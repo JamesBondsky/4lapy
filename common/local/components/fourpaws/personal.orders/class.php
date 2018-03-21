@@ -58,25 +58,23 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws ServiceNotFoundException
-     * @throws SystemException
      * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
+     * @throws SystemException
      */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
         try {
             $container = App::getInstance()->getContainer();
-        } catch (ApplicationCreateException $e) {
+            $this->orderService = $container->get('order.service');
+            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->orderService = $container->get('order.service');
-        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
-        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
     /**
