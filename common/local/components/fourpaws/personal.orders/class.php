@@ -91,7 +91,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 24 * 60 * 60;
         /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
         $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
-        return $params;
+
+        return parent::onPrepareComponentParams($params);
     }
 
     /**
