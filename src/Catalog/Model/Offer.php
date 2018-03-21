@@ -1306,7 +1306,7 @@ class Offer extends IblockElement
      */
     public function getShare(): IblockElementCollection
     {
-        if (!($this->share instanceof IblockElementCollection)) {
+        if ($this->share === null) {
             try {
                 $this->share = (new IblockElementQuery())->withOrder(['SORT'=>'ASC','ACTIVE_FROM'=>'DESC'])->withFilter([
                     'IBLOCK_ID'         => IblockUtils::getIblockId(IblockType::PUBLICATION,
