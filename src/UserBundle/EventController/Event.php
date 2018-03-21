@@ -6,8 +6,10 @@
 
 namespace FourPaws\UserBundle\EventController;
 
+use Bitrix\Main\Application as BitrixApplication;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -19,6 +21,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
@@ -34,8 +37,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Event implements ServiceHandlerInterface
 {
-    const GROUP_ADMIN = 1;
-    const GROUP_TECHNICAL_USERS = 8;
+    public const GROUP_ADMIN = 1;
+    public const GROUP_TECHNICAL_USERS = 8;
     /**
      * @var EventManager
      */
@@ -66,6 +69,9 @@ class Event implements ServiceHandlerInterface
 
         /** обновляем логин если он равняется телефону или email */
         self::initHandler('OnBeforeUserUpdate', 'replaceLoginOnUpdate');
+
+        /** очистка кеша пользователя */
+        self::initHandler('OnAfterUserUpdate', 'clearUserCache');
     }
 
     /**
@@ -73,7 +79,7 @@ class Event implements ServiceHandlerInterface
      * @param string $method
      * @param string $module
      */
-    public static function initHandler(string $eventName, string $method, string $module = 'main')
+    public static function initHandler(string $eventName, string $method, string $module = 'main'): void
     {
         self::$eventManager->addEventHandler(
             $module,
@@ -85,7 +91,7 @@ class Event implements ServiceHandlerInterface
         );
     }
 
-    public static function checkPhoneFormat(array &$fields)
+    public static function checkPhoneFormat(array &$fields): void
     {
         if ($fields['PERSONAL_PHONE'] ?? '') {
             try {
@@ -116,7 +122,7 @@ class Event implements ServiceHandlerInterface
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public static function replaceLogin(array $fields)
+    public static function replaceLogin(array $fields): void
     {
         global $APPLICATION;
         $userService = Application::getInstance()->getContainer()->get(UserRegistrationProviderInterface::class);
@@ -130,7 +136,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @param array $auth
      */
-    public static function deleteBasicAuth(&$auth)
+    public static function deleteBasicAuth(&$auth): void
     {
         if (\is_array($auth) && isset($auth['basic'])) {
             unset($auth['basic']);
@@ -140,7 +146,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @param $fields
      */
-    public static function preventAuthorizationOnRegister(&$fields)
+    public static function preventAuthorizationOnRegister(&$fields): void
     {
         $fields['ACTIVE'] = 'N';
     }
@@ -150,7 +156,7 @@ class Event implements ServiceHandlerInterface
      *
      * @throws \RuntimeException
      */
-    public static function sendEmail($fields)
+    public static function sendEmail($fields): void
     {
         if ($_SESSION['SEND_REGISTER_EMAIL'] && (int)$fields['USER_ID'] > 0 && !empty($fields['EMAIL'])) {
             /** отправка письма о регистрации */
@@ -180,6 +186,7 @@ class Event implements ServiceHandlerInterface
      * @param $fields
      *
      * @return bool
+     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
@@ -193,6 +200,7 @@ class Event implements ServiceHandlerInterface
                 $container = App::getInstance()->getContainer();
             } catch (ApplicationCreateException $e) {
                 /** если вызывается эта ошибка вероятно умерло все */
+                return false;
             }
             unset($_SESSION['MANZANA_UPDATE']);
             $client = null;
@@ -233,7 +241,7 @@ class Event implements ServiceHandlerInterface
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      */
-    public static function replaceLoginOnUpdate(&$fields)
+    public static function replaceLoginOnUpdate(&$fields): void
     {
         $notReplacedGroups= [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
@@ -269,6 +277,21 @@ class Event implements ServiceHandlerInterface
             } catch (ApplicationCreateException $e) {
                 /** если вызывается эта ошибка вероятно умерло все */
             }
+        }
+    }
+
+    /**
+     * @param $arFields
+     *
+     * @throws SystemException
+     */
+    public function clearUserCache($arFields): void
+    {
+        if (\defined('BX_COMP_MANAGED_CACHE')) {
+            /** Очистка кеша */
+            $instance = BitrixApplication::getInstance();
+            $tagCache = $instance->getTaggedCache();
+            $tagCache->clearByTag('user:' . $arFields['ID']);
         }
     }
 }

@@ -72,7 +72,7 @@ class CatalogElementSnippet extends CBitrixComponent
      */
     public function executeComponent()
     {
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             parent::executeComponent();
 
             if ($this->arParams['PRODUCT']) {
@@ -88,6 +88,8 @@ class CatalogElementSnippet extends CBitrixComponent
                     $tagCache = $instance->getTaggedCache();
                     $tagCache->registerTag('catalog:offer:' . $currentOffer->getId());
                     $tagCache->registerTag('catalog:product:' . $product->getId());
+                    $tagCache->registerTag('iblock:item:' . $currentOffer->getId());
+                    $tagCache->registerTag('iblock:item:' . $product->getId());
                 }
                 return;
             }

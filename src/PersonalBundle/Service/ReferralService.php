@@ -217,7 +217,7 @@ class ReferralService
             /** Очистка кеша */
             $instance = Application::getInstance();
             $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('referral_' . $entity->getUserId());
+            $tagCache->clearByTag('personal:referral:' . $entity->getUserId());
         }
 
         return $res;
@@ -501,7 +501,7 @@ class ReferralService
             /** Очистка кеша */
             $instance = Application::getInstance();
             $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('referral_' . $userId);
+            $tagCache->clearByTag('personal:referral:' . $userId);
         }
         return $res;
     }

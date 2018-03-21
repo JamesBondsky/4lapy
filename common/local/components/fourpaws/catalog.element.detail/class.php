@@ -135,6 +135,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 $tagCache = $instance->getTaggedCache();
                 $tagCache->registerTag('catalog:offer:' . $currentOffer->getId());
                 $tagCache->registerTag('catalog:product:' . $product->getId());
+                $tagCache->registerTag('iblock:item:' . $product->getId());
             }
         }
 

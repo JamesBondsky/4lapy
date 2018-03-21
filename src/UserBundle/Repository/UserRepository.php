@@ -271,7 +271,7 @@ class UserRepository
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('profile_' . $id);
+                $tagCache->clearByTag('personal:profile' . $id);
             }
 
             return true;

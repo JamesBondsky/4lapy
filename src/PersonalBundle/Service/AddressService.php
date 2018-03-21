@@ -151,7 +151,7 @@ class AddressService
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $address->getUserId());
+                $tagCache->clearByTag('personal:address:' . $address->getUserId());
             }
         }
 
@@ -242,7 +242,7 @@ class AddressService
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $updateEntity->getUserId());
+                $tagCache->clearByTag('personal:address:' . $updateEntity->getUserId());
             }
         }
 
@@ -283,7 +283,7 @@ class AddressService
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $deleteEntity->getUserId());
+                $tagCache->clearByTag('personal:address:' . $deleteEntity->getUserId());
             }
         }
         return $res;

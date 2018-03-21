@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global \CMain $APPLICATION
  */
 
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
@@ -167,7 +168,6 @@ class CItemsListComponent extends CBitrixComponent
         $userHaveAccess = $this->checkPermission($USER);
         
         if ($this->startResultCache(
-            
             $this->arParams['CACHE_TIME'],
             [
                 $this->arParams['CACHE_GROUPS'] === 'N' ? false : $USER->GetGroups(),
@@ -175,8 +175,6 @@ class CItemsListComponent extends CBitrixComponent
                 $navigation,
                 $this->externalFilter,
                 $this->pagerParameters,
-                'IBLOCK_ID'=>$this->arParams['IBLOCK_ID'],
-                'IBLOCK_TYPE'=>$this->arParams['IBLOCK_TYPE']
             ]
         
         )) {
@@ -194,6 +192,22 @@ class CItemsListComponent extends CBitrixComponent
             $this->setItems();
             
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $instance = BitrixApplication::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                if(\is_array($this->arParams['IBLOCK_ID'])){
+                    foreach ($this->arParams['IBLOCK_ID'] as $iblockId) {
+                        $tagCache->registerTag('items:list:'.$iblockId);
+                        $tagCache->registerTag('iblock_id_'.$iblockId);
+                    }
+                }
+                else{
+                    $tagCache->registerTag('items:list:'.$this->arParams['IBLOCK_ID']);
+                    $tagCache->registerTag('iblock_id_'.$this->arParams['IBLOCK_ID']);
+                }
+                $tagCache->registerTag('items:list');
+            }
         }
         
         if (isset($this->arResult['ID'])) {

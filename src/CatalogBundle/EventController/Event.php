@@ -35,7 +35,8 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnProductUpdate', [static::class, 'clearProductCache']);
         self::initHandler('OnProductAdd', [static::class, 'clearProductCache']);
 
-        /** @todo сброс кеша при изменении элементов */
+        /** очистка кеша при изменении элемента инфоблока */
+        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'clearIblockItemCache']);
     }
 
     /**
@@ -57,11 +58,10 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param $id
-     * @param $fields
      *
      * @throws SystemException
      */
-    public static function clearProductCache($id, $fields): void
+    public static function clearProductCache($id): void
     {
         if (\defined('BX_COMP_MANAGED_CACHE')) {
             /** Очистка кеша */
@@ -70,6 +70,21 @@ class Event implements ServiceHandlerInterface
             $tagCache->clearByTag('catalog:offer:' . $id);
             $tagCache->clearByTag('catalog:stocks:' . $id);
             $tagCache->clearByTag('catalog:product:' . $id);
+        }
+    }
+
+    /**
+     * @param $id
+     *
+     * @throws SystemException
+     */
+    public static function clearIblockItemCache($id): void
+    {
+        if (\defined('BX_COMP_MANAGED_CACHE')) {
+            /** Очистка кеша */
+            $instance = BitrixApplication::getInstance();
+            $tagCache = $instance->getTaggedCache();
+            $tagCache->clearByTag('iblock:item:' . $id);
         }
     }
 }

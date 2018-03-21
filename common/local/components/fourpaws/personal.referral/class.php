@@ -132,7 +132,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
         $nav = null;
 
-        /** @todo Добавить кеширование запроса в манзану с тегом - напрмиер на 30минут - 1час, + сбрасывать кеш по тегу при добавлении рефералла с сайта */
         $cache = Cache::createInstance();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $curUser->getId()]))) {
@@ -141,6 +140,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['BONUS'] = $result['BONUS'];
             $cacheItems = $result['cacheItems'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             try {
                 $nav = new PageNavigation('nav-referral');
                 $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
@@ -174,10 +178,10 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 $this->arResult['NAV'] = $nav;
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
+            if ($tagCache !== null) {
+                $tagCache->registerTag('personal:referral');
+                $tagCache->registerTag('personal:referral:'. $curUser->getId());
+                $tagCache->registerTag('highloadblock:field:user:'. $curUser->getId());
                 $tagCache->endTagCache();
             }
 
@@ -207,10 +211,9 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
-                $tagCache->endTagCache();
+                $tagCache->registerTag('personal:referral');
+                $tagCache->registerTag('personal:referral:'. $curUser->getId());
+                $tagCache->registerTag('highloadblock:field:user:'. $curUser->getId());
             }
         }
 

@@ -106,7 +106,7 @@ class PetService
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $entity->getUserId());
+                $tagCache->clearByTag('personal:pets:' . $entity->getUserId());
             }
         }
         
@@ -245,7 +245,7 @@ class PetService
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $updateEntity->getUserId());
+                $tagCache->clearByTag('personal:pets:' . $updateEntity->getUserId());
             }
         }
         
@@ -284,7 +284,7 @@ class PetService
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $deleteEntity->getUserId());
+                $tagCache->clearByTag('personal:pets:' . $deleteEntity->getUserId());
             }
         }
         

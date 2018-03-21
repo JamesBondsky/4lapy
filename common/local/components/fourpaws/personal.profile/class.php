@@ -151,10 +151,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('profile_%s', $curUser->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
-                $tagCache->endTagCache();
+                $tagCache->registerTag('personal:profile:'. $curUser->getId());
+                $tagCache->registerTag('user:'. $curUser->getId());
             }
         }
 
@@ -231,7 +229,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     /** Очистка кеша */
                     $instance = Application::getInstance();
                     $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('profile_' . $userId);
+                    $tagCache->clearByTag('personal:profile:' . $userId);
                 }
 
                 try {
@@ -411,7 +409,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('profile_' . $id);
+                $tagCache->clearByTag('personal:profile:' . $id);
             }
 
             if (!empty($oldPhone)) {

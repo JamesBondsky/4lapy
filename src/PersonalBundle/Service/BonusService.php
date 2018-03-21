@@ -276,7 +276,7 @@ class BonusService
                     /** Очистка кеша */
                     $instance = Application::getInstance();
                     $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('bonus_' . $user->getId());
+                    $tagCache->clearByTag('personal:bonus:' . $user->getId());
                 }
 
             }

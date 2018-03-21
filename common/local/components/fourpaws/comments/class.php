@@ -338,6 +338,9 @@ class CCommentsComponent extends \CBitrixComponent
             
             return false;
         }
+
+        /** @todo кеширование комментариев */
+
         try {
             $this->setHLEntity();
         } catch (LoaderException $e) {

@@ -163,6 +163,11 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             $offerIds          = $vars['offerIds'];
             $this->allProducts = $vars['allProducts'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             //получение данных из манзаны
             list($xmlIds, $allItems) = $this->getXmlIdsByManzana();
             //получение товаров с сайта по XML_ID
@@ -208,11 +213,10 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                 }
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('top_%s', $userId));
-                $tagCache->registerTag(sprintf('order_%s', $userId));
+            if ($tagCache !== null) {
+                $tagCache->registerTag('personal:top');
+                $tagCache->registerTag('personal:top:'. $userId);
+                $tagCache->registerTag('order:'. $userId);
                 $tagCache->endTagCache();
             }
             
@@ -271,11 +275,9 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('top_%s', $userId));
-                $tagCache->registerTag(sprintf('order_%s', $userId));
-                $tagCache->registerTag(sprintf('user_%s', $userId));
-                $tagCache->endTagCache();
+                $tagCache->registerTag('personal:top');
+                $tagCache->registerTag('personal:top:'. $userId);
+                $tagCache->registerTag('order:'. $userId);
             }
         }
         

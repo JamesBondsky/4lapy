@@ -101,7 +101,6 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
 
         $this->setFrameMode(true);
 
-        /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
         if ($this->startResultCache($this->arParams['CACHE_TIME'], ['user_id'=>$this->currentUserProvider->getCurrentUserId()])) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
             /** получение пола */
@@ -114,10 +113,9 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('pet_%s', $this->currentUserProvider->getCurrentUserId()));
-                $tagCache->registerTag(sprintf('user_%s', $this->currentUserProvider->getCurrentUserId()));
-                $tagCache->endTagCache();
+                $tagCache->registerTag('personal:pets:'. $this->currentUserProvider->getCurrentUserId());
+                $tagCache->registerTag('personal:pets');
+                $tagCache->registerTag('highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId());
             }
         }
 

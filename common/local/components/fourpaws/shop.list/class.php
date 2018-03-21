@@ -93,8 +93,13 @@ class FourPawsShopListComponent extends CBitrixComponent
         }
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             if ($this->prepareResult($city)) {
-
                 $this->includeComponentTemplate();
+            }
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->registerTag('shop:list:'. $city['CODE']);
+                $tagCache->registerTag('shop:list');
             }
         }
 

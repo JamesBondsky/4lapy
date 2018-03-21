@@ -4,6 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+use Bitrix\Main\Application as BitrixApplication;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
@@ -72,7 +73,7 @@ class CatalogOftenSeekComponent extends CBitrixComponent
             return null;
         }
 
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
                 $this->arParams['SECTION_ID'],
                 $this->arParams['LEFT_MARGIN'],
@@ -81,6 +82,13 @@ class CatalogOftenSeekComponent extends CBitrixComponent
             );
 
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $instance = BitrixApplication::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->registerTag('catalog:often_seek:'.$this->arParams['SECTION_ID']);
+                $tagCache->registerTag('catalog:often_seek');
+            }
         }
 
         return true;

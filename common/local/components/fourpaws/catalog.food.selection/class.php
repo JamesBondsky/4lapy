@@ -4,6 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+use Bitrix\Main\Application as BitrixApplication;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
@@ -58,11 +59,17 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
     {
         $this->setFrameMode(true);
         
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             $this->arResult['PET_TYPES'] = $this->foodSelectionService->getSectionsByParentSectionId(
                     $this->foodSelectionService->getSectionIdByXmlId('pet_type', 1)
                 );
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $instance = BitrixApplication::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->registerTag('catalog:food_selection');
+            }
         }
         
         return true;

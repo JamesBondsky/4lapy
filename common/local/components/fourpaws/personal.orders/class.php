@@ -158,8 +158,9 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             }
 
             if ($tagCache !== null) {
-                $tagCache->registerTag(sprintf('user_order_%s', $userId));
-                $tagCache->registerTag(sprintf('order_%s', $userId));
+                $tagCache->registerTag('personal:orders:');
+                $tagCache->registerTag('personal:orders:'. $userId);
+                $tagCache->registerTag('order:'. $userId);
                 $tagCache->endTagCache();
             }
 
@@ -208,9 +209,9 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag(sprintf('user_order_%s', $userId));
-                $tagCache->registerTag(sprintf('order_%s', $userId));
-                $tagCache->registerTag(sprintf('user_%s', $userId));
+                $tagCache->registerTag('personal:orders:');
+                $tagCache->registerTag('personal:orders:'. $userId);
+                $tagCache->registerTag('order:'. $userId);
             }
         }
 

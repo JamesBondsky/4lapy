@@ -110,6 +110,11 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             try {
                 $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);
             } catch (NotAuthorizedException $e) {
@@ -119,11 +124,9 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
                 return null;
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
-                $tagCache->registerTag(sprintf('order_%s', $user->getId()));
+            if ($tagCache !== null) {
+                $tagCache->registerTag('personal:bonus:'. $user->getId());
+                $tagCache->registerTag('order:'. $user->getId());
                 $tagCache->endTagCache();
             }
 

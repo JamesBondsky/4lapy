@@ -84,7 +84,7 @@ class ProductsByProp extends CBitrixComponent
         }
 
         $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             parent::executeComponent();
 
             $res = \CIBlockElement::GetProperty($this->arParams['IBLOCK_ID'], $this->arParams['ITEM_ID'], '', '',
@@ -115,10 +115,9 @@ class ProductsByProp extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $this->instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('iblock_id_%s', $this->arParams['IBLOCK_ID']));
-                $tagCache->registerTag(sprintf('iblock_item_id_%s', $this->arParams['ITEM_ID']));
-                $tagCache->endTagCache();
+                $tagCache->registerTag('product:by:prop');
+                $tagCache->registerTag('product:by:prop:'.$this->arParams['ITEM_ID']);
+                $tagCache->registerTag('iblock:item:'.$this->arParams['ITEM_ID']);
             }
         }
         return true;

@@ -592,7 +592,7 @@ class OrderService
                 /** Очистка кеша */
                 $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('order_' . $order->getField('USER_ID'));
+                $tagCache->clearByTag('order:' . $order->getField('USER_ID'));
             }
 
             $this->orderStorageService->clearStorage($storage);

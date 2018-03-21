@@ -247,8 +247,8 @@ class Event implements ServiceHandlerInterface
             /** Очистка кеша */
             $instance = BitrixApplication::getInstance();
             $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('order_' . $order->getField('USER_ID'));
-            $tagCache->clearByTag('user_order_' . $order->getField('USER_ID'));
+            $tagCache->clearByTag('order:' . $order->getField('USER_ID'));
+            $tagCache->clearByTag('personal:order:' . $order->getField('USER_ID'));
         }
     }
 }
