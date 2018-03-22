@@ -217,6 +217,13 @@ class PetService
      */
     public function update(array $data) : bool
     {
+        if (!empty($data['UF_PHOTO_TMP'])) {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
+        }
+        else{
+            unset($data['UF_PHOTO']);
+        }
+
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
 
@@ -225,14 +232,8 @@ class PetService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
-        }
-        if (!empty($data['UF_PHOTO_TMP'])) {
-            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
-            unset($data['UF_PHOTO']);
+        if($entity->getUserId() === 0){
+            $entity->setUserId($updateEntity->getUserId());
         }
 
         $res = $this->petRepository->setEntity($entity)->update();
