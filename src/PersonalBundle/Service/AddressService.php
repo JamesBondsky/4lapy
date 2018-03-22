@@ -224,6 +224,10 @@ class AddressService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
+        if($entity->getUserId() === 0){
+            $entity->setUserId($updateEntity->getUserId());
+        }
+
         if ($entity->isMain()) {
             $this->disableMainItem();
         }
