@@ -71,3 +71,7 @@ parameters:
   sap.shop.directory.in: '%sap.directory%/SAPBW/'
   sap.shop.directory.out: '%sap.directory%/SAPBW/'
   sap.shop.directory.error: '%sap.directory%/SAPBW_Errors/'
+
+  sap.bonus_buy.directory.in: '%sap.directory%/'
+  sap.bonus_buy.directory.out: '%sap.directory%/BB/'
+  sap.bonus_buy.directory.error: '%sap.directory%/BB_Errors/'

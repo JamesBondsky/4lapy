@@ -17,6 +17,11 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Interfaces\ToArrayInterface;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 
+/**
+ * Class IblockElementRepository
+ *
+ * @package FourPaws\SapBundle\Repository
+ */
 abstract class IblockElementRepository
 {
     /**
@@ -33,6 +38,12 @@ abstract class IblockElementRepository
      */
     private $iblockElement;
 
+    /**
+     * IblockElementRepository constructor.
+     *
+     * @param ToBitrixDataArrayConverter $converter
+     * @param SlugifyInterface $slugify
+     */
     public function __construct(ToBitrixDataArrayConverter $converter, SlugifyInterface $slugify)
     {
         $this->converter = $converter;
@@ -45,7 +56,7 @@ abstract class IblockElementRepository
      *
      * @return null|IblockElement
      */
-    public function find(int $id)
+    public function find(int $id): ?IblockElement
     {
         return $this->findBy(['=ID' => $id], [], 1)->first();
     }
@@ -55,7 +66,7 @@ abstract class IblockElementRepository
      *
      * @return null|IblockElement
      */
-    public function findByXmlId(string $xmlId)
+    public function findByXmlId(string $xmlId): ?IblockElement
     {
         return $this->findBy(['=XML_ID' => $xmlId], [], 1)->first();
     }
@@ -65,7 +76,7 @@ abstract class IblockElementRepository
      *
      * @return null|IblockElement
      */
-    public function findByCode(string $code)
+    public function findByCode(string $code): ?IblockElement
     {
         return $this->findBy(['=CODE' => $code], [], 1)->first();
     }
@@ -91,7 +102,7 @@ abstract class IblockElementRepository
      *
      * @return null|int
      */
-    public function findIdByXmlId(string $xmlId)
+    public function findIdByXmlId(string $xmlId): ?int
     {
         $data = $this->getQuery()
             ->withFilter(['=XML_ID' => $xmlId])
@@ -128,7 +139,9 @@ abstract class IblockElementRepository
         $data = $this->toArray($iblockElement);
         unset($data['ID']);
         $result = new AddResult();
-        if ($id = $this->iblockElement->Add($data)) {
+        $id = $this->iblockElement->Add($data);
+
+        if ($id) {
             $result->setId($id);
             $iblockElement->withId($id);
         } elseif ($this->iblockElement->LAST_ERROR) {
@@ -180,7 +193,7 @@ abstract class IblockElementRepository
      * @param array $properties
      *
      */
-    protected function setProperties(int $elementId, array $properties)
+    protected function setProperties(int $elementId, array $properties): void
     {
         if ($properties) {
             \CIBlockElement::SetPropertyValuesEx($elementId, $this->getIblockId(), $properties);
@@ -203,7 +216,7 @@ abstract class IblockElementRepository
         /**
          * @todo check property type
          */
-        $data['PROPERTY_VALUES'] = array_map(function ($value) {
+        $data['PROPERTY_VALUES'] =\ array_map(function ($value) {
             if (\is_bool($value)) {
                 return (int)$value;
             }
@@ -212,11 +225,17 @@ abstract class IblockElementRepository
         return $data;
     }
 
-    protected function generateUniqueCode(string $name = '', string $code = '')
+    /**
+     * @param string $name
+     * @param string $code
+     *
+     * @return string
+     */
+    protected function generateUniqueCode(string $name = '', string $code = ''): string
     {
         $iblockId = $this->getIblockId();
         $i = 0;
-        $name = $name ?: md5(microtime());
+        $name = $name ?: \md5(\microtime());
         $code = $code ?: $this->slugify->slugify($name);
         while ($i < 10) {
             $tmpCode = $i > 0 ? $code . $i : $code;
@@ -233,7 +252,7 @@ abstract class IblockElementRepository
             }
             return $tmpCode;
         }
-        return md5($code . microtime());
+        return \md5($code . \microtime());
     }
 
     /**
@@ -244,10 +263,13 @@ abstract class IblockElementRepository
      */
     protected function convertIblockBitrixErrors(string $lastError, string $delimiter = '<br>'): array
     {
-        return array_map(function ($text) {
-            return new Error(trim($text));
-        }, explode($delimiter, $lastError) ?? []);
+        return \array_map(function ($text) {
+            return new Error(\trim($text));
+        }, \explode($delimiter, $lastError) ?? []);
     }
 
+    /**
+     * @return IblockElementQuery
+     */
     abstract protected function getQuery(): IblockElementQuery;
 }
