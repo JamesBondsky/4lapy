@@ -359,7 +359,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * 02 – ZIMN Не оплачено;
          * 03 – ZIMN Предоплачено.
          */
-        if ($externalPayment->getField('CODE') === $this->baseOrderService::PAYMENT_ONLINE) {
+        if ($externalPayment->getPaySystem()->getField('CODE') === $this->baseOrderService::PAYMENT_ONLINE) {
             /** @noinspection PhpParamsInspection */
             $dto
                 ->setPayType(SapOrder::ORDER_PAYMENT_ONLINE_CODE)
@@ -507,7 +507,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function getDeliveryTypeCode(Order $order): string
     {
-        if ($this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC')) {
+        if ($this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y') {
             return SapOrder::DELIVERY_TYPE_ROUTE;
         }
 
