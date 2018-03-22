@@ -108,7 +108,7 @@ class ReferralService
         $search = (string)$request->get('search');
         $filter = [];
         if (!empty($search)) {
-            $filter['=UF_CARD'] = $search;
+            $filter['?UF_CARD'] = $search;
         }
         $referralType = $this->getReferralType();
         if (!empty($referralType)) {
