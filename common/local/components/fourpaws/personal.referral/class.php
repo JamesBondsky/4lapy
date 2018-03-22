@@ -19,6 +19,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -133,7 +134,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $nav = new PageNavigation('nav-referral');
         $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
-        /** @todo Добавить кеширование запроса в манзану с тегом - напрмиер на 30минут - 1час, + сбрасывать кеш по тегу при добавлении рефералла с сайта */
         $cache = Cache::createInstance();
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -145,6 +145,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['BONUS'] = $result['BONUS'];
             $cacheItems = $result['cacheItems'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             try {
                 $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $nav);
             } catch (NotAuthorizedException $e) {
@@ -175,10 +180,12 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 $this->arResult['NAV'] = $nav;
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
+            if ($tagCache !== null) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:referral',
+                    'personal:referral:'. $curUser->getId(),
+                    'highloadblock:field:user:'. $curUser->getId()
+                ], $tagCache);
                 $tagCache->endTagCache();
             }
 
@@ -206,13 +213,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
-                $tagCache->endTagCache();
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:referral',
+                'personal:referral:'. $curUser->getId(),
+                'highloadblock:field:user:'. $curUser->getId()
+            ]);
         }
 
         return true;

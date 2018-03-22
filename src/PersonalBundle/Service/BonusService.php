@@ -19,6 +19,7 @@ use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
@@ -272,12 +273,9 @@ class BonusService
                 $this->currentUserProvider->getUserRepository()->updateData($user->getId(),
                     ['UF_DISCOUNT_CARD' => $bonusCard]);
 
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    /** Очистка кеша */
-                    $instance = Application::getInstance();
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('bonus_' . $user->getId());
-                }
+                TaggedCacheHelper::clearManagedCache([
+                    'personal:bonus:' . $user->getId(),
+                ]);
 
             }
 
