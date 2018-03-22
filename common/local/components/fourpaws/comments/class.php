@@ -315,6 +315,8 @@ class CCommentsComponent extends \CBitrixComponent
         if (empty($params['TYPE'])) {
             $params['TYPE'] = 'iblock';
         }
+
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
         
         return $params;
     }
@@ -340,43 +342,54 @@ class CCommentsComponent extends \CBitrixComponent
         }
 
         /** @todo кеширование комментариев */
+        if($this->startResultCache()){
 
         try {
             $this->setHLEntity();
         } catch (LoaderException $e) {
             ShowError($e->getMessage());
-            
+
             return false;
         } catch (SystemException $e) {
             ShowError($e->getMessage());
-            
+
             return false;
         }
         try {
             $this->setUserBundle();
         } catch (ApplicationCreateException $e) {
             ShowError($e->getMessage());
-            
+
             return false;
         } catch (ServiceCircularReferenceException $e) {
             ShowError($e->getMessage());
-            
+
             return false;
         }
         $this->arResult['AUTH'] = $this->userAuthService->isAuthorized();
         
         try {
-            $comments                         = $this->getComments();
-            $this->arResult['COMMENTS']       = $comments['ITEMS'];
+            $comments = $this->getComments();
+            $this->arResult['COMMENTS'] = $comments['ITEMS'];
             $this->arResult['COUNT_COMMENTS'] = $comments['COUNT'];
         } catch (ArgumentException $e) {
             ShowError($e->getMessage());
-            
+
             return false;
         }
         $this->arResult['RATING'] = $this->getRating();
         
         $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->registerTag('comments');
+                $tagCache->registerTag('comments:objectId:'. $this->arParams['OBJECT_ID']);
+                $tagCache->registerTag('comments:type:'. $this->arParams['TYPE']);
+                $tagCache->registerTag('highloadblock:field:objectId:'. $this->arParams['OBJECT_ID']);
+            }
+        }
         
         return true;
     }
