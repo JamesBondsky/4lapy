@@ -138,6 +138,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
         $search = (string)$request->get('search');
+        $cacheItems = [];
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $curUser->getId(), 'page'=>$nav->getCurrentPage(), 'search'=>$search]))) {
             $result = $cache->getVars();
@@ -158,7 +159,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 return null;
             }
 
-            $cacheItems = [];
             if (!$items->isEmpty()) {
                 /** @var Referral $item */
                 /** @noinspection ForeachSourceInspection */
