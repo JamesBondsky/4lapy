@@ -1374,4 +1374,18 @@ class Offer extends IblockElement
 
         $this->isCounted = true;
     }
+
+    /**
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    public function isAvailable(): bool
+    {
+        /** @todo сделать обработку исключений */
+        return $this->isActive() && $this->getQuantity() > 0 && !$this->isByRequest();
+    }
 }

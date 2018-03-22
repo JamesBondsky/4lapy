@@ -9,13 +9,19 @@ use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\Analytics\Catalog;
 use Bitrix\Main\Analytics\Counter;
 use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Text\JsExpression;
 use CBitrixComponent;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
@@ -32,7 +38,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogElementDetailComponent extends \CBitrixComponent
 {
-    const EXPAND_CLOSURES = 'EXPAND_CLOSURES';
+    public const EXPAND_CLOSURES = 'EXPAND_CLOSURES';
 
     protected $unionOffers = [];
 
@@ -41,14 +47,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      */
     private $currentUserProvider;
 
-    /** @var UserAuthorizationInterface */
-    private $authUserProvider;
-
     /**
      * CatalogElementDetailComponent constructor.
      *
      * @param CBitrixComponent|null $component
      *
+     * @throws \RuntimeException
      * @throws SystemException
      */
     public function __construct(?CBitrixComponent $component = null)
@@ -57,7 +61,6 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
         } catch (ApplicationCreateException|ServiceCircularReferenceException|ServiceNotFoundException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
@@ -85,6 +88,15 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         return parent::onPrepareComponentParams($params);
     }
 
+    /**
+     * @return mixed
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     */
     public function executeComponent()
     {
         if (!$this->arParams['CODE']) {
@@ -144,6 +156,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     public function getOffersByUnion(string $type, string $val): OfferCollection
     {
         if (!isset($this->unionOffers[$type][$val])) {
+            $offerCollection = null;
             switch ($type) {
                 case 'color':
                     $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_COLOUR_COMBINATION' => $val])->exec();
@@ -152,7 +165,9 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])->exec();
                     break;
             }
-            $this->unionOffers[$type][$val] = $offerCollection;
+            if(null !== $offerCollection) {
+                $this->unionOffers[$type][$val] = $offerCollection;
+            }
 
         }
         return $this->unionOffers[$type][$val];
@@ -184,7 +199,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      *
      * @return array
      */
-    protected function getSectionChain(int $sectionId)
+    protected function getSectionChain(int $sectionId): array
     {
         $sectionChain = [];
         if ($sectionId > 0) {
@@ -202,7 +217,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      *
      * @return null|Category
      */
-    protected function getSection(int $sectionId)
+    protected function getSection(int $sectionId): ?Category
     {
         if ($sectionId <= 0) {
             return null;
@@ -216,8 +231,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     /**
      * Добавление в просмотренные товары при генерации результата
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws LoaderException
      */
-    protected function saveViewedProduct()
+    protected function saveViewedProduct(): void
     {
         if ($this->arParams['SET_VIEWED_IN_COMPONENT'] === 'Y' && !empty($this->arResult['PRODUCT'])) {
             // задано действие добавления в просмотренные при генерации результата
@@ -244,8 +262,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      * Получение данных для BigData
      *
      * @return void
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws LoaderException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentNullException
      */
-    protected function obtainCounterData()
+    protected function obtainCounterData(): void
     {
         if (empty($this->arResult['PRODUCT'])) {
             return;
@@ -279,7 +302,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         // pack value and protocol version
         $rcmLogCookieName = Option::get('main', 'cookie_name',
-                'BITRIX_SM') . '_' . \Bitrix\Main\Analytics\Catalog::getCookieLogName();
+                'BITRIX_SM') . '_' . Catalog::getCookieLogName();
 
         $this->arResult['counterDataSource'] = $counterData;
         $this->arResult['counterData'] = [
@@ -323,7 +346,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      *
      * @return void
      */
-    protected function sendCounters()
+    protected function sendCounters(): void
     {
         if (isset($this->arResult['counterData']) && Catalog::isOn()) {
             Counter::sendData('ct', $this->arResult['counterData']);
@@ -333,7 +356,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     /**
      * @todo from inheritedProperties
      */
-    protected function setMeta()
+    protected function setMeta(): void
     {
         global $APPLICATION;
 
@@ -346,19 +369,30 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      * @param Product $product
      *
      * @return Offer
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws LoaderException
      */
     protected function getCurrentOffer(Product $product): Offer
     {
         $offerId = (int)$this->arParams['OFFER_ID'];
 
+        $offers = $product->getOffers();
         if ($offerId) {
-            foreach ($product->getOffers() as $offer) {
+            foreach ($offers as $offer) {
                 if ($offer->getId() === $offerId) {
                     return $offer;
                 }
             }
         }
+        else{
+            foreach ($offers as $offer) {
+                if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+                    return $offer;
+                }
+            }
+        }
 
-        return $product->getOffers()->first();
+        return $offers->first();
     }
 }
