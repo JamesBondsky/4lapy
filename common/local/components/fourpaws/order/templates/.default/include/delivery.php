@@ -31,10 +31,13 @@ if (!$addresses || $addresses->isEmpty()) {
         $selectedAddressId = $storage->getAddressId();
     } elseif ($storage->getStreet()) {
         $showNewAddressForm = true;
-        $showNewAddressFormHeader = true;
     } else {
         $selectedAddressId = $addresses->first()->getId();
     }
+}
+
+if ($storage->getUserId()) {
+    $showNewAddressFormHeader = true;
 }
 
 ?>
