@@ -58,6 +58,7 @@ class ProductsByProp extends CBitrixComponent
         $params['PROPERTY_CODE'] = $params['PROPERTY_CODE'] ?? '';
         $params['FILTER_FIELD'] = $params['FILTER_FIELD'] ?? 'ID';
         $params['TITLE'] = $params['TITLE'] ?? 'Товары';
+        $params['SHOW_PAGE_NAVIGATION'] = $params['SHOW_PAGE_NAVIGATION'] ?? true;
 
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
         $params['CACHE_TYPE'] = $params['CACHE_TIME'] === 0 ? 'N' : $params['CACHE_TYPE'];
@@ -97,7 +98,7 @@ class ProductsByProp extends CBitrixComponent
             if (!empty($products)) {
                 $query = new OfferQuery();
                 if ($this->arParams['COUNT_ON_PAGE'] > 0) {
-                    if ($this->arParams['SLIDER'] !== 'Y') {
+                    if ($this->arParams['SHOW_PAGE_NAVIGATION'] && $this->arParams['SLIDER'] !== 'Y') {
                         $query->withNav([
                             'nPageSize' => $this->arParams['COUNT_ON_PAGE'],
                             'iNumPage'  => $this->arParams['CURRENT_PAGE'],

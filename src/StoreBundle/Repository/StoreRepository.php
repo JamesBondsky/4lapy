@@ -6,6 +6,7 @@
 
 namespace FourPaws\StoreBundle\Repository;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
@@ -103,7 +104,7 @@ class StoreRepository extends BaseRepository
                 $query->registerRuntimeField(
                     new ReferenceField(
                         'METRO',
-                        LocationTable::getEntity(),
+                        HLBlockFactory::createTableObject('MetroStations')::getEntity(),
                         ['=this.UF_METRO' => 'ref.ID']
                     )
                 );

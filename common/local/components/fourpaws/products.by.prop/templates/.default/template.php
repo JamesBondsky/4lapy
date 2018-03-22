@@ -43,7 +43,7 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
     </section>
 </div>
 <?php
-if($arParams['SLIDER'] !== 'Y') {
+if($arParams['SHOW_PAGE_NAVIGATION'] && $arParams['SLIDER'] !== 'Y') {
     $APPLICATION->IncludeComponent(
         'bitrix:system.pagenavigation',
         'pagination',

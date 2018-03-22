@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Repository;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;

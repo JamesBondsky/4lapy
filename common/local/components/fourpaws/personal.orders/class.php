@@ -49,30 +49,32 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     /** @var UserAuthorizationInterface */
     private $currentUserProvider;
 
+    public const STATUS_IN_POINT_ISSUE = 'F';
+    public const STATUS_IN_ASSEMBLY_1 = 'H';
+    public const STATUS_IN_ASSEMBLY_2 = 'W';
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws ServiceNotFoundException
-     * @throws SystemException
      * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
+     * @throws SystemException
      */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
         try {
             $container = App::getInstance()->getContainer();
-        } catch (ApplicationCreateException $e) {
+            $this->orderService = $container->get('order.service');
+            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->orderService = $container->get('order.service');
-        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
-        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
     /**
@@ -89,7 +91,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 24 * 60 * 60;
         /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
         $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
-        return $params;
+
+        return parent::onPrepareComponentParams($params);
     }
 
     /**
@@ -143,15 +146,18 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             try {
                 $manzanaOrders = $this->orderService->getManzanaOrders();
             } catch (ManzanaServiceException $e) {
                 $manzanaOrders = new ArrayCollection();
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
+            if ($tagCache !== null) {
                 $tagCache->registerTag(sprintf('user_order_%s', $userId));
                 $tagCache->registerTag(sprintf('order_%s', $userId));
                 $tagCache->endTagCache();
@@ -178,9 +184,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $nav->setRecordCount($allClosedOrders->count());
                 $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
-                if ($nav instanceof PageNavigation) {
-                    $this->arResult['NAV'] = $nav;
-                }
+                $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
@@ -204,11 +208,9 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
                 $tagCache->registerTag(sprintf('user_order_%s', $userId));
                 $tagCache->registerTag(sprintf('order_%s', $userId));
                 $tagCache->registerTag(sprintf('user_%s', $userId));
-                $tagCache->endTagCache();
             }
         }
 
@@ -270,7 +272,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             $oldOrder = Sale\Order::load($id);
 
-            if($oldOrder instanceof Order) {
+            if($oldOrder !== null) {
                 $oldBasket = $oldOrder->getBasket();
                 $oldBasketItems = $oldBasket->getBasketItems();
 

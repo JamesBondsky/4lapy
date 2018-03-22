@@ -11,8 +11,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
-use Bitrix\Main\Data\TaggedCache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
@@ -105,7 +103,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $cache = $instance->getCache();
 
         /** @todo здесь тоже можно делать обновление динамически, так как это влияет только на товары */
-        $this->currentUserProvider->refreshUserDiscount($user);
+        $this->currentUserProvider->refreshUserBonusPercent($user);
 
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getPath())) {

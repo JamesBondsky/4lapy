@@ -3,6 +3,10 @@
 namespace FourPaws\Components;
 
 use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -59,8 +63,12 @@ class CatalogElementSnippet extends CBitrixComponent
     /**
      * @return void
      *
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
+     * @throws SystemException
+     * @throws LoaderException
      */
     public function executeComponent()
     {
@@ -71,26 +79,7 @@ class CatalogElementSnippet extends CBitrixComponent
                 /** @var Product $product */
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
 
-                if (!empty($this->arParams['CURRENT_OFFER']) && $this->arParams['CURRENT_OFFER'] instanceof Offer) {
-                    $currentOffer = $this->arParams['CURRENT_OFFER'];
-                } else {
-                    /**
-                     * @todo Завязать текущий оффер на фильтр.
-                     */
-                    $offers = $product->getOffers();
-                    $currentOffer = null;
-                    foreach ($offers as $offer) {
-                        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
-                            $currentOffer = $offer;
-                        }
-                    }
-
-                    if (!($currentOffer instanceof Offer)) {
-                        $currentOffer = $offers->first();
-                    }
-                }
-
-                $this->arResult['CURRENT_OFFER'] = $currentOffer;
+                $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getOffer($product);
 
                 $this->includeComponentTemplate();
 
@@ -113,5 +102,37 @@ class CatalogElementSnippet extends CBitrixComponent
     public function getMarkService(): MarkService
     {
         return $this->markService;
+    }
+
+    /**
+     * @param Product $product
+     *
+     * @return mixed|null
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     */
+    protected function getOffer(Product $product)
+    {
+        if (!empty($this->arParams['CURRENT_OFFER']) && $this->arParams['CURRENT_OFFER'] instanceof Offer) {
+            $currentOffer = $this->arParams['CURRENT_OFFER'];
+        } else {
+            /**
+             * @todo Завязать текущий оффер на фильтр.
+             */
+            $offers = $product->getOffers();
+            $currentOffer = null;
+            foreach ($offers as $offer) {
+                if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+                    $currentOffer = $offer;
+                }
+            }
+
+            if (!($currentOffer instanceof Offer)) {
+                $currentOffer = $offers->first();
+            }
+        }
+
+        return $currentOffer;
     }
 }

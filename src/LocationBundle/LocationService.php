@@ -127,8 +127,8 @@ class LocationService
      * @throws ServiceCircularReferenceException
      * @throws IblockNotFoundException
      * @throws Exception
-     * @return array
      * @throws ArgumentException
+     * @return array
      */
     public function getAvailableCities(): array
     {
@@ -221,18 +221,18 @@ class LocationService
         array $additionalFilter = []
     ): array {
         $findLocation = function () use ($query, $limit, $exact, $additionalFilter) {
-            if (empty($query)) {
-                throw new CityNotFoundException('Город не найден');
+            $filter = [];
+            if ($query) {
+                $filter = [
+                    'NAME.LANGUAGE_ID' => LANGUAGE_ID,
+                    'PHRASE'           => $query,
+                ];
+
+                if ($exact) {
+                    $filter['NAME.NAME'] = $query;
+                }
             }
 
-            $filter = [
-                'NAME.LANGUAGE_ID' => LANGUAGE_ID,
-                'PHRASE'           => $query,
-            ];
-
-            if ($exact) {
-                $filter['NAME.NAME'] = $query;
-            }
 
             if (!empty($additionalFilter)) {
                 $filter = array_merge($filter, $additionalFilter);

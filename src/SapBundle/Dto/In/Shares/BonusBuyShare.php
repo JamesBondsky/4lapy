@@ -1,10 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
-
 
 /**
  * Class BonusBuyShare
@@ -149,7 +152,7 @@ class BonusBuyShare
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyFrom>")
      * @Serializer\SerializedName("PURCHASE_HEAD")
      *
-     * @var Collection|BonusBuyFrom[]
+     * @var BonusBuyFrom[]|Collection
      */
     protected $bonusBuyFrom;
 
@@ -159,7 +162,7 @@ class BonusBuyShare
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyTo>")
      * @Serializer\SerializedName("BONUS_HEAD")
      *
-     * @var Collection|BonusBuyTo[]
+     * @var BonusBuyTo[]|Collection
      */
     protected $bonusBuyTo;
 
@@ -354,7 +357,7 @@ class BonusBuyShare
     }
 
     /**
-     * @return Collection|BonusBuyTo[]
+     * @return BonusBuyTo[]|Collection
      */
     public function getBonusBuyTo()
     {
@@ -362,7 +365,7 @@ class BonusBuyShare
     }
 
     /**
-     * @param Collection|BonusBuyTo[] $bonusBuyTo
+     * @param BonusBuyTo[]|Collection $bonusBuyTo
      *
      * @return BonusBuyShare
      */
@@ -374,7 +377,7 @@ class BonusBuyShare
     }
 
     /**
-     * @return Collection|BonusBuyFrom[]
+     * @return BonusBuyFrom[]|Collection
      */
     public function getBonusBuyFrom()
     {
@@ -382,7 +385,7 @@ class BonusBuyShare
     }
 
     /**
-     * @param Collection|BonusBuyFrom[] $bonusBuyFrom
+     * @param BonusBuyFrom[]|Collection $bonusBuyFrom
      *
      * @return BonusBuyShare
      */

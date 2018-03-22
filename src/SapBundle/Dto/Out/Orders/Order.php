@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\Out\Orders;
 
 use Doctrine\Common\Collections\Collection;
@@ -688,7 +692,7 @@ class Order
     }
     
     /**
-     * @return \DateTime|null
+     * @return null|\DateTime
      */
     public function getPayHoldDate(): \DateTime
     {
@@ -696,7 +700,7 @@ class Order
     }
     
     /**
-     * @param \DateTime|null $payHoldDate
+     * @param null|\DateTime $payHoldDate
      *
      * @return Order
      */
@@ -802,7 +806,7 @@ class Order
     }
     
     /**
-     * @return DeliveryAddress|null
+     * @return null|DeliveryAddress
      */
     public function getDeliveryAddress(): DeliveryAddress
     {
@@ -810,7 +814,7 @@ class Order
     }
     
     /**
-     * @param DeliveryAddress|null $deliveryAddress
+     * @param null|DeliveryAddress $deliveryAddress
      *
      * @return Order
      */

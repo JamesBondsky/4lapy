@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\DependencyInjection\Compiler;
 
 use FourPaws\SapBundle\ReferenceDirectory\ReferenceRepositoryRegistry;

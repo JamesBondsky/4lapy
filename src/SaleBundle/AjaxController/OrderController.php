@@ -13,7 +13,6 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -61,10 +60,6 @@ class OrderController extends Controller
     private $deliveryService;
 
     /**
-     * @var IntervalService
-     */
-    private $intervalService;
-    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -82,7 +77,6 @@ class OrderController extends Controller
      * @param OrderService $orderService
      * @param StoreService $storeService
      * @param DeliveryService $deliveryService
-     * @param IntervalService $intervalService
      * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ReCaptchaService $recaptcha
@@ -91,7 +85,6 @@ class OrderController extends Controller
         OrderService $orderService,
         StoreService $storeService,
         DeliveryService $deliveryService,
-        IntervalService $intervalService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         ReCaptchaService $recaptcha
@@ -99,7 +92,6 @@ class OrderController extends Controller
         $this->orderService = $orderService;
         $this->storeService = $storeService;
         $this->deliveryService = $deliveryService;
-        $this->intervalService = $intervalService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
@@ -108,7 +100,9 @@ class OrderController extends Controller
     /**
      * @Route("/store-search/", methods={"GET"})
      * @param Request $request
-     *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return JsonResponse
      */
     public function storeSearchAction(Request $request): JsonResponse
@@ -131,14 +125,15 @@ class OrderController extends Controller
     /**
      * @Route("/delivery-intervals/", methods={"POST"})
      * @param Request $request
-     *
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
      * @return JsonResponse
      */
     public function deliveryIntervalsAction(Request $request): JsonResponse
     {
         $result = [];
         $date = (int)$request->get('deliveryDate', 0);
-        $deliveries = $this->orderService->getDeliveries();
+        $deliveries = $this->orderService->getDeliveries($this->orderStorageService->getStorage());
         $delivery = null;
         foreach ($deliveries as $deliveryItem) {
             if (!$this->deliveryService->isDelivery($deliveryItem)) {
@@ -155,12 +150,12 @@ class OrderController extends Controller
             );
         }
 
-        $intervals = $this->intervalService->getIntervalsByDate($delivery, $date);
+        $intervals = $delivery->getAvailableIntervals($date);
         /** @var Interval $interval */
         foreach ($intervals as $i => $interval) {
             $result[] = [
-                'name' => $interval->toString(),
-                'value' => $i
+                'name' => (string)$interval,
+                'value' => $i+1,
             ];
         }
 
@@ -172,9 +167,9 @@ class OrderController extends Controller
 
     /**
      * @Route("/validate/auth", methods={"POST"})
-     *
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     *
+     * @param Request $request
+     * @throws \Bitrix\Main\SystemException
+     * @return JsonResponse
      * @return \FourPaws\App\Response\JsonResponse
      */
     public function validateAuthAction(Request $request): JsonResponse
@@ -190,7 +185,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         }
 
@@ -219,7 +214,12 @@ class OrderController extends Controller
 
         $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors], 200, ['reload' => true]);
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => false]
+            );
         }
 
         return JsonSuccessResponse::create(
@@ -233,9 +233,15 @@ class OrderController extends Controller
     /**
      * @Route("/validate/payment", methods={"POST"})
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @return JsonResponse
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
@@ -251,7 +257,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         }
 

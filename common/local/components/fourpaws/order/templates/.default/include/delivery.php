@@ -10,13 +10,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $delivery
  */
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use Doctrine\Common\Collections\ArrayCollection;
 
 $storage = $arResult['STORAGE'];
 
@@ -41,50 +39,49 @@ if (!$addresses || $addresses->isEmpty()) {
 
 ?>
 
-<?php if ($addresses && !$addresses->isEmpty()) {
-    ?>
-    <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address"
-        <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
-        <div class="b-input-line__label-wrapper">
-            <span class="b-input-line__label">Адрес доставки</span>
-        </div>
-        <?php /** @var Address $address */ ?>
-        <?php foreach ($addresses as $address) { ?>
-            <div class="b-radio b-radio--tablet-big">
-                <input class="b-radio__input"
-                       type="radio"
-                       name="addressId"
-                       id="order-address-<?= $address->getId() ?>"
-                    <?= $selectedAddressId === $address->getId() ? 'checked="checked"' : '' ?>
-                       value="<?= $address->getId() ?>"/>
-                <label class="b-radio__label b-radio__label--tablet-big"
-                       for="order-address-<?= $address->getId() ?>">
-                    <span class="b-radio__text-label">
-                        <?= $address->getFullAddress() ?>
-                    </span>
-                </label>
-            </div>
-        <?php } ?>
+<div class="b-input-line b-input-line--delivery-address-current js-hide-if-address"
+    <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
+    <div class="b-input-line__label-wrapper">
+        <span class="b-input-line__label">Адрес доставки</span>
+    </div>
+    <?php /** @var Address $address */ ?>
+    <?php foreach ($addresses as $address) {
+        ?>
         <div class="b-radio b-radio--tablet-big">
             <input class="b-radio__input"
                    type="radio"
                    name="addressId"
-                   id="order-address-another"
-                   data-radio="4"
-                <?= $selectedAddressId === 0 ? 'checked="checked"' : '' ?>
-                   value="0">
-            <label class="b-radio__label b-radio__label--tablet-big js-order-address-another"
-                   for="order-address-another">
-                <span class="b-radio__text-label">Доставить по другому адресу…</span>
+                   id="order-address-<?= $address->getId() ?>"
+                <?= $selectedAddressId === $address->getId() ? 'checked="checked"' : '' ?>
+                   value="<?= $address->getId() ?>"/>
+            <label class="b-radio__label b-radio__label--tablet-big"
+                   for="order-address-<?= $address->getId() ?>">
+                    <span class="b-radio__text-label">
+                        <?= $address->getFullAddress() ?>
+                    </span>
             </label>
         </div>
+        <?php
+    } ?>
+    <div class="b-radio b-radio--tablet-big">
+        <input class="b-radio__input"
+               type="radio"
+               name="addressId"
+               id="order-address-another"
+               data-radio="4"
+            <?= $selectedAddressId === 0 ? 'checked="checked"' : '' ?>
+               value="0">
+        <label class="b-radio__label b-radio__label--tablet-big js-order-address-another"
+               for="order-address-another">
+            <span class="b-radio__text-label">Доставить по другому адресу…</span>
+        </label>
     </div>
-    <?php
-} ?>
-<div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
+</div>
+<div class="b-radio-tab__new-address js-form-new-address" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
-            <?php if ($showNewAddressFormHeader) { ?>
+            <?php if ($showNewAddressFormHeader) {
+                ?>
                 <span class="b-input-line__label">Новый адрес доставки</span>
                 <a class="b-link b-link--back-arrow js-back-list-address"
                    href="javascript:void(0);"
@@ -95,7 +92,8 @@ if (!$addresses || $addresses->isEmpty()) {
                     <span class="b-link__back-word">Вернуться </span>
                     <span class="b-link__mobile-word">к списку</span>
                 </a>
-            <?php } ?>
+                <?php
+            } ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--street">
@@ -205,6 +203,7 @@ if (!$addresses || $addresses->isEmpty()) {
             <option value="" disabled="disabled" selected="selected">выберите
             </option>
             <?php
+            /** @noinspection PhpUnhandledExceptionInspection */
             $start = $delivery->getPeriodFrom();
             $end = $delivery->getPeriodTo();
             $time = time();
@@ -220,9 +219,9 @@ if (!$addresses || $addresses->isEmpty()) {
         </select>
     </div>
 </div>
-<?php if (!$delivery->getIntervals()->isEmpty()) {
-    /** @var IntervalCollection $intervals */
-    $intervals = $delivery->getIntervals();
+<?php
+if (!$delivery->getIntervals()->isEmpty()) {
+    $availableIntervals = $delivery->getAvailableIntervals($storage->getDeliveryDate());
     ?>
     <div class="b-input-line b-input-line--interval">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
@@ -234,13 +233,12 @@ if (!$addresses || $addresses->isEmpty()) {
                 <option value="" disabled="disabled" selected="selected">
                     выберите
                 </option>
-                <?php 
+                <?php
                 /** @var Interval $interval */
-                foreach ($intervals as $i => $interval) {
+                foreach ($availableIntervals as $i => $interval) {
                     ?>
-                    <option value="<?= $i + 1 ?>" <?= ($storage->getDeliveryInterval(
-                        ) === $i + 1) ? 'selected="selected"' : '' ?>>
-                        <?= $interval->toString() ?>
+                    <option value="<?= $i + 1 ?>" <?= ($storage->getDeliveryInterval() === $i + 1) ? 'selected="selected"' : '' ?>>
+                        <?= (string)$interval ?>
                     </option>
                     <?php
                 } ?>

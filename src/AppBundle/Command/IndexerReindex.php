@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\Console\Command;
+namespace FourPaws\AppBundle\Command;
 
 use FourPaws\App\Application;
 use Symfony\Component\Console\Command\Command;
@@ -40,7 +40,7 @@ class IndexerReindex extends Command
     protected function configure()
     {
         $this
-            ->setName('indexer:reindex')
+            ->setName('fourpaws:indexer:reindex')
             ->setDescription('Reindex all catalog in Elasticsearch. Also could create index if it doesn\'t exist.')
             ->addOption(
                 self::OPT_FORCE,

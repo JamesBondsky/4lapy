@@ -21,6 +21,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
+use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -28,14 +29,13 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -45,45 +45,45 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
 class OrderService
 {
-    const PAYMENT_CASH = 'cash';
+    public const PAYMENT_CASH = 'cash';
 
-    const PAYMENT_CARD = 'card';
+    public const PAYMENT_CARD = 'card';
 
-    const PAYMENT_ONLINE = 'card-online';
+    public const PAYMENT_ONLINE = 'card-online';
 
-    const PAYMENT_INNER = 'inner';
+    public const PAYMENT_INNER = 'inner';
 
-    const PROPERTY_TYPE_ENUM = 'ENUM';
+    public const PROPERTY_TYPE_ENUM = 'ENUM';
 
     /**
      * Дефолтный статус заказа при курьерской доставке
      */
-    const STATUS_NEW_COURIER = 'Q';
+    public const STATUS_NEW_COURIER = 'Q';
 
     /**
      * Дефолтный статус заказа при самовывозе
      */
-    const STATUS_NEW_PICKUP = 'N';
+    public const STATUS_NEW_PICKUP = 'N';
 
     /**
      * Заказ доставляется ("Исполнен" для курьерской доставки)
      */
-    const STATUS_DELIVERING = 'Y';
+    public const STATUS_DELIVERING = 'Y';
 
     /**
      * Заказ в пункте выдачи
      */
-    const STATUS_ISSUING_POINT = 'F';
+    public const STATUS_ISSUING_POINT = 'F';
 
     /**
      * Заказ доставлен
      */
-    const STATUS_DELIVERED = 'J';
+    public const STATUS_DELIVERED = 'J';
 
     /**
      * 90% заказа можно оплатить бонусами
      */
-    const MAX_BONUS_PAYMENT = 0.9;
+    public const MAX_BONUS_PAYMENT = 0.9;
 
     /**
      * @var AddressService
@@ -237,13 +237,6 @@ class OrderService
             foreach ($deliveries as $delivery) {
                 if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
                     $selectedDelivery = clone $delivery;
-                    if ($this->deliveryService->isPickup($selectedDelivery)) {
-                        $selectedDelivery->setStockResult(
-                            $selectedDelivery->getStockResult()->filterByStore(
-                                $this->storeService->getByXmlId($storage->getDeliveryPlaceCode())
-                            )
-                        );
-                    }
                     break;
                 }
             }
@@ -286,10 +279,10 @@ class OrderService
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
-                    'DELIVERY_NAME'         => $selectedDelivery->getDeliveryName(),
-                    'CURRENCY'              => $order->getCurrency(),
-                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
+                    'DELIVERY_ID' => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
+                    'CURRENCY' => $order->getCurrency(),
+                    'PRICE_DELIVERY' => $selectedDelivery->getPrice(),
                     'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
@@ -339,7 +332,7 @@ class OrderService
                             }
 
                             /** @var Interval $interval */
-                            if (!$interval = $selectedDelivery->getIntervals()[$index]) {
+                            if (!$interval = $selectedDelivery->getAvailableIntervals($storage->getDeliveryDate())[$index]) {
                                 continue 2;
                             }
 
@@ -413,8 +406,7 @@ class OrderService
          */
         if ($storage->getComment()) {
             $order->setField('USER_DESCRIPTION', $storage->getComment());
-        }
-        else{
+        } else {
             $order->setField('USER_DESCRIPTION', '');
         }
 
@@ -612,9 +604,9 @@ class OrderService
     /**
      * @param OrderStorage $storage
      * @param bool $reload
-     * @return CalculationResultInterface[]
      * @throws ArgumentOutOfRangeException
      * @throws NotSupportedException
+     * @return CalculationResultInterface[]
      */
     public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
@@ -731,8 +723,8 @@ class OrderService
 
     /**
      * @param Order $order
-     * @return string
      * @throws ArgumentException
+     * @return string
      */
     public function getOrderDeliveryAddress(Order $order): string
     {

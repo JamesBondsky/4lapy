@@ -210,7 +210,7 @@ if ($arParams['IS_AJAX']) {
                     $APPLICATION->IncludeComponent(
                         'fourpaws:city.delivery.info',
                         'basket.summary',
-                        ['BASKET_PRICE' => $basket->getPrice()],
+                        ['BASKET_PRICE' => $orderableItems->getPrice()],
                         false,
                         ['HIDE_ICONS' => 'Y']
                     );
@@ -231,7 +231,7 @@ if ($arParams['IS_AJAX']) {
                         </div>
                     </div>
                     <?php
-                    if ($basket->getBasePrice() - $basket->getPrice() > 0.01) {
+                    if ($arResult['TOTAL_DISCOUNT'] > 0.01) {
                         ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Общая скидка

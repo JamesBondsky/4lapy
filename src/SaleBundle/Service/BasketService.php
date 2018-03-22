@@ -61,6 +61,9 @@ class BasketService
     ) {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
+        /**
+         * @todo Property is used only in constructor, perhaps we are dealing with dead code here.
+         */
         $this->manzanaService = $manzanaService;
     }
 
@@ -73,17 +76,18 @@ class BasketService
      * @param array $rewriteFields
      * @param bool $save
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws BitrixProxyException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\ObjectNotFoundException
-     * @return bool
+     * @return BasketItem
      */
     public function addOfferToBasket(
         int $offerId,
         int $quantity = null,
         array $rewriteFields = [],
         bool $save = true
-    ): bool {
+    ): BasketItem {
         if ($quantity < 0) {
             throw new InvalidArgumentException('Wrong $quantity');
         }
@@ -104,11 +108,6 @@ class BasketService
             $fields = $rewriteFields + $fields;
         }
 
-        // вызов новго провайдера
-//        \Bitrix\Sale\Internals\Catalog\Provider::getProductData(
-//            $this->getBasket(), $this->getContext()
-//        );
-
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
             $this->getBasket(),
             $fields,
@@ -122,7 +121,7 @@ class BasketService
             $this->getBasket()->save();
         }
 
-        return true;
+        return $result->getData()['BASKET_ITEM'];
     }
 
 
