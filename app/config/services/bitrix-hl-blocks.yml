@@ -26,6 +26,10 @@ services:
     arguments: ['PublicationType']
     parent: bx.hlblock.base
 
+  bx.hlblock.sharetype:
+    arguments: ['ShareType']
+    parent: bx.hlblock.base
+
   bx.hlblock.rewardtype:
     arguments: ['RewardType']
     parent: bx.hlblock.base

@@ -13,7 +13,7 @@ use FourPaws\Enum\IblockType;
  *
  * Class ShareQuery
  *
- * @package FourPaws\Catalog\Query
+ * @package FourPaws\BitrixOrm\Query
  */
 class ShareQuery extends IblockElementQuery
 {

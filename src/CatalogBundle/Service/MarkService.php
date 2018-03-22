@@ -4,9 +4,8 @@ namespace FourPaws\CatalogBundle\Service;
 
 
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
-use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Model\Share;
+use FourPaws\BitrixOrm\Model\Share;
 
 /**
  * Class DiscountMarkService
@@ -72,10 +71,8 @@ final class MarkService
         if ($offer->isShare()) {
             /** @var Share $share */
             $share  = $offer->getShare()->first();
-            /** @var HlbReferenceItem $label */
-            $label = $share->getLabels()->first();
-            if($label !== null && !empty($label->getName())){
-                return $label->getName();
+            if(!empty($share->getPropertyLabel())){
+                return $share->getPropertyLabel();
             }
 
             return self::MARK_GIFT_IMAGE;

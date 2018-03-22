@@ -23,6 +23,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
+use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -32,7 +33,7 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\Catalog\Query\ShareQuery;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StockService;
@@ -1298,9 +1299,9 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return IblockElementCollection
+     * @return ShareCollection
      */
-    public function getShare(): IblockElementCollection
+    public function getShare(): ShareCollection
     {
         if ($this->share === null) {
             $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter([
