@@ -73,12 +73,7 @@ abstract class BitrixArrayItemBase implements ActiveReadModelInterface, ItemInte
                 $propertyName = $this->getPropertyName($field);
 
                 if ($this->isExists($propertyName)) {
-                    if(\is_array($this->{$propertyName})){
-                        $this->{$propertyName}[] = $value;
-                    }
-                    else{
-                        $this->{$propertyName} = $value;
-                    }
+                    $this->{$propertyName}[] = $value;
                 }
             }
         }
