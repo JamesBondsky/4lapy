@@ -70,12 +70,12 @@ class Event implements ServiceHandlerInterface
     }
 
     /**
-     * @param $id
+     * @param array $arFields
      */
-    public static function clearIblockItemCache($id): void
+    public static function clearIblockItemCache($arFields): void
     {
         TaggedCacheHelper::clearManagedCache([
-            'iblock:item:' . $id,
+            'iblock:item:' . $arFields['ID'],
         ]);
     }
 }
