@@ -234,14 +234,14 @@ class CCommentsComponent extends \CBitrixComponent
             }
             $this->arResult['RATING'] = $this->getRating();
 
-            $this->includeComponentTemplate();
-
             TaggedCacheHelper::addManagedCacheTags([
                 'comments:objectId:' . $this->arParams['OBJECT_ID'],
                 'comments:type:' . $this->arParams['TYPE'],
                 'highloadblock:field:objectId:' . $this->arParams['OBJECT_ID'],
                 'catalog:comments',
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         return true;

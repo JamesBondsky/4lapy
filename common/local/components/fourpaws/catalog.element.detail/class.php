@@ -127,12 +127,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 //'SECTION' => $this->getSection($sectionId),
             ];
 
-            $this->includeComponentTemplate();
             TaggedCacheHelper::addManagedCacheTags([
                 'catalog:offer:' . $currentOffer->getId(),
                 'catalog:product:' . $product->getId(),
                 'iblock:item:' . $product->getId(),
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         // bigdata

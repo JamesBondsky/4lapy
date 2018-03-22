@@ -213,13 +213,13 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['referral_type'] = $this->referralService->getReferralType();
             $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
 
-            $this->includeComponentTemplate();
-
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:referral',
                 'personal:referral:'. $curUser->getId(),
                 'highloadblock:field:user:'. $curUser->getId()
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         return true;

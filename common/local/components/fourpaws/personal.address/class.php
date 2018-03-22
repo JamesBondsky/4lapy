@@ -96,12 +96,13 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
             ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
             $this->arResult['ITEMS'] = $this->addressService->getAddressesByUser();
-            $this->includeComponentTemplate();
 
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:address:'. $this->currentUserProvider->getCurrentUserId(),
                 'highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId()
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         return true;

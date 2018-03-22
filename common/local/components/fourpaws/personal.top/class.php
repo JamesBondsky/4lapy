@@ -274,13 +274,14 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             if(empty($this->arResult['PRODUCTS'])){
                 $page = 'notItems';
             }
-            $this->includeComponentTemplate($page);
 
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:top',
                 'personal:top:'. $userId,
                 'order:'. $userId
             ]);
+
+            $this->includeComponentTemplate($page);
         }
         
         return true;

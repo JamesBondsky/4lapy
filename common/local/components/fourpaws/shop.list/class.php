@@ -94,12 +94,16 @@ class FourPawsShopListComponent extends CBitrixComponent
         }
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             if ($this->prepareResult($city)) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'shop:list:'. $city['CODE'],
+                    'shop:list'
+                ]);
+
                 $this->includeComponentTemplate();
             }
-            TaggedCacheHelper::addManagedCacheTags([
-                'shop:list:'. $city['CODE'],
-                'shop:list'
-            ]);
+            else {
+                $this->abortResultCache();
+            }
         }
 
         return true;
