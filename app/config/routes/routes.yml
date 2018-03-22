@@ -12,6 +12,7 @@ app.swagger:
 ajax.routes:
     resource: "ajax.yml"
     prefix:   /ajax
+    condition: "request.isXmlHttpRequest()"
 
 app.catalog:
     resource: "@FourPawsCatalogBundle/Controller/"

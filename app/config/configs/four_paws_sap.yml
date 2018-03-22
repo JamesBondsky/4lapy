@@ -5,44 +5,50 @@ four_paws_sap:
       in: '%sap.product.directory.in%'
       out: '%sap.product.directory.out%'
       error: '%sap.product.directory.error%'
-      filemask: 'Mat_*'
+      filemask: 'Mat_.*'
     price:
       entity: FourPaws\SapBundle\Dto\In\Prices\Prices
       in: '%sap.prices.directory.in%'
       out: '%sap.prices.directory.out%'
       error: '%sap.prices.directory.error%'
-      filemask: 'Prc_*'
+      filemask: 'Prc_.*'
     stock_quantity:
       entity: FourPaws\SapBundle\Dto\In\DcStock\DcStock
       in: '%sap.stock.directory.in%'
       out: '%sap.stock.directory.out%'
       error: '%sap.stock.directory.error%'
-      filemask: 'Stc_*'
+      filemask: 'Stc_.*'
     order_status:
       entity: FourPaws\SapBundle\Dto\In\Orders\Order
       in: '%sap.order.status.directory.in%'
       out: '%sap.order.status.directory.out%'
       error: '%sap.order.status.directory.error%'
-      filemask: 'OrdersIM_*'
+      filemask: 'OrdersIM_.*'
     payment_order:
       entity: FourPaws\SapBundle\Dto\In\ConfirmPayment\Order
       in: '%sap.payment.directory.in%'
       out: '%sap.payment.directory.out%'
       error: '%sap.payment.directory.error%'
-      filemask: 'DP_*'
+      filemask: 'DP_.*'
     schedule:
-      entity: FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule
+      entity: FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules
       in: '%sap.schedule.directory.in%'
       out: '%sap.schedule.directory.out%'
       error: '%sap.schedule.directory.error%'
-      filemask: 'Sched_*'
+      filemask: 'Sched_.*'
     shop_quantity:
       entity: FourPaws\SapBundle\Dto\In\StoresStock\StoresStock
       in: '%sap.shop.directory.in%'
       out: '%sap.shop.directory.out%'
       error: '%sap.shop.directory.error%'
-      filemask: 'sapbi_balance_*'
+      filemask: 'sapbi_balance_.*'
       filetype: 'csv'
+  out:
+    path:
+      order: '%sap.directory.out%'
+      payment: '%sap.directory.out%'
+    prefix:
+      payment: 'PC_'
   pipelines:
     catalog:
       - FourPaws\SapBundle\Dto\In\Offers\Materials
@@ -51,5 +57,7 @@ four_paws_sap:
       - FourPaws\SapBundle\Dto\In\StoresStock\StoresStock
     order_status:
       - FourPaws\SapBundle\Dto\In\Orders\Order
+    payment:
+      - FourPaws\SapBundle\Dto\In\ConfirmPayment\Order
     delivery_schedule:
-      - FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule
+      - FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules

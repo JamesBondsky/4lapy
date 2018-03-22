@@ -24,6 +24,7 @@ class Configuration implements ConfigurationInterface
             ->children()
             ->append($this->getDirectorySourceNode())
             ->append($this->getPipelinesNode())
+            ->append($this->getOutNode())
             ->end();
         return $treeBuilder;
     }
@@ -80,6 +81,22 @@ class Configuration implements ConfigurationInterface
         /** @noinspection NullPointerExceptionInspection */
         $node->arrayPrototype()->scalarPrototype()->end()->end();
         
+        return $node;
+    }
+
+    /**
+     * @throws \RuntimeException
+     *
+     * @return ArrayNodeDefinition|NodeDefinition
+     */
+    public function getOutNode()
+    {
+        $treeBuilder = new TreeBuilder();
+
+        $node = $treeBuilder->root('out');
+        /** @noinspection NullPointerExceptionInspection */
+        $node->arrayPrototype()->scalarPrototype()->end()->end();
+
         return $node;
     }
 }

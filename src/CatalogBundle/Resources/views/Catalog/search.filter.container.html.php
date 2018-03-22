@@ -15,6 +15,7 @@ use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\CatalogBundle\ParamConverter\Catalog\AbstractCatalogRequestConverter;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
@@ -34,7 +35,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
 ?>
 <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
     <h1 class="b-title b-title--h1 b-title--catalog-filter"><?= $catalogRequest->getCategory()->getName() ?></h1>
-    <?php if ($catalogRequest->getSearchString() != $productSearchResult->getQuery()) { ?>
+    <?php if ($catalogRequest->getSearchString() !== $productSearchResult->getQuery()) { ?>
         <p class="b-title b-title--result">
             Возможно, вы имели ввиду «<span><?= $productSearchResult->getQuery() ?></span>»
         </p>
@@ -70,11 +71,11 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     'filters' => $filterCollection->getVisibleFilters()
                 ]
             ) ?>
-            <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
-            </div>
+            <div class="b-filter__block b-filter__block--discount js-discount-mobile-here"></div>
         </form>
     </div>
-    <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">
+    <div class="b-filter__bottom">
+        <a class="b-filter__button" href="javascript:void(0);" title="">
             Показать <?= $count . ' ' . WordHelper::declension($count, ['товар', 'товара', 'товаров']) ?>
         </a>
     </div>
@@ -141,16 +142,15 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     <?php } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
-                    <a class="b-link b-link--type active js-link-type-normal"
-                       href="javascript:void(0);" title="">
-                            <span class="b-icon b-icon--type">
-                                <?= new SvgDecorator('icon-catalog-normal', 20, 20) ?>
-                            </span>
+                    <a class="b-link b-link--type active js-link-type-normal" href="javascript:void(0);" title="">
+                        <span class="b-icon b-icon--type">
+                            <?= new SvgDecorator('icon-catalog-normal', 20, 20) ?>
+                        </span>
                     </a>
                     <a class="b-link b-link--type js-link-type-line" href="javascript:void(0);" title="">
-                            <span class="b-icon b-icon--type">
-                                <?= new SvgDecorator('icon-catalog-line', 20, 20) ?>
-                            </span>
+                        <span class="b-icon b-icon--type">
+                            <?= new SvgDecorator('icon-catalog-line', 20, 20) ?>
+                        </span>
                     </a>
                 </div>
             </div>
@@ -181,7 +181,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             'PAGE_PARAMETER' => 'page',
             'AJAX_MODE'      => 'Y'
         ],
-        $component,
+        null,
         [
             'HIDE_ICONS' => 'Y',
         ]

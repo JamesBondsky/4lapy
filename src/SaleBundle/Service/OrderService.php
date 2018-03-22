@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -27,10 +28,9 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
+use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -203,7 +203,6 @@ class OrderService
      * @param bool $save
      * @param bool $fastOrder
      *
-     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      * @throws \Exception
      * @throws OrderCreateException
      * @throws NotFoundException
@@ -232,23 +231,18 @@ class OrderService
         }
 
         $deliveries = $this->getDeliveries();
-        $selectedDelivery = null;
-        $deliveryId = $storage->getDeliveryId();
-        if ($fastOrder) {
-            /** устанавливаем самовывоз для быстрого заказа */
-            if (!empty($deliveries)) {
-                $selectedDelivery = current($deliveries);
-            } else {
-                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратить к администратору или попробуйте полный процесс оформления');
-            }
-        }
-        if ($selectedDelivery === null && !empty($deliveries)) {
+        $selectedDelivery = current($deliveries);
+        if ($deliveryId = $storage->getDeliveryId()) {
             /** @var CalculationResult $delivery */
             foreach ($deliveries as $delivery) {
                 if ($deliveryId === (int)$delivery->getData()['DELIVERY_ID']) {
                     $selectedDelivery = $delivery;
                 }
             }
+        }
+
+        if (!$selectedDelivery) {
+            throw new OrderCreateException('Нет доступных доставок');
         }
 
         /**
@@ -409,6 +403,9 @@ class OrderService
          */
         if ($storage->getComment()) {
             $order->setField('USER_DESCRIPTION', $storage->getComment());
+        }
+        else{
+            $order->setField('USER_DESCRIPTION', '');
         }
 
         $address = null;
@@ -583,6 +580,13 @@ class OrderService
             $result = $order->save();
             if (!$result->isSuccess()) {
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
+            }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('order_' . $order->getField('USER_ID'));
             }
 
             $this->orderStorageService->clearStorage($storage);

@@ -40,7 +40,7 @@ class BasketController extends Controller
     /**
      * BasketController constructor.
      *
-     * @param BasketService $basketService
+     * @param BasketService     $basketService
      * @param BasketViewService $basketViewService
      */
     public function __construct(BasketService $basketService, BasketViewService $basketViewService)
@@ -63,7 +63,7 @@ class BasketController extends Controller
     public function addAction(Request $request): JsonResponse
     {
         $offerId = (int)$request->get('offerId', 0);
-        if($offerId === 0){
+        if ($offerId === 0) {
             $offerId = (int)$request->get('offerid', 0);
         }
         $quantity = (int)$request->get('quantity', 1);
@@ -73,8 +73,8 @@ class BasketController extends Controller
             $this->basketService->addOfferToBasket($offerId, $quantity);
             $data = [
                 'remainQuantity' => 10,
-                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'disableAdd' => false
+                'miniBasket'     => $this->basketViewService->getMiniBasketHtml(true),
+                'disableAdd'     => false,
             ];
             $response = JsonSuccessResponse::createWithData(
                 'Товар добавлен в корзину',
@@ -111,9 +111,9 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml(),
+                'basket'     => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml()
+                'fastOrder'  => $this->basketViewService->getFastOrderHtml(true),
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -152,6 +152,10 @@ class BasketController extends Controller
     public function updateAction(Request $request)
     {
         $items = $request->get('items', []);
+        /** fix для быстрого заказа */
+        if (empty($items)) {
+            $items[] = ['basketId' => $request->get('basketId'), 'quantity' => $request->get('quantity')];
+        }
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
@@ -168,9 +172,9 @@ class BasketController extends Controller
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml(),
+                'basket'     => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml()
+                'fastOrder'  => $this->basketViewService->getFastOrderHtml(true),
             ];
 
             $response = JsonSuccessResponse::createWithData(
@@ -234,10 +238,10 @@ class BasketController extends Controller
                 $product = $offer->getProduct();
                 $name = '<strong>' . $product->getBrandName() . '</strong> ' . lcfirst(trim($product->getName()));
                 $items[] = [
-                    'id' => $offer->getId(),
-                    'actionId' => $discountId,
-                    'image' => $image,
-                    'name' => $name,
+                    'id'         => $offer->getId(),
+                    'actionId'   => $discountId,
+                    'image'      => $image,
+                    'name'       => $name,
                     'additional' => '', // todo ###
                 ];
 
@@ -247,7 +251,7 @@ class BasketController extends Controller
             $data = [
                 'count' => $unselectedCount,
                 'title' => 'Выберете ' . $unselectedCount . ' ' . $giftDeclension->get($unselectedCount),
-                'items' => $items
+                'items' => $items,
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -275,7 +279,8 @@ class BasketController extends Controller
      *
      * @return JsonErrorResponse|JsonResponse
      */
-    public function selectGiftAction(Request $request) {
+    public function selectGiftAction(Request $request)
+    {
         $response = null;
         $offerId = (int)$request->get('offerId', 0);
         $discountId = (int)$request->get('actionId', 0);
@@ -289,12 +294,12 @@ class BasketController extends Controller
                 ['reload' => true]
             );
         }
-        if(null === $response) {
+        if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
                 '',
                 [
                     'giftId' => 9001,
-                    'basket' => $this->basketViewService->getBasketHtml(true)
+                    'basket' => $this->basketViewService->getBasketHtml(true),
                 ],
                 200,
                 ['reload' => false]
@@ -316,18 +321,19 @@ class BasketController extends Controller
      *
      * @return JsonErrorResponse|JsonResponse
      */
-    public function refuseGiftAction(Request $request) {
+    public function refuseGiftAction(Request $request)
+    {
         $response = null;
         $giftBasketId = (int)$request->get('giftId', 0);
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
             $gift = $this->basketService->getAdder()->getExistGifts(null, true);
-            if(!isset($gift[$giftBasketId])) {
+            if (!isset($gift[$giftBasketId])) {
                 throw new NotFoundException('Подарок не найден');
             }
             $gift = $gift[$giftBasketId];
-            if($gift['quantity'] === 1) {
+            if ($gift['quantity'] === 1) {
                 $this->basketService->deleteOfferFromBasket($giftBasketId);
             } else {
                 $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - 1);
@@ -340,12 +346,12 @@ class BasketController extends Controller
                 ['reload' => true]
             );
         }
-        if(null === $response) {
+        if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
                 '',
                 [
                     'giftId' => 9001,
-                    'basket' => $this->basketViewService->getBasketHtml(true)
+                    'basket' => $this->basketViewService->getBasketHtml(true),
                 ],
                 200,
                 ['reload' => false]

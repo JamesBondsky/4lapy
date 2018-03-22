@@ -1,4 +1,10 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
@@ -45,7 +51,7 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
         /** @var Symfony\Component\Routing\RouteCollection $routes */
         $routes = $router->getRouteCollection();
 
-        /** @var \FourPaws\Location\LocationService $locationService */
+        /** @var \FourPaws\LocationBundle\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()

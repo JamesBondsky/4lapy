@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
@@ -28,6 +29,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -99,38 +101,52 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return null;
         }
 
-        $curUser = $this->currentUserProvider->getCurrentUser();
+        $instance = Application::getInstance();
 
-        $curBirthday = $curUser->getBirthday();
-        if ($curBirthday instanceof Date) {
-            try {
-                $birthday = DateHelper::replaceRuMonth($curBirthday->format('j #n# Y'), DateHelper::GENITIVE);
-            } catch (\Exception $e) {
+        if ($this->startResultCache($this->arParams['CACHE_TIME'],
+            ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+
+            $curBirthday = $curUser->getBirthday();
+            if ($curBirthday instanceof Date) {
+                try {
+                    $birthday = DateHelper::replaceRuMonth($curBirthday->format('j #n# Y'), DateHelper::GENITIVE);
+                } catch (\Exception $e) {
+                    $birthday = '';
+                }
+            } else {
                 $birthday = '';
             }
-        } else {
-            $birthday = '';
+
+            $this->arResult['CUR_USER'] = [
+                'ID'              => $curUser->getId(),
+                'PERSONAL_PHONE'  => PhoneHelper::formatPhone($curUser->getPersonalPhone(),
+                    '+7 (%s%s%s) %s%s%s-%s%s-%s%s'),
+                'EMAIL'           => $curUser->getEmail(),
+                'FULL_NAME'       => $curUser->getFullName(),
+                'LAST_NAME'       => $curUser->getLastName(),
+                'NAME'            => $curUser->getName(),
+                'SECOND_NAME'     => $curUser->getSecondName(),
+                'GENDER'          => $curUser->getGender(),
+                'GENDER_TEXT'     => $curUser->getGenderText(),
+                'BIRTHDAY'        => $birthday,
+                'BIRTHDAY_POPUP'  => ($curBirthday instanceof Date) ? $curBirthday->format(
+                    'd.m.Y'
+                ) : '',
+                'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
+                'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
+            ];
+
+            $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('profile_%s', $curUser->getId()));
+                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
+                $tagCache->endTagCache();
+            }
         }
-
-        $this->arResult['CUR_USER'] = [
-            'ID'              => $curUser->getId(),
-            'PERSONAL_PHONE'  => PhoneHelper::formatPhone($curUser->getPersonalPhone(), '+7 (%s%s%s) %s%s%s-%s%s-%s%s'),
-            'EMAIL'           => $curUser->getEmail(),
-            'FULL_NAME'       => $curUser->getFullName(),
-            'LAST_NAME'       => $curUser->getLastName(),
-            'NAME'            => $curUser->getName(),
-            'SECOND_NAME'     => $curUser->getSecondName(),
-            'GENDER'          => $curUser->getGender(),
-            'GENDER_TEXT'     => $curUser->getGenderText(),
-            'BIRTHDAY'        => $birthday,
-            'BIRTHDAY_POPUP'  => ($curBirthday instanceof Date) ? $curBirthday->format(
-                'd.m.Y'
-            ) : '',
-            'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
-            'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
-        ];
-
-        $this->includeComponentTemplate();
 
         return true;
     }
@@ -138,27 +154,45 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
     public function ajaxConfirmPhone(Request $request): JsonResponse
     {
+        $userId = (int)$request->get('ID', 0);
+
+        try {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+        }
+        catch (NotAuthorizedException $e){
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
+        }
+
+        if($userId !== $curUser->getId()){
+            return $this->ajaxMess->getSecurityError();
+        }
+
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            return $this->ajaxMess->getSystemError();
+        }
         $phone = $request->get('phone');
         $oldPhone = $request->get('oldPhone', '');
         try {
             $phone = PhoneHelper::normalizePhone($phone);
-            $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            if(!empty($oldPhone)){
+                $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
         try {
             /** @var ConfirmCodeService $confirmService */
-            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $confirmService = $container->get(ConfirmCodeInterface::class);
             $res = $confirmService::checkConfirmSms(
                 $phone,
                 $request->get('confirmCode')
@@ -172,32 +206,49 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (NotFoundConfirmedCodeException $e) {
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
+        } catch (Exception $e) {
+            return $this->ajaxMess->getSystemError();
         }
         $data = [
             'UF_PHONE_CONFIRMED' => true,
         ];
         try {
-            if ($this->currentUserProvider->getUserRepository()->updateData((int)$request->get('ID', 0), $data)) {
-                /** @var ManzanaService $manzanaService */
-                $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-                $client = null;
-                if (empty($oldPhone)) {
-                    return $this->ajaxMess->getNotOldPhoneError();
-                }
-                try {
-                    $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
-                    $client = new Client();
-                    $client->contactId = $contactId;
-                    $client->phone = $phone;
-                } catch (ManzanaServiceException $e) {
-                    $client = new Client();
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                } catch (WrongPhoneNumberException $e) {
-                    return $this->ajaxMess->getWrongPhoneNumberException();
+            if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
+                if (\defined('BX_COMP_MANAGED_CACHE')) {
+                    /** Очистка кеша */
+                    $instance = Application::getInstance();
+                    $tagCache = $instance->getTaggedCache();
+                    $tagCache->clearByTag('profile_' . $userId);
                 }
 
-                if ($client instanceof Client) {
-                    $manzanaService->updateContactAsync($client);
+                try {
+                    /** @var ManzanaService $manzanaService */
+                    $manzanaService = $container->get('manzana.service');
+                    $client = null;
+                    if (empty($oldPhone)) {
+                        $client = new Client();
+                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    } else {
+                        try {
+                            $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
+                            $client = new Client();
+                            $client->contactId = $contactId;
+                            $client->phone = $phone;
+                        } catch (ManzanaServiceException $e) {
+                            $client = new Client();
+                            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                        } catch (WrongPhoneNumberException $e) {
+                            return $this->ajaxMess->getWrongPhoneNumberException();
+                        }
+                    }
+
+                    if ($client instanceof Client) {
+                        $manzanaService->updateContactAsync($client);
+                    }
+                }
+                catch(\Exception $e){
+                    $logger = LoggerFactory::create('manzana');
+                    $logger->error('manzana error - '.$e->getMessage());
                 }
 
                 return JsonSuccessResponse::create('Телефон верифицирован');
@@ -205,6 +256,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
         } catch (\Exception $e) {
+            return $this->ajaxMess->getSystemError();
         }
 
         return $this->ajaxMess->getVerificationError();
@@ -234,9 +286,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
-        } catch (\RuntimeException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (\Exception $e) {
+        } catch (\RuntimeException|\Exception $e) {
             return $this->ajaxMess->getSystemError();
         }
 
@@ -246,10 +296,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
      * @return JsonResponse
-     * @throws ConstraintDefinitionException
      */
     public function ajaxGet(Request $request): JsonResponse
     {
@@ -298,12 +345,25 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @param string $phone
      * @param int    $id
      *
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
      * @return JsonResponse|string
      */
     private function ajaxGetConfirm(string $phone, int $id)
     {
+        try {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+        }
+        catch (NotAuthorizedException $e){
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
+        }
+
+        if($id !== $curUser->getId()){
+            return $this->ajaxMess->getSecurityError();
+        }
+
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
@@ -319,11 +379,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $curUser = $userRepository->find($id);
+            $user = $userRepository->find($id);
+
             $data = ['PERSONAL_PHONE' => $phone];
             $oldPhone = '';
-            if ($curUser !== null) {
-                $oldPhone = $curUser->getPersonalPhone();
+            if ($user !== null) {
+                $oldPhone = $user->getPersonalPhone();
             }
             if ($oldPhone !== $phone) {
                 $data['UF_PHONE_CONFIRMED'] = false;
@@ -331,6 +392,13 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             $res = $userRepository->updateData($id, $data);
             if (!$res) {
                 return $this->ajaxMess->getUpdateError();
+            }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('profile_' . $id);
             }
 
             if (!empty($oldPhone)) {
@@ -353,19 +421,19 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 return $this->ajaxMess->getSmsSendErrorException();
             } catch (WrongPhoneNumberException $e) {
                 return $this->ajaxMess->getWrongPhoneNumberException();
-            } catch (\RuntimeException $e) {
-                return $this->ajaxMess->getSystemError();
-            } catch (\Exception $e) {
+            } catch (\RuntimeException|\Exception $e) {
                 return $this->ajaxMess->getSystemError();
             }
+        } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (ApplicationCreateException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (ServiceNotFoundException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (ServiceCircularReferenceException $e) {
-            return $this->ajaxMess->getSystemError();
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            return $this->ajaxMess->getUpdateError($e->getMessage());
         }
 
         return $mess;

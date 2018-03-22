@@ -8,6 +8,11 @@ use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\XmlDeserializationVisitor;
 use JMS\Serializer\XmlSerializationVisitor;
 
+/**
+ * Class SapPositionStringHandler
+ *
+ * @package FourPaws\SapBundle\Serialization
+ */
 class SapPositionStringHandler implements SubscribingHandlerInterface
 {
     const LENGTH_BEFORE_TEN = 5;
@@ -63,7 +68,7 @@ class SapPositionStringHandler implements SubscribingHandlerInterface
         $data = (int)$data;
         $padLength = $data < 10 ? static::LENGTH_BEFORE_TEN : static::LENGTH_MORE_OR_EQUAL_TEN;
 
-        $data = str_pad($data * 10, $padLength, STR_PAD_LEFT);
+        $data = \str_pad($data * 10, $padLength, \STR_PAD_LEFT);
 
         return $visitor->getNavigator()->accept(
             $data,
@@ -75,6 +80,14 @@ class SapPositionStringHandler implements SubscribingHandlerInterface
         );
     }
 
+    /**
+     * @param XmlDeserializationVisitor $visitor
+     * @param $data
+     * @param array $type
+     * @param Context $context
+     *
+     * @return mixed
+     */
     public function deserialize(XmlDeserializationVisitor $visitor, $data, array $type, Context $context)
     {
         $data = $data instanceof \SimpleXMLElement ? $data->__toString() : $data;

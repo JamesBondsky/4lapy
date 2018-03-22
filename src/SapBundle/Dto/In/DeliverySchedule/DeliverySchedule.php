@@ -3,6 +3,7 @@
 namespace FourPaws\SapBundle\Dto\In\DeliverySchedule;
 
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class DeliverySchedule
@@ -12,21 +13,20 @@ use Doctrine\Common\Collections\Collection;
 class DeliverySchedule
 {
     /**
-     * Код файла выгрузки IDoc.
-     * Содержит номер файла выгрузки.
+     * Ключ выгрузки. Генерируется из отправителя/получателя.
      *
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("DN")
+     * @Serializer\Exclude()
      *
-     * @var int
+     * @var string
      */
-    protected $docId = 0;
+    protected $xmlId;
 
     /**
      * Отправитель остатка.
      * Содержит код склада или код поставщика.
      * Формат кода склада: DCХХ, формат кода поставщика: 9-значный цифровой код.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("string")
      * @Serializer\SerializedName("sender")
      *
@@ -39,6 +39,7 @@ class DeliverySchedule
      * Содержит код склада или магазина.
      * Формат кода склада: DCХХ, формат кода магазина: RХХХ.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("string")
      * @Serializer\SerializedName("recipient")
      *
@@ -50,6 +51,8 @@ class DeliverySchedule
      * Дата с.
      * Содержит дату начала действия графика, формат: ГГГГММДД.
      *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("DateTime<'Ymd'>")
      * @Serializer\SerializedName("dateFrom")
      *
      * @var \DateTime
@@ -60,6 +63,8 @@ class DeliverySchedule
      * Дата по.
      * Содержит дату окончания действия графика, формат: ГГГГММДД.
      *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("DateTime<'Ymd'>")
      * @Serializer\SerializedName("dateTo")
      *
      * @var \DateTime
@@ -73,6 +78,7 @@ class DeliverySchedule
      *   2 – по определенным неделям;
      *   8 – ручной.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
      * @Serializer\SerializedName("slType")
      *
@@ -84,6 +90,7 @@ class DeliverySchedule
      * Индикатор удаления.
      * Содержит индикатор удаления графика поставки. При значении «Х» Система должна удалить график поставки
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Deleted")
      *
@@ -114,21 +121,21 @@ class DeliverySchedule
     protected $manualDays;
 
     /**
-     * @return int
+     * @return string
      */
-    public function getDocId(): int
+    public function getXmlId(): string
     {
-        return $this->docId;
-    }
+        if (null === $this->xmlId) {
+            $this->xmlId = \md5(
+                \sprintf(
+                    '%s|%s',
+                    $this->getSenderCode(),
+                    $this->getRecipientCode()
+                )
+            );
+        }
 
-    /**
-     * @param int $docId
-     * @return DeliverySchedule
-     */
-    public function setDocId(int $docId): DeliverySchedule
-    {
-        $this->docId = $docId;
-        return $this;
+        return $this->xmlId;
     }
 
     /**
@@ -146,6 +153,7 @@ class DeliverySchedule
     public function setSenderCode(string $senderCode): DeliverySchedule
     {
         $this->senderCode = $senderCode;
+
         return $this;
     }
 
@@ -164,6 +172,7 @@ class DeliverySchedule
     public function setRecipientCode(string $recipientCode): DeliverySchedule
     {
         $this->recipientCode = $recipientCode;
+
         return $this;
     }
 
@@ -182,6 +191,7 @@ class DeliverySchedule
     public function setDateFrom(\DateTime $dateFrom): DeliverySchedule
     {
         $this->dateFrom = $dateFrom;
+
         return $this;
     }
 
@@ -200,6 +210,7 @@ class DeliverySchedule
     public function setDateTo(\DateTime $dateTo): DeliverySchedule
     {
         $this->dateTo = $dateTo;
+
         return $this;
     }
 
@@ -218,6 +229,7 @@ class DeliverySchedule
     public function setScheduleType(int $scheduleType): DeliverySchedule
     {
         $this->scheduleType = $scheduleType;
+
         return $this;
     }
 
@@ -236,6 +248,7 @@ class DeliverySchedule
     public function setDeleted(bool $deleted): DeliverySchedule
     {
         $this->deleted = $deleted;
+
         return $this;
     }
 
@@ -254,6 +267,7 @@ class DeliverySchedule
     public function setWeekdays(Collection $weekDays): DeliverySchedule
     {
         $this->weekDays = $weekDays;
+
         return $this;
     }
 
@@ -272,6 +286,7 @@ class DeliverySchedule
     public function setManualDays(Collection $manualDays): DeliverySchedule
     {
         $this->manualDays = $manualDays;
+
         return $this;
     }
 }

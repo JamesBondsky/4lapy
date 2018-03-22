@@ -42,7 +42,7 @@ class MysqlBatchOperations
      *
      * @throws SqlQueryException
      */
-    public function batchUpdate(array $fields)
+    public function batchUpdate(array $fields): void
     {
         /** @todo обновление из нескольких таблиц */
         /** @todo транзакции */
@@ -62,7 +62,7 @@ class MysqlBatchOperations
     /**
      * @throws SqlQueryException
      */
-    public function batchDelete()
+    public function batchDelete(): void
     {
         /** @todo удаление из нескольких таблиц */
         /** @todo использование USING */
@@ -79,7 +79,7 @@ class MysqlBatchOperations
      *
      * @throws SqlQueryException
      */
-    public function batchInsert(array $fields)
+    public function batchInsert(array $fields): void
     {
         /** @todo транзакции */
         /** @todo вставка по подзапросу в том числе с лимитом */
@@ -138,7 +138,7 @@ class MysqlBatchOperations
     /**
      * @param int $limit
      */
-    public function setLimit(int $limit)
+    public function setLimit(int $limit): void
     {
         $this->limit = $limit;
     }
@@ -154,7 +154,7 @@ class MysqlBatchOperations
     /**
      * @param bool $lowPriority
      */
-    public function setLowPriority(bool $lowPriority)
+    public function setLowPriority(bool $lowPriority): void
     {
         $this->lowPriority = $lowPriority;
     }
@@ -170,7 +170,7 @@ class MysqlBatchOperations
     /**
      * @param bool $quick
      */
-    public function setQuick(bool $quick)
+    public function setQuick(bool $quick): void
     {
         $this->quick = $quick;
     }
@@ -186,7 +186,7 @@ class MysqlBatchOperations
     /**
      * @param string $table
      */
-    public function setTable(string $table)
+    public function setTable(string $table): void
     {
         $this->table = $table;
     }
@@ -202,7 +202,7 @@ class MysqlBatchOperations
     /**
      * @param bool $delayed
      */
-    public function setDelayed(bool $delayed)
+    public function setDelayed(bool $delayed): void
     {
         $this->delayed = $delayed;
     }
@@ -223,7 +223,7 @@ class MysqlBatchOperations
     /**
      * @param bool $ignore
      */
-    public function setIgnore(bool $ignore)
+    public function setIgnore(bool $ignore): void
     {
         $this->ignore = $ignore;
     }
@@ -241,10 +241,10 @@ class MysqlBatchOperations
      *
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function setQuery(Query $query)
+    public function setQuery(Query $query): void
     {
         $this->query = new ExtendsBitrixQuery($query);
-        $this->setTable($this->query->getEntity()->getDBTableName());
+        $this->setTable($this->query->quoteTableSource($this->query->getEntity()->getDBTableName()));
     }
 
     /**
@@ -290,17 +290,17 @@ class MysqlBatchOperations
     /**
      * @param int $step
      */
-    private function setStep(int $step)
+    private function setStep(int $step): void
     {
         $this->step = $step;
     }
 
-    private function increaseStep()
+    private function increaseStep(): void
     {
         $this->setStep($this->getStep() + 1);
     }
 
-    private function clearStep()
+    private function clearStep(): void
     {
         $this->setStep(0);
     }

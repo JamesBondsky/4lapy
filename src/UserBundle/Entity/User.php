@@ -13,7 +13,6 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
-use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Security\Core\Role\Role;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -235,6 +234,15 @@ class User implements UserInterface
      * @Serializer\SkipWhenEmpty()
      */
     protected $discountCardNumber = '';
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DISCOUNT")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $discount = 3;
 
     public function __construct()
     {
@@ -509,7 +517,7 @@ class User implements UserInterface
         if (!empty($name)
             && !empty($secondName)
             && !empty($lastName)) {
-            $fullName = $name . ' ' . $secondName . $lastName;
+            $fullName = $lastName . ' ' . $name . ' ' . $secondName;
         } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($lastName)
             && !empty($name)) {
             $fullName = $lastName . ' ' . $name;
@@ -986,5 +994,21 @@ class User implements UserInterface
     public function allowedEASend(): bool
     {
         return $this->hasEmail() && $this->isEmailConfirmed();
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscount(): int
+    {
+        return $this->discount ?? 3;
+    }
+
+    /**
+     * @param int $discount
+     */
+    public function setDiscount(int $discount): void
+    {
+        $this->discount = $discount;
     }
 }

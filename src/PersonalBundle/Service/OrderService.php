@@ -62,21 +62,22 @@ class OrderService
      */
     public function __construct(OrderRepository $orderRepository)
     {
+        $container = App::getInstance()->getContainer();
         $this->orderRepository = $orderRepository;
-        $this->currentUser = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        $this->manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $this->currentUser = $container->get(CurrentUserProviderInterface::class);
+        $this->manzanaService = $container->get('manzana.service');
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
      * @throws \RuntimeException
-     * @throws \Exception
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ApplicationCreateException
+     * @throws \Exception
      */
     public function getAllClosedOrders(): ArrayCollection
     {
@@ -93,7 +94,7 @@ class OrderService
      * @param array $closedSiteOrders
      * @param array $manzanaOrders
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
@@ -146,6 +147,7 @@ class OrderService
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceException
      * @throws ApplicationCreateException
+     * @return ArrayCollection|Order[]
      */
     public function getManzanaOrders(): ArrayCollection
     {
@@ -202,7 +204,17 @@ class OrderService
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
+     * @throws NotFoundException
      * @throws \Exception
      */
     public function getActiveSiteOrders(): ArrayCollection
@@ -219,9 +231,10 @@ class OrderService
     /**
      * @param array $params
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
+     * @throws ServiceNotFoundException
      * @throws NotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @throws ArgumentException
@@ -236,10 +249,9 @@ class OrderService
         if (!$orderCollection->isEmpty()) {
             /** @var Order $order */
             foreach ($orderCollection as &$order) {
-                /** @todo вынести все полученяи из цикла и сделать по феншую без запросов цикле */
+                /** @todo вынести все получения из цикла и сделать по феншую без запросов в цикле */
                 if (!$order->isManzana() && $order->getId() > 0) {
                     list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
-                    var_dump($allWeight);
                     $order->setItems($items);
                     $order->setAllWeight((float)$allWeight);
                     $order->setItemsSum((float)$itemsSum);
@@ -319,7 +331,7 @@ class OrderService
     /**
      * @param int $orderId
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|OrderProp[]
      * @throws EmptyEntityClass
      */
     public function getOrderProps(int $orderId): ArrayCollection
@@ -331,10 +343,10 @@ class OrderService
      * @param Order $order
      *
      * @return Store
+     * @throws ArgumentException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws \Exception
      * @throws NotFoundException
      */
     public function getStore(Order $order): Store
@@ -357,30 +369,37 @@ class OrderService
         $store = new Store();
 
         if (!$props->isEmpty()) {
+            $street = '';
             $prop = $props->get('STREET');
             if ($prop instanceof OrderProp) {
                 $street = $prop->getValue() . ' ул.';
             }
+            $house='';
             $prop = $props->get('HOUSE');
             if ($prop instanceof OrderProp) {
                 $house = ', д.' . $prop->getValue();
             }
+            $building='';
             $prop = $props->get('BUILDING');
             if ($prop instanceof OrderProp) {
                 $building = !empty($prop->getValue()) ? ', корпус/строение ' . $prop->getValue() : '';
             }
+            $porch='';
             $prop = $props->get('PORCH');
             if ($prop instanceof OrderProp) {
                 $porch = !empty($prop->getValue()) ? ', подъезд. ' . $prop->getValue() : '';
             }
+            $apartment='';
             $prop = $props->get('APARTMENT');
             if ($prop instanceof OrderProp) {
                 $apartment = !empty($prop->getValue()) ? ', кв. ' . $prop->getValue() : '';
             }
+            $floor='';
             $prop = $props->get('FLOOR');
             if ($prop instanceof OrderProp) {
                 $floor = !empty($prop->getValue()) ? ', этаж ' . $prop->getValue() : '';
             }
+            $city='';
             $prop = $props->get('CITY');
             if ($prop instanceof OrderProp) {
                 $city = ', г. ' . $prop->getValue();

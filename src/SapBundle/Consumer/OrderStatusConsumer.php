@@ -2,12 +2,91 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-class OrderStatusConsumer implements ConsumerInterface
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use FourPaws\SapBundle\Dto\In\Orders\Order;
+use FourPaws\SapBundle\Exception\CantUpdateOrderException;
+use FourPaws\SapBundle\Service\Orders\OrderService;
+use FourPaws\SapBundle\Service\Orders\PaymentService;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LogLevel;
+use RuntimeException;
+
+/**
+ * Class OrderStatusConsumer
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
+class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
 {
-    public function consume($orderInfo) : bool
+    use LazyLoggerAwareTrait;
+    
+    /**
+     * @var OrderService
+     */
+    private $orderService;
+    /**
+     * @var PaymentService
+     */
+    private $paymentService;
+
+    /**
+     * OrderStatusConsumer constructor.
+     *
+     * @param OrderService $orderService
+     * @param PaymentService $paymentService
+     */
+    public function __construct(OrderService $orderService, PaymentService $paymentService)
     {
-        dump($orderInfo);
-        die();
+        $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
+    }
+
+    /**
+     * Consume order info (save sap order`s change)
+     *
+     * @param $order
+     *
+     * @return bool
+     * @throws RuntimeException
+     */
+    public function consume($order): bool
+    {
+        if (!$this->support($order)) {
+            return false;
+        }
+        
+        $this->log()->log(LogLevel::INFO, 'Импортируется статус заказа');
+        
+        try {
+            $success = true;
+
+            $order = $this->orderService->transformDtoToOrder($order);
+            $result = $order->save();
+
+            $this->paymentService->tryPaymentRefund($order);
+
+            if (!$result->isSuccess()) {
+                throw new CantUpdateOrderException(sprintf(
+                    'Не удалось обновить заказ #%s: %s',
+                    $order->getId(),
+                    implode(', ', $result->getErrorMessages())
+                ));
+            }
+
+            if ($warnings = $result->getWarningMessages()) {
+                $this->log()->error(sprintf(
+                    'Ошибки обновлении заказа #%s: %s',
+                    $order->getId(),
+                    implode(', ', $warnings)
+                ));
+            }
+        } catch (\Exception $e) {
+            $success = false;
+
+            $this->log()->log(LogLevel::ERROR, sprintf('Ошибка импорта статуса заказа: %s', $e->getMessage()));
+        }
+        
+        return $success;
     }
     
     /**
@@ -15,11 +94,8 @@ class OrderStatusConsumer implements ConsumerInterface
      *
      * @return bool
      */
-    public function support($data) : bool
+    public function support($data): bool
     {
-        /**
-         * @todo implement
-         */
-        return false;
+        return \is_object($data) && $data instanceof Order;
     }
 }

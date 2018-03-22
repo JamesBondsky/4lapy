@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\Error;
 use Bitrix\Main\EventResult;
@@ -229,15 +230,20 @@ class BasketService
      *
      * @param bool|null $reload
      *
+     * @param int       $fuserId
+     *
      * @return Basket
      */
-    public function getBasket(bool $reload = null): Basket
+    public function getBasket(bool $reload = null, int $fuserId = 0): Basket
     {
         if (null === $this->basket || $reload) {
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
-            $this->basket = Basket::loadItemsForFUser($this->currentUserProvider->getCurrentFUserId(), SITE_ID);
+            if($fuserId === 0){
+                $fuserId = $this->currentUserProvider->getCurrentFUserId();
+            }
+            $this->basket = Basket::loadItemsForFUser($fuserId, SITE_ID);
         }
         return $this->basket;
     }
@@ -283,7 +289,7 @@ class BasketService
                 continue;
             }
 
-            $delay = $offer->getStocks()->isEmpty();
+            $delay = $offer->getStocks()->isEmpty() || $offer->isByRequest();
             if ($basketItem->isDelay() !== $delay) {
                 $basketItem->setField(
                     'DELAY',
@@ -330,47 +336,24 @@ class BasketService
     }
 
     /**
-     * @param Offer $offer
-     * @param int   $quantity
-     *
-     * @return float
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     */
-    public function getItemBonus(Offer $offer, int $quantity = 1): float
-    {
-        try {
-            $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
-            if(!empty($cardNumber)) {
-                $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                    $this->manzanaPosService->buildRequestFromItem(
-                        $offer,
-                        $cardNumber,
-                        $quantity
-                    )
-                );
-
-                return $cheque->getChargedBonus();
-            }
-        } catch (NotAuthorizedException $e) {
-            /** Возвращаеи 0 в случае ошибки */
-        } catch (ExecuteException $e) {
-            /** Возвращаеи 0 в случае ошибки */
-        }
-        return (float)0;
-    }
-
-    /**
      * @return float
      */
     public function getBasketBonus(): float
     {
         try {
-            $cardNumber = $this->currentUserProvider->getActiveCard();
+            try {
+                $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
+            } catch (NotAuthorizedException $e){
+                /** запрашиваем без карты */
+            } catch (InvalidIdentifierException|ConstraintDefinitionException $e){
+                $logger = LoggerFactory::create('params');
+                $logger->error($e->getMessage());
+                /** запрашиваем без карты */
+            }
             $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                 $this->manzanaPosService->buildRequestFromBasket(
                     $this->getBasket(),
-                    $cardNumber
+                    $cardNumber ?? ''
                 )
             );
 

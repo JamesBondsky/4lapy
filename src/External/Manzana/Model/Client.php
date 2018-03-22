@@ -153,7 +153,7 @@ class Client
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
-     * @SerializedName("Address1_Line3")
+     * @SerializedName("address1_line3")
      */
     public $addressLine3;
 

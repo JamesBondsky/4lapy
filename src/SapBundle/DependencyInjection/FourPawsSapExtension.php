@@ -5,6 +5,8 @@ namespace FourPaws\SapBundle\DependencyInjection;
 use FourPaws\SapBundle\Consumer\ConsumerInterface;
 use FourPaws\SapBundle\Pipeline\Pipeline;
 use FourPaws\SapBundle\Service\DirectorySourceFinderBuilder;
+use FourPaws\SapBundle\Service\Orders\OrderService;
+use FourPaws\SapBundle\Service\Orders\PaymentService;
 use FourPaws\SapBundle\Source\CsvDirectorySource;
 use FourPaws\SapBundle\Source\SerializerDirectorySource;
 use FourPaws\SapBundle\Source\SourceInterface;
@@ -36,6 +38,7 @@ class FourPawsSapExtension extends ConfigurableExtension
         $this->registerConsumerTags($container);
         $this->registerSourceTags($container);
         $this->configPipelines($mergedConfig['pipelines'], $container);
+        $this->configOrderService($mergedConfig['out'], $container);
     }
 
     protected function registerConsumerTags(ContainerBuilder $container)
@@ -120,6 +123,35 @@ class FourPawsSapExtension extends ConfigurableExtension
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * @param array $out
+     * @param ContainerBuilder $container
+     *
+     * @throws InvalidArgumentException
+     */
+    protected function configOrderService(array $out, ContainerBuilder $container)
+    {
+
+        /**
+         * @todo сделать нормальную магию, это никуда не годится.
+         */
+        if ($out['path']['order']) {
+            $container->getDefinition(OrderService::class)->addMethodCall('setOutPath', [$out['path']['order']]);
+        }
+
+        if ($out['prefix']['order']) {
+            $container->getDefinition(OrderService::class)->addMethodCall('setOutPath', [$out['path']['order']]);
+        }
+
+        if ($out['path']['payment']) {
+            $container->getDefinition(PaymentService::class)->addMethodCall('setOutPrefix', [$out['path']['payment']]);
+        }
+
+        if ($out['prefix']['payment']) {
+            $container->getDefinition(PaymentService::class)->addMethodCall('setOutPrefix', [$out['path']['payment']]);
         }
     }
 }
