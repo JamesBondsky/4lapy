@@ -142,7 +142,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $curUser->getId(), 'page'=>$nav->getCurrentPage(), 'search'=>$search]))) {
             $result = $cache->getVars();
-            $this->arResult['NAV'] = $result['NAV'];
+            $nav = $result['NAV'];
             $this->arResult['BONUS'] = $result['BONUS'];
             $cacheItems = $result['cacheItems'];
         } elseif ($cache->startDataCache()) {
@@ -177,7 +177,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 if ($this->arResult['BONUS'] > 0) {
                     $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
                 }
-                $this->arResult['NAV'] = $nav;
             }
 
             if ($tagCache !== null) {
@@ -190,11 +189,13 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             }
 
             $cache->endDataCache([
-                'NAV'            => $this->arResult['NAV'],
+                'NAV'            => $nav,
                 'BONUS' => $this->arResult['BONUS'],
                 'cacheItems' => $cacheItems,
             ]);
         }
+
+        $this->arResult['NAV'] = $nav;
 
         if ($this->startResultCache(
             $this->arParams['CACHE_TIME'],
