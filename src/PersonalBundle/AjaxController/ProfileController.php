@@ -52,18 +52,18 @@ class ProfileController extends Controller
     /** @var UserAuthorizationInterface */
     private $userAuthorization;
     /** @var ArrayTransformerInterface */
-    private $serializer;
+    private $arrayTransformer;
 
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider,
         AjaxMess $ajaxMess,
-        ArrayTransformerInterface $serializer
+        ArrayTransformerInterface $arrayTransformer
     ) {
         $this->userAuthorization = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
         $this->ajaxMess = $ajaxMess;
-        $this->serializer = $serializer;
+        $this->arrayTransformer = $arrayTransformer;
     }
 
     /**
@@ -249,7 +249,7 @@ class ProfileController extends Controller
             $data['ID'] = (int)$data['ID'];
         }
         /** @var User $user */
-        $user = $this->serializer->fromArray($data, User::class);
+        $user = $this->arrayTransformer->fromArray($data, User::class);
 
         if($user->getId() === 0){
             return $this->ajaxMess->getSecurityError();
