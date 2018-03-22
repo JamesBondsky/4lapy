@@ -7,7 +7,6 @@
 namespace FourPaws\Catalog\Model;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
@@ -18,7 +17,6 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
 use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -32,11 +30,9 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
-use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
+use FourPaws\Catalog\Query\ShareQuery;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StockService;
@@ -1307,19 +1303,35 @@ class Offer extends IblockElement
     public function getShare(): IblockElementCollection
     {
         if ($this->share === null) {
-            try {
-                $this->share = (new IblockElementQuery())->withOrder(['SORT'=>'ASC','ACTIVE_FROM'=>'DESC'])->withFilter([
-                    'IBLOCK_ID'         => IblockUtils::getIblockId(IblockType::PUBLICATION,
-                        IblockCode::SHARES),
-                    'ACTIVE'            => 'Y',
-                    'ACTIVE_DATE'       => 'Y',
-                    'PROPERTY_PRODUCTS' => $this->getXmlId(),
-                ])->exec();
-            } catch (IblockNotFoundException $e) {
-                $this->share = new IblockElementCollection(new \CDBResult());
-            }
+            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter([
+                'ACTIVE'            => 'Y',
+                'ACTIVE_DATE'       => 'Y',
+                'PROPERTY_PRODUCTS' => $this->getXmlId(),
+            ])->withSelect([
+                'ID',
+                'NAME',
+                'IBLOCK_ID',
+                'PREVIEW_TEXT',
+                'DATE_ACTIVE_FROM',
+                'DATE_ACTIVE_TO',
+                'PROPERTY_LABEL'
+            ])->exec();
         }
         return $this->share;
+    }
+
+    /**
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    public function isAvailable(): bool
+    {
+        /** @todo сделать обработку исключений */
+        return $this->isActive() && $this->getQuantity() > 0 && !$this->isByRequest();
     }
 
     /**
@@ -1373,19 +1385,5 @@ class Offer extends IblockElement
         }
 
         $this->isCounted = true;
-    }
-
-    /**
-     * @return bool
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ArgumentException
-     * @throws ApplicationCreateException
-     * @throws \Exception
-     */
-    public function isAvailable(): bool
-    {
-        /** @todo сделать обработку исключений */
-        return $this->isActive() && $this->getQuantity() > 0 && !$this->isByRequest();
     }
 }
