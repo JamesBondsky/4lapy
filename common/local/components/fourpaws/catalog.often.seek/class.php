@@ -10,6 +10,7 @@ use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Service\OftenSeekInterface;
+use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -83,12 +84,10 @@ class CatalogOftenSeekComponent extends CBitrixComponent
 
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $instance = BitrixApplication::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('catalog:often_seek:'.$this->arParams['SECTION_ID']);
-                $tagCache->registerTag('catalog:often_seek');
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'catalog:often_seek:'.$this->arParams['SECTION_ID'],
+                'catalog:often_seek'
+            ]);
         }
 
         return true;

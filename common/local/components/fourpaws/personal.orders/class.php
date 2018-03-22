@@ -22,6 +22,7 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -158,9 +159,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             }
 
             if ($tagCache !== null) {
-                $tagCache->registerTag('personal:orders');
-                $tagCache->registerTag('personal:orders:'. $userId);
-                $tagCache->registerTag('order:'. $userId);
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:orders',
+                    'personal:orders:'. $userId,
+                    'order:'. $userId
+                ], $tagCache);
                 $tagCache->endTagCache();
             }
 
@@ -207,12 +210,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             $this->includeComponentTemplate($page);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('personal:orders');
-                $tagCache->registerTag('personal:orders:'. $userId);
-                $tagCache->registerTag('order:'. $userId);
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:orders',
+                'personal:orders:'. $userId,
+                'order:'. $userId
+            ]);
         }
 
         return true;

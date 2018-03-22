@@ -9,6 +9,7 @@ use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\SystemException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /**
  * Class Event
@@ -278,32 +279,22 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param $id
-     *
-     * @throws SystemException
      */
     protected function HlItemClearCache($id): void
     {
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = BitrixApplication::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('highloadblock:item:' . $id);
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'highloadblock:item:' . $id,
+        ]);
     }
 
     /**
      * @param $type
      * @param $value
-     *
-     * @throws SystemException
      */
     protected function HlFieldClearCache($type, $value): void
     {
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = BitrixApplication::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('highloadblock:field:' . $type . ':' . $value);
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'highloadblock:field:' . $type . ':' . $value,
+        ]);
     }
 }

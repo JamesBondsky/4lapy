@@ -19,6 +19,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -179,9 +180,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             }
 
             if ($tagCache !== null) {
-                $tagCache->registerTag('personal:referral');
-                $tagCache->registerTag('personal:referral:'. $curUser->getId());
-                $tagCache->registerTag('highloadblock:field:user:'. $curUser->getId());
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:referral',
+                    'personal:referral:'. $curUser->getId(),
+                    'highloadblock:field:user:'. $curUser->getId()
+                ], $tagCache);
                 $tagCache->endTagCache();
             }
 
@@ -209,12 +212,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('personal:referral');
-                $tagCache->registerTag('personal:referral:'. $curUser->getId());
-                $tagCache->registerTag('highloadblock:field:user:'. $curUser->getId());
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:referral',
+                'personal:referral:'. $curUser->getId(),
+                'highloadblock:field:user:'. $curUser->getId()
+            ]);
         }
 
         return true;

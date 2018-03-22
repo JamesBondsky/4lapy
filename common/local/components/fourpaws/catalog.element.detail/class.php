@@ -8,7 +8,6 @@ use Bitrix\Catalog\Product\Basket;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\Analytics\Catalog;
 use Bitrix\Main\Analytics\Counter;
-use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
@@ -29,8 +28,8 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -129,14 +128,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             ];
 
             $this->includeComponentTemplate();
-
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $instance = BitrixApplication::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('catalog:offer:' . $currentOffer->getId());
-                $tagCache->registerTag('catalog:product:' . $product->getId());
-                $tagCache->registerTag('iblock:item:' . $product->getId());
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'catalog:offer:' . $currentOffer->getId(),
+                'catalog:product:' . $product->getId(),
+                'iblock:item:' . $product->getId(),
+            ]);
         }
 
         // bigdata
@@ -166,7 +162,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])->exec();
                     break;
             }
-            if(null !== $offerCollection) {
+            if (null !== $offerCollection) {
                 $this->unionOffers[$type][$val] = $offerCollection;
             }
 
@@ -385,8 +381,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     return $offer;
                 }
             }
-        }
-        else{
+        } else {
             foreach ($offers as $offer) {
                 if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
                     return $offer;

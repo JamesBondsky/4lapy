@@ -18,6 +18,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -282,16 +283,11 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param $arFields
-     *
-     * @throws SystemException
      */
     public function clearUserCache($arFields): void
     {
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = BitrixApplication::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('user:' . $arFields['ID']);
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'user:' . $arFields['ID'],
+        ]);
     }
 }

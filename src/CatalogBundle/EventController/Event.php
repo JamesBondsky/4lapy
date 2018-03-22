@@ -6,6 +6,7 @@ use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\SystemException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /**
  * Class Event
@@ -58,33 +59,23 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param $id
-     *
-     * @throws SystemException
      */
     public static function clearProductCache($id): void
     {
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = BitrixApplication::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('catalog:offer:' . $id);
-            $tagCache->clearByTag('catalog:stocks:' . $id);
-            $tagCache->clearByTag('catalog:product:' . $id);
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'catalog:offer:' . $id,
+            'catalog:stocks:' . $id,
+            'catalog:product:' . $id
+        ]);
     }
 
     /**
      * @param $id
-     *
-     * @throws SystemException
      */
     public static function clearIblockItemCache($id): void
     {
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = BitrixApplication::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('iblock:item:' . $id);
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'iblock:item:' . $id,
+        ]);
     }
 }

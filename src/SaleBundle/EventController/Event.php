@@ -11,6 +11,7 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketFilter;
@@ -235,20 +236,15 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param BitrixEvent $event
-     *
-     * @throws SystemException
      */
     public function clearOrderCache(BitrixEvent $event): void
     {
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** @var Order $order */
-            $order = $event->getParameter('ENTITY');
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
 
-            /** Очистка кеша */
-            $instance = BitrixApplication::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('order:' . $order->getField('USER_ID'));
-            $tagCache->clearByTag('personal:order:' . $order->getField('USER_ID'));
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'order:' . $order->getField('USER_ID'),
+            'personal:order:' . $order->getField('USER_ID')
+        ]);
     }
 }

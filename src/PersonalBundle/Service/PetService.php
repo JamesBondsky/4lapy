@@ -17,6 +17,7 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Repository\PetRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -102,12 +103,9 @@ class PetService
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('personal:pets:' . $entity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $entity->getUserId(),
+            ]);
         }
         
         return $res;
@@ -241,12 +239,9 @@ class PetService
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('personal:pets:' . $updateEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $updateEntity->getUserId(),
+            ]);
         }
         
         return $res;
@@ -280,12 +275,9 @@ class PetService
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('personal:pets:' . $deleteEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $deleteEntity->getUserId(),
+            ]);
         }
         
         return $res;

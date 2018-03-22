@@ -11,6 +11,7 @@ use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\FoodSelectionBundle\Service\FoodSelectionService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -65,11 +66,7 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
                 );
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $instance = BitrixApplication::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('catalog:food_selection');
-            }
+            TaggedCacheHelper::addManagedCacheTags(['catalog:food_selection']);
         }
         
         return true;

@@ -15,6 +15,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -90,8 +91,6 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
             return null;
         }
 
-        $instance = Application::getInstance();
-
         $this->setFrameMode(true);
 
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
@@ -99,11 +98,10 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
             $this->arResult['ITEMS'] = $this->addressService->getAddressesByUser();
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('personal:address:'. $this->currentUserProvider->getCurrentUserId());
-                $tagCache->registerTag('highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId());
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:address:'. $this->currentUserProvider->getCurrentUserId(),
+                'highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId()
+            ]);
         }
 
         return true;

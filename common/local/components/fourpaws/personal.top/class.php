@@ -31,6 +31,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Cheque;
 use FourPaws\External\Manzana\Model\ChequeItem;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -214,9 +215,11 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             }
 
             if ($tagCache !== null) {
-                $tagCache->registerTag('personal:top');
-                $tagCache->registerTag('personal:top:'. $userId);
-                $tagCache->registerTag('order:'. $userId);
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:top',
+                    'personal:top:'. $userId,
+                    'order:'. $userId
+                ], $tagCache);
                 $tagCache->endTagCache();
             }
             
@@ -273,12 +276,11 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             }
             $this->includeComponentTemplate($page);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('personal:top');
-                $tagCache->registerTag('personal:top:'. $userId);
-                $tagCache->registerTag('order:'. $userId);
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:top',
+                'personal:top:'. $userId,
+                'order:'. $userId
+            ]);
         }
         
         return true;

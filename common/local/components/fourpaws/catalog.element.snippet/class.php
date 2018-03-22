@@ -14,6 +14,7 @@ use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Service\MarkService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -83,14 +84,12 @@ class CatalogElementSnippet extends CBitrixComponent
 
                 $this->includeComponentTemplate();
 
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    $instance = BitrixApplication::getInstance();
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->registerTag('catalog:offer:' . $currentOffer->getId());
-                    $tagCache->registerTag('catalog:product:' . $product->getId());
-                    $tagCache->registerTag('iblock:item:' . $currentOffer->getId());
-                    $tagCache->registerTag('iblock:item:' . $product->getId());
-                }
+                TaggedCacheHelper::addManagedCacheTags([
+                    'catalog:offer:' . $currentOffer->getId(),
+                    'catalog:product:' . $product->getId(),
+                    'iblock:item:' . $currentOffer->getId(),
+                    'iblock:item:' . $product->getId(),
+                ]);
                 return;
             }
 

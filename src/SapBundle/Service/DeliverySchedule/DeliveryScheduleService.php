@@ -11,6 +11,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\ManualDayItem;
@@ -160,14 +161,11 @@ class DeliveryScheduleService implements LoggerAwareInterface
         $this->clearCache();
     }
 
-    /**
-     * @throws SystemException
-     */
-    public function clearCache()
+    public function clearCache(): void
     {
-        $cache = Application::getInstance()->getTaggedCache();
-
-        $cache->clearByTag(self::CACHE_TAG);
+        TaggedCacheHelper::clearManagedCache([
+            self::CACHE_TAG,
+        ]);
     }
 
     /**

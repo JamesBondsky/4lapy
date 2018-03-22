@@ -11,6 +11,7 @@ use CBitrixComponent;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /** @noinspection AutoloadingIssuesInspection
  *
@@ -113,12 +114,11 @@ class ProductsByProp extends CBitrixComponent
             }
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $this->instance->getTaggedCache();
-                $tagCache->registerTag('product:by:prop');
-                $tagCache->registerTag('product:by:prop:'.$this->arParams['ITEM_ID']);
-                $tagCache->registerTag('iblock:item:'.$this->arParams['ITEM_ID']);
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'product:by:prop',
+                'product:by:prop:'.$this->arParams['ITEM_ID'],
+                'iblock:item:'.$this->arParams['ITEM_ID']
+            ]);
         }
         return true;
     }

@@ -28,6 +28,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -588,12 +589,9 @@ class OrderService
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('order:' . $order->getField('USER_ID'));
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'order:' . $order->getField('USER_ID'),
+            ]);
 
             $this->orderStorageService->clearStorage($storage);
         }

@@ -19,6 +19,7 @@ use Bitrix\Main\UserFieldTable;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -111,12 +112,11 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
 
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->registerTag('personal:pets:'. $this->currentUserProvider->getCurrentUserId());
-                $tagCache->registerTag('personal:pets');
-                $tagCache->registerTag('highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId());
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:pets:'. $this->currentUserProvider->getCurrentUserId(),
+                'personal:pets',
+                'highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId()
+            ]);
         }
 
         return true;
