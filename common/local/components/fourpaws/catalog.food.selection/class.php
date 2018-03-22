@@ -4,12 +4,14 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+use Bitrix\Main\Application as BitrixApplication;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\FoodSelectionBundle\Service\FoodSelectionService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -58,11 +60,13 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
     {
         $this->setFrameMode(true);
         
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             $this->arResult['PET_TYPES'] = $this->foodSelectionService->getSectionsByParentSectionId(
                     $this->foodSelectionService->getSectionIdByXmlId('pet_type', 1)
                 );
             $this->includeComponentTemplate();
+
+            TaggedCacheHelper::addManagedCacheTags(['catalog:food_selection']);
         }
         
         return true;

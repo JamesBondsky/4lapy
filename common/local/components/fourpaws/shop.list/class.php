@@ -13,6 +13,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -93,9 +94,12 @@ class FourPawsShopListComponent extends CBitrixComponent
         }
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             if ($this->prepareResult($city)) {
-
                 $this->includeComponentTemplate();
             }
+            TaggedCacheHelper::addManagedCacheTags([
+                'shop:list:'. $city['CODE'],
+                'shop:list'
+            ]);
         }
 
         return true;

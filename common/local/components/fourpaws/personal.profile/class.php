@@ -24,6 +24,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -149,13 +150,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('profile_%s', $curUser->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
-                $tagCache->endTagCache();
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:profile:'. $curUser->getId(),
+                'user:'. $curUser->getId()
+            ]);
         }
 
         return true;
@@ -227,12 +225,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         ];
         try {
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    /** Очистка кеша */
-                    $instance = Application::getInstance();
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('profile_' . $userId);
-                }
+                TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
 
                 try {
                     /** @var ManzanaService $manzanaService */
@@ -408,12 +401,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 return $this->ajaxMess->getUpdateError();
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('profile_' . $id);
-            }
+            TaggedCacheHelper::clearManagedCache(['personal:profile:' . $id]);
 
             if (!empty($oldPhone)) {
                 //Посылаем смс о смененном номере телефона
