@@ -130,21 +130,22 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
         $this->arResult['ITEMS'] = $items = new ArrayCollection();
 
-        $nav = null;
+        $nav = new PageNavigation('nav-referral');
+        $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
         /** @todo Добавить кеширование запроса в манзану с тегом - напрмиер на 30минут - 1час, + сбрасывать кеш по тегу при добавлении рефералла с сайта */
         $cache = Cache::createInstance();
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $request = Application::getInstance()->getContext()->getRequest();
+        $search = (string)$request->get('search');
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $curUser->getId()]))) {
+            serialize(['userId' => $curUser->getId(), 'page'=>$nav->getCurrentPage(), 'search'=>$search]))) {
             $result = $cache->getVars();
             $this->arResult['NAV'] = $result['NAV'];
             $this->arResult['BONUS'] = $result['BONUS'];
             $cacheItems = $result['cacheItems'];
         } elseif ($cache->startDataCache()) {
             try {
-                $nav = new PageNavigation('nav-referral');
-                $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-
                 $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $nav);
             } catch (NotAuthorizedException $e) {
                 define('NEED_AUTH', true);
