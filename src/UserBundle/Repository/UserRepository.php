@@ -17,6 +17,7 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\AppBundle\Service\LazyCallbackValueLoader;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -235,7 +236,6 @@ class UserRepository
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
-     * @throws SystemException
      */
     public function update(User $user): bool
     {
@@ -258,7 +258,6 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
-     * @throws SystemException
      */
     public function updateData(int $id, array $data): bool
     {
@@ -267,12 +266,9 @@ class UserRepository
             $id,
             $data
         )) {
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('profile_' . $id);
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:profile' . $id,
+            ]);
 
             return true;
         }
@@ -287,7 +283,6 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
-     * @throws SystemException
      */
     public function updatePassword(int $id, string $password): bool
     {
@@ -302,7 +297,6 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
      * @return bool
-     * @throws SystemException
      */
     public function updatePhone(int $id, string $phone): bool
     {
@@ -317,7 +311,6 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
      * @return bool
-     * @throws SystemException
      */
     public function updateEmail(int $id, string $email): bool
     {
@@ -332,7 +325,6 @@ class UserRepository
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
-     * @throws SystemException
      */
     public function updateDiscountCard(int $id, string $discountCardNumber): bool
     {

@@ -11,6 +11,7 @@ use CBitrixComponent;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /** @noinspection AutoloadingIssuesInspection
  *
@@ -84,7 +85,7 @@ class ProductsByProp extends CBitrixComponent
         }
 
         $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             parent::executeComponent();
 
             $res = \CIBlockElement::GetProperty($this->arParams['IBLOCK_ID'], $this->arParams['ITEM_ID'], '', '',
@@ -113,13 +114,11 @@ class ProductsByProp extends CBitrixComponent
             }
             $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $this->instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('iblock_id_%s', $this->arParams['IBLOCK_ID']));
-                $tagCache->registerTag(sprintf('iblock_item_id_%s', $this->arParams['ITEM_ID']));
-                $tagCache->endTagCache();
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'product:by:prop',
+                'product:by:prop:'.$this->arParams['ITEM_ID'],
+                'iblock:item:'.$this->arParams['ITEM_ID']
+            ]);
         }
         return true;
     }

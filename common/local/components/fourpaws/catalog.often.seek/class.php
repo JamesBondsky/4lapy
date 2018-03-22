@@ -4,11 +4,13 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+use Bitrix\Main\Application as BitrixApplication;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Service\OftenSeekInterface;
+use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -72,7 +74,7 @@ class CatalogOftenSeekComponent extends CBitrixComponent
             return null;
         }
 
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
                 $this->arParams['SECTION_ID'],
                 $this->arParams['LEFT_MARGIN'],
@@ -81,6 +83,11 @@ class CatalogOftenSeekComponent extends CBitrixComponent
             );
 
             $this->includeComponentTemplate();
+
+            TaggedCacheHelper::addManagedCacheTags([
+                'catalog:often_seek:'.$this->arParams['SECTION_ID'],
+                'catalog:often_seek'
+            ]);
         }
 
         return true;
