@@ -112,13 +112,14 @@ class ProductsByProp extends CBitrixComponent
                 }
                 $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
             }
-            $this->includeComponentTemplate();
 
             TaggedCacheHelper::addManagedCacheTags([
                 'product:by:prop',
                 'product:by:prop:'.$this->arParams['ITEM_ID'],
                 'iblock:item:'.$this->arParams['ITEM_ID']
             ]);
+
+            $this->includeComponentTemplate();
         }
         return true;
     }

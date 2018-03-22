@@ -110,13 +110,13 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             /** получение типов питомцев */
             $this->setPetTypes();
 
-            $this->includeComponentTemplate();
-
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:pets:'. $this->currentUserProvider->getCurrentUserId(),
                 'personal:pets',
                 'highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId()
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         return true;

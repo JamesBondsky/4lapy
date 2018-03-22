@@ -192,8 +192,6 @@ class CItemsListComponent extends CBitrixComponent
 
             $this->setItems();
 
-            $this->includeComponentTemplate();
-
             $tags = ['items:list'];
             if (\is_array($this->arParams['IBLOCK_ID'])) {
                 foreach ($this->arParams['IBLOCK_ID'] as $iblockId) {
@@ -205,6 +203,8 @@ class CItemsListComponent extends CBitrixComponent
                 $tags['iblock_id_' . $this->arParams['IBLOCK_ID']];
             }
             TaggedCacheHelper::addManagedCacheTags($tags);
+
+            $this->includeComponentTemplate();
         }
 
         if (isset($this->arResult['ID'])) {

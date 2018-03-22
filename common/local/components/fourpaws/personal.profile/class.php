@@ -148,12 +148,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
             ];
 
-            $this->includeComponentTemplate();
-
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:profile:'. $curUser->getId(),
                 'user:'. $curUser->getId()
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         return true;

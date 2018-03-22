@@ -82,12 +82,12 @@ class CatalogOftenSeekComponent extends CBitrixComponent
                 $this->arParams['DEPTH_LEVEL']
             );
 
-            $this->includeComponentTemplate();
-
             TaggedCacheHelper::addManagedCacheTags([
                 'catalog:often_seek:'.$this->arParams['SECTION_ID'],
                 'catalog:often_seek'
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         return true;

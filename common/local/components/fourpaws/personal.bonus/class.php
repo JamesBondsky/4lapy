@@ -146,12 +146,12 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             'paidByBonus' => $bonus->getCredit(),
             'realDiscount' => $bonus->getRealDiscount(),
         ], $this->getPath())) {
-            $this->includeComponentTemplate();
-
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:bonus:'. $user->getId(),
                 'order:'. $user->getId(),
             ]);
+
+            $this->includeComponentTemplate();
         }
 
         return true;

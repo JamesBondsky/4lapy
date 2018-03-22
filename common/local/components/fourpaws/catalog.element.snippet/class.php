@@ -82,14 +82,15 @@ class CatalogElementSnippet extends CBitrixComponent
 
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getOffer($product);
 
-                $this->includeComponentTemplate();
-
                 TaggedCacheHelper::addManagedCacheTags([
                     'catalog:offer:' . $currentOffer->getId(),
                     'catalog:product:' . $product->getId(),
                     'iblock:item:' . $currentOffer->getId(),
                     'iblock:item:' . $product->getId(),
                 ]);
+
+                $this->includeComponentTemplate();
+
                 return;
             }
 

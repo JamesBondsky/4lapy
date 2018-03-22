@@ -208,13 +208,13 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
             }
 
-            $this->includeComponentTemplate($page);
-
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:orders',
                 'personal:orders:'. $userId,
                 'order:'. $userId
             ]);
+
+            $this->includeComponentTemplate($page);
         }
 
         return true;
