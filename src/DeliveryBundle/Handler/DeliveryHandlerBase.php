@@ -7,11 +7,13 @@
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -21,6 +23,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
@@ -68,7 +71,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function __construct($initParams)
     {
@@ -88,15 +91,14 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param string $locationCode
      * @param BasketBase $basket
      *
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @return bool|OfferCollection
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @return null|OfferCollection
      */
-    public static function getOffers(string $locationCode, BasketBase $basket)
+    public static function getOffers(string $locationCode, BasketBase $basket): ?OfferCollection
     {
         if ($basket->isEmpty()) {
-            return false;
+            return null;
         }
 
         $offerIds = [];
@@ -111,7 +113,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         }
 
         if (empty($offerIds)) {
-            return false;
+            return null;
         }
 
         /** @noinspection PhpUnhandledExceptionInspection */
@@ -119,13 +121,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         $storeService = Application::getInstance()->getContainer()->get('store.service');
         $stores = $storeService->getByLocation($locationCode);
         if ($stores->isEmpty()) {
-            return false;
+            return null;
         }
 
         /** @var OfferCollection $offers */
         $offers = (new OfferQuery())->withFilterParameter('ID', $offerIds)->exec();
         if ($offers->isEmpty()) {
-            return false;
+            return null;
         }
 
         /** @var Offer $offer */
@@ -143,10 +145,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param OfferCollection $offers
      * @param StoreCollection $storesAvailable
      * @param StockResultCollection|null $stockResultCollection
+     *
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
      * @return StockResultCollection
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public static function getStocks(
         BasketBase $basket,
@@ -229,9 +232,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
     /**
      * @return array
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
-    protected function getConfigStructure()
+    protected function getConfigStructure(): array
     {
         $currency = $this->currency;
 
