@@ -155,7 +155,7 @@ class OrderController extends Controller
         foreach ($intervals as $i => $interval) {
             $result[] = [
                 'name' => (string)$interval,
-                'value' => $i,
+                'value' => $i+1,
             ];
         }
 
