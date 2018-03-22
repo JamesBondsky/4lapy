@@ -259,17 +259,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     //TODO Изображения
     protected $PROPERTY_IMG = [];
 
-    /**
-     * @var string[]
-     * @Type("array")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_LABEL = [];
-
-    /**
-     * @var HlbReferenceItemCollection
-     */
-    protected $label;
 
     /**
      * @var bool
@@ -1000,50 +989,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         $this->petGender = null;
         $this->PROPERTY_PET_GENDER = $xmlId;
-        return $this;
-    }
-
-    /**
-     * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItemCollection
-     */
-    public function getLabels(): HlbReferenceItemCollection
-    {
-        if (null === $this->label) {
-            $this->label = ReferenceUtils::getReferenceMulti(
-                Application::getHlBlockDataManager('bx.hlblock.label'),
-                $this->getLabelsXmlId()
-            );
-            /*
-             * TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
-             */
-
-            //TODO Сделать, чтобы это была отдельная коллекция объектов "Шильдик", а не просто элемент справочника.
-        }
-
-        return $this->label;
-    }
-
-    /**
-     * @return array|string[]
-     */
-    public function getLabelsXmlId(): array
-    {
-        $this->PROPERTY_LABEL = $this->PROPERTY_LABEL ?: [];
-        return $this->PROPERTY_LABEL;
-    }
-
-    /**
-     * @param array $xmlIds
-     *
-     * @return $this
-     */
-    public function withLabelsXmlIds(array $xmlIds)
-    {
-        $this->label = null;
-        $this->PROPERTY_LABEL = $xmlIds;
         return $this;
     }
 

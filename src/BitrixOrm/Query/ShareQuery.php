@@ -13,7 +13,7 @@ use FourPaws\Enum\IblockType;
  *
  * Class ShareQuery
  *
- * @package FourPaws\Catalog\Query
+ * @package FourPaws\BitrixOrm\Query
  */
 class ShareQuery extends IblockElementQuery
 {
@@ -65,7 +65,7 @@ class ShareQuery extends IblockElementQuery
      */
     public function getBaseFilter(): array
     {
-        return ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES)];
+        return ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), '=PROPERTY_ONLY_MP' => false];
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
