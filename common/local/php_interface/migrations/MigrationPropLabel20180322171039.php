@@ -15,11 +15,13 @@ class MigrationPropLabel20180322171039 extends \Adv\Bitrixtools\Migration\Sprint
         $helper = new HelperManager();
 
         $iblockHelper = $helper->Iblock();
+
         $catalogIblockId = IblockUtils::getIblockId(IblockType::CATALOG,IblockCode::PRODUCTS);
         $publicationIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION,IblockCode::SHARES);
 
+        $this->log()->info('создание свойства в акциях');
         $iblockHelper->addPropertyIfNotExists($publicationIblockId, [
-            'NAME'               => 'Шильдики',
+            'NAME'               => 'Шильдик',
             'ACTIVE'             => 'Y',
             'SORT'               => '20',
             'CODE'               => 'LABEL',
@@ -28,7 +30,7 @@ class MigrationPropLabel20180322171039 extends \Adv\Bitrixtools\Migration\Sprint
             'ROW_COUNT'          => '1',
             'COL_COUNT'          => '30',
             'LIST_TYPE'          => 'L',
-            'MULTIPLE'           => 'Y',
+            'MULTIPLE'           => 'N',
             'XML_ID'             => '',
             'FILE_TYPE'          => '',
             'MULTIPLE_CNT'       => '5',
@@ -39,18 +41,18 @@ class MigrationPropLabel20180322171039 extends \Adv\Bitrixtools\Migration\Sprint
             'FILTRABLE'          => 'N',
             'IS_REQUIRED'        => 'N',
             'VERSION'            => '1',
-            'USER_TYPE'          => 'directory',
-            'USER_TYPE_SETTINGS' => [
-                'size'       => 1,
-                'width'      => 0,
-                'group'      => 'N',
-                'multiple'   => 'N',
-                'TABLE_NAME' => 'b_hlbd_label',
-            ],
+            'USER_TYPE'          => null,
+            'USER_TYPE_SETTINGS' => null,
             'HINT'               => '',
         ]);
-        $this->log()->info('свойство в акциях создано создано');
+        $this->log()->info('свойство в акциях создано');
+
+        $this->log()->info('удаление свойства в товарах');
         $iblockHelper->deletePropertyIfExists($catalogIblockId,'LABEL');
         $this->log()->info('свойство в товарах удалено');
+
+        $this->log()->info('удаление hl блока Label');
+        $helper->Hlblock()->deleteHlblockIfExists('Label');
+        $this->log()->info('hl блок Label удален');
     }
 }
