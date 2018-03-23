@@ -16,6 +16,9 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class BonusBuyShare
 {
+    const ACT_MODIFY = 'MODI';
+    const ACT_DELETE = 'DELE';
+
     /**
      * Код региона
      *
@@ -394,5 +397,13 @@ class BonusBuyShare
         $this->bonusBuyTo = $bonusBuyFrom;
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDelete():bool
+    {
+        return $this->getAct() === self::ACT_DELETE;
     }
 }

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\BitrixOrm\Model;
 
 use FourPaws\App\Application;
@@ -11,7 +15,6 @@ use FourPaws\Catalog\Query\OfferQuery;
 use JMS\Serializer\Annotation\Type;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-
 
 /**
  * Class Share
@@ -59,11 +62,13 @@ class Share extends IblockElement
      * @Type("string")
      */
     protected $PROPERTY_SHORT_URL = '';
+
     /**
      * @var string
      * @Type("string")
      */
     protected $PROPERTY_OLD_URL = '';
+
     /**
      * @var string[]
      * @Type("array")
@@ -85,10 +90,14 @@ class Share extends IblockElement
 
     /**
      * @param string $propertyLabel
+     *
+     * @return Share
      */
-    public function setPropertyLabel(string $propertyLabel): void
+    public function withPropertyLabel(string $propertyLabel): Share
     {
         $this->PROPERTY_LABEL = $propertyLabel;
+
+        return $this;
     }
 
     /**
@@ -101,18 +110,22 @@ class Share extends IblockElement
 
     /**
      * @param string $propertyShareType
+     *
+     * @return Share
      */
-    public function setPropertyShareType(string $propertyShareType): void
+    public function withPropertyShareType(string $propertyShareType): Share
     {
         $this->PROPERTY_SHARE_TYPE = $propertyShareType;
+
+        return $this;
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
+     * @return HlbReferenceItem
      */
     public function getShareType(): HlbReferenceItem
     {
@@ -135,18 +148,22 @@ class Share extends IblockElement
 
     /**
      * @param string[] $propertyType
+     *
+     * @return Share
      */
-    public function setPropertyType(array $propertyType): void
+    public function withPropertyType(array $propertyType): Share
     {
         $this->PROPERTY_TYPE = $propertyType;
+
+        return $this;
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
+     * @return HlbReferenceItemCollection
      */
     public function getType(): HlbReferenceItemCollection
     {
@@ -169,10 +186,14 @@ class Share extends IblockElement
 
     /**
      * @param string $propertyOnlyMp
+     *
+     * @return Share
      */
-    public function setPropertyOnlyMp(string $propertyOnlyMp): void
+    public function withPropertyOnlyMp(string $propertyOnlyMp): Share
     {
         $this->PROPERTY_ONLY_MP = $propertyOnlyMp;
+
+        return $this;
     }
 
     /**
@@ -193,10 +214,14 @@ class Share extends IblockElement
 
     /**
      * @param string $propertyShortUrl
+     *
+     * @return Share
      */
-    public function setPropertyShortUrl(string $propertyShortUrl): void
+    public function withPropertyShortUrl(string $propertyShortUrl): Share
     {
         $this->PROPERTY_SHORT_URL = $propertyShortUrl;
+
+        return $this;
     }
 
     /**
@@ -209,10 +234,14 @@ class Share extends IblockElement
 
     /**
      * @param string $propertyOldUrl
+     *
+     * @return Share
      */
-    public function setPropertyOldUrl(string $propertyOldUrl): void
+    public function withPropertyOldUrl(string $propertyOldUrl): Share
     {
         $this->PROPERTY_OLD_URL = $propertyOldUrl;
+
+        return $this;
     }
 
     /**
@@ -225,10 +254,14 @@ class Share extends IblockElement
 
     /**
      * @param string[] $propertyProducts
+     *
+     * @return Share
      */
-    public function setPropertyProducts(array $propertyProducts): void
+    public function withPropertyProducts(array $propertyProducts): Share
     {
         $this->PROPERTY_PRODUCTS = $propertyProducts;
+
+        return $this;
     }
 
     /**
@@ -237,7 +270,7 @@ class Share extends IblockElement
     public function getProducts(): OfferCollection
     {
         if (null === $this->products) {
-            $this->products = (new OfferQuery())->withFilter(['=XML_ID'=>$this->getPropertyProducts()])->exec();
+            $this->products = (new OfferQuery())->withFilter(['=XML_ID' => $this->getPropertyProducts()])->exec();
         }
         return $this->products;
     }
