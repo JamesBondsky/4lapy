@@ -602,11 +602,11 @@ class DeliverySchedule extends Base
             case self::TYPE_BY_WEEK:
                 $weekNumbers = $this->getWeekNumbers();
                 $weekDates = [];
-                $weekNumbers[] = 0;
+
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
-                    $weekDate->setISODate($date->format('Y'), $weekNumber - 1);
-                    if ($weekDate->format('W') < $from->format('W')) {
+                    $weekDate->setISODate($date->format('Y'), $weekNumber);
+                    if ($weekDate->format('W') < $date->format('W')) {
                         $weekDate->modify('+1 year');
                     }
 
