@@ -83,6 +83,12 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     /**
      * @param CalculationResult|null $result
+     *
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
      * @return CalculationResultInterface
      */
     public static function fromBitrixResult(CalculationResult $result = null): CalculationResultInterface
@@ -113,6 +119,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             if ($result->getWarnings()) {
                 $instance->addWarnings($result->getWarnings());
             }
+
+            $instance->isSuccess();
         }
 
         return $instance;
@@ -632,7 +640,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     public function isSuccess($internalCall = false)
     {
-        if ($this->isSuccess) {
+        if ($this->isSuccess && $this->wereErrorsChecked) {
             /**
              * Расчет даты доставки
              */
@@ -766,7 +774,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $this->deliveryDate = null;
         $this->errors = new ErrorCollection();
-        $this->wereErrorsChecked = false;
         $this->isSuccess = true;
         $this->warnings = new ErrorCollection();
     }

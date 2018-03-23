@@ -34,6 +34,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -102,10 +103,14 @@ class DeliveryService implements LoggerAwareInterface
      * @param array $codes
      * @param \DateTime|null $from
      *
+     *
      * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @throws LoaderException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
      * @throws UserMessageException
      * @return CalculationResultInterface[]
      */
@@ -137,10 +142,13 @@ class DeliveryService implements LoggerAwareInterface
      * @param \DateTime|null $from
      *
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return CalculationResultInterface[]
+     * @return array
      */
     public function getByBasket(
         BasketBase $basket,
@@ -203,9 +211,14 @@ class DeliveryService implements LoggerAwareInterface
      * @param Shipment $shipment
      * @param array $codes
      * @param \DateTime|null $from
-     * @return array
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @return array
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = [], ?\DateTime $from = null): array
     {
