@@ -10,25 +10,48 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressDeleteRequest;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressPostPutRequest;
+use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\DeliveryAddressGetResponse;
 use FourPaws\MobileApiBundle\Dto\Response\FeedbackResponse;
+use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService;
+use FourPaws\UserBundle\Entity\User;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class UserDeliveryController extends FOSRestController
 {
     /**
+     * @var UserDeliveryAddressService
+     */
+    private $addressService;
+
+    public function __construct(UserDeliveryAddressService $addressService)
+    {
+        $this->addressService = $addressService;
+    }
+
+    /**
      * @Security("has_role('REGISTERED_USERS')")
      * @Rest\Get("/delivery_address/")
      * @Rest\View()
      *
-     * @see DeliveryAddressGetResponse
+     * @throws \LogicException
      */
-    public function getAddressAction()
+    public function listAction()
     {
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+
+        return new Response(
+            new DeliveryAddressGetResponse(
+                $this->addressService->getAll($user->getId())
+            )
+        );
     }
 
     /**
-     * @Rest\Post("/delivery_address")
+     * @Rest\Post("/delivery_address/")
      * @see  DeliveryAddressPostPutRequest
      * @see  FeedbackResponse
      * @todo assert

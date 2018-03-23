@@ -53,6 +53,7 @@ class BitrixOrm
                 return $d7Repository->getEntityClass() === $entityClass;
             })
             ->first();
+        $repository = $repository ?: null;
         if (null === $repository) {
             throw new NotFoundRepository(sprintf('Repository for entity %s not found', $entityClass));
         }

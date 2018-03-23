@@ -6,46 +6,44 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Doctrine\Common\Collections\Collection;
+use FourPaws\BitrixOrmBundle\Orm\BitrixOrm;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Service\AddressService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 class UserDeliveryAddressService
 {
-    /**
-     * @var AddressService
-     */
-    private $addressService;
-
-    /**
-     * @var CurrentUserProviderInterface
-     */
-    private $currentUserProvider;
-
     /**
      * @var CityService
      */
     private $cityService;
 
-    public function __construct(
-        AddressService $addressService,
-        CityService $cityService
-    ) {
-        $this->addressService = $addressService;
+    /**
+     * @var BitrixOrm
+     */
+    private $addressRepository;
+
+    public function __construct(BitrixOrm $bitrixOrm, CityService $cityService)
+    {
         $this->cityService = $cityService;
+        $this->addressRepository = $bitrixOrm->getD7Repository(Address::class);
     }
 
     /**
      * @param int $userId
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @return \Doctrine\Common\Collections\ArrayCollection|\Doctrine\Common\Collections\Collection
+     * @return Collection|DeliveryAddress[]
      */
     public function getAll(int $userId)
     {
-        return $this
-            ->addressService
-            ->getAddressesByUser($userId)
+        $addresses = $this->addressRepository->findBy(
+            [
+                'UF_USER_ID' => $userId,
+            ],
+            [
+                'ID' => 'ASC',
+            ]
+        );
+        return $addresses
             ->map(function (Address $address) {
                 $details = '';
                 $parts = [

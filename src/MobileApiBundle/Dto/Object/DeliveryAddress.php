@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
 use JMS\Serializer\Annotation as Serializer;
@@ -13,7 +17,7 @@ use JMS\Serializer\Annotation as Serializer;
 class DeliveryAddress
 {
     /**
-     * @Serializer\Type("string")
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("id")
      * @var string
      */
@@ -62,18 +66,18 @@ class DeliveryAddress
     protected $details;
 
     /**
-     * @return string
+     * @return int
      */
-    public function getId(): string
+    public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * @param string $id
+     * @param int $id
      * @return DeliveryAddress
      */
-    public function setId(string $id): DeliveryAddress
+    public function setId(int $id): DeliveryAddress
     {
         $this->id = $id;
         return $this;

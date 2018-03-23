@@ -148,7 +148,7 @@ class D7EntityManager implements D7EntityManagerInterface
     ): Collection {
         $query = $this
             ->getQuery()
-            ->where($criteria)
+            ->setFilter(array_merge($this->getQuery()->getFilter(), $criteria))
             ->setOrder($orderBy)
             ->setLimit($limit)
             ->setOffset($offset);
@@ -171,7 +171,7 @@ class D7EntityManager implements D7EntityManagerInterface
     ): Collection {
         $query = $this
             ->getQuery()
-            ->where($criteria)
+            ->setFilter(array_merge($this->getQuery()->getFilter(), $criteria))
             ->setOrder($orderBy)
             ->setLimit($limit)
             ->setOffset($offset);
@@ -185,10 +185,8 @@ class D7EntityManager implements D7EntityManagerInterface
     public function find($id)
     {
         return $this
-            ->findByQuery(
-                $this->getQuery()->addFilter($this->primaryField, $id)
-            )
-            ->first();
+            ->findByQuery($this->getQuery()->addFilter($this->primaryField, $id))
+            ->first() ?: null;
     }
 
     /**

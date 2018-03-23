@@ -68,13 +68,13 @@ class FourPawsBitrixOrmExtension extends ConfigurableExtension
             $entityManagerDefinition->setArgument(1, new Reference(ValidatorInterface::class));
             $entityManagerDefinition->setArgument(2, new Reference(ArrayTransformerInterface::class));
             $entityManagerDefinition->setArgument(3, new Reference($entityData['data_manager']));
+            $entityManagerDefinition->addMethodCall('setSelect', [$entityData['select']]);
+            $entityManagerDefinition->addMethodCall('setFilter', [$entityData['filter']]);
             $containerBuilder->setDefinition($entityManagerId, $entityManagerDefinition);
 
 
             $repositoryDefinition = new Definition(D7Repository::class);
             $repositoryDefinition->setArgument(0, new Reference($entityManagerId));
-            $repositoryDefinition->addMethodCall('setSelect', [$entityData['select']]);
-            $repositoryDefinition->addMethodCall('setFilter', [$entityData['filter']]);
 
             $containerBuilder->setDefinition($repositoryId, $repositoryDefinition);
 
