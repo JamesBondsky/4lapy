@@ -12,6 +12,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+/** @todo вставка через component_epilog - ибо кеш */
+
 /** @noinspection PhpUnhandledExceptionInspection */
 $container = App::getInstance()->getContainer();
 /** @noinspection PhpUnhandledExceptionInspection */

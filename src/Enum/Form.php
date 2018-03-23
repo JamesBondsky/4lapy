@@ -4,6 +4,7 @@ namespace FourPaws\Enum;
 
 class Form
 {
-    const FEEDBACK     = 'feedback';
-    const CALLBACK     = 'callback';
+    public const FEEDBACK = 'feedback';
+    public const CALLBACK = 'callback';
+    public const FAQ = 'faq';
 }

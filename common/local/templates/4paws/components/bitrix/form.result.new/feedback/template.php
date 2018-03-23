@@ -133,6 +133,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
             <?php try {
                 echo App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();
             } catch (ApplicationCreateException $e) {
+                /** ошибка - капчу не вывести */
             } ?>
         </div>
         <?php
