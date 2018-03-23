@@ -665,7 +665,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     public function isSuccess($internalCall = false)
     {
-        if ($this->isSuccess && $this->wereErrorsChecked) {
+        if ($this->isSuccess) {
             /**
              * Расчет даты доставки
              */
