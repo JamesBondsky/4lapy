@@ -1,10 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
-
 
 /**
  * Class BonusBuy
@@ -95,10 +98,10 @@ class BonusBuy
     /**
      * Группа данных об акции Bonus Buy
      *
+     * @Serializer\XmlList(inline=true, entry="BB_HEAD")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyShare>")
-     * @Serializer\SerializedName("BB_HEAD")
      *
-     * @var Collection|BonusBuyShare[]
+     * @var BonusBuyShare[]|Collection
      */
     protected $bonusBuyShare;
 
@@ -123,7 +126,7 @@ class BonusBuy
     }
 
     /**
-     * @param Collection|BonusBuyShare[] $bonusBuyShare
+     * @param BonusBuyShare[]|Collection $bonusBuyShare
      * @return BonusBuy
      */
     public function setBonusBuyShare(Collection $bonusBuyShare): BonusBuy
@@ -239,7 +242,7 @@ class BonusBuy
     }
 
     /**
-     * @return Collection|BonusBuyShare[]
+     * @return BonusBuyShare[]|Collection
      */
     public function getBonusBuyShare()
     {

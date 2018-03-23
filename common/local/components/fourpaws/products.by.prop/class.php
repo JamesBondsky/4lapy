@@ -11,6 +11,7 @@ use CBitrixComponent;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /** @noinspection AutoloadingIssuesInspection
  *
@@ -58,6 +59,7 @@ class ProductsByProp extends CBitrixComponent
         $params['PROPERTY_CODE'] = $params['PROPERTY_CODE'] ?? '';
         $params['FILTER_FIELD'] = $params['FILTER_FIELD'] ?? 'ID';
         $params['TITLE'] = $params['TITLE'] ?? 'Товары';
+        $params['SHOW_PAGE_NAVIGATION'] = $params['SHOW_PAGE_NAVIGATION'] ?? true;
 
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
         $params['CACHE_TYPE'] = $params['CACHE_TIME'] === 0 ? 'N' : $params['CACHE_TYPE'];
@@ -83,7 +85,7 @@ class ProductsByProp extends CBitrixComponent
         }
 
         $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->startResultCache()) {
             parent::executeComponent();
 
             $res = \CIBlockElement::GetProperty($this->arParams['IBLOCK_ID'], $this->arParams['ITEM_ID'], '', '',
@@ -97,7 +99,7 @@ class ProductsByProp extends CBitrixComponent
             if (!empty($products)) {
                 $query = new OfferQuery();
                 if ($this->arParams['COUNT_ON_PAGE'] > 0) {
-                    if ($this->arParams['SLIDER'] !== 'Y') {
+                    if ($this->arParams['SHOW_PAGE_NAVIGATION'] && $this->arParams['SLIDER'] !== 'Y') {
                         $query->withNav([
                             'nPageSize' => $this->arParams['COUNT_ON_PAGE'],
                             'iNumPage'  => $this->arParams['CURRENT_PAGE'],
@@ -110,15 +112,14 @@ class ProductsByProp extends CBitrixComponent
                 }
                 $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
             }
-            $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $this->instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('iblock_id_%s', $this->arParams['IBLOCK_ID']));
-                $tagCache->registerTag(sprintf('iblock_item_id_%s', $this->arParams['ITEM_ID']));
-                $tagCache->endTagCache();
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'product:by:prop',
+                'product:by:prop:'.$this->arParams['ITEM_ID'],
+                'iblock:item:'.$this->arParams['ITEM_ID']
+            ]);
+
+            $this->includeComponentTemplate();
         }
         return true;
     }

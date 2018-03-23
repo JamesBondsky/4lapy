@@ -7,8 +7,8 @@
  * @var CMain $APPLICATION
  */
 
-use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Catalog\Collection\CategoryCollection;
+use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\Templating\PhpEngine;
 

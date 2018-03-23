@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
@@ -56,20 +60,18 @@ class FilterHelper implements LoggerAwareInterface
      * @param int $iblockId
      * @param int $sectionId
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return array
      */
     public function getSectionPropertyLinks($iblockId, $sectionId = 0): array
     {
         $propertyLinks = CIBlockSectionPropertyLink::GetArray($iblockId, $sectionId);
-
-        if ($iblockId == IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS) &&
-            $sectionId != 0
-        ) {
+        if ((int)$iblockId === (int)IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)) {
             $propertyLinks = array_merge(
                 $propertyLinks,
                 CIBlockSectionPropertyLink::GetArray(
                     IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    0
+                    $sectionId
                 )
             );
         }

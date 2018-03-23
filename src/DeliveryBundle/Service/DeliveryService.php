@@ -22,6 +22,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\LocationBundle\LocationService;
@@ -230,7 +231,12 @@ class DeliveryService implements LoggerAwareInterface
             $from = $from ?? new \DateTime();
 
             if ($isDpd) {
-                $calculationResult = new DpdResult($calculationResult);
+                if ($service->getCode() === static::DPD_PICKUP_CODE) {
+                    $calculationResult = new DpdPickupResult($calculationResult);
+                    $calculationResult->setTerminals($_SESSION['DPD_DATA'][$service->getCode()]['TERMINALS']);
+                } else {
+                    $calculationResult = new DpdResult($calculationResult);
+                }
                 $calculationResult->setDeliveryCode($service->getCode());
                 /* @todo не хранить эти данные в сессии */
                 $calculationResult->setInitialPeriod($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
@@ -240,7 +246,6 @@ class DeliveryService implements LoggerAwareInterface
                 }
                 $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
                 $calculationResult->setDeliveryZone($_SESSION['DPD_DATA'][$service->getCode()]['DELIVERY_ZONE']);
-
                 unset($_SESSION['DPD_DATA']);
             }
             if (!$calculationResult instanceof CalculationResultInterface) {

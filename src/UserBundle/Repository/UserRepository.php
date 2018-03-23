@@ -17,6 +17,7 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\AppBundle\Service\LazyCallbackValueLoader;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -25,9 +26,9 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
-use JMS\Serializer\Serializer;
 use ProxyManager\Proxy\VirtualProxyInterface;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -39,8 +40,8 @@ class UserRepository
 {
     public const FIELD_ID = 'ID';
 
-    /** @var Serializer $builder */
-    protected $serializer;
+    /** @var ArrayTransformerInterface $builder */
+    protected $arrayTransformer;
 
     /**
      * @var ValidatorInterface
@@ -65,18 +66,18 @@ class UserRepository
     /**
      * UserRepository constructor.
      *
-     * @param ValidatorInterface      $validator
+     * @param ValidatorInterface        $validator
      *
-     * @param LazyCallbackValueLoader $lazyCallbackValueLoader
+     * @param LazyCallbackValueLoader   $lazyCallbackValueLoader
      *
-     * @param Serializer              $serializer
+     * @param ArrayTransformerInterface $arrayTransformer
      */
     public function __construct(
         ValidatorInterface $validator,
         LazyCallbackValueLoader $lazyCallbackValueLoader,
-        Serializer $serializer
+        ArrayTransformerInterface $arrayTransformer
     ) {
-        $this->serializer = $serializer;
+        $this->arrayTransformer = $arrayTransformer;
 
         $this->cuser = new \CUser();
         $this->validator = $validator;
@@ -100,7 +101,7 @@ class UserRepository
         }
 
         $result = $this->cuser->Add(
-            $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
+            $this->arrayTransformer->toArray($user, SerializationContext::create()->setGroups(['create']))
         );
         $userId = (int)$result;
         if ($userId > 0) {
@@ -152,7 +153,7 @@ class UserRepository
         /**
          * todo change group name to constant
          */
-        $users = $this->serializer->fromArray(
+        $users = $this->arrayTransformer->fromArray(
             $result->fetchAll(),
             sprintf('array<%s>', User::class),
             DeserializationContext::create()->setGroups(['read'])
@@ -235,7 +236,6 @@ class UserRepository
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
-     * @throws SystemException
      */
     public function update(User $user): bool
     {
@@ -246,7 +246,7 @@ class UserRepository
 
         return $this->updateData(
             $user->getId(),
-            $this->serializer->toArray($user, SerializationContext::create()->setGroups(['update']))
+            $this->arrayTransformer->toArray($user, SerializationContext::create()->setGroups(['update']))
         );
     }
 
@@ -258,7 +258,6 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
-     * @throws SystemException
      */
     public function updateData(int $id, array $data): bool
     {
@@ -267,12 +266,9 @@ class UserRepository
             $id,
             $data
         )) {
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('profile_' . $id);
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:profile' . $id,
+            ]);
 
             return true;
         }
@@ -287,7 +283,6 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
-     * @throws SystemException
      */
     public function updatePassword(int $id, string $password): bool
     {
@@ -302,7 +297,6 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
      * @return bool
-     * @throws SystemException
      */
     public function updatePhone(int $id, string $phone): bool
     {
@@ -317,7 +311,6 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
      * @return bool
-     * @throws SystemException
      */
     public function updateEmail(int $id, string $email): bool
     {
@@ -332,7 +325,6 @@ class UserRepository
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
-     * @throws SystemException
      */
     public function updateDiscountCard(int $id, string $discountCardNumber): bool
     {
@@ -432,8 +424,8 @@ class UserRepository
      */
     public function prepareData(array $data, string $group = 'update'): array
     {
-        $formattedData = $this->serializer->toArray(
-            $this->serializer->fromArray($data, User::class, DeserializationContext::create()->setGroups([$group])),
+        $formattedData = $this->arrayTransformer->toArray(
+            $this->arrayTransformer->fromArray($data, User::class, DeserializationContext::create()->setGroups([$group])),
             SerializationContext::create()->setGroups([$group])
         );
         foreach ($data as $key => $val) {
@@ -492,7 +484,7 @@ class UserRepository
             return $group && $group['GROUP_ACTIVE'];
         });
 
-        $groups = $this->serializer->fromArray($data, sprintf('array<%s>', Group::class)) ?? [];
+        $groups = $this->arrayTransformer->fromArray($data, sprintf('array<%s>', Group::class)) ?? [];
         return new ArrayCollection($groups);
     }
 

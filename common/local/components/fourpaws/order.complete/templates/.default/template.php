@@ -16,7 +16,6 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var Order $order */
 $order = $arResult['ORDER'];
-$calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -70,10 +69,11 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                 <div class="b-order__text-block">
                     <?php if ($arResult['ORDER_DELIVERY']['IS_DPD_PICKUP']) {
                         ?>
-                        <p>Ваш заказ вы можете получить <b>в <?= DeliveryTimeHelper::showTime(
-                                    $calcResult,
-                                    $arResult['ORDER_DELIVERY']['DELIVERY_DATE']
-                                ) ?> </b> в пункте самовывоза по
+                        <p>Ваш заказ вы можете получить
+                            <b>
+                                <?= DeliveryTimeHelper::showByDate($arResult['ORDER_DELIVERY']['DELIVERY_DATE']) ?>
+                            </b>
+                            в пункте самовывоза по
                             адресу
                             <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
                         <?php if ($arResult['ORDER_DELIVERY']['SCHEDULE']) {
@@ -88,10 +88,10 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                         <?php
                     } elseif ($arResult['ORDER_DELIVERY']['IS_PICKUP']) {
                         ?>
-                        <p>Ваш заказ вы можете получить <b>в <?= DeliveryTimeHelper::showTime(
-                                    $calcResult,
-                                    $arResult['ORDER_DELIVERY']['DELIVERY_DATE']
-                                ) ?></b> в нашем магазине по
+                        <p>Ваш заказ вы можете получить
+                            <b>
+                                <?= DeliveryTimeHelper::showByDate($arResult['ORDER_DELIVERY']['DELIVERY_DATE']) ?>
+                            </b> в нашем магазине по
                             адресу
                             <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
                         <?php if ($arResult['ORDER_DELIVERY']['SCHEDULE']) {
@@ -106,10 +106,10 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                         <?php
                     } else {
                         ?>
-                        <p>Ваш заказ будет доставлен <b>в <?= DeliveryTimeHelper::showTime(
-                                    $calcResult,
+                        <p>Ваш заказ будет доставлен <b><?= DeliveryTimeHelper::showByDate(
                                     $arResult['ORDER_DELIVERY']['DELIVERY_DATE'],
-                                    ['SHOW_TIME' => false, 'SHORT' => true]
+                                    0,
+                                    ['SHOW_TIME' => false, 'SHORT' => false]
                                 ) ?></b> по
                             адресу
                             <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
@@ -163,7 +163,8 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                             <li class="b-order__text-item">управлять адресами доставки.</li>
                         </ul>
                         <p>Перейти в
-                            <a class="b-link b-link--inherit b-link--orange" href="/personal/" title="">личный кабинет</a>.
+                            <a class="b-link b-link--inherit b-link--orange" href="/personal/" title="">личный
+                                кабинет</a>.
                         </p>
                         <p>Перейти на
                             <a class="b-link b-link--inherit b-link--orange" href="/" title="">главную страницу</a>.

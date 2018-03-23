@@ -7,14 +7,15 @@
 namespace FourPaws\DeliveryBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\AddDaysRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -71,7 +72,7 @@ class IntervalService implements LoggerAwareInterface
             try {
                 $result->add($this->createRule($type, $item));
             } catch (NotFoundException $e) {
-                $this->logger->error(sprintf('Unknown rule type %s', $type));
+                $this->logger->error('Unknown interval rule type', ['type' => $type]);
             }
         }
 
@@ -81,8 +82,11 @@ class IntervalService implements LoggerAwareInterface
     /**
      * @param CalculationResultInterface $delivery
      * @param IntervalCollection $intervals
-     * @return Interval
      * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws ApplicationCreateException
+     * @throws StoreNotFoundException
+     * @return Interval
      */
     public function getFirstInterval(CalculationResultInterface $delivery, IntervalCollection $intervals): Interval
     {
@@ -101,42 +105,6 @@ class IntervalService implements LoggerAwareInterface
 
         if (!$result instanceof Interval) {
             throw new NotFoundException('Не найдено подходящих интервалов');
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param CalculationResultInterface $delivery
-     * @param int $dateIndex
-     *
-     * @return IntervalCollection
-     */
-    public function getIntervalsByDate(CalculationResultInterface $delivery, int $dateIndex): IntervalCollection
-    {
-        $result = new IntervalCollection();
-
-        if ($dateIndex > (int)$delivery->getPeriodTo() - 1) {
-            return $result;
-        }
-
-        if (!$delivery->getStockResult()->getDelayed()->isEmpty()) {
-            return $result;
-        }
-
-        $deliveryDate = clone $delivery->getDeliveryDate();
-        if ($dateIndex > 0) {
-            $deliveryDate->modify(sprintf('+%s days', $dateIndex));
-        }
-
-        /** @var Interval $interval */
-        foreach ($delivery->getIntervals() as $interval) {
-            $tmpDelivery = clone $delivery;
-            $tmpDelivery->setSelectedInterval($interval);
-
-            if ($tmpDelivery->getDeliveryDate() <= $deliveryDate) {
-                $result->add($interval);
-            }
         }
 
         return $result;

@@ -1,6 +1,7 @@
 <?php
+
 /*
- * @copyright Copyright (c) ADV/web-engineering co.
+ * @copyright Copyright (c) ADV/web-engineering co
  */
 
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
@@ -106,6 +107,12 @@ interface CalculationResultInterface
     public function setIntervals(IntervalCollection $intervals): CalculationResultInterface;
 
     /**
+     * @param int $dateIndex
+     * @return IntervalCollection
+     */
+    public function getAvailableIntervals(int $dateIndex = 0): IntervalCollection;
+
+    /**
      * @return int
      */
     public function getFreeFrom(): int;
@@ -142,8 +149,8 @@ interface CalculationResultInterface
     public function setSelectedInterval(Interval $selectedInterval): CalculationResultInterface;
 
     /**
-     * @return Store
      * @throws NotFoundException
+     * @return Store
      */
     public function getSelectedStore(): Store;
 
@@ -173,11 +180,11 @@ interface CalculationResultInterface
 
     /**
      * @param bool $internalCall
-     * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @return bool
      */
     public function isSuccess($internalCall = false);
 

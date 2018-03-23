@@ -39,18 +39,18 @@ $orderPropertyService = $serviceContainer->get(OrderPropertyService::class);
 $recaptchaService = $serviceContainer->get('recaptcha.service');
 
 $communicationWays = $orderPropertyService->getPropertyVariants($orderPropertyService->getPropertyByCode('COM_WAY'))
-                                          ->filter(
-                                              function (OrderPropertyVariant $variant) {
-                                                  return in_array(
-                                                      $variant->getValue(),
-                                                      [
-                                                          OrderPropertyService::COMMUNICATION_PHONE,
-                                                          OrderPropertyService::COMMUNICATION_SMS,
-                                                      ],
-                                                      true
-                                                  );
-                                              }
-                                          );
+    ->filter(
+        function (OrderPropertyVariant $variant) {
+            return in_array(
+                $variant->getValue(),
+                [
+                    OrderPropertyService::COMMUNICATION_PHONE,
+                    OrderPropertyService::COMMUNICATION_SMS,
+                ],
+                true
+            );
+        }
+    );
 
 /** @var OrderPropertyVariant $currentCommWay */
 $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
@@ -85,7 +85,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                           id="order-step"
                           method="post"
                           data-url="<?= $arResult['URL']['AUTH_VALIDATION'] ?>">
-                        <div class="b-input-line js-small-input">
+                        <div class="b-input-line js-small-input-two">
                             <div class="b-input-line__label-wrapper">
                                 <label class="b-input-line__label" for="order-name">
                                     Имя
@@ -108,9 +108,10 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper js-information-comment">
                                 <label class="b-input-line__label" for="order-phone">Мобильный телефон
-                                </label><span class="b-input-line__require">(обязательно)</span><a class="b-information-link b-information-link--input js-popover-information-open"
-                                                                                                   href="javascript:void(0);"
-                                                                                                   title="">
+                                </label><span class="b-input-line__require">(обязательно)</span><a
+                                        class="b-information-link b-information-link--input js-popover-information-open"
+                                        href="javascript:void(0);"
+                                        title="">
                                     <span class="b-information-link__icon">i</span>
                                     <div class="b-popover-information b-popover-information--input js-popover-information">
                                     </div>
@@ -218,9 +219,10 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                 <div class="b-radio b-radio--tablet-big">
                                     <input class="b-radio__input"
                                            type="radio"
-                                           name="order-confirm"
+                                           name="communicationWay"
                                            id="order-<?= $commWay->getValue() ?>"
                                         <?= $isSelected ? 'checked="checked"' : '' ?>
+                                           value="<?= $commWay->getValue() ?>"
                                            data-radio="<?= $i ?>">
                                     <label class="b-radio__label b-radio__label--tablet-big"
                                            for="order-<?= $commWay->getValue() ?>">

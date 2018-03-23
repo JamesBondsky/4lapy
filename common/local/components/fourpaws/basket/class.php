@@ -28,13 +28,12 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\External\ManzanaPosService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
-use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -60,9 +59,9 @@ class BasketComponent extends \CBitrixComponent
      */
     private $currentUserService;
     /**
-     * @var UserAccountService
+     * @var ManzanaPosService
      */
-    private $userAccountService;
+    private $manzanaPosService;
     /** @var array $images */
     private $images;
 
@@ -84,7 +83,7 @@ class BasketComponent extends \CBitrixComponent
 
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
-        $this->userAccountService = $container->get(UserAccountService::class);
+        $this->manzanaPosService = $container->get('manzana.pos.service');
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection */
@@ -131,10 +130,21 @@ class BasketComponent extends \CBitrixComponent
             $this->arResult['USER'] = null;
             $this->arResult['USER_ACCOUNT'] = null;
             try {
-                $this->arResult['USER'] = $this->currentUserService->getCurrentUser();
-                $this->arResult['USER_ACCOUNT'] = $this->userAccountService->findAccountByUser($this->arResult['USER']);
-            } /** @noinspection BadExceptionsProcessingInspection */
-            catch (NotAuthorizedException|NotFoundException $e) {
+                $user = $this->currentUserService->getCurrentUser();
+                $this->arResult['USER'] = $user;
+                $orderableBasket = $basket->getOrderableItems();
+                $this->arResult['MAX_BONUS_SUM'] = 0;
+                if (!$orderableBasket->isEmpty()) {
+                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
+                        $orderableBasket,
+                        $user->getDiscountCardNumber()
+                    );
+                    $chequeRequest->setPaidByBonus($orderableBasket->getPrice());
+                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
+                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getAvailablePayment());
+                }
+            }  /** @noinspection BadExceptionsProcessingInspection */
+            catch (NotAuthorizedException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);

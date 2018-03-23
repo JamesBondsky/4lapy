@@ -355,7 +355,7 @@ class IndexHelper implements LoggerAwareInterface
     public function indexProducts(array $products): bool
     {
         $products = array_filter($products, function ($data) {
-            return $data && $data instanceof Product;
+            return $data && $data instanceof Product && !$data->getOffers()->isEmpty();
         });
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
