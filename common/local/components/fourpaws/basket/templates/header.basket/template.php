@@ -9,7 +9,6 @@
  * @var array $arResult
  * @var array $arParams
  * @var Basket $basket
- * @var UserAccount $userAccount
  */
 
 use Bitrix\Sale\Basket;
@@ -17,11 +16,9 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\SaleBundle\Entity\UserAccount;
 use FourPaws\UserBundle\Entity\User;
 
 $user = $arResult['USER'];
-$userAccount = $arResult['USER_ACCOUNT'];
 
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();

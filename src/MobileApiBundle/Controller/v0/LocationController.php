@@ -66,4 +66,17 @@ class LocationController extends FOSRestController
             )
         );
     }
+
+    /**
+     * @Rest\Get("/city_list/")
+     * @Rest\View()
+     *
+     * @param CityService $cityService
+     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
+     * @return Response
+     */
+    public function defaultCityListAction(CityService $cityService): Response
+    {
+        return new Response($cityService->getDefaultCity());
+    }
 }

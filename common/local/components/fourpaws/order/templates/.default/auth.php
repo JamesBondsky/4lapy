@@ -85,7 +85,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                           id="order-step"
                           method="post"
                           data-url="<?= $arResult['URL']['AUTH_VALIDATION'] ?>">
-                        <div class="b-input-line js-small-input">
+                        <div class="b-input-line js-small-input-two">
                             <div class="b-input-line__label-wrapper">
                                 <label class="b-input-line__label" for="order-name">
                                     Имя

@@ -24,6 +24,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -147,15 +148,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
             ];
 
-            $this->includeComponentTemplate();
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:profile:'. $curUser->getId(),
+                'user:'. $curUser->getId()
+            ]);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('profile_%s', $curUser->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
-                $tagCache->endTagCache();
-            }
+            $this->includeComponentTemplate();
         }
 
         return true;
@@ -227,12 +225,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         ];
         try {
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    /** Очистка кеша */
-                    $instance = Application::getInstance();
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('profile_' . $userId);
-                }
+                TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
 
                 try {
                     /** @var ManzanaService $manzanaService */
@@ -310,6 +303,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxGet(Request $request): JsonResponse
     {
+        $userId = (int)$request->get('ID', 0);
         $phone = $request->get('phone', '');
         $step = $request->get('step', '');
         /** @noinspection PhpUnusedLocalVariableInspection */
@@ -326,7 +320,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         switch ($step) {
             case 'confirm':
-                $mess = $this->ajaxGetConfirm($phone, (int)$request->get('ID', 0));
+                $mess = $this->ajaxGetConfirm($phone, $userId);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
                 }
@@ -407,12 +401,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 return $this->ajaxMess->getUpdateError();
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('profile_' . $id);
-            }
+            TaggedCacheHelper::clearManagedCache(['personal:profile:' . $id]);
 
             if (!empty($oldPhone)) {
                 //Посылаем смс о смененном номере телефона

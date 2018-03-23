@@ -7,6 +7,8 @@
 namespace FourPaws\SapBundle\Service\Shares;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use FourPaws\SapBundle\Dto\In\Shares\BonusBuy;
+use FourPaws\SapBundle\Repository\ShareRepository;
 use JMS\Serializer\Serializer;
 use Psr\Log\LoggerAwareInterface;
 
@@ -23,21 +25,21 @@ class SharesService implements LoggerAwareInterface
      * @var serializer
      */
     private $serializer;
+    /**
+     * @var ShareRepository
+     */
+    private $repository;
 
-    public function __construct(Serializer $serializer)
+    /**
+     * SharesService constructor.
+     *
+     * @param ShareRepository $repository
+     * @param Serializer $serializer
+     */
+    public function __construct(ShareRepository $repository, Serializer $serializer)
     {
         $this->serializer = $serializer;
-    }
-
-    public function createOrUpdate()
-    {
-        /**
-         * @todo
-         */
-    }
-
-    public function delete()
-    {
+        $this->repository = $repository;
     }
 
     /**
@@ -48,6 +50,20 @@ class SharesService implements LoggerAwareInterface
      */
     public function getGroupHash(string $groupName, string $shareName): string
     {
-        return md5(sprintf('%s|%s', $groupName, $shareName));
+        return \md5(\sprintf('%s|%s', $groupName, $shareName));
+    }
+
+    /**
+     * @param BonusBuy $dto
+     */
+    public function export(BonusBuy $dto): void
+    {
+        /**
+         * @todo
+         *
+         * create
+         * update
+         * delete
+         */
     }
 }

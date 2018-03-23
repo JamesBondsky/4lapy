@@ -15,6 +15,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -110,6 +111,11 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             try {
                 $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);
             } catch (NotAuthorizedException $e) {
@@ -119,11 +125,11 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
                 return null;
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
-                $tagCache->registerTag(sprintf('order_%s', $user->getId()));
+            if ($tagCache !== null) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:bonus:'. $user->getId(),
+                    'order:'. $user->getId(),
+                ], $tagCache);
                 $tagCache->endTagCache();
             }
 
@@ -140,16 +146,12 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             'paidByBonus' => $bonus->getCredit(),
             'realDiscount' => $bonus->getRealDiscount(),
         ], $this->getPath())) {
-            $this->includeComponentTemplate();
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:bonus:'. $user->getId(),
+                'order:'. $user->getId(),
+            ]);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
-                $tagCache->registerTag(sprintf('order_%s', $user->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $user->getId()));
-                $tagCache->endTagCache();
-            }
+            $this->includeComponentTemplate();
         }
 
         return true;

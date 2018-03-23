@@ -98,6 +98,18 @@ class LocationCest
         $citiesData = $apiTester->grabDataFromResponseByJsonPath('$.data');
         $cities = reset($citiesData);
 
+        $this->checkCityData($apiTester, $cities);
+        foreach ($cities as $city) {
+            $apiTester->isValidLocationType($city['id'], 3, 6);
+        }
+    }
+
+    /**
+     * @param \ApiTester $apiTester
+     * @param array      $cities
+     */
+    protected function checkCityData(\ApiTester $apiTester, array $cities): void
+    {
         foreach ($cities as $city) {
             $apiTester->assertInternalType('string', $city['id']);
             $apiTester->assertNotEmpty($city['id']);
@@ -114,8 +126,6 @@ class LocationCest
                     $apiTester->assertNotEmpty($pathItem);
                 }
             }
-
-            $apiTester->isValidLocationType($city['id'], 3, 6);
         }
     }
 
@@ -171,6 +181,42 @@ class LocationCest
     }
 
     /**
+     * @param \ApiTester $apiTester
+     * @throws \Exception
+     */
+    public function testGetDefaultCity(\ApiTester $apiTester): void
+    {
+        $token = $apiTester->createToken();
+        $apiTester->wantTo('Test default city get');
+        $apiTester->haveHttpHeader('Content-type', 'application/json');
+        $apiTester->sendGET('/city_list/', [
+            'token' => $token,
+        ]);
+        $apiTester->seeResponseCodeIs(HttpCode::OK);
+        $apiTester->seeResponseIsJson();
+        $apiTester->seeResponseMatchesJsonType([
+            'data'  => 'array',
+            'error' => 'array:empty',
+        ]);
+
+        $citiesData = $apiTester->grabDataFromResponseByJsonPath('$.data');
+        $cities = reset($citiesData);
+        $this->checkCityData($apiTester, $cities);
+
+        foreach ($cities as $city) {
+            $apiTester->seeNumRecords(
+                1,
+                'b_sale_loc_def2site',
+                [
+                    'LOCATION_CODE' => $city['id'],
+                ]
+            );
+        }
+
+        $apiTester->seeNumRecords(\count($cities), 'b_sale_loc_def2site');
+    }
+
+    /**
      * @return array
      */
     protected function goodMetroProvider(): array
@@ -196,10 +242,6 @@ class LocationCest
             [
                 'city_id' => '123123123',
                 'error'   => 44,
-            ],
-            [
-                'city_id' => random_bytes(1024),
-                'error'   => 3,
             ],
         ];
     }

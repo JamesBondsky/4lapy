@@ -12,6 +12,11 @@ use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 
+/**
+ * Class MaterialsConsumer
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
 class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -20,7 +25,12 @@ class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
      * @var MaterialConsumer
      */
     private $consumer;
-    
+
+    /**
+     * MaterialsConsumer constructor.
+     *
+     * @param MaterialConsumer $consumer
+     */
     public function __construct(MaterialConsumer $consumer)
     {
         $this->consumer = $consumer;
@@ -42,8 +52,8 @@ class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
     
         $totalCount = $materials->getMaterials()->count();
     
-        $this->log()->log(LogLevel::INFO, sprintf('Импортируется %s документ', $materials->getDocumentNumber()));
-        $this->log()->log(LogLevel::INFO, sprintf('Импортируется %s материалов', $totalCount));
+        $this->log()->log(LogLevel::INFO, \sprintf('Импортируется %s документ', $materials->getDocumentNumber()));
+        $this->log()->log(LogLevel::INFO, \sprintf('Импортируется %s материалов', $totalCount));
         
         $error = 0;
         foreach ($materials->getMaterials() as $material) {
@@ -53,8 +63,8 @@ class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
             }
             $error++;
         }
-        $this->log()->log(LogLevel::INFO, sprintf('Импортировано %s товаров', $totalCount - $error));
-        $this->log()->log(LogLevel::INFO, sprintf('Ошибка импорта %s товаров', $error));
+        $this->log()->log(LogLevel::INFO, \sprintf('Импортировано %s товаров', $totalCount - $error));
+        $this->log()->log(LogLevel::INFO, \sprintf('Ошибка импорта %s товаров', $error));
         
         return $error === 0;
     }

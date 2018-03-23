@@ -142,6 +142,23 @@ class ProductService
         if (!$id || $data['PROPERTY_CML2_LINK_PROPERTY_PACKING_COMBINATION_VALUE'] ?? 0) {
             return null;
         }
+        /**
+         * fix если по каким-то причинам товар оказался в комбинационном товаре, который не имеет признака комбинации
+         */
+        $countOther = (int)\CIBlockElement::GetList(
+            [],
+            [
+                'PROPERTY_CML2_LINK' => $id,
+                'IBLOCK_ID'          => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                '!XML_ID'            => $xmlId,
+            ],
+            []
+        );
+        if ($countOther > 0) {
+            return null;
+        }
+
+
         return $this->productRepository->find($id);
     }
 
