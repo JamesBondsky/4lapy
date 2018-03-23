@@ -56,8 +56,8 @@ class BonusBuyFrom
     /**
      * Группа данных о позиции предпосылки акции
      *
+     * @Serializer\XmlList(inline=true, entry="PURCHASE_ITEM")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyFromItem>")
-     * @Serializer\SerializedName("PURCHASE_ITEM")
      *
      * @var BonusBuyFromItem[]|Collection
      */

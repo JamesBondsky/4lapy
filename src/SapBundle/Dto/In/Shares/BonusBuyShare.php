@@ -149,8 +149,8 @@ class BonusBuyShare
     /**
      * Группа данных о предпосылке акции
      *
+     * @Serializer\XmlList(inline=true, entry="PURCHASE_HEAD")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyFrom>")
-     * @Serializer\SerializedName("PURCHASE_HEAD")
      *
      * @var BonusBuyFrom[]|Collection
      */
@@ -159,8 +159,8 @@ class BonusBuyShare
     /**
      * Группа данных о подарках (элементы, на которые действуют акции)
      *
+     * @Serializer\XmlList(inline=true, entry="BONUS_HEAD")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyTo>")
-     * @Serializer\SerializedName("BONUS_HEAD")
      *
      * @var BonusBuyTo[]|Collection
      */
