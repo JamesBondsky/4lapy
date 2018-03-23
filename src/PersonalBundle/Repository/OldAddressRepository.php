@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\PersonalBundle\Repository;
 
 use Bitrix\Main\ObjectPropertyException;
@@ -20,8 +24,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * Class AddressRepository
  *
  * @package FourPaws\PersonalBundle\Repository
+ * @deprecated
  */
-class AddressRepository extends BaseHlRepository
+class OldAddressRepository extends BaseHlRepository
 {
     public const HL_NAME = 'Address';
     /**
@@ -47,12 +52,12 @@ class AddressRepository extends BaseHlRepository
     }
 
     /**
-     * @return bool
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws \Exception
      * @throws BitrixRuntimeException
      * @throws ServiceCircularReferenceException
+     * @return bool
      */
     public function create(): bool
     {
@@ -73,9 +78,9 @@ class AddressRepository extends BaseHlRepository
      * @param int    $userId
      * @param string $locationCode
      *
-     * @return ArrayCollection|Address[]
      * @throws ObjectPropertyException
      * @throws NotAuthorizedException
+     * @return Address[]|ArrayCollection
      */
     public function findByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {

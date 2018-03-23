@@ -12,32 +12,25 @@ use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressDeleteRequest;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressPostPutRequest;
 use FourPaws\MobileApiBundle\Dto\Response\DeliveryAddressGetResponse;
 use FourPaws\MobileApiBundle\Dto\Response\FeedbackResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class UserDeliveryController extends FOSRestController
 {
     /**
-     * @Rest\Get("/delivery_address")
+     * @Security("has_role('REGISTERED_USERS')")
+     * @Rest\Get("/delivery_address/")
+     * @Rest\View()
+     *
      * @see DeliveryAddressGetResponse
      */
-    public function getAction()
+    public function getAddressAction()
     {
-        /**
-         * @todo Проверяем авторизацию
-         */
-
-        /**
-         * @todo Получаем адреса
-         */
-
-        /**
-         * @todo Возвращаем массив адресов
-         */
     }
 
     /**
      * @Rest\Post("/delivery_address")
-     * @see DeliveryAddressPostPutRequest
-     * @see FeedbackResponse
+     * @see  DeliveryAddressPostPutRequest
+     * @see  FeedbackResponse
      * @todo assert
      */
     public function createAction()
@@ -46,8 +39,8 @@ class UserDeliveryController extends FOSRestController
 
     /**
      * @Rest\Put("/delivery_address")
-     * @see DeliveryAddressPostPutRequest
-     * @see FeedbackResponse
+     * @see  DeliveryAddressPostPutRequest
+     * @see  FeedbackResponse
      * @todo assert
      */
     public function updateAction()

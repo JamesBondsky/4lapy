@@ -22,7 +22,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $name;
+    protected $name = '';
     
     /**
      * @var int
@@ -42,7 +42,7 @@ class Address extends BaseEntity
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $city;
+    protected $city = '';
     
     /**
      * @var string
@@ -51,7 +51,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $cityLocation;
+    protected $cityLocation = '';
     
     /**
      * @var string
@@ -61,7 +61,7 @@ class Address extends BaseEntity
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $street;
+    protected $street = '';
     
     /**
      * @var string
@@ -71,7 +71,7 @@ class Address extends BaseEntity
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $house;
+    protected $house = '';
     
     /**
      * @var string
@@ -80,7 +80,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $housing;
+    protected $housing = '';
     
     /**
      * @var string
@@ -89,7 +89,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $entrance;
+    protected $entrance = '';
     
     /**
      * @var string
@@ -98,7 +98,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $floor;
+    protected $floor = '';
     
     /**
      * @var string
@@ -107,7 +107,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $flat;
+    protected $flat = '';
     
     /**
      * @var string
@@ -116,7 +116,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $intercomCode;
+    protected $intercomCode = '';
     
     /**
      * @var bool
@@ -125,7 +125,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $main;
+    protected $main = false;
     
     /**
      * @return string
