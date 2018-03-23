@@ -571,7 +571,7 @@ class DeliverySchedule extends Base
             }
 
             if (!empty($results)) {
-                return max($results);
+                return min($results);
             }
 
             return null;
@@ -590,7 +590,7 @@ class DeliverySchedule extends Base
                         continue;
                     }
 
-                    if ($deliveryDate > $date) {
+                    if ($deliveryDate >= $date) {
                         $results[] = $deliveryDate;
                     }
                 }
@@ -610,7 +610,7 @@ class DeliverySchedule extends Base
                         $weekDate->modify('+1 year');
                     }
 
-                    $weekDates[] = ($weekDate > $from) ? $weekDate : $from;
+                    $weekDates[] = ($weekDate > $date) ? $weekDate : $date;
                 }
 
                 $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
