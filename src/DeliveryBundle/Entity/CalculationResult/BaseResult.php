@@ -85,17 +85,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $scheduleService;
 
     /**
-     * BaseResult constructor.
-     * @throws ApplicationCreateException
-     */
-    public function __construct()
-    {
-        parent::__construct();
-        /** @var DeliveryScheduleService $scheduleService */
-        $this->scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
-    }
-
-    /**
      * @param CalculationResult|null $result
      *
      *
@@ -508,6 +497,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         $resultCollection = new DeliveryScheduleResultCollection();
 
+        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
         /**
          * Если есть товары под заказ
          */
@@ -520,7 +510,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             /**
              * Находим маршрут от складов поставщика до РЦ
              */
-            $schedules = $this->scheduleService->findBySenders($byRequestStores);
+            $schedules = $scheduleService->findBySenders($byRequestStores);
             if ($schedules->isEmpty()) {
                 $this->addError(new Error('Не найдено графиков поставок со складов поставщика'));
                 return $date;
@@ -532,22 +522,38 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                  * куда есть поставки со складов поставщика
                  */
                 $regularStores = $this->getStoreIntersection([$schedules->getReceivers(), $regularStores]);
-            } else {
-                $regularStores = $schedules->getReceivers();
-            }
-            $results = $schedules->getNextDeliveries($regularStores, $date);
+                /** @var DeliveryScheduleResult $result */
+                foreach ($schedules->getNextDeliveries($regularStores, $date) as $result) {
+                    if (!$tmpResult = $this->getDCShipmentResult(
+                        $store,
+                        $result->getSchedule()->getReceiver(),
+                        $result->getDate())
+                    ) {
+                        continue;
+                    }
 
-            /** @var DeliveryScheduleResult $result */
-            foreach ($results as $result) {
-                if (!$tmpResult = $this->getDCShipmentResult(
-                    $store,
-                    $result->getSchedule()->getReceiver(),
-                    $result->getDate())
-                ) {
-                    continue;
+                    $resultCollection->add($tmpResult);
                 }
+            } else {
+                $receivers = $schedules->getReceivers();
+                if ($receivers->hasStore($store)) {
+                    /**
+                     * Можно доставить со склада поставщика напрямую на нужный склад
+                     */
+                    $resultCollection = $schedules->getNextDeliveries($schedules->getReceivers(), $date);
+                } else {
+                    foreach ($schedules->getNextDeliveries($schedules->getReceivers(), $date) as $result) {
+                        if (!$tmpResult = $this->getDCShipmentResult(
+                            $store,
+                            $result->getSchedule()->getReceiver(),
+                            $result->getDate())
+                        ) {
+                            continue;
+                        }
 
-                $resultCollection->add($tmpResult);
+                        $resultCollection->add($tmpResult);
+                    }
+                }
             }
         } else {
             /** @var Store $sender */
@@ -569,10 +575,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $scheduleResult = $resultCollection->getFastest();
         $date = $scheduleResult->getDate();
 
-        /**
-         * Добавляем "срок поставки" к дате доставки
-         */
-        $date->modify(sprintf('+%s days', $store->getDeliveryTime()));
+        if ($store->isShop()) {
+            /**
+             * Добавляем "срок поставки" к дате доставки
+             * (он должен быть не менее 1 дня)
+             */
+            $modifier = $store->getDeliveryTime();
+            if ($store->getDeliveryTime() < 1) {
+                $modifier = 1;
+            }
+            $date->modify(sprintf('+%s days', $modifier));
+        }
 
         return $date;
     }
@@ -584,10 +597,13 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      *
      * @throws ArgumentException
      * @throws StoreNotFoundException
+     * @throws ApplicationCreateException
      * @return DeliveryScheduleResult|null
      */
     protected function getDCShipmentResult(Store $receiver, Store $sender, \DateTime $date): ?DeliveryScheduleResult
     {
+        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+
         $date = clone $date;
         /**
          * Находим дату отгрузки
@@ -602,7 +618,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         /**
          * Ищем графики поставок с РЦ на нужный склад/магазин
          */
-        return $this->scheduleService->findBySender($sender)
+        return $scheduleService->findBySender($sender)
             ->getNextDelivery(
                 $receiver,
                 $date
