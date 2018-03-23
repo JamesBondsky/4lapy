@@ -122,8 +122,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             if ($result->getWarnings()) {
                 $instance->addWarnings($result->getWarnings());
             }
-
-            $instance->isSuccess();
         }
 
         return $instance;
