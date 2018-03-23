@@ -322,12 +322,6 @@ interface CalculationResultInterface
     public function addError(Error $error);
 
     /**
-     * @param Error[] $errors
-     * @return null
-     */
-    public function addNotices(array $errors);
-
-    /**
      * @return Error[]
      */
     public function getWarnings();
