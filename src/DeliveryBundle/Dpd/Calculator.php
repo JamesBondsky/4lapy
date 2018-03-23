@@ -125,8 +125,8 @@ class Calculator extends DPD
             (new Interval())->setFrom($interval[0])
                             ->setTo($interval[1])
         );
-        /* @todo не хранить эти данные в сессии */
-        $_SESSION['DPD_DATA'][$profileCode] = [
+
+        DeliveryService::$dpdData[$profileCode] = [
             'TERMINALS'    => $terminals,
             'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],

@@ -75,6 +75,9 @@ class DeliveryService implements LoggerAwareInterface
         DeliveryService::DPD_DELIVERY_CODE,
     ];
 
+    /** @var array */
+    public static $dpdData = [];
+
     /**
      * @var LocationService $locationService
      */
@@ -215,15 +218,6 @@ class DeliveryService implements LoggerAwareInterface
                 continue;
             }
 
-            $isDpd = \in_array(
-                $service->getCode(),
-                [
-                    self::DPD_DELIVERY_CODE,
-                    self::DPD_PICKUP_CODE,
-                ],
-                true
-            );
-
             if ($service::isProfile()) {
                 $name = $service->getNameWithParent();
             } else {
@@ -251,23 +245,31 @@ class DeliveryService implements LoggerAwareInterface
             $calculationResult = $shipment->calculateDelivery();
             $from = $from ?? new \DateTime();
 
-            if ($isDpd) {
+            if (\in_array(
+                $service->getCode(),
+                [
+                    self::DPD_DELIVERY_CODE,
+                    self::DPD_PICKUP_CODE,
+                ],
+                true
+            )) {
                 if ($service->getCode() === static::DPD_PICKUP_CODE) {
-                    $calculationResult = new DpdPickupResult($calculationResult);
-                    $calculationResult->setTerminals($_SESSION['DPD_DATA'][$service->getCode()]['TERMINALS']);
+                    /** @var DpdPickupResult $calculationResult */
+                    $calculationResult = DpdPickupResult::fromBitrixResult($calculationResult);
+                    $calculationResult->setTerminals(static::$dpdData[$service->getCode()]['TERMINALS']);
                 } else {
-                    $calculationResult = new DpdResult($calculationResult);
+                    /** @var DpdResult $calculationResult */
+                    $calculationResult = DpdResult::fromBitrixResult($calculationResult);
                 }
                 $calculationResult->setDeliveryCode($service->getCode());
-                /* @todo не хранить эти данные в сессии */
-                $calculationResult->setInitialPeriod($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
-                $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
-                if ($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
-                    $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
+                $calculationResult->setInitialPeriod(static::$dpdData[$service->getCode()]['DAYS_FROM']);
+                $calculationResult->setPeriodTo(static::$dpdData[$service->getCode()]['DAYS_TO']);
+                if (static::$dpdData[$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
+                    $calculationResult->setStockResult(static::$dpdData[$service->getCode()]['STOCK_RESULT']);
                 }
-                $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
-                $calculationResult->setDeliveryZone($_SESSION['DPD_DATA'][$service->getCode()]['DELIVERY_ZONE']);
-                unset($_SESSION['DPD_DATA']);
+                $calculationResult->setIntervals(static::$dpdData[$service->getCode()]['INTERVALS']);
+                $calculationResult->setDeliveryZone(static::$dpdData[$service->getCode()]['DELIVERY_ZONE']);
+                static::$dpdData = [];
             }
             if (!$calculationResult instanceof CalculationResultInterface) {
                 $this->log()->critical('Invalid delivery result', [

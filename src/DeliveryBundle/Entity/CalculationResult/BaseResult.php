@@ -82,40 +82,40 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $selectedStore;
 
     /**
-     * BaseResult constructor.
-     *
-     * @param null|CalculationResult $result
+     * @param CalculationResult|null $result
+     * @return CalculationResultInterface
      */
-    public function __construct(CalculationResult $result = null)
+    public static function fromBitrixResult(CalculationResult $result = null): CalculationResultInterface
     {
-        parent::__construct();
-
+        $instance = new static();
         if ($result) {
-            $this->setDeliveryPrice($result->getDeliveryPrice());
-            $this->setExtraServicesPrice($result->getExtraServicesPrice());
-            $this->setDescription($result->getDescription());
-            $this->setPacksCount($result->getPacksCount());
+            $instance->setDeliveryPrice($result->getDeliveryPrice());
+            $instance->setExtraServicesPrice($result->getExtraServicesPrice());
+            $instance->setDescription($result->getDescription());
+            $instance->setPacksCount($result->getPacksCount());
 
             if ($result->isNextStep()) {
-                $this->setAsNextStep();
+                $instance->setAsNextStep();
             }
 
-            $this->setTmpData($result->getTmpData());
-            $this->setData($result->getData());
+            $instance->setTmpData($result->getTmpData());
+            $instance->setData($result->getData());
 
-            $this->setPeriodDescription($result->getPeriodDescription());
-            $this->setPeriodFrom($result->getPeriodFrom());
-            $this->setPeriodType($result->getPeriodType());
-            $this->setPeriodTo($result->getPeriodTo());
+            $instance->setPeriodDescription($result->getPeriodDescription());
+            $instance->setPeriodFrom($result->getPeriodFrom());
+            $instance->setPeriodType($result->getPeriodType());
+            $instance->setPeriodTo($result->getPeriodTo());
 
             if ($result->getErrors()) {
-                $this->addErrors($result->getErrors());
+                $instance->addErrors($result->getErrors());
             }
 
             if ($result->getWarnings()) {
-                $this->addWarnings($result->getWarnings());
+                $instance->addWarnings($result->getWarnings());
             }
         }
+
+        return $instance;
     }
 
     /**
