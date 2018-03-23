@@ -43,6 +43,13 @@ four_paws_sap:
       error: '%sap.shop.directory.error%'
       filemask: 'sapbi_balance_.*'
       filetype: 'csv'
+    bonus_buy:
+      entity: FourPaws\SapBundle\Dto\In\Shares\BonusBuy
+      in: '%sap.bonus_buy.directory.in%'
+      out: '%sap.bonus_buy.directory.out%'
+      error: '%sap.bonus_buy.directory.error%'
+      filemask: 'BB_.*'
+      filetype: 'xml'
   out:
     path:
       order: '%sap.directory.out%'
@@ -61,3 +68,5 @@ four_paws_sap:
       - FourPaws\SapBundle\Dto\In\ConfirmPayment\Order
     delivery_schedule:
       - FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules
+    bonus_buy:
+      - FourPaws\SapBundle\Dto\In\Shares\BonusBuy
