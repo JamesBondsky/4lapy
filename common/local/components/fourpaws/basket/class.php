@@ -11,17 +11,14 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
-use Bitrix\Sale\Internals\DiscountTable;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -47,6 +44,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
+/** @noinspection EfferentObjectCouplingInspection */
 
 /**
  * Class BasketComponent
@@ -135,7 +133,8 @@ class BasketComponent extends \CBitrixComponent
             try {
                 $this->arResult['USER'] = $this->currentUserService->getCurrentUser();
                 $this->arResult['USER_ACCOUNT'] = $this->userAccountService->findAccountByUser($this->arResult['USER']);
-            } catch (NotAuthorizedException|NotFoundException $e) {
+            } /** @noinspection BadExceptionsProcessingInspection */
+            catch (NotAuthorizedException|NotFoundException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
@@ -214,7 +213,8 @@ class BasketComponent extends \CBitrixComponent
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             try {
                 $fastOrderClass = new FourPawsFastOrderComponent();
-            } catch (SystemException $e) {
+            } /** @noinspection PhpRedundantCatchClauseInspection */
+            catch (SystemException $e) {
                 $fastOrderClass = null;
                 $logger = LoggerFactory::create('system');
                 $logger->error('Ошибка загрузки компонента - ' . $e->getMessage());
@@ -412,7 +412,7 @@ class BasketComponent extends \CBitrixComponent
      *
      * @return array
      */
-    public function getPromoLink(BasketItem $basketItem)
+    public function getPromoLink(BasketItem $basketItem): array
     {
         $result = [];
         /**
@@ -433,7 +433,7 @@ class BasketComponent extends \CBitrixComponent
             isset($applyResult['RESULT']['BASKET'][$basketItem->getId()])
         ) {
             foreach (array_column($applyResult['RESULT']['BASKET'][$basketItem->getId()], 'DISCOUNT_ID') as $fakeId) {
-                if($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
+                if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
                     $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
                 }
             }
