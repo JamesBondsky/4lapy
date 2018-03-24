@@ -6,10 +6,12 @@
 
 namespace FourPaws\StoreBundle\Collection;
 
+use Bitrix\Main\ArgumentException;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 /**
  * Class DeliveryScheduleCollection
@@ -51,6 +53,48 @@ class DeliveryScheduleCollection extends BaseCollection
     }
 
     /**
+     * @return StoreCollection
+     * @throws NotFoundException
+     * @throws ArgumentException
+     */
+    public function getSenders(): StoreCollection
+    {
+        $result = new StoreCollection();
+
+        /** @var DeliverySchedule $item */
+        foreach ($this->getIterator() as $item) {
+            if (isset($result[$item->getSenderCode()])) {
+                continue;
+            }
+            $store = $item->getSender();
+            $result[$store->getXmlId()] = $store;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return StoreCollection
+     * @throws NotFoundException
+     * @throws ArgumentException
+     */
+    public function getReceivers(): StoreCollection
+    {
+        $result = new StoreCollection();
+
+        /** @var DeliverySchedule $item */
+        foreach ($this->getIterator() as $item) {
+            if (isset($result[$item->getReceiverCode()])) {
+                continue;
+            }
+            $store = $item->getReceiver();
+            $result[$store->getXmlId()] = $store;
+        }
+
+        return $result;
+    }
+
+    /**
      * @param \DateTime|null $date
      * @return DeliveryScheduleCollection
      */
@@ -69,8 +113,8 @@ class DeliveryScheduleCollection extends BaseCollection
      *
      * @param Store $receiver
      * @param null|\DateTime $from
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
      * @return null|DeliveryScheduleResult
      */
     public function getNextDelivery(
@@ -104,7 +148,7 @@ class DeliveryScheduleCollection extends BaseCollection
      * @param \DateTime|null $from
      * @return DeliveryScheduleResultCollection
      * @throws NotFoundException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function getNextDeliveries(
         StoreCollection $receivers,
@@ -132,7 +176,7 @@ class DeliveryScheduleCollection extends BaseCollection
      * @param Store $receiver
      * @param \DateTime $from
      * @param int $transitionCount
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws NotFoundException
      * @return null|\DateTime
      */
@@ -142,7 +186,8 @@ class DeliveryScheduleCollection extends BaseCollection
         \DateTime $from,
         int $transitionCount = 0
     ): ?\DateTime {
-        if ($transitionCount > 3) {
+        /** Пока не нужно */
+        if ($transitionCount > 0) {
             return null;
         }
 

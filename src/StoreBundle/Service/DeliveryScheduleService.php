@@ -123,7 +123,11 @@ class DeliveryScheduleService implements LoggerAwareInterface
             $results[] = $this->findByReceiver($store)->toArray();
         }
 
-        return new DeliveryScheduleCollection(array_merge(...$results));
+        if (!empty($results)) {
+            $results = array_merge(...$results);
+        }
+
+        return new DeliveryScheduleCollection($results);
     }
 
     /**
@@ -138,7 +142,11 @@ class DeliveryScheduleService implements LoggerAwareInterface
             $results[] = $this->findBySender($store)->toArray();
         }
 
-        return new DeliveryScheduleCollection(array_merge(...$results));
+        if (!empty($results)) {
+            $results = array_merge(...$results);
+        }
+
+        return new DeliveryScheduleCollection($results);
     }
 
     /**
