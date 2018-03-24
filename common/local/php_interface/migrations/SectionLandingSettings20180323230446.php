@@ -3,9 +3,11 @@
 namespace Sprint\Migration;
 
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Sprint\Migration\Helpers\UserTypeEntityHelper;
@@ -16,7 +18,12 @@ class SectionLandingSettings20180323230446 extends SprintMigrationBase
     public const ENTITY_ID = 'IBLOCK_2_SECTION';
     protected $description = 'Настройка лендинга на разделе';
 
-    public function up()
+    /**
+     * @return bool
+     * @throws IblockNotFoundException
+     * @throws ApplicationCreateException
+     */
+    public function up():bool
     {
         /** @var UserTypeEntityHelper $userTypeEntityHelper */
 
