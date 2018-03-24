@@ -13,7 +13,7 @@ use Sprint\Migration\Helpers\UserTypeEntityHelper;
 class SectionlandingSettings20180323230446 extends SprintMigrationBase
 {
 
-    public const ENTITY_ID = 'IBLOCK_2_SECTION ';
+    public const ENTITY_ID = 'IBLOCK_2_SECTION';
     protected $description = 'Настройка лендинга на разделе';
 
     public function up()
