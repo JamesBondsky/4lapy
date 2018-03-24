@@ -27,6 +27,9 @@ class SectionLandingSettings20180323230446 extends SprintMigrationBase
     {
         /** @var UserTypeEntityHelper $userTypeEntityHelper */
 
+        $bannerIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION,
+            IblockCode::BANNERS);
+
         $field = 'UF_LANDING';
         if ($this->getHelper()->UserTypeEntity()->addUserTypeEntityIfNotExists(static::ENTITY_ID, 'UF_LANDING', [
             'ENTITY_ID'         => static::ENTITY_ID,
@@ -227,8 +230,7 @@ class SectionLandingSettings20180323230446 extends SprintMigrationBase
         $this->log()->info('Веб форма faq создана');
 
         $this->log()->info('установка свойства привязки к разделу для баннеров');
-        $this->getHelper()->Iblock()->addPropertyIfNotExists(IblockUtils::getIblockId(IblockType::PUBLICATION,
-            IblockCode::BANNERS), [
+        $this->getHelper()->Iblock()->addPropertyIfNotExists($bannerIblockId, [
             'NAME'               => 'Привязка к разделу',
             'ACTIVE'             => 'Y',
             'SORT'               => '500',
@@ -256,24 +258,6 @@ class SectionLandingSettings20180323230446 extends SprintMigrationBase
         $this->log()->info('свойство привязки к разделу для баннеров установлено');
 
         $this->log()->info('Создание инфоблока faq');
-        $this->getHelper()->Iblock()->addIblockTypeIfNotExists([
-            'ID'               => 'publications',
-            'SECTIONS'         => 'Y',
-            'EDIT_FILE_BEFORE' => '',
-            'EDIT_FILE_AFTER'  => '',
-            'IN_RSS'           => 'N',
-            'SORT'             => '200',
-            'LANG'             =>
-                [
-                    'ru' =>
-                        [
-                            'NAME'         => 'Публикации',
-                            'SECTION_NAME' => '',
-                            'ELEMENT_NAME' => 'Публикация',
-                        ],
-                ],
-        ]);
-
         $iblockId = $this->getHelper()->Iblock()->addIblockIfNotExists([
             'IBLOCK_TYPE_ID'     => 'publications',
             'LID'                => 's1',
@@ -489,6 +473,55 @@ class SectionLandingSettings20180323230446 extends SprintMigrationBase
             'SORT'              => 20,
         ]);
         $this->log()->info('Структура создана');
+
+        $this->log()->info('Начало установки интерфейсов');
+        //форма элемента banner
+        $this->getHelper()->AdminIblock()->buildElementForm(
+            $bannerIblockId,
+            [
+                'Настройки'         => [
+                    'ID',
+                    'DATE_CREATE',
+                    'TIMESTAMP_X',
+                    'ACTIVE',
+                    'ACTIVE_FROM',
+                    'ACTIVE_TO',
+                    'NAME',
+                    'SORT',
+                    'PROPERTY_LINK',
+                    'XML_ID',
+                    'PROPERTY_SECTION', //Добавлено
+                ],
+                'Баннер'      => [
+                    'PREVIEW_PICTURE' => 'Изображение для мобильного',
+                    'PROPERTY_IMG_TABLET' => 'Изображение для планшета для мобильного',
+                    'DETAIL_PICTURE' => 'Передний план (Десктоп) для планшета для мобильного',
+                    'PROPERTY_BACKGROUND' => 'Фон (Десктоп) для планшета для мобильного',
+                ],
+            ]
+        );
+
+        //форма элемента faq
+        $this->getHelper()->AdminIblock()->buildElementForm(
+            $iblockId,
+            [
+                'Вопрос'         => [
+                    'ID',
+                    'DATE_CREATE',
+                    'TIMESTAMP_X',
+                    'ACTIVE',
+                    'ACTIVE_FROM' => 'Дата отзыва(для пользовательских) - для остального - начало активности',
+                    'ACTIVE_TO',
+                    'SORT',
+                    'NAME' => 'Имя',
+                    'PREVIEW_TEXT'=>'Вопрос',
+                ],
+                'Ответ'      => [
+                    'DETAIL_TEXT' => 'Ответ',
+                ],
+            ]
+        );
+        $this->log()->info('Установка интерфейсов завершена');
 
         return true;
 
