@@ -13,7 +13,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
 ?>
 <div class="fleas-protection-block__form">
     <div class="fleas-protection-block__form--title">Не нашли ответа на свой вопрос?</div>
-    <form data-url="/ajax/form/faq/add/" method="post" class="js-form-validation">
+    <form data-url="/ajax/form/faq/add/" method="post" class="js-form-validation js-form-faq">
         <?= bitrix_sessid_post() ?>
         <input name="WEB_FORM_ID" value="<?= $arResult['arForm']['ID'] ?>" type="hidden">
 
@@ -29,9 +29,9 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                         if ($fieldSid === 'phone') {
                             $type = 'tel';
                         } ?>
-                        <div class="fleas-protection-block__form--item b-input-line">
+                        <div class="fleas-protection-block__form--item b-input-line js-form-field-block-<?=$fieldSid?>">
                             <label class="b-input-line__label"><?= $question['CAPTION'] ?></label>
-                            <input class="b-input__input-field" required="required" type="<?=$type?>" name="<?= $fieldName ?>" placeholder="<?=$type === 'email' ? 'Ваша ' : 'Ваш '?><?= ToLower($question['CAPTION']) ?>"/>
+                            <input value="<?=$arResult['CUR_USER'][$fieldSid]?>" class="b-input__input-field" required="required" type="<?=$type?>" name="<?= $fieldName ?>" placeholder="<?=$type === 'email' ? 'Ваша ' : 'Ваш '?><?= ToLower($question['CAPTION']) ?>"/>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
                         <?php break;
