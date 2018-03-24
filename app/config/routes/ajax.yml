@@ -67,3 +67,8 @@ form.callback:
   path: /form/callback/add/
   defaults: { _controller: '\FourPaws\Form\AjaxController\CallBackController::addAction' }
   methods: [POST]
+
+form.faq:
+  path: /form/faq/add/
+  defaults: { _controller: '\FourPaws\Form\AjaxController\FaqController::addAction' }
+  methods: [POST]
