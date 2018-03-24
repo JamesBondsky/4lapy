@@ -19,8 +19,8 @@ try {
         <script>
             $(function () {
                 var $form = $('.js-form-callback');
-                $form.find('js-form-field-block-name input').val('<?=$user->getName()?>');
-                $form.find('js-form-field-block-phone input').val('<?=$user->getPersonalPhone()?>');
+                $form.find('.js-form-field-block-name input').val('<?=$user->getName()?>');
+                $form.find('.js-form-field-block-phone input').val('<?=$user->getPersonalPhone()?>');
             });
         </script>
     <?php }
