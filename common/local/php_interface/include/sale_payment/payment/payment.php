@@ -6,13 +6,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Main\Application;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\PaySystem\Manager;
+use FourPaws\App\Application as PawsApplication;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\SaleBundle\Exception\PaymentException;
+use FourPaws\SaleBundle\Service\PaymentService;
 
 IncludeModuleLangFile(__FILE__);
-
-CModule::IncludeModule('sale');
-CModule::IncludeModule('catalog');
 
 /** @noinspection PhpIncludeInspection */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/update_class.php';
@@ -33,21 +33,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/
 /** @noinspection PhpDeprecationInspection */
 $paySystemAction = new CSalePaySystemAction();
 
-if ($paySystemAction->GetParamValue('TEST_MODE') === 'Y') {
-    $testMode = true;
-} else {
-    $testMode = false;
-}
-if ($paySystemAction->GetParamValue('TWO_STAGE') === 'Y') {
-    $twoStage = true;
-} else {
-    $twoStage = false;
-}
-if ($paySystemAction->GetParamValue('LOGGING') === 'Y') {
-    $logging = true;
-} else {
-    $logging = false;
-}
+$testMode = $paySystemAction->GetParamValue('TEST_MODE') === 'Y';
+$twoStage = $paySystemAction->GetParamValue('TWO_STAGE') === 'Y';
+$logging = $paySystemAction->GetParamValue('LOGGING') === 'Y';
 
 $rbs = new RBS(
     $paySystemAction->GetParamValue('USER_NAME'),
@@ -65,11 +53,7 @@ $orderNumber = $paySystemAction->GetParamValue('ORDER_NUMBER');
 
 $entityId = $paySystemAction->GetParamValue('ORDER_PAYMENT_ID');
 
-if (CUpdateSystem::GetModuleVersion('sale') <= '16.0.11') {
-    $orderId = $orderNumber;
-} else {
-    list($orderId, $paymentId) = \Bitrix\Sale\PaySystem\Manager::getIdsByPayment($entityId);
-}
+[$orderId, $paymentId] = Manager::getIdsByPayment($entityId);
 
 if (!$orderNumber) {
     $orderNumber = $orderId;
@@ -98,120 +82,17 @@ if ($hash = $request->getQuery('HASH')) {
 }
 
 $fiscalization = COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
-$fiscalization = unserialize($fiscalization, null);
+$fiscalization = unserialize($fiscalization, []);
 
 /* Фискализация */
 $fiscal = [];
 if ($fiscalization['ENABLE'] === 'Y') {
-
-    $amount = 0; //Для фискализации общая сумма берется путем суммирования округленных позиций.
-
-    $fiscal = [
-        'orderBundle' => [
-            'orderCreationDate' => strtotime($order->getField('DATE_INSERT')),
-            'customerDetails' => [
-                'email' => false,
-                'contact' => false,
-            ],
-            'cartItems' => [
-                'items' => [],
-            ],
-        ],
-        'taxSystem' => $fiscalization['TAX_SYSTEM'],
-    ];
-
-    /** @var \Bitrix\Sale\PropertyValue $propertyValue */
-    foreach ($order->getPropertyCollection() as $propertyValue) {
-        if ($propertyValue->getProperty()['IS_PAYER'] === 'Y') {
-            $fiscal['orderBundle']['customerDetails']['contact'] = $propertyValue->getValue();
-        } elseif ($propertyValue->getProperty()['IS_EMAIL'] === 'Y') {
-            $fiscal['orderBundle']['customerDetails']['email'] = $propertyValue->getValue();
-        }
-    }
-
-    if (!$fiscal['orderBundle']['customerDetails']['email'] || !$fiscal['orderBundle']['customerDetails']['contact']) {
-        global $USER;
-        if (!$fiscal['orderBundle']['customerDetails']['email']) {
-            $fiscal['orderBundle']['customerDetails']['email'] = $USER->GetEmail();
-        }
-        if (!$fiscal['orderBundle']['customerDetails']['contact']) {
-            $fiscal['orderBundle']['customerDetails']['contact'] = $USER->GetFullName();
-        }
-    }
-
-    $measureList = [];
-    $dbMeasure = CCatalogMeasure::getList();
-    while ($arMeasure = $dbMeasure->GetNext()) {
-        $measureList[$arMeasure['ID']] = $arMeasure['MEASURE_TITLE'];
-    }
-
-    $vatList = [];
-    $dbRes = CCatalogVat::GetListEx(
-        [], //order
-        [], //filter
-        false, //group
-        false, //nav
-        [] //select
-    );
-    while ($arRes = $dbRes->Fetch()) {
-        $vatList[$arRes['ID']] = $arRes['RATE'];
-    }
-
-    $vatGateway = [
-        -1 => 0,
-        0 => 1,
-        10 => 2,
-        18 => 3,
-    ];
-
-    $itemsCnt = 1;
-    $arCheck = null;
-
-    /** @var \Bitrix\Sale\BasketItem $basketItem */
-    foreach ($order->getBasket() as $basketItem) {
-        $arProduct = CCatalogProduct::GetByID($basketItem->getProductId());
-        $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
-
-        $itemAmount = $basketItem->getPrice() * 100;
-        if (!($itemAmount % 1)) {
-            $itemAmount = round($itemAmount);
-        }
-
-        $amount += $itemAmount * $basketItem->getQuantity(); //Для фискализации общая сумма берется путем суммирования округленных позиций.
-
-        $fiscal['orderBundle']['cartItems']['items'][] = [
-            'positionId' => $itemsCnt++,
-            'name' => $basketItem->getField('NAME'),
-            'quantity' => [
-                'value' => $basketItem->getQuantity(),
-                'measure' => $measureList[$arProduct['MEASURE']],
-            ],
-            'itemAmount' => $itemAmount * $basketItem->getQuantity(),
-            'itemCode' => $basketItem->getProductId(),
-            'itemPrice' => $itemAmount,
-            'tax' => [
-                'taxType' => $vatGateway[$taxType],
-            ],
-        ];
-    }
-    if ($order->getDeliveryPrice() > 0) {
-        $fiscal['orderBundle']['cartItems']['items'][] = [
-            'positionId' => $itemsCnt++,
-            'name' => GetMessage('RBS_PAYMENT_DELIVERY_TITLE'),
-            'quantity' => [
-                'value' => 1,
-                'measure' => GetMessage('RBS_PAYMENT_MEASURE_DEFAULT'),
-            ],
-            'itemAmount' => $order->getDeliveryPrice() * 100,
-            'itemCode' => $order->getId() . '_DELIVERY',
-            'itemPrice' => $order->getDeliveryPrice() * 100,
-            'tax' => [
-                'taxType' => 0,
-            ],
-        ];
-
-        $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
-    }
+    /**
+     * @var PaymentService $paymentService
+     * @global $USER
+     */
+    $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentService::class);
+    [$amount, $fiscal] = \array_values($paymentService->getFiscalization($order, $USER, (int)$fiscalization['TAX_SYSTEM']));
 }
 
 /* END Фискализация */
@@ -232,6 +113,8 @@ for ($i = 0; $i <= 10; $i++) {
 
 /**
  * Разбор ответа
+ *
+ * @var array $response
  */
 if ((int)$response['errorCode'] !== 0) {
     $code = null;
