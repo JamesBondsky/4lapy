@@ -14,9 +14,6 @@ use FourPaws\SaleBundle\Service\PaymentService;
 
 IncludeModuleLangFile(__FILE__);
 
-CModule::IncludeModule('sale');
-CModule::IncludeModule('catalog');
-
 /** @noinspection PhpIncludeInspection */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/update_class.php';
 
@@ -86,7 +83,7 @@ if ($hash = $request->getQuery('HASH')) {
 
 $fiscalization = COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
 $fiscalization = unserialize($fiscalization, []);
-dump($fiscalization);
+
 /* Фискализация */
 $fiscal = [];
 if ($fiscalization['ENABLE'] === 'Y') {
