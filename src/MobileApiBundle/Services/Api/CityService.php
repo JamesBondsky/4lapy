@@ -121,13 +121,29 @@ class CityService implements LoggerAwareInterface
                     ]
                 );
             } catch (CityNotFoundException $e) {
-                dump($e);
-                die();
             } catch (\Exception $e) {
                 throw new SystemException($e->getMessage(), $e->getCode(), $e);
             }
         }
         return $this->mapLocations($locations);
+    }
+
+    /**
+     * @param string $code
+     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
+     * @return null|City
+     */
+    public function getCityByCode(string $code): ?City
+    {
+        $locations = [];
+        try {
+            $locations = $this->locationService->findLocation('', 1, true, ['CODE' => $code]);
+        } catch (CityNotFoundException $e) {
+        } catch (\Exception $e) {
+            throw new SystemException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        return $this->mapLocations($locations)->first() ?: null;
     }
 
     /**

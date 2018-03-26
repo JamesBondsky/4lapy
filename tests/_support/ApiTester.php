@@ -179,10 +179,24 @@ class ApiTester extends \Codeception\Actor
             'UF_FLAT'          => md5(random_bytes(1024)),
             'UF_INTERCOM_CODE' => md5(random_bytes(1024)),
             'UF_MAIN'          => random_int(0, 1),
+            'UF_DETAILS'       => md5(random_bytes(1024)),
         ];
 
         $id = $this->haveInDatabase('adv_adress', $fields);
         $fields['ID'] = $id;
         return $fields;
+    }
+
+    /**
+     * @param int $errorCode
+     * @throws Exception
+     */
+    public function assertContainsError(int $errorCode): void
+    {
+        $data = $this->grabDataFromResponseByJsonPath('$.error[0]');
+        $error = reset($data);
+
+        $code = $error['code'] ?? 0;
+        $this->assertEquals($errorCode, (int)$code);
     }
 }

@@ -120,6 +120,7 @@ class D7EntityManager implements D7EntityManagerInterface
 
     /**
      * @inheritdoc
+     * @throws \FourPaws\BitrixOrmBundle\Exception\RuntimeException
      */
     public function findByQueryRaw(Query $query): Collection
     {
@@ -273,6 +274,8 @@ class D7EntityManager implements D7EntityManagerInterface
     {
         $validationResult = $this->validator->validate($entity, $constraints, [$crudAction]);
         if (0 !== $validationResult->count()) {
+            dump($validationResult);
+            die();
             throw new ValidationException('Wrong entity passed to ' . $crudAction);
         }
     }

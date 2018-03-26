@@ -7,9 +7,10 @@
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * @todo assert
+ * @todo    assert
  * ОбъектАдресДоставки
  * Class DeliveryAddress
  * @package FourPaws\MobileApiBundle\Dto\Object
@@ -17,6 +18,8 @@ use JMS\Serializer\Annotation as Serializer;
 class DeliveryAddress
 {
     /**
+     * @Assert\GreaterThan(value="0", groups={"update","read","delete"})
+     * @Serializer\Groups(groups={"update","read","delete"})
      * @Serializer\Type("int")
      * @Serializer\SerializedName("id")
      * @var string
@@ -24,6 +27,7 @@ class DeliveryAddress
     protected $id;
 
     /**
+     * @Assert\NotBlank()
      * @Serializer\Type("string")
      * @Serializer\SerializedName("title")
      * @var string
@@ -31,6 +35,7 @@ class DeliveryAddress
     protected $title;
 
     /**
+     * @Assert\Valid()
      * @Serializer\SerializedName("city")
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\City")
      * @var null|City
@@ -38,6 +43,7 @@ class DeliveryAddress
     protected $city;
 
     /**
+     * @Assert\NotBlank()
      * @Serializer\SerializedName("street_name")
      * @Serializer\Type("string")
      * @var string
@@ -45,6 +51,7 @@ class DeliveryAddress
     protected $streetName;
 
     /**
+     * @Assert\NotBlank()
      * @Serializer\SerializedName("house")
      * @Serializer\Type("string")
      * @var string
@@ -104,7 +111,7 @@ class DeliveryAddress
     /**
      * @return null|City
      */
-    public function getCity(): City
+    public function getCity(): ?City
     {
         return $this->city;
     }
@@ -113,7 +120,7 @@ class DeliveryAddress
      * @param null|City $city
      * @return DeliveryAddress
      */
-    public function setCity(City $city): DeliveryAddress
+    public function setCity(?City $city): DeliveryAddress
     {
         $this->city = $city;
         return $this;
