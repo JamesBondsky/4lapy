@@ -25,7 +25,7 @@ abstract class ReferenceUtils
      */
     public static function getReference(DataManager $dataManager, string $xmlId): HlbReferenceItem
     {
-        if (trim($xmlId) == '') {
+        if (\trim($xmlId) === '') {
             return new HlbReferenceItem();
         }
 
@@ -49,10 +49,10 @@ abstract class ReferenceUtils
      */
     public static function getReferenceMulti(DataManager $dataManager, array $xmlIdList): HlbReferenceItemCollection
     {
-        $xmlIdList = array_filter(
+        $xmlIdList = \array_filter(
             $xmlIdList,
             function ($xmlId) {
-                return trim($xmlId) != '';
+                return \trim($xmlId) !== '';
             }
         );
 

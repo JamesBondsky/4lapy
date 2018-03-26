@@ -17,6 +17,7 @@ use FourPaws\AppBundle\Service\ToBitrixDataArrayConverter;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Interfaces\ToArrayInterface;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
+use FourPaws\Helpers\IblockHelper;
 
 /**
  * Class IblockElementRepository
@@ -139,6 +140,7 @@ abstract class IblockElementRepository
             ->withCode($this->generateUniqueCode($iblockElement->getName(), $iblockElement->getCode()));
         $data = $this->toArray($iblockElement);
         unset($data['ID']);
+
         $result = new AddResult();
         $id = $this->iblockElement->Add($data);
 
@@ -259,26 +261,10 @@ abstract class IblockElementRepository
      */
     protected function generateUniqueCode(string $name = '', string $code = ''): string
     {
-        $iblockId = $this->getIblockId();
-        $i = 0;
         $name = $name ?: \md5(\microtime());
         $code = $code ?: $this->slugify->slugify($name);
-        while ($i < 10) {
-            $tmpCode = $i > 0 ? $code . $i : $code;
-            $r = ElementTable::query()
-                ->setSelect(['ID'])
-                ->addFilter('IBLOCK_ID', $iblockId)
-                ->addFilter('=CODE', $tmpCode)
-                ->setLimit(1)
-                ->exec()
-                ->getSelectedRowsCount();
-            if ($r) {
-                $i++;
-                continue;
-            }
-            return $tmpCode;
-        }
-        return \md5($code . \microtime());
+
+        return IblockHelper::generateUniqueCode($this->getIblockId(), $name, $code);
     }
 
     /**

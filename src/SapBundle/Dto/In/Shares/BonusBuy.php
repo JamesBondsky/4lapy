@@ -61,8 +61,8 @@ class BonusBuy
      *
      * @var bool
      */
+    protected $forIm = true;
 
-    protected $forIm = false;
     /**
      *
      * @Serializer\XmlAttribute()
