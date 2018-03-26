@@ -19,6 +19,7 @@ use Bitrix\Main\UserFieldTable;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -101,7 +102,6 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
 
         $this->setFrameMode(true);
 
-        /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
         if ($this->startResultCache($this->arParams['CACHE_TIME'], ['user_id'=>$this->currentUserProvider->getCurrentUserId()])) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
             /** получение пола */
@@ -110,15 +110,13 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             /** получение типов питомцев */
             $this->setPetTypes();
 
-            $this->includeComponentTemplate();
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:pets:'. $this->currentUserProvider->getCurrentUserId(),
+                'personal:pets',
+                'highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId()
+            ]);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('pet_%s', $this->currentUserProvider->getCurrentUserId()));
-                $tagCache->registerTag(sprintf('user_%s', $this->currentUserProvider->getCurrentUserId()));
-                $tagCache->endTagCache();
-            }
+            $this->includeComponentTemplate();
         }
 
         return true;

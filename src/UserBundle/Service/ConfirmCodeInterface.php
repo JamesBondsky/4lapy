@@ -85,4 +85,42 @@ interface ConfirmCodeInterface
      * @return string
      */
     public static function getConfirmHash(string $text, int $time = 0): string;
+
+    /**
+     * @param $id
+     * @param $code
+     * @param $type
+     *
+     * @return bool
+     * @throws ArgumentException
+     * @throws \Exception
+     */
+    public static function writeGeneratedCode($id, $code, $type): bool;
+
+    /**
+     * @param string $code
+     * @param string $type
+     * @param int    $time
+     *
+     * @throws ArgumentException
+     * @throws \Exception
+     */
+    public static function setCode(string $code, string $type, int $time = 0): void;
+
+    /**
+     * @param  string $type
+     * @param int     $time
+     *
+     * @return string
+     * @throws \Exception
+     */
+    public static function setCookie(string $type, int $time = 0): string;
+
+    /**
+     * @param string $type
+     * @param bool   $upper
+     *
+     * @return string
+     */
+    public static function getPrefixByType(string $type, bool $upper = false): string;
 }

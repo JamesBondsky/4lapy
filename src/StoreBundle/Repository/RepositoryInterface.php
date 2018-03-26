@@ -8,7 +8,7 @@ use FourPaws\StoreBundle\Collection\BaseCollection;
 interface RepositoryInterface
 {
     /**
-     * @param \FourPaws\StoreBundle\Entity\Base $entity
+     * @param BaseEntity $entity
      *
      * @return bool
      */
@@ -20,6 +20,7 @@ interface RepositoryInterface
      * @return BaseEntity|null
      */
     public function find(int $id);
+    /** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param array $criteria

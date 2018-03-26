@@ -175,7 +175,10 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </div>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
-        <?php foreach ($productSearchResult->getProductCollection() as $product) {
+        <?php $i = 0;
+        foreach ($productSearchResult->getProductCollection() as $product) {
+            $i++;
+
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
@@ -183,6 +186,19 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 null,
                 ['HIDE_ICONS' => 'Y']
             );
+
+            if($catalogRequest->getCategory()->isLanding() && !empty($catalogRequest->getCategory()->getUfLandingBanner())) {
+                if ($i === 3) { ?>
+                    <div class="b-fleas-protection-banner b-tablet">
+                        <?=htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner())?>
+                    </div>
+                <?php }
+                if ($i === 4) { ?>
+                    <div class="b-fleas-protection-banner">
+                        <?=htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner())?>
+                    </div>
+                <?php }
+            }
         } ?>
     </div>
     <div class="b-line b-line--catalog-filter"></div>

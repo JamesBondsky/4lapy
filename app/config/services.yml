@@ -39,12 +39,6 @@ services:
       - '@jms_serializer'
       - '@old_sound_rabbit_mq.catalog_sync_producer'
 
-  location.service:
-    class: FourPaws\Location\LocationService
-
-  health.service:
-    class: FourPaws\Health\HealthService
-
   sms.service:
     class: FourPaws\External\SmsService
 

@@ -7,14 +7,19 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Entity\UserAccount;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Repository\UserAccountRepository;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 class UserAccountService
 {
@@ -42,53 +47,68 @@ class UserAccountService
     }
 
     /**
-     * @param null|User $user
+     * @param null|User  $user
+     * @param null|float $newBudget
      *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ValidationException
-     * @return bool
+     * @return array
+     * @throws ApplicationCreateException
      */
-    public function refreshUserBalance(User $user = null, float $newBudget = null): bool
+    public function refreshUserBalance(User $user = null, ?float $newBudget = null): array
     {
         if (!$user) {
             try {
                 $user = $this->currentUserProvider->getCurrentUser();
             } catch (NotAuthorizedException $e) {
-                return false;
+                return [false, null];
             }
         }
 
         if (!$user->getDiscountCardNumber()) {
-            return false;
+            return [false, null];
         }
 
+        $bonus = null;
         if (null === $newBudget) {
             $bonus = $this->bonusService->getUserBonusInfo($user);
             if ($bonus->isEmpty()) {
-                return false;
+                return [false, $bonus];
             }
-            $newBudget = $bonus->getCard()->getBalance();
+            $newBudget = $bonus->getActiveBonus();
         }
 
         try {
             $userAccount = $this->userAccountRepository->findByUser($user);
 
-            return $this->userAccountRepository->updateBalance(
-                $userAccount->setCurrentBudget($newBudget)
-            );
+            return [
+                $this->userAccountRepository->updateBalance(
+                    $userAccount->setCurrentBudget($newBudget)
+                ),
+                $bonus,
+            ];
         } catch (NotFoundException $e) {
         }
 
         $userAccount = (new UserAccount())->setUser($user)
-                                          ->setCurrency(CurrencyManager::getBaseCurrency())
-                                          ->setCurrentBudget($newBudget);
+            ->setCurrency(CurrencyManager::getBaseCurrency())
+            ->setCurrentBudget($newBudget);
 
-        return $this->userAccountRepository->create($userAccount);
+        return [$this->userAccountRepository->create($userAccount), $bonus];
     }
 
     /**
      * @param null|User $user
      *
      * @return UserAccount
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws NotFoundException
      */
     public function findAccountByUser(User $user = null): UserAccount
     {

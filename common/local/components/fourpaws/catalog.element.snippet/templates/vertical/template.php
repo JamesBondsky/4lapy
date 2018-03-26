@@ -28,22 +28,7 @@ use FourPaws\Decorators\SvgDecorator;
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 
-if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
-    $currentOffer = $arParams['CURRENT_OFFER'];
-} else {
-    /**
-     * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
-     */
-    foreach ($offers as $offer) {
-        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
-            $currentOffer = $offer;
-        }
-    }
-
-    if (!$currentOffer) {
-        $currentOffer = $offers->first();
-    }
-}
+$currentOffer = $arResult['CURRENT_OFFER'];
 
 $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['ITEM_ATTR_ID']) : '';
 

@@ -5,8 +5,8 @@
  */
 
 use FourPaws\App\Templates\ViewsEnum;
-use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use Symfony\Component\HttpFoundation\Request;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -41,7 +41,7 @@ $category = $APPLICATION->IncludeComponent(
                         'IBLOCK_SECTION' => $category,
                         'ADDITIONAL_CLASS' => 'b-breadcrumbs--catalog-main'
                     ],
-                    $component,
+                    null,
                     ['HIDE_ICONS' => 'Y']
                 );
                 ?>

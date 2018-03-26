@@ -36,6 +36,15 @@ services:
         resource: '../../Serialization/*'
         tags: ['jms_serializer.subscribing_handler']
 
+    metro.guzzle:
+      class: GuzzleHttp\Client
+      arguments:
+        - base_uri: '%metro.guzzle.url%'
+
+    FourPaws\AppBundle\Command\HhImportMetro:
+      arguments:
+        $client: '@metro.guzzle'
+
 #    FourPaws\AppBundle\Controller\:
 #        resource: '../../Controller'
 #        public: true

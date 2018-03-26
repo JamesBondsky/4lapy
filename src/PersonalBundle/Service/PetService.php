@@ -17,6 +17,7 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Repository\PetRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -102,12 +103,9 @@ class PetService
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $entity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $entity->getUserId(),
+            ]);
         }
         
         return $res;
@@ -219,6 +217,13 @@ class PetService
      */
     public function update(array $data) : bool
     {
+        if (!empty($data['UF_PHOTO_TMP'])) {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
+        }
+        else{
+            unset($data['UF_PHOTO']);
+        }
+
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
 
@@ -227,26 +232,17 @@ class PetService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
-        }
-        if (!empty($data['UF_PHOTO_TMP'])) {
-            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
-            unset($data['UF_PHOTO']);
+        if($entity->getUserId() === 0){
+            $entity->setUserId($updateEntity->getUserId());
         }
 
         $res = $this->petRepository->setEntity($entity)->update();
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $updateEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $updateEntity->getUserId(),
+            ]);
         }
         
         return $res;
@@ -280,12 +276,9 @@ class PetService
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $deleteEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $deleteEntity->getUserId(),
+            ]);
         }
         
         return $res;

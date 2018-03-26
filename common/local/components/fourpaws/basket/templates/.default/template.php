@@ -17,17 +17,14 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\SaleBundle\Entity\UserAccount;
 use FourPaws\UserBundle\Entity\User;
 
 /** @var User $user */
 $user = $arResult['USER'];
-/** @var UserAccount $userAccount */
-$userAccount = $arResult['USER_ACCOUNT'];
 
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
-$orderableBasket = $basket->getOrderableItems();
+$orderableItems = $basket->getOrderableItems();
 
 /** @var ArrayCollection $notAlowedItems */
 $notAlowedItems = $arResult['NOT_ALOWED_ITEMS'];
@@ -45,6 +42,9 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
     </div>
     <?php
 }
+if ($arParams['IS_AJAX']) {
+    $user_discount = $component->getCurrentUserService()->getDiscount();
+}
 ?>
     <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
@@ -60,7 +60,8 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                     foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
                         $disableClass = '';
-                        if (1 > $component->basketService->getAdder()->getExistGiftsQuantity($group, false)) {
+                        /** @noinspection PhpUndefinedMethodInspection */
+                        if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
                         }
                         ?>
@@ -143,12 +144,12 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 </section>
                 <?php
             }
-            if (!$orderableBasket->isEmpty()) { ?>
+            if (!$orderableItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                     <?php
                     /** @var BasketItem $basketItem */
-                    foreach ($orderableBasket as $basketItem) {
+                    foreach ($orderableItems as $basketItem) {
                         if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                             continue;
                         }
@@ -157,7 +158,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                     ?>
                 </section>
             <?php }
-            if (!$notAlowedItems->isEmpty()) { ?>
+            if ($notAlowedItems instanceof ArrayCollection && !$notAlowedItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
                     <?php foreach ($notAlowedItems as $basketItem) {
@@ -174,11 +175,10 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
             <div class="b-information-order">
                 <div class="b-information-order__client">
                     <?php if ($user) { ?>
-                        <?php if (!empty($userAccount)) { ?>
+                        <?php if ($arResult['MAX_BONUS_SUM']) { ?>
                             <span class="b-information-order__pay-points">
                                 <span class="b-information-order__name"><?= $user->getName() ?>, </span>
-                                вы можете оплатить этот заказ баллами (до <?= WordHelper::numberFormat($userAccount->getCurrentBudget()) ?>
-                                ).
+                                вы можете оплатить этот заказ баллами (до <?= $arResult['MAX_BONUS_SUM'] ?>).
                             </span>
                         <?php }
                     } else { ?>
@@ -206,7 +206,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                     $APPLICATION->IncludeComponent(
                         'fourpaws:city.delivery.info',
                         'basket.summary',
-                        ['BASKET_PRICE' => $basket->getPrice()],
+                        ['BASKET_PRICE' => $orderableItems->getPrice()],
                         false,
                         ['HIDE_ICONS' => 'Y']
                     );
@@ -227,7 +227,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         </div>
                     </div>
                     <?php
-                    if ($basket->getBasePrice() - $basket->getPrice() > 0.01) {
+                    if ($arResult['TOTAL_DISCOUNT'] > 0.01) {
                         ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Общая скидка
@@ -284,7 +284,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
          * Выгодная покупка
          */
         $productsIds = [];
-        foreach ($orderableBasket as $basketItem) {
+        foreach ($orderableItems as $basketItem) {
             $pId = (int)$basketItem->getProductId();
             $productInfo = CCatalogSku::GetProductInfo($pId);
             if ($productInfo) {

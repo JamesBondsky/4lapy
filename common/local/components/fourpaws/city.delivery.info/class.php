@@ -1,16 +1,22 @@
 <?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Location\Exception\CityNotFoundException;
-use FourPaws\Location\LocationService;
-use FourPaws\Location\Model\City;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\LocationBundle\Model\City;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -31,6 +37,11 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      */
     protected $deliveryService;
 
+    /**
+     * FourPawsCityDeliveryInfoComponent constructor.
+     * @param CBitrixComponent|null $component
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
@@ -72,11 +83,12 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     }
 
     /**
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws CityNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return $this
+     * @throws CityNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     protected function prepareResult()
     {
@@ -88,7 +100,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $allDeliveryCodes = array_intersect($allDeliveryCodes, $this->arParams['DELIVERY_CODES']);
         }
 
-        /** @var CalculationResult[] $defaultDeliveryResult */
+        /** @var CalculationResultInterface[] $defaultDeliveryResult */
         $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
         $defaultDeliveryResult = $this->getDelivery($defaultResult);
         $defaultPickupResult = $this->getPickup($defaultResult);
@@ -100,7 +112,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $currentPickupResult = $defaultPickupResult;
             $currentCity = $defaultCity;
         } else {
-            /** @var CalculationResult[] $currentDeliveryResult */
+            /** @var CalculationResultInterface[] $currentDeliveryResult */
             $currentResult = $this->getDeliveries($currentLocation['CODE'], $allDeliveryCodes);
             $currentDeliveryResult = $this->getDelivery($currentResult);
             $currentPickupResult = $this->getPickup($currentResult);
@@ -139,40 +151,40 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         if ($currentDeliveryResult) {
             $this->arResult['CURRENT']['DELIVERY'] = [
                 'PRICE'       => $currentDeliveryResult->getPrice(),
-                'FREE_FROM'   => $currentDeliveryResult->getData()['FREE_FROM'],
-                'INTERVALS'   => $currentDeliveryResult->getData()['INTERVALS'],
+                'FREE_FROM'   => $currentDeliveryResult->getFreeFrom(),
+                'INTERVALS'   => $currentDeliveryResult->getIntervals(),
                 'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
-                'PERIOD_TYPE' => $currentDeliveryResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
-                'CODE'        => $currentDeliveryResult->getData()['DELIVERY_CODE'],
+                'PERIOD_TYPE' => $currentDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
+                'CODE'        => $currentDeliveryResult->getDeliveryCode(),
             ];
         }
 
         if ($defaultDeliveryResult) {
             $this->arResult['DEFAULT']['DELIVERY'] = [
                 'PRICE'       => $defaultDeliveryResult->getPrice(),
-                'FREE_FROM'   => $defaultDeliveryResult->getData()['FREE_FROM'],
-                'INTERVALS'   => $defaultDeliveryResult->getData()['INTERVALS'],
+                'FREE_FROM'   => $defaultDeliveryResult->getFreeFrom(),
+                'INTERVALS'   => $defaultDeliveryResult->getIntervals(),
                 'PERIOD_FROM' => $defaultDeliveryResult->getPeriodFrom(),
-                'PERIOD_TYPE' => $defaultDeliveryResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
-                'CODE'        => $defaultDeliveryResult->getData()['DELIVERY_CODE'],
+                'PERIOD_TYPE' => $defaultDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
+                'CODE'        => $defaultDeliveryResult->getDeliveryCode(),
             ];
         }
 
         if ($currentPickupResult) {
             $this->arResult['CURRENT']['PICKUP'] = [
                 'PRICE'       => $currentPickupResult->getPrice(),
-                'CODE'        => $currentPickupResult->getData()['DELIVERY_CODE'],
+                'CODE'        => $currentPickupResult->getDeliveryCode(),
                 'PERIOD_FROM' => $currentPickupResult->getPeriodFrom(),
-                'PERIOD_TYPE' => $currentPickupResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
+                'PERIOD_TYPE' => $currentPickupResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
             ];
         }
 
         if ($defaultPickupResult) {
             $this->arResult['DEFAULT']['PICKUP'] = [
                 'PRICE'       => $defaultPickupResult->getPrice(),
-                'CODE'        => $defaultPickupResult->getData()['DELIVERY_CODE'],
+                'CODE'        => $defaultPickupResult->getDeliveryCode(),
                 'PERIOD_FROM' => $defaultPickupResult->getPeriodFrom(),
-                'PERIOD_TYPE' => $defaultPickupResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
+                'PERIOD_TYPE' => $defaultPickupResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
             ];
         }
 
@@ -183,7 +195,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      * @param string $locationCode
      * @param array $possibleDeliveryCodes
      *
-     * @return null|CalculationResult[]
+     * @return null|CalculationResultInterface[]
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
@@ -191,9 +203,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     }
 
     /**
-     * @param CalculationResult[] $deliveries
+     * @param CalculationResultInterface[] $deliveries
      *
-     * @return null|CalculationResult
+     * @return null|CalculationResultInterface
      */
     protected function getDelivery($deliveries)
     {
@@ -203,7 +215,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
         $filtered = array_filter(
             $deliveries,
-            function (CalculationResult $delivery) {
+            function (CalculationResultInterface $delivery) {
                 return $this->deliveryService->isDelivery($delivery);
             }
         );
@@ -212,9 +224,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     }
 
     /**
-     * @param CalculationResult[] $deliveries
+     * @param CalculationResultInterface[] $deliveries
      *
-     * @return null|CalculationResult
+     * @return null|CalculationResultInterface
      */
     protected function getPickup($deliveries)
     {
@@ -224,7 +236,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
         $filtered = array_filter(
             $deliveries,
-            function (CalculationResult $delivery) {
+            function (CalculationResultInterface $delivery) {
                 return $this->deliveryService->isPickup($delivery);
             }
         );

@@ -86,6 +86,7 @@ $APPLICATION->IncludeComponent(
         'COUNT_ON_PAGE' => 20,
         'PROPERTY_CODE' => 'PRODUCTS',
         'FILTER_FIELD'  => 'XML_ID',
+        'SLIDER'  => 'Y',
     ],
     $component,
     [

@@ -29,6 +29,9 @@ class CategoryQuery extends IblockSectionQuery
             'UF_DISPLAY_NAME',
             'UF_SUFFIX',
             'PICTURE',
+            'UF_LANDING',
+            'UF_LANDING_BANNER',
+            'UF_FAQ_SECTION'
         ];
     }
 

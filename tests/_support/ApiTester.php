@@ -4,8 +4,10 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-use Codeception\Util\HttpCode;
-
+/**
+ * Class ApiTester
+ * @todo more by Db manipulation
+ */
 class ApiTester extends \Codeception\Actor
 {
     use _generated\ApiTesterActions;
@@ -15,107 +17,141 @@ class ApiTester extends \Codeception\Actor
      */
     public function createToken()
     {
-        $this->haveHttpHeader('Content-type', 'application/json');
-        $this->sendGET('/start/');
-        $this->seeResponseCodeIs(HttpCode::OK);
-        $this->seeResponseIsJson();
-        $this->seeResponseMatchesJsonType([
-            'data' => [
-                'access_id' => 'string:!empty',
-            ],
+        $fuserId = $this->haveInDatabase('b_sale_fuser', [
+            'CODE' => md5(uniqid('fuser', true)),
         ]);
 
-        $data = $this->grabDataFromResponseByJsonPath('$.data.access_id');
+        $this->assertGreaterThan(0, $fuserId);
 
-        if (!$data[0]) {
-            throw new RuntimeException('No token was provided');
-        }
-
-        $this->seeInDatabase('api_user_session', [
-            'TOKEN' => $data[0],
+        $token = md5(uniqid('token', true));
+        $tokenId = $this->haveInDatabase('api_user_session', [
+            'USER_AGENT'  => 'Symfony BrowserKit',
+            'REMOTE_ADDR' => '127.0.0.1',
+            'FUSER_ID'    => $fuserId,
+            'TOKEN'       => $token,
         ]);
 
-        return $data[0];
-    }
-
-    /**
-     * @param string $token
-     */
-    public function deleteToken(string $token)
-    {
-        $this->sendDELETE(sprintf('/fake/session/%s/', $token));
-        $this->seeResponseCodeIs(HttpCode::OK);
-        $this->dontSeeInDatabase('api_user_session', [
-            'TOKEN' => $token,
-        ]);
+        $this->assertGreaterThan(0, $tokenId);
+        return $token;
     }
 
     public function createDummyUser()
     {
-        $this->sendGET('/fake/user/dummy/');
-        $this->seeResponseCodeIs(HttpCode::OK);
-        $this->seeResponseMatchesJsonType([
-            'ID'       => 'integer:>0',
-            'EMAIL'    => 'string:email',
-            'PASSWORD' => 'string:!empty',
-        ], '$.user');
-        $userData = $this->grabDataFromResponseByJsonPath('$.user');
-        $user = reset($userData);
+        $login = md5(uniqid('email', true)) . '@4lapy.ru';
 
-        $this->seeInDatabase('b_user', [
-            'ID'             => $user['ID'],
-            'EMAIL'          => $user['EMAIL'],
-            'LOGIN'          => $user['LOGIN'],
-            'PERSONAL_PHONE' => $user['PERSONAL_PHONE'],
+        $data = [
+            'ACTIVE'         => 'Y',
+            'EMAIL'          => $login,
+            'LOGIN'          => $login,
+            'PASSWORD'       => md5(uniqid('pass', true)),
+            'NAME'           => md5(uniqid('name', true)),
+            'LAST_NAME'      => md5(uniqid('lastname', true)),
+            'PERSONAL_PHONE' => '916' . random_int(1000000, 9999999),
+        ];
+
+        $salt = substr(md5(uniqid('salt', true)), 0, 8);
+        $saltedPassword = md5($salt . $data['PASSWORD']);
+        $addData = $data;
+        $addData['PASSWORD'] = $salt . $saltedPassword;
+        $userId = $this->haveInDatabase('b_user', $addData);
+
+        $this->haveInDatabase('b_uts_user', [
+            'VALUE_ID'           => $userId,
+            'UF_PHONE_CONFIRMED' => 1,
         ]);
-        return $user;
+
+        $data['ID'] = $userId;
+
+        $this->haveInDatabase('b_user_group', [
+            'USER_ID'  => $userId,
+            'GROUP_ID' => 6,
+        ]);
+
+        $fuserId = $this->haveInDatabase('b_sale_fuser', [
+            'USER_ID' => $userId,
+        ]);
+        $data['FUSER_ID'] = $fuserId;
+
+        return $data;
     }
 
-    public function deleteDummyUsers()
+    public function login(int $userId, string $token): void
     {
-        $this->sendDELETE('/fake/user/dummy/');
-        $this->seeResponseCodeIs(HttpCode::OK);
-        $this->dontSeeInDatabase('b_user', [
-            'SECOND_NAME' => 'fixture',
-        ]);
+        if ($fuserId = $this->grabFromDatabase('b_sale_fuser', 'ID', ['USER_ID' => $userId,])) {
+            $this->updateInDatabase(
+                'api_user_session',
+                [
+                    'FUSER_ID' => $fuserId,
+                ],
+                [
+                    'TOKEN' => $token,
+                ]
+            );
+        } else {
+            $fuserId = $this->grabFromDatabase('b_sale_fuser', 'FUSER_ID', [
+                'TOKEN' => $token,
+            ]);
+            $this->assertGreaterThan(0, $fuserId);
+            $this->updateInDatabase(
+                'b_sale_fuser',
+                [
+                    'USER_ID' => $userId,
+                ],
+                [
+                    'FUSER_ID' => $fuserId,
+                ]
+            );
+        }
     }
 
-    public function deleteDummyUser(int $id)
+    /**
+     * @param int $userId
+     * @throws Exception
+     * @throws \Codeception\Exception\ModuleException
+     * @return string
+     */
+    public function getCard(int $userId): string
     {
-        $this->sendDELETE(sprintf('/fake/user/dummy/%s/', $id));
-        $this->seeResponseCodeIs(HttpCode::OK);
-        $this->dontSeeInDatabase('b_user', [
-            'ID'          => $id,
-            'SECOND_NAME' => 'fixture',
+        $cardNumber = '267700' . random_int(1000000, 9999999);
+        $data = $this->grabColumnsFromDatabase('b_uts_user', [
+            'VALUE_ID' => $userId,
         ]);
+
+        if ($data['UF_DISCOUNT_CARD']) {
+            return $data['UF_DISCOUNT_CARD'];
+        }
+
+        if (!$data['UF_DISCOUNT_CARD'] ?? '') {
+            $this->updateInDatabase('b_uts_user', [
+                'UF_DISCOUNT_CARD' => $cardNumber,
+            ]);
+        }
+
+        return $cardNumber;
     }
 
-    public function deleteUser(int $id)
+    /**
+     * @param int $userId
+     * @throws \Codeception\Exception\ModuleException
+     * @throws Exception
+     * @return array
+     */
+    public function getSettings(int $userId): array
     {
-        $this->sendDELETE(sprintf('/fake/user/%s/', $id));
-        $this->seeResponseCodeIs(HttpCode::OK);
-        $this->dontSeeInDatabase('b_user', [
-            'ID' => $id,
-        ]);
-    }
-
-
-    public function login(string $token, string $phone, string $password)
-    {
-        $this->haveHttpHeader('Content-type', 'application/json');
-        $this->sendPOST('/user_login/', [
-            'token'           => $token,
-            'user_login_info' => [
-                'login'    => $phone,
-                'password' => $password,
-            ],
+        $data = $this->grabColumnsFromDatabase('b_uts_user', [
+            'VALUE_ID' => $userId,
         ]);
 
-        $this->seeResponseCodeIs(HttpCode::OK);
-        $this->seeResponseIsJson();
-        $this->seeResponseMatchesJsonType([
-            'data'  => 'array:!empty',
-            'error' => 'array:empty',
-        ]);
+        return [
+            'interview_messaging_enabled' => $data['UF_INTERVIEW_MES'] === '1',
+            'bonus_messaging_enabled'     => $data['UF_BONUS_MES'] === '1',
+            'feedback_messaging_enabled'  => $data['UF_FEEDBACK_MES'] === '1',
+            'push_order_status'           => $data['UF_PUSH_ORD_STAT'] === '1',
+            'push_news'                   => $data['UF_PUSH_NEWS'] === '1',
+            'push_account_change'         => $data['UF_PUSH_ACC_CHANGE'] === '1',
+            'sms_messaging_enabled'       => $data['UF_SMS_MES'] === '1',
+            'email_messaging_enabled'     => $data['UF_EMAIL_MES'] === '1',
+            'gps_messaging_enabled'       => $data['UF_GPS_MESS'] === '1',
+        ];
     }
 }

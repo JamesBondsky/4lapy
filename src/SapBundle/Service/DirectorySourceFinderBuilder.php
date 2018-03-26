@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service;
 
 use InvalidArgumentException;
@@ -19,8 +23,8 @@ class DirectorySourceFinderBuilder
      *
      * @throws InvalidArgumentException
      *
-     * @return Finder
      * @throws IOException
+     * @return Finder
      */
     public function build(string $nameMask, string $path, string $fileType = 'xml'): Finder
     {

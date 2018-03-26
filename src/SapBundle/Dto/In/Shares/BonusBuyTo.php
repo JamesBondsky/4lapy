@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use Doctrine\Common\Collections\Collection;
@@ -52,10 +56,10 @@ class BonusBuyTo
     /**
      * Группа данных о единице подарка
      *
+     * @Serializer\XmlList(inline=true, entry="BONUS_ITEM")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyToItem>")
-     * @Serializer\SerializedName("BONUS_ITEM")
      *
-     * @var Collection|BonusBuyToItem[]
+     * @var BonusBuyToItem[]|Collection
      */
     protected $bonusBuyTotems;
 
@@ -115,7 +119,7 @@ class BonusBuyTo
     }
 
     /**
-     * @return Collection|BonusBuyToItem[]
+     * @return BonusBuyToItem[]|Collection
      */
     public function getBonusBuyTotems(): Collection
     {
@@ -123,7 +127,7 @@ class BonusBuyTo
     }
 
     /**
-     * @param Collection|BonusBuyToItem[] $bonusBuyTotems
+     * @param BonusBuyToItem[]|Collection $bonusBuyTotems
      *
      * @return BonusBuyTo
      */

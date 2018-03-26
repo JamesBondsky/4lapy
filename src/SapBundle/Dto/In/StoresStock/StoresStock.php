@@ -1,11 +1,16 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\StoresStock;
 
 use Doctrine\Common\Collections\Collection;
 
 /**
  * Class StoresStock
+ *
  * @package FourPaws\SapBundle\Dto\In
  */
 class StoresStock

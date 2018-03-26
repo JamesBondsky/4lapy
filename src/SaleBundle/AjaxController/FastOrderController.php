@@ -22,12 +22,10 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\SmsService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -201,8 +199,8 @@ class FastOrderController extends Controller
             $logger = LoggerFactory::create('params');
             $logger->error('Ошибка параметров - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
-        } catch (OrderCreateException|FastOrderCreateException $e) {
-            return $this->ajaxMess->getOrderCreateError($e->getMessage());
+        } catch (OrderCreateException $e) {
+            return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
         } catch (NotImplementedException|NotSupportedException|ObjectNotFoundException|\Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->error('Системная ошибка - ' . $e->getMessage());

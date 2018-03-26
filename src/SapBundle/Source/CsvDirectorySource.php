@@ -1,7 +1,10 @@
 <?php
 
-namespace FourPaws\SapBundle\Source;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
 
+namespace FourPaws\SapBundle\Source;
 
 class CsvDirectorySource extends DirectorySource
 {

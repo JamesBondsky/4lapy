@@ -19,6 +19,7 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -147,12 +148,9 @@ class AddressService
                 /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress($address);
             }
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $address->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' . $address->getUserId(),
+            ]);
         }
 
         return $res;
@@ -226,6 +224,10 @@ class AddressService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
+        if($entity->getUserId() === 0){
+            $entity->setUserId($updateEntity->getUserId());
+        }
+
         if ($entity->isMain()) {
             $this->disableMainItem();
         }
@@ -238,12 +240,9 @@ class AddressService
                 /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress($entity);
             }
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $updateEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' .$updateEntity->getUserId(),
+            ]);
         }
 
         return $res;
@@ -279,12 +278,9 @@ class AddressService
                 /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress(new Address());
             }
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $deleteEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' .$deleteEntity->getUserId(),
+            ]);
         }
         return $res;
     }

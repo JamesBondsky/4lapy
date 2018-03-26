@@ -1,5 +1,8 @@
 <?php
 
+use FourPaws\Catalog\Model\Filter\BrandFilter;
+use FourPaws\Catalog\Model\Filter\SectionFilter;
+use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -7,12 +10,6 @@ use FourPaws\Enum\IblockType;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-
-/**
- * Блок "Популярные бренды" в каталоге
- *
- * @updated: 09.02.2018
- */
 
 /** @global $APPLICATION */
 /** @var array $arParams */
@@ -29,24 +26,25 @@ if (isset($arParams['categoryRequest'])) {
     if ($categoryRequest instanceof CatalogCategorySearchRequestInterface) {
         /** @var CatalogCategorySearchRequestInterface $categoryRequest */
         $filterCollection = $categoryRequest->getCategory()->getFilters();
-        /** @var \FourPaws\Catalog\Model\Filter\BrandFilter $brandFilter */
+        /** @var BrandFilter $brandFilter */
         $brandFilter = $filterCollection->filter(
             function ($collectionItem) {
-                return $collectionItem instanceof \FourPaws\Catalog\Model\Filter\BrandFilter;
+                return $collectionItem instanceof BrandFilter;
             }
         )->first();
-        if ($brandFilter->hasAvailableVariants()) {
+
+        if ($brandFilter && $brandFilter->hasAvailableVariants()) {
             $isFilterSet = true;
             $GLOBALS['arCatalogPopularBrandsFilterExt']['=CODE'] = [];
             foreach ($brandFilter->getAvailableVariants() as $item) {
-                /** @var \FourPaws\Catalog\Model\Variant $item */
+                /** @var Variant $item */
                 $GLOBALS['arCatalogPopularBrandsFilterExt']['=CODE'][] = $item->getValue();
             }
             $GLOBALS['arCatalogPopularBrandsFilterExt']['=CODE'] = array_unique($GLOBALS['arCatalogPopularBrandsFilterExt']['=CODE']);
             // Ссылки должны вести на карточку бренда с предустановленным фильтром по разделу,
             // за это там отвечает фильтр \FourPaws\Catalog\Model\Filter\SectionFilter
             // сгенерируем ссылку
-            $filterCode = (new \FourPaws\Catalog\Model\Filter\SectionFilter())->getFilterCode();
+            $filterCode = (new SectionFilter())->getFilterCode();
             $arParams['ADD_URL_PARAMS'] = $filterCode.'='.$categoryRequest->getCategory()->getId();
         }
     }

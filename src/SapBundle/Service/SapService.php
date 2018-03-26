@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service;
 
 use FourPaws\SapBundle\Consumer\ConsumerRegistryInterface;
@@ -33,8 +37,7 @@ class SapService
         ConsumerRegistryInterface $consumerRegistry,
         SourceRegistryInterface $sourceRegistry,
         PipelineRegistry $pipelineRegistry
-    )
-    {
+    ) {
         $this->consumerRegistry = $consumerRegistry;
         $this->sourceRegistry = $sourceRegistry;
         $this->pipelineRegistry = $pipelineRegistry;

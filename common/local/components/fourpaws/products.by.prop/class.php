@@ -9,7 +9,9 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use FourPaws\Catalog\Collection\ProductCollection;
-use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /** @noinspection AutoloadingIssuesInspection
  *
@@ -49,6 +51,7 @@ class ProductsByProp extends CBitrixComponent
     {
         $params['IBLOCK_ID'] = (int)$params['IBLOCK_ID'];
         $params['ITEM_ID'] = (int)$params['ITEM_ID'];
+        $params['SLIDER'] = $params['SLIDER'] ?? 'N';
         $params['COUNT_ON_PAGE'] = (int)$params['COUNT_ON_PAGE'];
         if ($params['COUNT_ON_PAGE'] === 0) {
             $params['COUNT_ON_PAGE'] = 20;
@@ -56,6 +59,7 @@ class ProductsByProp extends CBitrixComponent
         $params['PROPERTY_CODE'] = $params['PROPERTY_CODE'] ?? '';
         $params['FILTER_FIELD'] = $params['FILTER_FIELD'] ?? 'ID';
         $params['TITLE'] = $params['TITLE'] ?? 'Товары';
+        $params['SHOW_PAGE_NAVIGATION'] = $params['SHOW_PAGE_NAVIGATION'] ?? true;
 
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
         $params['CACHE_TYPE'] = $params['CACHE_TIME'] === 0 ? 'N' : $params['CACHE_TYPE'];
@@ -80,8 +84,8 @@ class ProductsByProp extends CBitrixComponent
             $this->arParams['CURRENT_PAGE'] = 1;
         }
 
-        $this->arResult['PRODUCTS'] = new ProductCollection(new \CDBResult());
-        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
+        if ($this->startResultCache()) {
             parent::executeComponent();
 
             $res = \CIBlockElement::GetProperty($this->arParams['IBLOCK_ID'], $this->arParams['ITEM_ID'], '', '',
@@ -93,21 +97,29 @@ class ProductsByProp extends CBitrixComponent
                 }
             }
             if (!empty($products)) {
-                $query = new ProductQuery();
-                if($this->arParams['COUNT_ON_PAGE'] > 0) {
-                    $query->withNav(['nPageSize' => $this->arParams['COUNT_ON_PAGE'], 'iNumPage' => $this->arParams['CURRENT_PAGE']]);
+                $query = new OfferQuery();
+                if ($this->arParams['COUNT_ON_PAGE'] > 0) {
+                    if ($this->arParams['SHOW_PAGE_NAVIGATION'] && $this->arParams['SLIDER'] !== 'Y') {
+                        $query->withNav([
+                            'nPageSize' => $this->arParams['COUNT_ON_PAGE'],
+                            'iNumPage'  => $this->arParams['CURRENT_PAGE'],
+                        ]);
+                    } else {
+                        $query->withNav([
+                            'nTopCount' => $this->arParams['COUNT_ON_PAGE'],
+                        ]);
+                    }
                 }
-                $this->arResult['PRODUCTS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
+                $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
             }
-            $this->includeComponentTemplate();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $this->instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('iblock_id_%s', $this->arParams['IBLOCK_ID']));
-                $tagCache->registerTag(sprintf('iblock_item_id_%s', $this->arParams['ITEM_ID']));
-                $tagCache->endTagCache();
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'product:by:prop',
+                'product:by:prop:'.$this->arParams['ITEM_ID'],
+                'iblock:item:'.$this->arParams['ITEM_ID']
+            ]);
+
+            $this->includeComponentTemplate();
         }
         return true;
     }

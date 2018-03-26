@@ -63,7 +63,7 @@ class BasketController extends Controller
     public function addAction(Request $request): JsonResponse
     {
         $offerId = (int)$request->get('offerId', 0);
-        if($offerId === 0){
+        if ($offerId === 0) {
             $offerId = (int)$request->get('offerid', 0);
         }
         $quantity = (int)$request->get('quantity', 1);
@@ -111,9 +111,9 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml(),
+                'basket'     => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml()
+                'fastOrder' => $this->basketViewService->getFastOrderHtml(true)
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -152,6 +152,10 @@ class BasketController extends Controller
     public function updateAction(Request $request)
     {
         $items = $request->get('items', []);
+        /** fix для быстрого заказа */
+        if (empty($items)) {
+            $items[] = ['basketId' => $request->get('basketId'), 'quantity' => $request->get('quantity')];
+        }
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
@@ -168,9 +172,9 @@ class BasketController extends Controller
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml(),
+                'basket'     => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml()
+                'fastOrder'  => $this->basketViewService->getFastOrderHtml(true),
             ];
 
             $response = JsonSuccessResponse::createWithData(
@@ -196,6 +200,8 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \InvalidArgumentException
      * @throws \RuntimeException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\NotSupportedException
@@ -242,7 +248,8 @@ class BasketController extends Controller
                 ];
 
             }
-            $unselectedCount = $this->basketService->getAdder()->getExistGiftsQuantity($giftGroup, false);
+            /** @noinspection PhpUndefinedMethodInspection */
+            $unselectedCount = $this->basketService->getAdder('gift')->getExistGiftsQuantity($giftGroup, false);
             $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
             $data = [
                 'count' => $unselectedCount,
@@ -267,20 +274,20 @@ class BasketController extends Controller
      * @param Request $request
      *
      * @throws \RuntimeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Exception
      *
      * @return JsonErrorResponse|JsonResponse
      */
-    public function selectGiftAction(Request $request) {
+    public function selectGiftAction(Request $request)
+    {
         $response = null;
         $offerId = (int)$request->get('offerId', 0);
         $discountId = (int)$request->get('actionId', 0);
         try {
-            $this->basketService->getAdder()->selectGift($offerId, $discountId);
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->basketService->getAdder('gift')->selectGift($offerId, $discountId);
         } catch (BaseExceptionInterface $e) {
             $response = JsonErrorResponse::create(
                 $e->getMessage(),
@@ -289,7 +296,7 @@ class BasketController extends Controller
                 ['reload' => true]
             );
         }
-        if(null === $response) {
+        if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
                 '',
                 [
@@ -316,18 +323,20 @@ class BasketController extends Controller
      *
      * @return JsonErrorResponse|JsonResponse
      */
-    public function refuseGiftAction(Request $request) {
+    public function refuseGiftAction(Request $request)
+    {
         $response = null;
         $giftBasketId = (int)$request->get('giftId', 0);
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
-            $gift = $this->basketService->getAdder()->getExistGifts(null, true);
+            /** @noinspection PhpUndefinedMethodInspection */
+            $gift = $this->basketService->getAdder('gift')->getExistGifts(null, true);
             if(!isset($gift[$giftBasketId])) {
                 throw new NotFoundException('Подарок не найден');
             }
             $gift = $gift[$giftBasketId];
-            if($gift['quantity'] === 1) {
+            if ($gift['quantity'] === 1) {
                 $this->basketService->deleteOfferFromBasket($giftBasketId);
             } else {
                 $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - 1);
@@ -340,7 +349,7 @@ class BasketController extends Controller
                 ['reload' => true]
             );
         }
-        if(null === $response) {
+        if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
                 '',
                 [
