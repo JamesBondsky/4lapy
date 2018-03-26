@@ -362,6 +362,14 @@ class AjaxMess
     /**
      * @return JsonResponse
      */
+    public function getCardNotFoundError(): JsonResponse
+    {
+        return $this->getJsonError('cardNotFound', 'Карта не найдена');
+    }
+
+    /**
+     * @return JsonResponse
+     */
     public function getNotAllowedEASendError(): JsonResponse
     {
         return $this->getJsonError('notAllowedEASend', 'Отправка писем недоступна - необходимо подтвердить почту');
