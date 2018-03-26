@@ -100,7 +100,8 @@ class OrderDeliveryValidator extends ConstraintValidator
             }
 
             $intervalIndex = $entity->getDeliveryInterval();
-            $intervals = $delivery->getAvailableIntervals($dateIndex);
+            $delivery->setDateOffset($entity->getDeliveryDate());
+            $intervals = $delivery->getAvailableIntervals();
             if (!empty($intervals)) {
                 if (($intervalIndex < 1) || $intervalIndex > $intervals->count()) {
                     $this->context->addViolation($constraint->deliveryIntervalMessage);
