@@ -348,7 +348,7 @@ class AjaxMess
      */
     public function getWrongCardNumber(): JsonResponse
     {
-        return $this->getJsonError('wrongCardNumber', 'Номер карты не верный');
+        return $this->getJsonError('wrongCardNumber', 'Номер карты неверный');
     }
 
     /**
