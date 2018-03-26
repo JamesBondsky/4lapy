@@ -264,7 +264,7 @@ abstract class IblockElementRepository
         $name = $name ?: \md5(\microtime());
         $code = $code ?: $this->slugify->slugify($name);
 
-        return IblockHelper::generateUniqueCode($this->getIblockId(), $name, $code);
+        return IblockHelper::generateUniqueCode($this->getIblockId(), $code);
     }
 
     /**

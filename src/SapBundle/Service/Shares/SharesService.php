@@ -237,7 +237,7 @@ class SharesService implements LoggerAwareInterface
      */
     private function tryAddShare(Share $share)
     {
-        $share->withCode(IblockHelper::generateUniqueCode($share->getIblockId(), $share->getName(), $this->slugify->slugify($share->getName())));
+        $share->withCode(IblockHelper::generateUniqueCode($share->getIblockId(), $this->slugify->slugify($share->getName())));
 
         $result = $this->repository->create($share);
 

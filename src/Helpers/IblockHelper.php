@@ -17,12 +17,11 @@ class IblockHelper
 {
     /**
      * @param int $iBlockId
-     * @param string $name
      * @param string $code
      *
      * @return string
      */
-    public static function generateUniqueCode(int $iBlockId, string $name, string $code): string
+    public static function generateUniqueCode(int $iBlockId, string $code): string
     {
         $i = 0;
         while ($i < 10) {
