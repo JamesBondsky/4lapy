@@ -98,6 +98,8 @@ if($category->isLanding()) {
             ) ?>
         </div>
         <?php if($category->isLanding()) {
+            global $faqCategoryId;
+            $faqCategoryId = $category->getUfFaqSection();
             $APPLICATION->IncludeComponent(
                 'bitrix:main.include',
                 '',
@@ -112,6 +114,9 @@ if($category->isLanding()) {
                 ]
             );
 
+            $filterName = 'catalogLandingNewsFilter';
+            global ${$filterName};
+            ${$filterName} = ['=PROPERTY_IN_LANDING'=>true];
             $APPLICATION->IncludeComponent('fourpaws:items.list',
                 'in_catalog',
                 [
@@ -129,7 +134,7 @@ if($category->isLanding()) {
                     'FIELD_CODE'             => [
                         '',
                     ],
-                    'FILTER_NAME'            => '',
+                    'FILTER_NAME'            => $filterName,
                     'IBLOCK_ID'              => [
                         IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
                         IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),

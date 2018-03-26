@@ -72,6 +72,9 @@ class Category extends IblockSection implements FilterInterface
      */
     protected $UF_LANDING_BANNER;
 
+    /** @var string */
+    protected $UF_FAQ_SECTION;
+
     /**
      * @var FilterCollection
      */
@@ -490,5 +493,21 @@ class Category extends IblockSection implements FilterInterface
     public function setUfLandingBanner($ufLandingBanner): void
     {
         $this->UF_LANDING_BANNER = $ufLandingBanner;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUfFaqSection()
+    {
+        return $this->UF_FAQ_SECTION;
+    }
+
+    /**
+     * @param mixed $ufFaqSection
+     */
+    public function setUfFaqSection($ufFaqSection): void
+    {
+        $this->UF_FAQ_SECTION = $ufFaqSection;
     }
 }

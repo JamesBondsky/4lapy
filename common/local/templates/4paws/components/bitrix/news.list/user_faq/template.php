@@ -22,28 +22,25 @@
 if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     return;
 }
-?>
-<div class="fleas-protection-block__questions--block js-question-block" data-type="users-questions">
-    <?php foreach ($arResult['ITEMS'] as $item) {
-        if (empty($item['PREVIEW_TEXT']) || empty($item['DETAIL_TEXT'])) {
-            continue;
-        } ?>
-        <div class="fleas-protection-block__questions--item">
-            <div class="fleas-protection-block__questions--item-info">
-                <?= $item['NAME'] ?>
-                <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
-                    <span><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>
-                <?php } ?>
-            </div>
-            <div class="fleas-protection-block__questions--item-title">
-                <?= $item['PREVIEW_TEXT'] ?>
-            </div>
-            <div class="fleas-protection-block__questions--item-dropdown">
-                <?= $item['DETAIL_TEXT'] ?>
-            </div>
-        </div>
-    <?php }
-    if ($arParams['DISPLAY_BOTTOM_PAGER']) {
-        echo $arResult['NAV_STRING'];
+foreach ($arResult['ITEMS'] as $item) {
+    if (empty($item['PREVIEW_TEXT']) || empty($item['DETAIL_TEXT'])) {
+        continue;
     } ?>
-</div>
+    <div class="fleas-protection-block__questions--item">
+        <div class="fleas-protection-block__questions--item-info">
+            <?= $item['NAME'] ?>
+            <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
+                <span><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>
+            <?php } ?>
+        </div>
+        <div class="fleas-protection-block__questions--item-title">
+            <?= $item['PREVIEW_TEXT'] ?>
+        </div>
+        <div class="fleas-protection-block__questions--item-dropdown">
+            <?= $item['DETAIL_TEXT'] ?>
+        </div>
+    </div>
+<?php }
+if ($arParams['DISPLAY_BOTTOM_PAGER']) {
+    echo $arResult['NAV_STRING'];
+} ?>
