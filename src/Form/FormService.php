@@ -304,11 +304,13 @@ class FormService
             $filter = $params['type'];
         }
         $obFormField = new \CFormField();
-        $res         = $obFormField->GetList($formId, $type, $by, $order, $filter);
+        $isFiltered = false;
+        $res         = $obFormField->GetList($formId, $type, $by, $order, $filter, $isFiltered);
         $items       = [];
         $obAnswer    = new \CFormAnswer();
         while ($item = $res->Fetch()) {
-            $resAnswer = $obAnswer->GetList($item['ID'], $by, $order, ['ACTIVE' => 'Y']);
+            $isFilteredAnswer = false;
+            $resAnswer = $obAnswer->GetList($item['ID'], $by, $order, ['ACTIVE' => 'Y'], $isFilteredAnswer);
             while ($itemAnswer = $resAnswer->Fetch()) {
                 foreach ($itemAnswer as $key => $val) {
                     if ($key === 'ID') {
