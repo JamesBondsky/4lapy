@@ -305,7 +305,7 @@ class DeliverySchedule extends Base
      */
     public function getType(): ?string
     {
-        return $this->type ;
+        return $this->type;
     }
 
     /**
@@ -466,10 +466,10 @@ class DeliverySchedule extends Base
     /**
      * @return string
      */
-     public function getXmlId(): string
-     {
+    public function getXmlId(): string
+    {
         return $this->xmlId;
-     }
+    }
 
     /**
      * @param string $xmlId
@@ -571,7 +571,7 @@ class DeliverySchedule extends Base
             }
 
             if (!empty($results)) {
-                return max($results);
+                return min($results);
             }
 
             return null;
@@ -590,7 +590,7 @@ class DeliverySchedule extends Base
                         continue;
                     }
 
-                    if ($deliveryDate > $date) {
+                    if ($deliveryDate >= $date) {
                         $results[] = $deliveryDate;
                     }
                 }
@@ -602,21 +602,21 @@ class DeliverySchedule extends Base
             case self::TYPE_BY_WEEK:
                 $weekNumbers = $this->getWeekNumbers();
                 $weekDates = [];
-                $weekNumbers[] = 0;
+
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
-                    $weekDate->setISODate($date->format('Y'), $weekNumber - 1);
-                    if ($weekDate->format('W') < $from->format('W')) {
+                    $weekDate->setISODate($date->format('Y'), $weekNumber);
+                    if ($weekDate->format('W') < $date->format('W')) {
                         $weekDate->modify('+1 year');
                     }
 
-                    $weekDates[] = ($weekDate > $from) ? $weekDate : $from;
+                    $weekDates[] = ($weekDate > $date) ? $weekDate : $date;
                 }
 
                 $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
                 break;
             case self::TYPE_WEEKLY:
-                $result =  $getByDay($from);
+                $result = $getByDay($from);
                 break;
         }
 

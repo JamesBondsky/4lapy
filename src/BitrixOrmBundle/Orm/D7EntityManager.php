@@ -274,8 +274,6 @@ class D7EntityManager implements D7EntityManagerInterface
     {
         $validationResult = $this->validator->validate($entity, $constraints, [$crudAction]);
         if (0 !== $validationResult->count()) {
-            dump($validationResult);
-            die();
             throw new ValidationException('Wrong entity passed to ' . $crudAction);
         }
     }

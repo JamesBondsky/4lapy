@@ -3,7 +3,9 @@
 namespace FourPaws\CatalogBundle\Service;
 
 
+use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\BitrixOrm\Model\Share;
 
 /**
  * Class DiscountMarkService
@@ -12,14 +14,14 @@ use FourPaws\Catalog\Model\Offer;
  */
 final class MarkService
 {
-    const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
-    const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
-    const MARK_HIT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>';
-    const MARK_NEW_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/new.svg" alt="" role="presentation"/>';
+    public const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
+    public const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
+    public const MARK_HIT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>';
+    public const MARK_NEW_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/new.svg" alt="" role="presentation"/>';
 
-    const DEFAULT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#da291c;data-background:#da291c;">%s</span>';
-    const YELLOW_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">%s</span>';
-    const GREEN_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#44af2b;data-background:#44af2b;">%s</span>';
+    public const DEFAULT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#da291c;data-background:#da291c;">%s</span>';
+    public const YELLOW_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">%s</span>';
+    public const GREEN_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#44af2b;data-background:#44af2b;">%s</span>';
 
 
     /**
@@ -43,7 +45,7 @@ final class MarkService
         if ($content) {
             return \sprintf($this->getMarkTemplate($offer), $content);
         }
-        
+
         return '';
     }
 
@@ -66,7 +68,13 @@ final class MarkService
             return self::MARK_SALE_IMAGE;
         }
 
-        if ($offer->hasAction()) {
+        if ($offer->isShare()) {
+            /** @var Share $share */
+            $share  = $offer->getShare()->first();
+            if(!empty($share->getPropertyLabel())){
+                return $share->getPropertyLabel();
+            }
+
             return self::MARK_GIFT_IMAGE;
         }
 

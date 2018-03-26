@@ -56,8 +56,8 @@ class BonusBuyFrom
     /**
      * Группа данных о позиции предпосылки акции
      *
+     * @Serializer\XmlList(inline=true, entry="PURCHASE_ITEM")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyFromItem>")
-     * @Serializer\SerializedName("PURCHASE_ITEM")
      *
      * @var BonusBuyFromItem[]|Collection
      */
@@ -128,7 +128,7 @@ class BonusBuyFrom
      */
     public function getBonusBuyFromItems(): Collection
     {
-        return $this->bonusBuyFromItems->filter(function ($key, $item) {
+        return $this->bonusBuyFromItems->filter(function ($item) {
             /**
              * @var $item BonusBuyFromItem
              */

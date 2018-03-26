@@ -96,7 +96,7 @@ class DeliveryTimeHelper
                     $dateFormat = 'll, j F';
                 }
                 if ($options['SHOW_TIME']) {
-                    $dateFormat .= ' в H:00';
+                    $dateFormat .= ' с H:00';
                 }
 
                 $result = DateHelper::formatDate($dateFormat, $date->getTimestamp());

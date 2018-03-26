@@ -988,6 +988,70 @@ class Store extends Base
     }
 
     /**
+     * Возвращает дату отгрузки
+     *
+     * @param \DateTime $date
+     * @return \DateTime
+     */
+    public function getShipmentDate(\DateTime $date): \DateTime
+    {
+        $items = [
+            11 => $this->getShipmentTill11(),
+            13 => $this->getShipmentTill13(),
+            18 => $this->getShipmentTill18(),
+        ];
+
+        $tmpDate = clone $date;
+        $currentDay = (int)$tmpDate->format('w');
+        $currentHour = (int)$tmpDate->format('G');
+        $results = [];
+
+        /**
+         * @var int $maxHour
+         * @var array $days
+         */
+        foreach ($items as $maxHour => $days) {
+            if (empty($days)) {
+                continue;
+            }
+
+            $res = [];
+            foreach ($days as $day) {
+                $diff = $day - $currentDay;
+                /**
+                 * Если текущий день является днем отгрузки
+                 */
+                if ($diff === 0) {
+                    /**
+                     * Если текущий час меньше времени окончания отгрузки,
+                     * то отгрузка в текущий день, иначе - через неделю
+                     */
+                    if ($currentHour < $maxHour) {
+                        $res[] = 0;
+                    } else {
+                        $res[] = 7;
+                    }
+                    continue;
+                }
+
+                /**
+                 * если diff < 0, то поставка на следующей неделе, соответственно, добавляем 7 дней
+                 */
+                $res[] = ($diff > 0) ? $diff : $diff + 7;
+            }
+
+            $results[] = min($res);
+        }
+
+        $modifier = empty($results) ? 0 : min($results);
+        if ($modifier) {
+            $tmpDate->modify(sprintf('+%s days', $modifier));
+        }
+
+        return $tmpDate;
+    }
+
+    /**
      * @return string
      */
     public function serialize(): string

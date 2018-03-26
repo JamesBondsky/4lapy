@@ -31,10 +31,13 @@ if (!$addresses || $addresses->isEmpty()) {
         $selectedAddressId = $storage->getAddressId();
     } elseif ($storage->getStreet()) {
         $showNewAddressForm = true;
-        $showNewAddressFormHeader = true;
     } else {
         $selectedAddressId = $addresses->first()->getId();
     }
+}
+
+if ($storage->getUserId()) {
+    $showNewAddressFormHeader = true;
 }
 
 ?>
@@ -77,7 +80,7 @@ if (!$addresses || $addresses->isEmpty()) {
         </label>
     </div>
 </div>
-<div class="b-radio-tab__new-address js-form-new-address" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
+<div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields active" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
             <?php if ($showNewAddressFormHeader) {
@@ -221,7 +224,9 @@ if (!$addresses || $addresses->isEmpty()) {
 </div>
 <?php
 if (!$delivery->getIntervals()->isEmpty()) {
-    $availableIntervals = $delivery->getAvailableIntervals($storage->getDeliveryDate());
+    $tmpDelivery = clone $delivery;
+    $tmpDelivery->setDateOffset($storage->getDeliveryDate());
+    $availableIntervals = $tmpDelivery->getAvailableIntervals();
     ?>
     <div class="b-input-line b-input-line--interval">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
