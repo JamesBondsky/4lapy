@@ -2,6 +2,11 @@
 
 namespace FourPaws\BitrixOrm\Type;
 
+/**
+ * Class TextContent
+ *
+ * @package FourPaws\BitrixOrm\Type
+ */
 class TextContent
 {
     const TYPE_HTML = 'html';
@@ -19,9 +24,14 @@ class TextContent
      */
     private $text = '';
 
-    public function __construct($fields = null)
+    /**
+     * TextContent constructor.
+     *
+     * @param array|null $fields
+     */
+    public function __construct(?array $fields = null)
     {
-        if (\is_array($fields) && isset($fields['TYPE'], $fields['TEXT'])) {
+        if (null !== $fields && isset($fields['TYPE'], $fields['TEXT'])) {
             $this->withType($fields['TYPE'])
                 ->withText($fields['TEXT']);
         }
@@ -57,8 +67,9 @@ class TextContent
     public function getText(): string
     {
         if ($this->matchType(self::TYPE_HTML)) {
-            return html_entity_decode($this->text);
+            return \html_entity_decode($this->text);
         }
+
         return $this->text;
     }
 
@@ -69,7 +80,7 @@ class TextContent
      */
     private function matchType($type): bool
     {
-        return strtolower($this->getType()) === $type;
+        return \strtolower($this->getType()) === $type;
     }
 
     /**

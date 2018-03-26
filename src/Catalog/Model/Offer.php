@@ -21,6 +21,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
+use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -28,6 +29,7 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Helpers\WordHelper;
@@ -351,6 +353,9 @@ class Offer extends IblockElement
     protected $isCounted = false;
 
     protected $bonus = 0;
+
+    /** @var ShareCollection */
+    protected $share;
 
     public function __construct(array $fields = [])
     {
@@ -1075,6 +1080,7 @@ class Offer extends IblockElement
         return $this->bonus;
     }
 
+    
     /**
      * @param int $percent
      * @param int $quantity
@@ -1091,13 +1097,14 @@ class Offer extends IblockElement
             return $bonusText;
         }
 
-        $div = $bonus - \floor($bonus) * 100;
+        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
+        $floorBonus = \floor($bonus);
+        $div = ($bonus - $floorBonus) * 100;
 
         return \sprintf(
-            '+ %d %s %s',
-            \round($bonus, 2, \PHP_ROUND_HALF_DOWN),
+            '+ %s %s',
             WordHelper::numberFormat($bonus),
-            WordHelper::declension($div ?: \floor($bonus), ['бонус', 'бонуса', 'бонусов'])
+            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
         );
     }
 
@@ -1188,6 +1195,7 @@ class Offer extends IblockElement
 
     /**
      * @param StockCollection $allStocks
+     *
      * @return Offer
      */
     public function withAllStocks(StockCollection $allStocks): Offer
@@ -1282,6 +1290,51 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return bool
+     */
+    public function isShare(): bool
+    {
+        return !$this->getShare()->isEmpty();
+    }
+
+    /**
+     * @return ShareCollection
+     */
+    public function getShare(): ShareCollection
+    {
+        if ($this->share === null) {
+            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter([
+                'ACTIVE'            => 'Y',
+                'ACTIVE_DATE'       => 'Y',
+                'PROPERTY_PRODUCTS' => $this->getXmlId(),
+            ])->withSelect([
+                'ID',
+                'NAME',
+                'IBLOCK_ID',
+                'PREVIEW_TEXT',
+                'DATE_ACTIVE_FROM',
+                'DATE_ACTIVE_TO',
+                'PROPERTY_LABEL'
+            ])->exec();
+        }
+        return $this->share;
+    }
+
+    /**
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    public function isAvailable(): bool
+    {
+        /** @todo сделать обработку исключений */
+        return $this->isActive() && $this->getQuantity() > 0 && !$this->isByRequest();
+    }
+
+    /**
      * Check and set optimal price, discount, old price with bitrix discount
      *
      * @throws LoaderException
@@ -1308,9 +1361,9 @@ class Offer extends IblockElement
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
         $fields = [
-            'PRODUCT_ID' => $this->getId(),
-            'QUANTITY' => 1,
-            'MODULE' => 'catalog',
+            'PRODUCT_ID'             => $this->getId(),
+            'QUANTITY'               => 1,
+            'MODULE'                 => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
 

@@ -27,7 +27,7 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
     {
         $this->withLogName(
             \sprintf(
-                'component:%s',
+                'component_%s',
                 static::class
             )
         );

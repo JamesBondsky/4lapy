@@ -20,6 +20,10 @@ use FourPaws\SapBundle\Enum\SapProductProperty;
 use FourPaws\SapBundle\Repository\ProductRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 
+/**
+ * Class ProductService
+ * @package FourPaws\SapBundle\Service\Materials
+ */
 class ProductService
 {
     /**
@@ -32,6 +36,12 @@ class ProductService
      */
     private $productRepository;
 
+    /**
+     * ProductService constructor.
+     *
+     * @param ReferenceService $referenceService
+     * @param ProductRepository $productRepository
+     */
     public function __construct(
         ReferenceService $referenceService,
         ProductRepository $productRepository
@@ -85,7 +95,7 @@ class ProductService
      * @throws IblockNotFoundException
      * @return null|Product
      */
-    protected function findByMaterial(Material $material)
+    protected function findByMaterial(Material $material): ?Product
     {
         $product = $this->findByCombination(
             $material->getProperties()->getPropertyValues(
@@ -100,7 +110,7 @@ class ProductService
      *
      * @return null|Product
      */
-    protected function findByCombination(string $combination)
+    protected function findByCombination(string $combination): ?Product
     {
         if (!$combination) {
             return null;
@@ -142,6 +152,23 @@ class ProductService
         if (!$id || $data['PROPERTY_CML2_LINK_PROPERTY_PACKING_COMBINATION_VALUE'] ?? 0) {
             return null;
         }
+        /**
+         * fix если по каким-то причинам товар оказался в комбинационном товаре, который не имеет признака комбинации
+         */
+        $countOther = (int)\CIBlockElement::GetList(
+            [],
+            [
+                'PROPERTY_CML2_LINK' => $id,
+                'IBLOCK_ID'          => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                '!XML_ID'            => $xmlId,
+            ],
+            []
+        );
+        if ($countOther > 0) {
+            return null;
+        }
+
+
         return $this->productRepository->find($id);
     }
 
@@ -155,7 +182,7 @@ class ProductService
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @throws \FourPaws\SapBundle\Exception\LogicException
      */
-    protected function fillProduct(Product $product, Material $material)
+    protected function fillProduct(Product $product, Material $material): void
     {
         $this->fillFields($product, $material);
         $this->fillProperties($product, $material);
@@ -165,22 +192,23 @@ class ProductService
      * @param Product  $product
      * @param Material $material
      */
-    protected function fillFields(Product $product, Material $material)
+    protected function fillFields(Product $product, Material $material): void
     {
         if ($material->getProductName()) {
             $product->withName($material->getProductName());
         }
+
         if (!$product->getName()) {
             $product->withName($material->getProductName() ?: $material->getOfferName());
         }
+
+        $product->withActive(!$material->isNotUploadToIm());
 
         if (!$product->getId()) {
             /**
              * По умолчанию создающиеся товары должны быть деактивированными
              */
             $product->withActive(false);
-        } else {
-            $product->withActive(!$material->isNotUploadToIm());
         }
     }
 
@@ -194,7 +222,7 @@ class ProductService
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @throws \FourPaws\SapBundle\Exception\LogicException
      */
-    protected function fillProperties(Product $product, Material $material)
+    protected function fillProperties(Product $product, Material $material): void
     {
         $product
             ->withSTM(
@@ -229,9 +257,6 @@ class ProductService
             );
         $this->fillReferenceProperties($product, $material);
         $this->fillCountry($product, $material);
-        /**
-         * @todo fields
-         */
     }
 
     /**
@@ -244,7 +269,7 @@ class ProductService
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      */
-    protected function fillReferenceProperties(Product $product, Material $material)
+    protected function fillReferenceProperties(Product $product, Material $material): void
     {
         $product
             ->withForWhoXmlIds($this->referenceService->getPropertyBitrixValue(
@@ -346,7 +371,7 @@ class ProductService
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      */
-    protected function fillCountry(Product $product, Material $material)
+    protected function fillCountry(Product $product, Material $material): void
     {
         $product->withCountryXmlId('');
         if ($material->getCountryOfOriginCode() && $material->getCountryOfOriginName()) {

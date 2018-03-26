@@ -432,7 +432,7 @@ class OrderStorage
      */
     public function setComment(string $comment): OrderStorage
     {
-        $this->comment = $comment;
+        $this->comment = trim($comment);
 
         return $this;
     }
@@ -452,7 +452,7 @@ class OrderStorage
      */
     public function setName(string $name): OrderStorage
     {
-        $this->name = $name;
+        $this->name = trim($name);
 
         return $this;
     }
@@ -558,7 +558,7 @@ class OrderStorage
      */
     public function setStreet(string $street): OrderStorage
     {
-        $this->street = $street;
+        $this->street = trim($street);
 
         return $this;
     }
@@ -578,7 +578,7 @@ class OrderStorage
      */
     public function setHouse(string $house): OrderStorage
     {
-        $this->house = $house;
+        $this->house = trim($house);
 
         return $this;
     }
@@ -598,7 +598,7 @@ class OrderStorage
      */
     public function setBuilding(string $building): OrderStorage
     {
-        $this->building = $building;
+        $this->building = trim($building);
 
         return $this;
     }
@@ -618,7 +618,7 @@ class OrderStorage
      */
     public function setApartment(string $apartment): OrderStorage
     {
-        $this->apartment = $apartment;
+        $this->apartment = trim($apartment);
 
         return $this;
     }
@@ -638,7 +638,7 @@ class OrderStorage
      */
     public function setPorch(string $porch): OrderStorage
     {
-        $this->porch = $porch;
+        $this->porch = trim($porch);
 
         return $this;
     }
@@ -658,7 +658,7 @@ class OrderStorage
      */
     public function setFloor(string $floor): OrderStorage
     {
-        $this->floor = $floor;
+        $this->floor = trim($floor);
 
         return $this;
     }
@@ -718,7 +718,7 @@ class OrderStorage
      */
     public function setDeliveryPlaceCode(string $deliveryPlaceCode): OrderStorage
     {
-        $this->deliveryPlaceCode = $deliveryPlaceCode;
+        $this->deliveryPlaceCode = trim($deliveryPlaceCode);
 
         return $this;
     }
@@ -738,7 +738,7 @@ class OrderStorage
      */
     public function setCommunicationWay(string $communicationWay): OrderStorage
     {
-        $this->communicationWay = $communicationWay;
+        $this->communicationWay = trim($communicationWay);
 
         return $this;
     }
@@ -758,7 +758,7 @@ class OrderStorage
      */
     public function setSourceCode(string $sourceCode): OrderStorage
     {
-        $this->sourceCode = $sourceCode;
+        $this->sourceCode = trim($sourceCode);
 
         return $this;
     }
@@ -778,7 +778,7 @@ class OrderStorage
      */
     public function setPartnerCode(string $partnerCode): OrderStorage
     {
-        $this->partnerCode = $partnerCode;
+        $this->partnerCode = trim($partnerCode);
 
         return $this;
     }
@@ -798,7 +798,7 @@ class OrderStorage
      */
     public function setCity(string $city): OrderStorage
     {
-        $this->city = $city;
+        $this->city = trim($city);
 
         return $this;
     }
@@ -818,7 +818,7 @@ class OrderStorage
      */
     public function setCityCode(string $cityCode): OrderStorage
     {
-        $this->cityCode = $cityCode;
+        $this->cityCode = trim($cityCode);
 
         return $this;
     }
@@ -878,7 +878,7 @@ class OrderStorage
      */
     public function setDiscountCardNumber(string $discountCardNumber): OrderStorage
     {
-        $this->discountCardNumber = $discountCardNumber;
+        $this->discountCardNumber = trim($discountCardNumber);
 
         return $this;
     }

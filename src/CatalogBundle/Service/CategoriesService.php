@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -19,30 +23,17 @@ class CategoriesService implements LoggerAwareInterface
 
     /**
      * @param string $path
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws CategoryNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return Category
      */
     public function getByPath(string $path): Category
     {
-        $id = $this->getIdByPath($path);
-        if (0 === $id) {
-            return Category::createRoot();
-        }
-
-        $categoryCollection = (new CategoryQuery())->withFilterParameter('=ID', $id)->exec();
-        if ($categoryCollection->isEmpty()) {
-            throw new CategoryNotFoundException(
-                sprintf('Категория каталога #%d не найдена.', $id)
-            );
-        }
-        if ($categoryCollection->count() > 1) {
-            throw new CategoryNotFoundException(
-                sprintf('Найдено более одной категории каталога с id %d', $id)
-            );
-        }
-
-        return $categoryCollection->current();
+        return $this->getById($this->getIdByPath($path));
     }
 
     /**
@@ -94,5 +85,50 @@ class CategoriesService implements LoggerAwareInterface
         throw new CategoryNotFoundException(
             sprintf('Категория каталога по пути `%s` не найдена.', $path)
         );
+    }
+
+    /**
+     * @param int $id
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws CategoryNotFoundException
+     * @return Category
+     */
+    public function getById(int $id): Category
+    {
+        if (0 === $id) {
+            return Category::createRoot();
+        }
+
+        $categoryCollection = (new CategoryQuery())->withFilterParameter('=ID', $id)->exec();
+        if ($categoryCollection->isEmpty()) {
+            throw new CategoryNotFoundException(
+                sprintf('Категория каталога #%d не найдена.', $id)
+            );
+        }
+        if ($categoryCollection->count() > 1) {
+            throw new CategoryNotFoundException(
+                sprintf('Найдено более одной категории каталога с id %d', $id)
+            );
+        }
+
+        return $categoryCollection->current();
+    }
+
+    /**
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @return Category
+     */
+    public function getSearchRoot(): Category
+    {
+        return Category::createRoot([
+            'NAME' => 'Результаты поиска',
+        ]);
     }
 }

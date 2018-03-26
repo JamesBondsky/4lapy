@@ -15,6 +15,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -217,9 +218,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'parts_available' => $partsAvailable,
                     'parts_delayed' => $partsDelayed,
                     'price' => $available->isEmpty() ?
-                        $fullResult->getStockResult()->getPrice() :
-                        $available->getPrice(),
-                    'full_price' => $fullResult->getStockResult()->getPrice(),
+                        WordHelper::numberFormat($fullResult->getStockResult()->getPrice()) :
+                        WordHelper::numberFormat($available->getPrice()),
+                    'full_price' => WordHelper::numberFormat($fullResult->getStockResult()->getPrice()),
                     /* @todo поменять местами gps_s и gps_n */
                     'gps_n' => $store->getLongitude(),
                     'gps_s' => $store->getLatitude(),
@@ -228,8 +229,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $avgGpsS += $store->getLatitude();
             }
 
-            $result['avg_gps_n'] = $avgGpsN / $shopCount;
-            $result['avg_gps_s'] = $avgGpsS / $shopCount;
+            if ($shopCount) {
+                $result['avg_gps_n'] = $avgGpsN / $shopCount;
+                $result['avg_gps_s'] = $avgGpsS / $shopCount;
+            }
         }
 
         return $result;

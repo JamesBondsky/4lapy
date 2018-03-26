@@ -79,7 +79,7 @@ class UserAccountService
             if ($bonus->isEmpty()) {
                 return [false, $bonus];
             }
-            $newBudget = $bonus->getCard()->getBalance();
+            $newBudget = $bonus->getActiveBonus();
         }
 
         try {

@@ -6,6 +6,7 @@ use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\SystemException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /**
  * Class Event
@@ -35,7 +36,8 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnProductUpdate', [static::class, 'clearProductCache']);
         self::initHandler('OnProductAdd', [static::class, 'clearProductCache']);
 
-        /** @todo сброс кеша при изменении элементов */
+        /** очистка кеша при изменении элемента инфоблока */
+        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'clearIblockItemCache']);
     }
 
     /**
@@ -57,19 +59,23 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param $id
-     * @param $fields
-     *
-     * @throws SystemException
      */
-    public static function clearProductCache($id, $fields): void
+    public static function clearProductCache($id): void
     {
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = BitrixApplication::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('catalog:offer:' . $id);
-            $tagCache->clearByTag('catalog:stocks:' . $id);
-            $tagCache->clearByTag('catalog:product:' . $id);
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'catalog:offer:' . $id,
+            'catalog:stocks:' . $id,
+            'catalog:product:' . $id
+        ]);
+    }
+
+    /**
+     * @param array $arFields
+     */
+    public static function clearIblockItemCache($arFields): void
+    {
+        TaggedCacheHelper::clearManagedCache([
+            'iblock:item:' . $arFields['ID'],
+        ]);
     }
 }

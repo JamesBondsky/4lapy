@@ -17,13 +17,10 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\SaleBundle\Entity\UserAccount;
 use FourPaws\UserBundle\Entity\User;
 
 /** @var User $user */
 $user = $arResult['USER'];
-/** @var UserAccount $userAccount */
-$userAccount = $arResult['USER_ACCOUNT'];
 
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
@@ -178,11 +175,10 @@ if ($arParams['IS_AJAX']) {
             <div class="b-information-order">
                 <div class="b-information-order__client">
                     <?php if ($user) { ?>
-                        <?php if (!empty($userAccount)) { ?>
+                        <?php if ($arResult['MAX_BONUS_SUM']) { ?>
                             <span class="b-information-order__pay-points">
                                 <span class="b-information-order__name"><?= $user->getName() ?>, </span>
-                                вы можете оплатить этот заказ баллами (до <?= WordHelper::numberFormat($userAccount->getCurrentBudget()) ?>
-                                ).
+                                вы можете оплатить этот заказ баллами (до <?= $arResult['MAX_BONUS_SUM'] ?>).
                             </span>
                         <?php }
                     } else { ?>
@@ -210,7 +206,7 @@ if ($arParams['IS_AJAX']) {
                     $APPLICATION->IncludeComponent(
                         'fourpaws:city.delivery.info',
                         'basket.summary',
-                        ['BASKET_PRICE' => $basket->getPrice()],
+                        ['BASKET_PRICE' => $orderableItems->getPrice()],
                         false,
                         ['HIDE_ICONS' => 'Y']
                     );
@@ -231,7 +227,7 @@ if ($arParams['IS_AJAX']) {
                         </div>
                     </div>
                     <?php
-                    if ($basket->getBasePrice() - $basket->getPrice() > 0.01) {
+                    if ($arResult['TOTAL_DISCOUNT'] > 0.01) {
                         ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Общая скидка

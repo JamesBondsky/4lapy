@@ -47,17 +47,17 @@ class BonusBuyTo
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("KOND_PER")
-     * @Serializer\Type("sap_bool")
+     * @Serializer\Type("float")
      *
-     * @var bool
+     * @var float
      */
-    protected $percent = false;
+    protected $percent = 0.0;
 
     /**
      * Группа данных о единице подарка
      *
+     * @Serializer\XmlList(inline=true, entry="BONUS_ITEM")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyToItem>")
-     * @Serializer\SerializedName("BONUS_ITEM")
      *
      * @var BonusBuyToItem[]|Collection
      */
@@ -96,6 +96,7 @@ class BonusBuyTo
     public function setSign(string $sign): BonusBuyTo
     {
         $this->sign = $sign;
+        
         return $this;
     }
 

@@ -30,6 +30,7 @@ use FourPaws\External\Manzana\Model\ReferralParams as ManzanaReferalParams;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Repository\ReferralRepository;
 use FourPaws\UserBundle\Entity\User;
@@ -107,7 +108,7 @@ class ReferralService
         $search = (string)$request->get('search');
         $filter = [];
         if (!empty($search)) {
-            $filter['=UF_CARD'] = $search;
+            $filter['?UF_CARD'] = $search;
         }
         $referralType = $this->getReferralType();
         if (!empty($referralType)) {
@@ -213,12 +214,9 @@ class ReferralService
             }
         }
 
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = Application::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('referral_' . $entity->getUserId());
-        }
+        TaggedCacheHelper::clearManagedCache([
+            'personal:referral:' . $entity->getUserId(),
+        ]);
 
         return $res;
     }
@@ -497,11 +495,10 @@ class ReferralService
     public function delete(int $id, int $userId = 0): bool
     {
         $res = $this->referralRepository->delete($id);
-        if($res && $userId > 0 && \defined('BX_COMP_MANAGED_CACHE')) {
-            /** Очистка кеша */
-            $instance = Application::getInstance();
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->clearByTag('referral_' . $userId);
+        if($res && $userId > 0) {
+            TaggedCacheHelper::clearManagedCache([
+                'personal:referral:' . $userId,
+            ]);
         }
         return $res;
     }

@@ -90,7 +90,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                           method="post"
                           id="order-step">
                         <input type="hidden" name="shopId" class="js-no-valid" value="<?= /** @noinspection PhpUnhandledExceptionInspection */
-                        $pickup->getSelectedStore()->getXmlId() ?>">
+                        $pickup ? $pickup->getSelectedStore()->getXmlId() : '' ?>">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) {
     ?>

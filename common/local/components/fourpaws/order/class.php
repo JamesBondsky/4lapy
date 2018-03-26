@@ -10,10 +10,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\ManzanaPosService;
 use FourPaws\External\Manzana\Exception\ExecuteException;
+use FourPaws\External\ManzanaPosService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -27,6 +28,8 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
@@ -73,8 +76,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
     /**
      * FourPawsOrderComponent constructor.
-     * @param null $component
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @param $component
+     *
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
     public function __construct($component = null)
     {
@@ -141,7 +148,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      */
     protected function prepareResult(): void
@@ -287,7 +294,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $chequeRequest->setPaidByBonus($basket->getPrice());
 
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = $cheque->getAvailablePayment();
+                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getAvailablePayment());
                 } catch (ExecuteException $e) {
                     /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
                     $this->logger->error($e->getMessage());

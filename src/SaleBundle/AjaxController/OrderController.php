@@ -150,12 +150,13 @@ class OrderController extends Controller
             );
         }
 
-        $intervals = $delivery->getAvailableIntervals($date);
+        $delivery->setDateOffset($date);
+        $intervals = $delivery->getAvailableIntervals();
         /** @var Interval $interval */
         foreach ($intervals as $i => $interval) {
             $result[] = [
                 'name' => (string)$interval,
-                'value' => $i,
+                'value' => $i+1,
             ];
         }
 
@@ -185,7 +186,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         }
 
@@ -214,7 +215,12 @@ class OrderController extends Controller
 
         $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors], 200, ['reload' => true]);
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => false]
+            );
         }
 
         return JsonSuccessResponse::create(
@@ -252,7 +258,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         }
 

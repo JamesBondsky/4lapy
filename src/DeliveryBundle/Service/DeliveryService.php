@@ -6,9 +6,13 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
@@ -18,23 +22,25 @@ use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
+use Bitrix\Sale\UserMessageException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     public const INNER_DELIVERY_CODE = '4lapy_delivery';
 
@@ -70,6 +76,9 @@ class DeliveryService implements LoggerAwareInterface
         DeliveryService::DPD_DELIVERY_CODE,
     ];
 
+    /** @var array */
+    public static $dpdData = [];
+
     /**
      * @var LocationService $locationService
      */
@@ -83,7 +92,7 @@ class DeliveryService implements LoggerAwareInterface
     public function __construct(LocationService $locationService)
     {
         $this->locationService = $locationService;
-        $this->setLogger(LoggerFactory::create('DeliveryService'));
+        $this->withLogName('DeliveryService');
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
@@ -93,12 +102,17 @@ class DeliveryService implements LoggerAwareInterface
      * @param string $locationCode
      * @param array $codes
      * @param \DateTime|null $from
-     * @return array
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Sale\UserMessageException
+     *
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     * @return CalculationResultInterface[]
      */
     public function getByProduct(
         Offer $offer,
@@ -108,9 +122,13 @@ class DeliveryService implements LoggerAwareInterface
     ): array {
         $basket = Basket::createFromRequest([]);
         $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
+        /** @noinspection PhpInternalEntityUsedInspection */
         $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+        /** @noinspection PhpInternalEntityUsedInspection */
         $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
+        /** @noinspection PhpInternalEntityUsedInspection */
         $basketItem->setFieldNoDemand('QUANTITY', 1);
+        /** @noinspection PhpInternalEntityUsedInspection */
         $basket->addItem($basketItem);
 
         return $this->getByBasket($basket, $locationCode, $codes, $from);
@@ -118,14 +136,19 @@ class DeliveryService implements LoggerAwareInterface
 
     /**
      * Получение доставок для корзины
-     *
      * @param BasketBase $basket
      * @param string $locationCode
      * @param array $codes
      * @param \DateTime|null $from
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
      * @return array
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotSupportedException
      */
     public function getByBasket(
         BasketBase $basket,
@@ -147,7 +170,7 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @param string $locationCode
      * @param array $codes
-     * @return array
+     * @return CalculationResultInterface[]
      */
     public function getByLocation(string $locationCode, array $codes = []): array
     {
@@ -164,7 +187,9 @@ class DeliveryService implements LoggerAwareInterface
                 ->resultOf($getDeliveries);
             $deliveries = $result['result'];
         } catch (\Exception $e) {
-            $this->logger->error('failed to get deliveries for location', ['locationCode' => $locationCode]);
+            $this->log()->error(sprintf('failed to get deliveries for location: %s', $e->getMessage()), [
+                'location' => $locationCode
+            ]);
         }
         if (!empty($codes)) {
             /**
@@ -186,9 +211,14 @@ class DeliveryService implements LoggerAwareInterface
      * @param Shipment $shipment
      * @param array $codes
      * @param \DateTime|null $from
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
      * @return array
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotSupportedException
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = [], ?\DateTime $from = null): array
     {
@@ -201,55 +231,64 @@ class DeliveryService implements LoggerAwareInterface
                 continue;
             }
 
-            $isDpd = \in_array(
+            if ($service::isProfile()) {
+                $name = $service->getNameWithParent();
+            } else {
+                $name = $service->getName();
+            }
+            /**
+             * todo раскомментировать строчки, выключающие постобработку кастомных акций, либо расчитывать как-то по-другому
+             */
+            //\FourPaws\SaleBundle\Discount\Utils\Manager::disableProcessingFinalAction();
+            try {
+                $shipment->setFields(
+                    [
+                        'DELIVERY_ID' => $service->getId(),
+                        'DELIVERY_NAME' => $name,
+                    ]
+                );
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('Cannot set shipment fields: %s', $e->getMessage()), [
+                    'location' => $this->getDeliveryLocation($shipment),
+                    'service' => $service->getCode()
+                ]);
+                continue;
+            }
+            //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
+            $calculationResult = $shipment->calculateDelivery();
+            $from = $from ?? new \DateTime();
+
+            if (\in_array(
                 $service->getCode(),
                 [
                     self::DPD_DELIVERY_CODE,
                     self::DPD_PICKUP_CODE,
                 ],
                 true
-            );
-
-            if ($service::isProfile()) {
-                $name = $service->getNameWithParent();
-            } else {
-                $name = $service->getName();
-            }
-            $service->getCode();
-            /**
-             * todo раскомментировать строчки, выключающие постобработку кастомных акций, либо расчитывать как-то по-другому
-             */
-            //\FourPaws\SaleBundle\Discount\Utils\Manager::disableProcessingFinalAction();
-            $shipment->setFields(
-                [
-                    'DELIVERY_ID' => $service->getId(),
-                    'DELIVERY_NAME' => $name,
-                ]
-            );
-            //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
-            $calculationResult = $shipment->calculateDelivery();
-            $from = $from ?? new \DateTime();
-
-            if ($isDpd) {
+            )) {
                 if ($service->getCode() === static::DPD_PICKUP_CODE) {
-                    $calculationResult = new DpdPickupResult($calculationResult);
-                    $calculationResult->setTerminals($_SESSION['DPD_DATA'][$service->getCode()]['TERMINALS']);
+                    /** @var DpdPickupResult $calculationResult */
+                    $calculationResult = DpdPickupResult::fromBitrixResult($calculationResult);
+                    $calculationResult->setTerminals(static::$dpdData[$service->getCode()]['TERMINALS']);
                 } else {
-                    $calculationResult = new DpdResult($calculationResult);
+                    /** @var DpdDeliveryResult $calculationResult */
+                    $calculationResult = DpdDeliveryResult::fromBitrixResult($calculationResult);
                 }
                 $calculationResult->setDeliveryCode($service->getCode());
-                /* @todo не хранить эти данные в сессии */
-                $calculationResult->setInitialPeriod($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
-                $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
-                if ($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
-                    $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
+                $calculationResult->setInitialPeriod(static::$dpdData[$service->getCode()]['DAYS_FROM']);
+                $calculationResult->setPeriodTo(static::$dpdData[$service->getCode()]['DAYS_TO']);
+                if (static::$dpdData[$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
+                    $calculationResult->setStockResult(static::$dpdData[$service->getCode()]['STOCK_RESULT']);
                 }
-                $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
-                $calculationResult->setDeliveryZone($_SESSION['DPD_DATA'][$service->getCode()]['DELIVERY_ZONE']);
-                unset($_SESSION['DPD_DATA']);
+                $calculationResult->setIntervals(static::$dpdData[$service->getCode()]['INTERVALS']);
+                $calculationResult->setDeliveryZone(static::$dpdData[$service->getCode()]['DELIVERY_ZONE']);
+                static::$dpdData = [];
             }
             if (!$calculationResult instanceof CalculationResultInterface) {
-                // непонятная доставка, мы с такими работать не обучены
+                $this->log()->critical('Invalid delivery result', [
+                    'service' => $service->getCode(),
+                    'location' => $this->getDeliveryLocation($shipment)
+                ]);
                 continue;
             }
             $calculationResult->setDeliveryId($service->getId());
@@ -265,6 +304,12 @@ class DeliveryService implements LoggerAwareInterface
         return $result;
     }
 
+    /**
+     * Получить все зоны доставки
+     *
+     * @param bool $withLocations
+     * @return array
+     */
     public function getAllZones($withLocations = true): array
     {
         return $this->locationService->getLocationGroups($withLocations);
@@ -276,9 +321,11 @@ class DeliveryService implements LoggerAwareInterface
      * @param Shipment $shipment
      *
      * @return null|string
+     * @throws ObjectNotFoundException
      */
-    public function getDeliveryLocation(Shipment $shipment)
+    public function getDeliveryLocation(Shipment $shipment): ?string
     {
+        /** @noinspection PhpInternalEntityUsedInspection */
         $order = $shipment->getParentOrder();
         $propertyCollection = $order->getPropertyCollection();
         $locationProp = $propertyCollection->getDeliveryLocation();
@@ -296,11 +343,12 @@ class DeliveryService implements LoggerAwareInterface
      * отдельное местоположение)
      *
      * @param Shipment $shipment
-     * @param bool $skipLocations возвращать только коды групп
      *
-     * @return bool|string
+     * @param bool $skipLocations
+     * @throws ObjectNotFoundException
+     * @return null|string
      */
-    public function getDeliveryZoneCode(Shipment $shipment, $skipLocations = true)
+    public function getDeliveryZoneCode(Shipment $shipment, $skipLocations = true): ?string
     {
         if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
             return false;
@@ -315,9 +363,9 @@ class DeliveryService implements LoggerAwareInterface
      * @param $deliveryId
      * @param bool $skipLocations
      *
-     * @return bool|int|string
+     * @return null|string
      */
-    public function getDeliveryZoneCodeByLocation($deliveryLocation, $deliveryId, $skipLocations = true)
+    public function getDeliveryZoneCodeByLocation($deliveryLocation, $deliveryId, $skipLocations = true): ?string
     {
         $deliveryLocationPath = [$deliveryLocation];
         if (($location = $this->locationService->findLocationByCode($deliveryLocation)) && $location['PATH']) {
@@ -338,7 +386,7 @@ class DeliveryService implements LoggerAwareInterface
             }
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -403,9 +451,16 @@ class DeliveryService implements LoggerAwareInterface
             return $result;
         };
 
-        $result = (new BitrixCache())
-            ->withId(__METHOD__ . $deliveryId)
-            ->resultOf($getZones);
+        try {
+            $result = (new BitrixCache())
+                ->withId(__METHOD__ . $deliveryId)
+                ->resultOf($getZones);
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get available zones: %s', $e->getMessage()), [
+                'deliveryId' => $deliveryId
+            ]);
+            return [];
+        }
 
         return $result;
     }
@@ -473,6 +528,7 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param string $code
      *
+     * @throws ArgumentException
      * @throws NotFoundException
      * @return int
      */
@@ -485,6 +541,8 @@ class DeliveryService implements LoggerAwareInterface
      * @param string $code
      *
      * @throws NotFoundException
+     * @throws ArgumentException
+     *
      * @return array
      */
     public function getDeliveryByCode(string $code): array
@@ -500,6 +558,7 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param int $id
      *
+     * @throws ArgumentException
      * @throws NotFoundException
      * @return string
      */
@@ -530,6 +589,7 @@ class DeliveryService implements LoggerAwareInterface
         $result = new StoreCollection();
 
         $getTerminals = function () use ($locationCode) {
+            /** @noinspection PhpUndefinedClassInspection */
             $terminals = TerminalTable::query()
                 ->setSelect(['*'])
                 ->setFilter(['LOCATION.CODE' => $locationCode])
@@ -546,10 +606,17 @@ class DeliveryService implements LoggerAwareInterface
             return ['result' => $terminals->fetchAll()];
         };
 
-        /** @var array $terminals */
-        $terminals = (new BitrixCache())
-            ->withId(__METHOD__ . $locationCode)
-            ->resultOf($getTerminals)['result'];
+        try {
+            /** @var array $terminals */
+            $terminals = (new BitrixCache())
+                ->withId(__METHOD__ . $locationCode)
+                ->resultOf($getTerminals)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get dpd terminals: %s', $e->getMessage()), [
+                'location' => $locationCode
+            ]);
+            return $result;
+        }
 
         if ($withCod) {
             $terminals = array_filter(
@@ -571,12 +638,12 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param $code
      *
-     * @throws NotFoundException
-     * @return Store
+     * @return Store|null
      */
-    public function getDpdTerminalByCode($code): Store
+    public function getDpdTerminalByCode($code): ?Store
     {
         $getTerminal = function () use ($code) {
+            /** @noinspection PhpUndefinedClassInspection */
             $terminal = TerminalTable::query()->setSelect(['*', 'LOCATION.CODE'])
                 ->setFilter(['CODE' => $code])
                 ->registerRuntimeField(
@@ -595,14 +662,28 @@ class DeliveryService implements LoggerAwareInterface
             return ['result' => $terminal];
         };
 
-        /** @var array $terminals */
-        $terminal = (new BitrixCache())
-            ->withId(__METHOD__ . $code)
-            ->resultOf($getTerminal)['result'];
+        try {
+            $terminal = (new BitrixCache())
+                ->withId(__METHOD__ . $code)
+                ->resultOf($getTerminal)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get dpd terminal: %s', $e->getMessage()), [
+                'code' => $code
+            ]);
+            return null;
+        }
 
         return $this->dpdTerminalToStore($terminal, $terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE']);
     }
 
+    /**
+     * @param string $locationCode
+     * @param BasketBase|null $basket
+     * @return Shipment
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
+     */
     protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment
     {
         $order = Order::create(
@@ -611,6 +692,7 @@ class DeliveryService implements LoggerAwareInterface
             CurrencyManager::getBaseCurrency()
         );
 
+        /** @noinspection PhpInternalEntityUsedInspection */
         $order->setMathActionOnly(true);
 
         if (!$basket) {
@@ -626,12 +708,24 @@ class DeliveryService implements LoggerAwareInterface
         $shipmentCollection = $order->getShipmentCollection();
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
-        $shipment->setField('CURRENCY', $order->getCurrency());
+        try {
+            $shipment->setField('CURRENCY', $order->getCurrency());
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('Failed to set shipment currency: %s', $e->getMessage()), [
+                'location' => $locationCode
+            ]);
+        }
 
-        /** @var BasketItem $item */
-        foreach ($order->getBasket() as $item) {
-            $shipmentItem = $shipmentItemCollection->createItem($item);
-            $shipmentItem->setQuantity($item->getQuantity());
+        try {
+            /** @var BasketItem $item */
+            foreach ($order->getBasket() as $item) {
+                $shipmentItem = $shipmentItemCollection->createItem($item);
+                $shipmentItem->setQuantity($item->getQuantity());
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('Failed to set shipmentItem quantity: %s', $e->getMessage()), [
+                'location' => $locationCode
+            ]);
         }
 
         return $shipment;
