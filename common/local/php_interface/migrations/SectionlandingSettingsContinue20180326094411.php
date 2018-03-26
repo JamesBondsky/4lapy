@@ -139,34 +139,6 @@ class SectionlandingSettingsContinue20180326094411 extends \Adv\Bitrixtools\Migr
         $faqSection = (new IblockSectQuery())->withFilter(['CODE'=>'fleas'])->exec()->first()->getId();
         $isLanding = true;
         $sections = [
-            142 => [
-                'NEW_SECT'          => 539,
-                'UF_FAQ_SECTION'    => $faqSection,
-                'UF_LANDING'        => $isLanding,
-                'UF_LANDING_BANNER' => $html,
-            ],
-            //кошки
-            350 => [
-                'NEW_SECT'          => 561,
-                'UF_FAQ_SECTION'    => $faqSection,
-                'UF_LANDING'        => $isLanding,
-                'UF_LANDING_BANNER' => $html,
-            ],
-            //завели щенка
-            455 => [
-                'NEW_SECT'          => 587,
-                'UF_FAQ_SECTION'    => $faqSection,
-                'UF_LANDING'        => $isLanding,
-                'UF_LANDING_BANNER' => $html,
-            ],
-            //птицы
-            417 => [
-                'NEW_SECT'          => 582,
-                'UF_FAQ_SECTION'    => $faqSection,
-                'UF_LANDING'        => $isLanding,
-                'UF_LANDING_BANNER' => $html,
-            ],
-            //грызуны и хорьки
             351 => [
                 'NEW_SECT'          => 538,
                 'UF_FAQ_SECTION'    => $faqSection,
@@ -174,20 +146,6 @@ class SectionlandingSettingsContinue20180326094411 extends \Adv\Bitrixtools\Migr
                 'UF_LANDING_BANNER' => $html,
             ],
             //ветеринарная аптека с верхнего уровня
-            163 => [
-                'NEW_SECT'          => 539,
-                'UF_FAQ_SECTION'    => $faqSection,
-                'UF_LANDING'        => $isLanding,
-                'UF_LANDING_BANNER' => $html,
-            ],
-            //дубль - завели котенка
-            326 => [
-                'NEW_SECT'          => 561,
-                'UF_FAQ_SECTION'    => $faqSection,
-                'UF_LANDING'        => $isLanding,
-                'UF_LANDING_BANNER' => $html,
-            ],
-            //дубль - собаки
         ];
         $iblockSect = new \CIBlockSection();
 
