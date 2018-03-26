@@ -75,6 +75,9 @@ class ReferralController extends Controller
         if (!empty($data['UF_CARD'])) {
             $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
         }
+        if(!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])){
+            return $this->ajaxMess->getWrongCardNumber();
+        }
         $data['UF_MODERATED'] = 'Y';
         try {
             if ($this->referralService->add($data)) {
@@ -121,8 +124,14 @@ class ReferralController extends Controller
         if (empty($card)) {
             return $this->ajaxMess->getEmptyCardNumber();
         }
+        if(\mb_strlen($card) < 13){
+            return $this->ajaxMess->getWrongCardNumber();
+        }
         /** @var Card $currentCard */
         try {
+            if(!$this->referralService->manzanaService->validateCardByNumber($card)){
+                return $this->ajaxMess->getWrongCardNumber();
+            }
             $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
             $cardInfo = [
                 'last_name'   => $currentCard->lastName,
