@@ -25,6 +25,9 @@ class PaymentService
     }
 
     /**
+     * @todo переделать на DTO
+     * @todo переделать на сериализацию
+     *
      * @param Order $order
      * @param CUser $user
      * @param int $taxSystem
@@ -116,9 +119,10 @@ class PaymentService
                 ],
             ];
         }
+
         if ($order->getDeliveryPrice() > 0) {
             $fiscal['orderBundle']['cartItems']['items'][] = [
-                'positionId' => $itemsCnt++,
+                'positionId' => $itemsCnt + 1,
                 'name' => Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE'),
                 'quantity' => [
                     'value' => 1,
@@ -134,8 +138,6 @@ class PaymentService
 
             $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
         }
-
-        dump(\compact('amount', 'fiscal'));
 
         return \compact('amount', 'fiscal');
     }
