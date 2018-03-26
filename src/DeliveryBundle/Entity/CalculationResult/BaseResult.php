@@ -17,9 +17,9 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -83,40 +83,51 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $selectedStore;
 
     /**
-     * BaseResult constructor.
-     *
-     * @param null|CalculationResult $result
+     * @var int
      */
-    public function __construct(CalculationResult $result = null)
-    {
-        parent::__construct();
+    protected $dateOffset = 0;
 
+    /**
+     * @var DeliveryScheduleResult
+     */
+    protected $shipmentResult;
+
+    /**
+     * @param CalculationResult|null $result
+     *
+     * @return CalculationResultInterface
+     */
+    public static function fromBitrixResult(CalculationResult $result = null): CalculationResultInterface
+    {
+        $instance = new static();
         if ($result) {
-            $this->setDeliveryPrice($result->getDeliveryPrice());
-            $this->setExtraServicesPrice($result->getExtraServicesPrice());
-            $this->setDescription($result->getDescription());
-            $this->setPacksCount($result->getPacksCount());
+            $instance->setDeliveryPrice($result->getDeliveryPrice());
+            $instance->setExtraServicesPrice($result->getExtraServicesPrice());
+            $instance->setDescription($result->getDescription());
+            $instance->setPacksCount($result->getPacksCount());
 
             if ($result->isNextStep()) {
-                $this->setAsNextStep();
+                $instance->setAsNextStep();
             }
 
-            $this->setTmpData($result->getTmpData());
-            $this->setData($result->getData());
+            $instance->setTmpData($result->getTmpData());
+            $instance->setData($result->getData());
 
-            $this->setPeriodDescription($result->getPeriodDescription());
-            $this->setPeriodFrom($result->getPeriodFrom());
-            $this->setPeriodType($result->getPeriodType());
-            $this->setPeriodTo($result->getPeriodTo());
+            $instance->setPeriodDescription($result->getPeriodDescription());
+            $instance->setPeriodFrom($result->getPeriodFrom());
+            $instance->setPeriodType($result->getPeriodType());
+            $instance->setPeriodTo($result->getPeriodTo());
 
             if ($result->getErrors()) {
-                $this->addErrors($result->getErrors());
+                $instance->addErrors($result->getErrors());
             }
 
             if ($result->getWarnings()) {
-                $this->addWarnings($result->getWarnings());
+                $instance->addWarnings($result->getWarnings());
             }
         }
+
+        return $instance;
     }
 
     /**
@@ -273,6 +284,42 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
+     * @param int $dateIndex
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     * @return IntervalCollection
+     */
+    public function getAvailableIntervals(int $dateIndex = 0): IntervalCollection
+    {
+        $result = new IntervalCollection();
+        $date = clone $this->getDeliveryDate();
+        $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
+        if ($dateIndex < 0 || $dateIndex >= $diff) {
+            return $result;
+        }
+
+        if ($dateIndex > 0) {
+            $date->modify(sprintf('+%s days', $dateIndex));
+        }
+        $date->setTime(0, 0, 0, 0);
+
+        /** @var Interval $interval */
+        foreach ($this->getIntervals() as $interval) {
+            $tmpDelivery = clone $this;
+            $tmpDate = clone $tmpDelivery->setSelectedInterval($interval)->getDeliveryDate();
+            $tmpDate->setTime(0, 0, 0, 0);
+            if ($tmpDate <= $date) {
+                $result->add($interval);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @return int
      */
     public function getFreeFrom(): int
@@ -314,10 +361,29 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @return Interval
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @return Interval|null
      */
-    public function getSelectedInterval(): Interval
+    public function getSelectedInterval(): ?Interval
     {
+        /**
+         * Если интервал не выбран, подбираем наиболее подходящий (с минимальной датой доставки)
+         */
+        if (null === $this->selectedInterval) {
+            /** @var IntervalService $intervalService */
+            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+            try {
+                $this->selectedInterval = $intervalService->getFirstInterval(
+                    $this,
+                    $this->getIntervals()
+                );
+            } catch (NotFoundException $e) {
+                return $this->getIntervals()->first();
+            }
+        }
+
         return $this->selectedInterval;
     }
 
@@ -335,8 +401,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @return Store
      * @throws NotFoundException
+     * @return Store
      */
     public function getSelectedStore(): Store
     {
@@ -369,21 +435,22 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $date = clone $this->getCurrentDate();
 
         if (null !== $this->stockResult) {
-            $stockResult = $this->getStockResult()->filterByStore($this->getSelectedStore());
+            $this->getSelectedStore();
+            $stockResult = $this->getStockResult()->filterByStore($this->selectedStore);
 
             /**
              * Если есть отложенные товары, то добавляем к дате доставки
              * срок поставки на склад по графику
              */
             if (!$stockResult->getDelayed()->isEmpty()) {
-                $date = $this->getStoreShipmentDate($this->getSelectedStore(), $stockResult->getDelayed());
+                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult->getDelayed());
             }
 
             /**
              * Если склад является магазином, то учитываем его график работы
              */
-            if ($this->getSelectedStore()->isShop()) {
-                $this->calculateWithStoreSchedule($date, $this->getSelectedStore());
+            if ($this->selectedStore->isShop()) {
+                $this->calculateWithStoreSchedule($date, $this->selectedStore);
             }
         }
 
@@ -408,10 +475,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $date = clone $this->getCurrentDate();
 
-        $modifier = 0;
-
-        /** @var DeliveryScheduleService $scheduleService */
-        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
         $regularStoresByOffer = [];
         $byRequestStoresByOffer = [];
         $hasRegular = false;
@@ -452,7 +515,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             return $date;
         }
 
-        $shipmentDay = 0;
+        $resultCollection = new DeliveryScheduleResultCollection();
+
+        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
         /**
          * Если есть товары под заказ
          */
@@ -460,100 +525,123 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             /**
              * Для товаров под заказ добавляем +2 ко дню доставки
              */
-            $tmpDate = (clone $date)->modify(sprintf('+%s days', 2));
+            $date->modify(sprintf('+%s days', 2));
 
-            if (!$hasRegular) {
-                /**
-                 * Если нет товаров из регулярного ассортимента, то находим скорейший маршрут
-                 *  от складов поставщика до нужного склада/магазина
-                 */
-
-                $scheduleResult = $scheduleService->findBySenders($byRequestStores)
-                    ->getNextDelivery(
-                        $store,
-                        $tmpDate
-                    );
-
-                if (null === $scheduleResult) {
-                    $this->addError(new Error('Нет доступных графиков поставок'));
-                    return $date;
-                }
-
-                $shipmentDay += $scheduleResult->getDate()->diff($date)->days;
-            } else {
-                /**
-                 * Если есть товары из регулярного ассортимента, то находим маршруты
-                 * от складов поставщика до складов, где есть требуемое кол-во данных товаров
-                 */
-                $scheduleResults = $scheduleService->findBySenders($byRequestStores)
-                    ->getNextDeliveries(
-                        $regularStores,
-                        $tmpDate
-                    );
-                if ($scheduleResults->isEmpty()) {
-                    $this->addError(new Error('Нет доступных графиков поставок'));
-                    return $date;
-                }
-
-                /** @var DeliveryScheduleResult $senderResult */
-                $collection = new DeliveryScheduleResultCollection();
-                foreach ($scheduleResults as $senderResult) {
-                    $schedules = $senderResult->getSchedule()->getReceiverSchedules();
-                    if ($schedules->isEmpty()) {
-                        continue;
-                    }
-                    if ($result = $schedules->getNextDelivery($store, $senderResult->getDate())) {
-                        $collection->add($result);
-                    }
-                }
-
-                if ($collection->isEmpty()) {
-                    $this->addError(new Error('Нет доступных графиков поставок'));
-                    return $date;
-                }
-
-                /** @noinspection NullPointerExceptionInspection */
-                $shipmentDay += $collection->getFastest()->getDate()->diff($date)->days;
-            }
             /**
-             * Если есть только товары из регулярного ассортимента
+             * Находим маршрут от складов поставщика до РЦ
              */
-        } elseif (!$regularStores->isEmpty()) {
-            $schedules = $scheduleService->findBySenders($regularStores);
+            $schedules = $scheduleService->findBySenders($byRequestStores);
             if ($schedules->isEmpty()) {
-                $this->addError(new Error('Нет доступных графиков поставок'));
+                $this->addError(new Error('Не найдено графиков поставок со складов поставщика'));
                 return $date;
             }
-            $day = $this->getShipmentDay($store, $date);
 
-            if (null !== $day) {
-                $shipmentDay += $day;
-            } else {
-                $scheduleResult = $schedules->getNextDelivery(
-                    $store,
-                    $date
-                );
-                if ($scheduleResult) {
-                    $shipmentDay = $scheduleResult->getDate()->diff($date)->days;
-                } else {
-                    $this->addError(new Error('Нет доступных графиков поставок'));
+            if (!$regularStores->isEmpty()) {
+                /**
+                 * Если есть товары из регулярного ассортимента, то оставляем только те склады,
+                 * куда есть поставки со складов поставщика
+                 */
+                $regularStores = $this->getStoreIntersection([$schedules->getReceivers(), $regularStores]);
+                /** @var DeliveryScheduleResult $result */
+                foreach ($schedules->getNextDeliveries($regularStores, $date) as $result) {
+                    if (!$tmpResult = $this->getDCShipmentResult(
+                        $store,
+                        $result->getSchedule()->getReceiver(),
+                        $result->getDate())
+                    ) {
+                        continue;
+                    }
+
+                    $resultCollection->add($tmpResult);
                 }
+            } else {
+                $receivers = $schedules->getReceivers();
+                if ($receivers->hasStore($store)) {
+                    /**
+                     * Можно доставить со склада поставщика напрямую на нужный склад
+                     */
+                    $resultCollection = $schedules->getNextDeliveries($schedules->getReceivers(), $date);
+                } else {
+                    foreach ($schedules->getNextDeliveries($schedules->getReceivers(), $date) as $result) {
+                        if (!$tmpResult = $this->getDCShipmentResult(
+                            $store,
+                            $result->getSchedule()->getReceiver(),
+                            $result->getDate())
+                        ) {
+                            continue;
+                        }
+
+                        $resultCollection->add($tmpResult);
+                    }
+                }
+            }
+        } else {
+            /** @var Store $sender */
+            foreach ($regularStores as $sender) {
+                if (!$result = $this->getDCShipmentResult($store, $sender, $date)) {
+                    continue;
+                }
+
+                $resultCollection->add($result);
             }
         }
 
-        $modifier += $shipmentDay;
+        if ($resultCollection->isEmpty()) {
+            $this->addError(new Error('Не найдено графиков поставок с РЦ'));
+            return $date;
+        }
 
-        /**
-         * Добавляем "срок поставки" к дате доставки
-         */
-        $modifier += $store->getDeliveryTime();
+        $this->shipmentResult = $resultCollection->getFastest();
+        $date = $this->shipmentResult->getDate();
 
-        /**
-         * Вычисляем день доставки
-         */
-        $date->modify(sprintf('+%s days', $modifier));
+        if ($store->isShop()) {
+            /**
+             * Добавляем "срок поставки" к дате доставки
+             * (он должен быть не менее 1 дня)
+             */
+            $modifier = $store->getDeliveryTime();
+            if ($store->getDeliveryTime() < 1) {
+                $modifier = 1;
+            }
+            $date->modify(sprintf('+%s days', $modifier));
+        }
 
         return $date;
+    }
+
+    /**
+     * @param Store $receiver
+     * @param Store $sender
+     * @param \DateTime $date
+     *
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws ApplicationCreateException
+     * @return DeliveryScheduleResult|null
+     */
+    protected function getDCShipmentResult(Store $receiver, Store $sender, \DateTime $date): ?DeliveryScheduleResult
+    {
+        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+
+        $date = clone $date;
+        /**
+         * Находим дату отгрузки
+         */
+        $date = $receiver->getShipmentDate($date);
+
+        /**
+         * Добавляем к ней 1 день (по ТЗ)
+         */
+        $date->modify('+1 day');
+
+        /**
+         * Ищем графики поставок с РЦ на нужный склад/магазин
+         */
+        return $scheduleService->findBySender($sender)
+            ->getNextDelivery(
+                $receiver,
+                $date
+            );
     }
 
     /**
@@ -587,12 +675,49 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
+     * @return int
+     */
+    public function getDateOffset(): int
+    {
+        return $this->dateOffset;
+    }
+
+    /**
+     * @param int $dateOffset
+     * @return BaseResult
+     */
+    public function setDateOffset(int $dateOffset): CalculationResultInterface
+    {
+        $this->dateOffset = $dateOffset;
+        $this->resetResult();
+        return $this;
+    }
+
+    /**
+     * @return DeliveryScheduleResult
+     */
+    public function getShipmentResult(): ?DeliveryScheduleResult
+    {
+        return $this->shipmentResult;
+    }
+
+    /**
+     * @param DeliveryScheduleResult $shipmentResult
+     * @return BaseResult
+     */
+    public function setShipmentResult(DeliveryScheduleResult $shipmentResult): CalculationResultInterface
+    {
+        $this->shipmentResult = $shipmentResult;
+        return $this;
+    }
+
+    /**
      * @param bool $internalCall
-     * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @return bool
      */
     public function isSuccess($internalCall = false)
     {
@@ -603,69 +728,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->getDeliveryDate();
         }
         return parent::isSuccess($internalCall);
-    }
-
-    /**
-     * Поиск ближайшего дня поставки по дням отгрузки в магазин
-     * Возвращает кол-во дней до отгрузки
-     *
-     * @param Store $store
-     * @param \DateTime $date
-     * @return null|int
-     */
-    protected function getShipmentDay(Store $store, \DateTime $date): ?int
-    {
-        $items = [
-            11 => $store->getShipmentTill11(),
-            13 => $store->getShipmentTill13(),
-            18 => $store->getShipmentTill18(),
-        ];
-
-        $currentDay = (int)$date->format('w');
-        $currentHour = (int)$date->format('G');
-        $results = [];
-
-        /**
-         * @var int $maxHour
-         * @var array $days
-         */
-        foreach ($items as $maxHour => $days) {
-            if (empty($days)) {
-                continue;
-            }
-
-            $res = [];
-            foreach ($days as $day) {
-                /**
-                 * Если текущий день является днем отгрузки
-                 */
-                if ($day === $currentDay) {
-                    /**
-                     * Если текущий час меньше времени окончания отгрузки,
-                     * то отгрузка в текущий день, иначе - через неделю
-                     */
-                    if ($currentHour < $maxHour) {
-                        $res[] = 0;
-                    } else {
-                        $res[] = 7;
-                    }
-                    continue;
-                }
-
-                $diff = $day - $currentDay;
-                /**
-                 * если diff < 0, то поставка на следующей неделе, соответственно, добавляем 7 дней
-                 */
-                $res[] = ($diff > 0) ? $diff : $diff + 7;
-            }
-
-            $results[] = min($res);
-        }
-
-        /**
-         * Если найден результат, то добавляем к нему 1 день (по ТЗ)
-         */
-        return empty($results) ? null : min($results) + 1;
     }
 
     /**
@@ -730,7 +792,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $this->deliveryDate = null;
         $this->errors = new ErrorCollection();
-        $this->wereErrorsChecked = false;
         $this->isSuccess = true;
         $this->warnings = new ErrorCollection();
     }

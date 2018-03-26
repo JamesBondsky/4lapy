@@ -1,6 +1,7 @@
 <?php
+
 /*
- * @copyright Copyright (c) ADV/web-engineering co.
+ * @copyright Copyright (c) ADV/web-engineering co
  */
 
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
@@ -106,6 +107,11 @@ interface CalculationResultInterface
     public function setIntervals(IntervalCollection $intervals): CalculationResultInterface;
 
     /**
+     * @return IntervalCollection
+     */
+    public function getAvailableIntervals(): IntervalCollection;
+
+    /**
      * @return int
      */
     public function getFreeFrom(): int;
@@ -132,7 +138,7 @@ interface CalculationResultInterface
     /**
      * @return Interval
      */
-    public function getSelectedInterval(): Interval;
+    public function getSelectedInterval(): ?Interval;
 
     /**
      * @param Interval $selectedInterval
@@ -142,8 +148,8 @@ interface CalculationResultInterface
     public function setSelectedInterval(Interval $selectedInterval): CalculationResultInterface;
 
     /**
-     * @return Store
      * @throws NotFoundException
+     * @return Store
      */
     public function getSelectedStore(): Store;
 
@@ -173,13 +179,24 @@ interface CalculationResultInterface
 
     /**
      * @param bool $internalCall
-     * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @return bool
      */
     public function isSuccess($internalCall = false);
+
+    /**
+     * @return int
+     */
+    public function getDateOffset(): int;
+
+    /**
+     * @param int $offset
+     * @return CalculationResultInterface
+     */
+    public function setDateOffset(int $offset): CalculationResultInterface;
 
     /**
      * @return float
@@ -313,12 +330,6 @@ interface CalculationResultInterface
      * @return void
      */
     public function addError(Error $error);
-
-    /**
-     * @param Error[] $errors
-     * @return null
-     */
-    public function addNotices(array $errors);
 
     /**
      * @return Error[]

@@ -123,7 +123,11 @@ class DeliveryScheduleService implements LoggerAwareInterface
             $results[] = $this->findByReceiver($store)->toArray();
         }
 
-        return new DeliveryScheduleCollection(array_merge(...$results));
+        if (!empty($results)) {
+            $results = array_merge(...$results);
+        }
+
+        return new DeliveryScheduleCollection($results);
     }
 
     /**
@@ -138,7 +142,11 @@ class DeliveryScheduleService implements LoggerAwareInterface
             $results[] = $this->findBySender($store)->toArray();
         }
 
-        return new DeliveryScheduleCollection(array_merge(...$results));
+        if (!empty($results)) {
+            $results = array_merge(...$results);
+        }
+
+        return new DeliveryScheduleCollection($results);
     }
 
     /**
@@ -155,7 +163,24 @@ class DeliveryScheduleService implements LoggerAwareInterface
      * @param int $typeId
      * @return null|string
      */
-    public function getTypeCode(int $typeId): ?string
+    public function getTypeCodeById(int $typeId): ?string
+    {
+        return $this->getTypes()[$typeId];
+    }
+
+    /**
+     * @param string $code
+     * @return int|null
+     */
+    public function getTypeIdByCode(string $code): ?int
+    {
+        return array_flip($this->getTypes())[$code];
+    }
+
+    /**
+     * @return array
+     */
+    public function getTypes(): array
     {
         $getTypes = function () {
             $result = [];
@@ -168,7 +193,6 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
             return ['result' => $result];
         };
-
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__)
@@ -176,8 +200,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
                 ->resultOf($getTypes)['result'];
         } catch (\Exception $e) {
             $this->logger->error(sprintf('failed to get enum list: %s', $e->getMessage()));
-            return null;
+            return [];
         }
-        return $result[$typeId];
+
+        return $result;
     }
 }

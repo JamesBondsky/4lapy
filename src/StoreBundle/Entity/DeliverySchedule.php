@@ -303,7 +303,7 @@ class DeliverySchedule extends Base
     /**
      * @return string
      */
-    public function getType(): string
+    public function getType(): ?string
     {
         return $this->type;
     }
@@ -464,12 +464,14 @@ class DeliverySchedule extends Base
     }
 
     /**
-     * public function getXmlId(): string
-     * {
-     * return $this->xmlId;
-     * }
-     *
-     * /**
+     * @return string
+     */
+    public function getXmlId(): string
+    {
+        return $this->xmlId;
+    }
+
+    /**
      * @param string $xmlId
      *
      * @return DeliverySchedule
@@ -486,7 +488,7 @@ class DeliverySchedule extends Base
      */
     public function getTypeCode(): ?string
     {
-        return $this->scheduleService->getTypeCode((int)$this->getType());
+        return $this->scheduleService->getTypeCodeById((int)$this->getType());
     }
 
     /**
@@ -569,7 +571,7 @@ class DeliverySchedule extends Base
             }
 
             if (!empty($results)) {
-                return max($results);
+                return min($results);
             }
 
             return null;
@@ -588,7 +590,7 @@ class DeliverySchedule extends Base
                         continue;
                     }
 
-                    if ($deliveryDate > $date) {
+                    if ($deliveryDate >= $date) {
                         $results[] = $deliveryDate;
                     }
                 }
@@ -600,21 +602,21 @@ class DeliverySchedule extends Base
             case self::TYPE_BY_WEEK:
                 $weekNumbers = $this->getWeekNumbers();
                 $weekDates = [];
-                $weekNumbers[] = 0;
+
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
-                    $weekDate->setISODate($date->format('Y'), $weekNumber - 1);
-                    if ($weekDate->format('W') < $from->format('W')) {
+                    $weekDate->setISODate($date->format('Y'), $weekNumber);
+                    if ($weekDate->format('W') < $date->format('W')) {
                         $weekDate->modify('+1 year');
                     }
 
-                    $weekDates[] = ($weekDate > $from) ? $weekDate : $from;
+                    $weekDates[] = ($weekDate > $date) ? $weekDate : $date;
                 }
 
                 $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
                 break;
             case self::TYPE_WEEKLY:
-                $result =  $getByDay($from);
+                $result = $getByDay($from);
                 break;
         }
 
@@ -626,12 +628,13 @@ class DeliverySchedule extends Base
         return $result;
     }
 
-    /**
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
      * @return string
      */
     public function serialize(): string
     {
-        return serialize([
+        return \serialize([
             $this->id,
             $this->name,
             $this->xmlId,
@@ -647,7 +650,8 @@ class DeliverySchedule extends Base
         ]);
     }
 
-    /**
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
      * @param string $serialized
      * @throws ApplicationCreateException
      */
@@ -666,7 +670,8 @@ class DeliverySchedule extends Base
             $this->deliveryNumber,
             $this->deliveryDates,
             $this->type
-        ] = unserialize($serialized, ['allowed_classes' => true]);
+        ] = \unserialize($serialized, ['allowed_classes' => true]);
+
         $this->__construct();
     }
 }

@@ -48,23 +48,19 @@ $delayedPrice = 0;
 $delayedQuantity = 0;
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 
-$pickup = null;
 if ($deliveryService->isPickup($selectedDelivery)) {
-    $pickup = $selectedDelivery;
     $showPickupContainer = true;
-} else {
-    foreach ($arResult['DELIVERIES'] as $delivery) {
-        if ($deliveryService->isPickup($delivery)) {
-            $pickup = $delivery;
-            break;
-        }
-    }
 }
 
+/** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface $pickup */
+$pickup = $arResult['PICKUP'];
 if (null !== $pickup) {
     /** @var Store $selectedShop */
     $selectedShop = $arResult['SELECTED_SHOP'];
-    $stockResult = $pickup->getStockResult()->filterByStore($selectedShop);
+    $stockResult = $pickup->getStockResult();
+    if ($deliveryService->isInnerPickup($pickup)) {
+        $stockResult = $stockResult->filterByStore($selectedShop);
+    }
 
     $available = $stockResult->getAvailable();
     $availableWeight = 0;
@@ -195,7 +191,7 @@ if (null !== $pickup) {
             <?php } ?>
         </ul>
     </div>
-    <h4 class="b-title b-title--order-list js-popup-mobile-link js-basket-link js-parts-list-title"
+    <h4 class="b-title b-title--order-list js-parts-list-title"
         <?= !$showDelayedItems ? 'style="display:none"' : '' ?>>
         <span class="js-mobile-title-order">Останется в корзине: <?= $delayedQuantity ?></span>
         <?= (new Declension('товар', 'товара', 'товаров'))->get(

@@ -21,6 +21,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Repository\BaseRepository;
+use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -188,6 +189,24 @@ class OrderRepository extends BaseRepository
                         $item['PROPERTY_SELECTED'] = WordHelper::showWeight((float)$item['WEIGHT']);
                         $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
                     }
+
+                    /** установка фалага акции для товара, кешировать не надо - в компоненте кешируется вывод, больше нигде не используется
+                     * @todo вынести из цикла и делать 1 запрос на получение по заказу*/
+                    if(strpos($item['PRODUCT_XML_ID'], '#') !== false){
+                        $explode = explode('#',$item['PRODUCT_XML_ID']);
+                        $xmlId = end($explode);
+                    }
+                    else{
+                        $xmlId = $item['PRODUCT_XML_ID'];
+                    }
+                    $shares = (new IblockElementQuery())->withOrder(['SORT'=>'ASC','ACTIVE_FROM'=>'DESC'])->withFilter([
+                        'IBLOCK_ID'         => IblockUtils::getIblockId(IblockType::PUBLICATION,
+                            IblockCode::SHARES),
+                        'ACTIVE'            => 'Y',
+                        'ACTIVE_DATE'       => 'Y',
+                        'PROPERTY_PRODUCTS' => $xmlId,
+                    ])->withNav(['nTopCount'=>1])->exec();
+                    $item['HAVE_STOCK'] = $shares->isEmpty() ? 'N' : 'Y';
                 }
 
                 unset($item['PROPERTY_SIZE'], $item['PROPERTY_VOLUME']);

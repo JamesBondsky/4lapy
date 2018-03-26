@@ -37,7 +37,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
             'ADV:BasketFilterBasePriceRatio'
         ];
         $controlDescr['SORT'] = 300;
-        //dump($controlDescr);
         return $controlDescr;
     }
 
@@ -163,8 +162,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
      */
     public static function GetAtomsEx($strControlID = false, $boolEx = false): array
     {
-//        $res = parent::GetAtomsEx($strControlID, $boolEx);
-//        dump($res);
         $boolEx = (bool)$boolEx;
         $arAtomList = [
             'count' => [

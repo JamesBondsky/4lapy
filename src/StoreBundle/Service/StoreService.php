@@ -9,17 +9,21 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -76,7 +80,7 @@ class StoreService implements LoggerAwareInterface
      */
     protected $stockRepository;
 
-    /** @var  CalculationResultInterface */
+    /** @var  PickupResultInterface */
     protected $pickupDelivery;
 
     /** @var DeliveryService $deliveryService */
@@ -179,7 +183,6 @@ class StoreService implements LoggerAwareInterface
      * @param bool $strict
      *
      * @throws ArgumentException
-     * @throws \Exception
      * @return StoreCollection
      */
     public function getByLocation(
@@ -450,7 +453,6 @@ class StoreService implements LoggerAwareInterface
             $haveMetro = false;
             foreach ($storeCollection as $store) {
                 $metro = $store->getMetro();
-                $address = $store->getAddress();
 
                 if (!empty($metro) && !$haveMetro) {
                     $haveMetro = true;
@@ -481,8 +483,8 @@ class StoreService implements LoggerAwareInterface
 
                 $item = [
                     'id' => $store->getXmlId(),
-                    'addr' => $address,
-                    'adress' => $store->getDescription(),
+                    'addr' => $store->getAddress(),
+                    'adress' => WordHelper::clear($store->getDescription()),
                     'phone' => $store->getPhone(),
                     'schedule' => $store->getScheduleString(),
                     'photo' => $imageSrc,
@@ -535,11 +537,11 @@ class StoreService implements LoggerAwareInterface
     /**
      * @param int $offerId
      *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Sale\UserMessageException
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
      * @return StoreCollection
      */
     public function getActiveStoresByProduct(int $offerId): StoreCollection
@@ -664,11 +666,11 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Sale\UserMessageException
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
      * @return PickupResultInterface|null
      */
     protected function getPickupDelivery(): ?PickupResultInterface

@@ -6,11 +6,10 @@ use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
-class DpdResult extends BaseResult implements PickupResultInterface
+class DpdDeliveryResult extends BaseResult
 {
     /**
      * Данные по длительности доставки, пришедшие от DPD
@@ -32,11 +31,11 @@ class DpdResult extends BaseResult implements PickupResultInterface
         /**
          * дата доставки DPD для зоны 4 рассчитывается как "то, что вернуло DPD" + 1 день
          */
-        if ($this->getDeliveryCode() === DeliveryService::DPD_DELIVERY_CODE &&
-            $this->getDeliveryZone() === DeliveryService::ZONE_4
-        ) {
+        if ($this->getDeliveryZone() === DeliveryService::ZONE_4) {
             $modifier++;
         }
+
+        $modifier += $this->getDateOffset();
 
         if ($modifier > 0) {
             $this->deliveryDate->modify(sprintf('+%s days', $modifier));
@@ -64,19 +63,10 @@ class DpdResult extends BaseResult implements PickupResultInterface
     }
 
     /**
-     * @return StoreCollection
-     * @throws NotFoundException
-     */
-    public function getBestShops(): StoreCollection
-    {
-        return $this->getStockResult()->getStores();
-    }
-
-    /**
      * @param int $initialPeriod
-     * @return DpdResult
+     * @return DpdDeliveryResult
      */
-    public function setInitialPeriod(int $initialPeriod): DpdResult
+    public function setInitialPeriod(int $initialPeriod): DpdDeliveryResult
     {
         $this->resetResult();
         $this->initialPeriod = $initialPeriod;
@@ -91,18 +81,5 @@ class DpdResult extends BaseResult implements PickupResultInterface
     {
         $this->selectedStore = $selectedStore;
         return $this;
-    }/** @noinspection SenselessProxyMethodInspection */
-
-    /**
-     * @param bool $internalCall
-     * @return bool
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws NotFoundException
-     * @throws StoreNotFoundException
-     */
-    public function isSuccess($internalCall = false)
-    {
-        return parent::isSuccess($internalCall);
     }
 }

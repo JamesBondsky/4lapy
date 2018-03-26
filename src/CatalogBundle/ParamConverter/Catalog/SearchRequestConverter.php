@@ -1,10 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use FourPaws\Catalog\Exception\CategoryNotFoundException;
-use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterService;
@@ -14,7 +16,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SearchRequestConverter extends AbstractCatalogRequestConverter
 {
-    const SORT_DEFAULT = 'relevance';
+    public const SORT_DEFAULT = 'relevance';
 
     /**
      * @var CategoriesService
@@ -40,6 +42,7 @@ class SearchRequestConverter extends AbstractCatalogRequestConverter
 
     /**
      * @param FilterService $filterService
+     *
      * @return static
      * @required
      */
@@ -70,21 +73,22 @@ class SearchRequestConverter extends AbstractCatalogRequestConverter
     }
 
     /**
-     * @param Request              $request
-     * @param ParamConverter       $configuration
-     * @param SearchRequest $object
+     * @param Request        $request
+     * @param ParamConverter $configuration
+     * @param SearchRequest  $object
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws NotFoundHttpException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return bool
      */
     protected function configureCustom(Request $request, ParamConverter $configuration, $object): bool
     {
         try {
-            $category = $this->categoriesService->getByPath('');
+            $category = $this->categoriesService->getSearchRoot();
         } catch (IblockNotFoundException $e) {
             throw new NotFoundHttpException('Инфоблок каталога не найден');
-        } catch (CategoryNotFoundException $e) {
-            throw new NotFoundHttpException(sprintf('Корневая категория не найдена'));
         }
         try {
             $this->filterService->getFilterHelper()->initCategoryFilters($category, $request);

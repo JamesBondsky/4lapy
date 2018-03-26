@@ -61,9 +61,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                     //Детачим
                                     $basketItem->setField('QUANTITY', $basketItem->getQuantity() - $applyCount);
                                     $fields = [
-                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
-                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
-                                        'CUSTOM_PRICE' => 'Y', //надо как-то по-другому сделать
                                         'PROPS' => [
                                             [
                                                 'NAME' => 'Отделено от элемента корзины',
@@ -73,18 +70,23 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                             ],
                                         ]
                                     ];
-                                    $this->basketService->addOfferToBasket(
+                                    $newBasketItem = $this->basketService->addOfferToBasket(
                                         $basketItem->getProductId(),
                                         $applyCount,
                                         $fields,
                                         false
                                     );
-                                } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
-                                    //Просто проставляем поля
-                                    $basketItem->setFields([
+                                    /** @noinspection PhpInternalEntityUsedInspection */
+                                    $newBasketItem->setFieldsNoDemand([
                                         'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
                                         'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
-                                        'CUSTOM_PRICE' => 'Y',
+                                    ]);
+                                } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
+                                    //Просто проставляем поля
+                                    /** @noinspection PhpInternalEntityUsedInspection */
+                                    $basketItem->setFieldsNoDemand([
+                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
+                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
                                     ]);
                                 } else {
                                     // todo ситуация может возникать когда на одну позицию действует несколько детач акций, пока опустим этот момент

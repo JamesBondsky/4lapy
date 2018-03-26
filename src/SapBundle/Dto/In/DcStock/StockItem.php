@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\DcStock;
 
 use JMS\Serializer\Annotation as Serializer;
@@ -10,7 +14,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\SapBundle\Dto\In
  * @Serializer\XmlRoot("STOCKITEMS")
-  */
+ */
 class StockItem
 {
     /**

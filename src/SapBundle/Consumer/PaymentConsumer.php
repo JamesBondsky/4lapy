@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -32,8 +36,8 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @param $paymentInfo
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function consume($paymentInfo): bool
     {

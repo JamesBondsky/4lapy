@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -12,8 +16,8 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\StoresStock\StockItem;
 use FourPaws\SapBundle\Dto\In\StoresStock\StoresStock;
-use Psr\Log\LoggerAwareInterface;
 use FourPaws\SapBundle\Exception\InvalidArgumentException;
+use Psr\Log\LoggerAwareInterface;
 
 class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
 {

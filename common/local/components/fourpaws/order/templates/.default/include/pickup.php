@@ -28,7 +28,10 @@ $storage = $arResult['STORAGE'];
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
 
-$stockResultByShop = $pickup->getStockResult()->filterByStore($selectedShop);
+$stockResultByShop = $pickup->getStockResult();
+if ($deliveryService->isInnerPickup($pickup)) {
+    $stockResultByShop = $stockResultByShop->filterByStore($selectedShop);
+}
 $available = $stockResultByShop->getAvailable();
 $delayed = $stockResultByShop->getDelayed();
 

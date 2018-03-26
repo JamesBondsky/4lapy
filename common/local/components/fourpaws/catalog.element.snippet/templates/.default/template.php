@@ -13,6 +13,7 @@
  * @global \CMain             $APPLICATION
  */
 
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
@@ -75,11 +76,14 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         <div class="b-common-item__rank-wrapper">
             &nbsp
             <?php
-            /**
-             * @todo new; shares
-             * <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
-             * <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
-             */ ?>
+            if($currentOffer->isNew()){?>
+                <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
+            <?php }
+            if($currentOffer->isShare()){
+                /** @var IblockElement $share */
+                $share = $currentOffer->getShare()->first();?>
+                <span class="b-common-item__rank-text b-common-item__rank-text--red"><?=$share->getName()?></span>
+            <?php }?>
         </div>
         <?php if ($offers->count() > 1) {
 

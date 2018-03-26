@@ -1,5 +1,0 @@
-_main_dev:
-    resource: routes_dev.yml
-
-app.test.api:
-    resource: "@FourPawsMobileApiBundle/Resources/config/routing_test.yml"

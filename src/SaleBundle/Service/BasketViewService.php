@@ -48,7 +48,7 @@ class BasketViewService
             [
                 'COMPONENT_TEMPLATE'   => 'header.basket',
                 'PATH_TO_BASKET'       => '/cart/',
-                'PATH_TO_ORDER'        => '/order/make/',
+                'PATH_TO_ORDER'        => '/sale/order/',
                 'MINI_BASKET'        => true,
                 'IS_AJAX'              => $isAjax,
             ],

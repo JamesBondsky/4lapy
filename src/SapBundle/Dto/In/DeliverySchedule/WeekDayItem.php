@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\DeliverySchedule;
 
 use JMS\Serializer\Annotation as Serializer;
@@ -9,7 +13,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\SapBundle\Dto\In
  * @Serializer\XmlRoot("weekdays")
-  */
+ */
 class WeekDayItem
 {
     /**
