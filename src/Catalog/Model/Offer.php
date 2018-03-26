@@ -1331,7 +1331,7 @@ class Offer extends IblockElement
     public function isAvailable(): bool
     {
         /** @todo сделать обработку исключений */
-        return $this->isActive() && $this->getQuantity() > 0 && !$this->isByRequest();
+        return $this->isActive() && $this->getQuantity() > 0;
     }
 
     /**

@@ -153,6 +153,10 @@ if ($arParams['IS_AJAX']) {
                         if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                             continue;
                         }
+                        $offer = $component->getOffer((int)$basketItem->getProductId());
+                        if ($offer->isByRequest()) {
+                            continue;
+                        }
                         require __DIR__ . '/basketItem.php';
                     }
                     ?>
@@ -165,6 +169,7 @@ if ($arParams['IS_AJAX']) {
                         if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                             continue;
                         }
+                        $offer = $component->getOffer((int)$basketItem->getProductId());
                         require __DIR__ . '/basketItem.php';
                     } ?>
                 </section>
