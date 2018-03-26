@@ -17,6 +17,7 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
@@ -81,17 +82,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected $selectedStore;
 
-    /** @var DeliveryScheduleService */
-    protected $scheduleService;
+    /**
+     * @var int
+     */
+    protected $dateOffset = 0;
 
     /**
      * @param CalculationResult|null $result
      *
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws NotFoundException
-     * @throws StoreNotFoundException
      * @return CalculationResultInterface
      */
     public static function fromBitrixResult(CalculationResult $result = null): CalculationResultInterface
@@ -358,10 +356,29 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @return Interval
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @return Interval|null
      */
-    public function getSelectedInterval(): Interval
+    public function getSelectedInterval(): ?Interval
     {
+        /**
+         * Если интервал не выбран, подбираем наиболее подходящий (с минимальной датой доставки)
+         */
+        if (null === $this->selectedInterval) {
+            /** @var IntervalService $intervalService */
+            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+            try {
+                $this->selectedInterval = $intervalService->getFirstInterval(
+                    $this,
+                    $this->getIntervals()
+                );
+            } catch (NotFoundException $e) {
+                return $this->getIntervals()->first();
+            }
+        }
+
         return $this->selectedInterval;
     }
 
@@ -651,6 +668,25 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $this->getDeliveryDate();
         return parent::getPeriodType();
+    }
+
+    /**
+     * @return int
+     */
+    public function getDateOffset(): int
+    {
+        return $this->dateOffset;
+    }
+
+    /**
+     * @param int $dateOffset
+     * @return BaseResult
+     */
+    public function setDateOffset(int $dateOffset): CalculationResultInterface
+    {
+        $this->dateOffset = $dateOffset;
+        $this->resetResult();
+        return $this;
     }
 
     /**

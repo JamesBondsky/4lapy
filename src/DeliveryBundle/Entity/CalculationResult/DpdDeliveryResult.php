@@ -9,7 +9,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
-class DpdResult extends BaseResult
+class DpdDeliveryResult extends BaseResult
 {
     /**
      * Данные по длительности доставки, пришедшие от DPD
@@ -31,11 +31,11 @@ class DpdResult extends BaseResult
         /**
          * дата доставки DPD для зоны 4 рассчитывается как "то, что вернуло DPD" + 1 день
          */
-        if ($this->getDeliveryCode() === DeliveryService::DPD_DELIVERY_CODE &&
-            $this->getDeliveryZone() === DeliveryService::ZONE_4
-        ) {
+        if ($this->getDeliveryZone() === DeliveryService::ZONE_4) {
             $modifier++;
         }
+
+        $modifier += $this->getDateOffset();
 
         if ($modifier > 0) {
             $this->deliveryDate->modify(sprintf('+%s days', $modifier));
@@ -64,9 +64,9 @@ class DpdResult extends BaseResult
 
     /**
      * @param int $initialPeriod
-     * @return DpdResult
+     * @return DpdDeliveryResult
      */
-    public function setInitialPeriod(int $initialPeriod): DpdResult
+    public function setInitialPeriod(int $initialPeriod): DpdDeliveryResult
     {
         $this->resetResult();
         $this->initialPeriod = $initialPeriod;

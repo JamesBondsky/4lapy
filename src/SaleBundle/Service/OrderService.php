@@ -246,6 +246,7 @@ class OrderService
         if (!$selectedDelivery) {
             throw new OrderCreateException('Нет доступных доставок');
         }
+        $selectedDelivery = clone $selectedDelivery;
 
         /**
          * Задание способов доставки
@@ -272,6 +273,14 @@ class OrderService
 
             if (null === $selectedDelivery) {
                 throw new OrderCreateException('Не выбрана доставка');
+            }
+
+            $selectedDelivery->setDateOffset($storage->getDeliveryDate());
+            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+                /** @var Interval $interval */
+                if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
+                    $selectedDelivery->setSelectedInterval($interval);
+                }
             }
 
             if ($this->deliveryService->isDelivery($selectedDelivery)) {
@@ -312,36 +321,22 @@ class OrderService
                         $value = $storage->getDeliveryPlaceCode();
                         break;
                     case 'DELIVERY_DATE':
-                        /**
-                         * У доставок есть выбор даты доставки
-                         */
-                        $date = clone $deliveryDate;
-                        if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if (($days = $storage->getDeliveryDate() - 1) >= 0) {
-                                $date->modify('+' . $days . ' days');
-                            }
-                        }
-                        $value = $date->format('d.m.Y');
+                        $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
                         break;
                     case 'DELIVERY_INTERVAL':
                         /**
                          * У доставок есть выбор интервала доставки
                          */
                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if (($index = $storage->getDeliveryInterval() - 1) < 0) {
+                            if ($interval = $selectedDelivery->getSelectedInterval()) {
+                                $value = sprintf(
+                                    '%s:00-%s:00',
+                                    str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                    str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
+                                );
+                            } else {
                                 continue 2;
                             }
-
-                            /** @var Interval $interval */
-                            if (!$interval = $selectedDelivery->getAvailableIntervals($storage->getDeliveryDate())[$index]) {
-                                continue 2;
-                            }
-
-                            $value = sprintf(
-                                '%s:00-%s:00',
-                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
-                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
-                            );
                         } else {
                             $value = sprintf(
                                 '%s:00-23:59',
