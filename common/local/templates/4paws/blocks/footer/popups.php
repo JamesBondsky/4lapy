@@ -111,6 +111,6 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
     }
     ?>
-    <?php include __DIR__ . 'gifts_popup.php' ?>
-    <?php include __DIR__ . 'modal_popup.php' ?>
+    <?php include __DIR__ . '/gifts_popup.php' ?>
+    <?php include __DIR__ . '/modal_popup.php' ?>
 </div>

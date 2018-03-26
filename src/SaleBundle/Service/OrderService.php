@@ -35,6 +35,7 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -246,6 +247,7 @@ class OrderService
         if (!$selectedDelivery) {
             throw new OrderCreateException('Нет доступных доставок');
         }
+        $selectedDelivery = clone $selectedDelivery;
 
         /**
          * Задание способов доставки
@@ -274,6 +276,14 @@ class OrderService
                 throw new OrderCreateException('Не выбрана доставка');
             }
 
+            $selectedDelivery->setDateOffset($storage->getDeliveryDate());
+            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+                /** @var Interval $interval */
+                if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
+                    $selectedDelivery->setSelectedInterval($interval);
+                }
+            }
+
             if ($this->deliveryService->isDelivery($selectedDelivery)) {
                 $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
             }
@@ -299,11 +309,20 @@ class OrderService
             foreach ($propertyValueCollection as $propertyValue) {
                 $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
-                    case 'DELIVERY_PLACE_CODE':
-                        if (!$this->deliveryService->isInnerPickup($selectedDelivery)) {
+                    case 'SHIPMENT_PLACE_CODE':
+                        $shipmentResult = $selectedDelivery->getShipmentResult();
+                        if ($shipmentResult instanceof DeliveryScheduleResult) {
+                            $value = $shipmentResult->getSchedule()->getSenderCode();
+                        } else {
                             continue 2;
                         }
-                        $value = $storage->getDeliveryPlaceCode();
+                        break;
+                    case 'DELIVERY_PLACE_CODE':
+                        if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                            $value = $storage->getDeliveryPlaceCode();
+                        } else {
+                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                        }
                         break;
                     case 'DPD_TERMINAL_CODE':
                         if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
@@ -312,36 +331,22 @@ class OrderService
                         $value = $storage->getDeliveryPlaceCode();
                         break;
                     case 'DELIVERY_DATE':
-                        /**
-                         * У доставок есть выбор даты доставки
-                         */
-                        $date = clone $deliveryDate;
-                        if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if (($days = $storage->getDeliveryDate() - 1) >= 0) {
-                                $date->modify('+' . $days . ' days');
-                            }
-                        }
-                        $value = $date->format('d.m.Y');
+                        $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
                         break;
                     case 'DELIVERY_INTERVAL':
                         /**
                          * У доставок есть выбор интервала доставки
                          */
                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if (($index = $storage->getDeliveryInterval() - 1) < 0) {
+                            if ($interval = $selectedDelivery->getSelectedInterval()) {
+                                $value = sprintf(
+                                    '%s:00-%s:00',
+                                    str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                    str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
+                                );
+                            } else {
                                 continue 2;
                             }
-
-                            /** @var Interval $interval */
-                            if (!$interval = $selectedDelivery->getAvailableIntervals($storage->getDeliveryDate())[$index]) {
-                                continue 2;
-                            }
-
-                            $value = sprintf(
-                                '%s:00-%s:00',
-                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
-                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
-                            );
                         } else {
                             $value = sprintf(
                                 '%s:00-23:59',

@@ -47,11 +47,11 @@ class BonusBuyTo
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("KOND_PER")
-     * @Serializer\Type("sap_bool")
+     * @Serializer\Type("float")
      *
-     * @var bool
+     * @var float
      */
-    protected $percent = false;
+    protected $percent = 0.0;
 
     /**
      * Группа данных о единице подарка
@@ -96,6 +96,7 @@ class BonusBuyTo
     public function setSign(string $sign): BonusBuyTo
     {
         $this->sign = $sign;
+        
         return $this;
     }
 

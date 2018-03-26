@@ -10,7 +10,7 @@
         <div class="b-common-item b-common-item--popup-gift js-presents-item" style="display: none;">
             <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift">
                 <img class="b-common-item__image b-common-item__image--popup-gift js-image-raplace"
-                     src="/static/build/imagescontent/hills-cat.jpg"
+                     src="/static/build/images/content/hills-cat.jpg"
                      alt="для щенков с ягненком и рисом"
                      title=""/>
             </span>
