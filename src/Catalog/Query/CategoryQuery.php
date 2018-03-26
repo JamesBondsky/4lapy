@@ -30,7 +30,8 @@ class CategoryQuery extends IblockSectionQuery
             'UF_SUFFIX',
             'PICTURE',
             'UF_LANDING',
-            'UF_LANDING_BANNER'
+            'UF_LANDING_BANNER',
+            'UF_FAQ_SECTION'
         ];
     }
 
