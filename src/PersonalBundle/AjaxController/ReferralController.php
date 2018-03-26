@@ -75,8 +75,15 @@ class ReferralController extends Controller
         if (!empty($data['UF_CARD'])) {
             $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
         }
-        if(!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])){
-            return $this->ajaxMess->getWrongCardNumber();
+        try {
+            if (!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])) {
+                return $this->ajaxMess->getWrongCardNumber();
+            }
+        }
+        catch (ManzanaServiceException $e) {
+            $logger = LoggerFactory::create('manzana');
+            $logger->error('Ошибка манзаны - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
         }
         $data['UF_MODERATED'] = 'Y';
         try {
