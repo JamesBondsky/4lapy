@@ -128,7 +128,7 @@ class SectionlandingSettingsContinue20180326094411 extends \Adv\Bitrixtools\Migr
                         клещей
                     </div>
                     <div class="b-fleas-protection-banner__doctor">
-                        <div class="b-fleas-protection-banner__doctor-img"><img src="./images/content/img_doc.png"/>
+                        <div class="b-fleas-protection-banner__doctor-img"><img src="/static/build/images/content/img_doc.png"/>
                         </div>
                         <div class="b-fleas-protection-banner__doctor-info">
                             <div class="b-fleas-protection-banner__doctor-name">Андрей Михайлович Семеренко</div>
