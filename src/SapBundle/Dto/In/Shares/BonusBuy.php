@@ -61,8 +61,8 @@ class BonusBuy
      *
      * @var bool
      */
+    protected $forIm = true;
 
-    protected $forIm = false;
     /**
      *
      * @Serializer\XmlAttribute()
@@ -98,8 +98,8 @@ class BonusBuy
     /**
      * Группа данных об акции Bonus Buy
      *
+     * @Serializer\XmlList(inline=true, entry="BB_HEAD")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyShare>")
-     * @Serializer\SerializedName("BB_HEAD")
      *
      * @var BonusBuyShare[]|Collection
      */

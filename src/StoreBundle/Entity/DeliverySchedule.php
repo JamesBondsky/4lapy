@@ -305,7 +305,7 @@ class DeliverySchedule extends Base
      */
     public function getType(): ?string
     {
-        return $this->type ;
+        return $this->type;
     }
 
     /**
@@ -466,10 +466,10 @@ class DeliverySchedule extends Base
     /**
      * @return string
      */
-     public function getXmlId(): string
-     {
+    public function getXmlId(): string
+    {
         return $this->xmlId;
-     }
+    }
 
     /**
      * @param string $xmlId
@@ -616,7 +616,7 @@ class DeliverySchedule extends Base
                 $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
                 break;
             case self::TYPE_WEEKLY:
-                $result =  $getByDay($from);
+                $result = $getByDay($from);
                 break;
         }
 

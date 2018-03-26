@@ -10,7 +10,6 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SapBundle\Dto\In\Shares\BonusBuy;
 use FourPaws\SapBundle\Service\Shares\SharesService;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LogLevel;
 use RuntimeException;
 
 /**
@@ -49,8 +48,8 @@ class BonusBuyConsumer implements ConsumerInterface, LoggerAwareInterface
         if (!$this->support($data)) {
             return false;
         }
-        
-        $this->log()->log(LogLevel::INFO, 'Импортируется акция из Bonus Buy');
+
+        $this->log()->info('Импортируется акция из Bonus Buy');
         
         try {
             $success = true;
@@ -59,7 +58,7 @@ class BonusBuyConsumer implements ConsumerInterface, LoggerAwareInterface
         } catch (\Exception $e) {
             $success = false;
 
-            $this->log()->log(LogLevel::ERROR, \sprintf('Импортируется акции: %s', $e->getMessage()));
+            $this->log()->error(\sprintf('Импортируется акции: %s', $e->getMessage()));
         }
         
         return $success;

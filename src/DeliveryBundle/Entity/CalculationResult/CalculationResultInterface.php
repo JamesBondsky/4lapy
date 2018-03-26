@@ -107,10 +107,9 @@ interface CalculationResultInterface
     public function setIntervals(IntervalCollection $intervals): CalculationResultInterface;
 
     /**
-     * @param int $dateIndex
      * @return IntervalCollection
      */
-    public function getAvailableIntervals(int $dateIndex = 0): IntervalCollection;
+    public function getAvailableIntervals(): IntervalCollection;
 
     /**
      * @return int
@@ -139,7 +138,7 @@ interface CalculationResultInterface
     /**
      * @return Interval
      */
-    public function getSelectedInterval(): Interval;
+    public function getSelectedInterval(): ?Interval;
 
     /**
      * @param Interval $selectedInterval
@@ -187,6 +186,17 @@ interface CalculationResultInterface
      * @return bool
      */
     public function isSuccess($internalCall = false);
+
+    /**
+     * @return int
+     */
+    public function getDateOffset(): int;
+
+    /**
+     * @param int $offset
+     * @return CalculationResultInterface
+     */
+    public function setDateOffset(int $offset): CalculationResultInterface;
 
     /**
      * @return float

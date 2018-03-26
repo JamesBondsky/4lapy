@@ -56,8 +56,8 @@ class BonusBuyTo
     /**
      * Группа данных о единице подарка
      *
+     * @Serializer\XmlList(inline=true, entry="BONUS_ITEM")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyToItem>")
-     * @Serializer\SerializedName("BONUS_ITEM")
      *
      * @var BonusBuyToItem[]|Collection
      */
