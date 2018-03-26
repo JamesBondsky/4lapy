@@ -10,6 +10,7 @@ use FourPaws\Migrator\Converter\StringToLocation;
 use FourPaws\Migrator\Converter\StringToNotEmptyString;
 use FourPaws\Migrator\Converter\StringToReference;
 use FourPaws\Migrator\Converter\TextHtmlToString;
+use FourPaws\Migrator\Converter\Trim;
 
 /**
  * Class Store
@@ -55,6 +56,7 @@ class Store extends ProviderAbstract
         $nameBuilder          = new StoreNameBuilder('TITLE');
         $phoneBuilder         = new PhoneBuilder('PHONE');
         $gpsSeparator         = new GpsSeparator('GPS');
+        $trimAddressConverter = new Trim('ADDRESS');
         $addressConverter     = new StringToNotEmptyString('ADDRESS');
         $descriptionConverter = new TextHtmlToString('DESCRIPTION');
         
@@ -62,6 +64,7 @@ class Store extends ProviderAbstract
             $nameBuilder,
             $phoneBuilder,
             $gpsSeparator,
+            $trimAddressConverter,
             $addressConverter,
             $descriptionConverter,
         ];
