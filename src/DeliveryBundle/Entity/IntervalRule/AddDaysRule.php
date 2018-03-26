@@ -2,8 +2,11 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use Bitrix\Main\ArgumentException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 /**
  * Правило, добавляющее $value дней к дате доставки,
@@ -101,6 +104,15 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
         return $this;
     }
 
+    /**
+     * @param CalculationResultInterface $result
+     *
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     * @return bool
+     */
     public function isSuitable(CalculationResultInterface $result): bool
     {
         $hour = $result->getDeliveryDate()->format('G');
@@ -108,6 +120,15 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
         return ($hour >= $this->getFrom()) && ($hour < $this->getTo());
     }
 
+    /**
+     * @param CalculationResultInterface $result
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     * @return CalculationResultInterface
+     */
     public function apply(CalculationResultInterface $result): CalculationResultInterface
     {
         if (!$this->isSuitable($result)) {

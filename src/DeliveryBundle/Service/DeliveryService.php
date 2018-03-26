@@ -29,7 +29,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -271,8 +271,8 @@ class DeliveryService implements LoggerAwareInterface
                     $calculationResult = DpdPickupResult::fromBitrixResult($calculationResult);
                     $calculationResult->setTerminals(static::$dpdData[$service->getCode()]['TERMINALS']);
                 } else {
-                    /** @var DpdResult $calculationResult */
-                    $calculationResult = DpdResult::fromBitrixResult($calculationResult);
+                    /** @var DpdDeliveryResult $calculationResult */
+                    $calculationResult = DpdDeliveryResult::fromBitrixResult($calculationResult);
                 }
                 $calculationResult->setDeliveryCode($service->getCode());
                 $calculationResult->setInitialPeriod(static::$dpdData[$service->getCode()]['DAYS_FROM']);
