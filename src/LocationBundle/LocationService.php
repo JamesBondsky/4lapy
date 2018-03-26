@@ -8,7 +8,7 @@ namespace FourPaws\LocationBundle;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Bitrix\Main\ArgumentException;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\TypeTable;
@@ -17,7 +17,7 @@ use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
 use FourPaws\App\Application;
-use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\LocationBundle\Enum\CitiesSectionCode;
@@ -26,6 +26,9 @@ use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -39,6 +42,8 @@ use WebArch\BitrixCache\BitrixCache;
  */
 class LocationService
 {
+    use LazyLoggerAwareTrait;
+
     public const TYPE_CITY = 'CITY';
 
     public const TYPE_VILLAGE = 'VILLAGE';
@@ -54,6 +59,7 @@ class LocationService
      */
     public function __construct()
     {
+        $this->withLogName('LocationService');
     }
 
     /**
@@ -61,10 +67,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
      * @throws Exception
      * @return string
      */
@@ -127,7 +133,6 @@ class LocationService
      * @throws ServiceCircularReferenceException
      * @throws IblockNotFoundException
      * @throws Exception
-     * @throws ArgumentException
      * @return array
      */
     public function getAvailableCities(): array
@@ -200,7 +205,7 @@ class LocationService
             ->withId(__METHOD__)
             ->withIblockTag(IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES))
             ->resultOf($getAvailableCities);
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * Поиск местоположения по названию
@@ -211,7 +216,6 @@ class LocationService
      * @param array  $additionalFilter
      *
      * @throws CityNotFoundException
-     * @throws Exception
      * @return array
      */
     public function findLocation(
@@ -235,7 +239,7 @@ class LocationService
 
 
             if (!empty($additionalFilter)) {
-                $filter = array_merge($filter, $additionalFilter);
+                $filter = \array_merge($filter, $additionalFilter);
             }
 
             // Bitrix не ищет по массиву TYPE_ID
@@ -261,9 +265,13 @@ class LocationService
             return $result;
         };
 
-        $result = (new BitrixCache())
-            ->withId($query . \json_encode($additionalFilter) . $limit . (int)$exact)
-            ->resultOf($findLocation);
+        try {
+            $result = (new BitrixCache())
+                ->withId($query . \json_encode($additionalFilter) . $limit . (int)$exact)
+                ->resultOf($findLocation);
+        } catch (\Exception $e) {
+            $result = $findLocation();
+        }
 
         if (empty($result)) {
             throw new CityNotFoundException('Город не найден');
@@ -278,8 +286,7 @@ class LocationService
      * @param string $code
      * @param array  $additionalFilter
      *
-     * @throws Exception
-     * @return array|false
+     * @return array
      */
     public function findLocationByCode(string $code, array $additionalFilter = []): array
     {
@@ -304,9 +311,13 @@ class LocationService
                 )
                 ->resultOf($findLocation);
         } catch (Exception $e) {
-            return $findLocation();
+            $this->log()->error(sprintf('failed to get location: %s', $e->getMessage()), [
+                'code' => $code,
+                'filter' => $additionalFilter
+            ]);
+            return [];
         }
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * Поиск местоположений с типом "город" и "деревня" по названию
@@ -317,7 +328,6 @@ class LocationService
      * @param bool     $exact
      *
      * @throws CityNotFoundException
-     * @throws Exception
      * @return array
      */
     public function findLocationCity(
@@ -357,7 +367,6 @@ class LocationService
      *
      * @param string $code
      *
-     * @throws Exception
      * @throws CityNotFoundException
      * @return array
      */
@@ -386,7 +395,6 @@ class LocationService
     /**
      * Возвращает дефолтное местоположение
      *
-     * @throws Exception
      * @return array
      */
     public function getDefaultLocation(): array
@@ -404,11 +412,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws Exception
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
      * @return string
      */
     public function getCurrentLocation(): string
@@ -431,7 +438,6 @@ class LocationService
      * @param bool $withLocations если true, то в каждой группе содержать ключ LOCATIONS,
      *                            содержащий массив кодов местоположений этой группы
      *
-     * @throws Exception
      * @return array
      */
     public function getLocationGroups($withLocations = true): array
@@ -474,9 +480,16 @@ class LocationService
             return $result;
         };
 
-        return (new BitrixCache())
-            ->withId(__METHOD__ . (int)$withLocations)
-            ->resultOf($getGroups);
+        try {
+            return (new BitrixCache())
+                ->withId(__METHOD__ . (int)$withLocations)
+                ->resultOf($getGroups);
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get location groups: %s', $e->getMessage()), [
+                'withLocations' => (int)$withLocations
+            ]);
+            return [];
+        }
     }
 
     /**
@@ -484,10 +497,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @return null|City
      */
-    public function getDefaultCity()
+    public function getDefaultCity(): ?City
     {
         $citiesTable = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
 
@@ -503,10 +516,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @return null|\FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface
+     * @throws ApplicationCreateException
+     * @return null|City
      */
-    public function getCity($locationCode)
+    public function getCity($locationCode): ?City
     {
         try {
             return City::createFromLocation($locationCode);
@@ -519,15 +532,15 @@ class LocationService
      * Получение эл-та из HL-блока,
      * привязанного к выбранному городу пользователя
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @return null|ActiveReadModelInterface
+     * @throws ApplicationCreateException
+     * @return null|City
      */
-    public function getCurrentCity(): ?ActiveReadModelInterface
+    public function getCurrentCity(): ?City
     {
         if (($locationCode = $this->getCurrentLocation()) && ($city = $this->getCity($locationCode))) {
             return $city;
@@ -539,7 +552,6 @@ class LocationService
     /**
      * @param array $typeCodes
      *
-     * @throws Exception
      * @return array
      */
     protected function getTypeIdsByCodes(array $typeCodes): array
@@ -549,7 +561,6 @@ class LocationService
     }
 
     /**
-     * @throws Exception
      * @return array
      */
     protected function getTypeIds(): array
@@ -572,9 +583,13 @@ class LocationService
             return $result;
         };
 
-        return (new BitrixCache())
-            ->withId(__METHOD__)
-            ->resultOf($getTypeIds);
+        try {
+            return (new BitrixCache())
+                ->withId(__METHOD__)
+                ->resultOf($getTypeIds);
+        } catch (\Exception $e) {
+            return $getTypeIds();
+        }
     }
 
     /**
@@ -587,7 +602,7 @@ class LocationService
      * @throws Exception
      * @return array
      */
-    private function findWithLocationSearchComponent($filter, $limit)
+    private function findWithLocationSearchComponent($filter, $limit): array
     {
         $result = [];
 
@@ -609,8 +624,10 @@ class LocationService
         );
 
         $types = array_flip($this->getTypeIds());
+        /** @var array $item */
         foreach ($data['ITEMS'] as $item) {
             $path = [];
+            /** @var string $pathId */
             foreach ($item['PATH'] as $pathId) {
                 if (!isset($data['ETC']['PATH_ITEMS'][$pathId])) {
                     continue;

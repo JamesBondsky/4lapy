@@ -7,10 +7,15 @@
 namespace FourPaws\SapBundle\Service\Shares;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\Connection;
+use Bitrix\Main\DB\SqlQueryException;
 use Cocur\Slugify\SlugifyInterface;
 use DateTimeImmutable;
+use Exception;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\BitrixOrm\Type\TextContent;
+use FourPaws\Helpers\IblockHelper;
 use FourPaws\SapBundle\Dto\In\Shares\BonusBuy;
 use FourPaws\SapBundle\Dto\In\Shares\BonusBuyFrom;
 use FourPaws\SapBundle\Dto\In\Shares\BonusBuyFromItem;
@@ -38,6 +43,10 @@ class SharesService implements LoggerAwareInterface
      * @var SlugifyInterface
      */
     private $slugify;
+    /**
+     * @var Connection
+     */
+    private $connection;
 
     /**
      * SharesService constructor.
@@ -47,6 +56,7 @@ class SharesService implements LoggerAwareInterface
      */
     public function __construct(ShareRepository $repository, SlugifyInterface $slugify)
     {
+        $this->connection = Application::getConnection();
         $this->repository = $repository;
         $this->slugify = $slugify;
     }
@@ -66,28 +76,39 @@ class SharesService implements LoggerAwareInterface
      * @param BonusBuy $promo
      *
      * @throws RuntimeException
+     * @throws SqlQueryException
      */
     public function export(BonusBuy $promo): void
     {
         foreach ($promo->getBonusBuyShare() as $share) {
-            if ($this->tryDeleteShare($share)) {
-                return;
-            }
-
-            $entity = $this->transformDtoToEntity($share, $promo);
-
             try {
-                $existsEntityId = $this->findShare($share)->getId();
-                $entity->withId($existsEntityId);
+                $this->connection->startTransaction();
 
-                $this->tryUpdateShare($entity);
-            } catch (NotFoundShareException $e) {
-                $this->tryAddShare($entity);
+                if ($this->tryDeleteShare($share)) {
+                    return;
+                }
+
+                $entity = $this->transformDtoToEntity($share, $promo);
+
+                try {
+                    $exists = $this->findShare($share);
+                    $existsEntityId = $exists->getId();
+                    $entity->withId($existsEntityId);
+                    $entity->withCode($exists->getCode());
+
+                    $this->tryUpdateShare($entity);
+                } catch (NotFoundShareException $e) {
+                    $this->tryAddShare($entity);
+                }
+
+                $this->connection->commitTransaction();
+            } catch (Exception $e) {
+                /**
+                 * Глобально исключение - откатываем транзакцию
+                 */
+                $this->connection->rollbackTransaction();
             }
         }
-
-        dump($promo);
-        die;
     }
 
     /**
@@ -122,17 +143,22 @@ class SharesService implements LoggerAwareInterface
     private function transformDtoToEntity(BonusBuyShare $share, BonusBuy $promo): Share
     {
         $items = $share->getBonusBuyFrom();
-        $products = $items->forAll(function (BonusBuyFrom $item) {
+        $products = $items->map(function (BonusBuyFrom $item) {
             return $item->getBonusBuyFromItems()->map(
                 function (BonusBuyFromItem $product) {
-
+                    return $product->getOfferId();
                 }
             )->toArray();
+        })->toArray();
+
+        $products = \array_reduce($products, function ($array, $current) {
+            return \array_merge($array ?? [], $current ?? []);
         });
 
-        $entity = (new Share())
-            ->withActive('N')
-            ->withCode($this->slugify->slugify($share->getDescription()))
+        $entity = new Share();
+
+        $entity->withActive('N')
+            ->withXmlId($share->getShareNumber())
             ->withDateActiveFrom(DateTimeImmutable::createFromMutable($promo->getStartDate()))
             ->withDateActiveTo(DateTimeImmutable::createFromMutable($promo->getEndDate()))
             ->withDetailText((new TextContent())->withText($share->getDescription()))
@@ -194,7 +220,7 @@ class SharesService implements LoggerAwareInterface
                 )
             );
         } else {
-            $this->log()->info(
+            $this->log()->error(
                 \sprintf(
                     'Ошибка обновления акции #%s: %s',
                     $share->getId(),
@@ -211,6 +237,8 @@ class SharesService implements LoggerAwareInterface
      */
     private function tryAddShare(Share $share)
     {
+        $share->withCode(IblockHelper::generateUniqueCode($share->getIblockId(), $this->slugify->slugify($share->getName())));
+
         $result = $this->repository->create($share);
 
         if ($result->isSuccess()) {
@@ -221,7 +249,7 @@ class SharesService implements LoggerAwareInterface
                 )
             );
         } else {
-            $this->log()->info(
+            $this->log()->error(
                 \sprintf(
                     'Ошибка создания акции #%s: %s',
                     $share->getXmlId(),

@@ -229,8 +229,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $avgGpsS += $store->getLatitude();
             }
 
-            $result['avg_gps_n'] = $avgGpsN / $shopCount;
-            $result['avg_gps_s'] = $avgGpsS / $shopCount;
+            if ($shopCount) {
+                $result['avg_gps_n'] = $avgGpsN / $shopCount;
+                $result['avg_gps_s'] = $avgGpsS / $shopCount;
+            }
         }
 
         return $result;

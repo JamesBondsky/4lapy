@@ -6,37 +6,60 @@
 
 namespace FourPaws\DeliveryBundle\Handler;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Shipment;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 
 class InnerDeliveryHandler extends DeliveryHandlerBase
 {
     protected $code = '4lapy_delivery';
 
+    /**
+     * InnerDeliveryHandler constructor.
+     * @param array $initParams
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     */
     public function __construct(array $initParams)
     {
         parent::__construct($initParams);
     }
 
-    public static function getClassTitle()
+    /**
+     * @return string
+     */
+    public static function getClassTitle(): string
     {
         return 'Доставка "Четыре лапы"';
     }
 
-    public static function getClassDescription()
+    /**
+     * @return string
+     */
+    public static function getClassDescription(): string
     {
         return 'Обработчик собственной доставки "Четыре лапы"';
     }
 
-    public function isCompatible(Shipment $shipment)
+    /**
+     * @param Shipment $shipment
+     * @return bool
+     */
+    public function isCompatible(Shipment $shipment): bool
     {
         if (!parent::isCompatible($shipment)) {
             return false;
@@ -45,6 +68,11 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         return true;
     }
 
+    /**
+     * @param Shipment $shipment
+     * @return IntervalCollection
+     * @throws SystemException
+     */
     public function getIntervals(Shipment $shipment): IntervalCollection
     {
         $result = new IntervalCollection();
@@ -53,12 +81,12 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
         $config = $this->getConfig();
         $intervalConfig = $config['MAIN']['ITEMS']['INTERVALS']['VALUE'];
+        /** @var array $intervalGroup */
         foreach ($intervalConfig as $intervalGroup) {
             if ($intervalGroup['ZONE_CODE'] !== $deliveryZone) {
                 continue;
             }
 
-            $intervalGroup['RULES'];
             foreach ($intervalGroup['INTERVALS'] as $intervalIndex => $interval) {
                 $ruleCollection = new IntervalRuleCollection();
                 foreach ($interval['RULES'] as $type => $values) {
@@ -78,7 +106,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
                     }
 
                     $ruleCollection = new IntervalRuleCollection(
-                        array_merge(
+                        \array_merge(
                             $ruleCollection->toArray(),
                             $this->intervalService->createRules($type, $ruleData)->toArray()
                         )
@@ -98,13 +126,15 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
     /**
      * @param Shipment $shipment
-     * @return \Bitrix\Sale\Delivery\CalculationResult|DeliveryResult
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     *
+     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws NotFoundException
+     * @return DeliveryResult
      */
-    protected function calculateConcrete(Shipment $shipment)
+    protected function calculateConcrete(Shipment $shipment): DeliveryResult
     {
         $result = new DeliveryResult();
 
@@ -114,6 +144,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             $result->setDeliveryZone($zone);
         }
 
+        /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
@@ -149,13 +180,17 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
                 /**
                  * условие доставки в эту зону - наличие в базовом магазине
                  */
-                $stores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
-                $availableStores = $stores->getBaseShops();
+                $availableStores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL)
+                    ->getBaseShops();
                 break;
             default:
                 $result->addError(new Error('Доставка не работает для этой зоны'));
 
                 return $result;
+        }
+        if ($availableStores->isEmpty()) {
+            $result->addError(new Error('Не найдено доступных складов'));
+            return $result;
         }
 
         $stockResult = static::getStocks($basket, $offers, $availableStores);
@@ -170,7 +205,11 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         return $result;
     }
 
-    protected function getConfigStructure()
+    /**
+     * @throws ArgumentException
+     * @return array
+     */
+    protected function getConfigStructure(): array
     {
         $result = parent::getConfigStructure();
 

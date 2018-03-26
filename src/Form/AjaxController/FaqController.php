@@ -7,30 +7,30 @@
 namespace FourPaws\Form\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
-use Bitrix\Main\ObjectException;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\AppBundle\Callback\CallbackService;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\Form\Exception\FileSaveException;
+use FourPaws\Form\Exception\FileSizeException;
+use FourPaws\Form\Exception\FileTypeException;
 use FourPaws\Form\FormService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\ReCaptcha\ReCaptchaService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class CallBackController
+ * Class FeedBackController
  *
  * @package FourPaws\Form\AjaxController
  */
-class CallBackController extends Controller
+class FaqController extends Controller
 {
     /** @var AjaxMess */
     private $ajaxMess;
@@ -48,24 +48,34 @@ class CallBackController extends Controller
      */
     public function addAction(Request $request): JsonResponse
     {
-        try {
-            $data = $request->request->all();
-            $container = App::getInstance()->getContainer();
+        $data = $request->request->all();
 
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
+        }
+
+        try {
             /** @var FormService $formService */
             $formService = $container->get('form.service');
 
             $requiredFields = [
                 'name',
+                'email',
                 'phone',
-                'time_call',
+                'message',
             ];
-            $formatedFields = $formService->getRealNamesFields(
-                (int)$data['WEB_FORM_ID']
-            );
+            $formatedFields = $formService->getRealNamesFields((int)$data['WEB_FORM_ID']);
             if (!$formService->checkRequiredFields($data,
                 array_intersect_key($formatedFields, array_flip($requiredFields)))) {
                 return $this->ajaxMess->getEmptyDataError();
+            }
+
+            if (!$formService->validEmail($data[$formatedFields['email']])) {
+                return $this->ajaxMess->getWrongEmailError();
             }
 
             try {
@@ -74,29 +84,20 @@ class CallBackController extends Controller
                 return $this->ajaxMess->getWrongPhoneNumberException();
             }
 
-            if ($formService->addResult($data)) {
-                if (!empty($data['phone'])) {
-                    /** @noinspection PhpUnhandledExceptionInspection */
-                    Loader::includeModule('form');
-                    $answer = new \CFormAnswer();
-                    $arAnswer = $answer->GetByID($data[$formatedFields['time_call']])->Fetch();
-                    $timeout = $arAnswer['FIELD_PARAM'] ?? 0;
-                    /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-                    $date = new DateTime();
-                    /** @noinspection PhpUnhandledExceptionInspection */
-                    /** @var CallbackService $callbackService */
-                    $callbackService = $container->get('callback.service');
-                    $callbackService->send(
-                        $data['phone'],
-                        $date->format('Y-m-d H:i:s'),
-                        $timeout
-                    );
+            if ($request->request->has('g-recaptcha-response')) {
+                /** @var ReCaptchaService $recaptchaService */
+                $recaptchaService = $container->get('recaptcha.service');
+                if (!$recaptchaService->checkCaptcha()) {
+                    return $this->ajaxMess->getFailCaptchaCheckError();
                 }
-                JsonSuccessResponse::create('Ваша завка принята');
-            } else {
-                return $this->ajaxMess->getUpdateError();
             }
-        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|ObjectException|LoaderException $e) {
+
+            if ($formService->addResult($data)) {
+                return JsonSuccessResponse::create('Ваша завка принята');
+            }
+
+            return $this->ajaxMess->getAddError();
+        } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|SystemException $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }

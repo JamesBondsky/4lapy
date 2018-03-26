@@ -128,7 +128,7 @@ class BonusBuyFrom
      */
     public function getBonusBuyFromItems(): Collection
     {
-        return $this->bonusBuyFromItems->filter(function ($key, $item) {
+        return $this->bonusBuyFromItems->filter(function ($item) {
             /**
              * @var $item BonusBuyFromItem
              */

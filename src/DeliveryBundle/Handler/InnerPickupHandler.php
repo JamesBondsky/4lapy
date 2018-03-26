@@ -6,50 +6,60 @@
 
 namespace FourPaws\DeliveryBundle\Handler;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 
 class InnerPickupHandler extends DeliveryHandlerBase
 {
-    const ORDER_DELIVERY_PLACE_CODE_PROP = 'DELIVERY_PLACE_CODE';
+    protected const ORDER_DELIVERY_PLACE_CODE_PROP = 'DELIVERY_PLACE_CODE';
 
     protected $code = '4lapy_pickup';
 
     /**
      * InnerPickupHandler constructor.
      * @param array $initParams
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
+     * @throws SystemException
+     * @throws ApplicationCreateException
      */
     public function __construct(array $initParams)
     {
         parent::__construct($initParams);
     }
 
-    public static function getClassTitle()
+    public static function getClassTitle(): string
     {
         return 'Самовывоз из магазина "Четыре лапы"';
     }
 
-    public static function getClassDescription()
+    public static function getClassDescription(): string
     {
         return 'Обработчик самовывоза "Четыре лапы"';
     }
 
     /**
      * @param Shipment $shipment
+     *
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
      * @return bool
-     * @throws \Bitrix\Main\ArgumentException
      */
-    public function isCompatible(Shipment $shipment)
+    public function isCompatible(Shipment $shipment): bool
     {
         if (!parent::isCompatible($shipment)) {
             return false;
@@ -75,13 +85,14 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
     /**
      * @param Shipment $shipment
-     * @return \Bitrix\Sale\Delivery\CalculationResult|PickupResult
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     *
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @return PickupResult
      */
-    protected function calculateConcrete(Shipment $shipment)
+    protected function calculateConcrete(Shipment $shipment): PickupResult
     {
         $result = new PickupResult();
 
@@ -92,15 +103,17 @@ class InnerPickupHandler extends DeliveryHandlerBase
         }
 
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $storesAll = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
         $shops = $storesAll->getShops();
 
         $shopCode = null;
+        /** @noinspection PhpInternalEntityUsedInspection */
         /* @var PropertyValue $prop */
         foreach ($shipment->getParentOrder()->getPropertyCollection() as $prop) {
-            if ($prop->getField('CODE') == self::ORDER_DELIVERY_PLACE_CODE_PROP) {
+            if ($prop->getField('CODE') === self::ORDER_DELIVERY_PLACE_CODE_PROP) {
                 $shopCode = $prop->getValue();
                 break;
             }
@@ -111,7 +124,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             $shops = $shops->filter(
                 function ($shop) use ($shopCode) {
                     /** @var Store $shop */
-                    return $shop->getXmlId() == $shopCode;
+                    return $shop->getXmlId() === $shopCode;
                 }
             );
 
@@ -139,12 +152,10 @@ class InnerPickupHandler extends DeliveryHandlerBase
         $result->setStockResult($stockResult);
         $result->setIntervals($this->getIntervals($shipment));
 
-        if ($shopCode) {
-            if (!$stockResult->getUnavailable()->isEmpty()) {
-                $result->addError(new Error('Присутствуют товары не в наличии'));
+        if ($shopCode && !$stockResult->getUnavailable()->isEmpty()) {
+            $result->addError(new Error('Присутствуют товары не в наличии'));
 
-                return $result;
-            }
+            return $result;
         }
 
         return $result;

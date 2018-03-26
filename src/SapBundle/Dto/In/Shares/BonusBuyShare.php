@@ -402,7 +402,7 @@ class BonusBuyShare
     /**
      * @return bool
      */
-    public function isDelete():bool
+    public function isDelete(): bool
     {
         return $this->getAct() === self::ACT_DELETE;
     }

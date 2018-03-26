@@ -28,7 +28,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Class FeedBackController
  *
- * @package FourPaws\UserBundle\AjaxController
+ * @package FourPaws\Form\AjaxController
  */
 class FeedBackController extends Controller
 {
