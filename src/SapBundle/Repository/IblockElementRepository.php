@@ -8,6 +8,7 @@ namespace FourPaws\SapBundle\Repository;
 
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Entity\AddResult;
+use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
 use Cocur\Slugify\SlugifyInterface;
@@ -16,6 +17,7 @@ use FourPaws\AppBundle\Service\ToBitrixDataArrayConverter;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Interfaces\ToArrayInterface;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
+use FourPaws\Helpers\IblockHelper;
 
 /**
  * Class IblockElementRepository
@@ -58,7 +60,7 @@ abstract class IblockElementRepository
      */
     public function find(int $id): ?IblockElement
     {
-        return $this->findBy(['=ID' => $id], [], 1)->first();
+        return $this->findBy(['=ID' => $id], [], 1)->first() ?: null;
     }
 
     /**
@@ -68,7 +70,7 @@ abstract class IblockElementRepository
      */
     public function findByXmlId(string $xmlId): ?IblockElement
     {
-        return $this->findBy(['=XML_ID' => $xmlId], [], 1)->first();
+        return $this->findBy(['=XML_ID' => $xmlId], [], 1)->first() ?: null;
     }
 
     /**
@@ -78,7 +80,7 @@ abstract class IblockElementRepository
      */
     public function findByCode(string $code): ?IblockElement
     {
-        return $this->findBy(['=CODE' => $code], [], 1)->first();
+        return $this->findBy(['=CODE' => $code], [], 1)->first() ?: null;
     }
 
     /**
@@ -138,6 +140,7 @@ abstract class IblockElementRepository
             ->withCode($this->generateUniqueCode($iblockElement->getName(), $iblockElement->getCode()));
         $data = $this->toArray($iblockElement);
         unset($data['ID']);
+
         $result = new AddResult();
         $id = $this->iblockElement->Add($data);
 
@@ -182,6 +185,31 @@ abstract class IblockElementRepository
         return $updateResult;
     }
 
+    /**
+     * @param IblockElement $iblockElement
+     *
+     * @return DeleteResult
+     */
+    public function delete(IblockElement $iblockElement): DeleteResult {
+        global $APPLICATION;
+        $result = new DeleteResult();
+
+        if (!$iblockElement->getId()) {
+            $result->addError(new Error('Не указан идентификатор продукта'));
+
+            return $result;
+        }
+
+        if ($this->iblockElement::Delete($iblockElement->getId())) {
+            $result->setData(['ID' => $iblockElement->getId()]);
+        } elseif ($APPLICATION->GetException()->GetString()) {
+            $result->addErrors($this->convertIblockBitrixErrors($APPLICATION->GetException()->GetString()));
+        } else {
+            $result->addError(new Error('Неизвестная ошибка'));
+        }
+
+        return $result;
+    }
 
     /**
      * @return int
@@ -233,26 +261,10 @@ abstract class IblockElementRepository
      */
     protected function generateUniqueCode(string $name = '', string $code = ''): string
     {
-        $iblockId = $this->getIblockId();
-        $i = 0;
         $name = $name ?: \md5(\microtime());
         $code = $code ?: $this->slugify->slugify($name);
-        while ($i < 10) {
-            $tmpCode = $i > 0 ? $code . $i : $code;
-            $r = ElementTable::query()
-                ->setSelect(['ID'])
-                ->addFilter('IBLOCK_ID', $iblockId)
-                ->addFilter('=CODE', $tmpCode)
-                ->setLimit(1)
-                ->exec()
-                ->getSelectedRowsCount();
-            if ($r) {
-                $i++;
-                continue;
-            }
-            return $tmpCode;
-        }
-        return \md5($code . \microtime());
+
+        return IblockHelper::generateUniqueCode($this->getIblockId(), $code);
     }
 
     /**

@@ -7,7 +7,6 @@
 namespace FourPaws\SapBundle\Service\DeliverySchedule;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -182,7 +181,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
         $entity->setXmlId($schedule->getXmlId())
             ->setSenderCode($schedule->getSenderCode())
             ->setReceiverCode($schedule->getRecipientCode())
-            ->setType($this->baseService->getTypeCode($schedule->getScheduleType()))
+            ->setType($this->baseService->getTypeIdByCode($schedule->getScheduleType()))
             ->setName(
                 \sprintf(
                     'График поставки из %s в %s',

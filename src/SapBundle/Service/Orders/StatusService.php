@@ -77,11 +77,13 @@ class StatusService implements LoggerAwareInterface
         }
 
         if (null === $orderStatus) {
-            throw new NotFoundOrderStatusException(sprintf(
-                'Не найден статус %s для службы доставка %s',
-                $sapStatus,
-                $deliveryType
-            ));
+            throw new NotFoundOrderStatusException(
+                \sprintf(
+                    'Не найден статус %s для службы доставка %s',
+                    $sapStatus,
+                    $deliveryType
+                )
+            );
         }
 
         return $orderStatus;

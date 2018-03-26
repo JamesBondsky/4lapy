@@ -27,7 +27,7 @@ class ShareRepository extends IblockElementRepository
      */
     public function getIblockId(): int
     {
-        return IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::SHARES);
+        return IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
     }
 
     /**

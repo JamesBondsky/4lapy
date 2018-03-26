@@ -57,7 +57,8 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         OrderService $orderService,
         SerializerInterface $serializer,
         Filesystem $filesystem
-    ) {
+    )
+    {
         $this->orderService = $orderService;
         $this->serializer = $serializer;
         $this->filesystem = $filesystem;
@@ -92,9 +93,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      */
     public function getFileName($debit): string
     {
-        return sprintf(
+        return \sprintf(
             '/%s/%s-%s_%s',
-            trim($this->outPath, '/'),
+            \trim($this->outPath, '/'),
             $debit->getPaymentDate()->format('Ymd'),
             $this->outPrefix,
             $debit->getBitrixOrderId()
@@ -131,6 +132,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $this->outPath = $outPath;
     }
 
+    /**
+     * @param Order $order
+     */
     public function tryPaymentRefund(Order $order)
     {
         /**

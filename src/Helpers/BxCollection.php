@@ -14,6 +14,11 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 
+/**
+ * Class BxCollection
+ *
+ * @package FourPaws\Helpers
+ */
 class BxCollection
 {
     /**
@@ -24,7 +29,7 @@ class BxCollection
      */
     public static function filterCollection(CollectionBase $collection, callable $filter): array
     {
-        return array_filter($collection->getIterator()->getArrayCopy(), $filter);
+        return \array_filter($collection->getIterator()->getArrayCopy(), $filter);
     }
 
     /**
@@ -42,7 +47,7 @@ class BxCollection
             return $value->getField('CODE') === $code;
         });
         
-        return current($filtered) ?: null;
+        return \current($filtered) ?: null;
     }
 
     /**
@@ -61,6 +66,6 @@ class BxCollection
             return !$shipment->isSystem();
         });
 
-        return current($filtered);
+        return \current($filtered);
     }
 }
