@@ -88,6 +88,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $dateOffset = 0;
 
     /**
+     * @var DeliveryScheduleResult
+     */
+    protected $shipmentResult;
+
+    /**
      * @param CalculationResult|null $result
      *
      * @return CalculationResultInterface
@@ -586,9 +591,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             return $date;
         }
 
-        /** @var DeliveryScheduleResult $scheduleResult */
-        $scheduleResult = $resultCollection->getFastest();
-        $date = $scheduleResult->getDate();
+        $this->shipmentResult = $resultCollection->getFastest();
+        $date = $this->shipmentResult->getDate();
 
         if ($store->isShop()) {
             /**
@@ -686,6 +690,24 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $this->dateOffset = $dateOffset;
         $this->resetResult();
+        return $this;
+    }
+
+    /**
+     * @return DeliveryScheduleResult
+     */
+    public function getShipmentResult(): ?DeliveryScheduleResult
+    {
+        return $this->shipmentResult;
+    }
+
+    /**
+     * @param DeliveryScheduleResult $shipmentResult
+     * @return BaseResult
+     */
+    public function setShipmentResult(DeliveryScheduleResult $shipmentResult): CalculationResultInterface
+    {
+        $this->shipmentResult = $shipmentResult;
         return $this;
     }
 

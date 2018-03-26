@@ -35,6 +35,7 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -308,11 +309,20 @@ class OrderService
             foreach ($propertyValueCollection as $propertyValue) {
                 $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
-                    case 'DELIVERY_PLACE_CODE':
-                        if (!$this->deliveryService->isInnerPickup($selectedDelivery)) {
+                    case 'SHIPMENT_PLACE_CODE':
+                        $shipmentResult = $selectedDelivery->getShipmentResult();
+                        if ($shipmentResult instanceof DeliveryScheduleResult) {
+                            $value = $shipmentResult->getSchedule()->getSenderCode();
+                        } else {
                             continue 2;
                         }
-                        $value = $storage->getDeliveryPlaceCode();
+                        break;
+                    case 'DELIVERY_PLACE_CODE':
+                        if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                            $value = $storage->getDeliveryPlaceCode();
+                        } else {
+                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                        }
                         break;
                     case 'DPD_TERMINAL_CODE':
                         if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
