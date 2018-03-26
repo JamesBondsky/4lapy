@@ -151,7 +151,7 @@ TEMPL;
             'controlId' => static::GetControlID(),
             'group' => true,
             'label' => 'Установить цену из свойства',
-            'defaultText' => 'BT_SALE_ACT_GROUP_BASKET_DEF_TEXT',
+            'defaultText' => '',
             'showIn' => static::GetShowIn($arParams['SHOW_IN_GROUPS']),
             'visual' => static::GetVisual(),
             'control' => [

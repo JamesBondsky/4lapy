@@ -23,7 +23,7 @@ Loc::loadMessages(__FILE__);
  * <ul>
  * <li> ID string(255) mandatory
  * <li> CODE string(255) mandatory
- * <li> TYPE string(10) mandatory
+ * <li> TYPE string(50) mandatory
  * <li> DATE datetime mandatory
  * </ul>
  *
@@ -38,7 +38,7 @@ class ConfirmCodeTable extends DataManager
      */
     public static function getTableName(): string
     {
-        return '4lp_ConfirmCode';
+        return '4lp_confirm_code';
     }
 
     /**
@@ -120,7 +120,7 @@ class ConfirmCodeTable extends DataManager
     public static function validateType(): array
     {
         return [
-            new Length(null, 10),
+            new Length(null, 50),
         ];
     }
 }

@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Main\Application;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
@@ -18,9 +19,9 @@ if ($isAuth) {
     $curUser = $arResult['CUR_USER'];
 }
 
-/** @var \Bitrix\Sale\Basket $basket */
+/** @var Basket $basket */
 $basket = $arResult['BASKET'];
-$orderableBasket = $basket->getOrderableItems();
+$orderableItems = $basket->getOrderableItems();
 $request = Application::getInstance()->getContext()->getRequest();
 
 $requestType = '';
@@ -35,19 +36,19 @@ if (empty($type)) {
 }
 
 $name = '';
-if ($request->offsetExists('name')) {
-    $name = $request->get('name');
-}
 if ($isAuth) {
     $name = $curUser->getName();
 }
+if ($request->offsetExists('name')) {
+    $name = $request->get('name');
+}
 
 $phone = '';
-if ($request->offsetExists('phone')) {
-    $phone = $request->get('phone');
-}
 if ($isAuth) {
     $phone = $curUser->getPersonalPhone();
+}
+if ($request->offsetExists('phone')) {
+    $phone = $request->get('phone');
 }
 ?>
 <div class="b-popup-one-click__close-bar">
@@ -62,7 +63,7 @@ if ($isAuth) {
     <div class="b-popup-one-click__input-block">
         <label class="b-popup-one-click__label" for="one-click-name">Имя</label>
         <div class="b-input b-input--recall">
-            <input class="b-input__input-field b-input__input-field--recall" type="text" id="one-click-name"
+            <input class="b-input__input-field b-input__input-field--recall js-small-input-two" type="text" id="one-click-name"
                    placeholder="Ваше имя" name="name" value="<?= $name ?>"/>
             <div class="b-error"><span class="js-message"></span></div>
         </div>
@@ -79,13 +80,14 @@ if ($isAuth) {
         <div class="b-error"><span class="js-message"></span></div>
     </div>
     <hr class="b-hr b-hr--one-click"/>
-    <?php if (!$orderableBasket->isEmpty()) { ?>
+    <?php if (!$orderableItems->isEmpty()) {
+        $userDiscount = $component->getCurrentUserService()->getDiscount();?>
         <h2 class="b-title b-title--one-click">Ваш заказ</h2>
         <hr class="b-hr b-hr--one-click2"/>
-        <?php $countItems = $orderableBasket->count();
+        <?php $countItems = $orderableItems->count();
         $i = 0;
         /** @var BasketItem $basketItem */
-        foreach ($orderableBasket as $basketItem) {
+        foreach ($orderableItems as $basketItem) {
             $i++;
             $image = $component->getImage($basketItem->getProductId());
             $offer = $component->getOffer((int)$basketItem->getProductId());
@@ -144,12 +146,9 @@ if ($isAuth) {
                             } ?>
                         </a>
                         <?php if ($useOffer) {
-                            $bonus = $component->getItemBonus($offer);
-                            if ($bonus > 0) {
-                                $bonus = floor($bonus); ?>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ <?= WordHelper::numberFormat($bonus,
-                                        0) ?>
-                                    <?= WordHelper::declension($bonus, ['бонус', 'бонуса', 'бонусов']) ?> </span>
+                            $bonus = $offer->getBonusFormattedText($userDiscount, $basketItem->getQuantity());
+                            if (!empty($bonus)) {?>
+                                <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping"><?=$bonus?></span>
                             <?php }
                         } ?>
                     </div>
@@ -242,7 +241,7 @@ if ($isAuth) {
         <hr class="b-hr b-hr--one-click3"/>
         <dl class="b-popup-one-click__result">
             <dt class="b-popup-one-click__result-dt">
-                Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension(1,
+                Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                     ['товар', 'товара', 'товаров']) ?> (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
             </dt>
             <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($basket->getPrice()) ?> ₽</dd>
@@ -255,5 +254,13 @@ if ($isAuth) {
             <span class="b-checkbox__text">Я подтверждаю, что даю согласие на обработку персональных данных</span>
         </label>
     </div>
+    <div class="b-error b-error--error">
+        <span class="js-message"></span>
+    </div>
     <button class="b-button b-button--one-click">Отправить</button>
 </form>
+<div class="b-preloader b-preloader--fixed">
+    <div class="b-preloader__spinner">
+        <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
+    </div>
+</div>

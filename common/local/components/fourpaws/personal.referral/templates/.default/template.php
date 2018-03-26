@@ -39,7 +39,8 @@ $items = $arResult['ITEMS'];
                                    type="text"
                                    id="referal-search"
                                    placeholder="Найти реферала"
-                                   name="search" />
+                                   name="search"
+                            value="<?=$arResult['search']?>"/>
                         </div>
                         <button class="b-button b-button--form-inline b-button--search-referal" type="submit">
                             <span class="b-icon">
@@ -155,7 +156,7 @@ $items = $arResult['ITEMS'];
                         <a class="b-account-referal__link-phone"
                            href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
                        title="позвони"><?= tplvar('phone_main') ?></a> или
-                        <a class="b-account-referal__link" href="javascript:void(0);"
+                        <a class="b-account-referal__link" href="/company/partnership/"
                            title="сайт">на сайте.</a>
                     </p>
                 </div>

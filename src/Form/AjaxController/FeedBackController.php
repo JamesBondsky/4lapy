@@ -6,11 +6,13 @@
 
 namespace FourPaws\Form\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Form\Exception\FileSaveException;
 use FourPaws\Form\Exception\FileSizeException;
 use FourPaws\Form\Exception\FileTypeException;
@@ -18,21 +20,30 @@ use FourPaws\Form\FormService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\ReCaptcha\ReCaptchaService;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class FeedBackController
  *
- * @package FourPaws\UserBundle\AjaxController
+ * @package FourPaws\Form\AjaxController
  */
 class FeedBackController extends Controller
 {
+    /** @var AjaxMess */
+    private $ajaxMess;
+
+    public function __construct(
+        AjaxMess $ajaxMess
+    ) {
+        $this->ajaxMess = $ajaxMess;
+    }
+
     /**
      * @param Request $request
      *
-     * @throws GuzzleException
      * @return JsonResponse
      */
     public function addAction(Request $request): JsonResponse
@@ -42,9 +53,9 @@ class FeedBackController extends Controller
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
-            return JsonErrorResponse::create(
-                'Системная ошибка, пожалуйста обратитесь к администратору'
-            );
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
         }
 
         try {
@@ -61,26 +72,17 @@ class FeedBackController extends Controller
             $formatedFields = $formService->getRealNamesFields((int)$data['WEB_FORM_ID']);
             if (!$formService->checkRequiredFields($data,
                 array_intersect_key($formatedFields, array_flip($requiredFields)))) {
-                return JsonErrorResponse::createWithData(
-                    'Не заполнены все обязательные поля',
-                    ['errors' => ['emptyData' => 'Не заполнены все обязательные поля']]
-                );
+                return $this->ajaxMess->getEmptyDataError();
             }
 
             if (!$formService->validEmail($data[$formatedFields['email']])) {
-                return JsonErrorResponse::createWithData(
-                    'Некорректно заполнен эл. адрес',
-                    ['errors' => ['wrongEmail' => 'Некорректно заполнен эл. адрес']]
-                );
+                return $this->ajaxMess->getWrongEmailError();
             }
 
             try {
                 $data[$formatedFields['phone']] = PhoneHelper::normalizePhone($data[$formatedFields['phone']]);
             } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::createWithData(
-                    'Некорретно заполнен телефон',
-                    ['errors' => ['wrongPhone' => 'Некорретно заполнен телефон']]
-                );
+                return $this->ajaxMess->getWrongPhoneNumberException();
             }
 
             $fileCode = $formatedFields['file'];
@@ -98,30 +100,18 @@ class FeedBackController extends Controller
                     $data[$fileCode] = $file;
                 }
             } catch (FileSaveException $e) {
+                /** произошла ошибка соранения фалйа - сохраняем без файла */
             } catch (FileSizeException $e) {
-                return JsonErrorResponse::createWithData(
-                    'Превышен максимально допустимый размер файла в 2Мб',
-                    ['errors' => ['wrongPhone' => 'Превышен максимально допустимый размер файла в 2Мб']]
-                );
+                return $this->ajaxMess->getFileSizeError(2);
             } catch (FileTypeException $e) {
-                return JsonErrorResponse::createWithData(
-                    'Неверный формат файла, допусимые форматы ' . implode(', ', $valid_types),
-                    [
-                        'errors' => [
-                            'wrongPhone' => 'Неверный формат файла, допусимые форматы ' . implode(', ', $valid_types),
-                        ],
-                    ]
-                );
+                return $this->ajaxMess->getFileTypeError($valid_types);
             }
 
             if ($request->request->has('g-recaptcha-response')) {
                 /** @var ReCaptchaService $recaptchaService */
                 $recaptchaService = $container->get('recaptcha.service');
                 if (!$recaptchaService->checkCaptcha()) {
-                    return JsonErrorResponse::createWithData(
-                        'Проверка капчи не пройдена',
-                        ['errors' => ['captchaError' => 'Проверка капчи не пройдена']]
-                    );
+                    return $this->ajaxMess->getFailCaptchaCheckError();
                 }
             }
 
@@ -131,16 +121,12 @@ class FeedBackController extends Controller
                 return JsonSuccessResponse::create('Ваша завка принята', 200, [], ['reload' => true]);
             }
 
-            return JsonErrorResponse::createWithData(
-                'Произошла ошибка при сохранении',
-                ['errors' => ['updateSave' => 'Произошла ошибка при сохранении']]
-            );
-        } catch (\Exception $e) {
+            return $this->ajaxMess->getAddError();
+        } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|SystemException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }
 
-        return JsonErrorResponse::createWithData(
-            'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта']]
-        );
+        return $this->ajaxMess->getSystemError();
     }
 }

@@ -10,6 +10,7 @@ $APPLICATION->SetPageProperty('title', 'Зоомагазин Четыре лап
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
 $APPLICATION->SetTitle('Главная страница');
 
+
 $APPLICATION->IncludeComponent('bitrix:news.list',
     'index.slider',
     [
@@ -55,7 +56,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
         'ADD_SECTIONS_CHAIN'              => 'N',
         'HIDE_LINK_WHEN_NO_DETAIL'        => 'N',
         'PARENT_SECTION'                  => '',
-        'PARENT_SECTION_CODE'             => '',
+        'PARENT_SECTION_CODE'             => 'slider_main',
         'INCLUDE_SUBSECTIONS'             => 'N',
         'STRICT_SECTION_CHECK'            => 'N',
         'DISPLAY_DATE'                    => 'N',
@@ -181,7 +182,7 @@ $APPLICATION->IncludeComponent('bitrix:main.include',
     ],
     false);
 /**
- * @todo Новости и события. Заменить компонентом и удалить файл.
+ * Новости и события.
  */
 $APPLICATION->IncludeComponent('fourpaws:items.list',
     '',

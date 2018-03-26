@@ -13,7 +13,6 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
-use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Security\Core\Role\Role;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -228,6 +227,87 @@ class User implements UserInterface
     protected $groups;
 
     /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_INTERVIEW_MES")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendInterviewMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_BONUS_MES")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendBonusMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_FEEDBACK_MES")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendFeedbackMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_PUSH_ORD_STAT")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendOrderStatusMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_PUSH_NEWS")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendNewsMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_PUSH_ACC_CHANGE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendBonusChangeMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_SMS_MES")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendSmsMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_EMAIL_MES")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $sendEmailMsg = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_GPS_MESS")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $gpsAllowed = false;
+
+    /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_DISCOUNT_CARD")
@@ -235,6 +315,15 @@ class User implements UserInterface
      * @Serializer\SkipWhenEmpty()
      */
     protected $discountCardNumber = '';
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DISCOUNT")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $discount = 3;
 
     public function __construct()
     {
@@ -320,6 +409,14 @@ class User implements UserInterface
         $this->email = $email;
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasEmail(): bool
+    {
+        return !empty($this->getEmail());
     }
 
     /**
@@ -501,7 +598,7 @@ class User implements UserInterface
         if (!empty($name)
             && !empty($secondName)
             && !empty($lastName)) {
-            $fullName = $name . ' ' . $secondName . $lastName;
+            $fullName = $lastName . ' ' . $name . ' ' . $secondName;
         } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($lastName)
             && !empty($name)) {
             $fullName = $lastName . ' ' . $name;
@@ -970,5 +1067,201 @@ class User implements UserInterface
         $this->shopCode = $shopCode;
 
         return $this;
+    }
+
+
+    /**
+     * @return bool
+     */
+    public function isSendInterviewMsg(): bool
+    {
+        return $this->sendInterviewMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendInterviewMsg
+     *
+     * @return User
+     */
+    public function setSendInterviewMsg(bool $sendInterviewMsg): User
+    {
+        $this->sendInterviewMsg = $sendInterviewMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSendBonusMsg(): bool
+    {
+        return $this->sendBonusMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendBonusMsg
+     *
+     * @return User
+     */
+    public function setSendBonusMsg(bool $sendBonusMsg): User
+    {
+        $this->sendBonusMsg = $sendBonusMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSendFeedbackMsg(): bool
+    {
+        return $this->sendFeedbackMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendFeedbackMsg
+     *
+     * @return User
+     */
+    public function setSendFeedbackMsg(bool $sendFeedbackMsg): User
+    {
+        $this->sendFeedbackMsg = $sendFeedbackMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSendOrderStatusMsg(): bool
+    {
+        return $this->sendOrderStatusMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendOrderStatusMsg
+     *
+     * @return User
+     */
+    public function setSendOrderStatusMsg(bool $sendOrderStatusMsg): User
+    {
+        $this->sendOrderStatusMsg = $sendOrderStatusMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSendNewsMsg(): bool
+    {
+        return $this->sendNewsMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendNewsMsg
+     *
+     * @return User
+     */
+    public function setSendNewsMsg(bool $sendNewsMsg): User
+    {
+        $this->sendNewsMsg = $sendNewsMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSendBonusChangeMsg(): bool
+    {
+        return $this->sendBonusChangeMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendBonusChangeMsg
+     *
+     * @return User
+     */
+    public function setSendBonusChangeMsg(bool $sendBonusChangeMsg): User
+    {
+        $this->sendBonusChangeMsg = $sendBonusChangeMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSendSmsMsg(): bool
+    {
+        return $this->sendSmsMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendSmsMsg
+     *
+     * @return User
+     */
+    public function setSendSmsMsg(bool $sendSmsMsg): User
+    {
+        $this->sendSmsMsg = $sendSmsMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSendEmailMsg(): bool
+    {
+        return $this->sendEmailMsg ?? false;
+    }
+
+    /**
+     * @param bool $sendEmailMsg
+     *
+     * @return User
+     */
+    public function setSendEmailMsg(bool $sendEmailMsg): User
+    {
+        $this->sendEmailMsg = $sendEmailMsg;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isGpsAllowed(): bool
+    {
+        return $this->gpsAllowed ?? false;
+    }
+
+    /**
+     * @param bool $gpsAllowed
+     *
+     * @return User
+     */
+    public function setGpsAllowed(bool $gpsAllowed): User
+    {
+        $this->gpsAllowed = $gpsAllowed;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function allowedEASend(): bool
+    {
+        return $this->hasEmail() && $this->isEmailConfirmed();
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscount(): int
+    {
+        return $this->discount ?? 3;
+    }
+
+    /**
+     * @param int $discount
+     */
+    public function setDiscount(int $discount): void
+    {
+        $this->discount = $discount;
     }
 }

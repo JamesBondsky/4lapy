@@ -1,7 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\DependencyInjection;
 
+use RuntimeException;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -12,7 +17,7 @@ class Configuration implements ConfigurationInterface
     /**
      * Generates the configuration tree builder.
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return TreeBuilder The tree builder
      */
     public function getConfigTreeBuilder(): TreeBuilder
@@ -24,12 +29,13 @@ class Configuration implements ConfigurationInterface
             ->children()
             ->append($this->getDirectorySourceNode())
             ->append($this->getPipelinesNode())
+            ->append($this->getOutNode())
             ->end();
         return $treeBuilder;
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws RuntimeException
      *
      * @return ArrayNodeDefinition|NodeDefinition
      */
@@ -68,7 +74,7 @@ class Configuration implements ConfigurationInterface
     }
     
     /**
-     * @throws \RuntimeException
+     * @throws RuntimeException
      *
      * @return ArrayNodeDefinition|NodeDefinition
      */
@@ -80,6 +86,22 @@ class Configuration implements ConfigurationInterface
         /** @noinspection NullPointerExceptionInspection */
         $node->arrayPrototype()->scalarPrototype()->end()->end();
         
+        return $node;
+    }
+
+    /**
+     * @throws RuntimeException
+     *
+     * @return ArrayNodeDefinition|NodeDefinition
+     */
+    public function getOutNode()
+    {
+        $treeBuilder = new TreeBuilder();
+
+        $node = $treeBuilder->root('out');
+        /** @noinspection NullPointerExceptionInspection */
+        $node->arrayPrototype()->scalarPrototype()->end()->end();
+
         return $node;
     }
 }

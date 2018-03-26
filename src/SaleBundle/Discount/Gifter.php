@@ -66,19 +66,6 @@ class Gifter extends \CGlobalCondCtrlAtoms
 
     /**
      *
-     *
-     * @return array
-     */
-    public static function GetControlShow($params)
-    {
-        //todo вставить пояснительный текст
-        $res = parent::GetControlShow($params);
-//        dump($res);
-        return $res;
-    }
-
-    /**
-     *
      * @param string|bool $strControlID
      *
      * @return array|bool
@@ -86,7 +73,6 @@ class Gifter extends \CGlobalCondCtrlAtoms
     public static function GetControls($strControlID = false)
     {
         $arAtoms = static::GetAtomsEx();
-//        dump($arAtoms);
         /** @noinspection OffsetOperationsInspection */
         $arControlList = [
             'GifterElement' => [

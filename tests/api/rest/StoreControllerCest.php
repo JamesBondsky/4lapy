@@ -8,40 +8,19 @@ use Codeception\Util\HttpCode;
 
 class StoreControllerCest
 {
-    protected $token;
-
-
-    /**
-     * @param ApiTester $I
-     *
-     * @throws Exception
-     */
-    public function _before(ApiTester $I)
-    {
-        $this->token = $I->createToken();
-    }
-
-    /**
-     * @param ApiTester $I
-     */
-    public function _after(ApiTester $I)
-    {
-        $I->deleteToken($this->token);
-    }
-
     /**
      * @param ApiTester            $I
      * @param \Codeception\Example $example
      *
      * @dataprovider validDataProvider
-     * @throws \_generated\Exception
+     * @throws Exception
      */
-    public function testValidGet(ApiTester $I, \Codeception\Example $example)
+    public function testValidGet(ApiTester $I, \Codeception\Example $example): void
     {
         $I->wantTo('Test valid store data');
         $I->haveHttpHeader('Content-type', 'application/json');
         $params = $example['params'] ?? [];
-        $params['token'] = $this->token;
+        $params['token'] = $I->createToken();
 
         $I->sendGET('/shop_list/', $params);
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -69,9 +48,15 @@ class StoreControllerCest
             'image' => 'string',
             'title' => 'string:!empty',
         ], '$.data.shops[0].service[0]');
+        if (null !== $example['count'] ?? null) {
+            $I->assertCount($example['count'], $I->grabDataFromResponseByJsonPath('$.data.shops[*]'));
+        }
     }
 
-    public function validDataProvider()
+    /**
+     * @return array
+     */
+    protected function validDataProvider(): array
     {
         return [
             [
@@ -80,15 +65,18 @@ class StoreControllerCest
             ],
             [
                 'params' => ['city_id' => ''],
+                'count'  => null,
             ],
             [
                 'params' => [],
+                'count'  => null,
             ],
             [
                 'params' => [
                     'city_id'       => '0000073738',
                     'metro_station' => [1, 16, 5],
                 ],
+                'count'  => null,
             ],
             [
                 'params' => [
@@ -106,25 +94,33 @@ class StoreControllerCest
      * @param \Codeception\Example $example
      *
      * @dataprovider invalidDataProvider
-     * @throws \_generated\Exception
+     * @throws Exception
      */
-    public function testInvalidGet(ApiTester $I, \Codeception\Example $example)
+    public function testInvalidGet(ApiTester $I, \Codeception\Example $example): void
     {
         $I->wantTo('Test invalid store data');
         $I->haveHttpHeader('Content-type', 'application/json');
         $params = $example['params'] ?? [];
-        $params['token'] = $this->token;
+        $params['token'] = $I->createToken();
 
         $I->sendGET('/shop_list/', $params);
         $I->seeResponseCodeIs(HttpCode::OK);
         $I->seeResponseIsJson();
-        $I->seeResponseMatchesJsonType(['data' => 'array', 'error' => 'array']);
         $I->seeResponseMatchesJsonType([
-            'code' => 'string:=44',
-        ], '$.error[0]');
+            'data'  => [
+                'shops' => 'array:!empty',
+            ],
+            'error' => 'array:empty',
+        ]);
+        if (null !== $example['count'] ?? null) {
+            $I->assertCount($example['count'], $I->grabDataFromResponseByJsonPath('$.data.shops[*]'));
+        }
     }
 
-    public function invalidDataProvider()
+    /**
+     * @return array
+     */
+    protected function invalidDataProvider(): array
     {
         return [
             [
@@ -132,6 +128,7 @@ class StoreControllerCest
                     'city_id'       => '0000230626',
                     'metro_station' => [1, 16, 5],
                 ],
+                'count'  => 2,
             ],
         ];
     }

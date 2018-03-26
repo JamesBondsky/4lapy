@@ -153,7 +153,7 @@ class Client
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
-     * @SerializedName("Address1_Line3")
+     * @SerializedName("address1_line3")
      */
     public $addressLine3;
 
@@ -504,5 +504,17 @@ class Client
     public function getCards(): ArrayCollection
     {
         return $this->cards;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBirthDateFormated(): string
+    {
+        $date = '';
+        if($this->birthDate instanceof \DateTimeImmutable){
+            $date = $this->birthDate->format('d.m.Y');
+        }
+        return $date;
     }
 }

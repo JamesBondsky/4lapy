@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Data\Cache;
@@ -30,6 +31,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Cheque;
 use FourPaws\External\Manzana\Model\ChequeItem;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -100,7 +102,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $params['COUNT_ITEMS']          = $params['COUNT_ITEMS'] ?? 10;
         $params['LIMIT_MANZANA_CHEQUE'] = 50;
         /** @todo возможно увеличить кеширование до 1-3х часов, не так часто происходят покупки */
-        $params['MANZANA_CACHE_TIME']   = 15 * 60;
+        $params['MANZANA_CACHE_TIME']   = 2 * 60 * 60;
         
         return $params;
     }
@@ -124,6 +126,8 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         if (empty($this->arParams)) {
             return null;
         }
+
+        $instance = Application::getInstance();
         
         $this->setFrameMode(true);
         
@@ -160,6 +164,11 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             $offerIds          = $vars['offerIds'];
             $this->allProducts = $vars['allProducts'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             //получение данных из манзаны
             list($xmlIds, $allItems) = $this->getXmlIdsByManzana();
             //получение товаров с сайта по XML_ID
@@ -203,6 +212,15 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                     $offerIds        = array_merge($offerIds, $bitrixOfferIds);
                     $this->sortItems += $sortItems;
                 }
+            }
+
+            if ($tagCache !== null) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:top',
+                    'personal:top:'. $userId,
+                    'order:'. $userId
+                ], $tagCache);
+                $tagCache->endTagCache();
             }
             
             $cache->endDataCache(
@@ -251,8 +269,19 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             }
             //Устанавливаем финализирвоанный сортирвоанный массив
             $this->setResults($this->sortItems, $this->allProducts);
-            
-            $this->includeComponentTemplate();
+
+            $page= '';
+            if(empty($this->arResult['PRODUCTS'])){
+                $page = 'notItems';
+            }
+
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:top',
+                'personal:top:'. $userId,
+                'order:'. $userId
+            ]);
+
+            $this->includeComponentTemplate($page);
         }
         
         return true;

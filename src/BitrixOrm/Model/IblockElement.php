@@ -195,6 +195,8 @@ class IblockElement extends BitrixArrayItemBase
     public function withPreviewText(TextContent $previewText)
     {
         $this->previewText = $previewText;
+        $this->PREVIEW_TEXT = $previewText->getText();
+        $this->PREVIEW_TEXT_TYPE = $previewText->getType();
 
         return $this;
     }
@@ -220,6 +222,8 @@ class IblockElement extends BitrixArrayItemBase
     public function withDetailText(TextContent $detailText)
     {
         $this->detailText = $detailText;
+        $this->DETAIL_TEXT = $detailText->getText();
+        $this->DETAIL_TEXT_TYPE = $detailText->getType();
 
         return $this;
     }
@@ -227,7 +231,7 @@ class IblockElement extends BitrixArrayItemBase
     /**
      * @return null|DateTimeImmutable
      */
-    public function getDateActiveFrom()
+    public function getDateActiveFrom(): ?DateTimeImmutable
     {
         if (null === $this->dateActiveFrom && $this->DATE_ACTIVE_FROM) {
             $this->dateActiveFrom = BitrixUtils::bitrixStringDateTime2DateTimeImmutable($this->DATE_ACTIVE_FROM);
@@ -252,7 +256,7 @@ class IblockElement extends BitrixArrayItemBase
     /**
      * @return null|DateTimeImmutable
      */
-    public function getDateActiveTo()
+    public function getDateActiveTo(): ?DateTimeImmutable
     {
         if (null === $this->dateActiveTo && $this->DATE_ACTIVE_TO) {
             $this->dateActiveTo = BitrixUtils::bitrixStringDateTime2DateTimeImmutable($this->DATE_ACTIVE_TO);
@@ -286,6 +290,7 @@ class IblockElement extends BitrixArrayItemBase
             $this->sectionIdList = [];
             $dbSectionList = CIBlockElement::GetElementGroups($this->getId(), true, ['ID']);
 
+            /** @noinspection PhpAssignmentInConditionInspection */
             while ($section = $dbSectionList->Fetch()) {
                 $this->sectionIdList[] = (int)$section['ID'];
             }

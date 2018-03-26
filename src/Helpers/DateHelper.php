@@ -6,6 +6,9 @@
 
 namespace FourPaws\Helpers;
 
+use Bitrix\Main\Type\DateTime;
+use DateTime as NormalDateTime;
+
 /**
  * Class DateHelper
  *
@@ -174,5 +177,60 @@ class DateHelper
                 'pattern' => '|#\d{1}#|',
             ]
         );
+    }
+
+    /**
+     * @param DateTime $bxDatetime
+     *
+     * @return NormalDateTime
+     */
+    public static function convertToDateTime(DateTime $bxDatetime): NormalDateTime
+    {
+        return (new NormalDateTime())->setTimestamp($bxDatetime->getTimestamp());
+    }
+
+    /**
+     * Враппер для FormatDate. Доп. возможности
+     *  - ll - отображение для недели в винительном падеже (в пятницу, в субботу)
+     *
+     * @param string $dateFormat
+     * @param int $timestamp
+     *
+     * @return string
+     */
+    public static function formatDate(string $dateFormat, int $timestamp)
+    {
+        if (false !== mb_strpos($dateFormat, 'll')) {
+            $date = (new \DateTime)->setTimestamp($timestamp);
+            $str = null;
+            switch ($date->format('w')) {
+                case 0:
+                    $str = 'в воскресенье';
+                    break;
+                case 1:
+                    $str = 'в понедельник';
+                    break;
+                case 2:
+                    $str = 'во вторник';
+                    break;
+                case 3:
+                    $str = 'в среду';
+                    break;
+                case 4:
+                    $str = 'в четверг';
+                    break;
+                case 5:
+                    $str = 'в пятницу';
+                    break;
+                case 6:
+                    $str = 'в субботу';
+                    break;
+            }
+            if (null !== $str) {
+                $dateFormat = str_replace('ll', $str, $dateFormat);
+            }
+        }
+
+        return FormatDate($dateFormat, $timestamp);
     }
 }

@@ -98,9 +98,9 @@ class BasketQuantity extends \CCatalogCondCtrlIBlockProps
      * @param $arControl
      * @param bool $arSubs
      *
-     * @return bool|mixed|string
+     * @return string
      */
-    public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false)
+    public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false): string
     {
         $arControl = static::GetControls($arControl);
         $arLogic = static::SearchLogic($arOneCondition['logic'], $arControl['LOGIC']);
@@ -111,7 +111,7 @@ class BasketQuantity extends \CCatalogCondCtrlIBlockProps
             . '(' . PHP_EOL
             . self::class . '::getBasketQuantity(' . PHP_EOL
             . '$row[\'PRODUCT_ID\'],' . PHP_EOL
-            . '(is_object($this) ? $this->orderData[\'BASKET_ITEMS\'] : null)' . PHP_EOL . ')'
+            . '(isset($this) ? $this->orderData[\'BASKET_ITEMS\'] : null)' . PHP_EOL . ')'
             . $operator . PHP_EOL
             . '(is_array(' . $strProp . ')' . PHP_EOL
             . '? (int)current(' . $strProp . ')' . PHP_EOL

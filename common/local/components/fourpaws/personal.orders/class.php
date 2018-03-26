@@ -12,6 +12,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
@@ -21,8 +22,10 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -47,30 +50,32 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     /** @var UserAuthorizationInterface */
     private $currentUserProvider;
 
+    public const STATUS_IN_POINT_ISSUE = 'F';
+    public const STATUS_IN_ASSEMBLY_1 = 'H';
+    public const STATUS_IN_ASSEMBLY_2 = 'W';
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws ServiceNotFoundException
-     * @throws SystemException
      * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
+     * @throws SystemException
      */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
         try {
             $container = App::getInstance()->getContainer();
-        } catch (ApplicationCreateException $e) {
+            $this->orderService = $container->get('order.service');
+            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->orderService = $container->get('order.service');
-        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
-        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
     /**
@@ -84,14 +89,16 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         $params['PATH_TO_BASKET'] = '/personal/cart/';
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
-        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 24 * 60 * 60;
-        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 24 * 60 * 60;
+        /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
+        $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
 
-        return $params;
+        return parent::onPrepareComponentParams($params);
     }
 
     /**
      * {@inheritdoc}
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws \RuntimeException
      * @throws EmptyEntityClass
      * @throws SystemException
@@ -114,6 +121,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             return null;
         }
 
+        $instance = Application::getInstance();
+
         $request = Application::getInstance()->getContext()->getRequest();
         if($request->get('reply_order') === 'Y'){
             $orderId = (int)$request->get('id');
@@ -124,25 +133,50 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
         $this->setFrameMode(true);
 
-        /** @todo добавить кеширвоание */
-        /** получаем заказы из манзаны, кешируем на сутки */
         try {
             $userId = $this->currentUserProvider->getCurrentUserId();
-            $manzanaOrders = $this->orderService->getManzanaOrders();
         } catch (NotAuthorizedException $e) {
             /** запрашиваем авторизацию */
             \define('NEED_AUTH', true);
             return null;
-        } catch (ManzanaServiceException $e) {
-            $manzanaOrders = new ArrayCollection();
+        }
+
+        $cache = Cache::createInstance();
+        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
+            serialize(['userId' => $userId]))) {
+            $result = $cache->getVars();
+            $manzanaOrders = $result['manzanaOrders'];
+        } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
+            try {
+                $manzanaOrders = $this->orderService->getManzanaOrders();
+            } catch (ManzanaServiceException $e) {
+                $manzanaOrders = new ArrayCollection();
+            }
+
+            if ($tagCache !== null) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:orders',
+                    'personal:orders:'. $userId,
+                    'order:'. $userId
+                ], $tagCache);
+                $tagCache->endTagCache();
+            }
+
+            $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
         }
 
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
             ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])) {
+            $activeOrders = $closedOrders = new ArrayCollection();
             try {
-                $this->arResult['ACTIVE_ORDERS'] = $this->orderService->getActiveSiteOrders();
+                $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
                 $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                     $manzanaOrders->toArray());
                 /** Сортировка по дате и статусу общих заказов */
@@ -152,23 +186,36 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $nav = new PageNavigation('nav-orders');
                 $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
                 $nav->setRecordCount($allClosedOrders->count());
-                $this->arResult['CLOSED_ORDERS'] = new ArrayCollection(array_slice($allClosedOrdersList,
+                $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
+                $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
+            } catch (\Exception $e) {
+                $logger = LoggerFactory::create('my_orders');
+                $logger->error('error - '.$e->getMessage());
+                /** Показываем пустую страницу с заказами */
             }
-            if ($nav instanceof PageNavigation) {
-                $this->arResult['NAV'] = $nav;
-            }
-            $storeService = App::getInstance()->getContainer()->get('store.service');
-            $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
 
-            $this->endResultCache();
+            $page= '';
+            if($activeOrders->isEmpty() && $closedOrders->isEmpty()){
+                $page = 'notOrders';
+            }
+            else{
+                $storeService = App::getInstance()->getContainer()->get('store.service');
+                $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
+            }
+
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:orders',
+                'personal:orders:'. $userId,
+                'order:'. $userId
+            ]);
+
+            $this->includeComponentTemplate($page);
         }
-
-        $this->includeComponentTemplate();
 
         return true;
     }
@@ -209,7 +256,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
      * @return void
      * @throws Exception
      */
-    protected function copyOrder2CustomerBasket(int $id)
+    protected function copyOrder2CustomerBasket(int $id): void
     {
         $result = new Main\Result();
 
@@ -228,45 +275,47 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             $oldOrder = Sale\Order::load($id);
 
-            $oldBasket = $oldOrder->getBasket();
-            $oldBasketItems = $oldBasket->getBasketItems();
+            if($oldOrder !== null) {
+                $oldBasket = $oldOrder->getBasket();
+                $oldBasketItems = $oldBasket->getBasketItems();
 
-            /** @var Sale\BasketItem $oldBasketItem*/
-            foreach ($oldBasketItems as $oldBasketItem)
-            {
-                $propertyList = array();
-                if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection())
+                /** @var Sale\BasketItem $oldBasketItem*/
+                foreach ($oldBasketItems as $oldBasketItem)
                 {
-                    $propertyList = $oldPropertyCollection->getPropertyValues();
-                }
-
-                $item = $basket->getExistsItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'), $propertyList);
-
-                if ($item)
-                {
-                    $resultItem = $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
-                }
-                else
-                {
-                    $item = $basket->createItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'));
-                    $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
-                    $item->setField('NAME', $oldBasketValues['NAME']);
-                    $resultItem = $item->setFields($oldBasketValues);
-                    $newPropertyCollection = $item->getPropertyCollection();
-
-                    /** @var Sale\BasketPropertyItem $oldProperty*/
-                    foreach ($propertyList as $oldPropertyFields)
+                    $propertyList = array();
+                    if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection())
                     {
-                        $propertyItem = $newPropertyCollection->createItem();
-                        unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
-
-                        /** @var Sale\BasketPropertyItem $propertyItem*/
-                        $propertyItem->setFields($oldPropertyFields);
+                        $propertyList = $oldPropertyCollection->getPropertyValues();
                     }
-                }
-                if (!$resultItem->isSuccess())
-                {
-                    $result->addErrors($resultItem->getErrors());
+
+                    $item = $basket->getExistsItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'), $propertyList);
+
+                    if ($item)
+                    {
+                        $resultItem = $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
+                    }
+                    else
+                    {
+                        $item = $basket->createItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'));
+                        $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
+                        $item->setField('NAME', $oldBasketValues['NAME']);
+                        $resultItem = $item->setFields($oldBasketValues);
+                        $newPropertyCollection = $item->getPropertyCollection();
+
+                        /** @var Sale\BasketPropertyItem $oldProperty*/
+                        foreach ($propertyList as $oldPropertyFields)
+                        {
+                            $propertyItem = $newPropertyCollection->createItem([]);
+                            unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
+
+                            /** @var Sale\BasketPropertyItem $propertyItem*/
+                            $propertyItem->setFields($oldPropertyFields);
+                        }
+                    }
+                    if (!$resultItem->isSuccess())
+                    {
+                        $result->addErrors($resultItem->getErrors());
+                    }
                 }
             }
 

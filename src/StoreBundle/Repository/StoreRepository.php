@@ -6,7 +6,9 @@
 
 namespace FourPaws\StoreBundle\Repository;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Catalog\StoreTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Location\LocationTable;
@@ -16,7 +18,7 @@ use JMS\Serializer\DeserializationContext;
 
 class StoreRepository extends BaseRepository
 {
-    const RADIUS_EARTH_KM = 6367;
+    public const RADIUS_EARTH_KM = 6367;
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
      * @param array    $criteria
@@ -24,7 +26,7 @@ class StoreRepository extends BaseRepository
      * @param null|int $limit
      * @param null|int $offset
      *
-     * @throws \Exception
+     * @throws ArgumentException
      * @return StoreCollection
      */
     public function findBy(
@@ -102,7 +104,7 @@ class StoreRepository extends BaseRepository
                 $query->registerRuntimeField(
                     new ReferenceField(
                         'METRO',
-                        LocationTable::getEntity(),
+                        HLBlockFactory::createTableObject('MetroStations')::getEntity(),
                         ['=this.UF_METRO' => 'ref.ID']
                     )
                 );
@@ -144,6 +146,9 @@ class StoreRepository extends BaseRepository
         return new StoreCollection();
     }
 
+    /**
+     * @return array
+     */
     protected function getDefaultOrder(): array
     {
         return [
@@ -152,21 +157,33 @@ class StoreRepository extends BaseRepository
         ];
     }
 
+    /**
+     * @return array
+     */
     protected function getDefaultFilter(): array
     {
         return ['ACTIVE' => 'Y'];
     }
 
+    /**
+     * @return string
+     */
     protected function getDataClass(): string
     {
         return StoreTable::class;
     }
 
+    /**
+     * @return string
+     */
     protected function getCollectionClass(): string
     {
         return StoreCollection::class;
     }
 
+    /**
+     * @return string
+     */
     protected function getEntityClass(): string
     {
         return Store::class;

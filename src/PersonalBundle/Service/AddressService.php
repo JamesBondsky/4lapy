@@ -6,15 +6,21 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -59,9 +65,9 @@ class AddressService
      * @param int    $userId
      * @param string $locationCode
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|Address[]
+     * @throws ObjectPropertyException
      * @throws NotAuthorizedException
-     * @throws \Exception
      */
     public function getAddressesByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {
@@ -71,8 +77,8 @@ class AddressService
     /**
      * @param int $id
      *
-     * @return Address
-     * @throws \Exception
+     * @return BaseEntity|Address
+     * @throws ObjectPropertyException
      * @throws NotFoundException
      */
     public function getById(int $id): Address
@@ -85,7 +91,7 @@ class AddressService
      *
      * @deprecated
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws NotAuthorizedException
      * @throws EmptyEntityClass
      * @throws \RuntimeException
@@ -100,9 +106,9 @@ class AddressService
      */
     public function addFromArray(array $data): bool
     {
-        $address = $this->addressRepository->dataToEntity($data, Address::class);
-
-        return $this->add($address);
+        /** @var Address $entity */
+        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+        return $this->add($entity);
     }
 
     /**
@@ -136,25 +142,28 @@ class AddressService
 
         $address->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($address)->create();
-        if ($res && $address->isMain()) {
-            /** @noinspection PhpParamsInspection */
-            $this->updateManzanaAddress($address);
+        if ($res) {
+            if ($address->isMain()
+            ) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress($address);
+            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' . $address->getUserId(),
+            ]);
         }
 
         return $res;
     }
 
-    /**
-     *
-     */
-    public function disableMainItem()
+    public function disableMainItem(): void
     {
         try {
             $addresses = $this->addressRepository->findBy(
                 [
                     'filter'      => [
                         'UF_USER_ID' => $this->currentUser->getCurrentUserId(),
-                        'UF_MAIN'    => 'Y',
+                        'UF_MAIN'    => true,
                     ],
                     'entityClass' => Address::class,
                 ]
@@ -164,8 +173,116 @@ class AddressService
                 $address->setMain(false);
                 $this->addressRepository->setEntity($address)->update();
             }
-        } catch (\Exception $e) {
+        } catch (ObjectPropertyException|\Exception $e) {
+            /** Ошибка не должна возникать */
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка снятии базового адреса доставки - ' . $e->getMessage());
         }
+    }
+
+    /**
+     * @param Client  $client
+     * @param Address $address
+     */
+    public function setClientAddress(&$client, Address $address): void
+    {
+        /** неоткуда взять область для обновления
+         * $client->addressStateOrProvince = '';*/
+        $client->addressCity = $address->getCity();//Город
+        $client->address = $address->getStreet();//Улица
+        $client->addressLine2 = $address->getHouse();//Дом
+        $client->addressLine3 = $address->getHousing();//Корпус
+        $client->plAddressFlat = $address->getFlat();//Квартира
+    }
+
+    /**
+     * @param array $data
+     *
+     * @throws ObjectPropertyException
+     * @throws NotFoundException
+     * @throws SecurityException
+     * @throws NotAuthorizedException
+     * @throws EmptyEntityClass
+     * @throws \RuntimeException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws \Exception
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @return bool
+     */
+    public function update(array $data): bool
+    {
+        /** @var Address $entity */
+        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+
+        $updateEntity = $this->getById($entity->getId());
+        if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+        }
+
+        if($entity->getUserId() === 0){
+            $entity->setUserId($updateEntity->getUserId());
+        }
+
+        if ($entity->isMain()) {
+            $this->disableMainItem();
+        }
+
+        $entity->setCityLocationByEntity();
+        $res = $this->addressRepository->setEntity($entity)->update();
+        if ($res) {
+            if ($entity->isMain()
+            ) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress($entity);
+            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' .$updateEntity->getUserId(),
+            ]);
+        }
+
+        return $res;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @throws ObjectPropertyException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws NotAuthorizedException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws SecurityException
+     * @throws InvalidIdentifierException
+     * @throws \Exception
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @return bool
+     */
+    public function delete(int $id): bool
+    {
+        $deleteEntity = $this->getById($id);
+        if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+        }
+
+        $res = $this->addressRepository->delete($id);
+        if ($res) {
+            if ($deleteEntity->isMain()) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress(new Address());
+            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' .$deleteEntity->getUserId(),
+            ]);
+        }
+        return $res;
     }
 
     /**
@@ -179,7 +296,7 @@ class AddressService
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      */
-    protected function updateManzanaAddress(Address $address)
+    protected function updateManzanaAddress(Address $address): void
     {
         $container = App::getInstance()->getContainer();
         /** @var ManzanaService $manzanaService */
@@ -198,68 +315,5 @@ class AddressService
             $this->setClientAddress($client, $address);
             $manzanaService->updateContactAsync($client);
         }
-    }
-
-    /**
-     * @param Client $client
-     * @param Address $address
-     */
-    public function setClientAddress(&$client, Address $address)
-    {
-        /** неоткуда взять область для обновления
-         * $client->addressStateOrProvince = '';*/
-        $client->addressCity = $address->getCity();//Город
-        $client->address = $address->getStreet();//Улица
-        $client->addressLine2 = $address->getHouse();//Дом
-        $client->addressLine3 = $address->getHousing();//Корпус
-        $client->plAddressFlat = $address->getFlat();//Квартира
-    }
-
-    /**
-     * @param array $data
-     *
-     * @throws NotAuthorizedException
-     * @throws EmptyEntityClass
-     * @throws \RuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @return bool
-     */
-    public function update(array $data): bool
-    {
-        if ($data['UF_MAIN'] === 'Y') {
-            $this->disableMainItem();
-        }
-
-        /** @var Address $entity */
-        $entity = $this->addressRepository->dataToEntity($data, Address::class);
-        $entity->setCityLocationByEntity();
-        $res = $this->addressRepository->setEntity($entity)->update();
-        if ($res && $data['UF_MAIN'] === 'Y') {
-            /** @noinspection PhpParamsInspection */
-            $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
-        }
-
-        return $res;
-    }
-
-    /**
-     * @param int $id
-     *
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @return bool
-     */
-    public function delete(int $id): bool
-    {
-        return $this->addressRepository->delete($id);
     }
 }

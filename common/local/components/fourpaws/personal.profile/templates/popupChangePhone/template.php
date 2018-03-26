@@ -14,9 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </header>
         <div class="b-registration__form">
             <?php $oldPhone = $phone = $arResult['CUR_USER']['PERSONAL_PHONE'];
-            require_once 'include/phone.php';
-            require_once 'include/confirm.php';
-            ?>
+            require_once 'include/phone.php'; ?>
         </div>
     </div>
 </section>

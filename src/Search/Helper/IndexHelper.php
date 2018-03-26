@@ -355,7 +355,7 @@ class IndexHelper implements LoggerAwareInterface
     public function indexProducts(array $products): bool
     {
         $products = array_filter($products, function ($data) {
-            return $data && $data instanceof Product;
+            return $data && $data instanceof Product && !$data->getOffers()->isEmpty();
         });
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
@@ -387,9 +387,9 @@ class IndexHelper implements LoggerAwareInterface
      *
      * @param bool $flushBaseFilter
      *
-     * @throws \RuntimeException
+     * @param int  $batchSize
      */
-    public function indexAll(bool $flushBaseFilter = false)
+    public function indexAll(bool $flushBaseFilter = false, int $batchSize = 500)
     {
         $query = (new ProductQuery())
             ->withOrder(['ID' => 'DESC']);
@@ -411,17 +411,21 @@ class IndexHelper implements LoggerAwareInterface
             )
         );
 
-        $batchSize = 500;
-        $iterations = ceil($allProducts->count() / $batchSize);
+        $allProductsChunked = array_chunk($allProducts->toArray(), $batchSize);
+        unset($allProducts);
+        unset($query);
 
-        for ($i = 0; $i < $iterations; $i++) {
-            $batch = $allProducts->slice($i * $batchSize, $batchSize);
-            if ($this->indexProducts($batch)) {
-                $indexOk += \count($batch);
+        $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
+        foreach ($allProductsChunked as $i => $allProductsChunk) {
+            if ($this->indexProducts($allProductsChunk)) {
+                $indexOk += \count($allProductsChunk);
             } else {
-                $indexError +=\count($batch);
+                $indexError +=\count($allProductsChunk);
             }
+            unset($allProductsChunked[$i]);
+
             $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
+            $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
         }
 
         $this->log()->info(

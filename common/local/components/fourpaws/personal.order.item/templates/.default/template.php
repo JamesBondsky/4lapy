@@ -1,79 +1,16 @@
-<?php
+<?php /** @var Order $order
+ * @global FourPawsPersonalCabinetOrdersComponent $component
+ */
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
-use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
-
-/**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
- * @var CBitrixComponent $component
- * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $componentPath
- */
-
-if (!$arResult['ORDER']) {
-    return;
-}
-/** @var Order $order */
-$order = $arResult['ORDER'];
-
-/** @var OrderSubscribe $orderSubscribe */
-$orderSubscribe = $arParams['ORDER_SUBSCRIBE'] ?? null;
-
-/**
- * Подписка на доставку заказа
- * (элементы управления подпиской и попап c формой)
- * @todo Сделать вызов попапа через ajax
- */
-$subscribeOrderAddControls = '';
-$subscribeOrderEditControls = '';
-if ($order->canBeSubscribed()) {
-    /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $subscribeFormComponent */
-    $subscribeFormComponent = $APPLICATION->IncludeComponent(
-        'fourpaws:personal.orders.subscribe.form',
-        'popup',
-        [
-            'ORDER_ID' => $order->getId(),
-            // Y - вставлять html через отложенные функции
-            'OUTPUT_VIA_BUFFER' => 'Y',
-        ],
-        $component,
-        [
-            'HIDE_ICONS' => 'Y',
-        ]
-    );
-    if ($subscribeFormComponent->arResult['CONTROLS_HTML']) {
-        if ($orderSubscribe) {
-            // элементы управления подпиской
-            $subscribeOrderEditControls = $subscribeFormComponent->arResult['CONTROLS_HTML']['EDIT'];
-        } else {
-            // элементы добавления подписки
-            $subscribeOrderAddControls = $subscribeFormComponent->arResult['CONTROLS_HTML']['ADD'];
-        }
-    }
-}
-
-$attr = '';
-if ($orderSubscribe) {
-    $attr .= ' data-first-subscribe="'.$orderSubscribe->getDateStart().'"';
-    $attr .= ' data-interval="'.$orderSubscribe->getDeliveryTime().'"';
-    $attr .= ' data-frequency="'.$orderSubscribe->getDeliveryFrequency().'"';
-    //$attr .= ' data-id="'.$orderSubscribe->getOrderId().'"';
-}
 ?>
-<li<?=$attr?> class="b-accordion-order-item js-permutation-li js-item-content">
+<li class="b-accordion-order-item js-permutation-li js-item-content">
     <div class="b-accordion-order-item__visible js-premutation-accordion-content">
         <div class="b-accordion-order-item__info">
             <a class="b-accordion-order-item__open-accordion js-open-accordion"
@@ -84,56 +21,40 @@ if ($orderSubscribe) {
                         <?= new SvgDecorator('icon-arrow-account', 25, 25) ?>
                     </span>
                 </span>
-                <?php
-                if ($orderSubscribe) {
-                    ?>
-                    <span class="b-accordion-order-item__number-order">
-                        <?php
-                        echo $orderSubscribe->getDeliveryFrequencyEntity()->getValue();
-                        echo ', ';
-                        echo $orderSubscribe->getDateStartWeekdayRu();
-                        ?>
-                    </span>
-                    <?php
-                } else {
-                    ?>
-                    <span class="b-accordion-order-item__number-order">
-                        <?=('№ '.$order->getId().' от '.$order->getFormatedDateInsert())?>
-                    </span>
-                    <?php
-                }
-                ?>
+                <span class="b-accordion-order-item__number-order">№ <?= $order->getId() ?>
+                    от <?= $order->getFormatedDateInsert() ?></span>
             </a>
             <?php $countItems = $order->getItems()->count(); ?>
             <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
-                    ['товар', 'товара', 'товаров']) ?> (<?= $order->getFormatedAllWeight() ?> кг)
+                    [
+                        'товар',
+                        'товара',
+                        'товаров',
+                    ]) ?> <?= $order->getAllWeight() > 0 ? '(' . $order->getFormatedAllWeight() . ' кг)' : ''; ?>
             </div>
         </div>
         <div class="b-accordion-order-item__adress">
             <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
                 <?= $order->getStatus() ?>
-                <span>с <?= $order->getFormatedDateStatus() ?></span>
+                <?php /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */ ?>
+                <span><?= \in_array($order->getStatus(), [
+                        $component::STATUS_IN_ASSEMBLY_1,
+                        $component::STATUS_IN_ASSEMBLY_2,
+                        $component::STATUS_IN_POINT_ISSUE,
+                    ], true) ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?></span>
             </div>
             <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
                 <?= $order->getDelivery()->getDeliveryName() ?>
                 <span><?= $order->getDateDelivery() ?></span>
             </div>
             <div class="b-adress-info b-adress-info--order">
-                <?php
-                $currentMetro = $order->getStore()->getMetro();
-                if (!empty($currentMetro)) {
-                    /** @var ArrayCollection $metroCollection */
-                    $metroCollection = $arResult['METRO'];
-                    $metroItem = $metroCollection->get($currentMetro);
-                    if (!empty($metroItem)) {
-                        ?>
-                        <span class="b-adress-info__label b-adress-info__label--<?= $metroItem['BRANCH']['UF_CLASS'] ?>"></span>
-                        м. <?= $metroItem['UF_NAME'] ?>,
-                    <?php }
-                }?>
+                <?php if (!empty($order->getStore()->getMetro())) { ?>
+                    <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
+                    м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
+                <?php } ?>
                 <?= $order->getStore()->getAddress() ?>
-                <?php if (!empty($order->getStore()->getSchedule())) { ?>
-                    <p class="b-adress-info__mode-operation"><?= $order->getStore()->getSchedule() ?></p>
+                <?php if (!empty($order->getStore()->getScheduleString())) { ?>
+                    <p class="b-adress-info__mode-operation"><?= $order->getStore()->getScheduleString() ?></p>
                 <?php } ?>
             </div>
         </div>
@@ -143,46 +64,33 @@ if ($orderSubscribe) {
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
-            <?php
-            if (!$orderSubscribe && $order->isClosed() && !$order->isManzana()) {
+            <?php if ($order->isClosed() && !$order->isManzana()) {
                 $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-                $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]);
-                ?>
+                $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]); ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?= $uri->getUri() ?>"
                        title="Повторить заказ">
                         <span class="b-link__text b-link__text--repeat-order">Повторить заказ</span>
                     </a>
                 </div>
-                <?php
-            }
-
-            if (!$orderSubscribe && !$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') {
-                ?>
+            <?php } ?>
+            <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') { ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--pay-account b-link--pay-account"
-                       href="<?='/sale/payment/?ORDER_ID='.$order->getId()?>"
+                       href="/sale/payment/?ORDER_ID=<?= $order->getId() ?>"
                        title="Оплатить">
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>
                 </div>
-                <?php
-            }
-
-            // элементы управления подпиской
-            echo $subscribeOrderEditControls;
-
-            ?>
-            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
-                <?= $order->getFormatedPrice() ?>
-                <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
+            <?php } ?>
+            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full"><?= $order->getFormatedPrice() ?>
+                <span
+                        class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
-            <?php
-
-            // элементы добавления подписки
-            echo $subscribeOrderAddControls;
-
-            ?>
+            <?php /** @todo подписаться на доставку */ ?>
+            <a class="b-accordion-order-item__subscribe js-open-popup" href="javascript:void(0);"
+               title="Подписаться на доставку" data-popup-id="subscribe-delivery">Подписаться
+                на&nbsp;доставку</a>
         </div>
     </div>
     <div class="b-accordion-order-item__hidden js-hidden-order">
@@ -198,7 +106,6 @@ if ($orderSubscribe) {
                     </div>
                     <div class="b-list-order__wrapper">
                         <div class="b-list-order__info">
-                            <?php /** @todo акционный товар */ ?>
                             <?php if ($item->isHaveStock()) { ?>
                                 <div class="b-list-order__action">Сейчас
                                     участвует в акции
@@ -212,6 +119,12 @@ if ($orderSubscribe) {
                                 </span>
                             </div>
                             <div class="b-list-order__option">
+                                <?php if (!empty($item->getFlavour())) { ?>
+                                    <div class="b-list-order__option-text">
+                                        Вкус:
+                                        <span><?= $item->getFlavour() ?></span>
+                                    </div>
+                                <?php } ?>
                                 <?php if (!empty($item->getOfferSelectedProp())) { ?>
                                     <div class="b-list-order__option-text">
                                         <?= $item->getOfferSelectedPropName() ?>:
@@ -260,7 +173,7 @@ if ($orderSubscribe) {
                         </div>
                     </div>
                     <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
-                        <?= $order->getFormatedItemsSum() ?><span
+                        <?= $order->getFormattedItemsSum() ?><span
                                 class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                     </div>
                 </li>
@@ -294,4 +207,3 @@ if ($orderSubscribe) {
     <div class="b-accordion-order-item__mobile-bottom js-button-permutation-mobile">
     </div>
 </li>
-<?php

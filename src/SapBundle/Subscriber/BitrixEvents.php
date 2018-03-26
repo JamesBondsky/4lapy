@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Subscriber;
 
 use Bitrix\Highloadblock\DataManager;
@@ -10,6 +14,7 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
+use RuntimeException;
 
 class BitrixEvents implements ServiceHandlerInterface
 {
@@ -26,15 +31,11 @@ class BitrixEvents implements ServiceHandlerInterface
     /**
      * Инициализация всех обработчиков сервиса
      *
-     * @param \Bitrix\Main\EventManager $eventManager
+     * @param EventManager $eventManager
      *
-     * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @return mixed
+     * @throws RuntimeException
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         /**
          * @var static $current
@@ -47,6 +48,7 @@ class BitrixEvents implements ServiceHandlerInterface
          */
         foreach ($current->getCollection() as $code => $dataManager) {
             $entity = $dataManager::getEntity();
+
             $eventManager->addEventHandler(
                 $entity->getModule(),
                 static::compileEventName($entity, DataManager::EVENT_ON_AFTER_ADD),
@@ -54,6 +56,7 @@ class BitrixEvents implements ServiceHandlerInterface
                     $referenceStorage->clear($code);
                 }
             );
+
             $eventManager->addEventHandler(
                 $entity->getModule(),
                 static::compileEventName($entity, DataManager::EVENT_ON_AFTER_UPDATE),
@@ -61,7 +64,11 @@ class BitrixEvents implements ServiceHandlerInterface
                     $referenceStorage->clear($code);
                 }
             );
+
             $eventManager->addEventHandler(
+            /**
+             *
+             */
                 $entity->getModule(),
                 static::compileEventName($entity, DataManager::EVENT_ON_AFTER_DELETE),
                 function () use ($code, $referenceStorage) {
@@ -69,7 +76,6 @@ class BitrixEvents implements ServiceHandlerInterface
                 }
             );
         }
-        return $eventManager;
     }
 
     protected static function compileEventName(Base $entity, $type)

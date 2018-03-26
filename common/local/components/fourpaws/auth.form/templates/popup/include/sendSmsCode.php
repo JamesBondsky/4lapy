@@ -22,6 +22,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
           method="post">
         <input type="hidden" name="action" value="savePhone">
         <input type="hidden" name="phone" value="<?= $phone ?>">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>" class="js-no-valid">
         <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>

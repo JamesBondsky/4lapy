@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -77,7 +81,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
 
         try {
             if ($material->isNotUploadToIm()) {
-                return $this->offerService->deativate($material->getOfferXmlId());
+                return $this->offerService->deactivate($material->getOfferXmlId());
             }
 
             $this->connection->startTransaction();

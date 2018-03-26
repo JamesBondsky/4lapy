@@ -37,6 +37,24 @@ class AjaxMess
         return $this->getJsonError('needAuth', 'Необходимо авторизоваться');
     }
 
+    /**
+     * @return JsonResponse
+     */
+    public function getSecurityError(): JsonResponse
+    {
+        return $this->getJsonError('securityError', 'Ошибка безопасности');
+    }
+
+    /**
+     * @param string $mess
+     *
+     * @return JsonResponse
+     */
+    public function getNotIdError(string $mess = ''): JsonResponse
+    {
+        return $this->getJsonError('notIdError', 'Не указан ID'.$mess);
+    }
+
     /** error block */
 
     /**
@@ -84,27 +102,33 @@ class AjaxMess
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getNotFoundConfirmedCodeException(): JsonResponse
+    public function getNotFoundConfirmedCodeException(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('notFoundConfirmCode', 'Код подтверждения не найден');
+        return $this->getJsonError('notFoundConfirmCode', 'Код подтверждения не найден', $additionalData);
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getExpiredConfirmCodeException(): JsonResponse
+    public function getExpiredConfirmCodeException(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('expiredConfirmCode', 'Срок действия кода подтверждения истек');
+        return $this->getJsonError('expiredConfirmCode', 'Срок действия кода подтверждения истек', $additionalData);
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getWrongConfirmCode(): JsonResponse
+    public function getWrongConfirmCode(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('wrongConfirmCode', 'Код подтверждения не соответствует');
+        return $this->getJsonError('wrongConfirmCode', 'Код подтверждения не соответствует', $additionalData);
     }
 
     /**
@@ -121,6 +145,14 @@ class AjaxMess
     public function getHavePhoneError(): JsonResponse
     {
         return $this->getJsonError('havePhone', 'Такой телефон уже существует');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getHaveLoginError(): JsonResponse
+    {
+        return $this->getJsonError('haveLogin', 'Такой логин уже существует');
     }
 
     /**
@@ -157,7 +189,7 @@ class AjaxMess
      */
     public function getEmptyDataError(): JsonResponse
     {
-        return $this->getJsonError('emptyData', 'Должны быть заполнены все поля');
+        return $this->getJsonError('emptyData', 'Должны быть заполнены все обязательные поля');
     }
 
     /**
@@ -166,7 +198,7 @@ class AjaxMess
     public function getNotActiveUserError(): JsonResponse
     {
         return $this->getJsonError('notActiveUser',
-            'Учетная запись есть на сайте, но она не активна, пожалуйста обратитесь к администрации сайта');
+            'Учетная запись есть на сайте, но она не активна, пожалуйста, обратитесь к администрации сайта');
     }
 
     /**
@@ -216,6 +248,28 @@ class AjaxMess
     }
 
     /**
+     * @param string $error
+     *
+     * @return JsonResponse
+     */
+    public function getDeleteError(string $error = ''): JsonResponse
+    {
+        $errorText = !empty($error) ? ' - ' . $error : '';
+        return $this->getJsonError('errorUpdate', 'Произошла ошибка при удалении' . $errorText);
+    }
+
+    /**
+     * @param string $error
+     *
+     * @return JsonResponse
+     */
+    public function getAddError(string $error = ''): JsonResponse
+    {
+        $errorText = !empty($error) ? ' - ' . $error : '';
+        return $this->getJsonError('errorUpdate', 'Произошла ошибка при добавлении' . $errorText);
+    }
+
+    /**
      * @return JsonResponse
      */
     public function getAuthError(): JsonResponse
@@ -236,7 +290,7 @@ class AjaxMess
      */
     public function getEmailSendError(): JsonResponse
     {
-        return $this->getJsonError('errorEmailSend', 'Отправка письма не удалась, пожалуйста попробуйте позднее');
+        return $this->getJsonError('errorEmailSend', 'Отправка письма не удалась, пожалуйста, попробуйте позднее');
     }
 
     /**
@@ -256,11 +310,13 @@ class AjaxMess
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getWrongPasswordError(): JsonResponse
+    public function getWrongPasswordError(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль');
+        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль',$additionalData);
     }
 
     /**
@@ -296,16 +352,46 @@ class AjaxMess
     }
 
     /**
-     * @param string $code
-     * @param string $mes
+     * @return JsonResponse
+     */
+    public function getNotAllowedEASendError(): JsonResponse
+    {
+        return $this->getJsonError('notAllowedEASend', 'Отправка писем недоступна - необходимо подтвердить почту');
+    }
+
+    /**
+     * @param int $size
      *
      * @return JsonResponse
      */
-    private function getJsonError(string $code, string $mes): JsonResponse
+    public function getFileSizeError(int $size): JsonResponse
+    {
+        return $this->getJsonError('fileSizeError', 'Превышен максимально допустимый размер файла в '.$size.'Мб');
+    }
+
+    /**
+     * @param array $valid_types
+     *
+     * @return JsonResponse
+     */
+    public function getFileTypeError(array $valid_types): JsonResponse
+    {
+        return $this->getJsonError('filetTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
+    }
+
+    /**
+     * @param string $code
+     * @param string $mes
+     *
+     * @param array  $additionalData
+     *
+     * @return JsonResponse
+     */
+    private function getJsonError(string $code, string $mes, array $additionalData = []): JsonResponse
     {
         return JsonErrorResponse::createWithData(
             $mes,
-            ['errors' => [$code => $mes]]
+            array_merge(['errors' => [$code => $mes]], $additionalData)
         );
     }
 }

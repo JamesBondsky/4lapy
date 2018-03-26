@@ -1,19 +1,19 @@
 <?php
 /**
- * @var array $arParams
- * @var array $arResult
+ * @var array                 $arParams
+ * @var array                 $arResult
  *
  * @var CatalogElementSnippet $component
  *
- * @var Product $product
- * @var OfferCollection $offers
- * @var Offer $offer
- * @var Offer $currentOffer
+ * @var Product               $product
+ * @var OfferCollection       $offers
+ * @var Offer                 $offer
+ * @var Offer                 $currentOffer
  *
- * @global \CMain $APPLICATION
+ * @global \CMain             $APPLICATION
  */
 
-use FourPaws\App\Templates\MediaEnum;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
@@ -28,27 +28,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
+/** @var Offer $currentOffer */
+$currentOffer = $arResult['CURRENT_OFFER']; ?>
 
-if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
-    $currentOffer = $arParams['CURRENT_OFFER'];
-} else {
-    /**
-     * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
-     */
-    foreach ($offers as $offer) {
-        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
-            $currentOffer = $offer;
-        }
-    }
-
-    if (!$currentOffer) {
-        $currentOffer = $offers->first();
-    }
-} ?>
-
-<div class="b-common-item b-common-item--catalog-item js-product-item">
+<div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item">
     <?= $component->getMarkService()->getMark($currentOffer) ?>
-    <? if ($currentOffer->getImages()->count() > 0) { ?>
+    <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
             <a class="b-common-item__image-link js-item-link" href="<?= $product->getDetailPageUrl() ?>">
                 <img class="b-common-item__image js-weight-img"
@@ -91,11 +76,14 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
         <div class="b-common-item__rank-wrapper">
             &nbsp
             <?php
-            /**
-             * @todo new; shares
-             * <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
-             * <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
-             */ ?>
+            if($currentOffer->isNew()){?>
+                <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
+            <?php }
+            if($currentOffer->isShare()){
+                /** @var IblockElement $share */
+                $share = $currentOffer->getShare()->first();?>
+                <span class="b-common-item__rank-text b-common-item__rank-text--red"><?=$share->getName()?></span>
+            <?php }?>
         </div>
         <?php if ($offers->count() > 1) {
 
@@ -139,9 +127,8 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                         } ?>
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId(
-                               ) ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
-                               data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
+                               class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
+                               data-price="<?= ceil($offer->getPrice()) ?>" data-offerid="<?= $offer->getId() ?>"
                                data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
                         </li>
@@ -199,20 +186,19 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>
                 </span>
             </a>
         <?php } else { ?>
-            <a class="b-common-item__add-to-cart" href="javascript:void(0);"
-               title="">
+            <a class="b-common-item__add-to-cart" href="javascript:void(0);" title="">
                 <span class="b-common-item__wrapper-link">
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>

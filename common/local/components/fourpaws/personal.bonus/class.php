@@ -9,12 +9,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -67,7 +68,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         $params['CACHE_TIME'] = 360000;
-        $params['MANZANA_CACHE_TIME'] = 8 * 60 * 60;
+        $params['MANZANA_CACHE_TIME'] = 10 * 60;
         return $params;
     }
 
@@ -84,6 +85,8 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        $instance = Application::getInstance();
+
         try {
             $user = $this->currentUserProvider->getCurrentUser();
         } catch (NotAuthorizedException $e) {
@@ -98,12 +101,21 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         }
 
         $cardNumber = $user->getDiscountCardNumber();
-        $cache = Cache::createInstance();
+        $cache = $instance->getCache();
+
+        /** @todo здесь тоже можно делать обновление динамически, так как это влияет только на товары */
+        $this->currentUserProvider->refreshUserBonusPercent($user);
+
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $user->getId(), 'card' => $cardNumber]))) {
+            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getPath())) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             try {
                 $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);
             } catch (NotAuthorizedException $e) {
@@ -112,6 +124,15 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
                 $cache->abortDataCache();
                 return null;
             }
+
+            if ($tagCache !== null) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:bonus:'. $user->getId(),
+                    'order:'. $user->getId(),
+                ], $tagCache);
+                $tagCache->endTagCache();
+            }
+
             $cache->endDataCache(['bonus' => $bonus]);
         }
 
@@ -120,9 +141,16 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         if ($this->startResultCache($this->arParams['CACHE_TIME'], [
             'userId' => $user->getId(),
             'cardNumber'  => $bonus->getCard()->getCardNumber(),
+            'bonus'  => $bonus->getActiveBonus(),
             'sum'         => $bonus->getSum(),
             'paidByBonus' => $bonus->getCredit(),
-        ])) {
+            'realDiscount' => $bonus->getRealDiscount(),
+        ], $this->getPath())) {
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:bonus:'. $user->getId(),
+                'order:'. $user->getId(),
+            ]);
+
             $this->includeComponentTemplate();
         }
 

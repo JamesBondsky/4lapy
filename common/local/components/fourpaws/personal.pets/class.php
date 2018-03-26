@@ -10,18 +10,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserFieldTable;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -36,6 +40,9 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
 
     /** @var UserAuthorizationInterface */
     private $authUserProvider;
+
+    /** @var CurrentUserProviderInterface */
+    private $currentUserProvider;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -60,10 +67,19 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         }
         $this->petService = $container->get('pet.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+    }
+
+    public function onPrepareComponentParams($params): array
+    {
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
+
+        return parent::onPrepareComponentParams($params);
     }
 
     /**
      * {@inheritdoc}
+     * @throws ObjectPropertyException
      * @throws ArgumentException
      * @throws \Exception
      * @throws ServiceNotFoundException
@@ -82,16 +98,23 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             return null;
         }
 
+        $instance = Application::getInstance();
+
         $this->setFrameMode(true);
 
-        /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
-        if ($this->startResultCache()) {
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], ['user_id'=>$this->currentUserProvider->getCurrentUserId()])) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
             /** получение пола */
             $this->setGenderVals();
 
             /** получение типов питомцев */
             $this->setPetTypes();
+
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:pets:'. $this->currentUserProvider->getCurrentUserId(),
+                'personal:pets',
+                'highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId()
+            ]);
 
             $this->includeComponentTemplate();
         }
@@ -103,7 +126,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
      * @throws ArgumentException
      * @throws LoaderException
      */
-    private function setGenderVals()
+    private function setGenderVals(): void
     {
         $this->arResult['GENDER'] = [];
         $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
@@ -122,7 +145,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     /**
      * @throws \Exception
      */
-    private function setPetTypes()
+    private function setPetTypes(): void
     {
         $this->arResult['PET_TYPES'] = [];
         $res =

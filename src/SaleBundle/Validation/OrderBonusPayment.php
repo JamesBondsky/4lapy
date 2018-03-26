@@ -12,7 +12,7 @@ class OrderBonusPayment extends Constraint
     /**
      * @var string
      */
-    public $wrongValueMessage = 'Укажите верное кол-во бонусов';
+    public $wrongValueMessage = 'Укажите верное количество бонусов';
 
     /**
      * @var string

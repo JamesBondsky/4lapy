@@ -6,6 +6,9 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -256,17 +259,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     //TODO Изображения
     protected $PROPERTY_IMG = [];
 
-    /**
-     * @var string[]
-     * @Type("array")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_LABEL = [];
-
-    /**
-     * @var HlbReferenceItemCollection
-     */
-    protected $label;
 
     /**
      * @var bool
@@ -997,50 +989,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         $this->petGender = null;
         $this->PROPERTY_PET_GENDER = $xmlId;
-        return $this;
-    }
-
-    /**
-     * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItemCollection
-     */
-    public function getLabels(): HlbReferenceItemCollection
-    {
-        if (null === $this->label) {
-            $this->label = ReferenceUtils::getReferenceMulti(
-                Application::getHlBlockDataManager('bx.hlblock.label'),
-                $this->getLabelsXmlId()
-            );
-            /*
-             * TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
-             */
-
-            //TODO Сделать, чтобы это была отдельная коллекция объектов "Шильдик", а не просто элемент справочника.
-        }
-
-        return $this->label;
-    }
-
-    /**
-     * @return array|string[]
-     */
-    public function getLabelsXmlId(): array
-    {
-        $this->PROPERTY_LABEL = $this->PROPERTY_LABEL ?: [];
-        return $this->PROPERTY_LABEL;
-    }
-
-    /**
-     * @param array $xmlIds
-     *
-     * @return $this
-     */
-    public function withLabelsXmlIds(array $xmlIds)
-    {
-        $this->label = null;
-        $this->PROPERTY_LABEL = $xmlIds;
         return $this;
     }
 
@@ -1817,17 +1765,21 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $result;
     }
-    
+
     /**
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
-     * @return Collection|Offer[]
+     * @param bool $skipZeroPrice
+     * @return Collection
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
-    public function getOffers(): Collection
+    public function getOffers($skipZeroPrice = true): Collection
     {
         if (null === $this->offers) {
-            $this->offers = new ArrayCollection(
+            $offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
                         ->withOrder(['CATALOG_WEIGHT' => 'ASC'])
@@ -1839,7 +1791,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             /**
              * @var Offer $offer
              */
-            foreach ($this->offers as $offer) {
+            foreach ($offers as $i => $offer) {
+                if ($skipZeroPrice && !$offer->getPrice()) {
+                    unset($offers[$i]);
+                    continue;
+                }
                 try {
                     $offer->setProduct($this);
                 } catch (\InvalidArgumentException $e) {
@@ -1848,6 +1804,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                      */
                 }
             }
+
+            $this->offers = $offers;
         }
 
         return $this->offers;

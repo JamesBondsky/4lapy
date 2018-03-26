@@ -2,18 +2,13 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
+
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
@@ -150,13 +145,13 @@ class Order extends BaseEntity
     protected $manzana = false;
 
     /** @var float */
-    protected $allWeight;
+    protected $allWeight = 0;
 
     /** @var Store */
     protected $store;
 
     /** @var float */
-    protected $itemsSum;
+    protected $itemsSum = 0;
 
     /** @var OrderPayment */
     protected $payment;
@@ -172,15 +167,6 @@ class Order extends BaseEntity
 
     /** @var array */
     protected $statusMain = [];
-
-    /** @var OrderService $orderService */
-    private $orderService = null;
-
-    /** @var array $orderItems */
-    private $orderItems = [];
-
-    /** @var \Bitrix\Sale\Order $bitrixOrder */
-    private $bitrixOrder;
 
     /**
      * @return string
@@ -493,11 +479,6 @@ class Order extends BaseEntity
      */
     public function getItems(): ArrayCollection
     {
-        if (!$this->items && $this->getId()) {
-            $orderItems = $this->getOrderItems();
-            $this->items = $orderItems[0];
-        }
-
         return $this->items ?? new ArrayCollection();
     }
 
@@ -523,7 +504,7 @@ class Order extends BaseEntity
     /**
      * @param bool $manzana
      */
-    public function setManzana(bool $manzana)
+    public function setManzana(bool $manzana): void
     {
         $this->manzana = $manzana;
     }
@@ -535,12 +516,12 @@ class Order extends BaseEntity
 
     public function getFormatedDateInsert(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateInsert()->format('d #n# Y'));
+        return DateHelper::replaceRuMonth($this->getDateInsert()->format('d #n# Y'), DateHelper::GENITIVE);
     }
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('d #n# Y'));
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('d #n# Y'),DateHelper::GENITIVE);
     }
 
     public function getFormatedPrice()
@@ -550,20 +531,9 @@ class Order extends BaseEntity
 
     /**
      * @return float
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
      */
     public function getAllWeight(): float
     {
-        if (!isset($this->allWeight) && $this->getId()) {
-            $orderItems = $this->getOrderItems();
-            $this->allWeight = (float)$orderItems[1];
-        }
-
         return $this->allWeight ?? 0;
     }
 
@@ -580,170 +550,120 @@ class Order extends BaseEntity
 
     /**
      * @return float
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
      */
     public function getFormatedAllWeight(): float
     {
-        $allWeight = $this->getAllWeight();
+        $allWeight =$this->getAllWeight();
         return $allWeight > 0 ? number_format(round($allWeight / 1000, 2),2,'.',' ') : 0;
     }
 
     /**
      * @return float
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
      */
     public function getItemsSum(): float
     {
-        if (!isset($this->itemsSum) && $this->getId()) {
-            $orderItems = $this->getOrderItems();
-            $this->itemsSum = (float)$orderItems[2];
-        }
-
         return $this->itemsSum ?? 0;
     }
 
     /**
      * @param float $itemsSum
      */
-    public function setItemsSum(float $itemsSum)
+    public function setItemsSum(float $itemsSum): void
     {
         $this->itemsSum = $itemsSum;
     }
 
     /**
-     * @return float
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws SystemException
-     * @throws \Exception
+     * @return string
      */
-    public function getFormatedItemsSum(): float
+    public function getFormattedItemsSum(): string
     {
         return number_format(round($this->getItemsSum(), 2), 2, '.', ' ');
     }
 
     /**
      * @return OrderPayment
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
      */
     public function getPayment(): OrderPayment
     {
-        if (!$this->payment) {
-            $this->payment = $this->getOrderService()->getPayment($this->getPaySystemId());
-        }
-
         return $this->payment;
     }
 
     /**
      * @param OrderPayment $payment
      */
-    public function setPayment(OrderPayment $payment)
+    public function setPayment(OrderPayment $payment): void
     {
         $this->payment = $payment;
     }
 
     /**
      * @return OrderDelivery
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
      */
     public function getDelivery(): OrderDelivery
     {
-        if (!$this->delivery) {
-            $this->delivery = $this->getOrderService()->getDelivery($this->getId());
-        }
-
         return $this->delivery;
     }
 
     /**
      * @param OrderDelivery $delivery
      */
-    public function setDelivery(OrderDelivery $delivery)
+    public function setDelivery(OrderDelivery $delivery): void
     {
         $this->delivery = $delivery;
     }
 
     /**
      * @return string
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
+     * @throws \Bitrix\Main\ObjectException
      */
     public function getDateDelivery(): string
     {
-        $formattedDate = '';
+        $formatedDate = '';
         if ($this->getDelivery()->isDeducted()) {
-            $formattedDate = $this->getDelivery()->getFormatedDateDeducted();
+            $formatedDate = $this->getDelivery()->getFormatedDateDeducted();
         } else {
             /** @todo рассчитанная дата доставки */
-            $propVal = $this->getPropValue('DELIVERY_DATE');
-            if ($propVal) {
-                /** @var Date|null $date */
-                $date = new Date($propVal);
-                if ($date instanceof Date) {
-                    $formattedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
-                }
+            /** @var OrderProp $prop */
+            $prop = $this->getProps()->get('DELIVERY_DATE');
+            /** @var Date|null $date */
+            $date = new Date($prop->getValue());
+            if ($date instanceof Date) {
+                $formatedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
             }
         }
 
-        return $formattedDate;
+        return $formatedDate;
     }
 
     /**
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
      */
     public function getProps(): ArrayCollection
     {
-        if (!$this->props && $this->getId()) {
-            $this->props = $this->getOrderService()->getOrderProps($this->getId());
-        }
-
         return $this->props ?? new ArrayCollection();
     }
 
     /**
      * @param ArrayCollection $props
      */
-    public function setProps(ArrayCollection $props)
+    public function setProps(ArrayCollection $props): void
     {
         $this->props = $props;
     }
 
     /**
      * @return Store
-     * @throws ApplicationCreateException
-     * @throws \Exception
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getStore(): Store
     {
-        if (!$this->store && $this->getId()) {
-            $this->store = $this->getOrderService()->getStore($this);
-        }
-
         return $this->store;
     }
 
     /**
      * @param Store $store
      */
-    public function setStore(Store $store)
+    public function setStore(Store $store): void
     {
         $this->store = $store;
     }
@@ -759,7 +679,7 @@ class Order extends BaseEntity
     /**
      * @param array $statusLang
      */
-    public function setStatusLang(array $statusLang)
+    public function setStatusLang(array $statusLang): void
     {
         $this->statusLang = $statusLang;
     }
@@ -775,7 +695,7 @@ class Order extends BaseEntity
     /**
      * @param array $statusMain
      */
-    public function setStatusMain(array $statusMain)
+    public function setStatusMain(array $statusMain): void
     {
         $this->statusMain = $statusMain;
     }
@@ -799,76 +719,5 @@ class Order extends BaseEntity
     public function isClosed(): bool
     {
         return \in_array($this->getStatusId(), OrderService::$finalStatuses, true);
-    }
-
-    /**
-     * @param string $propCode
-     * @return mixed
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     */
-    public function getPropValue(string $propCode)
-    {
-        $orderProp = $this->getProps()->get($propCode);
-
-        return $orderProp ? $orderProp->getValue() : '';
-    }
-
-    /**
-     * @return bool
-     */
-    public function canBeSubscribed(): bool
-    {
-        /** @todo уточнить требуемую логику */
-        $result = $this->isPayed();
-// временно для разработки
-$result = true;
-        return $result;
-    }
-
-    /**
-     * @return OrderService
-     * @throws ApplicationCreateException
-     */
-    protected function getOrderService(): OrderService
-    {
-        if (!$this->orderService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->orderService = $appCont->get('order.service');
-        }
-
-        return $this->orderService;
-    }
-
-    /**
-     * @return array
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    protected function getOrderItems(): array
-    {
-        if (!$this->orderItems) {
-            $this->orderItems = $this->getOrderService()->getOrderItems($this->getId());
-        }
-
-        return $this->orderItems;
-    }
-
-    /**
-     * @return \Bitrix\Sale\Order|null
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\NotImplementedException
-     */
-    public function getBitrixOrder(): \Bitrix\Sale\Order
-    {
-        if (!isset($this->bitrixOrder)) {
-            $this->bitrixOrder = \Bitrix\Sale\Order::load($this->getId());
-        }
-
-        return $this->bitrixOrder;
     }
 }

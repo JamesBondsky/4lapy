@@ -271,8 +271,10 @@ class UserBonus
         if ($this->realDiscount <= 0) {
             $this->realDiscount = $this->getGeneratedRealDiscount();
         }
-        
-        return $this->realDiscount ?? 0;
+
+        $discountTable = static::$discountTable;
+        reset($discountTable);
+        return $this->realDiscount ?? key($discountTable);
     }
     
     /**
@@ -298,6 +300,12 @@ class UserBonus
                     break;
                 }
             }
+        }
+        /** установка скидки если есть карта и она учавствует в бонусной программе*/
+        if($discount === 0 && !$this->isEmpty() && !$this->getCard()->isEmpty()) {
+            $discountTable = static::$discountTable;
+            reset($discountTable);
+            $discount = key($discountTable);
         }
         
         return $discount;

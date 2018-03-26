@@ -7,18 +7,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $arResult
  * @var Basket $basket
- * @var CalculationResult $selectedDelivery
+ * @var CalculationResultInterface $selectedDelivery
  */
 
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -28,11 +28,10 @@ $basketQuantity = array_sum($basket->getQuantityList());
 $basketWeight = $basket->getWeight();
 $basketPrice = $basket->getPrice();
 
-/* @todo отображение акционных товаров */
-
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
+/** @noinspection PhpUnhandledExceptionInspection */
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
@@ -47,14 +46,21 @@ $delayedItems = [];
 $delayedWeight = 0;
 $delayedPrice = 0;
 $delayedQuantity = 0;
+$selectedDelivery = $arResult['SELECTED_DELIVERY'];
 
 if ($deliveryService->isPickup($selectedDelivery)) {
     $showPickupContainer = true;
+}
 
+/** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface $pickup */
+$pickup = $arResult['PICKUP'];
+if (null !== $pickup) {
     /** @var Store $selectedShop */
     $selectedShop = $arResult['SELECTED_SHOP'];
-    $stockResult = $deliveryService->getStockResultByDelivery($selectedDelivery)
-                                   ->filterByStore($selectedShop);
+    $stockResult = $pickup->getStockResult();
+    if ($deliveryService->isInnerPickup($pickup)) {
+        $stockResult = $stockResult->filterByStore($selectedShop);
+    }
 
     $available = $stockResult->getAvailable();
     $availableWeight = 0;
@@ -65,9 +71,9 @@ if ($deliveryService->isPickup($selectedDelivery)) {
         $availableQuantity = $available->getAmount();
         foreach ($available as $item) {
             $availableItems[] = [
-                'name'     => $item->getOffer()->getName(),
+                'name' => $item->getOffer()->getName(),
                 'quantity' => $item->getAmount(),
-                'price'    => $item->getPrice(),
+                'price' => $item->getPrice(),
             ];
 
             $availablePrice += $item->getPrice() * $item->getAmount();
@@ -79,9 +85,9 @@ if ($deliveryService->isPickup($selectedDelivery)) {
         /** @var StockResult $item */
         foreach ($available as $item) {
             $availableItems[] = [
-                'name'     => $item->getOffer()->getName(),
+                'name' => $item->getOffer()->getName(),
                 'quantity' => $item->getAmount(),
-                'price'    => $item->getPrice(),
+                'price' => $item->getPrice(),
             ];
 
             $availablePrice += $item->getPrice() * $item->getAmount();
@@ -96,9 +102,9 @@ if ($deliveryService->isPickup($selectedDelivery)) {
         /** @var StockResult $item */
         foreach ($delayed as $item) {
             $delayedItems[] = [
-                'name'     => $item->getOffer()->getName(),
+                'name' => $item->getOffer()->getName(),
                 'quantity' => $item->getAmount(),
-                'price'    => $item->getPrice(),
+                'price' => $item->getPrice(),
             ];
 
             $delayedPrice += $item->getPrice() * $item->getAmount();
@@ -185,7 +191,7 @@ if ($deliveryService->isPickup($selectedDelivery)) {
             <?php } ?>
         </ul>
     </div>
-    <h4 class="b-title b-title--order-list js-popup-mobile-link js-basket-link js-parts-list-title"
+    <h4 class="b-title b-title--order-list js-parts-list-title"
         <?= !$showDelayedItems ? 'style="display:none"' : '' ?>>
         <span class="js-mobile-title-order">Останется в корзине: <?= $delayedQuantity ?></span>
         <?= (new Declension('товар', 'товара', 'товаров'))->get(
@@ -225,7 +231,8 @@ if ($deliveryService->isPickup($selectedDelivery)) {
            href="/cart"
            title="Вернуться в корзину">
             <span class="b-icon b-icon--order-busket">
-                <?= new SvgDecorator('icon-reason', 16, 16) ?>
+                <?= /** @noinspection PhpUnhandledExceptionInspection */
+                new SvgDecorator('icon-reason', 16, 16) ?>
             </span>
             <span class="b-link__text b-link__text--order-gotobusket">Вернуться в корзину</span>
         </a>

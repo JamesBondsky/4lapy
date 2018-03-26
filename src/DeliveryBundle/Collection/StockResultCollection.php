@@ -58,7 +58,7 @@ class StockResultCollection extends ArrayCollection
             function (StockResult $stockResult) use ($store) {
                 return $stockResult->getStores()->exists(
                     function ($i, Store $stockResultStore) use ($store) {
-                        return $stockResultStore->getId() === $store->getId();
+                        return $stockResultStore->getXmlId() === $store->getXmlId();
                     }
                 );
             }
@@ -91,21 +91,6 @@ class StockResultCollection extends ArrayCollection
         }
 
         return $amount;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getDeliveryDate(): \DateTime
-    {
-        $deliveryDate = new \DateTime();
-
-        /** @var StockResult $item */
-        foreach ($this->getIterator() as $item) {
-            $deliveryDate = \max($deliveryDate, $item->getDeliveryDate());
-        }
-
-        return $deliveryDate;
     }
 
     /**

@@ -19,7 +19,7 @@ use FourPaws\Decorators\SvgDecorator;
     </div>
     <hr class="b-contact__hr" />
     <?= $arResult['FORM_DESCRIPTION'] ?>
-    <form class="b-contact__form js-form-validation js-phone-query" data-url="/ajax/form/callback/add/" method="post">
+    <form class="b-contact__form js-form-validation js-phone-query js-form-callback" data-url="/ajax/form/callback/add/" method="post">
         <?= bitrix_sessid_post() ?>
         <input name="WEB_FORM_ID" value="<?= $arResult['arForm']['ID'] ?>" type="hidden">
         
@@ -36,7 +36,7 @@ use FourPaws\Decorators\SvgDecorator;
                         if ($fieldSid === 'phone') {
                             $type = 'tel';
                         } ?>
-                        <div class="b-input b-input--recall<?= $type === 'tel' ? ' js-phone-mask' : '' ?>">
+                        <div class="b-input b-input--recall<?= $type === 'tel' ? ' js-phone-mask' : '' ?> js-form-field-block-<?=$fieldSid?>">
                             <input class="b-input__input-field b-input__input-field--recall<?= $type === 'tel' ? ' js-phone-mask' : '' ?>"
                                    type="<?= $type ?>"
                                    id="id-recall-<?= $fieldSid ?>"

@@ -28,22 +28,7 @@ use FourPaws\Decorators\SvgDecorator;
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 
-if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
-    $currentOffer = $arParams['CURRENT_OFFER'];
-} else {
-    /**
-     * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
-     */
-    foreach ($offers as $offer) {
-        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
-            $currentOffer = $offer;
-        }
-    }
-
-    if (!$currentOffer) {
-        $currentOffer = $offers->first();
-    }
-}
+$currentOffer = $arResult['CURRENT_OFFER'];
 
 $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['ITEM_ATTR_ID']) : '';
 
@@ -128,7 +113,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             }
                             $isOffersPrinted = true;
                             $addAttr = '';
-                            $addAttr .= ' data-price="' . $offer->getPrice() . '"';
+                            $addAttr .= ' data-price="' . ceil($offer->getPrice()) . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
@@ -163,7 +148,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                         echo new SvgDecorator('icon-cart', 16, 16);
                         ?></span>
                 </span>
-                <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+                <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
             </span>
             </a><?php

@@ -4,57 +4,66 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Application;
+use Bitrix\Sale\Order;
+use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\SaleBundle\Exception\PaymentException;
+
 IncludeModuleLangFile(__FILE__);
 
 CModule::IncludeModule('sale');
 CModule::IncludeModule('catalog');
 
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/update_class.php');
+/** @noinspection PhpIncludeInspection */
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/update_class.php';
 
 /**
  * Подключение файла настроек
  */
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php');
+/** @noinspection PhpIncludeInspection */
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
 
 /**
  * Подключение класса RBS
  */
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php');
+/** @noinspection PhpIncludeInspection */
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php';
 
-if (CSalePaySystemAction::GetParamValue('TEST_MODE') === 'Y') {
+
+/** @noinspection PhpDeprecationInspection */
+$paySystemAction = new CSalePaySystemAction();
+
+if ($paySystemAction->GetParamValue('TEST_MODE') === 'Y') {
     $testMode = true;
 } else {
     $testMode = false;
 }
-if (CSalePaySystemAction::GetParamValue('TWO_STAGE') === 'Y') {
+if ($paySystemAction->GetParamValue('TWO_STAGE') === 'Y') {
     $twoStage = true;
 } else {
     $twoStage = false;
 }
-if (CSalePaySystemAction::GetParamValue('LOGGING') === 'Y') {
+if ($paySystemAction->GetParamValue('LOGGING') === 'Y') {
     $logging = true;
 } else {
     $logging = false;
 }
 
 $rbs = new RBS(
-    CSalePaySystemAction::GetParamValue('USER_NAME'),
-    CSalePaySystemAction::GetParamValue('PASSWORD'),
+    $paySystemAction->GetParamValue('USER_NAME'),
+    $paySystemAction->GetParamValue('PASSWORD'),
     $twoStage,
     $testMode,
     $logging
 );
 
-$app = \Bitrix\Main\Application::getInstance();
+/** @noinspection PhpUnhandledExceptionInspection */
+$app = Application::getInstance();
 $request = $app->getContext()->getRequest();
 
-/**
- * Запрос register.do или regiterPreAuth.do в ПШ
- */
+$orderNumber = $paySystemAction->GetParamValue('ORDER_NUMBER');
 
-$orderNumber = CSalePaySystemAction::GetParamValue('ORDER_NUMBER');
-
-$entityId = CSalePaySystemAction::GetParamValue('ORDER_PAYMENT_ID');
+$entityId = $paySystemAction->GetParamValue('ORDER_PAYMENT_ID');
 
 if (CUpdateSystem::GetModuleVersion('sale') <= '16.0.11') {
     $orderId = $orderNumber;
@@ -73,17 +82,17 @@ if (!$orderNumber) {
     $orderNumber = $_REQUEST['ORDER_ID'];
 }
 
-$arOrder = CSaleOrder::GetByID($orderId);
+$order = Order::load($orderId);
 
-$currency = $arOrder['CURRENCY'];
+$currency = $order->getCurrency();
 
-$amount = CSalePaySystemAction::GetParamValue('AMOUNT') * 100;
-
+$amount = $paySystemAction->GetParamValue('AMOUNT') * 100;
 if (is_float($amount)) {// Если сумма с плавающей точкой
     $amount = ceil($amount); // Производим округление в большую сторону
 }
 
-$returnUrl = 'http://' . $_SERVER['SERVER_NAME'] . '/sale/payment/result.php?ORDER_ID=' . $arOrder['ACCOUNT_NUMBER'];
+
+$returnUrl = '/sale/payment/result.php?ORDER_ID=' . $order->getField('ACCOUNT_NUMBER');
 if ($hash = $request->getQuery('HASH')) {
     $returnUrl .= '&HASH=' . $hash;
 }
@@ -99,26 +108,27 @@ if ($fiscalization['ENABLE'] === 'Y') {
 
     $fiscal = [
         'orderBundle' => [
-            'orderCreationDate' => strtotime($arOrder['DATE_INSERT']),
-            'customerDetails'   => [
-                'email'   => false,
+            'orderCreationDate' => strtotime($order->getField('DATE_INSERT')),
+            'customerDetails' => [
+                'email' => false,
                 'contact' => false,
             ],
-            'cartItems'         => [
+            'cartItems' => [
                 'items' => [],
             ],
         ],
-        'taxSystem'   => $fiscalization['TAX_SYSTEM'],
+        'taxSystem' => $fiscalization['TAX_SYSTEM'],
     ];
-    $db_props = CSaleOrderPropsValue::GetOrderProps($arOrder['ID']);
 
-    while ($props = $db_props->Fetch()) {
-        if ($props['IS_PAYER'] === 'Y') {
-            $fiscal['orderBundle']['customerDetails']['contact'] = $props['VALUE'];
-        } elseif ($props['IS_EMAIL'] === 'Y') {
-            $fiscal['orderBundle']['customerDetails']['email'] = $props['VALUE'];
+    /** @var \Bitrix\Sale\PropertyValue $propertyValue */
+    foreach ($order->getPropertyCollection() as $propertyValue) {
+        if ($propertyValue->getProperty()['IS_PAYER'] === 'Y') {
+            $fiscal['orderBundle']['customerDetails']['contact'] = $propertyValue->getValue();
+        } elseif ($propertyValue->getProperty()['IS_EMAIL'] === 'Y') {
+            $fiscal['orderBundle']['customerDetails']['email'] = $propertyValue->getValue();
         }
     }
+
     if (!$fiscal['orderBundle']['customerDetails']['email'] || !$fiscal['orderBundle']['customerDetails']['contact']) {
         global $USER;
         if (!$fiscal['orderBundle']['customerDetails']['email']) {
@@ -149,7 +159,7 @@ if ($fiscalization['ENABLE'] === 'Y') {
 
     $vatGateway = [
         -1 => 0,
-        0  => 1,
+        0 => 1,
         10 => 2,
         18 => 3,
     ];
@@ -157,54 +167,50 @@ if ($fiscalization['ENABLE'] === 'Y') {
     $itemsCnt = 1;
     $arCheck = null;
 
-    $dbRes = CSaleBasket::GetList([], ['ORDER_ID' => $orderId]);
-    while ($arRes = $dbRes->Fetch()) {
-
-        $arProduct = CCatalogProduct::GetByID($arRes['PRODUCT_ID']);
-
+    /** @var \Bitrix\Sale\BasketItem $basketItem */
+    foreach ($order->getBasket() as $basketItem) {
+        $arProduct = CCatalogProduct::GetByID($basketItem->getProductId());
         $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
 
-        $itemAmount = $arRes['PRICE'] * 100;
-        /*if($itemAmount % 1)
-            $itemAmount = round($itemAmount);*/
+        $itemAmount = $basketItem->getPrice() * 100;
         if (!($itemAmount % 1)) {
             $itemAmount = round($itemAmount);
         }
 
-        $amount += $itemAmount * $arRes['QUANTITY']; //Для фискализации общая сумма берется путем суммирования округленных позиций.
+        $amount += $itemAmount * $basketItem->getQuantity(); //Для фискализации общая сумма берется путем суммирования округленных позиций.
 
         $fiscal['orderBundle']['cartItems']['items'][] = [
             'positionId' => $itemsCnt++,
-            'name'       => $arRes['NAME'],
-            'quantity'   => [
-                'value'   => $arRes['QUANTITY'],
+            'name' => $basketItem->getField('NAME'),
+            'quantity' => [
+                'value' => $basketItem->getQuantity(),
                 'measure' => $measureList[$arProduct['MEASURE']],
             ],
-            'itemAmount' => $itemAmount * $arRes['QUANTITY'],
-            'itemCode'   => $arRes['PRODUCT_ID'],
-            'itemPrice'  => $itemAmount,
-            'tax'        => [
+            'itemAmount' => $itemAmount * $basketItem->getQuantity(),
+            'itemCode' => $basketItem->getProductId(),
+            'itemPrice' => $itemAmount,
+            'tax' => [
                 'taxType' => $vatGateway[$taxType],
             ],
         ];
     }
-    if ($arOrder['PRICE_DELIVERY'] > 0) {
+    if ($order->getDeliveryPrice() > 0) {
         $fiscal['orderBundle']['cartItems']['items'][] = [
             'positionId' => $itemsCnt++,
-            'name'       => GetMessage('RBS_PAYMENT_DELIVERY_TITLE'),
-            'quantity'   => [
-                'value'   => 1,
+            'name' => GetMessage('RBS_PAYMENT_DELIVERY_TITLE'),
+            'quantity' => [
+                'value' => 1,
                 'measure' => GetMessage('RBS_PAYMENT_MEASURE_DEFAULT'),
             ],
-            'itemAmount' => $arOrder['PRICE_DELIVERY'] * 100,
-            'itemCode'   => $arOrder['ID'] . '_DELIVERY',
-            'itemPrice'  => $arOrder['PRICE_DELIVERY'] * 100,
-            'tax'        => [
+            'itemAmount' => $order->getDeliveryPrice() * 100,
+            'itemCode' => $order->getId() . '_DELIVERY',
+            'itemPrice' => $order->getDeliveryPrice() * 100,
+            'tax' => [
                 'taxType' => 0,
             ],
         ];
 
-        $amount += $arOrder['PRICE_DELIVERY'] * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
+        $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
     }
 }
 
@@ -213,9 +219,9 @@ for ($i = 0; $i <= 10; $i++) {
     $response = $rbs->register_order(
         $orderNumber . '_' . $i,
         $amount,
-        $returnUrl,
+        (string)new FullHrefDecorator($returnUrl),
         $currency,
-        $arOrder['USER_DESCRIPTION'],
+        $order->getField('USER_DESCRIPTION'),
         $fiscal
     );
 
@@ -235,7 +241,7 @@ if ((int)$response['errorCode'] !== 0) {
     } else {
         $message = GetMessage('RBS_PAYMENT_PAY_ERROR');
     }
-    throw new \FourPaws\SaleBundle\Exception\PaymentException($message, $code);
+    throw new PaymentException($message, $code);
 }
 
 echo '<script>window.location="' . $response['formUrl'] . '"</script>';

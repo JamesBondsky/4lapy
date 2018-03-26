@@ -48,6 +48,7 @@ class OfferService implements LoggerAwareInterface
     /**
      * @param Material $material
      *
+     * @throws RuntimeException
      * @throws NotFoundDataManagerException
      * @throws NotFoundBasicUomException
      * @throws CantCreateReferenceItem
@@ -90,7 +91,7 @@ class OfferService implements LoggerAwareInterface
      * @throws RuntimeException
      * @return bool
      */
-    public function deativate(string $xmlId)
+    public function deactivate(string $xmlId): bool
     {
         if ($id = $this->offerRepository->findIdByXmlId($xmlId)) {
             $result = $this->offerRepository->setActive($id, false);
@@ -116,6 +117,7 @@ class OfferService implements LoggerAwareInterface
      * @param Offer    $offer
      * @param Material $material
      *
+     * @throws RuntimeException
      * @throws NotFoundReferenceRepositoryException
      * @throws NotFoundDataManagerException
      * @throws LogicException
@@ -155,14 +157,14 @@ class OfferService implements LoggerAwareInterface
     protected function fillProperties(Offer $offer, Material $material)
     {
         /**
-         @todo пока нет объединения по цвету
-        $offer->withColourCombination(
-            (string)$material->getProperties()->getPropertyValues(
-                SapOfferProperty::COLOUR_COMBINATION,
-                ['']
-            )->first()
-        );
-        */
+         * @todo пока нет объединения по цвету
+         * $offer->withColourCombination(
+         * (string)$material->getProperties()->getPropertyValues(
+         * SapOfferProperty::COLOUR_COMBINATION,
+         * ['']
+         * )->first()
+         * );
+         */
         $offer->withFlavourCombination(
             (string)$material->getProperties()->getPropertyValues(
                 SapOfferProperty::FLAVOUR_COMBINATION,

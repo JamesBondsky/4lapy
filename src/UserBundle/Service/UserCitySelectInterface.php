@@ -1,8 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserBundle\Service;
 
-use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;

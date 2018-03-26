@@ -103,5 +103,5 @@ sensio_framework_extra:
 
 cocur_slugify:
     lowercase: true
-    separator: '_'
+    separator: '-'
     rulesets: [default, russian]

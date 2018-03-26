@@ -33,6 +33,7 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -90,11 +91,14 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
     {
         $params['PATH_TO_CATALOG'] = '/catalog/';
         $params['TYPE'] = !empty($params['TYPE']) ? $params['TYPE'] : '';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
         return $params;
     }
 
     /**
      * {@inheritdoc}
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \InvalidArgumentException
      * @throws \RuntimeException
      * @throws EmptyEntityClass
      * @throws SystemException
@@ -128,7 +132,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             }
             $this->includeComponentTemplate($this->arParams['TYPE']);
         } else {
-            if ($this->startResultCache(360000)) {
+            if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
                 $this->includeComponentTemplate();
             }
         }
@@ -143,7 +147,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
      *
      * @return ResizeImageDecorator|null
      */
-    public function getImage($offerId)
+    public function getImage($offerId): ?ResizeImageDecorator
     {
         return $this->images[$offerId] ?? null;
     }
@@ -153,7 +157,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
      *
      * @return Offer|null
      */
-    public function getOffer(int $id)
+    public function getOffer(int $id): ?Offer
     {
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
@@ -169,6 +173,8 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
      * @param int   $quantity
      *
      * @return float
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      */
     public function getItemBonus(Offer $offer, int $quantity = 1): float
     {
@@ -178,12 +184,12 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
     /**
      * @param Offer $offer
      *
+     * @param bool  $showToday
+     *
      * @return string
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
-    public function getDeliveryDate(Offer $offer): string
+    public function getDeliveryDate(Offer $offer, $showToday = false): string
     {
         /** Если доставка сегодня не показываем */
         $deliveryDate = '';
@@ -196,7 +202,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $periodFrom = $item->getPeriodFrom();
                 switch ($periodFrom) {
                     case 0:
-                        $dates[0] = '';
+                        $dates[0] = $showToday ? 'Сегодня' : '';
                         break;
                     case 1:
                         $dates[1] = 'Завтра';
@@ -207,23 +213,26 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                         $dates[$periodFrom] = $date;
                 }
             } else {
-                $dates[0] = '';
+                $dates[0] = $showToday ? 'Сегодня' : '';
             }
         }
         if (!empty($dates)) {
             /** @var Date $minDate */
             $minDate = $dates[min(array_keys($dates))];
-            if($minDate instanceof Date) {
+            if ($minDate instanceof Date) {
                 $deliveryDate = $minDate->format('d.m.Y');
-            }
-            else{
+            } else {
                 $deliveryDate = $minDate;
             }
         }
         return $deliveryDate;
     }
 
-    private function loadImages()
+    /**
+     *
+     * @throws \InvalidArgumentException
+     */
+    private function loadImages(): void
     {
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
@@ -236,7 +245,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         }
     }
 
-    private function calcTemplateFields()
+    private function calcTemplateFields(): void
     {
         $weight = 0;
         $quantity = 0;
@@ -249,5 +258,13 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         }
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
+    }
+
+    /**
+     * @return UserService
+     */
+    public function getCurrentUserService(): UserService
+    {
+        return $this->currentUserProvider;
     }
 }

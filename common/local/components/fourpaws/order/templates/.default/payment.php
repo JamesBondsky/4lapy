@@ -4,9 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Sale\BasketBase;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -24,7 +24,7 @@ $deliveryService = Application::getInstance()->getContainer()->get('delivery.ser
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-/** @var CalculationResult $selectedDelivery */
+/** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 
 /** @var BasketBase $basket */
@@ -34,7 +34,12 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
     $deliveryService->isInnerPickup($selectedDelivery);
 
 $selectedPayment = null;
-foreach ($arResult['PAYMENTS'] as $payment) {
+/** @var array $payments */
+$payments = $arResult['PAYMENTS'];
+foreach ($payments as $i => $payment) {
+    if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
+       unset($payments[$i]);
+    }
     if ((int)$payment['ID'] === $storage->getPaymentId()) {
         $selectedPayment = $payment;
     }
@@ -45,13 +50,11 @@ foreach ($arResult['PAYMENTS'] as $payment) {
  */
 $basketPrice = $basket->getPrice();
 if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
-    $basketPrice = $deliveryService->getStockResultByDelivery($selectedDelivery)
-                                   ->filterByStore($arResult['SELECTED_SHOP'])
-                                   ->getAvailable()
-                                   ->getPrice();
+    $basketPrice = $selectedDelivery->getStockResult()
+                                    ->filterByStore($arResult['SELECTED_SHOP'])
+                                    ->getAvailable()
+                                    ->getPrice();
 }
-
-$payments = $arResult['PAYMENTS'];
 
 /** @var User $user */
 $user = $arResult['USER'];
@@ -101,19 +104,21 @@ $user = $arResult['USER'];
                           data-url="<?= $arResult['URL']['PAYMENT_VALIDATION'] ?>"
                           id="order-step">
                         <div class="b-choice-recovery b-choice-recovery--flex">
-                            <?php /** @var array $payment */ ?>
-                            <?php foreach ($payments as $payment) { ?>
-                                <?php
-                                if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
-                                    continue;
-                                }
-
+                            <?php /** @var array $payment */
+                            $i = 0;
+                            $max = count($payments);
+                            foreach ($payments as $payment) {
                                 if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
                                     $displayName = 'Наличными или картой при получении';
                                 } else {
                                     $displayName = $payment['NAME'];
                                 }
-
+                                $labelClass = $i % 2 !== 0
+                                    ? ' b-choice-recovery__label--right'
+                                    : ' b-choice-recovery__label--left';
+                                if ($i === $max - 1) {
+                                    $labelClass .= ' b-choice-recovery__label--right';
+                                }
                                 ?>
                                 <input class="b-choice-recovery__input"
                                        id="order-payment-<?= $payment['ID'] ?>"
@@ -122,11 +127,12 @@ $user = $arResult['USER'];
                                        data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
                                        value="<?= $payment['ID'] ?>"
                                     <?= (int)$payment['ID'] === $storage->getPaymentId() ? 'checked="checked"' : '' ?>/>
-                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
+                                <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
                                     <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
                                 </label>
                                 <?php
+                                $i++;
                             } ?>
                         </div>
                     </form>
@@ -134,12 +140,13 @@ $user = $arResult['USER'];
                           action="/">
                         <?php if ($user && $user->getDiscountCardNumber()) {
                             if ($arResult['MAX_BONUS_SUM']) {
+                                $active = $storage->getBonus() > 0;
                                 ?>
                                 <label class="b-order-contacts__label" for="point-pay">
                                     <b>Оплатить часть заказа бонусными баллами </b>
                                     (до <?= $arResult['MAX_BONUS_SUM'] ?>)
                                 </label>
-                                <div class="b-input b-input--order-line js-pointspay-input">
+                                <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
                                     <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
                                            id="point-pay"
                                            type="text"
@@ -149,13 +156,15 @@ $user = $arResult['USER'];
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>
-                                    <a class="b-input__close-points js-pointspay-close"
+                                    <a class="b-input__close-points js-pointspay-close<?= $active ? ' active' : '' ?>"
                                        href="javascript:void(0)"
                                        title=""
-                                       style="display: none;">
+                                        <?= $active ? 'style="display:inline"' : '' ?>>
                                     </a>
                                 </div>
-                                <button class="b-button b-button--order-line js-pointspay-button" style="">Подтвердить
+                                <button class="b-button b-button--order-line js-pointspay-button<?= $active ? ' hide' : '' ?>"
+                                    <?= $active ? 'style="display:none"' : '' ?>>
+                                    Подтвердить
                                 </button>
                             <?php } ?>
                         <?php } else { ?>
@@ -232,7 +241,11 @@ $user = $arResult['USER'];
             </div>
         </div>
         <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
-            Перейти к оплате
+            <?php if ($selectedPayment['CODE'] === OrderService::PAYMENT_ONLINE) { ?>
+                Перейти к оплате
+            <?php } else { ?>
+                Заказать
+            <?php } ?>
         </button>
     </div>
 </div>

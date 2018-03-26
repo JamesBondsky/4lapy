@@ -4,44 +4,27 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+use _support\LoggedApiUser;
 use Codeception\Example;
 use Codeception\Util\HttpCode;
 
 class UserCest
 {
-    private $token = '';
-    private $user = [];
-
-    public function _before(ApiTester $I)
-    {
-        $I->deleteDummyUsers();
-        $this->token = $I->createToken();
-        $this->user = $I->createDummyUser();
-    }
-
-    public function _after(ApiTester $I)
-    {
-        $I->deleteToken($this->token);
-        $this->token = '';
-        if ($dummyUserId = (int)$this->user['ID']) {
-            $I->deleteDummyUser($dummyUserId);
-            $this->user = [];
-        }
-    }
-
     /**
      * @param ApiTester $I
-     * @param Example   $example
+     * @param Example $example
      *
      * @dataprovider goodRegistrationProvider
+     * @throws Exception
      */
-    public function testRegister(ApiTester $I, Example $example)
+    public function testRegister(ApiTester $I, Example $example): void
     {
+        $token = $I->createToken();
         $I->wantTo('Test registration process');
         $I->haveHttpHeader('Content-type', 'application/json');
         $data = $example['callback']();
         $I->sendPOST('/user_login/', [
-            'token'           => $this->token,
+            'token'           => $token,
             'user_login_info' => $data,
         ]);
 
@@ -66,23 +49,25 @@ class UserCest
             ],
         ]);
         $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
-            'TOKEN' => $this->token,
+            'TOKEN' => $token,
         ]);
         $userId = (int)$I->grabFromDatabase('b_sale_fuser', 'USER_ID', [
             'ID' => $fUserId,
         ]);
         if (!$userId) {
-            throw new RuntimeException('No user for token ' . $this->token);
+            throw new RuntimeException('No user for token ' . $token);
         }
         $I->seeInDatabase('b_user', [
             'ID'             => $userId,
             'LOGIN'          => $data['login'],
             'PERSONAL_PHONE' => $data['login'],
         ]);
-        $I->deleteUser($userId);
     }
 
-    public function goodRegistrationProvider()
+    /**
+     * @return array
+     */
+    protected function goodRegistrationProvider(): array
     {
         return [
             [
@@ -98,18 +83,23 @@ class UserCest
 
     /**
      * @param ApiTester $I
-     * @param Example   $example
      *
-     * @dataprovider goodAuthProvider
      * @throws \RuntimeException
+     * @throws Exception
      */
-    public function testAuth(ApiTester $I, Example $example)
+    public function testAuth(ApiTester $I): void
     {
+        $token = $I->createToken();
+        $user = $I->createDummyUser();
+
         $I->wantTo('check valid auth');
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendPOST('/user_login/', [
-            'token'           => $this->token,
-            'user_login_info' => $example['callback'](),
+            'token'           => $token,
+            'user_login_info' => [
+                'login'    => $user['PERSONAL_PHONE'],
+                'password' => $user['PASSWORD'],
+            ],
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -125,51 +115,40 @@ class UserCest
             'error' => 'array:empty',
         ]);
         $I->seeResponseContainsJson([
-            'firstname' => $this->user['NAME'],
-            'lastname'  => $this->user['LAST_NAME'],
-            'email'     => $this->user['EMAIL'],
+            'firstname' => $user['NAME'],
+            'lastname'  => $user['LAST_NAME'],
+            'email'     => $user['EMAIL'],
         ]);
         $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
-            'TOKEN' => $this->token,
+            'TOKEN' => $token,
         ]);
         $userId = $I->grabFromDatabase('b_sale_fuser', 'USER_ID', [
             'ID' => $fUserId,
         ]);
         if (!$userId) {
-            throw new RuntimeException('No user for token ' . $this->token);
+            throw new RuntimeException('No user for token ' . $token);
         }
-    }
-
-
-    public function goodAuthProvider()
-    {
-        return [
-            [
-                'callback' => function () {
-                    return [
-                        'login'    => $this->user['PERSONAL_PHONE'],
-                        'password' => $this->user['PASSWORD'],
-                    ];
-                },
-            ],
-        ];
     }
 
 
     /**
      * @param ApiTester $I
      *
-     * @param Example   $example
+     * @param Example $example
      *
      * @dataprovider wrongAuthProvider
+     * @throws Exception
      */
-    public function testWrongAuth(ApiTester $I, Example $example)
+    public function testWrongAuth(ApiTester $I, Example $example): void
     {
+        $token = $I->createToken();
+        $user = $I->createDummyUser();
+
         $I->wantTo('check wrong auth');
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendPOST('/user_login/', [
-            'token'           => $this->token,
-            'user_login_info' => $example['callback'](),
+            'token'           => $token,
+            'user_login_info' => $example['callback']($user),
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -180,59 +159,59 @@ class UserCest
         ]);
     }
 
-    public function wrongAuthProvider()
+    protected function wrongAuthProvider(): array
     {
         return [
             [
-                'callback' => function () {
+                'callback' => function ($user) {
                     return [
-                        'login'    => $this->user['EMAIL'],
-                        'password' => $this->user['PASSWORD'],
+                        'login'    => $user['EMAIL'],
+                        'password' => $user['PASSWORD'],
                     ];
                 },
             ],
             [
-                'callback' => function () {
+                'callback' => function ($user) {
                     return [
-                        'login'    => $this->user['PERSONAL_PHONE'],
+                        'login'    => $user['PERSONAL_PHONE'],
                         'password' => md5(random_bytes(32)),
                     ];
                 },
             ],
             [
-                'callback' => function () {
+                'callback' => function ($user) {
                     return [
-                        'login'    => $this->user['LOGIN'],
+                        'login'    => $user['LOGIN'],
                         'password' => '',
                     ];
                 },
             ],
             [
-                'callback' => function () {
+                'callback' => function ($user) {
                     return [
-                        'login'    => $this->user['EMAIL'],
+                        'login'    => $user['EMAIL'],
                         'password' => '',
                     ];
                 },
             ],
             [
-                'callback' => function () {
+                'callback' => function ($user) {
                     return [
-                        'login'    => $this->user['PERSONAL_PHONE'],
+                        'login'    => $user['PERSONAL_PHONE'],
                         'password' => '',
                     ];
                 },
             ],
             [
-                'callback' => function () {
+                'callback' => function ($user) {
                     return [
-                        'login'    => $this->user['LOGIN'],
+                        'login'    => $user['LOGIN'],
                         'password' => random_bytes(1024),
                     ];
                 },
             ],
             [
-                'callback' => function () {
+                'callback' => function ($user) {
                     return [
                         'login'    => '',
                         'password' => random_bytes(1024),
@@ -243,32 +222,20 @@ class UserCest
     }
 
 
-    public function testLogout(ApiTester $I)
+    /**
+     * @param ApiTester $I
+     * @throws Exception
+     */
+    public function testLogout(ApiTester $I): void
     {
-        $I->wantTo('Test logout');
-        $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
-            'TOKEN' => $this->token,
-        ]);
-        $I->seeInDatabase('b_sale_fuser', [
-            'ID'      => $fUserId,
-            'USER_ID' => null,
-        ]);
+        $token = $I->createToken();
+        $user = $I->createDummyUser();
+        $I->login($user['ID'], $token);
 
-        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
-
-        $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
-            'TOKEN' => $this->token,
-        ]);
-        $userId = $I->grabFromDatabase('b_sale_fuser', 'USER_ID', [
-            'ID' => $fUserId,
-        ]);
-        if (!$userId) {
-            throw new RuntimeException('No user for token ' . $this->token);
-        }
 
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendGET('/logout/', [
-            'token' => $this->token,
+            'token' => $token,
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -280,28 +247,32 @@ class UserCest
             'error' => 'array:empty',
         ]);
         $I->seeInDatabase('api_user_session', [
-            'TOKEN' => $this->token,
+            'TOKEN' => $token,
         ]);
         $I->dontSeeInDatabase('api_user_session', [
-            'TOKEN'    => $this->token,
-            'FUSER_ID' => $fUserId,
+            'TOKEN'    => $token,
+            'FUSER_ID' => $user['FUSER_ID'],
         ]);
     }
 
     /**
      * @param ApiTester $I
-     * @param Example   $example
+     * @param Example $example
      *
      * @dataprovider existLoginProvider
+     * @throws Exception
      */
-    public function testExistLoginExist(ApiTester $I, Example $example)
+    public function testExistLoginExist(ApiTester $I, Example $example): void
     {
         $I->wantTo('Test exist user');
 
+        $token = $I->createToken();
+        $user = $I->createDummyUser();
+
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendGET('/login_exist/', [
-            'token' => $this->token,
-            'login' => $example['callback'](),
+            'token' => $token,
+            'login' => $example['callback']($user),
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -315,34 +286,41 @@ class UserCest
         $I->seeResponseContainsJson(['exist' => true]);
     }
 
-    public function existLoginProvider()
+    /**
+     * @return array
+     */
+    protected function existLoginProvider(): array
     {
         return [
             [
-                'callback' => function () {
-                    return $this->user['LOGIN'];
+                'callback' => function ($user) {
+                    return $user['LOGIN'];
                 },
             ],
             [
-                'callback' => function () {
-                    return $this->user['EMAIL'];
+                'callback' => function ($user) {
+                    return $user['EMAIL'];
                 },
             ],
             [
-                'callback' => function () {
-                    return $this->user['PERSONAL_PHONE'];
+                'callback' => function ($user) {
+                    return $user['PERSONAL_PHONE'];
                 },
             ],
         ];
     }
 
-    public function testNonExistLoginExist(ApiTester $I)
+    /**
+     * @param ApiTester $I
+     * @throws Exception
+     */
+    public function testNonExistLoginExist(ApiTester $I): void
     {
         $I->wantTo('Test exist user');
 
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendGET('/login_exist/', [
-            'token' => $this->token,
+            'token' => $I->createToken(),
             'login' => md5(random_bytes(1024)),
         ]);
 
@@ -359,21 +337,20 @@ class UserCest
     }
 
     /**
-     * @param ApiTester $I
-     * @param Example   $example
+     * @param LoggedApiUser $I
+     * @param Example $example
      *
      * @dataprovider validUpdateUserInfoProvider
      */
-    public function testUpdateUserInfo(ApiTester $I, Example $example)
+    public function testUpdateUserInfo(LoggedApiUser $I, Example $example): void
     {
         $I->wantTo('Test updating exist user');
-        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
-        $I->haveHttpHeader('Content-type', 'application/json');
 
+        $I->haveHttpHeader('Content-type', 'application/json');
         $data = $example['data'];
 
         $I->sendPOST('/user_info/', [
-            'token' => $this->token,
+            'token' => $I->getToken(),
             'user'  => $data,
         ]);
 
@@ -389,15 +366,15 @@ class UserCest
 
         $I->seeResponseContainsJson(['data' => ['user' => $data]]);
         $I->seeInDatabase('b_user', [
-            'EMAIL'          => $data['email'] ?? $this->user['EMAIL'],
-            'NAME'           => $data['firstname'] ?? $this->user['NAME'],
-            'LAST_NAME'      => $data['lastname'] ?? $this->user['LAST_NAME'],
-            'SECOND_NAME'    => $data['midname'] ?? $this->user['SECOND_NAME'],
-            'PERSONAL_PHONE' => $data['phone'] ?? $this->user['PERSONAL_PHONE'],
+            'EMAIL'          => $data['email'] ?? $I->getField('EMAIL'),
+            'NAME'           => $data['firstname'] ?? $I->getField('NAME'),
+            'LAST_NAME'      => $data['lastname'] ?? $I->getField('LAST_NAME'),
+            'SECOND_NAME'    => $data['midname'] ?? $I->getField('SECOND_NAME'),
+            'PERSONAL_PHONE' => $data['phone'] ?? $I->getField('PERSONAL_PHONE'),
         ]);
     }
 
-    public function validUpdateUserInfoProvider(): array
+    protected function validUpdateUserInfoProvider(): array
     {
         return [
             [
@@ -456,13 +433,12 @@ class UserCest
         ];
     }
 
-    public function testUserInfoGet(ApiTester $I)
+    public function testUserInfoGet(LoggedApiUser $I): void
     {
         $I->wantTo('Test get user info');
-        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendGET('/user_info/', [
-            'token' => $this->token,
+            'token' => $I->getToken(),
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -476,23 +452,27 @@ class UserCest
         $I->seeResponseContainsJson([
             'data' => [
                 'user' => [
-                    'email'     => (string)$this->user['EMAIL'],
-                    'firstname' => (string)$this->user['NAME'],
-                    'lastname'  => (string)$this->user['LAST_NAME'],
-                    'midname'   => (string)$this->user['SECOND_NAME'],
-                    'phone'     => (string)$this->user['PERSONAL_PHONE'],
-                    'birthdate' => (string)$this->user['PERSONAL_BIRTHDAY'],
+                    'email'     => (string)$I->getField('EMAIL'),
+                    'firstname' => (string)$I->getField('NAME'),
+                    'lastname'  => (string)$I->getField('LAST_NAME'),
+                    'midname'   => (string)$I->getField('SECOND_NAME'),
+                    'phone'     => (string)$I->getField('PERSONAL_PHONE'),
+                    'birthdate' => (string)$I->getField('PERSONAL_BIRTHDAY'),
                 ],
             ],
         ]);
     }
 
-    public function testUserInfoGetUnauthorized(ApiTester $I)
+    /**
+     * @param ApiTester $I
+     * @throws Exception
+     */
+    public function testUserInfoGetUnauthorized(ApiTester $I): void
     {
         $I->wantTo('Test get user info unauthorized');
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendGET('/user_info/', [
-            'token' => $this->token,
+            'token' => $I->createToken(),
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);

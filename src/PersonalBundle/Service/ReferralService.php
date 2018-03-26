@@ -30,6 +30,7 @@ use FourPaws\External\Manzana\Model\ReferralParams as ManzanaReferalParams;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Repository\ReferralRepository;
 use FourPaws\UserBundle\Entity\User;
@@ -98,7 +99,7 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @return ArrayCollection
+     * @return ArrayCollection|Referral[]
      */
     public function getCurUserReferrals(bool $redirectIfAdd = false, PageNavigation &$nav = null): ArrayCollection
     {
@@ -107,7 +108,7 @@ class ReferralService
         $search = (string)$request->get('search');
         $filter = [];
         if (!empty($search)) {
-            $filter['=UF_CARD'] = $search;
+            $filter['?UF_CARD'] = $search;
         }
         $referralType = $this->getReferralType();
         if (!empty($referralType)) {
@@ -212,6 +213,10 @@ class ReferralService
                 );
             }
         }
+
+        TaggedCacheHelper::clearManagedCache([
+            'personal:referral:' . $entity->getUserId(),
+        ]);
 
         return $res;
     }
@@ -464,9 +469,37 @@ class ReferralService
                 if ($haveAdd && $redirectIfAdd) {
                     /** обновляем если добавилась инфа, чтобы была актуальная постраничка, табы и поиск */
                     LocalRedirect($request->getRequestUri());
+                    die();
                 }
             }
         }
         return true;
+    }
+
+    /**
+     * @return ArrayCollection|Referral[]
+     * @throws ObjectPropertyException
+     */
+    public function getModeratedReferrals(): ArrayCollection
+    {
+        return $this->referralRepository->findBy(['filter' => ['UF_MODERATED' => 1]]);
+    }
+
+    /**
+     * @param int $id
+     * @param int $userId
+     *
+     * @return bool
+     * @throws \Exception
+     */
+    public function delete(int $id, int $userId = 0): bool
+    {
+        $res = $this->referralRepository->delete($id);
+        if($res && $userId > 0) {
+            TaggedCacheHelper::clearManagedCache([
+                'personal:referral:' . $userId,
+            ]);
+        }
+        return $res;
     }
 }

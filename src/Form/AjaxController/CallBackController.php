@@ -6,44 +6,55 @@
 
 namespace FourPaws\Form\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
-use FourPaws\App\Response\JsonErrorResponse;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Callback\CallbackService;
+use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Form\FormService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class CallBackController
  *
- * @package FourPaws\UserBundle\AjaxController
+ * @package FourPaws\Form\AjaxController
  */
 class CallBackController extends Controller
 {
+    /** @var AjaxMess */
+    private $ajaxMess;
+
+    public function __construct(
+        AjaxMess $ajaxMess
+    ) {
+        $this->ajaxMess = $ajaxMess;
+    }
+
     /**
      * @param Request $request
      *
-     * @throws GuzzleException
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
-    public function addAction(Request $request) : JsonResponse
+    public function addAction(Request $request): JsonResponse
     {
         try {
-            $data      = $request->request->all();
+            $data = $request->request->all();
             $container = App::getInstance()->getContainer();
-            
+
             /** @var FormService $formService */
             $formService = $container->get('form.service');
-            
+
             $requiredFields = [
                 'name',
                 'phone',
@@ -52,29 +63,24 @@ class CallBackController extends Controller
             $formatedFields = $formService->getRealNamesFields(
                 (int)$data['WEB_FORM_ID']
             );
-            if (!$formService->checkRequiredFields($data, array_intersect_key($formatedFields, array_flip($requiredFields)))) {
-                return JsonErrorResponse::createWithData(
-                    'Не заполнены все обязательные поля',
-                    ['errors' => ['emptyData' => 'Не заполнены все обязательные поля']]
-                );
+            if (!$formService->checkRequiredFields($data,
+                array_intersect_key($formatedFields, array_flip($requiredFields)))) {
+                return $this->ajaxMess->getEmptyDataError();
             }
-            
+
             try {
                 $data[$formatedFields['phone']] = PhoneHelper::normalizePhone($data[$formatedFields['phone']]);
             } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::createWithData(
-                    'Некорретно заполнен телефон',
-                    ['errors' => ['wrongPhone' => 'Некорретно заполнен телефон']]
-                );
+                return $this->ajaxMess->getWrongPhoneNumberException();
             }
-            
+
             if ($formService->addResult($data)) {
                 if (!empty($data['phone'])) {
                     /** @noinspection PhpUnhandledExceptionInspection */
                     Loader::includeModule('form');
-                    $answer   = new \CFormAnswer();
+                    $answer = new \CFormAnswer();
                     $arAnswer = $answer->GetByID($data[$formatedFields['time_call']])->Fetch();
-                    $timeout  = $arAnswer['FIELD_PARAM'] ?? 0;
+                    $timeout = $arAnswer['FIELD_PARAM'] ?? 0;
                     /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                     $date = new DateTime();
                     /** @noinspection PhpUnhandledExceptionInspection */
@@ -88,17 +94,13 @@ class CallBackController extends Controller
                 }
                 JsonSuccessResponse::create('Ваша завка принята');
             } else {
-                return JsonErrorResponse::createWithData(
-                    'Произошла ошибка при сохранении',
-                    ['errors' => ['errorSave' => 'Произошла ошибка при сохранении']]
-                );
+                return $this->ajaxMess->getUpdateError();
             }
-        } catch (\Exception $e) {
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|ObjectException|LoaderException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }
-        
-        return JsonErrorResponse::createWithData(
-            'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта']]
-        );
+
+        return $this->ajaxMess->getSystemError();
     }
 }
