@@ -384,7 +384,7 @@ class AjaxMess
      */
     public function getFileTypeError(array $valid_types): JsonResponse
     {
-        return $this->getJsonError('filetTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
+        return $this->getJsonError('fileTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
     }
 
     /**
