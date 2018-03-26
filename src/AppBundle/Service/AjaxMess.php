@@ -346,6 +346,14 @@ class AjaxMess
     /**
      * @return JsonResponse
      */
+    public function getWrongCardNumber(): JsonResponse
+    {
+        return $this->getJsonError('wrongCardNumber', 'Номер карты не верный');
+    }
+
+    /**
+     * @return JsonResponse
+     */
     public function getCardNotValidError(): JsonResponse
     {
         return $this->getJsonError('cardNotValid', 'Карта не валидна');
