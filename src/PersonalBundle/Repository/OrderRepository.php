@@ -312,6 +312,7 @@ class OrderRepository extends BaseRepository
                 'PRICE_DELIVERY',
                 'DEDUCTED',
                 'DATE_DEDUCTED',
+                'ORDER_ID',
             ])->exec()->fetch();
         if (\is_array($shipment)) {
             return $this->dataToEntity(

@@ -24,6 +24,7 @@ use FourPaws\PersonalBundle\Entity\OrderProp;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -246,28 +247,7 @@ class OrderService
     public function getUserOrders(array $params): ArrayCollection
     {
         $orderCollection = $this->orderRepository->getUserOrders($params);
-        if (!$orderCollection->isEmpty()) {
-            /** @var Order $order */
-            foreach ($orderCollection as &$order) {
-                /** @todo вынести все получения из цикла и сделать по феншую без запросов в цикле */
-                if (!$order->isManzana() && $order->getId() > 0) {
-                    list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
-                    $order->setItems($items);
-                    $order->setAllWeight((float)$allWeight);
-                    $order->setItemsSum((float)$itemsSum);
-                    $order->setPayment($this->getPayment($order->getPaySystemId()));
-                    $order->setDelivery($this->getDelivery($order->getId()));
-                    $order->setProps($this->getOrderProps($order->getId()));
-                    $order->setStore($this->getStore($order));
-                }
 
-                $payment = $this->getPayment($order->getPaySystemId());
-                $order->setPayment($payment);
-                $delivery = $this->getDelivery($order->getId());
-                $order->setDelivery($delivery);
-            }
-            unset($order);
-        }
         return $orderCollection;
     }
 
@@ -343,71 +323,53 @@ class OrderService
      * @param Order $order
      *
      * @return Store
-     * @throws ArgumentException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws \Exception
      * @throws NotFoundException
      */
     public function getStore(Order $order): Store
     {
-        /** @var OrderProp $prop */
+        //
         //CITY_CODE
         /** @todo может что сделать с dpd */
-        $props = $order->getProps();
-        if (!$props->isEmpty()) {
-            $prop = $props->get('DELIVERY_PLACE_CODE');
-            if ($prop instanceof OrderProp) {
-                $storeXmlId = $prop->getValue();
-                if (!empty($storeXmlId)) {
-                    $storeService = App::getInstance()->getContainer()->get('store.service');
-                    return $storeService->getByXmlId($storeXmlId);
-                }
-            }
+        $storeXmlId = $order->getPropValue('DELIVERY_PLACE_CODE');
+        if (!empty($storeXmlId)) {
+            /** @var StoreService $storeService */
+            $storeService = App::getInstance()->getContainer()->get('store.service');
+            return $storeService->getByXmlId($storeXmlId);
         }
 
         $store = new Store();
+        $street = $order->getPropValue('STREET') . ' ул.';
+        $house = ', д.' . $order->getPropValue('HOUSE');
+        $building = !empty($order->getPropValue('BUILDING')) ? ', корпус/строение ' . $order->getPropValue('BUILDING') : '';
+        $porch = !empty($order->getPropValue('PORCH')) ? ', подъезд. ' . $order->getPropValue('PORCH') : '';
+        $apartment = !empty($order->getPropValue('APARTMENT')) ? ', кв. ' . $order->getPropValue('APARTMENT') : '';
+        $floor = !empty($order->getPropValue('FLOOR')) ? ', этаж ' . $order->getPropValue('FLOOR') : '';
+        $city = ', г. ' . $order->getPropValue('CITY');
+        $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
+        $store->setActive(true);
+        $store->setIsShop(false);
 
-        if (!$props->isEmpty()) {
-            $street = '';
-            $prop = $props->get('STREET');
-            if ($prop instanceof OrderProp) {
-                $street = $prop->getValue() . ' ул.';
-            }
-            $house='';
-            $prop = $props->get('HOUSE');
-            if ($prop instanceof OrderProp) {
-                $house = ', д.' . $prop->getValue();
-            }
-            $building='';
-            $prop = $props->get('BUILDING');
-            if ($prop instanceof OrderProp) {
-                $building = !empty($prop->getValue()) ? ', корпус/строение ' . $prop->getValue() : '';
-            }
-            $porch='';
-            $prop = $props->get('PORCH');
-            if ($prop instanceof OrderProp) {
-                $porch = !empty($prop->getValue()) ? ', подъезд. ' . $prop->getValue() : '';
-            }
-            $apartment='';
-            $prop = $props->get('APARTMENT');
-            if ($prop instanceof OrderProp) {
-                $apartment = !empty($prop->getValue()) ? ', кв. ' . $prop->getValue() : '';
-            }
-            $floor='';
-            $prop = $props->get('FLOOR');
-            if ($prop instanceof OrderProp) {
-                $floor = !empty($prop->getValue()) ? ', этаж ' . $prop->getValue() : '';
-            }
-            $city='';
-            $prop = $props->get('CITY');
-            if ($prop instanceof OrderProp) {
-                $city = ', г. ' . $prop->getValue();
-            }
-            $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
-            $store->setActive(true);
-            $store->setIsShop(false);
-        }
         return $store;
+    }
+
+    /**
+     * @param int $orderId
+     * @return Order|null
+     * @throws \Exception
+     */
+    public function getOrderById(int $orderId)
+    {
+        $params = [
+            'filter' => [
+                'ID' => $orderId
+            ]
+        ];
+        $collection = $this->orderRepository->findBy($params);
+
+        return $collection->count() ? $collection->first() : null;
     }
 }

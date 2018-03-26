@@ -93,6 +93,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
         $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -214,6 +216,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 'order:'. $userId
             ]);
 
+/** @todo Кеширование шаблона здесь очень не в тему */
             $this->includeComponentTemplate($page);
         }
 
