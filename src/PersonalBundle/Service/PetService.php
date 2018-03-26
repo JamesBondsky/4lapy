@@ -6,7 +6,6 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -218,11 +217,10 @@ class PetService
      */
     public function update(array $data) : bool
     {
-        if (!empty($data['UF_PHOTO_TMP'])) {
-            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
+        if (empty($data['UF_PHOTO_TMP'])) {
             unset($data['UF_PHOTO']);
+        } else {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
 
         /** @var Pet $entity */
@@ -233,12 +231,8 @@ class PetService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
-        }
-        if (!empty($data['UF_PHOTO_TMP'])) {
-            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        } else {
+        if ($entity->getUserId() === 0) {
+            $entity->setUserId($updateEntity->getUserId());
             unset($data['UF_PHOTO']);
         }
 
