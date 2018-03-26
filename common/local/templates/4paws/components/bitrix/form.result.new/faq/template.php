@@ -2,6 +2,7 @@
 
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Decorators\SvgDecorator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -89,7 +90,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
     <div class="b-message-block b-hidden">
         <div class="b-message-block__icon">
             <span class="b-icon b-icon--feedback">
-                <?=new \FourPaws\Decorators\SvgDecorator('icon-check-color', 25,25)?>
+                <?=new SvgDecorator('icon-check-color', 25,25)?>
             </span>
         </div>
         <p class="b-message-block__text-thanks"></p>
