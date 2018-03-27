@@ -13,6 +13,8 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
@@ -25,12 +27,11 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
+use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -218,7 +219,7 @@ class DeliveryService implements LoggerAwareInterface
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
-     * @return array
+     * @return CalculationResultInterface[]
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = [], ?\DateTime $from = null): array
     {
@@ -256,45 +257,20 @@ class DeliveryService implements LoggerAwareInterface
             }
             //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
             $calculationResult = $shipment->calculateDelivery();
-            $from = $from ?? new \DateTime();
-
-            if (\in_array(
-                $service->getCode(),
-                [
-                    self::DPD_DELIVERY_CODE,
-                    self::DPD_PICKUP_CODE,
-                ],
-                true
-            )) {
-                if ($service->getCode() === static::DPD_PICKUP_CODE) {
-                    /** @var DpdPickupResult $calculationResult */
-                    $calculationResult = DpdPickupResult::fromBitrixResult($calculationResult);
-                    $calculationResult->setTerminals(static::$dpdData[$service->getCode()]['TERMINALS']);
-                } else {
-                    /** @var DpdDeliveryResult $calculationResult */
-                    $calculationResult = DpdDeliveryResult::fromBitrixResult($calculationResult);
-                }
-                $calculationResult->setDeliveryCode($service->getCode());
-                $calculationResult->setInitialPeriod(static::$dpdData[$service->getCode()]['DAYS_FROM']);
-                $calculationResult->setPeriodTo(static::$dpdData[$service->getCode()]['DAYS_TO']);
-                if (static::$dpdData[$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
-                    $calculationResult->setStockResult(static::$dpdData[$service->getCode()]['STOCK_RESULT']);
-                }
-                $calculationResult->setIntervals(static::$dpdData[$service->getCode()]['INTERVALS']);
-                $calculationResult->setDeliveryZone(static::$dpdData[$service->getCode()]['DELIVERY_ZONE']);
-                static::$dpdData = [];
-            }
-            if (!$calculationResult instanceof CalculationResultInterface) {
-                $this->log()->critical('Invalid delivery result', [
+            try {
+                $calculationResult = CalculationResultFactory::fromBitrixResult($calculationResult, $service);
+            } catch (UnknownDeliveryException $e) {
+                $this->log()->critical($e->getMessage(), [
                     'service' => $service->getCode(),
                     'location' => $this->getDeliveryLocation($shipment)
                 ]);
                 continue;
             }
+            $calculationResult->setDeliveryZone($this->getDeliveryZoneCode($shipment));
             $calculationResult->setDeliveryId($service->getId());
             $calculationResult->setDeliveryName($name);
             $calculationResult->setDeliveryCode($service->getCode());
-            $calculationResult->setCurrentDate($from);
+            $calculationResult->setCurrentDate($from ?? new \DateTime());
 
             if ($calculationResult->isSuccess()) {
                 $result[] = $calculationResult;
@@ -530,6 +506,8 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @throws ArgumentException
      * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return int
      */
     public function getDeliveryIdByCode(string $code): int
@@ -540,9 +518,10 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param string $code
      *
-     * @throws NotFoundException
      * @throws ArgumentException
-     *
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return array
      */
     public function getDeliveryByCode(string $code): array
@@ -560,6 +539,8 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @throws ArgumentException
      * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return string
      */
     public function getDeliveryCodeById(int $id): string
