@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\PersonalBundle\Repository;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
@@ -83,16 +87,19 @@ class OrderRepository extends BaseRepository
      *      'countTotal'=>bool
      * ]
      *
-     * @return ArrayCollection|Order[]
      * @throws ArgumentException
+     * @return ArrayCollection|Order[]
      */
     public function getUserOrders(array $params = []): ArrayCollection
     {
         if (!isset($params['filter']['USER_ID'])) {
             $params['filter']['USER_ID'] = $this->curUserService->getCurrentUserId();
         }
-        $params['runtime'][] = new ReferenceField('STATUS_MAIN', StatusTable::getEntity(),
-            Join::on('this.STATUS_ID', 'ref.ID'));
+        $params['runtime'][] = new ReferenceField(
+            'STATUS_MAIN',
+            StatusTable::getEntity(),
+            Join::on('this.STATUS_ID', 'ref.ID')
+        );
         $params['order'] = ['STATUS_MAIN.SORT' => 'asc', 'DATE_INSERT' => 'desc'];
         $params['setKey'] = 'ID';
         return $this->findBy($params);
@@ -101,7 +108,6 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $orderId
      *
-     * @return array
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @throws EmptyEntityClass
@@ -109,28 +115,58 @@ class OrderRepository extends BaseRepository
      * @throws ArgumentException
      * @throws IblockNotFoundException
      * @throws \Exception
+     * @return array
      */
     public function getOrderItems(int $orderId): array
     {
         $queryCacheTtl = 360000;
-        $iblockId = IblockUtils::getIblockId(IblockType::CATALOG,
-            IblockCode::OFFERS);
-        $productIblockId = IblockUtils::getIblockId(IblockType::CATALOG,
-            IblockCode::PRODUCTS);
+        $iblockId = IblockUtils::getIblockId(
+            IblockType::CATALOG,
+            IblockCode::OFFERS
+        );
+        $productIblockId = IblockUtils::getIblockId(
+            IblockType::CATALOG,
+            IblockCode::PRODUCTS
+        );
 
-        $volumePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'VOLUME_REFERENCE')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $sizePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'CLOTHING_SIZE')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $cml2LinkPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'CML2_LINK')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $imgPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'IMG')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        /**
+         * WAT
+         * @todo Зачем все это?
+         */
+        $volumePropId = PropertyTable::query()
+                            ->where('IBLOCK_ID', $iblockId)
+                            ->whereIn('CODE', 'VOLUME_REFERENCE')
+                            ->setCacheTtl($queryCacheTtl)
+                            ->setSelect(['ID'])
+                            ->exec();
 
-        $brandPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where('CODE',
-            'BRAND')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $flavourPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where('CODE',
-            'FLAVOUR')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+
+
+
+
+
+
+        $sizePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
+            'CODE',
+            'CLOTHING_SIZE'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $cml2LinkPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
+            'CODE',
+            'CML2_LINK'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $imgPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
+            'CODE',
+            'IMG'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+
+        $brandPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where(
+            'CODE',
+            'BRAND'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $flavourPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where(
+            'CODE',
+            'FLAVOUR'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
         $basketRes = BasketTable::query()
             ->setSelect([
                 '*',
@@ -144,12 +180,16 @@ class OrderRepository extends BaseRepository
                 'PROPERTY_FLAVOUR' => 'PRODUCT_PROPS.PROPERTY_' . $flavourPropId,
             ])
             ->where('ORDER_ID', $orderId)
-            ->registerRuntimeField(new ReferenceField('OFFER_PROPS',
+            ->registerRuntimeField(new ReferenceField(
+                'OFFER_PROPS',
                 IblockPropEntityConstructor::getDataClass($iblockId)::getEntity(),
-                Join::on('this.PRODUCT_ID', 'ref.IBLOCK_ELEMENT_ID')))
-            ->registerRuntimeField(new ReferenceField('PRODUCT_PROPS',
+                Join::on('this.PRODUCT_ID', 'ref.IBLOCK_ELEMENT_ID')
+            ))
+            ->registerRuntimeField(new ReferenceField(
+                'PRODUCT_PROPS',
                 IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
-                Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')))
+                Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
+            ))
             ->setCacheTtl($queryCacheTtl)
             ->exec();
         $result = new ArrayCollection();
@@ -262,7 +302,9 @@ class OrderRepository extends BaseRepository
         }
         if ($basketRes->getSelectedRowsCount() > 0) {
             $result = new ArrayCollection($this->dataToEntity(
-                $items, sprintf('array<string, %s>', OrderItem::class)));
+                $items,
+                sprintf('array<string, %s>', OrderItem::class)
+            ));
         }
         return [$result, $allWeight, $allSum];
     }
@@ -270,8 +312,8 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $paySystemId
      *
-     * @return OrderPayment|BaseEntity
      * @throws EmptyEntityClass
+     * @return BaseEntity|OrderPayment
      */
     public function getPayment(int $paySystemId): OrderPayment
     {
@@ -287,7 +329,8 @@ class OrderRepository extends BaseRepository
         if (\is_array($payment)) {
             return $this->dataToEntity(
                 $payment,
-                OrderPayment::class);
+                OrderPayment::class
+            );
         }
         return new OrderPayment();
     }
@@ -295,8 +338,8 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $orderId
      *
-     * @return OrderDelivery|BaseEntity
      * @throws EmptyEntityClass
+     * @return BaseEntity|OrderDelivery
      */
     public function getDelivery(int $orderId): OrderDelivery
     {
@@ -317,7 +360,8 @@ class OrderRepository extends BaseRepository
         if (\is_array($shipment)) {
             return $this->dataToEntity(
                 $shipment,
-                OrderDelivery::class);
+                OrderDelivery::class
+            );
         }
 
         return new OrderDelivery();
@@ -326,8 +370,8 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $orderId
      *
-     * @return ArrayCollection|OrderProp[]
      * @throws EmptyEntityClass
+     * @return ArrayCollection|OrderProp[]
      */
     public function getOrderProps(int $orderId): ArrayCollection
     {
@@ -347,7 +391,8 @@ class OrderRepository extends BaseRepository
         if (!empty($props)) {
             return new ArrayCollection($this->dataToEntity(
                 $props,
-                sprintf('array<string, %s>', OrderProp::class)));
+                sprintf('array<string, %s>', OrderProp::class)
+            ));
         }
 
         return new ArrayCollection();

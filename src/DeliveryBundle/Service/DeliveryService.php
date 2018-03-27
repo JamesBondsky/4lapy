@@ -466,12 +466,12 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $deliveryCode
+     * @param string|null $deliveryCode
      * @return bool
      */
-    public function isPickupCode(string $deliveryCode): bool
+    public function isPickupCode($deliveryCode): bool
     {
-        return \in_array($deliveryCode, static::PICKUP_CODES, true);
+        return $deliveryCode && \in_array($deliveryCode, static::PICKUP_CODES, true);
     }
 
     /**
@@ -485,12 +485,12 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $deliveryCode
+     * @param string|null $deliveryCode
      * @return bool
      */
-    public function isDeliveryCode(string $deliveryCode): bool
+    public function isDeliveryCode($deliveryCode): bool
     {
-        return \in_array($deliveryCode, static::DELIVERY_CODES, true);
+        return $deliveryCode && \in_array($deliveryCode, static::DELIVERY_CODES, true);
     }
 
     /**
@@ -504,12 +504,12 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $deliveryCode
+     * @param string|null $deliveryCode
      * @return bool
      */
-    public function isInnerPickupCode(string $deliveryCode): bool
+    public function isInnerPickupCode($deliveryCode): bool
     {
-        return $deliveryCode === static::INNER_PICKUP_CODE;
+        return $deliveryCode && $deliveryCode === static::INNER_PICKUP_CODE;
     }
 
     /**
@@ -523,12 +523,12 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $deliveryCode
+     * @param string|null $deliveryCode
      * @return bool
      */
-    public function isDpdPickupCode(string $deliveryCode): bool
+    public function isDpdPickupCode($deliveryCode): bool
     {
-        return $deliveryCode === static::DPD_PICKUP_CODE;
+        return $deliveryCode && $deliveryCode === static::DPD_PICKUP_CODE;
     }
 
     /**
@@ -542,12 +542,12 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $deliveryCode
+     * @param string|null $deliveryCode
      * @return bool
      */
-    public function isInnerDeliveryCode(string $deliveryCode): bool
+    public function isInnerDeliveryCode($deliveryCode): bool
     {
-        return $deliveryCode === static::INNER_DELIVERY_CODE;
+        return $deliveryCode && $deliveryCode === static::INNER_DELIVERY_CODE;
     }
 
     /**
@@ -561,12 +561,12 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $deliveryCode
+     * @param string|null $deliveryCode
      * @return bool
      */
-    public function isDpdDeliveryCode(string $deliveryCode): bool
+    public function isDpdDeliveryCode($deliveryCode): bool
     {
-        return $deliveryCode === static::DPD_DELIVERY_CODE;
+        return $deliveryCode && $deliveryCode === static::DPD_DELIVERY_CODE;
     }
 
     /**

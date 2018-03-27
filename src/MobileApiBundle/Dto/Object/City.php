@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
+use FourPaws\AppBundle\Validator\Constraints\LocationCode;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -18,6 +19,7 @@ class City
     /**
      * @Serializer\SerializedName("id")
      * @Serializer\Type("string")
+     * @LocationCode()
      * @var string
      */
     protected $id = '';
