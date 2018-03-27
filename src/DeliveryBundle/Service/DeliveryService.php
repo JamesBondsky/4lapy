@@ -257,6 +257,10 @@ class DeliveryService implements LoggerAwareInterface
             }
             //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
             $calculationResult = $shipment->calculateDelivery();
+            if (!$calculationResult->isSuccess()) {
+                continue;
+            }
+
             try {
                 $calculationResult = CalculationResultFactory::fromBitrixResult($calculationResult, $service);
             } catch (UnknownDeliveryException $e) {

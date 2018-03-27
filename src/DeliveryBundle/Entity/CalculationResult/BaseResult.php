@@ -369,7 +369,12 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function getSelectedStore(): Store
     {
         if (!$this->selectedStore instanceof Store) {
-            $this->setSelectedStore($this->getStockResult()->getStores()->first());
+            try {
+                $this->setSelectedStore($this->getStockResult()->getStores()->first());
+            } catch (NotFoundException $e) {
+                $this->addError(new Error('Нет складов с доступными товарами'));
+                $this->setSelectedStore($this->getStockResult()->getStores(false)->first());
+            }
         }
 
         return $this->selectedStore;

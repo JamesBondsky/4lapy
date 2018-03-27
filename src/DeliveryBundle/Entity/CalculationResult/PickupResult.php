@@ -82,7 +82,7 @@ class PickupResult extends BaseResult implements PickupResultInterface
      */
     protected function doGetBestShops(): StoreCollection
     {
-        $shops = $this->getStockResult()->getStores();
+        $shops = $this->getStockResult()->getStores(false);
         $storeData = [];
         /** @var Store $shop */
         foreach ($shops as $shop) {

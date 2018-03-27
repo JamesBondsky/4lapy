@@ -195,8 +195,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $result->setData($data);
         if (!$stockResult->getUnavailable()->isEmpty()) {
             $result->addError(new Error('Присутствуют товары не в наличии'));
-
-            return $result;
         }
 
         return $result;
