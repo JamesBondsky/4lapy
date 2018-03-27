@@ -130,7 +130,7 @@ class Address extends BaseEntity
 
     /**
      * @var bool
-     * @Serializer\Type("bitrix_bool")
+     * @Serializer\Type("bitrix_bool_d7")
      * @Serializer\SerializedName("UF_MAIN")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
