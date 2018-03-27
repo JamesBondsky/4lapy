@@ -145,7 +145,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
         $cache = Cache::createInstance();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $userId]))) {
+            serialize(['userId' => $userId]))
+        ) {
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
         } elseif ($cache->startDataCache()) {
@@ -175,7 +176,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])) {
+            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])
+        ) {
             $activeOrders = $closedOrders = new ArrayCollection();
             try {
                 $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
@@ -201,11 +203,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 /** Показываем пустую страницу с заказами */
             }
 
-            $page= '';
-            if($activeOrders->isEmpty() && $closedOrders->isEmpty()){
-                $page = 'notOrders';
-            }
-            else{
+            if(($activeOrders && !$activeOrders->isEmpty()) || ($closedOrders && !$closedOrders->isEmpty())) {
                 $storeService = App::getInstance()->getContainer()->get('store.service');
                 $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
             }
@@ -215,12 +213,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 'personal:orders:'. $userId,
                 'order:'. $userId
             ]);
-
-/** @todo Кеширование шаблона здесь очень не в тему */
-            $this->includeComponentTemplate($page);
         }
 
-        return true;
+        $this->includeComponentTemplate();
+
+        return $this;
     }
 
     /**
