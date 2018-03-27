@@ -152,6 +152,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 $tagCache->startTagCache($this->getPath());
             }
             try {
+                /** @var ArrayCollection $items
+                 * @var bool $redirect*/
                 [$items, $redirect] = $this->referralService->getCurUserReferrals($nav);
                 if($redirect){
                     $tagCache->abortTagCache();
