@@ -83,6 +83,16 @@ class OrderService
     public const STATUS_DELIVERED = 'J';
 
     /**
+     * Заказ в сборке
+     */
+    public const STATUS_IN_ASSEMBLY_1 = 'H';
+
+    /**
+     * Заказ в сборке
+     */
+    public const STATUS_IN_ASSEMBLY_2 = 'W';
+
+    /**
      * 90% заказа можно оплатить бонусами
      */
     public const MAX_BONUS_PAYMENT = 0.9;

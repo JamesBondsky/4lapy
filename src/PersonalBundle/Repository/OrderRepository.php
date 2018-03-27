@@ -138,9 +138,8 @@ class OrderRepository extends BaseRepository
                             ->whereIn('CODE', 'VOLUME_REFERENCE')
                             ->setCacheTtl($queryCacheTtl)
                             ->setSelect(['ID'])
-                            ->exec();
-
-
+                            ->exec()
+                            ->fetch()['ID'];
 
 
 

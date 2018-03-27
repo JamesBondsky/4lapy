@@ -7,6 +7,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Entity\Order;
@@ -214,6 +215,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         if ($updateResult->isSuccess()) {
                             $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
                             $this->flushOrderSubscribe();
+                            $this->clearTaggedCache();
                         } else {
                             $this->setExecError('subscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
                         }
@@ -228,6 +230,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
                         $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $addResult->getId();
                         $this->flushOrderSubscribe();
+                        $this->clearTaggedCache();
                     } else {
                         $this->setExecError('subscribeAction', $addResult->getErrors(), 'subscriptionAdd');
                     }
@@ -263,6 +266,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     if ($updateResult->isSuccess()) {
                         $this->arResult['UNSUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
                         $this->flushOrderSubscribe();
+                        $this->clearTaggedCache();
                     } else {
                         $this->setExecError('unsubscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
                     }
@@ -421,6 +425,23 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     }
 
     /**
+     * Сброс тегированного кеша
+     */
+    public function clearTaggedCache()
+    {
+        if ($this->arParams['USER_ID']) {
+            $userId = $this->arParams['USER_ID'];
+            TaggedCacheHelper::clearManagedCache(
+                [
+                    //'personal:orders',
+                    'personal:orders:'.$userId,
+                    //'order:'.$userId
+                ]
+            );
+        }
+    }
+
+    /**
      * Варианты времени доставки
      *
      * @return array
@@ -448,7 +469,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     if ($intervals && $intervals instanceof IntervalCollection) {
                         foreach ($intervals as $interval) {
                             /** @var Interval $interval */
-                            $val = $interval->toString();
+                            $val = $interval->__toString();
                             $this->data['TIME_VARIANTS'][] = [
                                 'VALUE' => $val,
                                 'TEXT' => $val,

@@ -25,7 +25,6 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderService;
-use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -49,10 +48,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
     /** @var UserAuthorizationInterface */
     private $currentUserProvider;
-
-    public const STATUS_IN_POINT_ISSUE = 'F';
-    public const STATUS_IN_ASSEMBLY_1 = 'H';
-    public const STATUS_IN_ASSEMBLY_2 = 'W';
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -203,7 +198,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 /** Показываем пустую страницу с заказами */
             }
 
-            if(($activeOrders && !$activeOrders->isEmpty()) || ($closedOrders && !$closedOrders->isEmpty())) {
+            if(!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
                 $storeService = App::getInstance()->getContainer()->get('store.service');
                 $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
             }
@@ -213,6 +208,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 'personal:orders:'. $userId,
                 'order:'. $userId
             ]);
+
+            $this->endResultCache();
         }
 
         $this->includeComponentTemplate();

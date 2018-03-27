@@ -2,17 +2,16 @@
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Service\OrderService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-
 /**
  * @global CMain $APPLICATION
  * @var array $arParams
@@ -22,6 +21,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $templateName
  * @var string $componentPath
  */
+
 /** @var Order $order */
 $order = $arResult['ORDER'];
 
@@ -112,13 +112,20 @@ if ($orderSubscribe) {
         </div>
         <div class="b-accordion-order-item__adress">
             <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
-                <?= $order->getStatus() ?>
-                <?php /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */ ?>
-                <span><?= \in_array($order->getStatus(), [
-                        $component::STATUS_IN_ASSEMBLY_1,
-                        $component::STATUS_IN_ASSEMBLY_2,
-                        $component::STATUS_IN_POINT_ISSUE,
-                    ], true) ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?></span>
+                <?
+                echo $order->getStatus();
+                echo ' ';
+                echo '<span>';
+                /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
+                $checkStatuses = [
+                    OrderService::STATUS_IN_ASSEMBLY_1,
+                    OrderService::STATUS_IN_ASSEMBLY_2,
+                    OrderService::STATUS_ISSUING_POINT,
+                ];
+                echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
+                echo $order->getFormatedDateStatus();
+                echo '</span>';
+                ?>
             </div>
             <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
                 <?= $order->getDelivery()->getDeliveryName() ?>
