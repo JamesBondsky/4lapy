@@ -17,7 +17,7 @@ $bonus = $currentOffer->getBonusFormattedText((int)$component->getCurrentUserSer
 if (!empty($bonus)) { ?>
     <script type="text/javascript">
         $(function () {
-            $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
+            var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
             if($jsBonus.length > 0) {
                 $jsBonus.html('<?=$bonus?>');
             }
