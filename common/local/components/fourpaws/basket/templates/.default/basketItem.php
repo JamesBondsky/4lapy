@@ -1,6 +1,7 @@
 <?php
 /** @var BasketItem $basketItem */
 /** @var float $user_discount */
+/** @var Offer $offer */
 
 /** @global \FourPaws\Components\BasketComponent $component */
 
@@ -19,7 +20,6 @@ if (!$basketItemId = $basketItem->getId()) {
 }
 
 $image = $component->getImage($basketItem->getProductId());
-$offer = $component->getOffer((int)$basketItem->getProductId());
 $templateData['OFFERS'][$offer->getId().'_'.$basketItem->getQuantity()] = $offer;
 $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
 <div class="b-item-shopping js-remove-shopping">

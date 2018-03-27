@@ -154,4 +154,49 @@ class ApiTester extends \Codeception\Actor
             'gps_messaging_enabled'       => $data['UF_GPS_MESS'] === '1',
         ];
     }
+
+    /**
+     * @param int $userId
+     * @throws Exception
+     * @throws \Codeception\Exception\ModuleException
+     * @return array
+     */
+    public function createAddress(int $userId): array
+    {
+        $city = $this->grabColumnsFromDatabase('b_sale_location', [
+            'TYPE_ID' => 5,
+        ]);
+
+        $fields = [
+            'UF_USER_ID'       => $userId,
+            'UF_NAME'          => md5(random_bytes(1024)),
+            'UF_CITY_LOCATION' => $city['CODE'],
+            'UF_STREET'        => md5(random_bytes(1024)),
+            'UF_HOUSE'         => md5(random_bytes(1024)),
+            'UF_HOUSING'       => md5(random_bytes(1024)),
+            'UF_ENTRANCE'      => md5(random_bytes(1024)),
+            'UF_FLOOR'         => md5(random_bytes(1024)),
+            'UF_FLAT'          => md5(random_bytes(1024)),
+            'UF_INTERCOM_CODE' => md5(random_bytes(1024)),
+            'UF_MAIN'          => random_int(0, 1),
+            'UF_DETAILS'       => md5(random_bytes(1024)),
+        ];
+
+        $id = $this->haveInDatabase('adv_adress', $fields);
+        $fields['ID'] = $id;
+        return $fields;
+    }
+
+    /**
+     * @param int $errorCode
+     * @throws Exception
+     */
+    public function assertContainsError(int $errorCode): void
+    {
+        $data = $this->grabDataFromResponseByJsonPath('$.error[0]');
+        $error = reset($data);
+
+        $code = $error['code'] ?? 0;
+        $this->assertEquals($errorCode, (int)$code);
+    }
 }

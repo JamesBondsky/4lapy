@@ -1,62 +1,65 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Response;
 
+use Doctrine\Common\Collections\Collection;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use JMS\Serializer\Annotation as Serializer;
 
 class DeliveryAddressGetResponse
 {
     /**
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress>")
+     * @Serializer\Type("ArrayCollection<FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress>")
      * @Serializer\SerializedName("address")
      * @var DeliveryAddress[]
      */
-    protected $address = [];
+    protected $addresses;
 
-    /**
-     * @return DeliveryAddress[]
-     */
-    public function getAddress(): array
+    public function __construct(Collection $collection)
     {
-        return $this->address;
+        $this->addresses = $collection;
     }
 
     /**
-     * @param DeliveryAddress[] $address
+     * @return Collection|DeliveryAddress[]
+     */
+    public function getAddresses(): Collection
+    {
+        return $this->addresses;
+    }
+
+    /**
+     * @param Collection|DeliveryAddress[] $addresses
      *
      * @return DeliveryAddressGetResponse
      */
-    public function setAddress(array $address): DeliveryAddressGetResponse
+    public function setAddresses(Collection $addresses): DeliveryAddressGetResponse
     {
-        $this->address = $address;
+        $this->addresses = $addresses;
         return $this;
     }
 
     /**
      * @param DeliveryAddress $address
      *
-     * @return $this
+     * @return bool
      */
-    public function addAddress(DeliveryAddress $address)
+    public function addAddress(DeliveryAddress $address): bool
     {
-        if (!\in_array($address, $this->address, true)) {
-            $this->address[] = $address;
-        }
-        return $this;
+        return $this->getAddresses()->add($address);
     }
 
     /**
      * @param DeliveryAddress $address
      *
-     * @return $this
+     * @return bool
      */
-    public function removeAddress(DeliveryAddress $address)
+    public function removeAddress(DeliveryAddress $address): bool
     {
-        $key = array_search($address, $this->address, true);
-        if ($key !== false) {
-            unset($this->address[$key]);
-        }
-        return $this;
+        return $this->getAddresses()->removeElement($address);
     }
 }

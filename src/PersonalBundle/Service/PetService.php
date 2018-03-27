@@ -6,7 +6,6 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -61,8 +60,7 @@ class PetService
         PetRepository $petRepository,
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaService $manzanaService
-    )
-    {
+    ) {
         $this->petRepository  = $petRepository;
         $this->currentUser    = $currentUserProvider;
         $this->manzanaService = $manzanaService;
@@ -71,7 +69,6 @@ class PetService
     /**
      * @param array $data
      *
-     * @return bool
      * @throws EmptyEntityClass
      * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
@@ -84,6 +81,7 @@ class PetService
      * @throws BitrixRuntimeException
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
     public function add(array $data) : bool
     {
@@ -92,14 +90,17 @@ class PetService
         }
         if (!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
+        } else {
             unset($data['UF_PHOTO']);
         }
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
         $this->petRepository->setEntity($entity);
         $res = $this->petRepository->create();
+
+        /**
+         * @todo Events
+         */
         if ($res) {
             $this->updateManzanaPets();
 
@@ -191,7 +192,6 @@ class PetService
                     break;
                 }
             }
-            
         }
         $client->ffOthers = $others;
     }
@@ -211,17 +211,16 @@ class PetService
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
-     * @return bool
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
     public function update(array $data) : bool
     {
-        if (!empty($data['UF_PHOTO_TMP'])) {
-            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
+        if (empty($data['UF_PHOTO_TMP'])) {
             unset($data['UF_PHOTO']);
+        } else {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
 
         /** @var Pet $entity */
@@ -232,8 +231,9 @@ class PetService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if($entity->getUserId() === 0){
+        if ($entity->getUserId() === 0) {
             $entity->setUserId($updateEntity->getUserId());
+            unset($data['UF_PHOTO']);
         }
 
         $res = $this->petRepository->setEntity($entity)->update();
@@ -261,9 +261,9 @@ class PetService
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
-     * @return bool
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
     public function delete(int $id) : bool
     {
@@ -287,10 +287,10 @@ class PetService
     /**
      * @param int $id
      *
-     * @return Pet|BaseEntity
      * @throws ObjectPropertyException
      * @throws \Exception
      * @throws NotFoundException
+     * @return BaseEntity|Pet
      */
     public function getById(int $id): Pet
     {

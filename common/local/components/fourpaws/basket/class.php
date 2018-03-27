@@ -225,7 +225,7 @@ class BasketComponent extends \CBitrixComponent
         foreach ($basket->getBasketItems() as $basketItem) {
             if ($basketItem->getId() === 0 || $basketItem->getProductId() === 0) {
                 /** удаляет непонятно что в корзине */
-                if(!$haveOrder) {
+                if (!$haveOrder) {
                     $basketItem->delete();
                     $isUpdate = true;
                 }
@@ -235,7 +235,7 @@ class BasketComponent extends \CBitrixComponent
             $useOffer = $offer instanceof Offer && $offer->getId() > 0;
             if (!$useOffer) {
                 /** если нет офера удаляем товар из корзины */
-                if(!$haveOrder) {
+                if (!$haveOrder) {
                     $basketItem->delete();
                     $isUpdate = true;
                 }
@@ -244,23 +244,13 @@ class BasketComponent extends \CBitrixComponent
 
             $offerQuantity = $offer->getQuantity();
             if ($basketItem->canBuy() && !$basketItem->isDelay()) {
-                if (!$haveOrder && ($offerQuantity === 0 || $offer->isByRequest())) {
+                if (!$haveOrder && ($offerQuantity === 0)) {
                     $basketItem->setField('DELAY', 'Y');
-
-                    if (!$this->arParams['MINI_BASKET']) {
-                        $notAllowedItems->add($basketItem);
-                        /** @todo пока берем ближайшую доставку из быстрого заказа */
-                        if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
-                            $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer,
-                                true);
-                        }
-                    }
 
                     $isUpdate = true;
                 }
             } else {
-                if (!$haveOrder && $offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()
-                    && !$offer->isByRequest()) {
+                if (!$haveOrder && $offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()) {
                     $basketItem->setField('DELAY', 'N');
 
                     $isUpdate = true;
@@ -273,6 +263,20 @@ class BasketComponent extends \CBitrixComponent
                                 true);
                         }
                     }
+                }
+            }
+
+            if (!$this->arParams['MINI_BASKET'] &&
+                $offer->isByRequest()
+            ) {
+                /** @todo пока берем ближайшую доставку из быстрого заказа */
+                if ($fastOrderClass instanceof FourPawsFastOrderComponent) {
+                    $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer,
+                        true);
+                }
+
+                if (!$notAllowedItems->contains($basketItem)) {
+                    $notAllowedItems->add($basketItem);
                 }
             }
         }
