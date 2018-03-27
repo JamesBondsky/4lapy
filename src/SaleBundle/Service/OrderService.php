@@ -726,6 +726,7 @@ class OrderService
 
     /**
      * @param Order $order
+     *
      * @throws ArgumentException
      * @return string
      */
@@ -747,47 +748,55 @@ class OrderService
             ]
         );
         $address = '';
-        if ($properties['DELIVERY_PLACE_CODE']) {
-            try {
-                $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
-                $address = $store->getAddress();
+        $deliveryCode = $this->getOrderDeliveryCode($order);
+        switch (true) {
+            case \in_array($deliveryCode, DeliveryService::PICKUP_CODES, true):
+                if ($properties['DPD_TERMINAL_CODE'] && $properties['CITY_CODE']) {
+                    $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+                    if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
+                        $address = $terminal->getAddress();
+                    }
+                } elseif ($properties['DELIVERY_PLACE_CODE']) {
+                    try {
+                        $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                        $address = $store->getAddress();
 
-                if ($store->getMetro()) {
-                    /** @noinspection PhpUnusedLocalVariableInspection */
-                    list($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
+                        if ($store->getMetro()) {
+                            /** @noinspection PhpUnusedLocalVariableInspection */
+                            list($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
 
-                    if ($metro[$store->getMetro()]) {
-                        $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
+                            if ($metro[$store->getMetro()]) {
+                                $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
+                            }
+                        }
+                    } catch (StoreNotFoundException $e) {
                     }
                 }
-            } catch (StoreNotFoundException $e) {
-            }
-        } elseif ($properties['DELIVERY_PLACE_CODE'] && $properties['CITY_CODE']) {
-            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
-            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
-                $address = $terminal->getAddress();
-            }
-        } elseif ($properties['CITY'] && $properties['STREET']) {
-            $address = [
-                $properties['CITY'],
-                $properties['STREET'],
-            ];
-            if (isset($properties['HOUSE'])) {
-                $address[] = $properties['HOUSE'];
-            }
-            if (isset($properties['BUILDING'])) {
-                $address[] = 'корпус ' . $properties['BUILDING'];
-            }
-            if (isset($properties['PORCH'])) {
-                $address[] = 'подъезд ' . $properties['PORCH'];
-            }
-            if (isset($properties['FLOOR'])) {
-                $address[] = 'этаж ' . $properties['FLOOR'];
-            }
-            if (isset($properties['APARTMENT'])) {
-                $address[] = 'кв. ' . $properties['APARTMENT'];
-            }
-            $address = implode(', ', $address);
+                break;
+            case \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
+                if ($properties['CITY'] && $properties['STREET']) {
+                    $address = [
+                        $properties['CITY'],
+                        $properties['STREET'],
+                    ];
+                    if (isset($properties['HOUSE'])) {
+                        $address[] = $properties['HOUSE'];
+                    }
+                    if (isset($properties['BUILDING'])) {
+                        $address[] = 'корпус ' . $properties['BUILDING'];
+                    }
+                    if (isset($properties['PORCH'])) {
+                        $address[] = 'подъезд ' . $properties['PORCH'];
+                    }
+                    if (isset($properties['FLOOR'])) {
+                        $address[] = 'этаж ' . $properties['FLOOR'];
+                    }
+                    if (isset($properties['APARTMENT'])) {
+                        $address[] = 'кв. ' . $properties['APARTMENT'];
+                    }
+                    $address = implode(', ', $address);
+                }
+                break;
         }
 
         return $address;
