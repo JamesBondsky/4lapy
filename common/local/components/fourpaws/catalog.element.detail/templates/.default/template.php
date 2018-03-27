@@ -482,4 +482,3 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     </div>
 <?php
 $this->EndViewTarget();
-$templateData['currentOffer'] = $currentOffer;
