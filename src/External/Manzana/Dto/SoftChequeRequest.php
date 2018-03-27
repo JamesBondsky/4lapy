@@ -85,11 +85,11 @@ class SoftChequeRequest
      *
      * @Serializer\Type("FourPaws\External\Manzana\Dto\Card")
      * @Serializer\SerializedName("Card")
-     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Accessor(setter="setCard", getter="getCard")
      *
-     * @var string
+     * @var Card
      */
-    protected $card = '';
+    protected $card;
     
     /**
      * Номер чека
@@ -249,7 +249,9 @@ class SoftChequeRequest
      */
     public function setCard(Card $card)
     {
-        $this->card = $card;
+        if ($card->getNumber()) {
+            $this->card = $card;
+        }
         
         return $this;
     }
@@ -265,8 +267,11 @@ class SoftChequeRequest
         
         return $this;
     }
-    
-    public function addItem(ChequePosition $position)
+
+    /**
+     * @param ChequePosition $position
+     */
+    public function addItem(ChequePosition $position): void
     {
         if (!$this->items) {
             $this->items = new ArrayCollection();
@@ -278,7 +283,7 @@ class SoftChequeRequest
     /**
      * @param string $coupon
      */
-    public function addCoupon(string $coupon)
+    public function addCoupon(string $coupon): void
     {
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         $coupon = (new Coupon())->setNumber($coupon);
@@ -376,5 +381,13 @@ class SoftChequeRequest
     public function getItems() : Collection
     {
         return $this->items;
+    }
+
+    /**
+     * @return Card
+     */
+    public function getCard(): ?Card
+    {
+        return $this->card;
     }
 }

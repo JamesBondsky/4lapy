@@ -46,3 +46,7 @@ services:
     FourPaws\SaleBundle\Service\UserAccountService:
         class: FourPaws\SaleBundle\Service\UserAccountService
         public: true
+
+    FourPaws\SaleBundle\Discount\Manzana:
+        class: FourPaws\SaleBundle\Discount\Manzana
+        public: true

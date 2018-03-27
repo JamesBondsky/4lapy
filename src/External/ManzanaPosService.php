@@ -1,11 +1,16 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\External;
 
-use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
-use FourPaws\Catalog\Model\Offer;
+use DateTimeImmutable;
+use Exception;
+use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
@@ -14,6 +19,7 @@ use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\ArithmeticHelper;
 use Psr\Log\LoggerAwareInterface;
+use Throwable;
 
 /**
  * Class ManzanaService
@@ -48,8 +54,8 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
             $xmlId = $item->getField('PRODUCT_XML_ID');
 
-            if (strpos($xmlId, '#')) {
-                $xmlId = explode('#', $xmlId)[1];
+            if (\strpos($xmlId, '#')) {
+                $xmlId = \explode('#', $xmlId)[1];
             }
 
             $chequePosition =
@@ -57,8 +63,10 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     ->setSumm($item->getBasePrice() * $item->getQuantity())
                     ->setQuantity($item->getQuantity())
                     ->setPrice($item->getBasePrice())
-                    ->setDiscount(ArithmeticHelper::getPercent($item->getPrice(),
-                        $item->getBasePrice()))
+                    ->setDiscount(ArithmeticHelper::getPercent(
+                        $item->getPrice(),
+                        $item->getBasePrice()
+                    ))
                     ->setSummDiscounted($item->getPrice() * $item->getQuantity())
                     ->setArticleId($xmlId)
                     ->setChequeItemId($item->getId());
@@ -119,10 +127,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      * - Подтверждение изменения выбранного населенного пункта
      *
      * @param SoftChequeRequest $chequeRequest
-     * @param string            $coupon
+     * @param string $coupon
      *
      * @throws ExecuteException
      *
+     * @throws ManzanaPromocodeUnavailableException
      * @return SoftChequeResponse
      */
     public function processChequeWithCoupons(SoftChequeRequest $chequeRequest, string $coupon): SoftChequeResponse
@@ -164,61 +173,83 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
     /**
      * @param SoftChequeRequest $chequeRequest
-     *
-     * @return SoftChequeResponse
-     *
-     * @throws ExecuteException
      */
-    protected function execute(SoftChequeRequest $chequeRequest): SoftChequeResponse
+    protected function prepareRequest(SoftChequeRequest $chequeRequest)
     {
         $requestId = $this->generateRequestId();
 
         $chequeRequest->setBusinessUnit($this->parameters['business_unit'])
             ->setOrganization($this->parameters['organization'])
             ->setPos($this->parameters['pos'])->setNumber($requestId)
-            ->setDatetime(new \DateTimeImmutable())
+            ->setDatetime(new DateTimeImmutable())
             ->setRequestId($requestId);
 
         $chequeRequest->getItems()->forAll(function ($k, ChequePosition $item) use ($requestId) {
             $item->setChequeId($requestId);
         });
+    }
 
-        try {
-            $arguments = [
-                'request' => [
-                    'Requests' => [
-                        $chequeRequest::ROOT_NAME => $this->serializer->toArray($chequeRequest),
+    /**
+     * @param SoftChequeRequest $chequeRequest
+     *
+     * @return array
+     */
+    protected function buildParametersFromRequest(SoftChequeRequest $chequeRequest): array
+    {
+        $this->prepareRequest($chequeRequest);
+
+        return
+            ['request_options' =>
+                [
+                    'request' => [
+                        'Requests' => [
+                            $chequeRequest::ROOT_NAME => $this->serializer->toArray($chequeRequest),
+                        ],
                     ],
+                    'orgName' => $this->parameters['organization_name'],
                 ],
-                'orgName' => $this->parameters['organization_name'],
             ];
+    }
 
-            $rawResult = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
-            $rawResult = (array)$rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
-            if ($rawResult['Item']) {
-                if (is_array($rawResult['Item'])) {
+    /**
+     * @param $rawResult
+     *
+     * @return SoftChequeResponse
+     */
+    protected function buildResponseFromRawResponse($rawResult): SoftChequeResponse
+    {
+        return $this->serializer->fromArray(\json_decode(\json_encode($rawResult), true), SoftChequeResponse::class);
+    }
 
-                    foreach ($rawResult['Item'] as &$item) {
-                        $item = (array)$item;
-                    }
-
-                    unset($item);
-                } elseif ($rawResult['Item'] instanceof \stdClass) {
-                    $rawResult['Item'] = [(array)$rawResult['Item']];
-                }
-            }
-
-            $result = $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
-        } catch (\Exception $e) {
+    /**
+     * @param SoftChequeRequest $chequeRequest
+     *
+     * @throws ExecuteException
+     * @return SoftChequeResponse
+     */
+    protected function execute(SoftChequeRequest $chequeRequest): SoftChequeResponse
+    {
+        dump($chequeRequest);
+        try {
+            $result = $this->buildResponseFromRawResponse(
+                $this->client->call(
+                    self::METHOD_EXECUTE,
+                    $this->buildParametersFromRequest($chequeRequest)
+                )
+            );
+        } catch (Exception $e) {
             try {
+                /** @noinspection PhpUndefinedFieldInspection */
                 $detail = $e->detail->details->description;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $detail = 'none';
             }
 
-            throw new ExecuteException(sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail),
+            throw new ExecuteException(
+                \sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail),
                 $e->getCode(),
-                $e);
+                $e
+            );
         }
 
         return $result;
@@ -229,6 +260,6 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     protected function generateRequestId(): int
     {
-        return (int)((microtime(true) * 1000) . random_int(1000, 9999));
+        return (int)((\microtime(true) * 1000) . random_int(1000, 9999));
     }
 }
