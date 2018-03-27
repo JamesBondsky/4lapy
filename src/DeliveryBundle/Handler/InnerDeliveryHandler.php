@@ -12,11 +12,11 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -132,28 +132,23 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
      * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws NotFoundException
-     * @return DeliveryResult
+     * @return CalculationResult
      */
-    protected function calculateConcrete(Shipment $shipment): DeliveryResult
+    protected function calculateConcrete(Shipment $shipment): CalculationResult
     {
-        $result = new DeliveryResult();
-
-        if (!$zone = $this->deliveryService->getDeliveryZoneCode($shipment)) {
-            $result->addError(new Error('Не указано местоположение доставки'));
-        } else {
-            $result->setDeliveryZone($zone);
-        }
+        $result = new CalculationResult();
 
         /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        $data = [];
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
-                $result->setFreeFrom((int)$this->config['FREE_FROM'][$deliveryZone]);
+                $data['FREE_FROM'] = (int)$this->config['FREE_FROM'][$deliveryZone];
                 if ($basket->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
                 }
@@ -161,8 +156,9 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         } else {
             $result->addError(new Error('Не задана стоимость доставки'));
         }
-        $result->setIntervals($this->getIntervals($shipment));
+        $data['INTERVALS'] = $this->getIntervals($shipment);
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+            $result->setData($data);
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
@@ -194,12 +190,11 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
 
         $stockResult = static::getStocks($basket, $offers, $availableStores);
-        $result->setStockResult($stockResult);
 
+        $data['STOCK_RESULT'] = $stockResult;
+        $result->setData($data);
         if (!$stockResult->getUnavailable()->isEmpty()) {
             $result->addError(new Error('Присутствуют товары не в наличии'));
-
-            return $result;
         }
 
         return $result;

@@ -12,12 +12,12 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -90,17 +90,11 @@ class InnerPickupHandler extends DeliveryHandlerBase
      * @throws ObjectNotFoundException
      * @throws ApplicationCreateException
      * @throws NotFoundException
-     * @return PickupResult
+     * @return CalculationResult
      */
-    protected function calculateConcrete(Shipment $shipment): PickupResult
+    protected function calculateConcrete(Shipment $shipment): CalculationResult
     {
-        $result = new PickupResult();
-
-        if (!$zone = $this->deliveryService->getDeliveryZoneCode($shipment)) {
-            $result->addError(new Error('Не указано местоположение доставки'));
-        } else {
-            $result->setDeliveryZone($zone);
-        }
+        $result = new CalculationResult();
 
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         /** @noinspection PhpInternalEntityUsedInspection */
@@ -149,8 +143,11 @@ class InnerPickupHandler extends DeliveryHandlerBase
             $stockResult = static::getStocks($basket, $offers, $availableStores, $stockResult);
         }
 
-        $result->setStockResult($stockResult);
-        $result->setIntervals($this->getIntervals($shipment));
+        $data = [
+            'STOCK_RESULT' => $stockResult,
+            'INTERVALS' => $this->getIntervals($shipment)
+        ];
+        $result->setData($data);
 
         if ($shopCode && !$stockResult->getUnavailable()->isEmpty()) {
             $result->addError(new Error('Присутствуют товары не в наличии'));

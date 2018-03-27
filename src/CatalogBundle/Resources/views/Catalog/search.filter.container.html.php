@@ -57,7 +57,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                    title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <div class="js-filter-input">
-                <input type="hidden" name="query" value="<?= $productSearchResult->getQuery() ?>">
+                <input type="hidden" name="query" value="<?= urlencode($productSearchResult->getQuery()) ?>">
             </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
