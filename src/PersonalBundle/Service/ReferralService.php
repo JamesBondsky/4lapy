@@ -360,6 +360,7 @@ class ReferralService
                 $arCards[$item->getCard()] = $key;
             }
         }
+        $referrals = $referrals->toArray();
 
         $manzanaReferrals = [];
         try {
@@ -456,6 +457,7 @@ class ReferralService
                 unset($referral);
             }
         }
+        $referrals = new ArrayCollection($referrals);
         return [true, $haveAdd];
     }
 
