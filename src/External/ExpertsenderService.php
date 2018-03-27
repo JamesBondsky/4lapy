@@ -93,6 +93,16 @@ class ExpertsenderService implements LoggerAwareInterface
             $params['subscribe'] = 0;
         }
         if (!empty($user->getEmail())) {
+            /** получение id подписчика по старому email */
+            $userIdResult = $this->client->getUserId($user->getEmail());
+            if ($userIdResult->isOk()) {
+                $expertSenderId = $userIdResult->getId();
+            }
+
+            if(!empty($expertSenderId)){
+                /** @todo сделать нормальный эксепшн и его обработку */
+                throw new ExpertsenderServiceException('такая почта уже заведена в системел');
+            }
             $addUserToList = new AddUserToList();
             $addUserToList->setForce(true);
             $addUserToList->setMode('AddAndUpdate');

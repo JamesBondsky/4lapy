@@ -7,7 +7,6 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -69,10 +68,6 @@ class AddressService
     public function getAddressesByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {
         return $this->addressRepository->findByUser($userId, $locationCode);
-    }
-
-    public function getCurrentUserAddresses()
-    {
     }
 
     /**
