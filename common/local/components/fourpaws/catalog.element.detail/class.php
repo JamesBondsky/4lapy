@@ -133,6 +133,8 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'iblock:item:' . $product->getId(),
             ]);
 
+            $this->setResultCacheKeys(['PRODUCT', 'CURRENT_OFFER']);
+
             $this->includeComponentTemplate();
         }
 

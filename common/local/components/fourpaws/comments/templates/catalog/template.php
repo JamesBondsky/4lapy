@@ -16,7 +16,7 @@ use FourPaws\Helpers\WordHelper;
 
 ?>
 <?php /** top catalog review block */
-ob_start(); ?>
+$this->SetViewTarget(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW) ?>
 <li class="b-tab-title__item js-tab-item">
     <a class="b-tab-title__link js-tab-link"
        href="javascript:void(0);"
@@ -28,9 +28,9 @@ ob_start(); ?>
         </span>
     </a>
 </li>
-<?php $APPLICATION->AddViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW, ob_get_clean()); ?>
+<?php $this->EndViewTarget() ?>
 <?php /** top catalog review block */
-ob_start(); ?>
+$this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
 <div class="b-rating b-rating--card">
     <?php for ($i = 1; $i <= 5; $i++) {
         ?>
@@ -50,7 +50,7 @@ ob_start(); ?>
             'отзывов',
         ]
     ) ?></span>
-<?php $APPLICATION->AddViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW, ob_get_clean()); ?>
+<?php $this->EndViewTarget() ?>
 <div class="b-tab-content__container js-tab-content" data-tab-content="reviews">
     <div class="tab-content-review">
         <?php /** @noinspection PhpUnhandledExceptionInspection */
