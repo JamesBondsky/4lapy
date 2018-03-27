@@ -378,7 +378,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         $offerId = (int)$this->arParams['OFFER_ID'];
 
         $offers = $product->getOffers();
-        if ($offerId) {
+        if ($offerId > 0) {
             foreach ($offers as $offer) {
                 if ($offer->getId() === $offerId) {
                     return $offer;
