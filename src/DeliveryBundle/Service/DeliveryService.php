@@ -461,7 +461,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isPickup(CalculationResultInterface $calculationResult): bool
     {
-        return $this->isPickupCode($calculationResult->getData()['DELIVERY_CODE']);
+        return $this->isPickupCode($calculationResult->getDeliveryCode());
     }
 
     /**
@@ -480,7 +480,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDelivery(CalculationResultInterface $calculationResult): bool
     {
-        return $this->isDeliveryCode($calculationResult->getData()['DELIVERY_CODE']);
+        return $this->isDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**
@@ -499,7 +499,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isInnerPickup(CalculationResultInterface $calculationResult): bool
     {
-        return $this->isInnerPickupCode($calculationResult->getData()['DELIVERY_CODE']);
+        return $this->isInnerPickupCode($calculationResult->getDeliveryCode());
     }
 
     /**
@@ -518,7 +518,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDpdPickup(CalculationResultInterface $calculationResult): bool
     {
-        return $this->isDpdPickupCode($calculationResult->getData()['DELIVERY_CODE']);
+        return $this->isDpdPickupCode($calculationResult->getDeliveryCode());
     }
 
     /**
@@ -537,7 +537,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isInnerDelivery(CalculationResultInterface $calculationResult): bool
     {
-        return $this->isInnerDeliveryCode($calculationResult->getData()['DELIVERY_CODE']);
+        return $this->isInnerDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**
@@ -556,7 +556,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDpdDelivery(CalculationResultInterface $calculationResult): bool
     {
-        return $this->isDpdDeliveryCode($calculationResult->getData()['DELIVERY_CODE']);
+        return $this->isDpdDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**
