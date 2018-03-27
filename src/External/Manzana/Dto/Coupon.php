@@ -76,7 +76,7 @@ class Coupon
     /**
      * @return bool
      */
-    public function isApplicabilityCode(): bool
+    public function isApplied(): bool
     {
         return $this->applicabilityCode === 1;
     }

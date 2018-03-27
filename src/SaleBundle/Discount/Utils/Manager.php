@@ -9,12 +9,24 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils;
 
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Order;
+use Exception;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\SaleBundle\Discount\Manzana;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Manager
@@ -29,15 +41,17 @@ class Manager
      *
      * @param Event|null $event
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws RuntimeException
+     * @throws NotFoundException
+     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws Exception
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws ArgumentOutOfRangeException
+     * @throws ManzanaPromocodeUnavailableException
      */
     public static function OnAfterSaleOrderFinalAction(Event $event = null): void
     {
@@ -48,9 +62,9 @@ class Manager
                 /** @var Order $order */
                 $order = $event->getParameter('ENTITY');
                 if ($order instanceof Order) {
-                    $basketService = Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class);
+                    $container = Application::getInstance()->getContainer();
+                    $basketService = $container->get(BasketService::class);
+                    $manzana = $container->get(Manzana::class);
 
                     // Автоматически добавляем подарки
                     $basketService
@@ -71,6 +85,15 @@ class Manager
                     $basketService
                         ->getCleaner('detach')
                         ->processOrder();
+
+                    /**
+                     * @todo
+                     */
+                    $promocode = '';
+                    if ($promocode) {
+                        $manzana->setPromocode($promocode);
+                    }
+                    $manzana->calculate();
                 }
             }
             $execution = false;

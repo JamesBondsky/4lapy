@@ -30,7 +30,6 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use Bitrix\Main\Application as BitrixApplication;
 
 /**
  * Class Event
@@ -120,7 +119,7 @@ class Event implements ServiceHandlerInterface
                 $userAccountService = $container->get(UserAccountService::class);
 
                 $userEntity = $userService->getUserRepository()->find($userId);
-                [, $bonus] = $userAccountService->refreshUserBalance($userEntity);
+                list(, $bonus) = $userAccountService->refreshUserBalance($userEntity);
 
                 $userService->refreshUserBonusPercent($userEntity, $bonus);
             } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException | ConstraintDefinitionException | InvalidIdentifierException | ValidationException | NotAuthorizedException $e) {

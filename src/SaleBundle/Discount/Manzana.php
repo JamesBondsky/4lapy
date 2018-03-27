@@ -4,9 +4,12 @@ namespace FourPaws\SaleBundle\Discount;
 
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\External\Manzana\Dto\ChequePosition;
+use FourPaws\External\Manzana\Dto\Coupon;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
@@ -69,6 +72,7 @@ class Manzana implements LoggerAwareInterface
     /**
      * @throws RuntimeException
      * @throws ManzanaPromocodeUnavailableException
+     * @throws ArgumentOutOfRangeException
      */
     public function calculate()
     {
@@ -91,8 +95,9 @@ class Manzana implements LoggerAwareInterface
             } else {
                 $response = $this->manzanaPosService->processCheque($request);
             }
+
+            $this->recalculateBasketFromResponse($basket, $response);
         } catch (ExecuteException $e) {
-            dump($e);
             $this->log()->error(
                 \sprintf(
                     'Manzana error: %s',
@@ -100,13 +105,13 @@ class Manzana implements LoggerAwareInterface
                 )
             );
         }
-
-        $this->recalculateBasketFromResponse($basket, $response);
     }
 
     /**
      * @param Basket $basket
      * @param SoftChequeResponse $response
+     *
+     * @throws ArgumentOutOfRangeException
      */
     public function recalculateBasketFromResponse(Basket $basket, SoftChequeResponse $response): void {
         $manzanaItems = $response->getItems();
@@ -115,8 +120,19 @@ class Manzana implements LoggerAwareInterface
          * @var BasketItem $item
          */
         foreach ($basket as $item) {
-            $itemXmlId = \preg_replace('~^(.*#)~', '', $item->getField('PRODUCT_XML_ID'));
-            dump($manzanaItems, $itemXmlId);die;
+            $itemXmlId = (int)\preg_replace('~^(.*#)~', '', $item->getField('PRODUCT_XML_ID'));
+
+            $manzanaItems->map(function (ChequePosition $position) use ($itemXmlId, $item) {
+                if ($position->getArticleId() === $itemXmlId) {
+                    $price = $position->getSummDiscounted() / $position->getQuantity();
+
+                    /** @noinspection PhpInternalEntityUsedInspection */
+                    $item->setFieldsNoDemand([
+                        'PRICE' => $price,
+                        'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
+                    ]);
+                }
+            });
         }
     }
 
@@ -127,13 +143,21 @@ class Manzana implements LoggerAwareInterface
      * @throws ManzanaPromocodeUnavailableException
      */
     public function checkPromocodeByResponse(SoftChequeResponse $response, string $promocode) {
-        dump([$response->getCoupons(), $promocode, $response]);
+        $applied = false;
 
-        throw new ManzanaPromocodeUnavailableException(
-            \sprintf(
-                'Promocode %s is not found or unavailable in current context',
-                $this->promocode
-            )
-        );
+        if ($response->getCoupons()) {
+            $applied = $response->getCoupons()->filter(function (Coupon $coupon) use ($promocode) {
+                return $coupon->isApplied() && $coupon->getNumber() === $promocode;
+            })->count() > 0;
+        }
+
+        if (!$applied) {
+            throw new ManzanaPromocodeUnavailableException(
+                \sprintf(
+                    'Promocode %s is not found or unavailable in current context',
+                    $this->promocode
+                )
+            );
+        }
     }
 }
