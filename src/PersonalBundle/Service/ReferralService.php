@@ -98,9 +98,9 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @return ArrayCollection|Referral[]
+     * @return array
      */
-    public function getCurUserReferrals(PageNavigation $nav = null): ArrayCollection
+    public function getCurUserReferrals(PageNavigation $nav = null): array
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -142,7 +142,7 @@ class ReferralService
             $this->referralRepository->clearNav();
         }
 
-        [, $haveAdd] = $this->setDataByManzana($curUser, $referrals);
+        [, $haveAdd, $referrals] = $this->setDataByManzana($curUser, $referrals);
 
         return [$referrals, $haveAdd];
     }
@@ -360,6 +360,7 @@ class ReferralService
                 $arCards[$item->getCard()] = $key;
             }
         }
+        $referralsList = $referrals->toArray();
 
         $manzanaReferrals = [];
         try {
@@ -437,7 +438,7 @@ class ReferralService
                     }
                     /** @var Referral $referral */
                     else {
-                        $referral =& $referrals[$arCards[$item->cardNumber]];
+                        $referral =& $referralsList[$arCards[$item->cardNumber]];
                         if ($referral instanceof Referral) {
                             $referral->setBonus((float)$item->sumReferralBonus);
                             $lastModerate = $referral->isModerate();
@@ -456,7 +457,8 @@ class ReferralService
                 unset($referral);
             }
         }
-        return [true, $haveAdd];
+        $referrals = new ArrayCollection($referralsList);
+        return [true, $haveAdd, $referrals];
     }
 
     /**
