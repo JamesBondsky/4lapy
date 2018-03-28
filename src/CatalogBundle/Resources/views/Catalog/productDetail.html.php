@@ -5,24 +5,35 @@
  */
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
+use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\HighloadHelper;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+
+$logger = LoggerFactory::create('productDetail');
 
 global $APPLICATION;
 
 $offerId = $productDetailRequest->getOfferId();
+$logger->info('Итем - '.$logger->info('Компонент ').' оффер - '.$offerId);
+
 /** @var Product $product */
 $product = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.element.detail',
@@ -35,15 +46,34 @@ $product = $APPLICATION->IncludeComponent(
     false,
     ['HIDE_ICONS' => 'Y']
 );
-
-/** @var Offer $offer */
-if (empty($offerId)) {
-    $offer   = $product->getOffers()->first();
-    $offerId = $offer->getId();
+if(!($product instanceof Product)){
+    $logger->error('Нет итема');
+    /** прерываем если вернулось непонятно что */
+    return;
 }
-if (!($offer instanceof Offer)) {
-    $offerQuery = new OfferQuery();
-    $offer      = $offerQuery->withFilter(['=ID' => $offerId])->exec()->first();
+
+$hasOffer = false;
+$offer = null;
+\CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
+/** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+try {
+    $catalogElementDetailClass = new CatalogElementDetailComponent();
+    try {
+        $offer = $catalogElementDetailClass->getCurrentOffer($product, $offerId);
+        $hasOffer = true;
+    } catch (LoaderException|NotSupportedException|ObjectNotFoundException $e) {
+        $logger->error('ошибка при получении оффера');
+        /** ошибки быть не должно */
+    }
+} catch (SystemException|\RuntimeException|ServiceNotFoundException $e) {
+    $logger->error('ошибка при загрузке класса компонента');
+    /** ошибки быть не должно, так как компонент отрабатывает выше */
+    return;
+}
+if(!$hasOffer){
+    /** нет оффера что-то пошло не так */
+    $logger->error('Нет оффера');
+    return;
 }
 ?>
     <div class="b-product-card">
@@ -58,6 +88,8 @@ if (!($offer instanceof Offer)) {
                 false,
                 ['HIDE_ICONS' => 'Y']
             );
+
+            $logger->info('Нлебные крошки подключены');
             ?>
             <div class="b-product-card__top">
                 <div class="b-product-card__title-product">
@@ -79,6 +111,7 @@ if (!($offer instanceof Offer)) {
                         </div>
                     </div>
                 </div>
+                <?php $logger->info('подключен топ итема');?>
                 <div class="b-product-card__product">
                     <div class="b-product-card__permutation-weight js-weight-tablet"></div>
                     <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
@@ -90,7 +123,7 @@ if (!($offer instanceof Offer)) {
                         ?>
                     </div>
                 </div>
-                
+                <?php $logger->info('подключена детальная информация итема');?>
                 <?php
                 /**
                  * @todo implement and remove - это набор
@@ -144,10 +177,12 @@ if (!($offer instanceof Offer)) {
                             <?php }?>
                         </ul>
                     </div>
+                    <?php $logger->info('подключены заголовки итемов');?>
                     <div class="b-tab-content">
                         <?php
                         $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
-                        
+                        $logger->info('подключено описание');
+
                         if ($product->getComposition()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
                                 <div class="b-description-tab b-description-tab--full">
@@ -158,7 +193,8 @@ if (!($offer instanceof Offer)) {
                                 </div>
                             </div>
                         <?php }
-                        
+                        $logger->info('подключена композиция');
+
                         if ($product->getNormsOfUse()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
                                 <div class="b-description-tab b-description-tab--full">
@@ -168,7 +204,8 @@ if (!($offer instanceof Offer)) {
                                 </div>
                             </div>
                         <?php }
-                        
+                        $logger->info('подключены рекомендации');
+
                         /** @noinspection PhpUnhandledExceptionInspection */
                         $APPLICATION->IncludeComponent(
                             'fourpaws:comments',
@@ -184,6 +221,9 @@ if (!($offer instanceof Offer)) {
                             false,
                             ['HIDE_ICONS' => 'Y']
                         );
+
+                        $logger->info('подключены комментарии');
+
                         ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:city.delivery.info',
@@ -193,7 +233,8 @@ if (!($offer instanceof Offer)) {
                             ],
                             false,
                             ['HIDE_ICONS' => 'Y']
-                        ) ?>
+                        );
+                        $logger->info('подключена доставка');?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:catalog.shop.available',
                             'catalog.detail.tab',
@@ -203,8 +244,9 @@ if (!($offer instanceof Offer)) {
                             ],
                             false,
                             ['HIDE_ICONS' => 'Y']
-                        ); ?>
-                        <?php if($offer->isShare()){ ?>
+                        );
+                        $logger->info('подключено наличие в магазинах');?>
+                        <?php if($offer->isShare()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="shares">
                                 <?php /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) {?>
@@ -284,7 +326,8 @@ if (!($offer instanceof Offer)) {
                                     );?>
                                 <?php }?>
                             </div>
-                        <?php }?>
+                        <?php }
+                        $logger->info('подключены акции');?>
                     </div>
                 </div>
             </div>
@@ -309,6 +352,8 @@ $APPLICATION->IncludeComponent(
     ]
 );
 
+$logger->info('подключены преимущества');
+
 /**
  * Похожие товары
  */
@@ -323,6 +368,9 @@ $APPLICATION->IncludeFile(
         'MODE'        => 'php',
     ]
 );
+
+$logger->info('подключены походие товары');
+$logger->info('---Конец');
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 die();
