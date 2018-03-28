@@ -47,7 +47,7 @@ class FoodSelectionController extends Controller
      */
     public function beginAction(Request $request): JsonResponse
     {
-        $values = $request->request->all();
+        $values = $request->query->all();
         \TrimArr($values);
         foreach ($values as $key => $val) {
             if ((int)$val <= 0) {
@@ -108,7 +108,7 @@ class FoodSelectionController extends Controller
      */
     public function requiredAction(Request $request): JsonResponse
     {
-        $values = $request->request->all();
+        $values = $request->query->all();
         \TrimArr($values);
         foreach ($values as $key => $val) {
             if ((int)$val <= 0) {
@@ -138,6 +138,7 @@ class FoodSelectionController extends Controller
             }
         }
 
+        $full_fields = true;
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
@@ -189,7 +190,7 @@ class FoodSelectionController extends Controller
      */
     public function notRequiredAction(Request $request): JsonResponse
     {
-        $values = $request->request->all();
+        $values = $request->query->all();
         \TrimArr($values);
         foreach ($values as $key => $val) {
             if ((int)$val <= 0) {
