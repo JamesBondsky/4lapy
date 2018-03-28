@@ -152,10 +152,20 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 $tagCache->startTagCache($this->getPath());
             }
             try {
-                $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $nav);
+                /** @var ArrayCollection $items
+                 * @var bool $redirect*/
+                [$items, $redirect] = $this->referralService->getCurUserReferrals($nav);
+                if($redirect){
+                    $tagCache->abortTagCache();
+                    $cache->abortDataCache();
+                    LocalRedirect($request->getRequestUri());
+                    die();
+                }
+                $this->arResult['ITEMS'] = $items;
             } catch (NotAuthorizedException $e) {
                 define('NEED_AUTH', true);
-
+                $tagCache->abortTagCache();
+                $cache->abortDataCache();
                 return null;
             }
 

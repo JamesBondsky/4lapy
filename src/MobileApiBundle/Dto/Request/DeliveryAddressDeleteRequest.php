@@ -1,19 +1,24 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class DeliveryAddressDeleteRequest
+class DeliveryAddressDeleteRequest implements PostRequest, SimpleUnserializeRequest
 {
     /**
      * @var int
      * @Assert\NotBlank()
+     * @Assert\GreaterThan("0")
      * @Serializer\SerializedName("id")
      * @Serializer\Type("string")
      */
-    protected $id = '';
+    protected $id = 0;
 
     /**
      * @return int

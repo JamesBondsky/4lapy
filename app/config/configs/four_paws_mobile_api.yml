@@ -21,6 +21,10 @@ four_paws_mobile_api:
       code: 9
       status_code: 200
       message: 'Пользователь не авторизован'
+    FourPaws\MobileApiBundle\Exception\DeliveryAddressAddError:
+      code: 20
+      message: 'Ошибка при добавлении профиля доставки'
+      status_code: 200
     FourPaws\MobileApiBundle\Exception\NoneMetroInCityException:
       code: 44
       message: 'Данные о станциях метро для этого города отсутствуют'
@@ -32,4 +36,11 @@ four_paws_mobile_api:
     FourPaws\MobileApiBundle\Exception\InvalidSignRequestException:
       code: 401
       status_code: 401
+    FourPaws\MobileApiBundle\Exception\HackerException:
+      code: 401
+      status_code: 401
+    FourPaws\MobileApiBundle\Exception\DeliveryAddressUpdateError:
+      code: 1021
+      message: 'Ошибка при обновления профиля доставки'
+      status_code: 200
 

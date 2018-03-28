@@ -2,6 +2,7 @@
 
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Decorators\SvgDecorator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -81,7 +82,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
             </label>
         </div>
         <div class="fleas-protection-block__form--item">
-            <button class="b-button js-add-question" data-url="/ajax/form/faq/add/" data-method="post">Отпавить</button>
+            <button class="b-button js-add-question">Отпавить</button>
         </div>
         <div class="fleas-protection-block__form--info">Так же Вы можете задать вопрос, позвонив по бесплатному
             номеру Горячей линии:<span>8 (800) 770-00-22</span></div>
@@ -89,7 +90,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
     <div class="b-message-block b-hidden">
         <div class="b-message-block__icon">
             <span class="b-icon b-icon--feedback">
-                <?=new \FourPaws\Decorators\SvgDecorator('icon-check-color', 25,25)?>
+                <?=new SvgDecorator('icon-check-color', 25,25)?>
             </span>
         </div>
         <p class="b-message-block__text-thanks"></p>

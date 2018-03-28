@@ -6,13 +6,16 @@
 
 namespace FourPaws\MobileApiBundle\ParamConverter;
 
+use FourPaws\MobileApiBundle\Dto\Request\CreateRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GetRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostRequest;
 use FourPaws\MobileApiBundle\Dto\Request\SimpleUnserializeRequest;
+use FourPaws\MobileApiBundle\Dto\Request\UpdateRequest;
 use FourPaws\MobileApiBundle\Exception\SystemException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Services\ErrorsFormatterService;
 use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\DeserializationContext;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,8 +23,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SimpleUnserializeRequestConverter implements ParamConverterInterface
 {
-    const SYMFONY_ERRORS = 'symfonyErrors';
-    const API_ERRORS = 'apiErrors';
+    public const SYMFONY_ERRORS = 'symfonyErrors';
+    public const API_ERRORS = 'apiErrors';
 
     /**
      * @var ArrayTransformerInterface
@@ -64,38 +67,12 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
             return false;
         }
 
-        $request->attributes->has($configuration->getName());
 
-        $params = [];
-        if (is_a($configuration->getClass(), GetRequest::class, true)) {
-            $params = array_merge($params, $request->query->all());
-        }
-        if (is_a($configuration->getClass(), PostRequest::class, true)) {
-            $params = array_merge($params, $request->request->all());
-        }
+        $groups = $this->getGroups($configuration);
+        $params = $this->getParams($request, $configuration);
+        $object = $this->convertToObject($configuration, $params, $groups);
 
-        $object = $this->arrayTransformer->fromArray($params, $configuration->getClass());
-        if (!$object) {
-            throw new SystemException('Cant converte request to object');
-        }
-
-        $notThrowException = $configuration->getOptions()['not_throw_exception'] ?? false;
-
-        $validationResult = $this->validator->validate($object);
-        if (!$notThrowException && $validationResult->count() > 0) {
-            throw new ValidationException('Cant converte request to object');
-        }
-
-        if (!$request->attributes->has(static::API_ERRORS)) {
-            $request->attributes->set(
-                static::API_ERRORS,
-                $this->errorsFormatterService->covertList($validationResult)
-            );
-        }
-
-        if (!$request->attributes->has(static::SYMFONY_ERRORS)) {
-            $request->attributes->set(static::SYMFONY_ERRORS, $validationResult);
-        }
+        $this->processValidation($request, $configuration, $object, $groups);
 
         $request->attributes->set($configuration->getName(), $object);
 
@@ -114,5 +91,86 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
         return
             $configuration->getClass()
             && is_a($configuration->getClass(), SimpleUnserializeRequest::class, true);
+    }
+
+    /**
+     * @param Request        $request
+     * @param ParamConverter $configuration
+     * @return array
+     */
+    protected function getParams(Request $request, ParamConverter $configuration): array
+    {
+        $params = [];
+        if (is_a($configuration->getClass(), GetRequest::class, true)) {
+            $params = array_merge($params, $request->query->all());
+        }
+        if (is_a($configuration->getClass(), PostRequest::class, true)) {
+            $params = array_merge($params, $request->request->all());
+        }
+        return $params;
+    }
+
+    /**
+     * @param ParamConverter $configuration
+     * @return array
+     */
+    protected function getGroups(ParamConverter $configuration): array
+    {
+        $groups = ['Default'];
+        if (is_a($configuration->getClass(), CreateRequest::class, true)) {
+            $groups[] = 'create';
+        }
+        if (is_a($configuration->getClass(), UpdateRequest::class, true)) {
+            $groups[] = 'update';
+        }
+        return $groups;
+    }
+
+    /**
+     * @param Request        $request
+     * @param ParamConverter $configuration
+     * @param                $object
+     * @param                $groups
+     * @throws ValidationException
+     */
+    protected function processValidation(Request $request, ParamConverter $configuration, $object, $groups): void
+    {
+        $notThrowException = $configuration->getOptions()['not_throw_exception'] ?? false;
+
+        $validationResult = $this->validator->validate($object, null, $groups);
+        if (!$notThrowException && $validationResult->count() > 0) {
+            throw new ValidationException('Cant converte request to object');
+        }
+
+        if (!$request->attributes->has(static::API_ERRORS)) {
+            $request->attributes->set(
+                static::API_ERRORS,
+                $this->errorsFormatterService->covertList($validationResult)
+            );
+        }
+
+        if (!$request->attributes->has(static::SYMFONY_ERRORS)) {
+            $request->attributes->set(static::SYMFONY_ERRORS, $validationResult);
+        }
+    }
+
+    /**
+     * @param ParamConverter $configuration
+     * @param                $params
+     * @param                $groups
+     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
+     * @return mixed
+     */
+    protected function convertToObject(ParamConverter $configuration, $params, $groups)
+    {
+        $object = $this->arrayTransformer->fromArray(
+            $params,
+            $configuration->getClass(),
+            DeserializationContext::create()->setGroups($groups)
+        );
+        if (!$object) {
+            throw new SystemException('Cant converte request to object');
+        }
+        return $object;
     }
 }

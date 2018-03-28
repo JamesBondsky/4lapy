@@ -14,8 +14,8 @@ use Bitrix\Main\Loader;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
@@ -126,7 +126,7 @@ class Calculator extends DPD
                             ->setTo($interval[1])
         );
 
-        DeliveryService::$dpdData[$profileCode] = [
+        CalculationResultFactory::$dpdData[$profileCode] = [
             'TERMINALS'    => $terminals,
             'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],

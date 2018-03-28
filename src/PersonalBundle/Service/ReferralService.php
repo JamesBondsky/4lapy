@@ -85,7 +85,6 @@ class ReferralService
     }
 
     /**
-     * @param bool                $redirectIfAdd
      * @param PageNavigation|null $nav
      *
      * @throws EmptyEntityClass
@@ -99,9 +98,9 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @return ArrayCollection|Referral[]
+     * @return array
      */
-    public function getCurUserReferrals(bool $redirectIfAdd = false, PageNavigation &$nav = null): ArrayCollection
+    public function getCurUserReferrals(PageNavigation $nav = null): array
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -138,14 +137,14 @@ class ReferralService
         } else {
             $referrals = $this->referralRepository->findByCurUser();
         }
-        if ($nav instanceof PageNavigation) {
+        if ($nav !== null) {
             $nav = $this->referralRepository->getNav();
             $this->referralRepository->clearNav();
         }
 
-        $this->setDataByManzana($curUser, $referrals, $request, $redirectIfAdd);
+        [, $haveAdd, $referrals] = $this->setDataByManzana($curUser, $referrals);
 
-        return $referrals;
+        return [$referrals, $haveAdd];
     }
 
     /**
@@ -196,6 +195,7 @@ class ReferralService
         if ($res && $updateManzana) {
             $referralClient = $this->getClientReferral($entity);
             if (!empty($referralClient->contactId) && !empty($referralClient->cardNumber)) {
+                /** @todo отправка через очередь информации */
                 $this->manzanaService->addReferralByBonusCard($referralClient);
             }
             /** @var User $user */
@@ -343,26 +343,16 @@ class ReferralService
     /**
      * @param User            $curUser
      * @param ArrayCollection $referrals
-     * @param HttpRequest     $request
-     * @param bool            $redirectIfAdd
      *
-     * @return bool
-     * @throws EmptyEntityClass
-     * @throws ServiceNotFoundException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
+     * @return array
      * @throws ApplicationCreateException
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceCircularReferenceException
+     * @throws EmptyEntityClass
+     * @throws \Exception
      */
     private function setDataByManzana(
         User $curUser,
-        ArrayCollection $referrals,
-        HttpRequest $request,
-        bool $redirectIfAdd
-    ): bool {
+        ArrayCollection $referrals
+    ): array {
         $arCards = [];
         if (!$referrals->isEmpty()) {
             /** @var Referral $item */
@@ -370,6 +360,7 @@ class ReferralService
                 $arCards[$item->getCard()] = $key;
             }
         }
+        $referralsList = $referrals->toArray();
 
         $manzanaReferrals = [];
         try {
@@ -378,11 +369,11 @@ class ReferralService
             $this->logger->critical('Ошибка манзаны - '.$e->getMessage());
         } catch (NotAuthorizedException $e) {
             /** прерываем выполнение если неавторизованы */
-            return false;
+            return [false,false];
         }
+        $haveAdd = false;
         if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
             /** @var ManzanaReferal $item */
-            $haveAdd = false;
             foreach ($manzanaReferrals as $item) {
                 if (!empty($item->cardNumber)) {
                     if (!array_key_exists($item->cardNumber, $arCards)) {
@@ -433,9 +424,7 @@ class ReferralService
                                 );
                                 try {
                                     $this->add($data);
-                                    if (!$haveAdd) {
-                                        $haveAdd = true;
-                                    }
+                                    $haveAdd = true;
                                 } catch (BitrixRuntimeException $e) {
                                     $this->logger->error('Ошибка добавления реферрала - '.$e->getMessage());
                                 } catch (\Exception $e) {
@@ -449,7 +438,7 @@ class ReferralService
                     }
                     /** @var Referral $referral */
                     else {
-                        $referral =& $referrals[$arCards[$item->cardNumber]];
+                        $referral =& $referralsList[$arCards[$item->cardNumber]];
                         if ($referral instanceof Referral) {
                             $referral->setBonus((float)$item->sumReferralBonus);
                             $lastModerate = $referral->isModerate();
@@ -466,14 +455,10 @@ class ReferralService
                     }
                 }
                 unset($referral);
-                if ($haveAdd && $redirectIfAdd) {
-                    /** обновляем если добавилась инфа, чтобы была актуальная постраничка, табы и поиск */
-                    LocalRedirect($request->getRequestUri());
-                    die();
-                }
             }
         }
-        return true;
+        $referrals = new ArrayCollection($referralsList);
+        return [true, $haveAdd, $referrals];
     }
 
     /**

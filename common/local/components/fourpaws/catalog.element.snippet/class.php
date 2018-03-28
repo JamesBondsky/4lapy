@@ -80,7 +80,7 @@ class CatalogElementSnippet extends CBitrixComponent
                 /** @var Product $product */
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
 
-                $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getOffer($product);
+                $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
 
                 TaggedCacheHelper::addManagedCacheTags([
                     'catalog:offer:' . $currentOffer->getId(),
@@ -114,7 +114,7 @@ class CatalogElementSnippet extends CBitrixComponent
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      */
-    protected function getOffer(Product $product)
+    protected function getCurrentOffer(Product $product)
     {
         if (!empty($this->arParams['CURRENT_OFFER']) && $this->arParams['CURRENT_OFFER'] instanceof Offer) {
             $currentOffer = $this->arParams['CURRENT_OFFER'];

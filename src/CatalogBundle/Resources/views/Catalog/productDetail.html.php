@@ -5,24 +5,34 @@
  */
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
+use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\HighloadHelper;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+
+$logger = LoggerFactory::create('productDetail');
 
 global $APPLICATION;
 
 $offerId = $productDetailRequest->getOfferId();
+
 /** @var Product $product */
 $product = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.element.detail',
@@ -35,15 +45,34 @@ $product = $APPLICATION->IncludeComponent(
     false,
     ['HIDE_ICONS' => 'Y']
 );
-
-/** @var Offer $offer */
-if (empty($offerId)) {
-    $offer   = $product->getOffers()->first();
-    $offerId = $offer->getId();
+if(!($product instanceof Product)){
+    $logger->error('Нет итема');
+    /** прерываем если вернулось непонятно что */
+    return;
 }
-if (!($offer instanceof Offer)) {
-    $offerQuery = new OfferQuery();
-    $offer      = $offerQuery->withFilter(['=ID' => $offerId])->exec()->first();
+
+$hasOffer = false;
+$offer = null;
+\CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
+/** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+try {
+    $catalogElementDetailClass = new CatalogElementDetailComponent();
+    try {
+        $offer = $catalogElementDetailClass->getCurrentOffer($product, $offerId);
+        $hasOffer = true;
+    } catch (LoaderException|NotSupportedException|ObjectNotFoundException $e) {
+        $logger->error('ошибка при получении оффера');
+        /** ошибки быть не должно */
+    }
+} catch (SystemException|\RuntimeException|ServiceNotFoundException $e) {
+    $logger->error('ошибка при загрузке класса компонента');
+    /** ошибки быть не должно, так как компонент отрабатывает выше */
+    return;
+}
+if(!$hasOffer){
+    /** нет оффера что-то пошло не так */
+    $logger->error('Нет оффера');
+    return;
 }
 ?>
     <div class="b-product-card">
@@ -57,8 +86,7 @@ if (!($offer instanceof Offer)) {
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
-            );
-            ?>
+            ); ?>
             <div class="b-product-card__top">
                 <div class="b-product-card__title-product">
                     <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>
@@ -90,7 +118,6 @@ if (!($offer instanceof Offer)) {
                         ?>
                     </div>
                 </div>
-                
                 <?php
                 /**
                  * @todo implement and remove - это набор
@@ -104,7 +131,7 @@ if (!($offer instanceof Offer)) {
                         <ul class="b-tab-title__list">
                             <?php
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER);
-                            
+
                             if ($product->getComposition()->getText()) { ?>
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
@@ -113,7 +140,7 @@ if (!($offer instanceof Offer)) {
                                                 class="b-tab-title__text">Состав</span></a>
                                 </li>
                             <?php }
-                            
+
                             if ($product->getNormsOfUse()->getText()) { ?>
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
@@ -121,7 +148,7 @@ if (!($offer instanceof Offer)) {
                                        data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
                                 </li>
                             <?php }
-                            
+
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW);
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
                             
@@ -141,13 +168,13 @@ if (!($offer instanceof Offer)) {
                                        href="javascript:void(0);" title="Акция"
                                        data-tab="shares"><span class="b-tab-title__text">Акция</span></a>
                                 </li>
-                            <?php }?>
+                            <?php } ?>
                         </ul>
                     </div>
                     <div class="b-tab-content">
                         <?php
                         $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
-                        
+
                         if ($product->getComposition()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
                                 <div class="b-description-tab b-description-tab--full">
@@ -158,7 +185,7 @@ if (!($offer instanceof Offer)) {
                                 </div>
                             </div>
                         <?php }
-                        
+
                         if ($product->getNormsOfUse()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
                                 <div class="b-description-tab b-description-tab--full">
@@ -168,7 +195,7 @@ if (!($offer instanceof Offer)) {
                                 </div>
                             </div>
                         <?php }
-                        
+
                         /** @noinspection PhpUnhandledExceptionInspection */
                         $APPLICATION->IncludeComponent(
                             'fourpaws:comments',
@@ -183,8 +210,7 @@ if (!($offer instanceof Offer)) {
                             ],
                             false,
                             ['HIDE_ICONS' => 'Y']
-                        );
-                        ?>
+                        ); ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:city.delivery.info',
                             'catalog.detail.tab',
@@ -193,7 +219,7 @@ if (!($offer instanceof Offer)) {
                             ],
                             false,
                             ['HIDE_ICONS' => 'Y']
-                        ) ?>
+                        ); ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:catalog.shop.available',
                             'catalog.detail.tab',
@@ -204,7 +230,7 @@ if (!($offer instanceof Offer)) {
                             false,
                             ['HIDE_ICONS' => 'Y']
                         ); ?>
-                        <?php if($offer->isShare()){ ?>
+                        <?php if($offer->isShare()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="shares">
                                 <?php /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) {?>
@@ -284,7 +310,7 @@ if (!($offer instanceof Offer)) {
                                     );?>
                                 <?php }?>
                             </div>
-                        <?php }?>
+                        <?php } ?>
                     </div>
                 </div>
             </div>

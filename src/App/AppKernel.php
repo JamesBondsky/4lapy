@@ -10,6 +10,7 @@ use Circle\RestClientBundle\CircleRestClientBundle;
 use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
+use FourPaws\BitrixOrmBundle\FourPawsBitrixOrmBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
@@ -99,6 +100,7 @@ class AppKernel extends Kernel
             new FourPawsPersonalBundle(),
             new FourPawsFoodSelectionBundle(),
             new FourPawsLocationBundle(),
+            new FourPawsBitrixOrmBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {

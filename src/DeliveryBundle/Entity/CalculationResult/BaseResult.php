@@ -93,44 +93,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $shipmentResult;
 
     /**
-     * @param CalculationResult|null $result
-     *
-     * @return CalculationResultInterface
-     */
-    public static function fromBitrixResult(CalculationResult $result = null): CalculationResultInterface
-    {
-        $instance = new static();
-        if ($result) {
-            $instance->setDeliveryPrice($result->getDeliveryPrice());
-            $instance->setExtraServicesPrice($result->getExtraServicesPrice());
-            $instance->setDescription($result->getDescription());
-            $instance->setPacksCount($result->getPacksCount());
-
-            if ($result->isNextStep()) {
-                $instance->setAsNextStep();
-            }
-
-            $instance->setTmpData($result->getTmpData());
-            $instance->setData($result->getData());
-
-            $instance->setPeriodDescription($result->getPeriodDescription());
-            $instance->setPeriodFrom($result->getPeriodFrom());
-            $instance->setPeriodType($result->getPeriodType());
-            $instance->setPeriodTo($result->getPeriodTo());
-
-            if ($result->getErrors()) {
-                $instance->addErrors($result->getErrors());
-            }
-
-            if ($result->getWarnings()) {
-                $instance->addWarnings($result->getWarnings());
-            }
-        }
-
-        return $instance;
-    }
-
-    /**
      * @return \DateTime
      */
     public function getCurrentDate(): \DateTime
@@ -407,7 +369,12 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function getSelectedStore(): Store
     {
         if (!$this->selectedStore instanceof Store) {
-            $this->setSelectedStore($this->getStockResult()->getStores()->first());
+            try {
+                $this->setSelectedStore($this->getStockResult()->getStores()->first());
+            } catch (NotFoundException $e) {
+                $this->addError(new Error('Нет складов с доступными товарами'));
+                $this->setSelectedStore($this->getStockResult()->getStores(false)->first());
+            }
         }
 
         return $this->selectedStore;
