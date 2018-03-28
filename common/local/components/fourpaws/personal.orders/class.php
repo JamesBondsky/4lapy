@@ -138,9 +138,10 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             return null;
         }
 
-        $cache = Cache::createInstance();
+        $cache = $instance->getCache();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $userId]))
+            serialize(['userId' => $userId]),
+            $this->getCachePath() ?: $this->getPath())
         ) {
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
@@ -148,7 +149,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
+                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
             }
             try {
                 $manzanaOrders = $this->orderService->getManzanaOrders();

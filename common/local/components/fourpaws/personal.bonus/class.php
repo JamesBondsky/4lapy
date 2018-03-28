@@ -107,14 +107,14 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $this->currentUserProvider->refreshUserBonusPercent($user);
 
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getPath())) {
+            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getCachePath() ?: $this->getPath())) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
+                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
             }
             try {
                 $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);

@@ -4,7 +4,7 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -29,7 +29,6 @@ class PickupResult extends BaseResult implements PickupResultInterface
      * @return int
      * @throws ArgumentException
      * @throws ApplicationCreateException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      */
     public function getPeriodTo(): int
@@ -39,7 +38,6 @@ class PickupResult extends BaseResult implements PickupResultInterface
 
     /**
      * @return Store
-     * @throws NotFoundException
      */
     public function getSelectedStore(): Store
     {
@@ -52,7 +50,6 @@ class PickupResult extends BaseResult implements PickupResultInterface
 
     /**
      * @return StoreCollection
-     * @throws NotFoundException
      */
     public function getBestShops(): StoreCollection
     {
@@ -68,7 +65,6 @@ class PickupResult extends BaseResult implements PickupResultInterface
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      */
     public function isSuccess($internalCall = false)
@@ -77,12 +73,19 @@ class PickupResult extends BaseResult implements PickupResultInterface
     }
 
     /**
+     * @return StockResultCollection
+     */
+    public function getStockResult(): StockResultCollection
+    {
+        return $this->stockResult->filterByStore($this->getSelectedStore());
+    }
+
+    /**
      * @return StoreCollection
-     * @throws NotFoundException
      */
     protected function doGetBestShops(): StoreCollection
     {
-        $shops = $this->getStockResult()->getStores(false);
+        $shops = $this->stockResult->getStores();
         $storeData = [];
         /** @var Store $shop */
         foreach ($shops as $shop) {
@@ -102,9 +105,8 @@ class PickupResult extends BaseResult implements PickupResultInterface
          * @param Store $shop1
          * @param Store $shop2
          * @return int
-         * @throws NotFoundException
-         * @throws \Bitrix\Main\ArgumentException
-         * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+         * @throws ArgumentException
+         * @throws ApplicationCreateException
          * @throws StoreNotFoundException
          */
         $sortFunc = function (Store $shop1, Store $shop2) use ($storeData) {
@@ -141,11 +143,5 @@ class PickupResult extends BaseResult implements PickupResultInterface
         $iterator->uasort($sortFunc);
 
         return new StoreCollection(iterator_to_array($iterator));
-    }
-
-    protected function resetResult(): void
-    {
-        $this->bestShops = null;
-        parent::resetResult();
     }
 }

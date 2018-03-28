@@ -1,15 +1,9 @@
-<?
+<?php
+
 $aMenuLinks = Array(
 	Array(
 		"Магазины", 
 		"/company/shops/", 
-		Array(), 
-		Array(), 
-		"" 
-	),
-	Array(
-		"Новости", 
-		"/company/news/", 
 		Array(), 
 		Array(), 
 		"" 
