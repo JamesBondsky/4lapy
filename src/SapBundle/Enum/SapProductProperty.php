@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Enum;
 
 /**
@@ -107,7 +111,7 @@ final class SapProductProperty
      * Содержит вкус корма.
      * Множественный выбор значений из справочника «Вкус».
      */
-    const FLAVOUR = 'FLAVOUR ';
+    const FLAVOUR = 'FLAVOUR';
 
     /**
      * Содержит особенности ингредиентов.
