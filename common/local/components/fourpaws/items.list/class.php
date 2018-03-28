@@ -16,6 +16,7 @@ use Bitrix\Iblock\Component\Tools;
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
 use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
 use Bitrix\Main\Data\Cache;
@@ -55,7 +56,7 @@ class CItemsListComponent extends CBitrixComponent
         if (empty($params['IBLOCK_ID'])) {
             /**Получение инфоблоков если не установлены*/
 
-            $cache = Cache::createInstance();
+            $cache = Application::getInstance()->getCache();
             if ($cache->initCache(
                 $params['CACHE_TIME'],
                 serialize(
@@ -64,7 +65,7 @@ class CItemsListComponent extends CBitrixComponent
                         'TYPE'        => 'full_iblocks',
                     ]
                 ),
-                'items_list'
+                $this->getCachePath() ?: $this->getPath()
             )) {
                 $vars = $cache->getVars();
                 $params['IBLOCK_ID'] = $vars['IBLOCK_ID'];
