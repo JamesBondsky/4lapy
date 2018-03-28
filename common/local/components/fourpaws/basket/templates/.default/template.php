@@ -185,8 +185,7 @@ if ($arParams['IS_AJAX']) {
                         $component,
                         ['HIDE_ICONS' => 'Y']
                     ); ?>
-
-                    <p class="b-information-order__additional-info">От города доставки зависит наличие товаров и параметры доставки.</p>
+                    <p class="b-information-order__additional-info">От Вашего города зависит наличие товаров и параметры доставки.</p>
                     <?php $APPLICATION->IncludeComponent(
                         'fourpaws:city.delivery.info',
                         'basket.summary',

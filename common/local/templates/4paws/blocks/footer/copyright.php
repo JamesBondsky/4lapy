@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 } ?>
 <div class="b-copyright">
     <div class="b-copyright__copyright">
-        &copy; <?= (new DateTime())->format('Y') ?> Зоомагазин «Четыре лапы»
+        &copy; <?= (new DateTime())->format('Y') ?> Зоомагазин «Четыре Лапы»
     </div>
     <a class="b-copyright__link"
        href="/company/user-agreement/" title="Пользовательское соглашение">
