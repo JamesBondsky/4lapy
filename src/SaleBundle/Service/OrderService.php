@@ -435,9 +435,23 @@ class OrderService
          */
         $arrayStorage = $this->orderStorageService->storageToArray($storage);
 
+        $addressProperties = [
+            'STREET',
+            'HOUSE',
+            'BUILDING',
+            'APARTMENT',
+            'PORCH',
+            'FLOOR'
+        ];
+        $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery);
+
         /** @var PropertyValue $propertyValue */
         foreach ($propertyValueCollection as $propertyValue) {
             $code = $propertyValue->getProperty()['CODE'];
+            if ($skipAddressProperties && \in_array($code, $addressProperties, true)) {
+                continue;
+            }
+
             $key = 'PROPERTY_' . $code;
 
             $value = $arrayStorage[$key] ?? null;
