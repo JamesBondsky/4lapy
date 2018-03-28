@@ -101,7 +101,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isNews(): bool
     {
-        return $this->isPartitionDir('/company/news');
+        return $this->isPartitionDir('/services/news');
     }
 
     /**
@@ -109,7 +109,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListNews(): bool
     {
-        return $this->isDir('/company/news');
+        return $this->isDir('/services/news');
     }
 
     /**
@@ -189,7 +189,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isDetailNews(): bool
     {
-        return $this->isPartitionDir('/company/news');
+        return $this->isPartitionDir('/services/news');
     }
 
     /**

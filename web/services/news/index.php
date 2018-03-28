@@ -5,8 +5,8 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
-$APPLICATION->SetTitle('Новости');
-?>
+
+$APPLICATION->SetTitle('Новости'); ?>
 <?php $APPLICATION->IncludeComponent(
     'bitrix:news',
     'news',
@@ -89,7 +89,7 @@ $APPLICATION->SetTitle('Новости');
         'PAGER_TEMPLATE'                  => 'pagination',
         'PAGER_TITLE'                     => 'Новости',
         'PREVIEW_TRUNCATE_LEN'            => '100',
-        'SEF_FOLDER'                      => '/company/news/',
+        'SEF_FOLDER'                      => '/services/news/',
         'SEF_MODE'                        => 'Y',
         'SEF_URL_TEMPLATES'               => [
             'news'    => '',
