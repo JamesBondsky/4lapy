@@ -40,6 +40,7 @@ if (\is_array($alsoItems) && !empty($alsoItems)) { ?>
                     '',
                     [
                         'PRODUCT' => $product,
+                        'NOT_CATALOG_ITEM_CLASS' => 'Y'
                     ]
                 );
             } ?>
