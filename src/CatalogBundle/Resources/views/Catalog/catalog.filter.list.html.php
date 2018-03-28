@@ -9,9 +9,7 @@
 
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
-use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
-use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
@@ -30,28 +28,19 @@ foreach ($filters as $filter) {
                             type="text"
                             data-min="<?= $filter->getMinValue() ?>"
                             value="<?= $filter->getFromValue() ?: $filter->getMinValue() ?>"
-                            name="<?= $filter->getFromFilterCode() ?>" />
+                            name="<?= $filter->getFromFilterCode() ?>"/>
                     <span class="b-range__line-input">-</span>
                     <input
                             class="b-input__input-field b-input__input-field--price b-input__input-field--max js-price-max"
                             type="text"
                             data-max="<?= $filter->getMaxValue() ?>"
                             value="<?= $filter->getToValue() ?: $filter->getMaxValue() ?>"
-                            name="<?= $filter->getToFilterCode() ?>" />
+                            name="<?= $filter->getToFilterCode() ?>"/>
                 </div>
                 <div class="b-range__line js-slider-range"></div>
             </div>
         </div>
         <?php
-        continue;
-    }
-    if ($filter instanceof RangeFilterInterface) {
-        continue;
-    }
-    if ($filter instanceof ActionsFilter) {
-        continue;
-    }
-    if (!$filter->hasAvailableVariants()) {
         continue;
     }
     if ($filter instanceof FilterBase) {

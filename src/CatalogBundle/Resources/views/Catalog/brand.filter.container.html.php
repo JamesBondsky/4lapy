@@ -51,7 +51,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterCollection->getVisibleFilters()
+                    'filters' => $filterCollection->getFiltersToShow(),
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -80,24 +80,21 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts()
+                            'sorts' => $catalogRequest->getSorts(),
                         ]
                     ) ?>
                     <?php
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getVisibleFilters() as $filter) {
-                        if (!$filter->hasAvailableVariants()) {
-                            continue;
-                        }
+                    foreach ($filterCollection->getFiltersToShow() as $filter) {
                         if (!($filter instanceof ActionsFilter)) {
                             continue;
-                        }
-                        ?>
+                        } ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
+                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
+                            ?>
                                     <li class="b-filter-link-list__item">
                                         <label class="b-filter-link-list__label">
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -113,10 +110,12 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                             </a>
                                         </label>
                                     </li>
-                                <?php } ?>
+                                <?php
+                        } ?>
                             </ul>
                         </span>
-                    <?php } ?>
+                    <?php
+                    } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
                     <a class="b-link b-link--type active js-link-type-normal"
@@ -161,7 +160,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
             'SHOW_ALWAYS' => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE' => 'Y'
+            'AJAX_MODE' => 'Y',
         ],
         null,
         [
