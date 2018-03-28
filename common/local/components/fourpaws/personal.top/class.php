@@ -147,7 +147,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $this->arResult['PRODUCTS'] = [];
         $this->arResult['OFFERS']   = [];
         //кешируем выборку из манзаны и базы с первичной обработкой на 15 минут
-        $cache = Cache::createInstance();
+        $cache = $instance->getCache();
         if ($cache->initCache(
             $this->arParams['MANZANA_CACHE_TIME'],
             serialize(
@@ -156,7 +156,8 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                     'COUNT_ITEMS'          => $this->arParams['COUNT_ITEMS'],
                     'LIMIT_MANZANA_CHEQUE' => $this->arParams['LIMIT_MANZANA_CHEQUE'],
                 ]
-            )
+            ),
+            $this->getCachePath() ?: $this->getPath()
         )) {
             $vars              = $cache->getVars(); // достаем переменные из кеша
             $this->sortItems   = $vars['sortItems'];
@@ -167,7 +168,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
+                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
             }
             //получение данных из манзаны
             list($xmlIds, $allItems) = $this->getXmlIdsByManzana();
