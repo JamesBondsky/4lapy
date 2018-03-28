@@ -44,7 +44,8 @@ foreach ($basket->getBasketItems() as $basketItem) { ?>
 <?php }
 /** @var Product $product */
 $product = $arResult['PRODUCT'];
-$offers = $product->getOffers();
+/** перегружаем для актуальности - иначе будут данные из кеша - они могут быть устаревшие */
+$offers = $product->getOffers(true,true);
 /** @var Offer $offer */
 foreach ($offers as $offer) {
     /** установка цен, скидочных цен, акции, нет в наличии */ ?>

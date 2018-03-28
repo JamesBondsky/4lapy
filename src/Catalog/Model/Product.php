@@ -1784,14 +1784,15 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
      * @param bool $skipZeroPrice
+     * @param bool $reload
      * @return Collection
      * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      */
-    public function getOffers($skipZeroPrice = true): Collection
+    public function getOffers($skipZeroPrice = true, bool $reload = false): Collection
     {
-        if (null === $this->offers) {
+        if (null === $this->offers || $reload) {
             $offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
