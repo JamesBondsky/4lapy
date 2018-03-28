@@ -137,7 +137,8 @@ if(!$hasOffer){
                         <ul class="b-tab-title__list">
                             <?php
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER);
-                            
+                            $logger->info('подключен заголовок описания');
+
                             if ($product->getComposition()->getText()) { ?>
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
@@ -146,7 +147,8 @@ if(!$hasOffer){
                                                 class="b-tab-title__text">Состав</span></a>
                                 </li>
                             <?php }
-                            
+                            $logger->info('подключен заголовок состава');
+
                             if ($product->getNormsOfUse()->getText()) { ?>
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
@@ -154,9 +156,12 @@ if(!$hasOffer){
                                        data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
                                 </li>
                             <?php }
-                            
+                            $logger->info('подключен заголовок рекомендации по питанию');
+
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW);
+                            $logger->info('подключен заголовок рейтинга');
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
+                            $logger->info('подключен заголовок доставки');
                             
                             /** наличие меняется аяксом */?>
                             <li class="b-tab-title__item js-tab-item">
@@ -174,7 +179,8 @@ if(!$hasOffer){
                                        href="javascript:void(0);" title="Акция"
                                        data-tab="shares"><span class="b-tab-title__text">Акция</span></a>
                                 </li>
-                            <?php }?>
+                            <?php }
+                            $logger->info('подключен заголовок акции');?>
                         </ul>
                     </div>
                     <?php $logger->info('подключены заголовки итемов');?>
