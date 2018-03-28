@@ -6,20 +6,25 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Order;
+use Exception;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
-use FourPaws\External\ManzanaService;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\CleanerInterface;
-use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -27,6 +32,9 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class BasketService
@@ -35,51 +43,43 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 class BasketService
 {
     /** @var Basket */
-    private $basket = null;
-
+    private $basket;
     /** @var CurrentUserProviderInterface */
     private $currentUserProvider;
-
     /** @var OfferCollection */
-    private $offerCollection = null;
+    private $offerCollection;
     /** @var ManzanaPosService */
     private $manzanaPosService;
-    /** @var ManzanaService */
-    private $manzanaService;
+    /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
+    private $promocodeDiscount = 0.0;
+    private $firstDiscount = 0.0;
 
     /**
      * BasketService constructor.
      *
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param ManzanaPosService $manzanaPosService
-     * @param ManzanaService $manzanaService
      */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
-        ManzanaPosService $manzanaPosService,
-        ManzanaService $manzanaService
-    ) {
+        ManzanaPosService $manzanaPosService
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
-        /**
-         * @todo Property is used only in constructor, perhaps we are dealing with dead code here.
-         */
-        $this->manzanaService = $manzanaService;
     }
 
 
     /**
-     *
-     *
      * @param int $offerId
      * @param int|null $quantity
      * @param array $rewriteFields
      * @param bool $save
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @throws BitrixProxyException
      * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws ObjectNotFoundException
      * @return BasketItem
      */
     public function addOfferToBasket(
@@ -87,7 +87,8 @@ class BasketService
         int $quantity = null,
         array $rewriteFields = [],
         bool $save = true
-    ): BasketItem {
+    ): BasketItem
+    {
         if ($quantity < 0) {
             throw new InvalidArgumentException('Wrong $quantity');
         }
@@ -128,11 +129,11 @@ class BasketService
     /**
      * @param int $basketId
      *
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Exception
+     * @throws ObjectNotFoundException
+     * @throws BitrixProxyException
+     * @throws NotFoundException
+     * @throws InvalidArgumentException
+     * @throws Exception
      *
      * @return bool
      */
@@ -141,87 +142,96 @@ class BasketService
         if ($basketId < 1) {
             throw new InvalidArgumentException('Wrong $basketId');
         }
+
         $basketItem = $this->getBasket()->getItemById($basketId);
         if (null === $basketItem) {
             throw new NotFoundException('Не найден элемент корзины');
         }
+
         $result = $basketItem->delete();
         if (!$result->isSuccess()) {
             throw new BitrixProxyException($result);
         }
+
         $this->getBasket()->save();
+
         return true;
     }
 
     /**
-     *
-     *
      * @param int $basketId
      * @param int|null $quantity
      *
-     * @throws \Exception
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws Exception
+     * @throws BitrixProxyException
+     * @throws NotFoundException
+     * @throws InvalidArgumentException
+     * @throws ArgumentOutOfRangeException
      *
      * @return bool
      */
-    public function updateBasketQuantity(int $basketId, int $quantity = null): bool
+    public function updateBasketQuantity(int $basketId, ?int $quantity = null): bool
     {
         if ($quantity < 1) {
             throw new InvalidArgumentException('Wrong $quantity');
         }
+
         if ($basketId < 1) {
             throw new InvalidArgumentException('Wrong $basketId');
         }
+
         $basketItem = $this->getBasket()->getItemById($basketId);
         if (null === $basketItem) {
             throw new NotFoundException('BasketItem');
         }
+
         $result = $basketItem->setField('QUANTITY', $quantity);
         if (!$result->isSuccess()) {
             throw new BitrixProxyException($result);
         }
+
         $this->getBasket()->save();
+
         return true;
     }
 
 
     /**
-     *
-     *
      * @param int|null $discountId
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \RuntimeException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws NotFoundException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      *
      * @return array
      */
-    public function getGiftGroupOfferCollection(int $discountId = null): array
+    public function getGiftGroupOfferCollection(?int $discountId = null): array
     {
         if (!$discountId || $discountId < 0) {
             throw new InvalidArgumentException('Отсутствует идентификатор скидки');
         }
+
         $basket = $this->getBasket();
         if (null === $order = $basket->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($basket);
         }
-        if ($giftGroups = Gift::getPossibleGiftGroups($order, $discountId)) {
+
+        $giftGroups = Gift::getPossibleGiftGroups($order, $discountId);
+        if ($giftGroups) {
             if (\count($giftGroups[$discountId]) === 1) {
-                $giftGroup = current($giftGroups[$discountId]);
+                $giftGroup = \current($giftGroups[$discountId]);
             } else {
-                throw new \RuntimeException('todo');
+                throw new RuntimeException('todo');
             }
         } else {
             throw new NotFoundException('Товары по акции не найдены');
         }
+
         $giftIds = $giftGroup['list'];
-        if (!\is_array($giftIds) || !($giftIds = array_flip(array_flip(array_filter($giftIds))))) {
+        if (!\is_array($giftIds) || !($giftIds = \array_flip(\array_flip(\array_filter($giftIds))))) {
             throw new NotFoundException('Товары по акции не найдены');
         }
         $giftGroup['list'] = (new OfferQuery())->withFilterParameter('ID', $giftIds)->exec();
@@ -233,21 +243,24 @@ class BasketService
      *
      * @param bool|null $reload
      *
-     * @param int $fuserId
+     * @param int $fUserId
      *
      * @return Basket
      */
-    public function getBasket(bool $reload = null, int $fuserId = 0): Basket
+    public function getBasket(bool $reload = null, int $fUserId = 0): Basket
     {
         if (null === $this->basket || $reload) {
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
-            if ($fuserId === 0) {
-                $fuserId = $this->currentUserProvider->getCurrentFUserId();
+
+            if ($fUserId === 0) {
+                $fUserId = $this->currentUserProvider->getCurrentFUserId();
             }
-            $this->basket = Basket::loadItemsForFUser($fuserId, SITE_ID);
+
+            $this->basket = Basket::loadItemsForFUser($fUserId, SITE_ID);
         }
+
         return $this->basket;
     }
 
@@ -281,32 +294,36 @@ class BasketService
     }
 
     /**
-     *
-     *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * @return OfferCollection
      */
     private function loadOfferCollection(): OfferCollection
     {
-        //todo перенести в метод выше и при повторном запросе проверять айдишники, если нет в коллекции, то делать запрос
+        /**
+         * @var Basket $basket
+         * @var BasketItem $basketItem
+         * @var OfferCollection $offerCollection
+         *
+         * @todo перенести в метод выше и при повторном запросе проверять айдишники,
+         * если нет в коллекции, то делать запрос
+         */
         $ids = [];
-        /** @var Basket $basket */
         $basket = $this->getBasket();
-        /** @var BasketItem $basketItem */
         foreach ($basket->getBasketItems() as $basketItem) {
             $ids[] = $basketItem->getProductId();
         }
+
         if (null !== $order = $basket->getOrder()) {
             /** @noinspection AdditionOperationOnArraysInspection */
             $ids += Gift::getPossibleGifts($order);
         }
-        $ids = array_flip(array_flip(array_filter($ids)));
 
+        $ids = \array_flip(\array_flip(\array_filter($ids)));
         if (empty($ids)) {
             $ids = false;
         }
-        /** @var OfferCollection $offerCollection */
+
         $offerCollection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
 
         return $this->offerCollection = $offerCollection;
@@ -316,12 +333,13 @@ class BasketService
      *
      * @param BasketItem $basketItem
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws InvalidArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      *
      * @return BasketItem
      */
@@ -349,13 +367,11 @@ class BasketService
     }
 
     /**
-     *
-     *
      * @param string $type
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws InvalidArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      *
      * @return AdderInterface
      */
@@ -365,6 +381,7 @@ class BasketService
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
+
         if ($type === 'gift') {
             $adder = new Utils\Gift\Adder($order, $this);
         } elseif ($type === 'detach') {
@@ -377,13 +394,11 @@ class BasketService
     }
 
     /**
-     *
-     *
      * @param string $type
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws InvalidArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      *
      * @return CleanerInterface
      */
@@ -409,17 +424,21 @@ class BasketService
      */
     public function getBasketBonus(): float
     {
-        //todo Remove multiple return statements usage https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
+        /**
+         * @todo Remove multiple return statements usage
+         * @see https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
+         */
         try {
             try {
                 $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
-            } catch (NotAuthorizedException $e){
+            } catch (NotAuthorizedException $e) {
                 /** запрашиваем без карты */
-            } catch (InvalidIdentifierException|ConstraintDefinitionException $e){
+            } catch (InvalidIdentifierException | ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error($e->getMessage());
                 /** запрашиваем без карты */
             }
+
             $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                 $this->manzanaPosService->buildRequestFromBasket(
                     $this->getBasket(),
@@ -431,5 +450,35 @@ class BasketService
         } catch (ExecuteException $e) {
             return 0.0;
         }
+    }
+
+    /**
+     * @todo КОСТЫЛЬ
+     *
+     * @return void
+     */
+    public function setDiscountBeforeManzana(): void
+    {
+        $this->firstDiscount = $this->basket->getBasePrice() - $this->basket->getPrice();
+    }
+
+    /**
+     * @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ
+     *
+     * @return float
+     */
+    public function getPromocodeDiscount(): float
+    {
+        return $this->promocodeDiscount;
+    }
+
+    /**
+     * @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ
+     *
+     * @param float $promocodeDiscount
+     */
+    public function setPromocodeDiscount(float $promocodeDiscount): void
+    {
+        $this->promocodeDiscount = $promocodeDiscount - $this->firstDiscount;
     }
 }
