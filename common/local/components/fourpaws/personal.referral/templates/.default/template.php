@@ -39,7 +39,8 @@ $items = $arResult['ITEMS'];
                                    type="text"
                                    id="referal-search"
                                    placeholder="Найти реферала"
-                                   name="search" />
+                                   name="search"
+                            value="<?=$arResult['search']?>"/>
                         </div>
                         <button class="b-button b-button--form-inline b-button--search-referal" type="submit">
                             <span class="b-icon">

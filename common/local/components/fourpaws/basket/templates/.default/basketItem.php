@@ -1,6 +1,7 @@
 <?php
 /** @var BasketItem $basketItem */
 /** @var float $user_discount */
+/** @var Offer $offer */
 
 /** @global \FourPaws\Components\BasketComponent $component */
 
@@ -8,9 +9,17 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
+/** у отделнных скидками строчек нет айди, поэтому берем айди той строчки от которой отделили */
+if (!$basketItemId = $basketItem->getId()) {
+    if (
+        ($propertyValues = $basketItem->getPropertyCollection()->getPropertyValues())
+        && isset($propertyValues['DETACH_FROM'])
+    ) {
+        $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
+    }
+}
 
 $image = $component->getImage($basketItem->getProductId());
-$offer = $component->getOffer((int)$basketItem->getProductId());
 $templateData['OFFERS'][$offer->getId().'_'.$basketItem->getQuantity()] = $offer;
 $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
 <div class="b-item-shopping js-remove-shopping">
@@ -57,7 +66,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             <?php if ($useOffer && $offer->getQuantity() > 0 && !$offer->isByRequest()) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?=$offer->getId()?>">
                     <?php if ($arParams['IS_AJAX']) {
-                        echo $offer->getBonusFormattedText($user_discount, $basketItem->getQuantity());
+                        echo $offer->getBonusFormattedText((int)$user_discount, $basketItem->getQuantity());
                     } ?>
                 </span>
             <?php } ?>
@@ -77,7 +86,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                        value="<?= WordHelper::numberFormat($basketItem->getQuantity(), 0) ?>"
                        data-one-price="<?= $basketItem->getPrice() ?>"
                        data-cont-max="<?= $maxQuantity ?>"
-                       data-basketid="<?= $basketItem->getId(); ?>" type="text"/>
+                       data-basketid="<?= $basketItemId; ?>" type="text"/>
 
                 <a class="b-plus-minus__plus js-plus" data-url="/ajax/sale/basket/update/"
                    href="javascript:void(0);"></a>
@@ -115,7 +124,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             </div>
         <?php } ?>
         <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-           data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItem->getId(); ?>">
+           data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItemId; ?>">
         <span class="b-icon b-icon--delete b-icon--shopping">
             <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
         </span>

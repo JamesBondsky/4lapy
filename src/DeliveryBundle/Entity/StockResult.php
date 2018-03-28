@@ -4,15 +4,14 @@ namespace FourPaws\DeliveryBundle\Entity;
 
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use \DateTime;
 
 class StockResult
 {
-    const TYPE_AVAILABLE = 'available';
+    public const TYPE_AVAILABLE = 'available';
 
-    const TYPE_DELAYED = 'delayed';
+    public const TYPE_DELAYED = 'delayed';
 
-    const TYPE_UNAVAILABLE = 'unavailable';
+    public const TYPE_UNAVAILABLE = 'unavailable';
 
     /**
      * @var int
@@ -32,13 +31,6 @@ class StockResult
     protected $stores;
 
     /**
-     * Склады, откуда будет поставка на $stores
-     *
-     * @var StoreCollection
-     */
-    protected $delayStores;
-
-    /**
      * @var float
      */
     protected $price = 0;
@@ -47,11 +39,6 @@ class StockResult
      * @var string
      */
     protected $type = self::TYPE_AVAILABLE;
-
-    /**
-     * @var null|DateTime
-     */
-    protected $deliveryDate;
 
     /**
      * @return int
@@ -138,26 +125,6 @@ class StockResult
     }
 
     /**
-     * @return DateTime
-     */
-    public function getDeliveryDate(): DateTime
-    {
-        return $this->deliveryDate;
-    }
-
-    /**
-     * @param DateTime $deliveryDate
-     *
-     * @return StockResult
-     */
-    public function setDeliveryDate(DateTime $deliveryDate): StockResult
-    {
-        $this->deliveryDate = $deliveryDate;
-
-        return $this;
-    }
-
-    /**
      * @return float
      */
     public function getPrice(): float
@@ -173,30 +140,6 @@ class StockResult
     public function setPrice(float $price): StockResult
     {
         $this->price = $price;
-
-        return $this;
-    }
-
-    /**
-     * @return StoreCollection
-     */
-    public function getDelayStores(): StoreCollection
-    {
-        if (!$this->delayStores) {
-            $this->delayStores = new StoreCollection();
-        }
-
-        return $this->delayStores;
-    }
-
-    /**
-     * @param StoreCollection $delayStores
-     *
-     * @return StockResult
-     */
-    public function setDelayStores(StoreCollection $delayStores): StockResult
-    {
-        $this->delayStores = $delayStores;
 
         return $this;
     }

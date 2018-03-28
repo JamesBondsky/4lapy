@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -33,9 +37,9 @@ class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @param $debit
      *
+     * @throws RuntimeException
      * @return bool
      *
-     * @throws RuntimeException
      */
     public function consume($debit): bool
     {

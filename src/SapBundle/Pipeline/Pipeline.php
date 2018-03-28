@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Pipeline;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -9,7 +13,7 @@ use FourPaws\SapBundle\Source\SourceInterface;
 class Pipeline implements PipelineInterface
 {
     /**
-     * @var SourceInterface[]|Collection
+     * @var Collection|SourceInterface[]
      */
     protected $sourceCollection;
     

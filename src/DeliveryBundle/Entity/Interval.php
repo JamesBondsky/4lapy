@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Entity;
 
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
@@ -88,7 +92,7 @@ class Interval
     /**
      * @return string
      */
-    public function toString(): string
+    public function __toString(): string
     {
         return date('H:00', mktime($this->getFrom())) .
             ' - ' . date('H:00', mktime($this->getTo()));

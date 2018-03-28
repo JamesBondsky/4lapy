@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -22,11 +23,20 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
      */
     protected $storeService;
 
+    /**
+     * @var StockService
+     */
+    protected $stockService;
+
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
 
-        $this->storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $serviceContainer = Application::getInstance()->getContainer();
+        $this->storeService = $serviceContainer->get('store.service');
+        $this->stockService = $serviceContainer->get(StockService::class);
     }
 
     /** {@inheritdoc} */
@@ -71,7 +81,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
                 if (!$this->arParams['STOCKS']) {
                     /** @var Offer $offer */
                     $offer = $this->arParams['OFFER'];
-                    $this->storeService->getStocks(new ArrayCollection([$offer]), $stores);
+                    $this->stockService->getStocks(new ArrayCollection([$offer]), $stores);
                     $this->arParams['STOCKS'] = $offer->getStocks();
                 }
                 $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
@@ -120,7 +130,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         /** @var Offer $offer */
         $offer = $this->arParams['OFFER'];
 
-        $this->storeService->getStocks(new ArrayCollection([$offer]), $stores);
+        $this->stockService->getStocks(new ArrayCollection([$offer]), $stores);
 
         return $offer->getStocks()->count();
     }

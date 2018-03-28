@@ -28,17 +28,21 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Class CallBackController
  *
- * @package FourPaws\UserBundle\AjaxController
+ * @package FourPaws\Form\AjaxController
  */
 class CallBackController extends Controller
 {
     /** @var AjaxMess */
     private $ajaxMess;
 
-    public function __construct(
-        AjaxMess $ajaxMess
-    ) {
-        $this->ajaxMess = $ajaxMess;
+    public function __construct() {
+        try {
+            $container = App::getInstance()->getContainer();
+            $this->ajaxMess = $container->get('ajax.mess');
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
     }
 
     /**

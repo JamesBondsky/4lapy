@@ -7,8 +7,8 @@ class WordHelper
     /**
      * Возвращает нужную форму существительного, стоящего после числительного
      *
-     * @param int   $number числительное
-     * @param array $forms  формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
+     * @param int $number числительное
+     * @param array $forms формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
      *
      * @return mixed
      */
@@ -22,7 +22,7 @@ class WordHelper
 
     /**
      * @param float $weight
-     * @param bool  $short
+     * @param bool $short
      *
      * @return string
      */
@@ -56,5 +56,14 @@ class WordHelper
     public static function numberFormat($number, int $decimals = 2): string
     {
         return number_format($number, $decimals, '.', ' ');
+    }
+
+    /**
+     * @param $string
+     * @return mixed
+     */
+    public static function clear($string)
+    {
+        return str_replace(["\r", PHP_EOL], '', strip_tags(html_entity_decode($string)));
     }
 }

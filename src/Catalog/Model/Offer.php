@@ -21,6 +21,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
+use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -28,10 +29,12 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
@@ -234,11 +237,6 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var int
-     */
-    protected $PROPERTY_BY_REQUEST = 0;
-
-    /**
      * Цена по акции - простая акция из SAP
      *
      * @var float
@@ -269,6 +267,11 @@ class Offer extends IblockElement
      * @var float
      */
     protected $oldPrice = 0;
+
+    /**
+     * @var bool
+     */
+    protected $isByRequest;
 
     /**
      * @Type("string")
@@ -340,11 +343,19 @@ class Offer extends IblockElement
     protected $stocks;
 
     /**
+     * @var StockCollection
+     */
+    protected $allStocks;
+
+    /**
      * @var bool
      */
     protected $isCounted = false;
 
     protected $bonus = 0;
+
+    /** @var ShareCollection */
+    protected $share;
 
     public function __construct(array $fields = [])
     {
@@ -826,15 +837,23 @@ class Offer extends IblockElement
 
     /**
      * @return bool
+     * @throws ApplicationCreateException
      */
     public function isByRequest(): bool
     {
-        return (bool)$this->PROPERTY_BY_REQUEST;
+        if (null === $this->isByRequest) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $stores = $storeService->getSupplierStores();
+            $this->isByRequest = !$this->getAllStocks()->filterByStores($stores)->isEmpty();
+        }
+
+        return $this->isByRequest;
     }
 
     public function withByRequest(bool $byRequest)
     {
-        $this->PROPERTY_BY_REQUEST = $byRequest;
+        $this->isByRequest = $byRequest;
 
         return $this;
     }
@@ -1045,50 +1064,48 @@ class Offer extends IblockElement
     }
 
     /**
-     * @param float $percent
-     * @param int   $quantity
+     *
+     *
+     * @param int $percent
+     * @param int $quantity
      *
      * @return float
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
-    public function getBonuses(float $percent = 3, int $quantity = 1): float
+    public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if ((int)$this->bonus === 0 && $percent > 0) {
-            $this->bonus = round($this->getPrice() * $quantity * $percent / 100, 2);
+        if (!$this->bonus) {
+            $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
         }
 
         return $this->bonus;
     }
 
+    
     /**
-     * @param float|int $percent
-     * @param int       $quantity
+     * @param int $percent
+     * @param int $quantity
      *
      * @return string
      */
-    public function getBonusFormattedText($percent = 3, int $quantity = 1): string
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1): string
     {
-        if(!\is_float($percent) && !\is_int($percent)){
-            $percent = 3;
-        }
         $bonusText = '';
-        try {
-            $bonus = $this->getBonuses($percent, $quantity);
-        } catch (\Exception $e) {
-            $bonus = 0;
+
+        $bonus = $this->getBonusCount($percent, $quantity);
+
+        if ($bonus <= 0) {
+            return $bonusText;
         }
-        if ($bonus > 0) {
-            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
-            $ost = $bonus - floor($bonus) * 100;
-            ob_start(); ?>
-            + <?= WordHelper::numberFormat($bonus) ?>
-            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonus),
-                ['бонус', 'бонуса', 'бонусов']) ?>
-            <?php $bonusText = ob_get_clean();
-        }
-        return $bonusText;
+
+        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
+        $floorBonus = \floor($bonus);
+        $div = ($bonus - $floorBonus) * 100;
+
+        return \sprintf(
+            '+ %s %s',
+            WordHelper::numberFormat($bonus),
+            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
+        );
     }
 
     /**
@@ -1097,7 +1114,11 @@ class Offer extends IblockElement
     public function getLink(): string
     {
         if (!$this->link) {
-            $this->link = sprintf('%s?offer=%s', $this->getProduct()->getDetailPageUrl(), $this->getId());
+            $this->link = \sprintf(
+                '%s?offer=%s',
+                $this->getProduct()->getDetailPageUrl(),
+                $this->getId()
+            );
         }
 
         return $this->link;
@@ -1158,21 +1179,48 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ArgumentException
      * @throws ServiceNotFoundException
-     * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     */
+    public function getAllStocks(): StockCollection
+    {
+        if (!$this->allStocks) {
+            /** @var StockService $stockService */
+            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+            $this->withAllStocks($stockService->getStocksByOffer($this));
+        }
+
+        return $this->allStocks;
+    }
+
+    /**
+     * @param StockCollection $allStocks
+     *
+     * @return Offer
+     */
+    public function withAllStocks(StockCollection $allStocks): Offer
+    {
+        $this->allStocks = $allStocks;
+
+        return $this;
+    }
+
+    /**
      * @return StockCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
     public function getStocks(): StockCollection
     {
         if (!$this->stocks) {
             /** @var StoreService $storeService */
             $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $allStocks = $storeService->getStocksByOffer($this);
-            $stores = $storeService->getByCurrentLocation();
-            $this->withStocks($allStocks->filterByStores($stores));
+            if ($this->isByRequest()) {
+                $stores = $storeService->getSupplierStores();
+            } else {
+                $stores = $storeService->getByCurrentLocation();
+            }
+            $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
 
         return $this->stocks;
@@ -1206,6 +1254,9 @@ class Offer extends IblockElement
         return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
     }
 
+    /**
+     * @return bool
+     */
     public function hasAction(): bool
     {
         /**
@@ -1236,6 +1287,51 @@ class Offer extends IblockElement
     public function isSale(): bool
     {
         return $this->getPropertyIsSale();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isShare(): bool
+    {
+        return !$this->getShare()->isEmpty();
+    }
+
+    /**
+     * @return ShareCollection
+     */
+    public function getShare(): ShareCollection
+    {
+        if ($this->share === null) {
+            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter([
+                'ACTIVE'            => 'Y',
+                'ACTIVE_DATE'       => 'Y',
+                'PROPERTY_PRODUCTS' => $this->getXmlId(),
+            ])->withSelect([
+                'ID',
+                'NAME',
+                'IBLOCK_ID',
+                'PREVIEW_TEXT',
+                'DATE_ACTIVE_FROM',
+                'DATE_ACTIVE_TO',
+                'PROPERTY_LABEL'
+            ])->exec();
+        }
+        return $this->share;
+    }
+
+    /**
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    public function isAvailable(): bool
+    {
+        /** @todo сделать обработку исключений */
+        return $this->isActive() && $this->getQuantity() > 0;
     }
 
     /**

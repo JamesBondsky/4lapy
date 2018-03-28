@@ -13,15 +13,10 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests,EventController}'
+        exclude: '../../{Entity,Tests,Dto,Exception,EventController}'
 
     FourPaws\MobileApiBundle\Controller\:
         resource: '../../Controller'
-        public: true
-        tags: ['controller.service_arguments']
-
-    FourPaws\MobileApiBundle\TestController\:
-        resource: '../../TestController'
         public: true
         tags: ['controller.service_arguments']
 

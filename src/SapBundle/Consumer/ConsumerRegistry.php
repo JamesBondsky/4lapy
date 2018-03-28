@@ -1,15 +1,30 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\Exception\UnexpectedValueException;
 use FourPaws\SapBundle\Model\ConsumerCollection;
+use InvalidArgumentException;
 
+/**
+ * Class ConsumerRegistry
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
 class ConsumerRegistry implements ConsumerRegistryInterface
 {
     protected $collection;
 
+    /**
+     * ConsumerRegistry constructor.
+     *
+     * @throws InvalidArgumentException
+     */
     public function __construct()
     {
         $this->collection = new ConsumerCollection();
@@ -18,7 +33,7 @@ class ConsumerRegistry implements ConsumerRegistryInterface
     /**
      * @param ConsumerInterface $consumer
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return ConsumerRegistryInterface
      */
     public function register(ConsumerInterface $consumer): ConsumerRegistryInterface
@@ -61,6 +76,7 @@ class ConsumerRegistry implements ConsumerRegistryInterface
         if ($supported->count() > 1) {
             throw new LogicException('More than one consumer was found to passed data');
         }
+
         return $supported->first();
     }
 }

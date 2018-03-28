@@ -1,0 +1,7 @@
+four_paws_bitrix_orm:
+    entities:
+        address:
+            class: FourPaws\PersonalBundle\Entity\Address
+            data_manager: 'bx.hlblock.address'
+
+#            repository: FourPaws\BitrixOrmBundle\Orm\D7Repository

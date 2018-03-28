@@ -16,24 +16,26 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
+use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -45,45 +47,45 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
 class OrderService
 {
-    const PAYMENT_CASH = 'cash';
+    public const PAYMENT_CASH = 'cash';
 
-    const PAYMENT_CARD = 'card';
+    public const PAYMENT_CARD = 'card';
 
-    const PAYMENT_ONLINE = 'card-online';
+    public const PAYMENT_ONLINE = 'card-online';
 
-    const PAYMENT_INNER = 'inner';
+    public const PAYMENT_INNER = 'inner';
 
-    const PROPERTY_TYPE_ENUM = 'ENUM';
+    public const PROPERTY_TYPE_ENUM = 'ENUM';
 
     /**
      * Дефолтный статус заказа при курьерской доставке
      */
-    const STATUS_NEW_COURIER = 'Q';
+    public const STATUS_NEW_COURIER = 'Q';
 
     /**
      * Дефолтный статус заказа при самовывозе
      */
-    const STATUS_NEW_PICKUP = 'N';
+    public const STATUS_NEW_PICKUP = 'N';
 
     /**
      * Заказ доставляется ("Исполнен" для курьерской доставки)
      */
-    const STATUS_DELIVERING = 'Y';
+    public const STATUS_DELIVERING = 'Y';
 
     /**
      * Заказ в пункте выдачи
      */
-    const STATUS_ISSUING_POINT = 'F';
+    public const STATUS_ISSUING_POINT = 'F';
 
     /**
      * Заказ доставлен
      */
-    const STATUS_DELIVERED = 'J';
+    public const STATUS_DELIVERED = 'J';
 
     /**
      * 90% заказа можно оплатить бонусами
      */
-    const MAX_BONUS_PAYMENT = 0.9;
+    public const MAX_BONUS_PAYMENT = 0.9;
 
     /**
      * @var AddressService
@@ -106,7 +108,7 @@ class OrderService
     protected $deliveryService;
 
     /**
-     * @var CalculationResult[]
+     * @var CalculationResultInterface[]
      */
     protected $deliveries;
 
@@ -230,13 +232,14 @@ class OrderService
             throw new OrderCreateException('Корзина пуста');
         }
 
-        $deliveries = $this->getDeliveries();
+        $deliveries = $this->getDeliveries($storage);
         $selectedDelivery = current($deliveries);
         if ($deliveryId = $storage->getDeliveryId()) {
-            /** @var CalculationResult $delivery */
+            /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
-                if ($deliveryId === (int)$delivery->getData()['DELIVERY_ID']) {
-                    $selectedDelivery = $delivery;
+                if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
+                    $selectedDelivery = clone $delivery;
+                    break;
                 }
             }
         }
@@ -244,12 +247,13 @@ class OrderService
         if (!$selectedDelivery) {
             throw new OrderCreateException('Нет доступных доставок');
         }
+        $selectedDelivery = clone $selectedDelivery;
 
         /**
          * Задание способов доставки
          */
         $propertyValueCollection = $order->getPropertyCollection();
-        if ($deliveryId) {
+        if ($storage->getDeliveryId()) {
             $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
             if (!$locationProp) {
                 throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
@@ -272,22 +276,31 @@ class OrderService
                 throw new OrderCreateException('Не выбрана доставка');
             }
 
-            if ($this->deliveryService->isDelivery($delivery)) {
+            $selectedDelivery->setDateOffset($storage->getDeliveryDate());
+            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+                /** @var Interval $interval */
+                if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
+                    $selectedDelivery->setSelectedInterval($interval);
+                }
+            }
+
+            if ($this->deliveryService->isDelivery($selectedDelivery)) {
                 $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
             }
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID' => $selectedDelivery->getData()['DELIVERY_ID'],
-                    'DELIVERY_NAME' => $selectedDelivery->getData()['DELIVERY_NAME'],
+                    'DELIVERY_ID' => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
                     'CURRENCY' => $order->getCurrency(),
+                    'PRICE_DELIVERY' => $selectedDelivery->getPrice(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
 
             $shipmentCollection->calculateDelivery();
 
-            $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
-            $deliveryDate = $stockResult->getDeliveryDate();
+            $deliveryDate = $selectedDelivery->getDeliveryDate();
 
             /**
              * Задание свойств заказа, связанных с доставкой
@@ -296,11 +309,20 @@ class OrderService
             foreach ($propertyValueCollection as $propertyValue) {
                 $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
-                    case 'DELIVERY_PLACE_CODE':
-                        if (!$this->deliveryService->isInnerPickup($selectedDelivery)) {
+                    case 'SHIPMENT_PLACE_CODE':
+                        $shipmentResult = $selectedDelivery->getShipmentResult();
+                        if ($shipmentResult instanceof DeliveryScheduleResult) {
+                            $value = $shipmentResult->getSchedule()->getSenderCode();
+                        } else {
                             continue 2;
                         }
-                        $value = $storage->getDeliveryPlaceCode();
+                        break;
+                    case 'DELIVERY_PLACE_CODE':
+                        if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                            $value = $storage->getDeliveryPlaceCode();
+                        } else {
+                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                        }
                         break;
                     case 'DPD_TERMINAL_CODE':
                         if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
@@ -309,35 +331,22 @@ class OrderService
                         $value = $storage->getDeliveryPlaceCode();
                         break;
                     case 'DELIVERY_DATE':
-                        /**
-                         * У доставок есть выбор даты доставки
-                         */
-                        $date = clone $deliveryDate;
-                        if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if (($days = $storage->getDeliveryDate() - 1) >= 0) {
-                                $date->modify('+' . $days . ' days');
-                            }
-                        }
-                        $value = $date->format('d.m.Y');
+                        $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
                         break;
                     case 'DELIVERY_INTERVAL':
                         /**
                          * У доставок есть выбор интервала доставки
                          */
                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if (($index = $storage->getDeliveryInterval() - 1) < 0) {
+                            if ($interval = $selectedDelivery->getSelectedInterval()) {
+                                $value = sprintf(
+                                    '%s:00-%s:00',
+                                    str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                    str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
+                                );
+                            } else {
                                 continue 2;
                             }
-                            /** @var Interval $interval */
-                            if (!$interval = $selectedDelivery->getData()['INTERVALS'][$index]) {
-                                continue 2;
-                            }
-
-                            $value = sprintf(
-                                '%s:00-%s:00',
-                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
-                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
-                            );
                         } else {
                             $value = sprintf(
                                 '%s:00-23:59',
@@ -347,7 +356,7 @@ class OrderService
 
                         break;
                     case 'REGION_COURIER_FROM_DC':
-                        $value = $stockResult->getDelayed()->isEmpty()
+                        $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
                             ? BitrixUtils::BX_BOOL_FALSE
                             : BitrixUtils::BX_BOOL_TRUE;
                         break;
@@ -403,8 +412,7 @@ class OrderService
          */
         if ($storage->getComment()) {
             $order->setField('USER_DESCRIPTION', $storage->getComment());
-        }
-        else{
+        } else {
             $order->setField('USER_DESCRIPTION', '');
         }
 
@@ -444,11 +452,11 @@ class OrderService
                 ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isInnerDelivery($selectedDelivery))
             ) {
                 $changeCommunicationWay = false;
-                $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
+                $stockResult = $selectedDelivery->getStockResult();
                 if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
                     $changeCommunicationWay = true;
                 } elseif ($this->deliveryService->isInnerDelivery($selectedDelivery)) {
-                    if (($selectedDelivery->getData()['DELIVERY_ZONE'] === DeliveryService::ZONE_2) &&
+                    if (($selectedDelivery->getDeliveryZone() === DeliveryService::ZONE_2) &&
                         !$stockResult->getDelayed()->isEmpty()
                     ) {
                         $changeCommunicationWay = true;
@@ -562,7 +570,11 @@ class OrderService
              * 1) пользователь только что зарегистрирован
              * 2) авторизованный пользователь задал новый адрес
              */
-            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery) && !$fastOrder) {
+            if ($needCreateAddress &&
+                $selectedDelivery &&
+                $this->deliveryService->isDelivery($selectedDelivery) &&
+                !$fastOrder
+            ) {
                 $address = (new Address())
                     ->setCity($storage->getCity())
                     ->setCityLocation($storage->getCityCode())
@@ -582,12 +594,9 @@ class OrderService
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('order_' . $order->getField('USER_ID'));
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'order:' . $order->getField('USER_ID'),
+            ]);
 
             $this->orderStorageService->clearStorage($storage);
         }
@@ -596,15 +605,20 @@ class OrderService
     }
 
     /**
+     * @param OrderStorage $storage
      * @param bool $reload
-     *
-     * @return CalculationResult[]
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @return CalculationResultInterface[]
      */
-    public function getDeliveries($reload = false): array
+    public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
         if (null === $this->deliveries || $reload) {
             $this->deliveries = $this->deliveryService->getByBasket(
-                $this->basketService->getBasket()->getOrderableItems()
+                $this->basketService->getBasket()->getOrderableItems(),
+                '',
+                [],
+                $storage->getCurrentDate()
             );
         }
 
@@ -713,6 +727,7 @@ class OrderService
     /**
      * @param Order $order
      *
+     * @throws ArgumentException
      * @return string
      */
     public function getOrderDeliveryAddress(Order $order): string
@@ -733,47 +748,55 @@ class OrderService
             ]
         );
         $address = '';
-        if ($properties['DELIVERY_PLACE_CODE']) {
-            try {
-                $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
-                $address = $store->getAddress();
+        $deliveryCode = $this->getOrderDeliveryCode($order);
+        switch (true) {
+            case \in_array($deliveryCode, DeliveryService::PICKUP_CODES, true):
+                if ($properties['DPD_TERMINAL_CODE'] && $properties['CITY_CODE']) {
+                    $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+                    if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
+                        $address = $terminal->getAddress();
+                    }
+                } elseif ($properties['DELIVERY_PLACE_CODE']) {
+                    try {
+                        $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                        $address = $store->getAddress();
 
-                if ($store->getMetro()) {
-                    /** @noinspection PhpUnusedLocalVariableInspection */
-                    list($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
+                        if ($store->getMetro()) {
+                            /** @noinspection PhpUnusedLocalVariableInspection */
+                            list($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
 
-                    if ($metro[$store->getMetro()]) {
-                        $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
+                            if ($metro[$store->getMetro()]) {
+                                $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
+                            }
+                        }
+                    } catch (StoreNotFoundException $e) {
                     }
                 }
-            } catch (StoreNotFoundException $e) {
-            }
-        } elseif ($properties['DELIVERY_PLACE_CODE'] && $properties['CITY_CODE']) {
-            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
-            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
-                $address = $terminal->getAddress();
-            }
-        } elseif ($properties['CITY'] && $properties['STREET']) {
-            $address = [
-                $properties['CITY'],
-                $properties['STREET'],
-            ];
-            if (isset($properties['HOUSE'])) {
-                $address[] = $properties['HOUSE'];
-            }
-            if (isset($properties['BUILDING'])) {
-                $address[] = 'корпус ' . $properties['BUILDING'];
-            }
-            if (isset($properties['PORCH'])) {
-                $address[] = 'подъезд ' . $properties['PORCH'];
-            }
-            if (isset($properties['FLOOR'])) {
-                $address[] = 'этаж ' . $properties['FLOOR'];
-            }
-            if (isset($properties['APARTMENT'])) {
-                $address[] = 'кв. ' . $properties['APARTMENT'];
-            }
-            $address = implode(', ', $address);
+                break;
+            case \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
+                if ($properties['CITY'] && $properties['STREET']) {
+                    $address = [
+                        $properties['CITY'],
+                        $properties['STREET'],
+                    ];
+                    if (isset($properties['HOUSE'])) {
+                        $address[] = $properties['HOUSE'];
+                    }
+                    if (isset($properties['BUILDING'])) {
+                        $address[] = 'корпус ' . $properties['BUILDING'];
+                    }
+                    if (isset($properties['PORCH'])) {
+                        $address[] = 'подъезд ' . $properties['PORCH'];
+                    }
+                    if (isset($properties['FLOOR'])) {
+                        $address[] = 'этаж ' . $properties['FLOOR'];
+                    }
+                    if (isset($properties['APARTMENT'])) {
+                        $address[] = 'кв. ' . $properties['APARTMENT'];
+                    }
+                    $address = implode(', ', $address);
+                }
+                break;
         }
 
         return $address;
@@ -795,9 +818,10 @@ class OrderService
         }
 
         if (empty($ids)) {
-            throw new NotFoundException('Корзина заказа пуста');
+            throw new NotFoundException('Basket is empty');
         }
 
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
 }

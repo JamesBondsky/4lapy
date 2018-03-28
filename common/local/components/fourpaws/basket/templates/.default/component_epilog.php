@@ -1,7 +1,7 @@
 <?php
-
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\Helpers\WordHelper;
+use FourPaws\Components\BasketComponent;
+/** @global BasketComponent $component */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();

@@ -54,10 +54,10 @@ class OrderAddressValidator extends ConstraintValidator
          * Проверка, что выбрана доступная доставка
          * Если выбрана недоступная - не проверяем
          */
-        $deliveryMethods = $this->orderService->getDeliveries();
+        $deliveryMethods = $this->orderService->getDeliveries($entity);
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
-            if ($deliveryId === (int)$deliveryMethod->getData()['DELIVERY_ID']) {
+            if ($deliveryId === $deliveryMethod->getDeliveryId()) {
                 $delivery = $deliveryMethod;
                 break;
             }

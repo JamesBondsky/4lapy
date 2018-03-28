@@ -2,10 +2,14 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
-use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Main\ArgumentException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 /**
- * Правило, добавляющее $value дней к дате доставке,
+ * Правило, добавляющее $value дней к дате доставки,
  * если время заказа лежит в промежутке между $from и $to
  *
  * Class AddDaysRule
@@ -100,15 +104,32 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
         return $this;
     }
 
-    public function isSuitable(CalculationResult $result): bool
+    /**
+     * @param CalculationResultInterface $result
+     *
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     * @return bool
+     */
+    public function isSuitable(CalculationResultInterface $result): bool
     {
-        /* @todo брать дату из CalculationResult */
-        $hour = (new \DateTime())->format('G');
+        $hour = $result->getDeliveryDate()->format('G');
 
         return ($hour >= $this->getFrom()) && ($hour < $this->getTo());
     }
 
-    public function apply(CalculationResult $result): CalculationResult
+    /**
+     * @param CalculationResultInterface $result
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     * @return CalculationResultInterface
+     */
+    public function apply(CalculationResultInterface $result): CalculationResultInterface
     {
         if (!$this->isSuitable($result)) {
             return $result;
@@ -118,9 +139,7 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
             return $result;
         }
 
-        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
-        $result->setPeriodFrom($result->getPeriodFrom() + $this->getValue());
-        $result->setPeriodTo($result->getPeriodTo() + $this->getValue());
+        $result->getDeliveryDate()->modify(sprintf('+%s days', $this->getValue()));
 
         return $result;
     }

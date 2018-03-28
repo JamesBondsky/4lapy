@@ -34,7 +34,7 @@ class StatusService implements LoggerAwareInterface
         'P' => 'J',
         'K' => '',
         'E' => '',
-        'V' => 'A'
+        'V' => 'A',
     ];
 
     private const STATUS_PICKUP_MAP = [
@@ -50,22 +50,22 @@ class StatusService implements LoggerAwareInterface
         'P' => 'J',
         'K' => '',
         'E' => '',
-        'V' => 'K'
+        'V' => 'K',
     ];
 
     private const STATUS_MAP = [
         DeliveryService::INNER_DELIVERY_CODE => self::STATUS_COURIER_MAP,
         DeliveryService::DPD_DELIVERY_CODE => self::STATUS_COURIER_MAP,
         DeliveryService::DPD_PICKUP_CODE => self::STATUS_PICKUP_MAP,
-        DeliveryService::INNER_PICKUP_CODE => self::STATUS_PICKUP_MAP
+        DeliveryService::INNER_PICKUP_CODE => self::STATUS_PICKUP_MAP,
     ];
 
     /**
      * @param string $deliveryType
      * @param string $sapStatus
+     * @throws NotFoundOrderStatusException
      * @return string
      *
-     * @throws NotFoundOrderStatusException
      */
     public function getStatusBySapStatus(string $deliveryType, string $sapStatus): string
     {
@@ -77,11 +77,13 @@ class StatusService implements LoggerAwareInterface
         }
 
         if (null === $orderStatus) {
-            throw new NotFoundOrderStatusException(sprintf(
-                'Не найден статус %s для службы доставка %s',
-                $sapStatus,
-                $deliveryType
-            ));
+            throw new NotFoundOrderStatusException(
+                \sprintf(
+                    'Не найден статус %s для службы доставка %s',
+                    $sapStatus,
+                    $deliveryType
+                )
+            );
         }
 
         return $orderStatus;

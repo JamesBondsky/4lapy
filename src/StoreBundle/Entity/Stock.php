@@ -2,6 +2,10 @@
 
 namespace FourPaws\StoreBundle\Entity;
 
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -50,16 +54,34 @@ class Stock extends Base
      */
     protected $storeId = 0;
 
+    /** @var Store */
+    protected $store;
+
+    /**
+     * @var StoreService
+     */
+    protected $storeService;
+
+    /**
+     * Stock constructor.
+     * @throws ApplicationCreateException
+     */
+    public function __construct()
+    {
+        $this->storeService = Application::getInstance()->getContainer()->get('store.service');
+    }
+
     /**
      * @return int
      */
     public function getId(): int
     {
-        return (int)$this->id;
+        return $this->id;
     }
 
     /**
      * @param int $id
+     * @return Stock
      */
     public function setId(int $id): Stock
     {
@@ -78,6 +100,7 @@ class Stock extends Base
 
     /**
      * @param int $productId
+     * @return Stock
      */
     public function setProductId(int $productId): Stock
     {
@@ -95,7 +118,8 @@ class Stock extends Base
     }
 
     /**
-     * @param int $amount
+     * @param float $amount
+     * @return Stock
      */
     public function setAmount(float $amount): Stock
     {
@@ -114,11 +138,63 @@ class Stock extends Base
 
     /**
      * @param int $storeId
+     * @return Stock
      */
     public function setStoreId(int $storeId): Stock
     {
         $this->storeId = $storeId;
 
         return $this;
+    }
+
+    /**
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getStore(): Store
+    {
+        if (null === $this->store) {
+            $this->store = $this->storeService->getById($this->getStoreId());
+        }
+
+        return $this->store;
+    }
+
+    /**
+     * @param Store $store
+     * @return Stock
+     */
+    public function setStore(Store $store): Stock
+    {
+        $this->store = $store;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function serialize(): string
+    {
+        return serialize([
+            $this->id,
+            $this->productId,
+            $this->amount,
+            $this->storeId
+        ]);
+    }
+
+    /**
+     * @param $serialized
+     * @throws ApplicationCreateException
+     */
+    public function unserialize($serialized): void
+    {
+        [
+            $this->id,
+            $this->productId,
+            $this->amount,
+            $this->storeId
+        ] = unserialize($serialized, ['allowed_classes' => false]);
+        $this->__construct();
     }
 }

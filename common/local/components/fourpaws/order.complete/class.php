@@ -10,6 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Sale\Order;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
@@ -19,6 +21,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -169,7 +172,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
 
         /** @var Shipment $shipment */
         if ($shipment = $order->getShipmentCollection()->current()) {
-            $this->arResult['ORDER_DELIVERY'] = $this->getDeliveryData($this->arResult['ORDER_PROPERTIES']);
+            $this->arResult['ORDER_DELIVERY'] = $this->getDeliveryData($order, $this->arResult['ORDER_PROPERTIES']);
             $deliveryCode = $shipment->getDelivery()->getCode();
             $this->arResult['ORDER_DELIVERY']['DELIVERY_CODE'] = $deliveryCode;
             $this->arResult['ORDER_DELIVERY']['IS_PICKUP'] = in_array(
@@ -178,13 +181,13 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 true
             );
             $this->arResult['ORDER_DELIVERY']['IS_DPD_PICKUP'] = $deliveryCode === DeliveryService::DPD_PICKUP_CODE;
-            if ($this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']) {
-                $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->storeService->getByXmlId(
-                    $this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']
-                );
-            } elseif ($this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']) {
+            if ($this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']) {
                 $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->deliveryService->getDpdTerminalByCode(
                     $this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']
+                );
+            } elseif ($this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']) {
+                $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->storeService->getByXmlId(
+                    $this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']
                 );
             }
         }
@@ -193,45 +196,28 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
     }
 
     /**
+     * @param Order $order
      * @param array $properties
      *
+     * @throws ArgumentException
      * @return array
      */
-    protected function getDeliveryData(array $properties): array
+    protected function getDeliveryData(Order $order, array $properties): array
     {
         $result = [];
-        if ($properties['DELIVERY_PLACE_CODE']) {
+        $result['ADDRESS'] = $this->orderService->getOrderDeliveryAddress($order);
+        if ($properties['DPD_TERMINAL_CODE']) {
+            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+            /** @var Store $terminal */
+            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
+                $result['SCHEDULE'] = $terminal->getScheduleString();
+            }
+        } elseif ($properties['DELIVERY_PLACE_CODE']) {
             try {
                 $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
-                $result['ADDRESS'] = $store->getAddress();
-                $result['SCHEDULE'] = $store->getSchedule();
+                $result['SCHEDULE'] = $store->getScheduleString();
             } catch (StoreNotFoundException $e) {
             }
-        } elseif ($properties['DPD_TERMINAL_CODE']) {
-            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
-            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
-                $result['ADDRESS'] = $terminal->getAddress();
-                $result['SCHEDULE'] = $terminal->getSchedule();
-            }
-        } else {
-            $result['ADDRESS'] = [
-                $properties['CITY'],
-                $properties['STREET'],
-                $properties['HOUSE'],
-            ];
-            if (!empty($properties['BUILDING'])) {
-                $result['ADDRESS'][] = 'корпус ' . $properties['BUILDING'];
-            }
-            if (!empty($properties['PORCH'])) {
-                $result['ADDRESS'][] = 'подъезд ' . $properties['PORCH'];
-            }
-            if (!empty($properties['FLOOR'])) {
-                $result['ADDRESS'][] = 'этаж ' . $properties['FLOOR'];
-            }
-            if (!empty($properties['APARTMENT'])) {
-                $result['ADDRESS'][] = 'кв. ' . $properties['APARTMENT'];
-            }
-            $result['ADDRESS'] = implode(', ', $result['ADDRESS']);
         }
 
         if ($properties['DELIVERY_DATE']) {

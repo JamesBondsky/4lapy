@@ -11,11 +11,13 @@
 
 use FourPaws\App\Application;
 use FourPaws\App\Templates\ViewsEnum;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 
@@ -59,7 +61,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                 $mainImageIndex = [];
                 $iterator = 0;
                 /** @var Offer $offer */
-                foreach ($product->getOffers() as $offer) {
+                foreach ($offers as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
@@ -97,7 +99,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
             <div class="b-product-slider__list b-product-slider__list--nav js-product-slider-nav">
                 <?php
                 /** @var Offer $offer */
-                foreach ($product->getOffers() as $offer) {
+                foreach ($offers as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
@@ -144,48 +146,56 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                     <?php
                     $isCurrentOffer = false;
 
-    foreach ($offers as $offer) {
-        $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
+                    foreach ($offers as $offer) {
+                        $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
 
-        $value = null;
-        if ($mainCombinationType === 'SIZE') {
-            if ($offer->getClothingSize()) {
-                $value = $offer->getClothingSize()->getName();
-            }
-        } else {
-            if ($offer->getVolumeReference()) {
-                $value = $offer->getVolumeReference()->getName();
-            } else {
-                $value = WordHelper::showWeight($offer->getCatalogProduct()->getWeight());
-            }
-        }
+                        $value = null;
+                        if ($mainCombinationType === 'SIZE') {
+                            if ($offer->getClothingSize()) {
+                                $value = $offer->getClothingSize()->getName();
+                            }
+                        } else {
+                            if ($offer->getVolumeReference()) {
+                                $value = $offer->getVolumeReference()->getName();
+                            } else {
+                                $value = WordHelper::showWeight($offer->getCatalogProduct()->getWeight());
+                            }
+                        }
 
-        if (!$value) {
-            continue;
-        } ?>
+                        if (!$value) {
+                            continue;
+                        } ?>
                         <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
-                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
+                            <a class="b-weight-container__link b-weight-container__link--product js-offer-link-<?=$offer->getId()?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
-                               data-price="<?= ceil($offer->getPrice()) ?>"
+                               data-price=""
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>"
                                data-url="<?= $offer->getLink() ?>"
                                data-offerid="<?= $offer->getId() ?>">
                                 <span class="b-weight-container__line">
                                     <span class="b-weight-container__weight"><?= $value ?></span>
-                                    <span class="b-weight-container__price">
-                                        <?= ceil($offer->getPrice()) ?> <span class="b-ruble b-ruble--weight">₽</span>
-                                    </span>
+                                    <span class="b-weight-container__price"><?/** подгрузка */?></span>
                                 </span>
                                 <span class="b-weight-container__line">
-                                    <?php /** @todo впилить акцию
-                                     * <span class="b-weight-container__action">Акция</span>
-                                     */ ?>
+                                    <span class="b-weight-container__not" style="display: none"><?/** подгрузка */?></span>
+                                    <span class="b-weight-container__action js-offer-action" style="display: none"><?/** подгрузка */?></span>
+                                    <span class="b-weight-container__old-price b-weight-container__old-price--big" style="display: none">
+                                        <?/** подгрузка */?>
+                                    </span>
+                                    <span class="b-weight-container__cart js-offer-in-cart-<?=$offer->getId()?>" style="display: none">
+                                        <?/** подгрузка */?>
+                                        <span class="b-cart b-cart--cart-product">
+                                            <span class="b-icon b-icon--cart-product">
+                                                <?=new SvgDecorator('icon-cart', 16,16)?>
+                                            </span>
+                                        </span>
+                                        <span class="b-weight-container__number">0</span>
+                                    </span>
                                 </span>
                             </a>
                         </li>
-                    <?php
-    } ?>
+                    <?php } ?>
                 </ul>
             </div>
         <?php
@@ -266,29 +276,25 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     ); ?>
 
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
-                        $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
-                        if (!$unionOffers->isEmpty()) {
-                            ?>
+                    $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
+                    if (!$unionOffers->isEmpty()) { ?>
                         <li class="b-product-information__item">
                             <div class="b-product-information__title-info">Вкус</div>
                             <div class="b-product-information__value b-product-information__value--select">
                                 <div class="b-select b-select--product">
                                     <select class="b-select__block b-select__block--product js-select-link">
                                         <?php /** @var Offer $unionOffer */
-                                        foreach ($unionOffers as $unionOffer) {
-                                            ?>
+                                        foreach ($unionOffers as $unionOffer) { ?>
                                             <option value="<?=$unionOffer->getDetailPageUrl()?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
                                                 <?=$unionOffer->getName()?>
                                             </option>
-                                        <?php
-                                        } ?>
+                                        <?php } ?>
                                     </select>
                                 </div>
                             </div>
                         </li>
-                    <?php
-                        }
-                    } ?>
+                    <?php }
+                } ?>
                 <?php if (!empty($currentOffer->getColourCombination())) {
                         $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombination());
                         if (!$unionOffers->isEmpty()) {
@@ -347,17 +353,16 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
             </a>
             <hr class="b-counter-basket__hr"/>
-            <?php
-            /**
-             * @todo Акции
-             */
-            ?>
-            <p class="b-counter-basket__text b-counter-basket__text--red">Акция. 4+1 подарок при
-                покупке</p>
-            <p class="b-counter-basket__text">При покупке четырех кормов, пятый вы получите
-                бесплатно</p>
-            <p class="b-counter-basket__text">5 июня — 25 августа 2017</p>
-            <?php ?>
+            <?php if($currentOffer->isShare()){
+                /** @var IblockElement $share */
+                foreach ($currentOffer->getShare() as $share) {?>
+                    <p class="b-counter-basket__text b-counter-basket__text--red"><?=$share->getName()?></p>
+                    <?php if(!empty($share->getPreviewText()->getText())){?>
+                        <p class="b-counter-basket__text"><?=$share->getPreviewText()->getText()?></p>
+                    <?php }?>
+                    <p class="b-counter-basket__text"><?= DateHelper::replaceRuMonth($share->getDateActiveFrom()->format('d #n#'))?> — <?= DateHelper::replaceRuMonth($share->getDateActiveTo()->format('d #n# Y'))?></p>
+                <?php }
+            }?>
         </div>
         <div class="b-preloader">
             <div class="b-preloader__spinner">
@@ -477,4 +482,3 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     </div>
 <?php
 $this->EndViewTarget();
-$templateData['currentOffer'] = $currentOffer;

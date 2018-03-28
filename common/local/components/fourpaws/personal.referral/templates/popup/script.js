@@ -1,6 +1,6 @@
 $('body').on('change keydown keyup', 'form.js-referal-form input#number-card', function () {
     var val = $(this).val().replace(/\D/g, '');
-    if ($(this).hasClass('ok') || val.length === 13) {
+    if ($(this).hasClass('ok') && val.length === 13) {
         $.ajax({
                    url:      $(this).data('url'),
                    data:     {'card': val},

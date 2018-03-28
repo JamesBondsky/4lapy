@@ -34,14 +34,9 @@ class Gift extends \CSaleActionGiftCtrlGroup
         $controlDescr = parent::GetControlDescr();
         $controlDescr['FORCED_SHOW_LIST'] = [
             'GifterElement',
-            'CondBsktAmtBaseGroup'
+            'ADV:BasketFilterBasePriceRatio'
         ];
         $controlDescr['SORT'] = 300;
-//        $controlDescr['ENTITY'] = 'ELEMENT_PROPERTY';
-//        $controlDescr['FIELD'] = 'PROPERTY_6_VALUE';
-//        $controlDescr['FIELD_TABLE'] = '3:6';
-//        $controlDescr['MODULE_ENTITY'] = 'catalog';
-
         return $controlDescr;
     }
 
@@ -65,25 +60,13 @@ class Gift extends \CSaleActionGiftCtrlGroup
     public static function GetControlShow($arParams): array
     {
         $description = parent::GetControlShow($arParams);
-//        $arAtoms = static::GetAtomsEx();
-//        dump($description, $arAtoms);
         $description['label'] = 'Предоставить выбор подарка';
         $description['containsOneAction'] = false;
         $description['mess'] = [
             'ADD_CONTROL' => 'Добавить условие',
             'SELECT_CONTROL' => 'Выбрать условие'
         ];
-//        $description['defaultText'] = 'Список подарков';
-//        $description['control'] = [
-//            'Предоствить',
-//            $arAtoms['count'],
-//            'подарков из списка',
-//            $arAtoms['list'],
-//            $arAtoms['All'],
-//            $arAtoms['True']
-//        ];
-//        $description['group'] = 'Y' === static::IsGroup();
-//        dump($description);
+
         return $description;
     }
 
@@ -158,7 +141,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
             $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
         }
 
-        if (!$applyBasket and !$actionDescription) {
+        if (!$applyBasket || !$actionDescription) {
             return;
         }
 
@@ -166,21 +149,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
             $rowActionDescription = $actionDescription;
             $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
-//            /** @var BasketItem $ifItem */
-//            if($basket && $ifItem = $basket->getItemByBasketCode($basketRow['ID'])) {
-//                dump($ifItem->getField('NAME'), $ifItem->getQuantity());
-//            }
         }
-
-        // пытаемся получить корзину, чтобы добавить подарков
-        /** @noinspection NullPointerExceptionInspection */
-//        if (
-//            \is_object($callerObject)
-//            && $callerObject instanceof Discount
-//            && $basket = $callerObject->getOrder()->getBasket() && false
-//        ) {
-//
-//        }
     }
 
     /**
@@ -193,8 +162,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
      */
     public static function GetAtomsEx($strControlID = false, $boolEx = false): array
     {
-//        $res = parent::GetAtomsEx($strControlID, $boolEx);
-//        dump($res);
         $boolEx = (bool)$boolEx;
         $arAtomList = [
             'count' => [
@@ -309,7 +276,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
             foreach ($applyResult['DISCOUNT_LIST'] as $discount) {
                 if (
                     ($data = json_decode($discount['ACTIONS_DESCR']['BASKET'], true))
-                    //&& \is_iterable($data)
                     && \is_array($data)
                     && isset($data['discountType'])
                     && $data['discountType'] === 'GIFT'

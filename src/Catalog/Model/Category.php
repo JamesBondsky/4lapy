@@ -65,6 +65,15 @@ class Category extends IblockSection implements FilterInterface
      */
     protected $UF_SUFFIX = '';
 
+    protected $UF_LANDING;
+
+    /**
+     * @var string
+     */
+    protected $UF_LANDING_BANNER;
+
+    /** @var string */
+    protected $UF_FAQ_SECTION;
 
     /**
      * @var FilterCollection
@@ -111,8 +120,8 @@ class Category extends IblockSection implements FilterInterface
                 $fields,
                 [
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-                    'ID' => 0,
-                    'CODE' => '',
+                    'ID'        => 0,
+                    'CODE'      => '',
                 ]
             )
         );
@@ -133,6 +142,7 @@ class Category extends IblockSection implements FilterInterface
 
     /**
      * @param int $pictureId
+     *
      * @return static
      */
     public function setPictureId(int $pictureId)
@@ -446,5 +456,58 @@ class Category extends IblockSection implements FilterInterface
     public function setRoot(bool $root)
     {
         $this->root = $root;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isLanding(): bool
+    {
+        return \in_array($this->getUfLanding(), ['Y', '1', 1, true], true);
+    }
+
+    public function getUfLanding()
+    {
+        return $this->UF_LANDING;
+    }
+
+    /**
+     * @param string|bool|int $ufLanding
+     */
+    public function setUfLanding($ufLanding): void
+    {
+        $this->UF_LANDING = $ufLanding;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUfLandingBanner()
+    {
+        return $this->UF_LANDING_BANNER;
+    }
+
+    /**
+     * @param mixed $ufLandingBanner
+     */
+    public function setUfLandingBanner($ufLandingBanner): void
+    {
+        $this->UF_LANDING_BANNER = $ufLandingBanner;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUfFaqSection()
+    {
+        return $this->UF_FAQ_SECTION;
+    }
+
+    /**
+     * @param mixed $ufFaqSection
+     */
+    public function setUfFaqSection($ufFaqSection): void
+    {
+        $this->UF_FAQ_SECTION = $ufFaqSection;
     }
 }
