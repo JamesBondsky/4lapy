@@ -9,12 +9,25 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils;
 
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Order;
+use Exception;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\SaleBundle\Discount\Manzana;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Manager
@@ -29,20 +42,18 @@ class Manager
      *
      * @param Event|null $event
      *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws RuntimeException
+     * @throws NotFoundException
+     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws Exception
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws ArgumentOutOfRangeException
      */
-    public static function OnAfterSaleOrderFinalAction(Event $event = null)
+    public static function OnAfterSaleOrderFinalAction(Event $event = null): void
     {
         static $execution;
         if (!$execution && self::$finalActionEnabled) {
@@ -51,22 +62,45 @@ class Manager
                 /** @var Order $order */
                 $order = $event->getParameter('ENTITY');
                 if ($order instanceof Order) {
+                    $container = Application::getInstance()->getContainer();
+                    $basketService = $container->get(BasketService::class);
+                    $manzana = $container->get(Manzana::class);
+                    $couponStorage = $container->get(CouponStorageInterface::class);
 
                     // Автоматически добавляем подарки
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
-                        ->getAdder()
+                    $basketService
+                        ->getAdder('gift')
                         ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
-                        ->getCleaner()
+                    $basketService
+                        ->getCleaner('gift')
                         ->processOrder();
+
+                    // Автоматически добавляем подарки
+                    $basketService
+                        ->getAdder('detach')
+                        ->processOrder();
+
+                    // Удаляем подарки, акции которых не выполнились
+                    $basketService
+                        ->getCleaner('detach')
+                        ->processOrder();
+
+                    $promocode = $couponStorage->getApplicableCoupon();
+                    if ($promocode) {
+                        $manzana->setPromocode($promocode);
+                    }
+
+                    try {
+                        $basketService->setDiscountBeforeManzana();
+                        $manzana->calculate();
+                    } catch (ManzanaPromocodeUnavailableException $e) {
+                        $couponStorage->delete($promocode);
+                    }
                 }
             }
+
             $execution = false;
         }
     }
@@ -75,7 +109,7 @@ class Manager
      *
      *
      */
-    public static function disableProcessingFinalAction()
+    public static function disableProcessingFinalAction(): void
     {
         self::$finalActionEnabled = false;
     }
@@ -84,7 +118,7 @@ class Manager
      *
      *
      */
-    public static function enableProcessingFinalAction()
+    public static function enableProcessingFinalAction(): void
     {
         self::$finalActionEnabled = true;
     }

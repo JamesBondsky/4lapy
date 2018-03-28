@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -35,8 +39,8 @@ class DeliveryScheduleConsumer implements ConsumerInterface, LoggerAwareInterfac
     /**
      * @param $scheduleInfo
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function consume($scheduleInfo): bool
     {

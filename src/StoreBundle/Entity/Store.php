@@ -127,8 +127,8 @@ class Store extends Base
     protected $modifiedBy = 0;
 
     /**
-     * @var string
-     * @Serializer\Type("string")
+     * @var Schedule
+     * @Serializer\Type("store_schedule")
      * @Serializer\SerializedName("SCHEDULE")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -253,12 +253,59 @@ class Store extends Base
     protected $isBase = false;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_IS_SUPPLIER")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $isSupplier = false;
+
+    /**
+     * Срок поставки
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DELIVERY_TIME")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $deliveryTime = 1;
+
+    /**
+     * @var array
+     * @Serializer\Type("array_or_false")
+     * @Serializer\SerializedName("UF_SHIPMENT_TILL_11")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $shipmentTill11;
+
+    /**
+     * @var array
+     * @Serializer\Type("array_or_false")
+     * @Serializer\SerializedName("UF_SHIPMENT_TILL_13")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $shipmentTill13;
+
+    /**
+     * @var array
+     * @Serializer\Type("array_or_false")
+     * @Serializer\SerializedName("UF_SHIPMENT_TILL_18")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $shipmentTill18;
+
+    /**
+     * @var string
+     */
+    protected $scheduleString;
+
+    /**
      * @return int
      */
     public function getId(): int
     {
         return $this->id ?? 0;
-    }
+    }/** @noinspection SenselessMethodDuplicationInspection */
 
     /**
      * @param int $id
@@ -528,21 +575,22 @@ class Store extends Base
     }
 
     /**
-     * @return string
+     * @return Schedule
      */
-    public function getSchedule(): string
+    public function getSchedule(): Schedule
     {
-        return $this->schedule ?? '';
+        return $this->schedule;
     }
 
     /**
-     * @param string $schedule
+     * @param Schedule $schedule
      *
      * @return Store
      */
-    public function setSchedule(string $schedule): Store
+    public function setSchedule(Schedule $schedule): Store
     {
         $this->schedule = $schedule;
+        $this->scheduleString = (string)$schedule;
 
         return $this;
     }
@@ -808,6 +856,24 @@ class Store extends Base
     }
 
     /**
+     * @return bool
+     */
+    public function isSupplier(): bool
+    {
+        return $this->isSupplier;
+    }
+
+    /**
+     * @param bool $isSupplier
+     * @return Store
+     */
+    public function setIsSupplier(bool $isSupplier): Store
+    {
+        $this->isSupplier = $isSupplier;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getPhone(): string
@@ -817,25 +883,255 @@ class Store extends Base
 
     /**
      * @param string $phone
+     * @return $this
      */
-    public function setPhone(string $phone)
+    public function setPhone(string $phone): Store
     {
         $this->phone = $phone;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryTime(): int
+    {
+        return $this->deliveryTime ?? 0;
+    }
+
+    /**
+     * @param int $deliveryTime
+     * @return Store
+     */
+    public function setDeliveryTime(int $deliveryTime): Store
+    {
+        $this->deliveryTime = $deliveryTime;
+        return $this;
     }
 
     /**
      * @return array
      */
-    public function getFormattedSchedule(): array
+    public function getShipmentTill11(): array
     {
-        preg_match('~(\d+):00 - (\d+):00~', $this->getSchedule(), $matches);
-        if (!empty($matches)) {
-            return [
-                'from' => (int)$matches[1],
-                'to'   => (int)$matches[2],
-            ];
+        return $this->shipmentTill11 ?? [];
+    }
+
+    /**
+     * @param array $shipmentTill11
+     * @return Store
+     */
+    public function setShipmentTill11(array $shipmentTill11): Store
+    {
+        $this->shipmentTill11 = $shipmentTill11;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getShipmentTill13(): array
+    {
+        return $this->shipmentTill13 ?? [];
+    }
+
+    /**
+     * @param array $shipmentTill13
+     * @return Store
+     */
+    public function setShipmentTill13(array $shipmentTill13): Store
+    {
+        $this->shipmentTill13 = $shipmentTill13;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getShipmentTill18(): array
+    {
+        return $this->shipmentTill18 ?? [];
+    }
+
+    /**
+     * @param array $shipmentTill18
+     * @return Store
+     */
+    public function setShipmentTill18(array $shipmentTill18): Store
+    {
+        $this->shipmentTill18 = $shipmentTill18;
+        return $this;
+    }
+
+    /**
+     * @todo убрать этот метод. Сейчас нужен для работы с терминалами DPD, где график работы в произвольном формате
+     *
+     * @return string
+     */
+    public function getScheduleString(): string
+    {
+        if (!$this->scheduleString) {
+            $this->scheduleString = (string)$this->schedule;
         }
 
-        return [];
+        return $this->scheduleString;
+    }
+
+    /**
+     * @param string $scheduleString
+     * @return Store
+     */
+    public function setScheduleString(string $scheduleString): Store
+    {
+        $this->scheduleString = $scheduleString;
+        return $this;
+    }
+
+    /**
+     * Возвращает дату отгрузки
+     *
+     * @param \DateTime $date
+     * @return \DateTime
+     */
+    public function getShipmentDate(\DateTime $date): \DateTime
+    {
+        $items = [
+            11 => $this->getShipmentTill11(),
+            13 => $this->getShipmentTill13(),
+            18 => $this->getShipmentTill18(),
+        ];
+
+        $tmpDate = clone $date;
+        $currentDay = (int)$tmpDate->format('w');
+        $currentHour = (int)$tmpDate->format('G');
+        $results = [];
+
+        /**
+         * @var int $maxHour
+         * @var array $days
+         */
+        foreach ($items as $maxHour => $days) {
+            if (empty($days)) {
+                continue;
+            }
+
+            $res = [];
+            foreach ($days as $day) {
+                $diff = $day - $currentDay;
+                /**
+                 * Если текущий день является днем отгрузки
+                 */
+                if ($diff === 0) {
+                    /**
+                     * Если текущий час меньше времени окончания отгрузки,
+                     * то отгрузка в текущий день, иначе - через неделю
+                     */
+                    if ($currentHour < $maxHour) {
+                        $res[] = 0;
+                    } else {
+                        $res[] = 7;
+                    }
+                    continue;
+                }
+
+                /**
+                 * если diff < 0, то поставка на следующей неделе, соответственно, добавляем 7 дней
+                 */
+                $res[] = ($diff > 0) ? $diff : $diff + 7;
+            }
+
+            $results[] = min($res);
+        }
+
+        $modifier = empty($results) ? 0 : min($results);
+        if ($modifier) {
+            $tmpDate->modify(sprintf('+%s days', $modifier));
+        }
+
+        return $tmpDate;
+    }
+
+    /**
+     * @return string
+     */
+    public function serialize(): string
+    {
+        return serialize([
+            $this->id,
+            $this->active,
+            $this->title,
+            $this->address,
+            $this->description,
+            $this->latitude,
+            $this->longitude,
+            $this->imageId,
+            $this->locationId,
+            $this->dateModify,
+            $this->dateCreate,
+            $this->userId,
+            $this->dateCreate,
+            $this->schedule,
+            $this->phone,
+            $this->xmlId,
+            $this->sort,
+            $this->email,
+            $this->issuingCenter,
+            $this->shippingCenter,
+            $this->siteId,
+            $this->code,
+            $this->isShop,
+            $this->location,
+            $this->metro,
+            $this->services,
+            $this->yandexShopId,
+            $this->isBase,
+            $this->isSupplier,
+            $this->deliveryTime,
+            $this->shipmentTill11,
+            $this->shipmentTill13,
+            $this->shipmentTill18
+        ]);
+    }
+
+    /**
+     * @param string $serialized
+     */
+    public function unserialize($serialized): void
+    {
+        [
+            $this->id,
+            $this->active,
+            $this->title,
+            $this->address,
+            $this->description,
+            $this->latitude,
+            $this->longitude,
+            $this->imageId,
+            $this->locationId,
+            $this->dateModify,
+            $this->dateCreate,
+            $this->userId,
+            $this->dateCreate,
+            $this->schedule,
+            $this->phone,
+            $this->xmlId,
+            $this->sort,
+            $this->email,
+            $this->issuingCenter,
+            $this->shippingCenter,
+            $this->siteId,
+            $this->code,
+            $this->isShop,
+            $this->location,
+            $this->metro,
+            $this->services,
+            $this->yandexShopId,
+            $this->isBase,
+            $this->isSupplier,
+            $this->deliveryTime,
+            $this->shipmentTill11,
+            $this->shipmentTill13,
+            $this->shipmentTill18
+        ] = unserialize($serialized, ['allowed_classes' => true]);
     }
 }

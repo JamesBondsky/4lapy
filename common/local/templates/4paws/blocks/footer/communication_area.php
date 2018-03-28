@@ -6,8 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\Decorators\SvgDecorator;
 
-?>
-<?php $APPLICATION->IncludeComponent(
+$APPLICATION->IncludeComponent(
     'fourpaws:city.phone',
     'template.footer',
     [],
@@ -29,7 +28,8 @@ use FourPaws\Decorators\SvgDecorator;
         <span class="b-footer-communication__link js-footer-recall" title="Перезвоните мне">
             <span class="b-icon b-icon--footer">
                 <?= new SvgDecorator('icon-phone-white', 10, 16) ?>
-            </span>Перезвоните мне
+            </span>
+            Перезвоните мне
         </span>
     </span>
     <span class="b-footer-communication__item">

@@ -8,14 +8,14 @@ namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
@@ -37,8 +37,21 @@ class Calculator extends DPD
     public static function callback($method)
     {
         return [__CLASS__, $method];
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
+    /**
+     * @param string $profile
+     * @param array $arConfig
+     * @param array $arOrder
+     * @param int $STEP
+     * @param bool $TEMP
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
     public function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -63,26 +76,29 @@ class Calculator extends DPD
         }
 
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
+        /**
+         * Если есть склады в данном городе, то доставка DPD выполняется с этих складов. Иначе - с Москвы
+         */
         $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
         if ($storesAvailable->isEmpty()) {
             $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
             $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
         }
 
-        $storesDelay = new StoreCollection();
-
         $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
         if ($result['RESULT'] === 'ERROR') {
             return $result;
         }
 
+        $stockResult = null;
+        $terminals = new StoreCollection();
         if (!empty($arOrder['ITEMS'])) {
             $basket = $basketService->getBasket()->getOrderableItems();
             if ($offers = DeliveryHandlerBase::getOffers(
                 $arOrder['LOCATION_FROM'],
                 $basket
             )) {
-                $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
+                $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable);
                 if (!$stockResult->getUnavailable()->isEmpty()) {
                     $result = [
                         'RESULT' => 'ERROR',
@@ -93,49 +109,32 @@ class Calculator extends DPD
                 }
 
                 /**
-                 * Если есть отложенные товары, то добавляем к дате доставки DPD
-                 * срок поставки на склад по графику
-                 */
-                if (!$stockResult->getDelayed()->isEmpty()) {
-                    $result['DPD_TARIFF']['DAYS'] += $stockResult->getDeliveryDate()->diff(new \DateTime())->days;
-                }
-                /**
                  * Получаем пункты самовывоза DPD
                  */
                 if ($profileCode === DeliveryService::DPD_PICKUP_CODE) {
                     $shipment = self::makeShipment($arOrder);
                     $terminals = $shipment->getDpdTerminals();
-
-                    /** @var StockResult $item */
-                    foreach ($stockResult as $item) {
-                        $item->setStores($terminals);
-                    }
                 }
             }
         }
 
         $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
-        /* по ТЗ - дата доставки DPD для зоны 4 рассчитывается как "то, что вернуло DPD" + 1 день */
-        if ($profileCode == DeliveryService::DPD_DELIVERY_CODE &&
-            $deliveryService->getDeliveryZoneCodeByLocation(
-                $arOrder['LOCATION_TO'],
-                $deliveryId
-            ) === DeliveryService::ZONE_4
-        ) {
-            $result['DPD_TARIFF']['DAYS']++;
-        }
 
         $intervals = new IntervalCollection();
         $intervals->add(
             (new Interval())->setFrom($interval[0])
                             ->setTo($interval[1])
         );
-        /* @todo не хранить эти данные в сессии */
-        $_SESSION['DPD_DATA'][$profileCode] = [
+
+        CalculationResultFactory::$dpdData[$profileCode] = [
+            'TERMINALS'    => $terminals,
             'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
-            'DAYS_TO'      => $result['DPD_TARIFF']['DAYS'] + 10,
-            'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
+            'STOCK_RESULT' => $stockResult,
+            'DELIVERY_ZONE' => $deliveryService->getDeliveryZoneCodeByLocation(
+                $arOrder['LOCATION_TO'],
+                $deliveryId
+            )
         ];
 
         $result['VALUE'] = floor($result['VALUE']);
@@ -162,6 +161,13 @@ class Calculator extends DPD
         return self::$shipment;
     }
 
+    /**
+     * @param array $arOrder
+     * @param array $arConfig
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     public function Compability($arOrder, $arConfig)
     {
         /** @var StoreService $storeService */
@@ -177,19 +183,18 @@ class Calculator extends DPD
         }
         $shipment = self::makeShipment($arOrder);
 
+        $profiles = [];
         if ($shipment->isPossibileSelfDelivery()) {
             $profiles = ['COURIER', 'PICKUP'];
         } elseif ($shipment->isPossibileDelivery()) {
             $profiles = ['COURIER'];
-        } else {
-            $profiles = [];
         }
 
         $event = new Event(IPOLH_DPD_MODULE, 'onCompabilityBefore', [$profiles, $arOrder, $arConfig]);
         $event->send();
 
         foreach ($event->getResults() as $eventResult) {
-            if ($eventResult->getType() != EventResult::SUCCESS) {
+            if ((int)$eventResult->getType() !== EventResult::SUCCESS) {
                 continue;
             }
 
@@ -201,7 +206,7 @@ class Calculator extends DPD
 }
 
 DPD::$needIncludeComponent = false;
-$eventManager = \Bitrix\Main\EventManager::getInstance();
+$eventManager = EventManager::getInstance();
 $events = [
     'OnSaleComponentOrderOneStepDelivery',
     'OnSaleComponentOrderOneStepPaySystem',
@@ -211,7 +216,7 @@ $events = [
 foreach ($events as $event) {
     $handlers = $eventManager->findEventHandlers('sale', $event);
     foreach ($handlers as $i => $handler) {
-        if (in_array('\\' . DPD::class, $handler['CALLBACK'], true)) {
+        if (\in_array('\\' . DPD::class, $handler['CALLBACK'], true)) {
             $eventManager->removeEventHandler('sale', $event, $i);
         }
     }

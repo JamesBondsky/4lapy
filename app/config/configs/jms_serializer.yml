@@ -1,6 +1,7 @@
 parameters:
     jms_serializer.json_serialization_visitor.class: FourPaws\MobileApiBundle\SerializationVisitor\BlankSerializationVisitor
     jms_serializer.datetime_handler.class: FourPaws\MobileApiBundle\Serialization\DateHandler
+    jms_serializer.unserialize_object_constructor.class: FourPaws\AppBundle\Construction\UnserializeObjectConstructor
 
 services:
     JMS\Serializer\SerializerInterface: '@jms_serializer'

@@ -6,7 +6,6 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -17,6 +16,7 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Repository\PetRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -60,8 +60,7 @@ class PetService
         PetRepository $petRepository,
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaService $manzanaService
-    )
-    {
+    ) {
         $this->petRepository  = $petRepository;
         $this->currentUser    = $currentUserProvider;
         $this->manzanaService = $manzanaService;
@@ -70,7 +69,6 @@ class PetService
     /**
      * @param array $data
      *
-     * @return bool
      * @throws EmptyEntityClass
      * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
@@ -83,6 +81,7 @@ class PetService
      * @throws BitrixRuntimeException
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
     public function add(array $data) : bool
     {
@@ -91,23 +90,23 @@ class PetService
         }
         if (!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
+        } else {
             unset($data['UF_PHOTO']);
         }
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
         $this->petRepository->setEntity($entity);
         $res = $this->petRepository->create();
+
+        /**
+         * @todo Events
+         */
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $entity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $entity->getUserId(),
+            ]);
         }
         
         return $res;
@@ -193,7 +192,6 @@ class PetService
                     break;
                 }
             }
-            
         }
         $client->ffOthers = $others;
     }
@@ -213,12 +211,18 @@ class PetService
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
-     * @return bool
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
     public function update(array $data) : bool
     {
+        if (empty($data['UF_PHOTO_TMP'])) {
+            unset($data['UF_PHOTO']);
+        } else {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
+        }
+
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
 
@@ -227,13 +231,8 @@ class PetService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
-        }
-        if (!empty($data['UF_PHOTO_TMP'])) {
-            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
+        if ($entity->getUserId() === 0) {
+            $entity->setUserId($updateEntity->getUserId());
             unset($data['UF_PHOTO']);
         }
 
@@ -241,12 +240,9 @@ class PetService
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $updateEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $updateEntity->getUserId(),
+            ]);
         }
         
         return $res;
@@ -265,9 +261,9 @@ class PetService
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
-     * @return bool
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
     public function delete(int $id) : bool
     {
@@ -280,12 +276,9 @@ class PetService
         if ($res) {
             $this->updateManzanaPets();
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $deleteEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:pets:' . $deleteEntity->getUserId(),
+            ]);
         }
         
         return $res;
@@ -294,10 +287,10 @@ class PetService
     /**
      * @param int $id
      *
-     * @return Pet|BaseEntity
      * @throws ObjectPropertyException
      * @throws \Exception
      * @throws NotFoundException
+     * @return BaseEntity|Pet
      */
     public function getById(int $id): Pet
     {

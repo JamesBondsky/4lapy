@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;

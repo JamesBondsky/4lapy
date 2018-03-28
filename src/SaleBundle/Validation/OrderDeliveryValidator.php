@@ -6,16 +6,27 @@
 
 namespace FourPaws\SaleBundle\Validation;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotSupportedException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
 class OrderDeliveryValidator extends ConstraintValidator
 {
+    /**
+     * Максимальное время хранения даты перехода пользователя на 2й шаг оформления заказа
+     */
+    public const MAX_DATE_DIFF = 1800;
+
     /**
      * @var OrderService
      */
@@ -33,15 +44,24 @@ class OrderDeliveryValidator extends ConstraintValidator
     }
 
     /**
-     * @param OrderStorage $entity
+     * @param mixed $entity
      * @param Constraint $constraint
-     *
      * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @throws ApplicationCreateException
      */
     public function validate($entity, Constraint $constraint)
     {
         if (!$entity instanceof OrderStorage || !$constraint instanceof OrderDelivery) {
             return;
+        }
+
+        $dateDiff = $entity->getCurrentDate()->getTimestamp() - (new \DateTime())->getTimestamp();
+        if (abs($dateDiff) > static::MAX_DATE_DIFF) {
+            $this->context->addViolation($constraint->deliveryDateExpiredMessage);
         }
 
         /**
@@ -56,10 +76,10 @@ class OrderDeliveryValidator extends ConstraintValidator
         /**
          * Проверка, что выбрана доступная доставка
          */
-        $deliveryMethods = $this->orderService->getDeliveries();
+        $deliveryMethods = $this->orderService->getDeliveries($entity);
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
-            if ($deliveryId === (int)$deliveryMethod->getData()['DELIVERY_ID']) {
+            if ($deliveryId === $deliveryMethod->getDeliveryId()) {
                 $delivery = $deliveryMethod;
                 break;
             }
@@ -85,23 +105,38 @@ class OrderDeliveryValidator extends ConstraintValidator
             }
 
             $intervalIndex = $entity->getDeliveryInterval();
-            $intervals = $delivery->getData()['DELIVERY_INTERVALS'];
+            $delivery->setDateOffset($entity->getDeliveryDate());
+            $intervals = $delivery->getAvailableIntervals();
             if (!empty($intervals)) {
-                if (($intervalIndex < 1) || $intervalIndex > \count($intervals)) {
+                if (($intervalIndex < 1) || $intervalIndex > $intervals->count()) {
                     $this->context->addViolation($constraint->deliveryIntervalMessage);
                 }
             }
         } else {
+            /** @var PickupResultInterface $delivery */
             try {
-                $availableStores = $this->deliveryService->getStockResultByDelivery($delivery)->getStores();
+                $availableStores = $delivery->getBestShops();
                 $storeXmlId = $entity->getDeliveryPlaceCode();
-                if (!isset($availableStores[$storeXmlId])) {
-                    $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
+                $selectedStore = null;
+                /** @var Store $store */
+                foreach ($availableStores as $store) {
+                    if ($store->getXmlId() === $storeXmlId) {
+                        $selectedStore = $store;
+                        break;
+                    }
+                }
 
+                if (null === $selectedStore) {
+                    $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
+                    return;
+                }
+
+                if (!$delivery->setSelectedStore($selectedStore)->isSuccess()) {
+                    $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
                     return;
                 }
                 /* @todo проверка частичного получения заказа */
-            } catch (NotFoundException $e) {
+            } catch (DeliveryNotFoundException $e) {
                 $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
             }
         }

@@ -24,8 +24,8 @@ class IblockSect extends BitrixArrayItemBase
     protected $IBLOCK_ID = 0;
     
     /**
-     * @var int
-     * @JMS\Serializer\Annotation\Type("int")
+     * @var string
+     * @JMS\Serializer\Annotation\Type("string")
      * @see BitrixArrayItemBase
      */
     protected $CODE = '';
@@ -33,22 +33,22 @@ class IblockSect extends BitrixArrayItemBase
     /**
      * @var int
      */
-    protected $IBLOCK_SECTION_ID = '';
+    protected $IBLOCK_SECTION_ID = 0;
     
     /**
      * @var int
      */
-    protected $PICTURE = '';
+    protected $PICTURE = 0;
     
     /**
      * @var int
      */
-    protected $DETAIL_PICTURE = '';
+    protected $DETAIL_PICTURE = 0;
     
     /**
      * @var int
      */
-    protected $DEPTH_LEVEL = '';
+    protected $DEPTH_LEVEL = 0;
     
     /**
      * @var string
@@ -69,17 +69,11 @@ class IblockSect extends BitrixArrayItemBase
      * @var string
      */
     protected $SECTION_PAGE_URL = '';
-    
-
-    public function __construct(array $fields = [])
-    {
-        parent::__construct($fields);
-    }
 
     /**
      * @return string
      */
-    public function getSectionPageUrl()
+    public function getSectionPageUrl(): string
     {
         return $this->SECTION_PAGE_URL;
     }
@@ -89,7 +83,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withSectionPageUrl(string $url)
+    public function withSectionPageUrl(string $url): self
     {
         $this->SECTION_PAGE_URL = $url;
 
@@ -115,7 +109,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withDescription(TextContent $description)
+    public function withDescription(TextContent $description): self
     {
         $this->description = $description;
 
@@ -135,7 +129,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withIblockId(int $iblockId)
+    public function withIblockId(int $iblockId): self
     {
         $this->IBLOCK_ID = $iblockId;
     
@@ -155,7 +149,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withCode(string $code)
+    public function withCode(string $code): self
     {
         $this->CODE = $code;
         
@@ -175,7 +169,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withIblockSectionId(int $iblockSectionId)
+    public function withIblockSectionId(int $iblockSectionId): self
     {
         $this->IBLOCK_SECTION_ID = $iblockSectionId;
         return $this;
@@ -195,7 +189,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withPicture(int $picture)
+    public function withPicture(int $picture): self
     {
         $this->PICTURE = $picture;
         return $this;
@@ -215,7 +209,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withDetailPicture(int $detailPicture)
+    public function withDetailPicture(int $detailPicture): self
     {
         $this->DETAIL_PICTURE = $detailPicture;
     
@@ -235,7 +229,7 @@ class IblockSect extends BitrixArrayItemBase
      *
      * @return $this
      */
-    public function withDepthLevel(int $depthLevel)
+    public function withDepthLevel(int $depthLevel): self
     {
         $this->DEPTH_LEVEL = $depthLevel;
     

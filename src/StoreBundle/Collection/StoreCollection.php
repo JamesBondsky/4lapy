@@ -2,6 +2,7 @@
 
 namespace FourPaws\StoreBundle\Collection;
 
+use FourPaws\StoreBundle\Entity\Schedule;
 use FourPaws\StoreBundle\Entity\Store;
 
 class StoreCollection extends BaseCollection
@@ -43,26 +44,32 @@ class StoreCollection extends BaseCollection
     }
 
     /**
-     * @return array
+     * @param StoreCollection $stores
+     * @return StoreCollection
      */
-    public function getTotalSchedule(): array
+    public function excludeStores(StoreCollection $stores): StoreCollection
     {
-        /** @var Store $item */
-        $from = null;
-        $to = null;
-        foreach ($this->getIterator() as $item) {
-            $formattedSchedule = $item->getFormattedSchedule();
-            if ((null === $from) || ($formattedSchedule['from'] < $from)) {
-                $from = $formattedSchedule['from'];
+        $result = new static();
+        /** @var Store $store */
+        foreach ($this->getIterator() as $store) {
+            if ($stores->contains($store)) {
+                continue;
             }
-            if ((null === $to) || ($formattedSchedule['to'] > $to)) {
-                $to = $formattedSchedule['to'];
-            }
+
+            $result[$store->getXmlId()] = $store;
         }
 
-        return [
-            'from' => $from,
-            'to'   => $to,
-        ];
+        return $result;
+    }
+
+    /**
+     * @param Store $store
+     * @return bool
+     */
+    public function hasStore(Store $store): bool
+    {
+        return !$this->filter(function (Store $currentStore) use ($store) {
+            return $currentStore->getXmlId() === $store->getXmlId();
+        })->isEmpty();
     }
 }
