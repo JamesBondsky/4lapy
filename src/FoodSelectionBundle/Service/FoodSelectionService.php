@@ -91,8 +91,11 @@ class FoodSelectionService
      */
     public function getSectionIdByXmlId($xmlId, int $depthLvl = 0)
     {
-        if (!\is_string($xmlId) || !\is_array($xmlId)) {
-            return null;
+        if (!\is_array($xmlId)) {
+            $xmlId = (string)$xmlId;
+            if(!\is_string($xmlId) || empty($xmlId)) {
+                return null;
+            }
         }
         if(!empty($xmlId)) {
             $filter = ['XML_ID' => $xmlId];
