@@ -1718,11 +1718,15 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $this->normsOfUse;
     }
-
+    
     /**
      * Возвращает информацию, на основе которой Elasticsearch будет строить механизм автодополнения
      *
      * @return string[]
+     *
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
     public function getSuggest()
     {
