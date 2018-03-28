@@ -97,7 +97,6 @@ class StockResultCollection extends ArrayCollection
      * @param bool $skipUnavailable
      *
      * @return StoreCollection
-     * @throws NotFoundException
      */
     public function getStores($skipUnavailable = true): StoreCollection
     {
@@ -115,10 +114,6 @@ class StockResultCollection extends ArrayCollection
                     $result[$store->getXmlId()] = $store;
                 }
             }
-        }
-
-        if ($result->isEmpty()) {
-            throw new NotFoundException('No stores found');
         }
 
         return $result;
