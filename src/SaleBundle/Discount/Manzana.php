@@ -1,7 +1,10 @@
 <?php
 
-namespace FourPaws\SaleBundle\Discount;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
 
+namespace FourPaws\SaleBundle\Discount;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -123,7 +126,8 @@ class Manzana implements LoggerAwareInterface
      *
      * @throws ArgumentOutOfRangeException
      */
-    public function recalculateBasketFromResponse(Basket $basket, SoftChequeResponse $response): void {
+    public function recalculateBasketFromResponse(Basket $basket, SoftChequeResponse $response): void
+    {
         $manzanaItems = $response->getItems();
 
         /**
@@ -152,7 +156,8 @@ class Manzana implements LoggerAwareInterface
      *
      * @throws ManzanaPromocodeUnavailableException
      */
-    public function checkPromocodeByResponse(SoftChequeResponse $response, string $promocode) {
+    public function checkPromocodeByResponse(SoftChequeResponse $response, string $promocode)
+    {
         $applied = false;
 
         if ($response->getCoupons()) {
