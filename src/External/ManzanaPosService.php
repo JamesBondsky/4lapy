@@ -219,7 +219,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     protected function buildResponseFromRawResponse($rawResult): SoftChequeResponse
     {
         $rawResult = $rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
-        dump($rawResult);
+
         return $this->serializer->fromArray(\json_decode(\json_encode($rawResult), true), SoftChequeResponse::class);
     }
 

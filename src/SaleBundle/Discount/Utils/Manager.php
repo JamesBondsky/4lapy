@@ -23,6 +23,7 @@ use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -51,7 +52,6 @@ class Manager
      * @throws ObjectNotFoundException
      * @throws NotSupportedException
      * @throws ArgumentOutOfRangeException
-     * @throws ManzanaPromocodeUnavailableException
      */
     public static function OnAfterSaleOrderFinalAction(Event $event = null): void
     {
@@ -65,6 +65,7 @@ class Manager
                     $container = Application::getInstance()->getContainer();
                     $basketService = $container->get(BasketService::class);
                     $manzana = $container->get(Manzana::class);
+                    $couponStorage = $container->get(CouponStorageInterface::class);
 
                     // Автоматически добавляем подарки
                     $basketService
@@ -86,16 +87,20 @@ class Manager
                         ->getCleaner('detach')
                         ->processOrder();
 
-                    /**
-                     * @todo
-                     */
-                    $promocode = '';
+                    $promocode = $couponStorage->getApplicableCoupon();
                     if ($promocode) {
                         $manzana->setPromocode($promocode);
                     }
-                    $manzana->calculate();
+
+                    try {
+                        $basketService->setDiscountBeforeManzana();
+                        $manzana->calculate();
+                    } catch (ManzanaPromocodeUnavailableException $e) {
+                        $couponStorage->delete($promocode);
+                    }
                 }
             }
+
             $execution = false;
         }
     }

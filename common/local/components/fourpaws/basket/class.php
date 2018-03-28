@@ -21,21 +21,26 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -45,7 +50,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * Class BasketComponent
  * @package FourPaws\Components
  */
-class BasketComponent extends \CBitrixComponent
+class BasketComponent extends CBitrixComponent
 {
     public $basketService;
     /** @var OfferCollection */
@@ -60,6 +65,10 @@ class BasketComponent extends \CBitrixComponent
     private $manzanaPosService;
     /** @var array $images */
     private $images;
+    /**
+     * @var CouponSessionStorage
+     */
+    private $couponsStorage;
 
     /**
      * BasketComponent constructor.
@@ -77,28 +86,29 @@ class BasketComponent extends \CBitrixComponent
 
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
+        $this->couponsStorage = $container->get(CouponStorageInterface::class);
         $this->manzanaPosService = $container->get('manzana.pos.service');
     }
 
-    /** @noinspection PhpMissingParentCallCommonInspection */
-    /**
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
+     * @return void
      *
      * @throws ApplicationCreateException
-     * @throws \Exception
+     * @throws Exception
      * @throws SystemException
      * @throws ArgumentOutOfRangeException
      * @throws ArgumentException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws InvalidArgumentException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     *
-     * @return void
+     * @throws ExecuteException
      */
     public function executeComponent(): void
     {
@@ -120,6 +130,7 @@ class BasketComponent extends \CBitrixComponent
 
         $this->arResult['BASKET'] = $basket;
         if (!$this->arParams['MINI_BASKET']) {
+            $this->setCoupon();
             $this->arResult['USER'] = null;
             $this->arResult['USER_ACCOUNT'] = null;
             try {
@@ -134,7 +145,7 @@ class BasketComponent extends \CBitrixComponent
                     );
                     $chequeRequest->setPaidByBonus($orderableBasket->getPrice());
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getAvailablePayment());
+                    $this->arResult['MAX_BONUS_SUM'] = \floor($cheque->getAvailablePayment());
                 }
             } catch (NotAuthorizedException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
@@ -150,8 +161,6 @@ class BasketComponent extends \CBitrixComponent
     }
 
     /**
-     *
-     *
      * @param $offerId
      *
      * @return ResizeImageDecorator|null
@@ -191,13 +200,13 @@ class BasketComponent extends \CBitrixComponent
      * @return Basket|bool
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws ApplicationCreateException
      * @throws ObjectNotFoundException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws SystemException
-     * @throws \Exception
+     * @throws Exception
      */
     private function setItems($basket)
     {
@@ -209,7 +218,7 @@ class BasketComponent extends \CBitrixComponent
             $this->arResult['OFFER_MIN_DELIVERY'] = [];
 
             /** @todo пока берем ближайшую доставку из быстрого заказа */
-            \CBitrixComponent::includeComponentClass('fourpaws:fast.order');
+            CBitrixComponent::includeComponentClass('fourpaws:fast.order');
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             try {
                 $fastOrderClass = new FourPawsFastOrderComponent();
@@ -297,7 +306,7 @@ class BasketComponent extends \CBitrixComponent
      *
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      */
@@ -309,7 +318,7 @@ class BasketComponent extends \CBitrixComponent
                 if (\count($group) === 1) {
                     $group = current($group);
                 } else {
-                    throw new \RuntimeException('TODO');
+                    throw new RuntimeException('TODO');
                 }
 
                 /** @noinspection PhpUndefinedMethodInspection */
@@ -365,9 +374,20 @@ class BasketComponent extends \CBitrixComponent
         $page = '';
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
-        if (!$basket->count() && !$this->arParams['MINI_BASKET']) {
+        if (!$this->arParams['MINI_BASKET'] && !$basket->count()) {
             $page = 'empty';
         }
         return $page;
+    }
+
+    /**
+     * Set coupon and coupon discount
+     *
+     * @return void
+     */
+    private function setCoupon(): void
+    {
+        $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
+        $this->arResult['COUPON_DISCOUNT'] = $this->basketService->getPromocodeDiscount();
     }
 }

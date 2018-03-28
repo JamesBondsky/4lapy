@@ -3,11 +3,13 @@
 namespace FourPaws\SaleBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
@@ -19,6 +21,7 @@ use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
@@ -46,7 +49,7 @@ class Event implements ServiceHandlerInterface
     protected static $eventManager;
 
     /**
-     * @param \Bitrix\Main\EventManager $eventManager
+     * @param EventManager $eventManager
      *
      * @return mixed|void
      */
@@ -87,8 +90,6 @@ class Event implements ServiceHandlerInterface
     }
 
     /**
-     *
-     *
      * @param string $eventName
      * @param callable $callback
      * @param string $module
@@ -132,12 +133,12 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
+     * @throws InvalidArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
     public static function updateItemAvailability(BitrixEvent $event): void
     {
@@ -151,9 +152,9 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      */
     public static function sendNewOrderMessage(BitrixEvent $event): void
     {
@@ -175,9 +176,9 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      */
     public static function sendOrderPaymentMessage(BitrixEvent $event): void
     {
@@ -195,9 +196,9 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      */
     public static function sendOrderCancelMessage(BitrixEvent $event): void
     {
@@ -215,10 +216,10 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ArgumentOutOfRangeException
+     * @throws ApplicationCreateException
      */
     public static function sendOrderStatusMessage(BitrixEvent $event): void
     {

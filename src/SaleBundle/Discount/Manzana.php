@@ -32,12 +32,10 @@ class Manzana implements LoggerAwareInterface
      * @var BasketService
      */
     private $basketService;
-
     /**
      * @var ManzanaPosService
      */
     private $manzanaPosService;
-
     /**
      * @var string
      */
@@ -78,6 +76,13 @@ class Manzana implements LoggerAwareInterface
     {
         $basket = $this->basketService->getBasket();
 
+        if (!$basket->count()) {
+            /**
+             * Empty basket
+             */
+            return;
+        }
+
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $user = $this->userService->getCurrentUser();
@@ -92,6 +97,11 @@ class Manzana implements LoggerAwareInterface
             if ($this->promocode) {
                 $response = $this->manzanaPosService->processChequeWithCoupons($request, $this->promocode);
                 $this->checkPromocodeByResponse($response, $this->promocode);
+
+                /**
+                 * @todo переделать костыль
+                 */
+                $this->saveCouponDiscount($response);
             } else {
                 $response = $this->manzanaPosService->processCheque($request);
             }
@@ -159,5 +169,13 @@ class Manzana implements LoggerAwareInterface
                 )
             );
         }
+    }
+
+    /**
+     * @param SoftChequeResponse $response
+     */
+    private function saveCouponDiscount(SoftChequeResponse $response)
+    {
+        $this->basketService->setPromocodeDiscount($response->getSumm() - $response->getSummDiscounted());
     }
 }

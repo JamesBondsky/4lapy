@@ -50,3 +50,7 @@ services:
     FourPaws\SaleBundle\Discount\Manzana:
         class: FourPaws\SaleBundle\Discount\Manzana
         public: true
+
+    FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface:
+        class: FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage
+        public: true

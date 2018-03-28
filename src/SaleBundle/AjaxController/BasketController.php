@@ -6,7 +6,13 @@ declare(strict_types=1);
 
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Grid\Declension;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Exception;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -14,11 +20,17 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
+use InvalidArgumentException as BaseInvalidArgumentException;
+use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,36 +41,50 @@ use Symfony\Component\HttpFoundation\Request;
  * @package FourPaws\SaleBundle\Controller
  * @Route("/basket")
  */
-class BasketController extends Controller
+class BasketController extends Controller implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     private $basketService;
     /**
      * @var BasketViewService
      */
     private $basketViewService;
+    /**
+     * @var Manzana
+     */
+    private $manzana;
+    /**
+     * @var CouponStorageInterface
+     */
+    private $couponStorage;
 
     /**
      * BasketController constructor.
      *
      * @param BasketService $basketService
      * @param BasketViewService $basketViewService
+     * @param Manzana $manzana
+     * @param CouponStorageInterface $couponStorage
      */
-    public function __construct(BasketService $basketService, BasketViewService $basketViewService)
+    public function __construct(BasketService $basketService, BasketViewService $basketViewService, Manzana $manzana, CouponStorageInterface $couponStorage)
     {
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
+        $this->manzana = $manzana;
+        $this->couponStorage = $couponStorage;
     }
 
     /**
      * @Route("/add/", methods={"GET", "POST"})
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \RuntimeException
+     * @throws ObjectNotFoundException
+     * @throws LoaderException
+     * @throws RuntimeException
      *
-     * @return \FourPaws\App\Response\JsonResponse
+     * @return JsonResponse
      */
     public function addAction(Request $request): JsonResponse
     {
@@ -96,12 +122,59 @@ class BasketController extends Controller
     }
 
     /**
+     * @Route("/promo/apply/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws RuntimeException
+     */
+    public function applyPromocodeAction(Request $request): JsonResponse
+    {
+        $promoCode = $request->get('promoCode');
+
+        try {
+            $promoCode = \htmlspecialchars($promoCode);
+
+            $this->manzana->setPromocode($promoCode);
+            $this->manzana->calculate();
+            $this->couponStorage->clear();
+            $this->couponStorage->save($promoCode);
+
+            return JsonSuccessResponse::createWithData(
+                'Промокод применен',
+                [],
+                200,
+                ['reload' => true]
+            );
+        } catch (ManzanaPromocodeUnavailableException $e) {
+            /**
+             * Возвращаем ответ
+             */
+        } catch (\Exception $e) {
+            $this->log()->error(
+                \sprintf(
+                    'Promocode apply exception: %s',
+                    $e->getMessage()
+                )
+            );
+        }
+
+        return JsonErrorResponse::create(
+            'Промокод не существует или не применим к вашей корзине',
+            200,
+            [],
+            ['reload' => false]
+        );
+    }
+
+    /**
      * @Route("/delete/", methods={"GET", "POST"})
      *
      * @param Request $request
      *
-     * @throws \Exception
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws Exception
+     * @throws ObjectNotFoundException
      *
      * @return JsonErrorResponse|JsonResponse
      */
@@ -111,7 +184,7 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket'     => $this->basketViewService->getBasketHtml(true),
+                'basket' => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 'fastOrder' => $this->basketViewService->getFastOrderHtml(true)
             ];
@@ -144,8 +217,8 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Exception
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
      *
      * @return JsonErrorResponse|JsonResponse
      */
@@ -172,9 +245,9 @@ class BasketController extends Controller
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
             $data = [
-                'basket'     => $this->basketViewService->getBasketHtml(true),
+                'basket' => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder'  => $this->basketViewService->getFastOrderHtml(true),
+                'fastOrder' => $this->basketViewService->getFastOrderHtml(true),
             ];
 
             $response = JsonSuccessResponse::createWithData(
@@ -189,7 +262,7 @@ class BasketController extends Controller
                 $e->getMessage(),
                 200,
                 [],
-                ['reload' => false]                     // todo TRUE !!!
+                ['reload' => false] // todo TRUE !!!
             );
         }
         return $response;
@@ -200,11 +273,11 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws InvalidArgumentException
+     * @throws BaseInvalidArgumentException
+     * @throws RuntimeException
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
      *
      * @return JsonErrorResponse|JsonResponse
      */
@@ -238,7 +311,7 @@ class BasketController extends Controller
                 }
                 /** @var Product $product */
                 $product = $offer->getProduct();
-                $name = '<strong>' . $product->getBrandName() . '</strong> ' . lcfirst(trim($product->getName()));
+                $name = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName()));
                 $items[] = [
                     'id' => $offer->getId(),
                     'actionId' => $discountId,
@@ -273,10 +346,10 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
-     * @throws \RuntimeException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Exception
+     * @throws RuntimeException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws Exception
      *
      * @return JsonErrorResponse|JsonResponse
      */
@@ -316,10 +389,10 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Exception
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
      *
      * @return JsonErrorResponse|JsonResponse
      */
@@ -332,7 +405,7 @@ class BasketController extends Controller
         try {
             /** @noinspection PhpUndefinedMethodInspection */
             $gift = $this->basketService->getAdder('gift')->getExistGifts(null, true);
-            if(!isset($gift[$giftBasketId])) {
+            if (!isset($gift[$giftBasketId])) {
                 throw new NotFoundException('Подарок не найден');
             }
             $gift = $gift[$giftBasketId];
