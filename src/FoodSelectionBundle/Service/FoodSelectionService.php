@@ -83,21 +83,40 @@ class FoodSelectionService
         return $this->foodSelectionRepository->getSections($params);
     }
 
-    public function getSectionIdByXmlId(string $xmlId, int $depthLvl = 0): int
+    /**
+     * @param string|array $xmlId
+     * @param int          $depthLvl
+     *
+     * @return int|array
+     */
+    public function getSectionIdByXmlId($xmlId, int $depthLvl = 0)
     {
-        $filter = ['XML_ID' => $xmlId];
+        if (!\is_string($xmlId) || !\is_array($xmlId)) {
+            return null;
+        }
+        if(!empty($xmlId)) {
+            $filter = ['XML_ID' => $xmlId];
+        }
         if ($depthLvl > 0) {
             $filter['DEPTH_LEVEL'] = $depthLvl;
         }
         $items = $this->getSections(['filter' => $filter]);
         if (!empty($items)) {
             /** @var IblockSect $item */
+            if (\is_array($xmlId)) {
+                $ids = [];
+                foreach ($items as $item) {
+                    $ids[$item->getId()] = $item->getXmlId();
+                }
+                return $ids;
+            }
+
             $item = current($items);
 
             return $item->getId();
         }
 
-        return 0;
+        return null;
     }
 
     /**
