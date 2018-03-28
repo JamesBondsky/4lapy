@@ -381,15 +381,16 @@ class ReferralService
         ArrayCollection $referrals
     ): array {
         $arCards = [];
+        $referralsList = [];
         if (!$referrals->isEmpty()) {
+            $referralsList = $referrals->toArray();
             /** @var Referral $item */
-            foreach ($referrals as $key => $item) {
+            foreach ($referralsList as $key => $item) {
                 if (!empty($item->getCard())) {
                     $arCards[$item->getCard()] = $key;
                 }
             }
         }
-        $referralsList = $referrals->toArray();
 
         $manzanaReferrals = [];
         try {
