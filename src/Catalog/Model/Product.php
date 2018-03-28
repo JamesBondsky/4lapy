@@ -1676,7 +1676,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getSpecifications() : TextContent
     {
         if (!($this->specifications instanceof TextContent)) {
-            $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
+            $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS ?? '');
         }
 
         return $this->specifications;
@@ -1690,7 +1690,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getComposition() : TextContent
     {
         if (!($this->composition instanceof TextContent)) {
-            $this->composition = new TextContent($this->PROPERTY_COMPOSITION);
+            $this->composition = new TextContent($this->PROPERTY_COMPOSITION ?? '');
         }
         
         return $this->composition;
@@ -1704,16 +1704,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getNormsOfUse() : TextContent
     {
         if (!($this->normsOfUse instanceof TextContent)) {
-            $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE);
+            $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE ?? '');
         }
         
         return $this->normsOfUse;
     }
-
+    
     /**
      * Возвращает информацию, на основе которой Elasticsearch будет строить механизм автодополнения
      *
      * @return string[]
+     *
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
     public function getSuggest()
     {
