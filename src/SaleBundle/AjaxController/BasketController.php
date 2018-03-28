@@ -227,9 +227,8 @@ class BasketController extends Controller implements LoggerAwareInterface
         $items = $request->get('items', []);
         /** fix для быстрого заказа */
         if (empty($items)) {
-            $items[] = ['basketId' => $request->get('basketId'), 'quantity' => $request->get('quantity')];
+            $items[] = ['basketId' => $request->get('basketId'), 'quantity' => $request->get('quantity', 1)];
         }
-
         /** @noinspection BadExceptionsProcessingInspection */
         try {
             if (!\is_array($items)) {

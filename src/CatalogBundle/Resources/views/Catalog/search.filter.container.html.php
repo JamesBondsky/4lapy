@@ -1,15 +1,14 @@
 <?php
 /**
- * @var Request $request
+ * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var PhpEngine                             $view
+ * @var CMain                                 $APPLICATION
  */
 
 use Bitrix\Main\Grid\Declension;
 use Bitrix\Main\Web\Uri;
-use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
@@ -22,11 +21,6 @@ use Symfony\Component\Templating\PhpEngine;
 
 global $APPLICATION;
 
-/**
- * @var Category $category
- */
-$category = $catalogRequest->getCategory();
-
 $filterCollection = $catalogRequest->getCategory()->getFilters();
 $count = $productSearchResult->getResultSet()->getTotalHits();
 
@@ -35,11 +29,13 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
 ?>
 <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
     <h1 class="b-title b-title--h1 b-title--catalog-filter"><?= $catalogRequest->getCategory()->getName() ?></h1>
-    <?php if ($catalogRequest->getSearchString() !== $productSearchResult->getQuery()) { ?>
+    <?php if ($catalogRequest->getSearchString() !== $productSearchResult->getQuery()) {
+    ?>
         <p class="b-title b-title--result">
             Возможно, вы имели ввиду «<span><?= $productSearchResult->getQuery() ?></span>»
         </p>
-    <?php } ?>
+    <?php
+} ?>
 </div>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
@@ -60,15 +56,9 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                 <input type="hidden" name="query" value="<?= urlencode($productSearchResult->getQuery()) ?>">
             </div>
             <?= $view->render(
-                'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
-                [
-                    'category' => $category,
-                ]
-            ) ?>
-            <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterCollection->getVisibleFilters()
+                    'filters' => $filterCollection->getFiltersToShow(),
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here"></div>
@@ -103,24 +93,24 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts()
+                            'sorts' => $catalogRequest->getSorts(),
                         ]
                     ) ?>
                     <?php
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getVisibleFilters() as $filter) {
+                    foreach ($filterCollection->getFiltersToShow() as $filter) {
                         if (!$filter->hasAvailableVariants()) {
                             continue;
                         }
                         if (!($filter instanceof ActionsFilter)) {
                             continue;
-                        }
-                        ?>
+                        } ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
+                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
+                            ?>
                                     <li class="b-filter-link-list__item">
                                         <label class="b-filter-link-list__label">
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -128,7 +118,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                                                    name="<?= $filter->getFilterCode() ?>"
                                                    value="<?= $variant->getValue() ?>"
                                                    id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
-                                                   <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                                <?= $variant->isChecked() ? 'checked' : '' ?>/>
                                             <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
                                                href="javascript:void(0);"
                                                title="<?= $filter->getName() ?>">
@@ -136,10 +126,12 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                                             </a>
                                         </label>
                                     </li>
-                                <?php } ?>
+                                <?php
+                        } ?>
                             </ul>
                         </span>
-                    <?php } ?>
+                    <?php
+                    } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
                     <a class="b-link b-link--type active js-link-type-normal" href="javascript:void(0);" title="">
@@ -179,7 +171,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
             'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE'      => 'Y'
+            'AJAX_MODE'      => 'Y',
         ],
         null,
         [
