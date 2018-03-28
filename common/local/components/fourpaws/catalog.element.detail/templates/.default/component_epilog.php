@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** установка бонусов за товар */
 /** @var Offer $currentOffer */
-$currentOffer = $templateData['currentOffer'];
+$currentOffer = $arResult['CURRENT_OFFER'];
 $bonus = $currentOffer->getBonusFormattedText((int)$component->getCurrentUserService()->getDiscount());
 if (!empty($bonus)) { ?>
     <script type="text/javascript">
@@ -63,7 +63,7 @@ foreach ($offers as $offer) {
                     <?php if($offer->isShare()) { ?>
                         $offerLink.find('.js-offer-action').html('Акция').css('display', 'inline-block');
                     <?php }
-                    if($offer->getOldPrice() !== $offer->getPrice()) {?>
+                    if($offer->getOldPrice() > $offer->getPrice()) {?>
                         $offerLink.find('.b-weight-container__old-price--big').html('<?=WordHelper::numberFormat($offer->getOldPrice(),
                             0)?> <span class="b-ruble b-ruble--old-weight-price">₽</span>').css('display', 'inline-block');
                     <?php }

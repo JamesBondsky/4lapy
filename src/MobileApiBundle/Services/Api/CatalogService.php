@@ -11,8 +11,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
-use FourPaws\Catalog\Model\Filter\ActionsFilter;
-use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Service\CategoriesService;
@@ -64,13 +62,7 @@ class CatalogService implements LoggerAwareInterface
 
         $filters = $this
             ->filterService->getCategoryFilters($category)
-            ->getVisibleFilters()
-            ->filter(function (FilterInterface $filter) {
-                return
-                    $filter instanceof FilterBase &&
-                    !($filter instanceof ActionsFilter) &&
-                    $filter->hasAvailableVariants();
-            });
+            ->getFiltersToShow();
         return (new ArrayCollection($filters->toArray()))
             ->map(function (FilterBase $filter) {
                 $apiFilter = (new Filter())

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -53,6 +57,7 @@ class SearchService implements LoggerAwareInterface
      * @param string           $searchString
      *
      * @throws RuntimeException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return ProductSearchResult
      */
     public function searchProducts(
@@ -106,7 +111,7 @@ class SearchService implements LoggerAwareInterface
      * Автокомплит для товаров
      *
      * @param Navigation $navigation
-     * @param string $searchString
+     * @param string     $searchString
      *
      * @return ProductSuggestResult
      */
@@ -175,28 +180,36 @@ class SearchService implements LoggerAwareInterface
 
         //Точное по артикулу
         $boolQuery->addShould(
-            $queryBuilder->query()->term(
-                [
-                    'offers.XML_ID' => [
-                        'value' => $searchString,
-                        'boost' => 100.0,
-                        '_name' => 'skuId',
-                    ],
-                ]
-            )
+            $queryBuilder->query()->nested()
+                ->setPath('offers')
+                ->setQuery(
+                    $queryBuilder->query()->term(
+                        [
+                            'offers.XML_ID' => [
+                                'value' => $searchString,
+                                'boost' => 100.0,
+                                '_name' => 'skuId',
+                            ],
+                        ]
+                    )
+                )
         );
 
         //Точное по штрихкоду
         $boolQuery->addShould(
-            $queryBuilder->query()->term(
-                [
-                    'offers.PROPERTY_BARCODE' => [
-                        'value' => $searchString,
-                        'boost' => 100.0,
-                        '_name' => 'barcode',
-                    ],
-                ]
-            )
+            $queryBuilder->query()->nested()
+                ->setPath('offers')
+                ->setQuery(
+                    $queryBuilder->query()->term(
+                        [
+                            'offers.PROPERTY_BARCODE' => [
+                                'value' => $searchString,
+                                'boost' => 100.0,
+                                '_name' => 'barcode',
+                            ],
+                        ]
+                    )
+                )
         );
 
         /*

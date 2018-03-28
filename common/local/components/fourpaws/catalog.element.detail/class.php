@@ -107,7 +107,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
             /** @var Product $product */
             $product = $this->getProduct($this->arParams['CODE']);
-            $currentOffer = $this->getCurrentOffer($product);
+            $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
 
             if (!$product) {
                 $this->abortResultCache();
@@ -132,6 +132,8 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'catalog:product:' . $product->getId(),
                 'iblock:item:' . $product->getId(),
             ]);
+
+            $this->setResultCacheKeys(['PRODUCT', 'CURRENT_OFFER']);
 
             $this->includeComponentTemplate();
         }
@@ -291,7 +293,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             'category'      => $categoryPath,
         ];
 
-        $currentOffer = $this->getCurrentOffer($product);
+        $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
         $counterData['price'] = $currentOffer ? $currentOffer->getPrice() : 0;
         $counterData['currency'] = $currentOffer ? $currentOffer->getCurrency() : '';
 
@@ -371,12 +373,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      * @throws NotSupportedException
      * @throws LoaderException
      */
-    protected function getCurrentOffer(Product $product): Offer
+    public function getCurrentOffer(Product $product, int $offerId = 0): Offer
     {
-        $offerId = (int)$this->arParams['OFFER_ID'];
-
         $offers = $product->getOffers();
-        if ($offerId) {
+        if ($offerId > 0) {
             foreach ($offers as $offer) {
                 if ($offer->getId() === $offerId) {
                     return $offer;
