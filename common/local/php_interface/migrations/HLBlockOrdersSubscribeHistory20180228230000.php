@@ -19,7 +19,7 @@ class HLBlockOrdersSubscribeHistory20180228230000 extends \Adv\Bitrixtools\Migra
                 'TABLE_NAME' => static::TABLE_NAME,
                 'LANG' => [
                     'ru' => [
-                        'NAME' => 'Подписка на доставку: итория заказов',
+                        'NAME' => 'Подписка на доставку: история заказов',
                     ],
                 ],
             ]

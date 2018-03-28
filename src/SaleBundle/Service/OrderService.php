@@ -848,4 +848,36 @@ class OrderService
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
+
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function isOnlinePayment(Order $order): bool
+    {
+        try {
+            $this->getOnlinePayment($order);
+            $result = true;
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function isSubscribe(Order $order): bool
+    {
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'IS_SUBSCRIBE');
+            $result = $propValue->getValue() === 'Y';
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
 }

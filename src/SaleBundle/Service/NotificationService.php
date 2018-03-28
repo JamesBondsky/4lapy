@@ -89,6 +89,11 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendNewOrderMessage(Order $order): void
     {
+        if ($this->orderService->isOnlinePayment($order)) {
+            // заказ не должен быть с оплатой "онлайн"
+            return;
+        }
+        /*
         try {
             $this->orderService->getOnlinePayment($order);
 
@@ -96,6 +101,7 @@ class NotificationService implements LoggerAwareInterface
         } catch (NotFoundException $e) {
             // заказ не должен быть с оплатой "онлайн"
         }
+        */
 
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);

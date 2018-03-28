@@ -30,6 +30,8 @@ use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Helper\OrderCopy;
+use FourPaws\SaleBundle\Service\NotificationService;
+use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -45,14 +47,15 @@ class OrderSubscribeService
     private $orderSubscribeRepository;
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
-    /** @var OrderService $orderService */
-    private $orderService;
+    /** @var OrderService $personalOrderService */
+    private $personalOrderService;
     /** @var DeliveryService $deliveryService */
     private $deliveryService;
     /** @var UserFieldEnumService $userFieldEnumService */
     private $userFieldEnumService;
     /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
     private $orderSubscribeHistoryService;
+
     /** @var array $miscData */
     private $miscData = [];
 
@@ -88,12 +91,12 @@ class OrderSubscribeService
     public function getOrderService(): OrderService
     {
         if (!isset($this->orderService)) {
-            $this->orderService = Application::getInstance()->getContainer()->get(
+            $this->personalOrderService = Application::getInstance()->getContainer()->get(
                 'order.service'
             );
         }
 
-        return $this->orderService;
+        return $this->personalOrderService;
     }
 
     /**
@@ -451,14 +454,29 @@ class OrderSubscribeService
      * @param OrderSubscribe $orderSubscribe
      * @param \DateTime|null $deliveryDate
      * @return Result
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws \Bitrix\Main\Db\SqlQueryException
      */
     public function copyOrder(OrderSubscribe $orderSubscribe, \DateTime $deliveryDate = null)
     {
         $result = new Result();
 
         $copyOrderId = $orderSubscribe->getOrderId();
+        $resultData = [
+            'NEW_ORDER_ID' => 0
+        ];
         if ($result->isSuccess()) {
+
+            $connection = \Bitrix\Main\Application::getConnection();
+            $connection->startTransaction();
+
             try {
+                if (!$deliveryDate) {
+                    $deliveryDate = $orderSubscribe->getNextDeliveryDate();
+                }
+
                 $orderCopyHelper = new OrderCopy($copyOrderId);
                 $orderCopyHelper->appendBasketItemExcludeProps(
                     $this->basketItemExcludeProps
@@ -472,12 +490,18 @@ class OrderSubscribeService
                     'DELIVERY_INTERVAL',
                     $orderSubscribe->getDeliveryTime()
                 );
-                if (!$deliveryDate) {
-                    $deliveryDate = $orderSubscribe->getNextDeliveryDate();
-                }
                 $orderCopyHelper->setPropValueByCode(
                     'DELIVERY_DATE',
                     $deliveryDate->format('d.m.Y')
+                );
+                $orderCopyHelper->setPropValueByCode(
+                    'IS_SUBSCRIBE',
+                    'Y'
+                );
+                // значение параметра: «Communic» значение «07 – Подписка»
+                $orderCopyHelper->setPropValueByCode(
+                    'COM_WAY',
+                    '07'
                 );
                 $saveResult = $orderCopyHelper->save();
                 if (!$saveResult->isSuccess()) {
@@ -485,19 +509,88 @@ class OrderSubscribeService
                         $saveResult->getErrors()
                     );
                 }
-                $result->setData(
-                    [
-                        'NEW_ORDER_ID' => $saveResult->getId()
-                    ]
-                );
+
+                $resultData['NEW_ORDER_ID'] = $saveResult->getId();
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error($exception->getMessage(), 'orderCopyException')
                 );
             }
+
+            if ($result->isSuccess()) {
+                try {
+                    if (!$deliveryDate) {
+                        $deliveryDate = $orderSubscribe->getNextDeliveryDate();
+                    }
+
+                    $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+
+                    $addResult = $orderSubscribeHistoryService->add(
+                        $orderSubscribe,
+                        $resultData['NEW_ORDER_ID'],
+                        $deliveryDate
+                    );
+                    if (!$addResult->isSuccess()) {
+                        $result->addErrors(
+                            $addResult->getErrors()
+                        );
+                    }
+                } catch (\Exception $exception) {
+                    $result->addError(
+                        new Error($exception->getMessage(), 'orderSubscribeHistoryAddException')
+                    );
+                }
+            }
+
+            // закрываем транзакцию
+            if ($result->isSuccess()) {
+                $connection->commitTransaction();
+                // отправка уведомлений во внешние системы
+                $this->doNewOrderIntegration($resultData['NEW_ORDER_ID']);
+            } else {
+                $connection->rollbackTransaction();
+            }
         }
 
+        $result->setData($resultData);
+
         return $result;
+    }
+
+    /**
+     * @param int $orderId
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
+    protected function doNewOrderIntegration(int $orderId)
+    {
+        $order = \Bitrix\Sale\Order::load($orderId);
+
+        /** @var \FourPaws\SaleBundle\Service\OrderService $saleOrderService */
+        $saleOrderService = Application::getInstance()->getContainer()->get(
+            \FourPaws\SaleBundle\Service\OrderService::class
+        );
+
+        if ($saleOrderService->isOnlinePayment($order)) {
+            // у заказа онлайн-оплата (что, вообще-то, странно для заказа по подписке),
+            // а значит, отправка во внешние системы будет после получения оплаты
+            return;
+        }
+
+        // отправка email, sms
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()->getContainer()->get(
+            NotificationService::class
+        );
+        $notificationService->sendNewOrderMessage($order);
+
+        // передача заказа в SAP
+        /** @var ConsumerRegistry $consumerRegistry */
+        $consumerRegistry = Application::getInstance()->getContainer()->get(
+            ConsumerRegistry::class
+        );
+        $consumerRegistry->consume($order);
     }
 
     /**
@@ -517,7 +610,6 @@ class OrderSubscribeService
         $result = new Result();
         $resultData = [];
 
-        $connection = \Bitrix\Main\Application::getConnection();
         $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
 
         // принудительное приведение к требуемому формату - время нам здесь не нужно
@@ -603,41 +695,22 @@ class OrderSubscribeService
                         $curData['deliveryDate']
                     );
                     if (!$curData['alreadyCreated']) {
-                        /** @todo Уточнить насчет транзакций, есть подозрение, что их для заказов нельзя использовать из-за различных интеграций */
-                        // открываем транзакцию, на случай неуспешного сохранения истории
-                        $connection->startTransaction();
-                        $copyOrderResult = $this->copyOrder($orderSubscribe);
-                        if ($copyOrderResult->isSuccess()) {
-                            $curData['NEW_ORDER_ID'] = $copyOrderResult->getData()['NEW_ORDER_ID'];
-                            try {
-                                $addResult = $orderSubscribeHistoryService->add(
-                                    $orderSubscribe,
-                                    $curData['NEW_ORDER_ID'],
-                                    $curData['deliveryDate']
-                                );
-                                if (!$addResult->isSuccess()) {
-                                    $curResult->addErrors(
-                                        $copyOrderResult->getErrors()
-                                    );
-                                }
-                            } catch (\Exception $exception) {
-                                $curResult->addError(
-                                    new Error(
-                                        'Не удалось создать запись в истории заказов по подписке',
-                                        'orderSubscribeHistoryAddException'
-                                    )
+                        try {
+                            $copyOrderResult = $this->copyOrder($orderSubscribe, $curData['deliveryDate']);
+                            if ($copyOrderResult->isSuccess()) {
+                                $curData['NEW_ORDER_ID'] = $copyOrderResult->getData()['NEW_ORDER_ID'];
+                            } else {
+                                $curResult->addErrors(
+                                    $copyOrderResult->getErrors()
                                 );
                             }
-                        } else {
-                            $curResult->addErrors(
-                                $copyOrderResult->getErrors()
+                        } catch (\Exception $exception) {
+                            $curResult->addError(
+                                new Error(
+                                    $exception->getMessage(),
+                                    'copyOrderException'
+                                )
                             );
-                        }
-                        // закрываем транзакцию
-                        if ($curResult->isSuccess()) {
-                            $connection->commitTransaction();
-                        } else {
-                            $connection->rollbackTransaction();
                         }
                     }
                 }
@@ -645,7 +718,7 @@ class OrderSubscribeService
 
             $curResult->setData($curData);
             $resultData[] = $curResult;
-            if ($result->isSuccess() && !$curResult->isSuccess()) {
+            if (!$curResult->isSuccess() && $result->isSuccess()) {
                 $result->addError(
                     new Error(
                         'Имеются подписки с ошибками',

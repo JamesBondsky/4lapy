@@ -25,6 +25,7 @@ use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -162,6 +163,15 @@ class Event implements ServiceHandlerInterface
         $order = $event->getParameter('ENTITY');
         $isNew = $event->getParameter('IS_NEW');
         if (!$isNew) {
+            return;
+        }
+
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(
+            OrderService::class
+        );
+        if ($orderService->isSubscribe($order)) {
+            // пропускаются заказы, созданные по подписке
             return;
         }
 

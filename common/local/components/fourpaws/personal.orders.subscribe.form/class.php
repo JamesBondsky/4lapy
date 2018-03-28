@@ -470,6 +470,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         foreach ($intervals as $interval) {
                             /** @var Interval $interval */
                             $val = $interval->__toString();
+                            $val = str_replace(' ', '', $val);
                             $this->data['TIME_VARIANTS'][] = [
                                 'VALUE' => $val,
                                 'TEXT' => $val,

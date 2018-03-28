@@ -330,7 +330,7 @@ class OrderCopy
             $newShipment->setField('DELIVERY_ID', $oldShipment->getDeliveryId());
             $newShipment->setField('DELIVERY_NAME', $oldShipment->getDeliveryName());
 
-            /** @todo: Обсудить с разработчиками системы оформления заказов изменение подхода установки начальных статусов (в иделае должен быть всегда N) */
+/** @todo: Обсудить с разработчиками системы оформления заказов изменение подхода установки начальных статусов (в иделае должен быть всегда N) */
             $deliveryCode = $newShipment->getDelivery()->getCode();
             if ($this->getDeliveryService()->isDeliveryCode($deliveryCode)) {
                 $this->newOrder->setFieldNoDemand('STATUS_ID', OrderService::STATUS_NEW_COURIER);

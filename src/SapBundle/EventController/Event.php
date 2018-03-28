@@ -16,6 +16,7 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\LogicException;
@@ -79,10 +80,23 @@ class Event implements ServiceHandlerInterface
         if ($event->getParameter('IS_NEW')) {
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
+
+            /** @var OrderService $orderService */
+            $orderService = Application::getInstance()->getContainer()->get(
+                OrderService::class
+            );
+
             /**
              * ...и оплата не онлайн, отправляем в SAP
              */
-            if (\in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
+            //if (\in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
+            if ($orderService->isOnlinePayment($order)) {
+                return;
+            }
+            /**
+             * ...и пропускаются заказы, созданные по подписке
+             */
+            if ($orderService->isSubscribe($order)) {
                 return;
             }
 

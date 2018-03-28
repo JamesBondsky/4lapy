@@ -226,7 +226,9 @@ class OrderSubscribe extends BaseEntity
      */
     public function getDeliveryTime() : string
     {
-        return $this->deliveryTime ?? '';
+        $value = $this->deliveryTime ? str_replace(' ', '', $this->deliveryTime) : '';
+
+        return $value;
     }
 
     /**
