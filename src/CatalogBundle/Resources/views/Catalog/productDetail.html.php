@@ -32,7 +32,6 @@ $logger = LoggerFactory::create('productDetail');
 global $APPLICATION;
 
 $offerId = $productDetailRequest->getOfferId();
-$logger->info('Итем - '.$logger->info('Компонент ').' оффер - '.$offerId);
 
 /** @var Product $product */
 $product = $APPLICATION->IncludeComponent(
@@ -87,10 +86,7 @@ if(!$hasOffer){
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
-            );
-
-            $logger->info('Нлебные крошки подключены');
-            ?>
+            ); ?>
             <div class="b-product-card__top">
                 <div class="b-product-card__title-product">
                     <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>
@@ -111,7 +107,6 @@ if(!$hasOffer){
                         </div>
                     </div>
                 </div>
-                <?php $logger->info('подключен топ итема');?>
                 <div class="b-product-card__product">
                     <div class="b-product-card__permutation-weight js-weight-tablet"></div>
                     <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
@@ -123,7 +118,6 @@ if(!$hasOffer){
                         ?>
                     </div>
                 </div>
-                <?php $logger->info('подключена детальная информация итема');?>
                 <?php
                 /**
                  * @todo implement and remove - это набор
@@ -137,7 +131,6 @@ if(!$hasOffer){
                         <ul class="b-tab-title__list">
                             <?php
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER);
-                            $logger->info('подключен заголовок описания');
 
                             if ($product->getComposition()->getText()) { ?>
                                 <li class="b-tab-title__item js-tab-item">
@@ -147,7 +140,6 @@ if(!$hasOffer){
                                                 class="b-tab-title__text">Состав</span></a>
                                 </li>
                             <?php }
-                            $logger->info('подключен заголовок состава');
 
                             if ($product->getNormsOfUse()->getText()) { ?>
                                 <li class="b-tab-title__item js-tab-item">
@@ -156,12 +148,9 @@ if(!$hasOffer){
                                        data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
                                 </li>
                             <?php }
-                            $logger->info('подключен заголовок рекомендации по питанию');
 
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW);
-                            $logger->info('подключен заголовок рейтинга');
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
-                            $logger->info('подключен заголовок доставки');
                             
                             /** наличие меняется аяксом */?>
                             <li class="b-tab-title__item js-tab-item">
@@ -179,15 +168,12 @@ if(!$hasOffer){
                                        href="javascript:void(0);" title="Акция"
                                        data-tab="shares"><span class="b-tab-title__text">Акция</span></a>
                                 </li>
-                            <?php }
-                            $logger->info('подключен заголовок акции');?>
+                            <?php } ?>
                         </ul>
                     </div>
-                    <?php $logger->info('подключены заголовки итемов');?>
                     <div class="b-tab-content">
                         <?php
                         $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
-                        $logger->info('подключено описание');
 
                         if ($product->getComposition()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
@@ -199,7 +185,6 @@ if(!$hasOffer){
                                 </div>
                             </div>
                         <?php }
-                        $logger->info('подключена композиция');
 
                         if ($product->getNormsOfUse()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
@@ -210,7 +195,6 @@ if(!$hasOffer){
                                 </div>
                             </div>
                         <?php }
-                        $logger->info('подключены рекомендации');
 
                         /** @noinspection PhpUnhandledExceptionInspection */
                         $APPLICATION->IncludeComponent(
@@ -226,11 +210,7 @@ if(!$hasOffer){
                             ],
                             false,
                             ['HIDE_ICONS' => 'Y']
-                        );
-
-                        $logger->info('подключены комментарии');
-
-                        ?>
+                        ); ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:city.delivery.info',
                             'catalog.detail.tab',
@@ -239,8 +219,7 @@ if(!$hasOffer){
                             ],
                             false,
                             ['HIDE_ICONS' => 'Y']
-                        );
-                        $logger->info('подключена доставка');?>
+                        ); ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:catalog.shop.available',
                             'catalog.detail.tab',
@@ -250,8 +229,7 @@ if(!$hasOffer){
                             ],
                             false,
                             ['HIDE_ICONS' => 'Y']
-                        );
-                        $logger->info('подключено наличие в магазинах');?>
+                        ); ?>
                         <?php if($offer->isShare()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="shares">
                                 <?php /** @var IblockElement $share */
@@ -332,8 +310,7 @@ if(!$hasOffer){
                                     );?>
                                 <?php }?>
                             </div>
-                        <?php }
-                        $logger->info('подключены акции');?>
+                        <?php } ?>
                     </div>
                 </div>
             </div>
@@ -358,8 +335,6 @@ $APPLICATION->IncludeComponent(
     ]
 );
 
-$logger->info('подключены преимущества');
-
 /**
  * Похожие товары
  */
@@ -374,9 +349,6 @@ $APPLICATION->IncludeFile(
         'MODE'        => 'php',
     ]
 );
-
-$logger->info('подключены походие товары');
-$logger->info('---Конец');
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 die();
