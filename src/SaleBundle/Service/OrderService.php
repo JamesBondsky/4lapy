@@ -11,13 +11,12 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
@@ -28,13 +27,15 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
+use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -44,8 +45,6 @@ use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
@@ -206,6 +205,7 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param OrderStorage $storage
+     * @param Basket|null $basket
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -213,13 +213,13 @@ class OrderService implements LoggerAwareInterface
      * @throws DeliveryNotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @throws ObjectPropertyException
      * @return Order
      */
-    public function initOrder(OrderStorage $storage): Order
+    public function initOrder(OrderStorage $storage, ?Basket $basket = null): Order
     {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
@@ -228,7 +228,8 @@ class OrderService implements LoggerAwareInterface
          * Привязываем корзину
          */
         /** @noinspection PhpParamsInspection */
-        $order->setBasket($this->basketService->getBasket());
+        $basket = $basket ?? $this->basketService->getBasket();
+        $order->setBasket($basket);
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
         }
@@ -495,22 +496,24 @@ class OrderService implements LoggerAwareInterface
      * @param Order $order
      * @param OrderStorage $storage
      * @param bool $fastOrder
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
-     * @throws NotImplementedException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws OrderCreateException
-     * @throws ObjectException
+     * @throws StoreNotFoundException
      * @throws SystemException
+     * @throws UserMessageException
      */
-    public function saveOrder(Order $order, OrderStorage $storage, bool $fastOrder = false)
+    public function saveOrder(Order $order, OrderStorage $storage, bool $fastOrder = false): void
     {
         try {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         } catch (NotFoundException $e) {
-            throw new OrderCreateException('Нет доступных доставок');
+            throw new OrderCreateException('No deliveries available');
         }
 
         /**
@@ -641,9 +644,16 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $result = $order->save();
-        if (!$result->isSuccess()) {
-            throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
+        try {
+            $result = $order->save();
+            if (!$result->isSuccess()) {
+                throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to create order: %s', $e->getMessage()), [
+                'fuserId' => $storage->getFuserId()
+            ]);
+            throw new OrderCreateException('failed to save order');
         }
 
         TaggedCacheHelper::clearManagedCache([
@@ -654,13 +664,37 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * Можно ли разделить заказ
+     *
+     * @param $storage
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     * @return bool
+     */
+    public function canSplitOrder($storage): bool
+    {
+        $delivery = $this->orderStorageService->getSelectedDelivery($storage);
+        $stockResult = $delivery->getStockResult();
+
+        return !$stockResult->getAvailable()->isEmpty() && !$stockResult->getDelayed()->isEmpty();
+    }
+
+    /**
+     * Разделение заказа на два.
+     * В первом будут товары, которые есть в данный момент на складе / в магазине,
+     * во втором - то, что необходимо привезти на склад / в магазин
+     *
+     * @param OrderStorage $storage
      *
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
-     * @throws ArgumentTypeException
-     * @throws DeliveryNotFoundEXception
-     * @throws NotImplementedException
+     * @throws DeliveryNotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws OrderCreateException
@@ -668,78 +702,94 @@ class OrderService implements LoggerAwareInterface
      * @throws StoreNotFoundException
      * @throws UserMessageException
      * @throws ApplicationCreateException
-     * @return Order[]
+     * @return OrderSplitResult[]
      */
-    public function splitOrder(Order $order): array
+    public function splitOrder(OrderStorage $storage): array
     {
-        /**
-         * Доставки, для которых возможно частичное получение заказа
-         */
-        $availableDeliveryCodes = [
-            DeliveryService::INNER_PICKUP_CODE
-        ];
+        $updateBasket = function (Basket $basket, StockResultCollection $stockResultCollection) {
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $i => $basketItem) {
+                $found = false;
+                /** @var StockResult $stockResultElement */
+                foreach ($stockResultCollection as $stockResultElement) {
+                    if ($stockResultElement->getOffer()->getId() === $basketItem->getProductId()) {
+                        $found = true;
+                        $basketItem->setField('QUANTITY', $stockResultElement->getAmount());
+                        break;
+                    }
+                }
 
-        try {
-            $deliveryCode = $this->getOrderDeliveryCode($order);
-        } catch (NotFoundException $e) {
-            throw new OrderSplitException($e->getMessage());
+                if (!$found) {
+                    $basket->deleteItem($i);
+                }
+            }
+        };
+
+        if (!$this->canSplitOrder($storage)) {
+            throw new OrderSplitException('Cannot split order');
         }
 
-        if (!\in_array($deliveryCode, $availableDeliveryCodes, true)) {
-            throw new OrderSplitException(sprintf('Delivery %s is not available', $deliveryCode));
-        }
+        $storage1 = clone $storage;
+        $storage2 = clone $storage;
+        $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
+        $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
 
-        $deliveries = $this->deliveryService->getByBasket(
-            $order->getBasket(),
-            '',
-            [$deliveryCode]
-        );
+        $basket = $this->basketService->getBasket();
+        $delivery = $this->orderStorageService->getSelectedDelivery($storage);
+        $available = $delivery->getStockResult()->getAvailable();
+        $delayed = $delivery->getStockResult()->getDelayed();
 
-        if (empty($deliveries)) {
-            throw new OrderSplitException(sprintf('Delivery %s is not available', $deliveryCode));
-        }
+        $basket1 = clone $basket;
+        $updateBasket($basket1, $available);
 
-        /** @var CalculationResultInterface $delivery */
-        $delivery = reset($deliveries);
-        $stockResult = $delivery->getStockResult();
-        $available = $stockResult->getAvailable();
-        $delayed = $stockResult->getDelayed();
-        if ($delayed->isEmpty() || $available->isEmpty()) {
-            throw new OrderSplitException(sprintf('Delivery %s is not available', $deliveryCode));
-        }
+        $basket2 = clone $basket;
+        $updateBasket($basket2, $delayed);
 
-        /**
-         * @todo разделение доставок
-         */
-        $partialDelivery = (clone $delivery)->setStockResult($available);
-        $delayedDelivery = $delivery->setStockResult($delayed);
+        $order1 = $this->initOrder($storage1, $basket1);
+        $order2 = $this->initOrder($storage2, $basket2);
 
         return [
-            $this->initOrder($storage1, false),
-            $this->initOrder($storage2, false)
+            (new OrderSplitResult())->setOrderStorage($storage1)
+                ->setOrder($order1),
+            (new OrderSplitResult())->setOrderStorage($storage2)
+                ->setOrder($order2),
         ];
     }
 
     /**
      * @param Order $order
      *
+     * @throws ObjectNotFoundException
      * @throws NotFoundException
      * @return Payment
      */
-    public function getOnlinePayment(Order $order): Payment
+    public function getOrderPayment(Order $order): Payment
     {
+        $payment = null;
         /** @var Payment $orderPayment */
         foreach ($order->getPaymentCollection() as $orderPayment) {
             if ($orderPayment->isInner()) {
                 continue;
             }
 
-            if ($orderPayment->getPaySystem()->getField('CODE') === static::PAYMENT_ONLINE) {
-                return $orderPayment;
-            }
+            $payment = $orderPayment;
         }
 
-        throw new NotFoundException('В данном заказе нет онлайн-оплаты');
+        if (null === $payment) {
+            throw new NotFoundException('payment system is not defined');
+        }
+
+        return $payment;
+    }
+
+    /**
+     * @param Order $order
+     * @return string
+     * @throws ObjectNotFoundException
+     */
+    public function getOrderPaymentType(Order $order): string
+    {
+        return $this->getOrderPayment($order)->getPaySystem()->getField('CODE');
     }
 
     /**
