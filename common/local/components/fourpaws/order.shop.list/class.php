@@ -300,7 +300,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     protected function getPickupDelivery(): ?PickupResultInterface
     {
         $pickupDelivery = null;
-        $deliveries = $this->orderService->getDeliveries($this->orderStorageService->getStorage());
+        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         foreach ($deliveries as $delivery) {
             if ($this->deliveryService->isPickup($delivery)) {
                 $pickupDelivery = $delivery;

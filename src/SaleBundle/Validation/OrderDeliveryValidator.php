@@ -15,6 +15,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use Symfony\Component\Validator\Constraint;
@@ -28,18 +29,18 @@ class OrderDeliveryValidator extends ConstraintValidator
     public const MAX_DATE_DIFF = 1800;
 
     /**
-     * @var OrderService
+     * @var OrderStorageService
      */
-    protected $orderService;
+    protected $orderStorageService;
 
     /**
      * @var DeliveryService
      */
     protected $deliveryService;
 
-    public function __construct(OrderService $orderService, DeliveryService $deliveryService)
+    public function __construct(OrderStorageService $orderStorageService, DeliveryService $deliveryService)
     {
-        $this->orderService = $orderService;
+        $this->orderStorageService = $orderStorageService;
         $this->deliveryService = $deliveryService;
     }
 
@@ -76,7 +77,7 @@ class OrderDeliveryValidator extends ConstraintValidator
         /**
          * Проверка, что выбрана доступная доставка
          */
-        $deliveryMethods = $this->orderService->getDeliveries($entity);
+        $deliveryMethods = $this->orderStorageService->getDeliveries($entity);
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
             if ($deliveryId === $deliveryMethod->getDeliveryId()) {

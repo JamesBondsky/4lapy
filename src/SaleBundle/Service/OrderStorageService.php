@@ -3,17 +3,26 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
+use Bitrix\Sale\UserMessageException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -64,22 +73,36 @@ class OrderStorageService
     protected $userAccountService;
 
     /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
+    /**
+     * @var CalculationResultInterface[]
+     */
+    protected $deliveries;
+
+    /**
      * OrderStorageService constructor.
      *
      * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param DatabaseStorageRepository $storageRepository
+     * @param UserAccountService $userAccountService
+     * @param DeliveryService $deliveryService
      */
     public function __construct(
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
         DatabaseStorageRepository $storageRepository,
-        UserAccountService $userAccountService
+        UserAccountService $userAccountService,
+        DeliveryService $deliveryService
     ) {
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->storageRepository = $storageRepository;
         $this->userAccountService = $userAccountService;
+        $this->deliveryService = $deliveryService;
     }
 
     /**
@@ -110,8 +133,9 @@ class OrderStorageService
     }
 
     /**
-     * @param int $fuserId
+     * @param int|null $fuserId
      *
+     * @throws OrderStorageSaveException
      * @return bool|OrderStorage
      */
     public function getStorage(int $fuserId = null)
@@ -314,6 +338,78 @@ class OrderStorageService
         }
 
         return $payments;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @param bool $reload
+     *
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @return CalculationResultInterface[]
+     */
+
+
+    /**
+     * @param OrderStorage $storage
+     * @param bool $reload
+     *
+     * @throws ArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
+     * @throws ApplicationCreateException
+     * @throws DeliveryNotFoundException
+     * @throws StoreNotFoundException
+     * @return array
+     */
+    public function getDeliveries(OrderStorage $storage, $reload = false): array
+    {
+        if (null === $this->deliveries || $reload) {
+            $this->deliveries = $this->deliveryService->getByBasket(
+                $this->basketService->getBasket()->getOrderableItems(),
+                '',
+                [],
+                $storage->getCurrentDate()
+            );
+        }
+
+        return $this->deliveries;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     * @return CalculationResultInterface
+     */
+    public function getSelectedDelivery(OrderStorage $storage): CalculationResultInterface
+    {
+        $deliveries = $this->getDeliveries($storage);
+        $selectedDelivery = current($deliveries);
+        if ($deliveryId = $storage->getDeliveryId()) {
+            /** @var CalculationResultInterface $delivery */
+            foreach ($deliveries as $delivery) {
+                if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
+                    $selectedDelivery = clone $delivery;
+                    break;
+                }
+            }
+        }
+
+        if (!$selectedDelivery) {
+            throw new NotFoundException('No deliveries available');
+        }
+
+        return $selectedDelivery;
     }
 
     /**

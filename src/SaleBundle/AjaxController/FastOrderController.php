@@ -173,7 +173,8 @@ class FastOrderController extends Controller
         }
 
         try {
-            $order = $this->orderService->createOrder($orderStorage, true, true);
+            $order = $this->orderService->initOrder($orderStorage);
+            $this->orderService->saveOrder($order, $orderStorage, true);
             if ($order instanceof Order && $order->getId() > 0) {
                 if (isset($_SESSION['NEW_USER']) && !empty($_SESSION['NEW_USER'])) {
                     $this->smsService->sendSms('Ваш логин: ' . $_SESSION['NEW_USER']['LOGIN'] . '. Ваш пароль: ' . $_SESSION['NEW_USER']['PASSWORD'],

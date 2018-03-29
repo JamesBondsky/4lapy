@@ -133,7 +133,7 @@ class OrderController extends Controller
     {
         $result = [];
         $date = (int)$request->get('deliveryDate', 0);
-        $deliveries = $this->orderService->getDeliveries($this->orderStorageService->getStorage());
+        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         $delivery = null;
         foreach ($deliveries as $deliveryItem) {
             if (!$this->deliveryService->isDelivery($deliveryItem)) {
@@ -263,7 +263,8 @@ class OrderController extends Controller
         }
 
         try {
-            $order = $this->orderService->createOrder($storage);
+            $order = $this->orderService->initOrder($storage);
+            $this->orderService->saveOrder($order, $storage);
         } catch (OrderCreateException $e) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }

@@ -171,7 +171,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         try {
-            $order = $this->orderService->createOrder($storage, false);
+            $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {
             LocalRedirect('/cart');
         }
@@ -219,7 +219,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
-            $deliveries = $this->orderService->getDeliveries($storage);
+            $deliveries = $this->orderStorageService->getDeliveries($storage);
             foreach ($deliveries as $delivery) {
                 $delivery->setCurrentDate($storage->getCurrentDate());
             }
@@ -264,7 +264,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
         } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
-            $deliveries = $this->orderService->getDeliveries($storage);
+            $deliveries = $this->orderStorageService->getDeliveries($storage);
             $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
             $selectedDelivery = null;

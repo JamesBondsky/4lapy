@@ -28,7 +28,6 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -75,11 +74,6 @@ class StoreService implements LoggerAwareInterface
      */
     protected $storeRepository;
 
-    /**
-     * @var StockRepository
-     */
-    protected $stockRepository;
-
     /** @var  PickupResultInterface */
     protected $pickupDelivery;
 
@@ -92,12 +86,10 @@ class StoreService implements LoggerAwareInterface
     public function __construct(
         LocationService $locationService,
         StoreRepository $storeRepository,
-        StockRepository $stockRepository,
         DeliveryService $deliveryService
     ) {
         $this->locationService = $locationService;
         $this->storeRepository = $storeRepository;
-        $this->stockRepository = $stockRepository;
         $this->deliveryService = $deliveryService;
         $this->setLogger(LoggerFactory::create('StoreService'));
     }
