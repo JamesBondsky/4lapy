@@ -2,7 +2,7 @@
 
 namespace FourPaws\Adapter;
 
-use Bitrix\Sale\Location\Admin\LocationHelper;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
@@ -18,14 +18,13 @@ use FourPaws\LocationBundle\LocationService;
 class DaDataLocationAdapter extends BaseAdapter
 {
     /**
-     * @param $data
+     * @param $entity
      *
      * @return mixed
      */
-    public function convert($data)
+    public function convert($entity)
     {
         /** @var DadataLocation $entity */
-        $entity = $this->convertDataToEntity($data, DadataLocation::class);
         $bitrixLocation = new BitrixLocation();
 
         /** @var LocationService $locationService */
@@ -39,8 +38,25 @@ class DaDataLocationAdapter extends BaseAdapter
             $bitrixLocation = $this->convertDataToEntity($city, BitrixLocation::class);
 
         } catch (CityNotFoundException $e) {
+            /** не нашли - возвращаем пустой объект - должно быть сведено к 0*/
+            $logger = LoggerFactory::create('dadataAdapter');
+            $logger->error('не найдено');
         } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->error('системная ошибка загрузки сервисов');
         }
         return $bitrixLocation;
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return mixed
+     */
+    public function convertFromArray(array $data)
+    {
+        /** @var DadataLocation $entity */
+        $entity = $this->convertDataToEntity($data, DadataLocation::class);
+        return $this->convert($entity);
     }
 }
