@@ -23,7 +23,7 @@ if (!\is_array($sections) || empty($sections)) {
                 data-url="<?=$nextUrl?>"
             <?=$required ? ' required="required"' : ''?>>
             <option disabled="disabled" selected="selected">--Не выбрано--</option>
-            <option value="0">Любой</option>
+            <option value="0" <?=$val === 0 ? ' selected="selected"' : ''?>>Любой</option>
             <?php /** @var IblockSect $item */
             foreach ($sections as $key => $item) {?>
                 <option value="<?= $item->getId() ?>" <?=$val === $item->getId() ? ' selected="selected"' : ''?>><?= $item->getName() ?></option>
