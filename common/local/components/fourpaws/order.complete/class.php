@@ -11,18 +11,28 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 
@@ -47,6 +57,11 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
     /** @var UserAccountService */
     protected $userAccountService;
 
+    /**
+     * FourPawsOrderCompleteComponent constructor.
+     * @param null $component
+     * @throws ApplicationCreateException
+     */
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -88,7 +103,19 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
      * @throws Exception
+     * @throws ExecuteException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws ValidationException
+     *
      * @return $this
      */
     protected function prepareResult()
@@ -96,6 +123,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         $user = null;
         $isAuthorized = false;
         $order = null;
+        $relatedOrder = null;
         try {
             $user = $this->currentUserProvider->getCurrentUser();
             $isAuthorized = true;
@@ -111,6 +139,11 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 $user ? $user->getId() : null,
                 $this->arParams['HASH']
             );
+            $relatedOrderId = $this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')
+                ->getValue();
+            if ($relatedOrderId) {
+                $relatedOrder = $this->orderService->getOrderById($relatedOrderId, false);
+            }
         } catch (NotFoundException $e) {
             Tools::process404('', true, true, true);
         }
@@ -135,40 +168,21 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         }
 
         $this->arResult['ORDER'] = $order;
-        $this->arResult['ORDER_PROPERTIES'] = [];
+        $this->arResult['ORDER_PROPERTIES'] = $this->getOrderProperties($order, $user);
         /**
          * флаг, что пользователь был зарегистрирован при оформлении заказа
          */
         $this->arResult['ORDER_REGISTERED'] = !$isAuthorized;
 
-        /** @var PropertyValue $propertyValue */
-        foreach ($order->getPropertyCollection() as $propertyValue) {
-            $propertyCode = $propertyValue->getProperty()['CODE'];
-            /**
-             * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
-             */
-            if ($user->getDiscountCardNumber() &&
-                ($propertyCode === 'BONUS_COUNT') &&
-                (null === $propertyValue->getValue())
-            ) {
-                if ($order->getPaymentCollection()->getInnerPayment()->getSum()) {
-                    $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                        $this->manzanaPosService->buildRequestFromBasket(
-                            $order->getBasket(),
-                            $user->getDiscountCardNumber()
-                        )
-                    );
-
-                    $propertyValue->setValue($cheque->getChargedBonus());
-                    $this->userAccountService->refreshUserBalance($user);
-                } else {
-                    $propertyValue->setValue(0);
-                }
-                $order->save();
-            }
-
-            $this->arResult['ORDER_PROPERTIES'][$propertyCode] = $propertyValue->getValue();
+        if (null !== $relatedOrder) {
+            $this->arResult['RELATED_ORDER'] = $relatedOrder;
+            $this->arResult['RELATED_ORDER_PROPERTIES'] = $this->getOrderProperties($relatedOrder, $user);
+            $this->arResult['RELATED_ORDER_DELIVERY'] = $this->getDeliveryData(
+                $relatedOrder,
+                $this->arResult['RELATED_ORDER_PROPERTIES']
+            );
         }
+        $this->userAccountService->refreshUserBalance($user);
 
         /** @var Shipment $shipment */
         if ($shipment = $order->getShipmentCollection()->current()) {
@@ -193,6 +207,54 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         }
 
         return $this;
+    }
+
+    /**
+     * @param Order $order
+     * @param User $user
+     *
+     * @throws ArgumentException
+     * @throws Exception
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws ExecuteException
+     * @return array
+     */
+    protected function getOrderProperties(Order $order, User $user): array
+    {
+        $result = [];
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            $propertyCode = $propertyValue->getProperty()['CODE'];
+            /**
+             * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
+             */
+            if ($user->getDiscountCardNumber() &&
+                ($propertyCode === 'BONUS_COUNT') &&
+                (null === $propertyValue->getValue())
+            ) {
+                if ($order->getPaymentCollection()->getInnerPayment()->getSum()) {
+                    $cheque = $this->manzanaPosService->processChequeWithoutBonus(
+                        $this->manzanaPosService->buildRequestFromBasket(
+                            $order->getBasket(),
+                            $user->getDiscountCardNumber()
+                        )
+                    );
+
+                    $propertyValue->setValue($cheque->getChargedBonus());
+                } else {
+                    $propertyValue->setValue(0);
+                }
+                $order->save();
+            }
+            $result[$propertyCode] = $propertyValue->getValue();
+        }
+
+        return $result;
     }
 
     /**
