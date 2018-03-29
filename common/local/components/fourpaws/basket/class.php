@@ -147,7 +147,7 @@ class BasketComponent extends CBitrixComponent
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
                     $this->arResult['MAX_BONUS_SUM'] = \floor($cheque->getAvailablePayment());
                 }
-            } catch (NotAuthorizedException $e) {
+            } catch (NotAuthorizedException|ExecuteException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
