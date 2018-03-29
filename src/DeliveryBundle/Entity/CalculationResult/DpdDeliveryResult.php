@@ -4,7 +4,6 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -20,7 +19,6 @@ class DpdDeliveryResult extends BaseResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      */
     public function doCalculateDeliveryDate(): void
@@ -44,7 +42,6 @@ class DpdDeliveryResult extends BaseResult
 
     /**
      * @return int
-     * @throws NotFoundException
      * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws StoreNotFoundException

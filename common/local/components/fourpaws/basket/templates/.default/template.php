@@ -8,12 +8,16 @@
  * @copyright   ADV/web-engineering co.
  */
 
-/** @global BasketComponent $component */
+/**
+ * @global BasketComponent $component
+ * @global \CMain $APPLICATION
+ */
 
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
@@ -26,8 +30,8 @@ $user = $arResult['USER'];
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
 
-/** @var ArrayCollection $notAlowedItems */
-$notAlowedItems = $arResult['NOT_ALOWED_ITEMS'];
+/** @var ArrayCollection $notAllowedItems */
+$notAllowedItems = $arResult['NOT_ALOWED_ITEMS'];
 
 /** @var Order $order */
 $order = $basket->getOrder();
@@ -35,115 +39,93 @@ $order = $basket->getOrder();
 if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
     ?>
     <div class="b-shopping-cart">
-    <div class="b-preloader">
-        <div class="b-preloader__spinner">
-            <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title="">
-        </div>
-    </div>
     <?php
+    /** @noinspection UntrustedInclusionInspection */
+    include SITE_TEMPLATE_PATH . '/blocks/preloader.php';
 }
+
 if ($arParams['IS_AJAX']) {
-    $user_discount = $component->getCurrentUserService()->getDiscount();
-}
-?>
+    $userDiscount = $component->getCurrentUserService()->getDiscount();
+} ?>
     <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
         <main class="b-shopping-cart__main" role="main">
-            <?php
-            if ($arResult['POSSIBLE_GIFT_GROUPS']) {
-
+            <?php if ($arResult['POSSIBLE_GIFT_GROUPS']) {
                 ?>
                 <section class="b-stock b-stock--shopping-cart">
-                    <h3 class="b-title b-title--h2-cart">Подарки к заказу
-                    </h3>
-                    <?php
-                    foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
+                    <h3 class="b-title b-title--h2-cart">Подарки к заказу</h3>
+                    <?php foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
                         $disableClass = '';
                         /** @noinspection PhpUndefinedMethodInspection */
                         if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
-                        }
-                        ?>
+                        } ?>
                         <div class="b-gift-order">
                             <div class="b-gift-order__info">
-                        <span class="b-gift-order__text">
-                            Мы решили подарить вам подарок на весь заказ за красивые глаза
-                        </span>
-                                <a
-                                        class="b-link-gift js-presents-order-open<?= $disableClass; ?>"
-                                        href="javascript:void(0);"
-                                        data-url="/ajax/sale/basket/gift/get/"
-                                        data-url-gift="/ajax/sale/basket/gift/select/"
-                                        data-discount-id="<?= $group['discountId']; ?>" title=""
-                                        data-popup-id="popup-choose-gift">
+                                <span class="b-gift-order__text">
+                                    Мы решили подарить вам подарок на весь заказ за красивые глаза
+                                </span>
+                                <a class="b-link-gift js-presents-order-open<?= $disableClass ?>"
+                                   href="javascript:void(0);"
+                                   data-url="/ajax/sale/basket/gift/get/"
+                                   data-url-gift="/ajax/sale/basket/gift/select/"
+                                   data-discount-id="<?= $group['discountId']; ?>" title=""
+                                   data-popup-id="popup-choose-gift">
                                     <span class="b-link-gift__text">Выбрать подарок</span>
                                     <span class="b-icon b-icon--gift">
-                                    <?= new SvgDecorator('icon-gift', 18, 18); ?>
+                                        <?= new SvgDecorator('icon-gift', 18, 18) ?>
                                     </span>
                                 </a>
                             </div>
-                            <?php
-                            if (
+                            <?php if (
                                 isset($arResult['SELECTED_GIFTS'][$group['discountId']])
                                 && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
-                            ) {
-                                ?>
+                            ) { ?>
                                 <div class="b-gift-order__gift-product js-section-remove-stock">
-                                    <?php
-                                    foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
+                                    <?php foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
                                         for ($i = 0; $i < $gift['quantity']; ++$i) {
                                             $offer = $component->offerCollection->getById($gift['offerId']);
                                             $image = $component->getImage($gift['offerId']);
+                                            /**
+                                             * @var Offer $offer
+                                             */
                                             $product = $offer->getProduct();
-                                            $name = '<strong>' . $product->getBrandName() . '</strong> ' . lcfirst(trim($product->getName()));
-                                            ?>
+                                            $name = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName())); ?>
                                             <div class="b-common-item b-common-item--shopping-cart js-remove-shopping">
-                                    <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
-                                        <img class="b-common-item__image b-common-item__image--shopping-cart"
-                                             src="<?= $image; ?>" alt="<?= $product->getName(); ?>">
-                                    </span>
+                                                <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
+                                                    <img class="b-common-item__image b-common-item__image--shopping-cart"
+                                                         src="<?= $image ?>" alt="<?= $product->getName() ?>">
+                                                </span>
                                                 <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart">
-                                                    <a class="b-common-item__description-wrap"
-                                                       href="javascript:void(0);"
-                                                       title="">
-                                                    <span class="b-clipped-text b-clipped-text--shopping-cart">
-                                                        <span>
-                                                            <?= $name; ?>
+                                                    <a class="b-common-item__description-wrap" href="#!" title="">
+                                                        <span class="b-clipped-text b-clipped-text--shopping-cart">
+                                                            <span><?= $name ?></span>
                                                         </span>
-                                                    </span>
-                                                        <!--                                            <span class="b-common-item__variant b-common-item__variant--shopping-cart">-->
-                                                        <!--                                                <span class="b-common-item__name-value">-->
-                                                        <!--                                                    Цвет:-->
-                                                        <!--                                                </span>-->
-                                                        <!--                                                <span>прозрачные</span>-->
-                                                        <!--                                            </span>-->
+                                                        <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart">-->
+                                                        <span class="b-common-item__name-value">Цвет:</span>
+                                                        <span>прозрачные</span>
+                                                        </span>*/ ?>
                                                     </a>
                                                     <a class="b-common-item__delete js-present-delete-item"
                                                        href="javascript:void(0);" title=""
                                                        data-url="/ajax/sale/basket/gift/refuse/"
                                                        data-gift-id="<?= $gift['basketId']; ?>">
-                                            <span class="b-icon b-icon--delete">
-                                                <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
-                                            </span>
+                                                        <span class="b-icon b-icon--delete">
+                                                            <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                                                        </span>
                                                     </a>
                                                 </div>
                                             </div>
-                                            <?php
-                                        }
-                                    }
-                                    ?>
+                                        <?php }
+                                    } ?>
                                 </div>
-                                <?php
-                            }
-                            ?>
+                            <?php } ?>
                         </div>
-                        <?php
-                    }
-                    ?>
+                    <?php } ?>
                 </section>
-                <?php
-            }
+            <?php }
+
             if (!$orderableItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
@@ -162,10 +144,11 @@ if ($arParams['IS_AJAX']) {
                     ?>
                 </section>
             <?php }
-            if ($notAlowedItems instanceof ArrayCollection && !$notAlowedItems->isEmpty()) { ?>
+
+            if ($notAllowedItems instanceof ArrayCollection && !$notAllowedItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
-                    <?php foreach ($notAlowedItems as $basketItem) {
+                    <?php foreach ($notAllowedItems as $basketItem) {
                         if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                             continue;
                         }
@@ -189,33 +172,27 @@ if ($arParams['IS_AJAX']) {
                     } else { ?>
                         <span class="b-information-order__pay-points b-information-order__pay-points--flex">
                             Уже покупали у нас?
-                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);"
-                               data-popup-id="authorization">
+                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="#!" data-popup-id="authorization">
                                 <span class="b-link-gift__text">Войти</span>
                             </a>
                         </span>
                     <?php }
+
                     $APPLICATION->IncludeComponent(
                         'fourpaws:city.selector',
                         'basket.summary',
                         [],
-                        $this,
+                        $component,
                         ['HIDE_ICONS' => 'Y']
-                    );
-                    ?>
-
-                    <p class="b-information-order__additional-info">
-                        От города доставки зависит наличие товаров и параметры доставки.
-                    </p>
-                    <?php
-                    $APPLICATION->IncludeComponent(
+                    ); ?>
+                    <p class="b-information-order__additional-info">От Вашего города зависит наличие товаров и параметры доставки.</p>
+                    <?php $APPLICATION->IncludeComponent(
                         'fourpaws:city.delivery.info',
                         'basket.summary',
                         ['BASKET_PRICE' => $orderableItems->getPrice()],
                         false,
                         ['HIDE_ICONS' => 'Y']
-                    );
-                    ?>
+                    ); ?>
 
                 </div>
                 <div class="b-information-order__order-wrapper">
@@ -231,35 +208,38 @@ if ($arParams['IS_AJAX']) {
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <?php
-                    if ($arResult['TOTAL_DISCOUNT'] > 0.01) {
-                        ?>
+                    <?php if ($arResult['TOTAL_DISCOUNT'] > 0.01) {?>
                         <div class="b-information-order__order">
-                            <div class="b-information-order__order-price">Общая скидка
-                            </div>
+                            <div class="b-information-order__order-price">Общая скидка</div>
                             <div class="b-price b-price--information-order">
                                 <span class="b-price__current">
-                                    - <?= WordHelper::numberFormat($arResult['TOTAL_DISCOUNT']); ?>
-                                </span><span class="b-ruble">₽</span>
+                                    - <?= WordHelper::numberFormat($arResult['TOTAL_DISCOUNT']) ?>
+                                </span>
+                                <span class="b-ruble">₽</span>
                             </div>
                         </div>
-                        <?php
-                    }
-                    /** @todo promo */
-                    ?>
-                    <!--                    <form class="b-information-order__form-promo js-form-validation">-->
-                    <!--                        <div class="b-input b-input--form-promo"><input-->
-                    <!--                                    class="b-input__input-field b-input__input-field--form-promo" type="text"-->
-                    <!--                                    id="promocode-delivery" placeholder="Промо-код" name="text" data-url=""/>-->
-                    <!--                            <div class="b-error"><span class="js-message"></span>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <button class="b-button b-button--form-promo">Применить-->
-                    <!--                        </button>-->
-                    <!--                    </form>-->
-                    <div class="b-information-order__order b-information-order__order--total">
-                        <div class="b-information-order__order-price">Итого без учета доставки
+                    <?php }
+
+                    if ($arResult['COUPON_DISCOUNT']) {  ?>
+                        <div class="b-information-order__order">
+                            <div class="b-information-order__order-price">Скидка по промокоду</div>
+                            <div class="b-price b-price--information-order">
+                                <span class="b-price__current">-
+                                    <?= WordHelper::numberFormat($arResult['COUPON_DISCOUNT']) ?>
+                                </span>
+                                <span class="b-ruble">₽</span>
+                            </div>
                         </div>
+                    <?php } ?>
+                    <form class="b-information-order__form-promo js-form-validation js-promo-code-add" method="post" data-url="/ajax/sale/basket/promo/apply/">
+                        <div class="b-input b-input--form-promo">
+                            <input class="b-input__input-field b-input__input-field--form-promo" type="text" id="promocode-delivery" placeholder="Промо-код" name="text" value="<?= $arResult['COUPON'] ?>" />
+                            <div class="b-error"><span class="js-message"></span></div>
+                        </div>
+                        <button class="b-button b-button--form-promo">Применить</button>
+                    </form>
+                    <div class="b-information-order__order b-information-order__order--total">
+                        <div class="b-information-order__order-price">Итого без учета доставки</div>
                         <div class="b-price b-price--information-order b-price--total-price">
                             <span class="b-price__current">
                                 <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
@@ -299,17 +279,18 @@ if ($arParams['IS_AJAX']) {
                 $productsIds[] = $pId;
             }
         }
+
         if ($productsIds) {
             $APPLICATION->IncludeFile('blocks/components/followup_products.php',
                 [
                     'WRAP_CONTAINER_BLOCK' => 'N',
-                    'SHOW_TOP_LINE'        => 'Y',
-                    'POSTCROSS_IDS'        => array_unique($productsIds),
+                    'SHOW_TOP_LINE' => 'Y',
+                    'POSTCROSS_IDS' => array_unique($productsIds),
                 ],
                 [
                     'SHOW_BORDER' => false,
-                    'NAME'        => 'Блок выгодной покупки',
-                    'MODE'        => 'php',
+                    'NAME' => 'Блок выгодной покупки',
+                    'MODE' => 'php',
                 ]);
         }
 
@@ -319,14 +300,14 @@ if ($arParams['IS_AJAX']) {
         $APPLICATION->IncludeFile('blocks/components/viewed_products.php',
             [
                 'WRAP_CONTAINER_BLOCK' => 'N',
-                'WRAP_SECTION_BLOCK'   => 'Y',
-                'SHOW_TOP_LINE'        => 'Y',
-                'SHOW_BOTTOM_LINE'     => 'N',
+                'WRAP_SECTION_BLOCK' => 'Y',
+                'SHOW_TOP_LINE' => 'Y',
+                'SHOW_BOTTOM_LINE' => 'N',
             ],
             [
                 'SHOW_BORDER' => false,
-                'NAME'        => 'Блок просмотренных товаров',
-                'MODE'        => 'php',
+                'NAME' => 'Блок просмотренных товаров',
+                'MODE' => 'php',
             ]);
         ?></div>
 <?php

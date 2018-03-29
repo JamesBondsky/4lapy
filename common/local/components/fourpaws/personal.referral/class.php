@@ -134,13 +134,14 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $nav = new PageNavigation('nav-referral');
         $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
-        $cache = Cache::createInstance();
+        $cache = $instance->getCache();
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $request = Application::getInstance()->getContext()->getRequest();
+        $request = $instance->getContext()->getRequest();
         $this->arResult['search'] = $search = (string)$request->get('search');
         $cacheItems = [];
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $curUser->getId(), 'page'=>$nav->getCurrentPage(), 'search'=>$search]))) {
+            serialize(['userId' => $curUser->getId(), 'page'=>$nav->getCurrentPage(), 'search'=>$search]),
+            $this->getCachePath() ?: $this->getPath())) {
             $result = $cache->getVars();
             $nav = $result['NAV'];
             $this->arResult['BONUS'] = $result['BONUS'];
@@ -149,7 +150,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
+                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
             }
             try {
                 /** @var ArrayCollection $items

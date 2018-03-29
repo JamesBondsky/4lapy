@@ -252,11 +252,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <span class="b-product-information__bonus js-bonus-<?=$currentOffer->getId()?>"></span>
                     </div>
                 </li>
-                <?php if ($currentOffer->isByRequest()) {
-                                    /**
+                <?php if ($currentOffer->isByRequest()) { /**
                                      * @todo наличие по зоне
-                                     */
-                    ?>
+                                     */ ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info">Наличие</div>
                         <div class="b-product-information__value">Только под заказ</div>
@@ -391,10 +389,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
         <div class="b-description-tab">
             <div class="b-description-tab__column">
-                <h2>Описание</h2>
-                <p>
-                    <?= $product->getDetailText()->getText() ?>
-                </p>
+                <p><?= $product->getDetailText()->getText() ?></p>
             </div>
             <div class="b-description-tab__column b-description-tab__column--characteristics">
                 <h2>Подробные характеристики</h2>

@@ -12,12 +12,9 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
 use FourPaws\Components\CatalogElementDetailComponent;
-use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -60,11 +57,11 @@ try {
     try {
         $offer = $catalogElementDetailClass->getCurrentOffer($product, $offerId);
         $hasOffer = true;
-    } catch (LoaderException|NotSupportedException|ObjectNotFoundException $e) {
+    } catch (LoaderException | NotSupportedException | ObjectNotFoundException $e) {
         $logger->error('ошибка при получении оффера');
         /** ошибки быть не должно */
     }
-} catch (SystemException|\RuntimeException|ServiceNotFoundException $e) {
+} catch (SystemException | \RuntimeException | ServiceNotFoundException $e) {
     $logger->error('ошибка при загрузке класса компонента');
     /** ошибки быть не должно, так как компонент отрабатывает выше */
     return;
@@ -77,14 +74,13 @@ if(!$hasOffer){
 ?>
     <div class="b-product-card">
         <div class="b-container">
-            <?php
-            $APPLICATION->IncludeComponent(
+            <?php $APPLICATION->IncludeComponent(
                 'fourpaws:breadcrumbs',
                 '',
                 [
                     'IBLOCK_ELEMENT' => $product,
                 ],
-                false,
+                null,
                 ['HIDE_ICONS' => 'Y']
             ); ?>
             <div class="b-product-card__top">
@@ -179,7 +175,6 @@ if(!$hasOffer){
                             <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
                                 <div class="b-description-tab b-description-tab--full">
                                     <div class="b-description-tab__column b-description-tab__column--full">
-                                        <h2>Состав</h2>
                                         <p><?= $product->getComposition()->getText() ?></p>
                                     </div>
                                 </div>
@@ -269,8 +264,11 @@ if(!$hasOffer){
                                                 <?php }?>
                                             </ul>
                                         </div>
-                                        <?/** @todo подарок по акции */?>
-                                        <div class="b-stock__gift">
+                                        <?php
+                                        /**
+                                         * @todo подарок по акции
+
+                                         <div class="b-stock__gift">
                                             <div class="b-advice b-advice--stock"><a
                                                         class="b-advice__item b-advice__item--stock"
                                                         href="javascript:void(0)" title=""><span
@@ -288,6 +286,8 @@ if(!$hasOffer){
                                             </div>
                                             <a class="b-button b-button--bordered-grey" href="javascript:void(0)" title="">Выбрать
                                                 подарок</a>
+                                         **/
+                                        ?>
                                         </div>
                                     </div>
                                     <?php $APPLICATION->IncludeComponent(
@@ -303,7 +303,7 @@ if(!$hasOffer){
                                             'FILTER_FIELD'  => 'XML_ID',
                                             'SHOW_PAGE_NAVIGATION' => false
                                         ],
-                                        $component,
+                                        null,
                                         [
                                             'HIDE_ICONS' => 'Y',
                                         ]
