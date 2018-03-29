@@ -399,7 +399,7 @@ class OrderStorageService
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
-                    $selectedDelivery = clone $delivery;
+                    $selectedDelivery = $delivery;
                     break;
                 }
             }

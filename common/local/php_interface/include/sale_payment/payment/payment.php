@@ -76,10 +76,8 @@ if (is_float($amount)) {// Если сумма с плавающей точко�
 }
 
 
-$returnUrl = '/sale/payment/result.php?ORDER_ID=' . $order->getField('ACCOUNT_NUMBER');
-if ($hash = $request->getQuery('HASH')) {
-    $returnUrl .= '&HASH=' . $hash;
-}
+$returnUrl = '/sale/payment/result.php?ORDER_ID=' . $order->getId();
+$returnUrl .= '&HASH=' . $order->getHash();
 
 $fiscalization = COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
 $fiscalization = unserialize($fiscalization, []);

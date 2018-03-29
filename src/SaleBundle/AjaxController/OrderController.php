@@ -282,9 +282,7 @@ class OrderController extends Controller
             }
         }
 
-        if (!$this->userAuthProvider->isAuthorized()) {
-            $url->addParams(['HASH' => $order->getHash()]);
-        }
+        $url->addParams(['HASH' => $order->getHash()]);
 
         return JsonSuccessResponse::create(
             '',

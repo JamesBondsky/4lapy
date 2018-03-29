@@ -84,12 +84,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             $this->prepareResult();
 
             if ($this->arParams['SET_TITLE'] === 'Y') {
-                $APPLICATION->SetTitle(
-                    sprintf(
-                        'Заказ № %s оформлен',
-                        $this->arParams['ORDER_ID']
-                    )
-                );
+                $APPLICATION->SetTitle('Заказ оформлен');
             }
 
             $this->includeComponentTemplate();
@@ -143,6 +138,11 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 ->getValue();
             if ($relatedOrderId) {
                 $relatedOrder = $this->orderService->getOrderById($relatedOrderId, false);
+                if ($relatedOrder->getId() < $order->getId()) {
+                    $tmp = $relatedOrder;
+                    $relatedOrder = $order;
+                    $order = $tmp;
+                }
             }
         } catch (NotFoundException $e) {
             Tools::process404('', true, true, true);

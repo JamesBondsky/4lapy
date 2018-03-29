@@ -53,8 +53,8 @@ $relatedOrder = $arResult['RELATED_ORDER'];
         <hr class="b-hr b-hr--order b-hr--top-line"/>
         <div class="b-order__block b-order__block--no-border">
             <div class="b-order__content b-order__content--no-border b-order__content--step-five">
-                <h2 class="b-title b-title--order-heading b-title--block"><? $APPLICATION->ShowTitle() ?>
-                </h2>
+                <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $order->getId() ?>
+                    оформлен</h2>
                 <?php if ($arResult['ORDER_PROPERTIES']['EMAIL']) {
                     ?>
                     <div class="b-order__text-block">

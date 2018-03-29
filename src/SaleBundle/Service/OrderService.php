@@ -252,10 +252,6 @@ class OrderService implements LoggerAwareInterface
             }
             $locationProp->setValue($selectedCity['CODE']);
 
-            if (null === $selectedDelivery) {
-                throw new OrderCreateException('Не выбрана доставка');
-            }
-
             $selectedDelivery->setDateOffset($storage->getDeliveryDate());
             if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
                 /** @var Interval $interval */
@@ -679,10 +675,14 @@ class OrderService implements LoggerAwareInterface
      */
     public function canSplitOrder($storage): bool
     {
-        $delivery = $this->orderStorageService->getSelectedDelivery($storage);
-        $stockResult = $delivery->getStockResult();
-
-        return !$stockResult->getAvailable()->isEmpty() && !$stockResult->getDelayed()->isEmpty();
+        $result = false;
+        try {
+            $delivery = $this->orderStorageService->getSelectedDelivery($storage);
+            $stockResult = $delivery->getStockResult();
+            $result = !$stockResult->getAvailable()->isEmpty() && !$stockResult->getDelayed()->isEmpty();
+        } catch (NotFoundException $e) {
+        }
+        return $result;
     }
 
     /**
@@ -795,16 +795,7 @@ class OrderService implements LoggerAwareInterface
              */
             if (!$storage->isPartialGet()) {
                 $this->saveOrder($order2, $splitResult2->getOrderStorage());
-                $this->setOrderPropertyByCode($order, 'RELATED_ORDER_ID', $order2->getId());
                 $this->setOrderPropertyByCode($order2, 'RELATED_ORDER_ID', $order->getId());
-                try {
-                    $order->save();
-                } catch (\Exception $e) {
-                    $this->log()->error('failed to set related order id', [
-                        'order' => $order->getId(),
-                        'relatedOrder' => $order2->getId()
-                    ]);
-                }
                 try {
                     $order2->save();
                 } catch (\Exception $e) {

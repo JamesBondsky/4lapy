@@ -50,6 +50,7 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
     {
         try {
             $order = null;
+            $relatedOrder = null;
             try {
                 $userId = $this->currentUserProvider->getCurrentUserId();
             } catch (NotAuthorizedException $e) {
@@ -63,6 +64,11 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
                     $userId,
                     $this->arParams['HASH']
                 );
+                $relatedOrderId = $this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')
+                    ->getValue();
+                if ($relatedOrderId) {
+                    $relatedOrder = $this->orderService->getOrderById($relatedOrderId, false);
+                }
             } catch (NotFoundException $e) {
                 Tools::process404('', true, true, true);
             }
@@ -70,7 +76,7 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
             /**
              * Попытка повторной оплаты заказа
              */
-            if ($order->isPaid()) {
+            if ($order->isPaid() && ((null === $relatedOrder) || $relatedOrder->isPaid())) {
                 Tools::process404('', true, true, true);
             }
 
@@ -94,7 +100,14 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
             $actionFile = $payment->getPaySystem()->getFieldsValues()['ACTION_FILE'];
             try {
                 $this->includeResultFile($actionFile);
+
                 $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
+
+                $path = '/sale/order/complete/' . $order->getId();
+                if ($relatedOrder && !$relatedOrder->isPaid()) {
+                    $url->setPath('/sale/payment');
+                    $url->addParams(['ORDER_ID' => $order->getId()]);
+                }
                 if (!empty($this->arParams['HASH'])) {
                     $url->addParams(['HASH' => $this->arParams['HASH']]);
                 }
@@ -105,7 +118,7 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
                 }
 
                 LocalRedirect($url->getUri());
-            } catch (PaymentException $e) {
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
             }
         } catch (\Exception $e) {
             try {
