@@ -757,6 +757,72 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
+     * Инициализирует и сохраняет заказ.
+     * Выполняет разделение заказов при необходимости
+     *
+     * @param OrderStorage $storage
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderCreateException
+     * @throws OrderSplitException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @return Order
+     */
+    public function createOrder(OrderStorage $storage): Order
+    {
+        /**
+         * Разделение заказов
+         */
+        if ($storage->isSplit()) {
+            $splitResults = $this->splitOrder($storage);
+            $splitResult1 = array_shift($splitResults);
+            $splitResult2 = array_shift($splitResults);
+
+            $order = $splitResult1->getOrder();
+            $order2 = $splitResult2->getOrder();
+
+            $this->saveOrder($order, $splitResult1->getOrderStorage());
+            /**
+             * Если выбрано частичное получение, то второй заказ не создается
+             */
+            if (!$storage->isPartialGet()) {
+                $this->saveOrder($order2, $splitResult2->getOrderStorage());
+                $this->setOrderPropertyByCode($order, 'RELATED_ORDER_ID', $order2->getId());
+                $this->setOrderPropertyByCode($order2, 'RELATED_ORDER_ID', $order->getId());
+                try {
+                    $order->save();
+                } catch (\Exception $e) {
+                    $this->log()->error('failed to set related order id', [
+                        'order' => $order->getId(),
+                        'relatedOrder' => $order2->getId()
+                    ]);
+                }
+                try {
+                    $order2->save();
+                } catch (\Exception $e) {
+                    $this->log()->error('failed to set related order id', [
+                        'order' => $order2->getId(),
+                        'relatedOrder' => $order->getId()
+                    ]);
+                }
+            }
+        } else {
+            $order = $this->initOrder($storage);
+            $this->saveOrder($order, $storage);
+        }
+
+        return $order;
+    }
+
+    /**
      * @param Order $order
      *
      * @throws ObjectNotFoundException
@@ -816,7 +882,7 @@ class OrderService implements LoggerAwareInterface
      * @param string $code
      * @param $value
      */
-    public function setOrderPropertyByCode(Order $order, string $code, $value)
+    public function setOrderPropertyByCode(Order $order, string $code, $value): void
     {
         /** @var PropertyValue $propertyValue */
         foreach ($order->getPropertyCollection() as $propertyValue) {

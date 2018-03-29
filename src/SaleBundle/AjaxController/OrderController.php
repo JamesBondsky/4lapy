@@ -16,6 +16,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -263,9 +264,8 @@ class OrderController extends Controller
         }
 
         try {
-            $order = $this->orderService->initOrder($storage);
-            $this->orderService->saveOrder($order, $storage);
-        } catch (OrderCreateException $e) {
+            $order = $this->orderService->createOrder($storage);
+        } catch (OrderCreateException|OrderSplitException $e) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
