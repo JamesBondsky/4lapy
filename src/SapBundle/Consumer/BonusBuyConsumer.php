@@ -54,7 +54,7 @@ class BonusBuyConsumer implements ConsumerInterface, LoggerAwareInterface
         try {
             $success = true;
 
-            $this->sharesService->export($data);
+            $this->sharesService->import($data);
         } catch (\Exception $e) {
             $success = false;
 

@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Debit;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
+use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -23,7 +24,7 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class PaymentService implements LoggerAwareInterface, SapOutInterface
 {
-    use LazyLoggerAwareTrait;
+    use LazyLoggerAwareTrait, SapOutFile;
 
     /**
      * @var OrderService
@@ -33,10 +34,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @var SerializerInterface
      */
     private $serializer;
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
     /**
      * @var string
      */
@@ -61,7 +58,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     {
         $this->orderService = $orderService;
         $this->serializer = $serializer;
-        $this->filesystem = $filesystem;
+        $this->setFilesystem($filesystem);
     }
 
     /**
@@ -87,6 +84,16 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
+     * @param Order $order
+     */
+    public function tryPaymentRefund(Order $order)
+    {
+        /**
+         * @todo refund
+         */
+    }
+
+    /**
      * @param Debit $debit
      *
      * @return string
@@ -102,43 +109,4 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         );
     }
 
-    /**
-     * @return string
-     */
-    public function getOutPrefix(): string
-    {
-        return $this->outPrefix;
-    }
-
-    /**
-     * @param string $outPrefix
-     */
-    public function setOutPrefix(string $outPrefix): void
-    {
-        $this->outPrefix = $outPrefix;
-    }
-
-    /**
-     * @param string $outPath
-     *
-     * @throws IOException
-     */
-    public function setOutPath(string $outPath): void
-    {
-        if (!$this->filesystem->exists($outPath)) {
-            $this->filesystem->mkdir($outPath, '0775');
-        }
-
-        $this->outPath = $outPath;
-    }
-
-    /**
-     * @param Order $order
-     */
-    public function tryPaymentRefund(Order $order)
-    {
-        /**
-         * @todo refund
-         */
-    }
 }
