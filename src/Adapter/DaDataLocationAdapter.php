@@ -18,11 +18,11 @@ use FourPaws\LocationBundle\LocationService;
 class DaDataLocationAdapter extends BaseAdapter
 {
     /**
-     * @param $entity
+     * @param DadataLocation $entity
      *
-     * @return mixed
+     * @return BitrixLocation
      */
-    public function convert($entity)
+    public function convert($entity):BitrixLocation
     {
         /** @var DadataLocation $entity */
         $bitrixLocation = new BitrixLocation();
@@ -35,6 +35,7 @@ class DaDataLocationAdapter extends BaseAdapter
             $city = !empty($entity->getCity()) ? : '';
             $cities = $locationService->findLocationCity($country.$region.$city, '', 1, true);
             $city = reset($cities);
+            $city['REGION'] = $entity->getRegion();
             $bitrixLocation = $this->convertDataToEntity($city, BitrixLocation::class);
 
         } catch (CityNotFoundException $e) {
@@ -51,9 +52,9 @@ class DaDataLocationAdapter extends BaseAdapter
     /**
      * @param array $data
      *
-     * @return mixed
+     * @return BitrixLocation
      */
-    public function convertFromArray(array $data)
+    public function convertFromArray(array $data): BitrixLocation
     {
         /** @var DadataLocation $entity */
         $entity = $this->convertDataToEntity($data, DadataLocation::class);

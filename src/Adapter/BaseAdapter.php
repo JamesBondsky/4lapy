@@ -53,5 +53,10 @@ abstract class BaseAdapter implements BaseAdapterInterface
         return $this->arrayTransformer->toArray($entity);
     }
 
+    /**
+     * @param mixed $entity
+     *
+     * @return mixed
+     */
     abstract public function convert($entity);
 }
