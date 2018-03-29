@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
@@ -139,6 +140,7 @@ class Event implements ServiceHandlerInterface
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws Exception
+     * @throws ArgumentException
      */
     public static function updateItemAvailability(BitrixEvent $event): void
     {

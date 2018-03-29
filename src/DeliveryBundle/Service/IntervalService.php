@@ -6,7 +6,8 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
@@ -17,19 +18,23 @@ use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 
+/**
+ * Class IntervalService
+ *
+ * @package FourPaws\DeliveryBundle\Service
+ */
 class IntervalService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     public const DELIVERY_INTERVALS = [
         '1' => '09:00-18:00',
-        '2' => '18:00-24:00',
+        '2' => '18:00-00:00',
         '3' => '08:00-12:00',
         '4' => '12:00-16:00',
         '5' => '16:00-20:00',
-        '6' => '20:00-24:00',
+        '6' => '20:00-00:00',
         '7' => '15:00-21:00',
     ];
 
@@ -37,9 +42,7 @@ class IntervalService implements LoggerAwareInterface
      * IntervalService constructor.
      */
     public function __construct()
-    {
-        $this->setLogger(LoggerFactory::create('IntervalService'));
-    }
+    {}
 
     /**
      * @param string $type
@@ -57,12 +60,15 @@ class IntervalService implements LoggerAwareInterface
                     ->setValue($data['VALUE'] ?? 0);
         }
 
-        throw new NotFoundException(sprintf('Rule type %s not found', $type));
+        throw new NotFoundException(
+            \sprintf('Rule type %s not found', $type)
+        );
     }
 
     /**
      * @param string $type
      * @param array $data
+     *
      * @return IntervalRuleCollection
      */
     public function createRules(string $type, array $data): IntervalRuleCollection
@@ -82,11 +88,13 @@ class IntervalService implements LoggerAwareInterface
     /**
      * @param CalculationResultInterface $delivery
      * @param IntervalCollection $intervals
+     *
+     * @return Interval
+     *
      * @throws NotFoundException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws StoreNotFoundException
-     * @return Interval
      */
     public function getFirstInterval(CalculationResultInterface $delivery, IntervalCollection $intervals): Interval
     {
@@ -117,9 +125,12 @@ class IntervalService implements LoggerAwareInterface
      */
     public function getIntervalCode(string $interval): string
     {
-        $code = array_search($interval, static::DELIVERY_INTERVALS, true);
+        $code = \array_search($interval, static::DELIVERY_INTERVALS, true);
+
         if (false === $code) {
-            throw new NotFoundException(sprintf('Interval %s not found', $interval));
+            throw new NotFoundException(
+                \sprintf('Interval %s not found', $interval)
+            );
         }
 
         return $code;
@@ -133,7 +144,9 @@ class IntervalService implements LoggerAwareInterface
     public function getIntervalByCode(string $code): string
     {
         if (!isset(static::DELIVERY_INTERVALS[$code])) {
-            throw new NotFoundException(sprintf('Interval with code %s not found', $code));
+            throw new NotFoundException(
+                \sprintf('Interval with code %s not found', $code)
+            );
         }
 
         return static::DELIVERY_INTERVALS[$code];
