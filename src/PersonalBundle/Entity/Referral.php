@@ -81,7 +81,7 @@ class Referral extends BaseEntity
     
     /**
      * @var bool
-     * @Serializer\Type("bitrix_bool")
+     * @Serializer\Type("bitrix_bool_d7")
      * @Serializer\SerializedName("UF_MODERATED")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()

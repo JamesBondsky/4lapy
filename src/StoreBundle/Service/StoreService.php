@@ -427,10 +427,8 @@ class StoreService implements LoggerAwareInterface
         if (!$storeCollection->isEmpty()) {
             [$servicesList, $metroList] = $this->getFullStoreInfo($storeCollection);
 
-            $stockResult = null;
             $storeAmount = 0;
             if ($this->pickupDelivery) {
-                $stockResult = $this->pickupDelivery->getStockResult();
                 $storeAmount = reset($this->offers)->getStocks()
                     ->filterByStores(
                         $this->getByCurrentLocation(
@@ -499,9 +497,14 @@ class StoreService implements LoggerAwareInterface
                     $item['active'] = true;
                 }
 
-                if ($stockResult) {
+                if ($this->pickupDelivery) {
+                    $tmpPickup = clone $this->pickupDelivery;
+                    $tmpPickup->setSelectedStore($store);
+                    if (!$tmpPickup->isSuccess()) {
+                        continue;
+                    }
                     /** @var StockResult $stockResultByStore */
-                    $stockResultByStore = $stockResult->filterByStore($store)->first();
+                    $stockResultByStore = $tmpPickup->getStockResult()->first();
                     $amount = $storeAmount + $stockResultByStore->getOffer()
                             ->getStocks()
                             ->filterByStore($store)
@@ -551,11 +554,7 @@ class StoreService implements LoggerAwareInterface
             return new StoreCollection();
         }
 
-        try {
-            return $pickupDelivery->getStockResult()->getStores();
-        } catch (DeliveryNotFoundException $e) {
-            return new StoreCollection();
-        }
+        return $pickupDelivery->getBestShops();
     }
 
     /**

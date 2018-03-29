@@ -22,23 +22,28 @@ use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -49,7 +54,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * Class BasketComponent
  * @package FourPaws\Components
  */
-class BasketComponent extends \CBitrixComponent
+class BasketComponent extends CBitrixComponent
 {
     public $basketService;
     /** @var OfferCollection */
@@ -64,6 +69,10 @@ class BasketComponent extends \CBitrixComponent
     private $manzanaPosService;
     /** @var array $images */
     private $images;
+    /**
+     * @var CouponSessionStorage
+     */
+    private $couponsStorage;
 
     private $promoDescriptions = [];
 
@@ -83,28 +92,29 @@ class BasketComponent extends \CBitrixComponent
 
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
+        $this->couponsStorage = $container->get(CouponStorageInterface::class);
         $this->manzanaPosService = $container->get('manzana.pos.service');
     }
 
-    /** @noinspection PhpMissingParentCallCommonInspection */
-    /**
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
+     * @return void
      *
      * @throws ApplicationCreateException
-     * @throws \Exception
+     * @throws Exception
      * @throws SystemException
      * @throws ArgumentOutOfRangeException
      * @throws ArgumentException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws InvalidArgumentException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     *
-     * @return void
+     * @throws ExecuteException
      */
     public function executeComponent(): void
     {
@@ -127,6 +137,7 @@ class BasketComponent extends \CBitrixComponent
         $this->arResult['BASKET'] = $basket;
         $this->loadPromoDescriptions();
         if (!$this->arParams['MINI_BASKET']) {
+            $this->setCoupon();
             $this->arResult['USER'] = null;
             $this->arResult['USER_ACCOUNT'] = null;
             try {
@@ -141,10 +152,10 @@ class BasketComponent extends \CBitrixComponent
                     );
                     $chequeRequest->setPaidByBonus($orderableBasket->getPrice());
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getAvailablePayment());
+                    $this->arResult['MAX_BONUS_SUM'] = \floor($cheque->getAvailablePayment());
                 }
             }  /** @noinspection BadExceptionsProcessingInspection */
-            catch (NotAuthorizedException $e) {
+            catch (NotAuthorizedException|ExecuteException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
@@ -158,8 +169,6 @@ class BasketComponent extends \CBitrixComponent
     }
 
     /**
-     *
-     *
      * @param $offerId
      *
      * @return ResizeImageDecorator|null
@@ -201,13 +210,13 @@ class BasketComponent extends \CBitrixComponent
      * @return Basket|bool
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws ApplicationCreateException
      * @throws ObjectNotFoundException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws SystemException
-     * @throws \Exception
+     * @throws Exception
      */
     private function setItems($basket)
     {
@@ -219,7 +228,7 @@ class BasketComponent extends \CBitrixComponent
             $this->arResult['OFFER_MIN_DELIVERY'] = [];
 
             /** @todo пока берем ближайшую доставку из быстрого заказа */
-            \CBitrixComponent::includeComponentClass('fourpaws:fast.order');
+            CBitrixComponent::includeComponentClass('fourpaws:fast.order');
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             try {
                 $fastOrderClass = new FourPawsFastOrderComponent();
@@ -255,23 +264,13 @@ class BasketComponent extends \CBitrixComponent
 
             $offerQuantity = $offer->getQuantity();
             if ($basketItem->canBuy() && !$basketItem->isDelay()) {
-                if (!$haveOrder && ($offerQuantity === 0 || $offer->isByRequest())) {
+                if (!$haveOrder && ($offerQuantity === 0)) {
                     $basketItem->setField('DELAY', 'Y');
-
-                    if (!$this->arParams['MINI_BASKET']) {
-                        $notAllowedItems->add($basketItem);
-                        /** @todo пока берем ближайшую доставку из быстрого заказа */
-                        if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
-                            $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer,
-                                true);
-                        }
-                    }
 
                     $isUpdate = true;
                 }
             } else {
-                if (!$haveOrder && $offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()
-                    && !$offer->isByRequest()) {
+                if (!$haveOrder && $offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()) {
                     $basketItem->setField('DELAY', 'N');
 
                     $isUpdate = true;
@@ -284,6 +283,20 @@ class BasketComponent extends \CBitrixComponent
                                 true);
                         }
                     }
+                }
+            }
+
+            if (!$this->arParams['MINI_BASKET'] &&
+                $offer->isByRequest()
+            ) {
+                /** @todo пока берем ближайшую доставку из быстрого заказа */
+                if ($fastOrderClass instanceof FourPawsFastOrderComponent) {
+                    $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer,
+                        true);
+                }
+
+                if (!$notAllowedItems->contains($basketItem)) {
+                    $notAllowedItems->add($basketItem);
                 }
             }
         }
@@ -304,7 +317,7 @@ class BasketComponent extends \CBitrixComponent
      *
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      */
@@ -316,7 +329,7 @@ class BasketComponent extends \CBitrixComponent
                 if (\count($group) === 1) {
                     $group = current($group);
                 } else {
-                    throw new \RuntimeException('TODO');
+                    throw new RuntimeException('TODO');
                 }
 
                 /** @noinspection PhpUndefinedMethodInspection */
@@ -372,7 +385,7 @@ class BasketComponent extends \CBitrixComponent
         $page = '';
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
-        if (!$basket->count() && !$this->arParams['MINI_BASKET']) {
+        if (!$this->arParams['MINI_BASKET'] && !$basket->count()) {
             $page = 'empty';
         }
         return $page;
@@ -449,5 +462,15 @@ class BasketComponent extends \CBitrixComponent
             }
         }
         return $result;
+    }
+    /**
+     * Set coupon and coupon discount
+     *
+     * @return void
+     */
+    private function setCoupon(): void
+    {
+        $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
+        $this->arResult['COUPON_DISCOUNT'] = $this->basketService->getPromocodeDiscount();
     }
 }

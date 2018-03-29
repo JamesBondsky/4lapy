@@ -93,44 +93,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $shipmentResult;
 
     /**
-     * @param CalculationResult|null $result
-     *
-     * @return CalculationResultInterface
-     */
-    public static function fromBitrixResult(CalculationResult $result = null): CalculationResultInterface
-    {
-        $instance = new static();
-        if ($result) {
-            $instance->setDeliveryPrice($result->getDeliveryPrice());
-            $instance->setExtraServicesPrice($result->getExtraServicesPrice());
-            $instance->setDescription($result->getDescription());
-            $instance->setPacksCount($result->getPacksCount());
-
-            if ($result->isNextStep()) {
-                $instance->setAsNextStep();
-            }
-
-            $instance->setTmpData($result->getTmpData());
-            $instance->setData($result->getData());
-
-            $instance->setPeriodDescription($result->getPeriodDescription());
-            $instance->setPeriodFrom($result->getPeriodFrom());
-            $instance->setPeriodType($result->getPeriodType());
-            $instance->setPeriodTo($result->getPeriodTo());
-
-            if ($result->getErrors()) {
-                $instance->addErrors($result->getErrors());
-            }
-
-            if ($result->getWarnings()) {
-                $instance->addWarnings($result->getWarnings());
-            }
-        }
-
-        return $instance;
-    }
-
-    /**
      * @return \DateTime
      */
     public function getCurrentDate(): \DateTime
@@ -158,7 +120,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return \DateTime
      */
@@ -380,7 +341,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                     $this->getIntervals()
                 );
             } catch (NotFoundException $e) {
-                return $this->getIntervals()->first();
+                $this->selectedInterval = $this->getIntervals()->first();
             }
         }
 
@@ -401,13 +362,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @throws NotFoundException
      * @return Store
      */
     public function getSelectedStore(): Store
     {
         if (!$this->selectedStore instanceof Store) {
-            $this->setSelectedStore($this->getStockResult()->getStores()->first());
+            $stores = $this->getStockResult()->getStores();
+            if ($stores->isEmpty()) {
+                $this->addError(new Error('Нет складов с доступными товарами'));
+            } else {
+                $this->setSelectedStore($stores->first());
+            }
         }
 
         return $this->selectedStore;
@@ -427,7 +392,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      */
     protected function doCalculateDeliveryDate(): void
@@ -647,7 +611,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return int
      */
@@ -664,7 +627,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return string
      */
@@ -715,7 +677,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @param bool $internalCall
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return bool
      */

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\Filter;
@@ -30,6 +34,7 @@ class GoodsListRequest
     /**
      * Список примененных фильтров ( ОбъектКаталога.Фильтр )
      *
+     * @Assert\Valid()
      * @Serializer\SerializedName("filters")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\InputFilter>")
      * @var Filter[]
@@ -39,6 +44,7 @@ class GoodsListRequest
     /**
      * Список примененных сортировок
      *
+     * @Assert\Valid()
      * @Serializer\SerializedName("sorts")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\Sort>")
      * @var Sort[]

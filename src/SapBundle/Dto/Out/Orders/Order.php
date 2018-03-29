@@ -365,6 +365,7 @@ class Order
     public function setId(string $id): Order
     {
         $this->id = $id;
+
         return $this;
     }
     
@@ -384,6 +385,7 @@ class Order
     public function setDateInsert(\DateTime $dateInsert): Order
     {
         $this->dateInsert = $dateInsert;
+
         return $this;
     }
     
@@ -403,6 +405,7 @@ class Order
     public function setClientId(int $clientId): Order
     {
         $this->clientId = $clientId;
+
         return $this;
     }
     
@@ -422,6 +425,7 @@ class Order
     public function setClientFio(string $clientFio): Order
     {
         $this->clientFio = $clientFio;
+
         return $this;
     }
     
@@ -441,6 +445,7 @@ class Order
     public function setClientPhone(string $clientPhone): Order
     {
         $this->clientPhone = $clientPhone;
+
         return $this;
     }
     
@@ -460,6 +465,7 @@ class Order
     public function setClientOrderPhone(string $clientOrderPhone): Order
     {
         $this->clientOrderPhone = $clientOrderPhone;
+
         return $this;
     }
     
@@ -479,6 +485,7 @@ class Order
     public function setDeliveryAddressOrPoint(string $deliveryAddressOrPoint): Order
     {
         $this->deliveryAddressOrPoint = $deliveryAddressOrPoint;
+
         return $this;
     }
     
@@ -498,6 +505,7 @@ class Order
     public function setClientComment(string $clientComment = ''): Order
     {
         $this->clientComment = $clientComment ?? '';
+
         return $this;
     }
     
@@ -517,6 +525,7 @@ class Order
     public function setOrderSource(string $orderSource): Order
     {
         $this->orderSource = $orderSource;
+
         return $this;
     }
     
@@ -536,6 +545,7 @@ class Order
     public function setCommunicationType(string $communicationType): Order
     {
         $this->communicationType = $communicationType;
+
         return $this;
     }
     
@@ -555,6 +565,7 @@ class Order
     public function setDeliveryType(string $deliveryType): Order
     {
         $this->deliveryType = $deliveryType;
+
         return $this;
     }
     
@@ -574,6 +585,7 @@ class Order
     public function setContractorDeliveryType(string $contractorDeliveryType): Order
     {
         $this->contractorDeliveryType = $contractorDeliveryType;
+
         return $this;
     }
     
@@ -593,6 +605,7 @@ class Order
     public function setContractorCode(string $contractorCode): Order
     {
         $this->contractorCode = $contractorCode;
+
         return $this;
     }
     
@@ -612,6 +625,7 @@ class Order
     public function setDeliveryDate(\DateTime $deliveryDate): Order
     {
         $this->deliveryDate = $deliveryDate;
+
         return $this;
     }
     
@@ -631,6 +645,7 @@ class Order
     public function setDeliveryTimeInterval(string $deliveryTimeInterval): Order
     {
         $this->deliveryTimeInterval = $deliveryTimeInterval;
+
         return $this;
     }
     
@@ -650,6 +665,7 @@ class Order
     public function setPayType(string $payType): Order
     {
         $this->payType = $payType;
+
         return $this;
     }
     
@@ -669,6 +685,7 @@ class Order
     public function setPayStatus(string $payStatus): Order
     {
         $this->payStatus = $payStatus;
+
         return $this;
     }
     
@@ -688,6 +705,7 @@ class Order
     public function setPayHoldTransaction(string $payHoldTransaction): Order
     {
         $this->payHoldTransaction = $payHoldTransaction;
+
         return $this;
     }
     
@@ -707,6 +725,7 @@ class Order
     public function setPayHoldDate(\DateTime $payHoldDate): Order
     {
         $this->payHoldDate = $payHoldDate;
+
         return $this;
     }
     
@@ -726,6 +745,7 @@ class Order
     public function setPayMerchantCode(string $payMerchantCode): Order
     {
         $this->payMerchantCode = $payMerchantCode;
+
         return $this;
     }
     
@@ -745,6 +765,7 @@ class Order
     public function setPrePayedSum(float $prePayedSum): Order
     {
         $this->prePayedSum = $prePayedSum;
+
         return $this;
     }
     
@@ -764,6 +785,7 @@ class Order
     public function setBonusCard(string $bonusCard): Order
     {
         $this->bonusCard = $bonusCard;
+
         return $this;
     }
     
@@ -783,6 +805,7 @@ class Order
     public function setBonusPayedCount(float $bonusPayedCount): Order
     {
         $this->bonusPayedCount = $bonusPayedCount;
+
         return $this;
     }
     
@@ -802,6 +825,7 @@ class Order
     public function setProducts($products): Order
     {
         $this->products = $products;
+
         return $this;
     }
     
@@ -821,6 +845,7 @@ class Order
     public function setDeliveryAddress(DeliveryAddress $deliveryAddress): Order
     {
         $this->deliveryAddress = $deliveryAddress;
+
         return $this;
     }
 }

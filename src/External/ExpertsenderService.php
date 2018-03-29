@@ -117,6 +117,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 $addUserToList->addProperty(new Property(48, 'string',
                     BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
                 $apiResult = $this->client->addUserToList($addUserToList);
+
                 if ($apiResult->isOk()) {
                     return true;
                 }

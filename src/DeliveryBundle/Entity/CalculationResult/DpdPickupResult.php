@@ -8,10 +8,9 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 
 class DpdPickupResult extends BaseResult implements PickupResultInterface
 {
@@ -35,7 +34,6 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
-     * @throws StoreNotFoundException
      */
     public function doCalculateDeliveryDate(): void
     {
@@ -48,7 +46,6 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
 
     /**
      * @return Store
-     * @throws NotFoundException
      */
     public function getSelectedStore(): Store
     {
@@ -98,7 +95,6 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
-     * @throws StoreNotFoundException
      */
     public function isSuccess($internalCall = false)
     {
@@ -129,7 +125,6 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws NotFoundException
-     * @throws StoreNotFoundException
      */
     public function getPeriodTo(): int
     {

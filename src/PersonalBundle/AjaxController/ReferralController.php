@@ -151,7 +151,10 @@ class ReferralController extends Controller
                 'Информация о карте получена',
                 ['card' => $cardInfo]
             );
-        } catch (ManzanaServiceException|CardNotFoundException $e) {
+        } catch(CardNotFoundException $e){
+            return $this->ajaxMess->getCardNotFoundError();
+        }
+        catch (ManzanaServiceException $e) {
             $logger = LoggerFactory::create('manzana');
             $logger->error('Ошибка манзаны - ' . $e->getMessage());
         }

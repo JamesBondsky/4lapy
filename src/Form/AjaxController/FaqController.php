@@ -13,9 +13,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
-use FourPaws\Form\Exception\FileSaveException;
-use FourPaws\Form\Exception\FileSizeException;
-use FourPaws\Form\Exception\FileTypeException;
 use FourPaws\Form\FormService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -26,7 +23,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class FeedBackController
+ * Class FaqController
  *
  * @package FourPaws\Form\AjaxController
  */
@@ -35,10 +32,14 @@ class FaqController extends Controller
     /** @var AjaxMess */
     private $ajaxMess;
 
-    public function __construct(
-        AjaxMess $ajaxMess
-    ) {
-        $this->ajaxMess = $ajaxMess;
+    public function __construct() {
+        try {
+            $container = App::getInstance()->getContainer();
+            $this->ajaxMess = $container->get('ajax.mess');
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
     }
 
     /**
@@ -93,7 +94,7 @@ class FaqController extends Controller
             }
 
             if ($formService->addResult($data)) {
-                return JsonSuccessResponse::create('Ваша завка принята');
+                return JsonSuccessResponse::create('Спасибо! В ближайшее время специалист свяжется с Вами и ответит на вопрос');
             }
 
             return $this->ajaxMess->getAddError();

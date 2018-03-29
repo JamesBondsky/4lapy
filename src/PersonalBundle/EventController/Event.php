@@ -24,7 +24,7 @@ class Event implements ServiceHandlerInterface
     protected static $eventManager;
 
     /**
-     * @param \Bitrix\Main\EventManager $eventManager
+     * @param EventManager $eventManager
      *
      * @return mixed|void
      */
@@ -84,7 +84,9 @@ class Event implements ServiceHandlerInterface
             $dm = HLBlockFactory::createTableObject('Address');
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
-        static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+        if(!empty($fields['UF_USER_ID'])) {
+            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+        }
     }
 
     /**
@@ -100,7 +102,7 @@ class Event implements ServiceHandlerInterface
         $dm = HLBlockFactory::createTableObject('Address');
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
-        if (isset($fields['UF_USER_ID'])) {
+        if (!empty($fields['UF_USER_ID'])) {
             static::HlFieldClearCache('user', $fields['UF_USER_ID']);
         }
     }
@@ -112,7 +114,7 @@ class Event implements ServiceHandlerInterface
     public static function AddressClearCacheAdd(BitrixEvent $event): void
     {
         $fields = $event->getParameter('fields');
-        if (isset($fields['UF_USER_ID'])) {
+        if (!empty($fields['UF_USER_ID'])) {
             static::HlFieldClearCache('user', $fields['UF_USER_ID']);
         }
     }
@@ -132,7 +134,9 @@ class Event implements ServiceHandlerInterface
             $dm = HLBlockFactory::createTableObject('Pet');
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
-        static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+        if(!empty($fields['UF_USER_ID'])) {
+            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+        }
     }
 
     /**
@@ -148,7 +152,7 @@ class Event implements ServiceHandlerInterface
         $dm = HLBlockFactory::createTableObject('Pet');
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
-        if (isset($fields['UF_USER_ID'])) {
+        if (!empty($fields['UF_USER_ID'])) {
             static::HlFieldClearCache('user', $fields['UF_USER_ID']);
         }
     }
@@ -160,7 +164,7 @@ class Event implements ServiceHandlerInterface
     public static function PetClearCacheAdd(BitrixEvent $event): void
     {
         $fields = $event->getParameter('fields');
-        if (isset($fields['UF_USER_ID'])) {
+        if (!empty($fields['UF_USER_ID'])) {
             static::HlFieldClearCache('user', $fields['UF_USER_ID']);
         }
     }
@@ -180,7 +184,9 @@ class Event implements ServiceHandlerInterface
             $dm = HLBlockFactory::createTableObject('Referral');
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
-        static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+        if(!empty($fields['UF_USER_ID'])) {
+            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+        }
     }
 
     /**
@@ -196,7 +202,7 @@ class Event implements ServiceHandlerInterface
         $dm = HLBlockFactory::createTableObject('Referral');
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
-        if (isset($fields['UF_USER_ID'])) {
+        if (!empty(['UF_USER_ID'])) {
             static::HlFieldClearCache('user', $fields['UF_USER_ID']);
         }
     }
@@ -208,7 +214,7 @@ class Event implements ServiceHandlerInterface
     public static function ReferralClearCacheAdd(BitrixEvent $event): void
     {
         $fields = $event->getParameter('fields');
-        if (isset($fields['UF_USER_ID'])) {
+        if (!empty($fields['UF_USER_ID'])) {
             static::HlFieldClearCache('user', $fields['UF_USER_ID']);
         }
     }
@@ -228,7 +234,9 @@ class Event implements ServiceHandlerInterface
             $dm = HLBlockFactory::createTableObject('Comments');
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
-        static::HlFieldClearCache('objectId', $fields['UF_OBJECT_ID']);
+        if(!empty($fields['UF_OBJECT_ID'])) {
+            static::HlFieldClearCache('objectId', $fields['UF_OBJECT_ID']);
+        }
     }
 
     /**
@@ -244,7 +252,7 @@ class Event implements ServiceHandlerInterface
         $dm = HLBlockFactory::createTableObject('Comments');
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
-        if (isset($fields['UF_OBJECT_ID'])) {
+        if (!empty($fields['UF_OBJECT_ID'])) {
             static::HlFieldClearCache('objectId', $fields['UF_OBJECT_ID']);
         }
     }
@@ -256,7 +264,7 @@ class Event implements ServiceHandlerInterface
     public static function CommentsClearCacheAdd(BitrixEvent $event): void
     {
         $fields = $event->getParameter('fields');
-        if (isset($fields['UF_OBJECT_ID'])) {
+        if (!empty($fields['UF_OBJECT_ID'])) {
             static::HlFieldClearCache('objectId', $fields['UF_OBJECT_ID']);
         }
     }

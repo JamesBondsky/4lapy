@@ -166,24 +166,25 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                             continue;
                         } ?>
                         <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
-                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?><?=!$offer->isAvailable() ? ' unavailable-link' : ''?>"
+                            <a class="b-weight-container__link b-weight-container__link--product js-offer-link-<?=$offer->getId()?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
-                               data-price="<?= ceil($offer->getPrice()) ?>"
+                               data-price=""
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>"
                                data-url="<?= $offer->getLink() ?>"
                                data-offerid="<?= $offer->getId() ?>">
                                 <span class="b-weight-container__line">
                                     <span class="b-weight-container__weight"><?= $value ?></span>
-                                    <span class="b-weight-container__price">
-                                        <?= ceil($offer->getPrice()) ?> <span class="b-ruble b-ruble--weight">₽</span>
-                                    </span>
+                                    <span class="b-weight-container__price"><?/** подгрузка */?></span>
                                 </span>
                                 <span class="b-weight-container__line">
-                                    <?php if($offer->isShare()){ ?>
-                                        <span class="b-weight-container__action">Акция</span>
-                                    <?php }?>
+                                    <span class="b-weight-container__not" style="display: none"><?/** подгрузка */?></span>
+                                    <span class="b-weight-container__action js-offer-action" style="display: none"><?/** подгрузка */?></span>
+                                    <span class="b-weight-container__old-price b-weight-container__old-price--big" style="display: none">
+                                        <?/** подгрузка */?>
+                                    </span>
                                     <span class="b-weight-container__cart js-offer-in-cart-<?=$offer->getId()?>" style="display: none">
+                                        <?/** подгрузка */?>
                                         <span class="b-cart b-cart--cart-product">
                                             <span class="b-icon b-icon--cart-product">
                                                 <?=new SvgDecorator('icon-cart', 16,16)?>
@@ -251,11 +252,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <span class="b-product-information__bonus js-bonus-<?=$currentOffer->getId()?>"></span>
                     </div>
                 </li>
-                <?php if ($currentOffer->isByRequest()) {
-                                    /**
+                <?php if ($currentOffer->isByRequest()) { /**
                                      * @todo наличие по зоне
-                                     */
-                    ?>
+                                     */ ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info">Наличие</div>
                         <div class="b-product-information__value">Только под заказ</div>
@@ -390,10 +389,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
         <div class="b-description-tab">
             <div class="b-description-tab__column">
-                <h2>Описание</h2>
-                <p>
-                    <?= $product->getDetailText()->getText() ?>
-                </p>
+                <p><?= $product->getDetailText()->getText() ?></p>
             </div>
             <div class="b-description-tab__column b-description-tab__column--characteristics">
                 <h2>Подробные характеристики</h2>
@@ -481,4 +477,3 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     </div>
 <?php
 $this->EndViewTarget();
-$templateData['currentOffer'] = $currentOffer;
