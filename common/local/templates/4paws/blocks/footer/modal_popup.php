@@ -14,6 +14,3 @@
         </div>
     </div>
 </section>
-
-<?php /** @todo js fix! remove it. */ ?>
-<div style="display: none" class="js-phone-change-one"></div>
