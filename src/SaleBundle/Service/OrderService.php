@@ -32,6 +32,8 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\FastOrderCreateException;
+use FourPaws\SaleBundle\Exception\FastOrderNotDeliveryException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -212,9 +214,10 @@ class OrderService
 
     /**
      * @param OrderStorage $storage
-     * @param bool $save
-     * @param bool $fastOrder
+     * @param bool         $save
+     * @param bool         $fastOrder
      *
+     * @throws FastOrderNotDeliveryException
      * @throws \Exception
      * @throws OrderCreateException
      * @throws NotFoundException
@@ -255,6 +258,10 @@ class OrderService
         }
 
         if (!$selectedDelivery) {
+            if($fastOrder){
+                throw new FastOrderNotDeliveryException('Нет доступных доставок');
+            }
+
             throw new OrderCreateException('Нет доступных доставок');
         }
         $selectedDelivery = clone $selectedDelivery;

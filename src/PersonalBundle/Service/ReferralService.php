@@ -126,13 +126,47 @@ class ReferralService
         }
         $curUser = $this->referralRepository->curUserService->getCurrentUser();
         if (!empty($filter)) {
-            $filter['UF_USER_ID'] = $curUser->getId();
-            $referrals = $this->referralRepository->findBy(
-                [
-                    'filter' => $filter,
-                    'ttl'    => 360000,
-                ]
-            );
+            $filter['UF_USER_ID'] = $curUserId = $curUser->getId();
+            $cacheTime = 360000;
+            try {
+                $instance = Application::getInstance();
+            } catch (SystemException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->error('Ошибка получения инстанса'.$e->getMessage());
+            }
+            $curUserId = $this->curUserService->getCurrentUserId();
+            $cache = $instance->getCache();
+            $referrals = new ArrayCollection();
+
+            if ($cache->initCache($cacheTime,
+                serialize($filter),
+                __FUNCTION__.'\ReferralsByFilter')) {
+                $result = $cache->getVars();
+                $referrals = $result['referrals'];
+            } elseif ($cache->startDataCache()) {
+                $tagCache = null;
+                if (\defined('BX_COMP_MANAGED_CACHE')) {
+                    $tagCache = $instance->getTaggedCache();
+                    $tagCache->startTagCache(__FUNCTION__.'\ReferralsByFilter');
+                }
+
+                $referrals = $this->referralRepository->findBy(
+                    [
+                        'filter' => $filter,
+                    ]
+                );
+
+                if ($tagCache !== null) {
+                    TaggedCacheHelper::addManagedCacheTags([
+                        'highloadblock:field:user:'. $curUserId
+                    ], $tagCache);
+                    $tagCache->endTagCache();
+                }
+
+                $cache->endDataCache([
+                    'referrals' => $referrals,
+                ]);
+            }
         } else {
             $referrals = $this->referralRepository->findByCurUser();
         }
@@ -387,7 +421,7 @@ class ReferralService
             /** @var Referral $item */
             foreach ($referralsList as $key => $item) {
                 if (!empty($item->getCard())) {
-                    $arCards[$item->getCard()] = $key;
+                    $arCards[(int)$item->getCard()] = $key;
                 }
             }
         }
@@ -399,26 +433,26 @@ class ReferralService
             $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
         } catch (NotAuthorizedException $e) {
             /** прерываем выполнение если неавторизованы */
-            return [false, false];
+            return [false, false, new ArrayCollection($referralsList)];
         }
         $haveAdd = false;
         if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
             /** @var ManzanaReferal $item */
             foreach ($manzanaReferrals as $item) {
-                $item->cardNumber = (string)$item->cardNumber;
-                if (empty($item->cardNumber)) {
+                $cardNumber = (int)$item->cardNumber;
+                if (empty($item->cardNumber) || $cardNumber === 0) {
                     continue;
                 }
-                if (!\array_key_exists($item->cardNumber, $arCards)) {
+                if (!\array_key_exists($cardNumber, $arCards)) {
                     $data = [
-                        'UF_CARD'    => $item->cardNumber,
+                        'UF_CARD'    => $cardNumber,
                         'UF_USER_ID' => $curUser->getId(),
                     ];
                     try {
                         $skip = false;
                         $card = null;
                         try {
-                            $card = $this->manzanaService->searchCardByNumber($item->cardNumber);
+                            $card = $this->manzanaService->searchCardByNumber($cardNumber);
                         } catch (CardNotFoundException $e) {
                             $skip = true;
                         } catch (\Exception $e) {
@@ -427,7 +461,7 @@ class ReferralService
                         if (!$skip) {
                             $cardInfo = null;
                             if (!empty(!empty($card->contactId))) {
-                                $cardInfo = $this->manzanaService->getCardInfo($item->cardNumber, $card->contactId);
+                                $cardInfo = $this->manzanaService->getCardInfo($cardNumber, $card->contactId);
                             }
                             if (!empty($card->phone)) {
                                 try {
@@ -451,7 +485,7 @@ class ReferralService
                                     CardByContractCards ? $cardInfo->getExpireDate()->format(
                                         'd.m.Y'
                                     ) : '',
-                                    'UF_MODERATED'        => $item->isQuestionnaireActual === 'Не указано' ? 'Y' : 'N',
+                                    'UF_MODERATED'        => $item->isModerated() ? 'Y' : 'N',
                                 ]
                             );
                             try {
@@ -470,11 +504,11 @@ class ReferralService
                     }
                 } /** @var Referral $referral */
                 else {
-                    $referral =& $referralsList[$arCards[$item->cardNumber]];
+                    $referral =& $referralsList[$arCards[$cardNumber]];
                     if ($referral instanceof Referral) {
                         $referral->setBonus((float)$item->sumReferralBonus);
                         $lastModerate = $referral->isModerate();
-                        $referral->setModerate($item->isQuestionnaireActual === 'Не указано');
+                        $referral->setModerate($item->isModerated());
                         if ($lastModerate !== $referral->isModerate()) {
                             $this->update(
                                 [
@@ -488,7 +522,6 @@ class ReferralService
                 unset($referral);
             }
         }
-        $referrals = new ArrayCollection($referralsList);
-        return [true, $haveAdd, $referrals];
+        return [true, $haveAdd, new ArrayCollection($referralsList)];
     }
 }

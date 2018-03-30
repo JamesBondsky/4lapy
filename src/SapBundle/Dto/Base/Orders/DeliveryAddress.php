@@ -176,6 +176,7 @@ class DeliveryAddress
     public function setCountryCode(string $countryCode): DeliveryAddress
     {
         $this->countryCode = $countryCode;
+
         return $this;
     }
     
@@ -195,6 +196,7 @@ class DeliveryAddress
     public function setRegionCode(string $regionCode): DeliveryAddress
     {
         $this->regionCode = $regionCode;
+
         return $this;
     }
     
@@ -214,6 +216,7 @@ class DeliveryAddress
     public function setPostCode(string $postCode): DeliveryAddress
     {
         $this->postCode = $postCode;
+
         return $this;
     }
     
@@ -233,6 +236,7 @@ class DeliveryAddress
     public function setCityName(string $cityName): DeliveryAddress
     {
         $this->cityName = $cityName;
+
         return $this;
     }
     
@@ -252,6 +256,7 @@ class DeliveryAddress
     public function setStreetName(string $streetName): DeliveryAddress
     {
         $this->streetName = $streetName;
+
         return $this;
     }
     
@@ -271,6 +276,7 @@ class DeliveryAddress
     public function setStreetPrefix(string $streetPrefix): DeliveryAddress
     {
         $this->streetPrefix = $streetPrefix;
+
         return $this;
     }
     
@@ -290,6 +296,7 @@ class DeliveryAddress
     public function setHouse(string $house): DeliveryAddress
     {
         $this->house = $house;
+
         return $this;
     }
     
@@ -309,6 +316,7 @@ class DeliveryAddress
     public function setHousing(string $housing): DeliveryAddress
     {
         $this->housing = $housing;
+
         return $this;
     }
     
@@ -328,6 +336,7 @@ class DeliveryAddress
     public function setBuilding(string $building): DeliveryAddress
     {
         $this->building = $building;
+
         return $this;
     }
     
@@ -347,6 +356,7 @@ class DeliveryAddress
     public function setOwnerShip(string $ownerShip): DeliveryAddress
     {
         $this->ownerShip = $ownerShip;
+
         return $this;
     }
     
@@ -366,6 +376,7 @@ class DeliveryAddress
     public function setFloor(string $floor): DeliveryAddress
     {
         $this->floor = $floor;
+
         return $this;
     }
     
@@ -385,6 +396,7 @@ class DeliveryAddress
     public function setRoomNumber(string $roomNumber): DeliveryAddress
     {
         $this->roomNumber = $roomNumber;
+
         return $this;
     }
     
@@ -404,6 +416,7 @@ class DeliveryAddress
     public function setDeliveryPointCode(string $deliveryPointCode): DeliveryAddress
     {
         $this->deliveryPointCode = $deliveryPointCode;
+
         return $this;
     }
 }

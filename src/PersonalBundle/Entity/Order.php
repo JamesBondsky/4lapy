@@ -819,11 +819,7 @@ class Order extends BaseEntity
      */
     public function canBeSubscribed(): bool
     {
-        /** @todo уточнить требуемую логику */
         $result = $this->isPayed();
-
-/** @todo временно для разработки */
-$result = true;
 
         return $result;
     }

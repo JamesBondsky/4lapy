@@ -78,7 +78,7 @@ class SharesService implements LoggerAwareInterface
      * @throws RuntimeException
      * @throws SqlQueryException
      */
-    public function export(BonusBuy $promo): void
+    public function import(BonusBuy $promo): void
     {
         foreach ($promo->getBonusBuyShare() as $share) {
             try {
