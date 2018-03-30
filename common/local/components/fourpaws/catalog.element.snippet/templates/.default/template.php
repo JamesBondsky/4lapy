@@ -31,7 +31,7 @@ $offers = $product->getOffers();
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER']; ?>
 
-<div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item">
+<div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item" data-productid="<?= $product->getId() ?>">
     <?= $component->getMarkService()->getMark($currentOffer) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">

@@ -13,6 +13,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\UserMessageException;
+use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -599,8 +601,17 @@ class StoreService implements LoggerAwareInterface
         }
         $code = $request->get('code');
         if (!empty($code)) {
-            $result['UF_LOCATION'] = $code;
+            $codeList = json_decode($code, true);
+            if (\is_array($codeList)) {
+                $dadataLocationAdapter = new DaDataLocationAdapter();
+                /** @var BitrixLocation $bitrixLocation */
+                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
+                $result['UF_LOCATION'] = $bitrixLocation->getCode();
+            } else {
+                $result['UF_LOCATION'] = $code;
+            }
         }
+
         $search = $request->get('search');
         if (!empty($search)) {
             $result[] = [
