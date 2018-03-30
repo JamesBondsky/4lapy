@@ -345,25 +345,13 @@ class OrderStorageService
      * @param bool $reload
      *
      * @throws ArgumentException
-     * @throws NotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @return CalculationResultInterface[]
-     */
-
-
-    /**
-     * @param OrderStorage $storage
-     * @param bool $reload
-     *
-     * @throws ArgumentException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws UserMessageException
      * @throws ApplicationCreateException
      * @throws DeliveryNotFoundException
      * @throws StoreNotFoundException
-     * @return array
+     * @return CalculationResultInterface[]
      */
     public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
@@ -385,6 +373,7 @@ class OrderStorageService
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException

@@ -37,6 +37,7 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
@@ -217,6 +218,7 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
+     * @throws DeliveryNotAvailableException
      * @return Order
      */
     public function initOrder(OrderStorage $storage, ?Basket $basket = null): Order
@@ -237,7 +239,7 @@ class OrderService implements LoggerAwareInterface
         try {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         } catch (NotFoundException $e) {
-            throw new OrderCreateException('Нет доступных доставок');
+            throw new DeliveryNotAvailableException('Нет доступных доставок');
         }
         $selectedDelivery = clone $selectedDelivery;
 

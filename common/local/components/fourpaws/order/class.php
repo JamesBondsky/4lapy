@@ -143,13 +143,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
      * @throws OrderCreateException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws ApplicationCreateException
-     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      */
     protected function prepareResult(): void
     {
