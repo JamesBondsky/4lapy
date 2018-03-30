@@ -28,6 +28,7 @@ use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
@@ -289,10 +290,10 @@ class OrderService implements LoggerAwareInterface
                     ]
                 );
             } catch (\Exception $e) {
-                $this->log()->error('failed to set shipment fields', [
+                $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
                     'deliveryId' => $selectedDelivery->getDeliveryId(),
                 ]);
-                throw new OrderCreateException('О май гад, мы все умрем');
+                throw new OrderCreateException('Ошибка при создании отгрузки');
             }
 
             $shipmentCollection->calculateDelivery();
@@ -657,14 +658,12 @@ class OrderService implements LoggerAwareInterface
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
         ]);
-
-        $this->orderStorageService->clearStorage($storage);
     }
 
     /**
      * Можно ли разделить заказ
      *
-     * @param $storage
+     * @param OrderStorage $storage
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -675,13 +674,19 @@ class OrderService implements LoggerAwareInterface
      * @throws UserMessageException
      * @return bool
      */
-    public function canSplitOrder($storage): bool
+    public function canSplitOrder(OrderStorage $storage): bool
     {
         $result = false;
         try {
             $delivery = $this->orderStorageService->getSelectedDelivery($storage);
-            $stockResult = $delivery->getStockResult();
-            $result = !$stockResult->getAvailable()->isEmpty() && !$stockResult->getDelayed()->isEmpty();
+            /**
+             * Для самовывоза DPD разделения заказов нет
+             */
+            if (!$delivery instanceof DpdPickupResult) {
+                [$available, $delayed] = $this->splitStockResult($storage, $delivery->getStockResult());
+
+                $result = !$available->isEmpty() && !$delayed->isEmpty();
+            }
         } catch (NotFoundException $e) {
         }
         return $result;
@@ -689,8 +694,8 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * Разделение заказа на два.
-     * В первом будут товары, которые есть в данный момент на складе / в магазине,
-     * во втором - то, что необходимо привезти на склад / в магазин
+     * В первом будут товары из регулярного ассортимента,
+     * во втором - товары под заказ
      *
      * @param OrderStorage $storage
      *
@@ -738,8 +743,7 @@ class OrderService implements LoggerAwareInterface
 
         $basket = $this->basketService->getBasket();
         $delivery = $this->orderStorageService->getSelectedDelivery($storage);
-        $available = $delivery->getStockResult()->getAvailable();
-        $delayed = $delivery->getStockResult()->getDelayed();
+        [$available, $delayed] = $this->splitStockResult($storage, $delivery->getStockResult());
 
         $basket1 = clone $basket;
         $updateBasket($basket1, $available);
@@ -749,6 +753,23 @@ class OrderService implements LoggerAwareInterface
 
         $order1 = $this->initOrder($storage1, $basket1);
         $order2 = $this->initOrder($storage2, $basket2);
+
+        /**
+         * У второго заказа (содержащего товары под заказ) доставка бесплатная
+         */
+        try {
+            /** @var Shipment $shipment */
+            foreach ($order2->getShipmentCollection() as $shipment) {
+                if ($shipment->isSystem()) {
+                    continue;
+                }
+                $shipment->setField('PRICE_DELIVERY', 0);
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to update shipment price: %s', $e->getMessage()), [
+                'fuserId' => $storage->getFuserId()
+            ]);
+        }
 
         return [
             (new OrderSplitResult())->setOrderStorage($storage1)
@@ -806,11 +827,22 @@ class OrderService implements LoggerAwareInterface
                         'relatedOrder' => $order->getId()
                     ]);
                 }
+                $this->setOrderPropertyByCode($order, 'RELATED_ORDER_ID', $order2->getId());
+                try {
+                    $order->save();
+                } catch (\Exception $e) {
+                    $this->log()->error('failed to set related order id', [
+                        'order' => $order->getId(),
+                        'relatedOrder' => $order2->getId()
+                    ]);
+                }
             }
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);
         }
+
+        $this->orderStorageService->clearStorage($storage);
 
         return $order;
     }
@@ -1027,5 +1059,23 @@ class OrderService implements LoggerAwareInterface
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @param StockResultCollection $stockResultCollection
+     * @return StockResultCollection[]
+     */
+    protected function splitStockResult(OrderStorage $storage, StockResultCollection $stockResultCollection): array
+    {
+        if ($storage->isPartialGet() && $stockResultCollection->getByRequest()->isEmpty()) {
+            $available = $stockResultCollection->getAvailable();
+            $delayed = $stockResultCollection->getDelayed();
+        } else {
+            $available = $stockResultCollection->getRegular();
+            $delayed = $stockResultCollection->getByRequest();
+        }
+
+        return [$available, $delayed];
     }
 }
