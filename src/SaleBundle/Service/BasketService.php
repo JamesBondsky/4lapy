@@ -111,8 +111,9 @@ class BasketService
             $fields = $rewriteFields + $fields;
         }
 
+        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
-            $basket instanceof Basket ? $basket : $this->getBasket(),
+            $basket,
             $fields,
             $this->getContext()
         );
@@ -121,7 +122,7 @@ class BasketService
             throw new BitrixProxyException($result);
         }
         if ($save) {
-            $this->getBasket()->save();
+            $basket->save();
         }
 
         return $result->getData()['BASKET_ITEM'];

@@ -6,6 +6,7 @@
 namespace FourPaws\SaleBundle\Entity;
 
 use Bitrix\Sale\Order;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 
 class OrderSplitResult
 {
@@ -14,6 +15,9 @@ class OrderSplitResult
 
     /** @var OrderStorage */
     protected $orderStorage;
+
+    /** @var StockResultCollection */
+    protected $stockResult;
 
     /**
      * @return Order
@@ -48,6 +52,24 @@ class OrderSplitResult
     public function setOrderStorage(OrderStorage $orderStorage): OrderSplitResult
     {
         $this->orderStorage = $orderStorage;
+        return $this;
+    }
+
+    /**
+     * @return StockResultCollection
+     */
+    public function getStockResult(): StockResultCollection
+    {
+        return $this->stockResult;
+    }
+
+    /**
+     * @param StockResultCollection $stockResult
+     * @return OrderSplitResult
+     */
+    public function setStockResult(StockResultCollection $stockResult): OrderSplitResult
+    {
+        $this->stockResult = $stockResult;
         return $this;
     }
 }

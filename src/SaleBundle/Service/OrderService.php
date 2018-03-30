@@ -30,7 +30,6 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -280,8 +279,6 @@ class OrderService implements LoggerAwareInterface
 
                 $shipment->setFields(
                     [
-                        'CURRENCY',
-                        $order->getCurrency(),
                         'DELIVERY_ID' => $selectedDelivery->getDeliveryId(),
                         'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
                         'CURRENCY' => $order->getCurrency(),
@@ -735,22 +732,26 @@ class OrderService implements LoggerAwareInterface
             $basket2 = Basket::create(SITE_ID);
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
-                $amount = $delayed->filterByOfferId($basketItem->getProductId())->getAmount();
-                $quantity1 = 0;
-                $quantity2 = 0;
-                if (!$amount) {
-                    $basketItem->delete();
-                    $quantity1 = $amount;
-                } elseif ($amount !== (int)$basketItem->getQuantity()) {
-                    $quantity1 = $basketItem->getQuantity() - $amount;
-                    $quantity2 = $amount;
-                }
+                $availableAmount = $available->filterByOfferId($basketItem->getProductId())->getAmount();
+                $delayedAmount = $delayed->filterByOfferId($basketItem->getProductId())->getAmount();
 
-                if ($quantity1) {
-                    $this->basketService->addOfferToBasket($basketItem->getProductId(), $quantity1, [], false);
+                if ($availableAmount) {
+                    $this->basketService->addOfferToBasket(
+                        $basketItem->getProductId(),
+                        $availableAmount,
+                        [],
+                        false,
+                        $basket1
+                    );
                 }
-                if ($quantity2) {
-                    $this->basketService->addOfferToBasket($basketItem->getProductId(), $quantity1, [], false);
+                if ($delayedAmount) {
+                    $this->basketService->addOfferToBasket(
+                        $basketItem->getProductId(),
+                        $delayedAmount,
+                        [],
+                        false,
+                        $basket2
+                    );
                 }
             }
         } catch (\Exception $e) {
@@ -779,9 +780,11 @@ class OrderService implements LoggerAwareInterface
 
         return [
             (new OrderSplitResult())->setOrderStorage($storage1)
-                ->setOrder($order1),
+                ->setOrder($order1)
+                ->setStockResult($available),
             (new OrderSplitResult())->setOrderStorage($storage2)
-                ->setOrder($order2),
+                ->setOrder($order2)
+                ->setStockResult($delayed),
         ];
     }
 
@@ -843,6 +846,10 @@ class OrderService implements LoggerAwareInterface
                     ]);
                 }
             }
+
+            $basket = $this->basketService->getBasket();
+            $basket->clearCollection();
+            $basket->save();
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);

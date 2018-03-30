@@ -18,6 +18,7 @@ use FourPaws\External\ManzanaPosService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -159,7 +160,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             throw new OrderCreateException('Failed to initialize storage');
         }
 
-        $date = (new \DateTime());
+        $date = new \DateTime();
         if (abs(
                 $storage->getCurrentDate()->getTimestamp() - $date->getTimestamp()
             ) > OrderDeliveryValidator::MAX_DATE_DIFF
@@ -218,9 +219,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
             $deliveries = $this->orderStorageService->getDeliveries($storage);
-            foreach ($deliveries as $delivery) {
-                $delivery->setCurrentDate($storage->getCurrentDate());
-            }
             $this->getPickupData($deliveries, $storage);
 
             $addresses = null;
@@ -254,6 +252,28 @@ class FourPawsOrderComponent extends \CBitrixComponent
             if (!$selectedDelivery) {
                 $selectedDelivery = reset($deliveries);
                 $selectedDeliveryId = (int)$selectedDelivery->getDeliveryId();
+            }
+
+            try {
+                if (null !== $delivery) {
+                    $tmpStorage = clone $storage;
+                    $tmpStorage->setDeliveryId($delivery->getDeliveryId());
+                    [$splitResult1, $splitResult2] = $this->orderService->splitOrder($tmpStorage);
+                    $this->arResult['SPLIT_RESULT'] = [
+                        '1' => [
+                            'ORDER' => $splitResult1->getOrder(),
+                            'STORAGE' => $splitResult1->getOrderStorage(),
+                            'DELIVERY' => (clone $delivery)->setStockResult($splitResult1->getStockResult())
+                        ],
+                        '2' => [
+                            'ORDER' => $splitResult2->getOrder(),
+                            'STORAGE' => $splitResult2->getOrderStorage(),
+                            'DELIVERY' => (clone $delivery)->setStockResult($splitResult2->getStockResult())
+                        ]
+                    ];
+                }
+            } catch (OrderSplitException $e) {
+                // проверяется на этапе валидации $storage
             }
 
             $this->arResult['PICKUP'] = $pickup;
@@ -323,31 +343,29 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
         }
 
-        if (!$pickup) {
-            return;
-        }
+        if (null !== $pickup) {
+            try {
+                $selectedShopCode = $storage->getDeliveryPlaceCode();
+                $shops = $pickup->getStockResult()->getStores();
+                if ($selectedShopCode && isset($shops[$selectedShopCode])) {
+                    $pickup->setSelectedStore($shops[$selectedShopCode]);
+                }
 
-        try {
-            $selectedShopCode = $storage->getDeliveryPlaceCode();
-            $shops = $pickup->getStockResult()->getStores();
-            if ($selectedShopCode && isset($shops[$selectedShopCode])) {
-                $pickup->setSelectedStore($shops[$selectedShopCode]);
+                $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedStore();
+            } catch (NotFoundException $e) {
+                $this->logger->error(sprintf(
+                        'Order has pickup delivery with no shops available. Delivery location: %s',
+                        $storage->getCityCode())
+                );
+                return;
             }
 
-            $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedStore();
-        } catch (NotFoundException $e) {
-            $this->logger->error(sprintf(
-                    'Order has pickup delivery with no shops available. Delivery location: %s',
-                    $storage->getCityCode())
-            );
-            return;
+            $available = $pickup->getStockResult()->getAvailable();
+
+            $partialPickup = clone $pickup;
+            $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
+                ? $partialPickup
+                : $partialPickup->setStockResult($pickup->getStockResult()->getAvailable());
         }
-
-        $available = $pickup->getStockResult()->getAvailable();
-
-        $partialPickup = (clone $pickup);
-        $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
-            ? $partialPickup
-            : $partialPickup->setStockResult($pickup->getStockResult()->getAvailable());
     }
 }
