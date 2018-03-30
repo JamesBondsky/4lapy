@@ -8,6 +8,8 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
@@ -156,10 +158,28 @@ class OrderStorageService
      * @param Request $request
      * @param string $step
      *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return OrderStorage
      */
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
+        $data = $request->request->all();
+
+        $mapping = [
+            'order-pick-time' => 'partialGet',
+            'shopId' => 'deliveryPlaceCode',
+            'pay-type' => 'paymentId',
+        ];
+
+        foreach ($data as $name => $value) {
+            if (isset($mapping[$name])) {
+                $data[$mapping[$name]] = $value;
+                unset($data[$name]);
+            }
+        }
+
         /**
          * Чтобы нельзя было, например, обойти проверку капчи,
          * отправив в POST данные со всех форм разом
@@ -177,6 +197,31 @@ class OrderStorageService
                 ];
                 break;
             case self::DELIVERY_STEP:
+
+                try {
+                    $deliveryCode = $this->deliveryService->getDeliveryCodeById(
+                        (int)$data['deliveryId']
+                    );
+                    if (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+                        switch ($data['delyveryType']) {
+                            case 'twoDeliveries':
+                                $data['deliveryInterval'] = $data['deliveryInterval1'];
+                                $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
+                                $data['deliveryDate'] = $data['deliveryDate1'];
+                                $data['secondDeliveryDate'] = $data['deliveryDate2'];
+                                $data['comment'] = $data['comment1'];
+                                $data['secondComment'] = $data['comment2'];
+                                $data['split'] = 1;
+                                break;
+                            default:
+                                $data['split'] = 0;
+                        }
+                    } else {
+                        // @todo pickup
+                    }
+                } catch (DeliveryNotFoundException $e) {
+                }
+
                 $availableValues = [
                     'deliveryId',
                     'addressId',
@@ -192,6 +237,10 @@ class OrderStorageService
                     'comment',
                     'partialGet',
                     'shopId',
+                    'split',
+                    'secondDeliveryDate',
+                    'secondDeliveryInterval',
+                    'secondComment'
                 ];
                 break;
             case self::PAYMENT_STEP:
@@ -201,16 +250,8 @@ class OrderStorageService
                 ];
         }
 
-        $mapping = [
-            'order-pick-time' => 'partialGet',
-            'shopId'          => 'deliveryPlaceCode',
-            'pay-type'        => 'paymentId',
-        ];
-
-        foreach ($request->request as $name => $value) {
-            if (!\in_array($name, $availableValues, true) &&
-                !\in_array($mapping[$name], $availableValues, true)
-            ) {
+        foreach ($data as $name => $value) {
+            if (!\in_array($name, $availableValues, true)) {
                 continue;
             }
 
@@ -418,7 +459,7 @@ class OrderStorageService
         try {
             $this->userAccountService->refreshUserBalance();
             $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
-                                                ->getCurrentBudget();
+                ->getCurrentBudget();
         } catch (NotFoundException $e) {
         }
 

@@ -731,6 +731,7 @@ class OrderService implements LoggerAwareInterface
         $storage2 = clone $storage;
         $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
         $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
+        $storage2->setComment($storage->getSecondComment());
 
         $basket = $this->basketService->getBasket();
         $delivery = $this->orderStorageService->getSelectedDelivery($storage);

@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Manzana\Exception\ExecuteException;
@@ -286,19 +287,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
             $selectedDelivery = null;
-            /** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $delivery */
+            /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryId() !== $storage->getDeliveryId()) {
                     continue;
                 }
 
                 $selectedDelivery = $delivery;
-            }
-
-            if (!$selectedDelivery) {
-                LocalRedirect(
-                    $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP]
-                );
             }
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
 
@@ -331,7 +326,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
-     * @param \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface[] $deliveries
+     * @param CalculationResultInterface[] $deliveries
      * @param OrderStorage $storage
      */
     protected function getPickupData(array $deliveries, OrderStorage $storage): void

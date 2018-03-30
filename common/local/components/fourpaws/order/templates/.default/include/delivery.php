@@ -245,7 +245,8 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 </div>
 
 
-<div class="delivery-block__type visible" data-delivery="<?= $delivery->getPrice() ?>"
+<div class="delivery-block__type <?= $storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
+     data-delivery="<?= $delivery->getPrice() ?>"
      data-full="<?= $basket->getPrice() ?>" data-type="oneDelivery">
 
     <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
@@ -292,7 +293,8 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     $delivery2 = $arResult['SPLIT_RESULT']['2']['DELIVERY'];
     $storage2 = $arResult['SPLIT_RESULT']['2']['STORAGE'];
     ?>
-    <div class="delivery-block__type js-hidden-valid-fields" data-delivery="<?= $delivery1->getPrice() ?>"
+    <div class="delivery-block__type <?= !$storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
+         data-delivery="<?= $delivery1->getPrice() ?>"
          data-full="<?= $basket->getPrice() ?>"
          data-type="twoDeliveries">
         <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
