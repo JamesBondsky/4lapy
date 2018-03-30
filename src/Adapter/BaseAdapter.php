@@ -12,11 +12,11 @@ namespace FourPaws\Adapter;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\SerializerInterface;
 
 abstract class BaseAdapter implements BaseAdapterInterface
 {
-    /** @var ArrayTransformerInterface  */
+    /** @var SerializerInterface  */
     private $arrayTransformer;
 
     /**
@@ -25,7 +25,7 @@ abstract class BaseAdapter implements BaseAdapterInterface
     public function __construct()
     {
         try {
-            $this->arrayTransformer = Application::getInstance()->getContainer()->get(ArrayTransformerInterface::class);
+            $this->arrayTransformer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('system');
             $logger->error('ошибка загрузки сервиса - '.$e->getMessage());

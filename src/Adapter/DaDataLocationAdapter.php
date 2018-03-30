@@ -30,10 +30,10 @@ class DaDataLocationAdapter extends BaseAdapter
         /** @var LocationService $locationService */
         try {
             $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $country = !empty($entity->getCountry()) ? $entity->getCountry().' ' : '';
-            $region = !empty($entity->getRegion()) ? $entity->getRegion().' ' : '';
-            $city = !empty($entity->getCity()) ? : '';
-            $cities = $locationService->findLocationCity($country.$region.$city, '', 1, true);
+            $country = !empty($entity->getCountry()) ? $entity->getCountry() : '';
+            $city = !empty($entity->getCity()) ? $entity->getCity() : '';
+            $region = !empty($entity->getRegion()) && $city !== $entity->getRegion() ? ' '.$entity->getRegion() : '';
+            $cities = $locationService->findLocationCity($city, $country.$region, 1, true);
             $city = reset($cities);
             $city['REGION'] = $entity->getRegion();
             $bitrixLocation = $this->convertDataToEntity($city, BitrixLocation::class);

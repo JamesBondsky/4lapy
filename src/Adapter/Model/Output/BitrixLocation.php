@@ -19,7 +19,7 @@ class BitrixLocation
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $id;
+    protected $id = 0;
     /**
      * @var string
      * @Serializer\Type("string")
@@ -27,7 +27,7 @@ class BitrixLocation
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $code;
+    protected $code = '';
     /**
      * @var string
      * @Serializer\Type("string")
@@ -35,7 +35,7 @@ class BitrixLocation
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $name;
+    protected $name = '';
     /**
      * @var string
      * @Serializer\Type("string")
@@ -43,14 +43,14 @@ class BitrixLocation
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $region;
+    protected $region = '';
 
     /**
      * @return int
      */
     public function getId(): int
     {
-        return $this->id;
+        return $this->id ?? 0;
     }
 
     /**
@@ -66,7 +66,7 @@ class BitrixLocation
      */
     public function getCode(): string
     {
-        return $this->code;
+        return $this->code ?? '';
     }
 
     /**
@@ -82,7 +82,7 @@ class BitrixLocation
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
 
     /**
@@ -98,7 +98,7 @@ class BitrixLocation
      */
     public function getRegion(): string
     {
-        return $this->region;
+        return $this->region ?? '';
     }
 
     /**
