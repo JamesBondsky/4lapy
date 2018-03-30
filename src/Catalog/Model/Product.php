@@ -503,27 +503,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var TextContent
      */
     protected $specifications;
-    
+
     /**
      * @var array
      */
     protected $PROPERTY_COMPOSITION = [];
-    
+
     /**
      * @var TextContent
      */
     protected $composition;
-    
+
     /**
      * @var array
      */
     protected $PROPERTY_NORMS_OF_USE = [];
-    
+
     /**
      * @var TextContent
      */
     protected $normsOfUse;
-    
+
     /**
      * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Offer>")
@@ -568,14 +568,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var string
      */
     protected $PROPERTY_PACKING_COMBINATION = '';
-    
+
     /**
      * @var string
      * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
-    
+
     /**
      * @var bool
      * @Type("bool")
@@ -1676,12 +1676,15 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getSpecifications() : TextContent
     {
         if (!($this->specifications instanceof TextContent)) {
+            if (empty($this->PROPERTY_SPECIFICATIONS)) {
+                $this->PROPERTY_SPECIFICATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+            }
             $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
         }
 
         return $this->specifications;
     }
-    
+
     /**
      * Возвращает состав товара.
      *
@@ -1690,12 +1693,15 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getComposition() : TextContent
     {
         if (!($this->composition instanceof TextContent)) {
+            if (empty($this->PROPERTY_COMPOSITION)) {
+                $this->PROPERTY_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+            }
             $this->composition = new TextContent($this->PROPERTY_COMPOSITION);
         }
-        
+
         return $this->composition;
     }
-    
+
     /**
      * Возвращает нормы.
      *
@@ -1704,16 +1710,23 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getNormsOfUse() : TextContent
     {
         if (!($this->normsOfUse instanceof TextContent)) {
+            if (empty($this->PROPERTY_NORMS_OF_USE)) {
+                $this->PROPERTY_NORMS_OF_USE = ['TYPE' => 'text', 'TEXT' => ''];
+            }
             $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE);
         }
-        
+
         return $this->normsOfUse;
     }
-
+    
     /**
      * Возвращает информацию, на основе которой Elasticsearch будет строить механизм автодополнения
      *
      * @return string[]
+     *
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
     public function getSuggest()
     {
@@ -1771,14 +1784,15 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
      * @param bool $skipZeroPrice
+     * @param bool $reload
      * @return Collection
      * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      */
-    public function getOffers($skipZeroPrice = true): Collection
+    public function getOffers($skipZeroPrice = true, bool $reload = false): Collection
     {
-        if (null === $this->offers) {
+        if (null === $this->offers || $reload) {
             $offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
@@ -1787,7 +1801,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                         ->toArray()
                 )
             );
-    
+
             /**
              * @var Offer $offer
              */
@@ -1810,7 +1824,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $this->offers;
     }
-    
+
     /**
      * @param array|ArrayCollection $offers
      */
@@ -1937,7 +1951,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
         return $this;
     }
-    
+
     /**
      * @return string
      */

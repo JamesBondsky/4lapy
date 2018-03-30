@@ -9,6 +9,7 @@ imports:
   - { resource: configs/four_paws_mobile_api.yml }
   - { resource: configs/env.parameters.yml }
   - { resource: configs/jms_serializer.yml }
+  - { resource: configs/four_paws_bitrix_orm.yml }
 
 parameters:
   manzana.guzzle.curl:

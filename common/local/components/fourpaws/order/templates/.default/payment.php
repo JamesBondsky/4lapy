@@ -51,7 +51,6 @@ foreach ($payments as $i => $payment) {
 $basketPrice = $basket->getPrice();
 if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
     $basketPrice = $selectedDelivery->getStockResult()
-                                    ->filterByStore($arResult['SELECTED_SHOP'])
                                     ->getAvailable()
                                     ->getPrice();
 }

@@ -47,4 +47,9 @@ class Referral
      * @SerializedName("is_questionnaire_actual")
      */
     public $isQuestionnaireActual;
+
+    public function isModerated()
+    {
+        return $this->isQuestionnaireActual === 'Не указано';
+    }
 }

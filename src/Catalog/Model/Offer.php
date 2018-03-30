@@ -6,7 +6,6 @@
 
 namespace FourPaws\Catalog\Model;
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
@@ -20,7 +19,6 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
@@ -31,9 +29,9 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StockService;
@@ -1082,6 +1080,7 @@ class Offer extends IblockElement
         return $this->bonus;
     }
 
+    
     /**
      * @param int $percent
      * @param int $quantity
@@ -1332,7 +1331,7 @@ class Offer extends IblockElement
     public function isAvailable(): bool
     {
         /** @todo сделать обработку исключений */
-        return $this->isActive() && $this->getQuantity() > 0 && !$this->isByRequest();
+        return $this->isActive() && $this->getQuantity() > 0;
     }
 
     /**

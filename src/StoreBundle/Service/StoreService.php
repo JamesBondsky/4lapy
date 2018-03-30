@@ -13,6 +13,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\UserMessageException;
+use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -427,10 +429,8 @@ class StoreService implements LoggerAwareInterface
         if (!$storeCollection->isEmpty()) {
             [$servicesList, $metroList] = $this->getFullStoreInfo($storeCollection);
 
-            $stockResult = null;
             $storeAmount = 0;
             if ($this->pickupDelivery) {
-                $stockResult = $this->pickupDelivery->getStockResult();
                 $storeAmount = reset($this->offers)->getStocks()
                     ->filterByStores(
                         $this->getByCurrentLocation(
@@ -499,9 +499,14 @@ class StoreService implements LoggerAwareInterface
                     $item['active'] = true;
                 }
 
-                if ($stockResult) {
+                if ($this->pickupDelivery) {
+                    $tmpPickup = clone $this->pickupDelivery;
+                    $tmpPickup->setSelectedStore($store);
+                    if (!$tmpPickup->isSuccess()) {
+                        continue;
+                    }
                     /** @var StockResult $stockResultByStore */
-                    $stockResultByStore = $stockResult->filterByStore($store)->first();
+                    $stockResultByStore = $tmpPickup->getStockResult()->first();
                     $amount = $storeAmount + $stockResultByStore->getOffer()
                             ->getStocks()
                             ->filterByStore($store)
@@ -551,11 +556,7 @@ class StoreService implements LoggerAwareInterface
             return new StoreCollection();
         }
 
-        try {
-            return $pickupDelivery->getStockResult()->getStores();
-        } catch (DeliveryNotFoundException $e) {
-            return new StoreCollection();
-        }
+        return $pickupDelivery->getBestShops();
     }
 
     /**
@@ -608,8 +609,16 @@ class StoreService implements LoggerAwareInterface
         }
         $code = $request->get('code');
         if (!empty($code)) {
-            $result['UF_LOCATION'] = $code;
+            if (\is_array($code)) {
+                $dadataLocationAdapter = new DaDataLocationAdapter();
+                /** @var BitrixLocation $bitrixLocation */
+                $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
+                $result['UF_LOCATION'] = $bitrixLocation->getCode();
+            } else {
+                $result['UF_LOCATION'] = $code;
+            }
         }
+
         $search = $request->get('search');
         if (!empty($search)) {
             $result[] = [

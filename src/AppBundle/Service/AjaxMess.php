@@ -346,9 +346,25 @@ class AjaxMess
     /**
      * @return JsonResponse
      */
+    public function getWrongCardNumber(): JsonResponse
+    {
+        return $this->getJsonError('wrongCardNumber', 'Номер карты неверный');
+    }
+
+    /**
+     * @return JsonResponse
+     */
     public function getCardNotValidError(): JsonResponse
     {
         return $this->getJsonError('cardNotValid', 'Карта не валидна');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getCardNotFoundError(): JsonResponse
+    {
+        return $this->getJsonError('cardNotFound', 'Карта не найдена');
     }
 
     /**
@@ -376,7 +392,7 @@ class AjaxMess
      */
     public function getFileTypeError(array $valid_types): JsonResponse
     {
-        return $this->getJsonError('filetTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
+        return $this->getJsonError('fileTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
     }
 
     /**

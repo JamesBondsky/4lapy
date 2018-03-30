@@ -8,11 +8,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var int $nextStep
  * @var array $sections
  * @var string $nextUrl
+ * @var string $val
+ * @var bool $required
  */
 if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
-<div class="b-quest b-quest--step-<?= $nextStep ?> js-quest js-quest--step-<?= $nextStep ?>" style="display: block">
+<div class="b-quest js-quest <?=$required ? ' js-block-required' : ''?>" style="display: block">
     <h4 class="b-quest__subtitle">Размер</h4>
     <?php /** @var IblockSect $item */
     foreach ($sections as $key => $item) {
@@ -24,7 +26,9 @@ if (!\is_array($sections) || empty($sections)) {
                    data-radio="<?= ++$_SESSION['RADIO_NUMBER'] ?>"
                    type="radio"
                    value="<?= $item->getId() ?>"
-                   data-url="<?=$nextUrl?>">
+                   data-url="<?=$nextUrl?>"
+                <?=$required ? ' required="required"' : ''?>
+                <?=$val === $item->getId() ? ' checked="checked"' : ''?>>
             <label class="b-radio__label b-radio__label--q-food" for="id-quest-size-<?= $key ?>">
                 <span class="b-radio__text-label"><?= $item->getName() ?></span>
             </label>

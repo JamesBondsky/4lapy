@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\Service;
 
 use FourPaws\Catalog\Model\Sorting;
@@ -43,16 +47,20 @@ class SortService
                 ->withName('возрастанию цены')
                 ->withRule(
                     [
-                        'offers.price' => ['order' => 'asc', 'mode' => 'min'],
-//                        'offers.prices.PRICE' => [
-//                            'order'         => 'asc',
-//                            'mode'          => 'min',
-//                            'nested_path'   => 'offers.prices',
-//                            'nested_filter' => [
-//                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
-//                            ],
-//
-//                        ],
+                        'offers.price' => [
+                            'order'       => 'asc',
+                            'mode'        => 'min',
+                            'nested_path' => 'offers',
+                        ],
+                        //                        'offers.prices.PRICE' => [
+                        //                            'order'         => 'asc',
+                        //                            'mode'          => 'min',
+                        //                            'nested_path'   => 'offers.prices',
+                        //                            'nested_filter' => [
+                        //                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
+                        //                            ],
+                        //
+                        //                        ],
                     ]
                 ),
 
@@ -60,16 +68,20 @@ class SortService
                 ->withName('убыванию цены')
                 ->withRule(
                     [
-                        'offers.price' => ['order' => 'desc', 'mode' => 'max'],
-//                        'offers.prices.PRICE' => [
-//                            'order'         => 'desc',
-//                            'mode'          => 'max',
-//                            'nested_path'   => 'offers.prices',
-//                            'nested_filter' => [
-//                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
-//                            ],
-//
-//                        ],
+                        'offers.price' => [
+                            'order'       => 'desc',
+                            'mode'        => 'max',
+                            'nested_path' => 'offers',
+                        ],
+                        //                        'offers.prices.PRICE' => [
+                        //                            'order'         => 'desc',
+                        //                            'mode'          => 'max',
+                        //                            'nested_path'   => 'offers.prices',
+                        //                            'nested_filter' => [
+                        //                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
+                        //                            ],
+                        //
+                        //                        ],
                     ]
                 ),
         ];

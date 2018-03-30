@@ -118,7 +118,7 @@ class ProductService
 
         return $this->productRepository->findBy([
             'PROPERTY_PACKING_COMBINATION' => $combination,
-        ], [], 1)->first();
+        ], [], 1)->first() ?: null;
     }
 
     /**

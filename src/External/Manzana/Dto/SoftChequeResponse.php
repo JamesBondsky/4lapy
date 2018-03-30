@@ -2,6 +2,8 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
+use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -22,9 +24,9 @@ class SoftChequeResponse
      * @Serializer\Type("manzana_date_time_short")
      * @Serializer\SerializedName("Proccessed")
      *
-     * @var \DateTimeImmutable
+     * @var DateTimeImmutable
      */
-    protected $proccessed;
+    protected $processed;
 
     /**
      * Код возврата
@@ -160,6 +162,15 @@ class SoftChequeResponse
     protected $availablePayment = 0;
 
     /**
+     * @Serializer\XmlList(inline=false, entry="Coupon")
+     * @Serializer\SerializedName("Coupons")
+     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\Coupon>")
+     *
+     * @var Collection|Coupon[]
+     */
+    protected $coupons;
+
+    /**
      * @Serializer\XmlList(inline=true)
      * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
      * @Serializer\SerializedName("Item")
@@ -177,11 +188,11 @@ class SoftChequeResponse
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return DateTimeImmutable
      */
-    public function getProccessed(): \DateTimeImmutable
+    public function getProcessed(): DateTimeImmutable
     {
-        return $this->proccessed;
+        return $this->processed;
     }
 
     /**
@@ -288,5 +299,60 @@ class SoftChequeResponse
     {
         $this->availablePayment = $availablePayment;
         return $this;
+    }
+
+    /**
+     * @return Collection|ChequePosition[]
+     */
+    public function getItems(): Collection
+    {
+        return $this->items;
+    }
+
+    /**
+     * @param $items
+     *
+     * @return $this
+     */
+    public function setItems($items): SoftChequeResponse
+    {
+        $this->items = $items;
+
+        return $this;
+    }
+
+    /**
+     * @param string $coupon
+     */
+    public function addCoupon(string $coupon): void
+    {
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        $coupon = (new Coupon())->setNumber($coupon);
+
+        if (!$this->coupons) {
+            $this->coupons = new ArrayCollection();
+        }
+
+        $this->coupons->add($coupon);
+    }
+
+    /**
+     * @param ArrayCollection $coupons
+     *
+     * @return $this
+     */
+    public function setCoupons(ArrayCollection $coupons)
+    {
+        $this->coupons = $coupons;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Coupon[]|null
+     */
+    public function getCoupons() : ?Collection
+    {
+        return $this->coupons;
     }
 }
