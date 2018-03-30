@@ -36,19 +36,19 @@ class CityController extends Controller
      */
     public function setAction(Request $request): JsonResponse
     {
-        $dadata = $request->get('code');
-        $dadataLocationAdapter = new DaDataLocationAdapter();
-        /** @var BitrixLocation $bitrixLocation */
-        $bitrixLocation = $dadataLocationAdapter->convertFromArray($dadata);
+        $code = $request->get('code');
+        if(\is_array($code)){
+            $dadataLocationAdapter = new DaDataLocationAdapter();
+            /** @var BitrixLocation $bitrixLocation */
+            $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
 
-        if (empty($dadata)) {
-            $code = $request->request->get('code') ?? '';
-            $name = $request->request->get('name') ?? '';
-            $regionName = $request->request->get('region_name') ?? '';
-        } else {
             $code = $bitrixLocation->getCode();
             $name = $bitrixLocation->getName();
             $regionName = $bitrixLocation->getRegion();
+        } else {
+            $code = $request->request->get('code') ?? '';
+            $name = $request->request->get('name') ?? '';
+            $regionName = $request->request->get('region_name') ?? '';
         }
 
         try {
