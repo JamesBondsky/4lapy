@@ -315,7 +315,6 @@ if(!$hasOffer){
                 </div>
             </div>
         </div>
-    </div>
 <?php
 
 /**

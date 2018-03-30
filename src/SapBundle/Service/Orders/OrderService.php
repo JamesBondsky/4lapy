@@ -19,6 +19,7 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
@@ -52,6 +53,7 @@ use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
 use FourPaws\SapBundle\Exception\NotFoundOrderStatusException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
 use FourPaws\SapBundle\Exception\NotFoundProductException;
+use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\SapBundle\Source\SourceMessage;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -70,7 +72,7 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class OrderService implements LoggerAwareInterface, SapOutInterface
 {
-    use LazyLoggerAwareTrait;
+    use LazyLoggerAwareTrait, SapOutFile;
 
     /**
      * @var BaseOrderService
@@ -80,10 +82,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @var SerializerInterface
      */
     private $serializer;
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
     /**
      * @var string
      */
@@ -141,12 +139,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     ) {
         $this->baseOrderService = $baseOrderService;
         $this->serializer = $serializer;
-        $this->filesystem = $filesystem;
         $this->userRepository = $userRepository;
         $this->deliveryService = $deliveryService;
         $this->locationService = $locationService;
         $this->intervalService = $intervalService;
         $this->statusService = $statusService;
+
+        $this->setFilesystem($filesystem);
     }
 
     /**
@@ -299,20 +298,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->outPrefix,
             $order->getId()
         );
-    }
-
-    /**
-     * @param string $outPath
-     *
-     * @throws IOException
-     */
-    public function setOutPath(string $outPath): void
-    {
-        if (!$this->filesystem->exists($outPath)) {
-            $this->filesystem->mkdir($outPath, '0775');
-        }
-
-        $this->outPath = $outPath;
     }
 
     /**
@@ -490,8 +475,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setStreetName($this->getPropertyValueByCode($order, 'STREET'))
             ->setStreetPrefix('')
             ->setHouse($this->getPropertyValueByCode($order, 'HOUSE'))
-            ->setHousing('')
-            ->setBuilding($this->getPropertyValueByCode($order, 'BUILDING'))
+            ->setHousing($this->getPropertyValueByCode($order, 'BUILDING'))
+            ->setBuilding('')
             ->setOwnerShip('')
             ->setFloor($this->getPropertyValueByCode($order, 'FLOOR'))
             ->setRoomNumber($this->getPropertyValueByCode($order, 'APARTMENT'))
@@ -745,11 +730,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Basket       $basket
+     * @param Basket $basket
      * @param OrderOfferIn $externalItem
      *
      * @throws NotFoundProductException
      * @throws RuntimeException
+     * @throws SystemException
      */
     private function addBasketItem(Basket $basket, OrderOfferIn $externalItem): void
     {
@@ -856,13 +842,5 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         return $status;
-    }
-
-    /**
-     * @param string $outPrefix
-     */
-    public function setOutPrefix(string $outPrefix): void
-    {
-        $this->outPrefix = $outPrefix;
     }
 }
