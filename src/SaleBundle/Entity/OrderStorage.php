@@ -253,6 +253,14 @@ class OrderStorage
     protected $secondDeliveryInterval = 0;
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("USER_DESCRIPTION2")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $secondComment;
+
+    /**
      * Код места доставки (или код терминала DPD)
      *
      * @var string
@@ -784,6 +792,24 @@ class OrderStorage
     public function setSecondDeliveryInterval(int $secondDeliveryInterval): OrderStorage
     {
         $this->secondDeliveryInterval = $secondDeliveryInterval;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSecondComment(): string
+    {
+        return $this->secondComment;
+    }
+
+    /**
+     * @param string $secondComment
+     * @return OrderStorage
+     */
+    public function setSecondComment(string $secondComment): OrderStorage
+    {
+        $this->secondComment = $secondComment;
         return $this;
     }
 

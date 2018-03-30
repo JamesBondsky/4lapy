@@ -838,9 +838,8 @@ class OrderService implements LoggerAwareInterface
              */
             if (!$storage->isPartialGet()) {
                 /**
-                 * чтобы предотвратить повторную регистрацию пользователя и создание адреса
+                 * чтобы предотвратить повторное создание адреса
                  */
-                $storage2->setUserId($storage1->getUserId());
                 $storage2->setAddressId($storage1->getAddressId());
 
                 $this->saveOrder($order2, $storage2);
