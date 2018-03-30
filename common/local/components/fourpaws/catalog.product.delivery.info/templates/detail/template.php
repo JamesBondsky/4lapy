@@ -20,9 +20,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CDatabase $DB
  */
 
-$this->setFrameMode(true);
+/** @var \FourPaws\Catalog\Model\Offer $currentOffer */
+$currentOffer = $arParams['OFFER'];
 
-$frame = $this->createFrame()->begin();
+?>
+<li class="b-product-information__item">
+    <div class="b-product-information__title-info">Наличие</div>
+    <?php if ($currentOffer->isByRequest()) { ?>
+        <div class="b-product-information__value">Только под заказ</div>
+    <?php } elseif ($currentOffer->getStocks()->isEmpty()) { ?>
+        <div class="b-product-information__value">Нет в наличии</div>
+    <?php } else { ?>
+        <div class="b-product-information__value">В наличии</div>
+    <?php } ?>
+</li>
+<?php
 if ($arResult['CURRENT']['PICKUP']) {
     $pickup = $arResult['CURRENT']['PICKUP'];
     include __DIR__ . '/include/pickup-info.php';
@@ -31,13 +43,4 @@ if ($arResult['CURRENT']['DELIVERY']) {
     $delivery = $arResult['CURRENT']['DELIVERY'];
     include __DIR__ . '/include/delivery-info.php';
 }
-$frame->beginStub();
-if ($arResult['DEFAULT']['PICKUP']) {
-    $pickup = $arResult['DEFAULT']['PICKUP'];
-    include __DIR__ . '/include/pickup-info.php';
-}
-if ($arResult['DEFAULT']['DELIVERY']) {
-    $delivery = $arResult['DEFAULT']['DELIVERY'];
-    include __DIR__ . '/include/delivery-info.php';
-}
-$frame->end();
+?>
