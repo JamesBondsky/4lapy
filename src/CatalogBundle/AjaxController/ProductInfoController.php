@@ -107,7 +107,7 @@ class ProductInfoController extends Controller
             if ($currentOffer) {
                 $response['deliveryHtml'] = $this->renderer->render(
                     'FourPawsCatalogBundle:Catalog:ajax.productDetail.info.html.php',
-                    ['offer' => $offer]
+                    ['offer' => $currentOffer]
                 );
             }
         }
