@@ -387,7 +387,11 @@ class OrderService implements LoggerAwareInterface
                     $sum -= $storage->getBonus();
                 }
             } catch (\Exception $e) {
-
+                $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()), [
+                    'userId' => $storage->getUserId(),
+                    'fuserId' => $storage->getFuserId(),
+                ]);
+                throw new OrderCreateException('Bonus payment failed');
             }
 
             try {
@@ -398,7 +402,11 @@ class OrderService implements LoggerAwareInterface
                 $paySystem = $extPayment->getPaySystem();
                 $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
             } catch (\Exception $e) {
-
+                $this->log()->error(sprintf('order payment failed: %s', $e->getMessage()), [
+                    'userId' => $storage->getUserId(),
+                    'fuserId' => $storage->getFuserId(),
+                ]);
+                throw new OrderCreateException('Order payment failed');
             }
         }
 
@@ -587,6 +595,8 @@ class OrderService implements LoggerAwareInterface
                     'LOGIN' => $storage->getPhone(),
                     'PASSWORD' => $password,
                 ];
+
+                $storage->setUserId($user->getId());
             }
         }
 
@@ -625,6 +635,7 @@ class OrderService implements LoggerAwareInterface
 
             try {
                 $this->addressService->add($address);
+                $storage->setAddressId($address->getId());
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
                     'city' => $address->getCity(),
@@ -814,19 +825,25 @@ class OrderService implements LoggerAwareInterface
          * Разделение заказов
          */
         if ($storage->isSplit()) {
-            $splitResults = $this->splitOrder($storage);
-            $splitResult1 = array_shift($splitResults);
-            $splitResult2 = array_shift($splitResults);
+            [$splitResult1, $splitResult2] = $this->splitOrder($storage);
 
             $order = $splitResult1->getOrder();
+            $storage1 = $splitResult1->getOrderStorage();
             $order2 = $splitResult2->getOrder();
+            $storage2 = $splitResult2->getOrderStorage();
 
-            $this->saveOrder($order, $splitResult1->getOrderStorage());
+            $this->saveOrder($order, $storage1);
             /**
              * Если выбрано частичное получение, то второй заказ не создается
              */
             if (!$storage->isPartialGet()) {
-                $this->saveOrder($order2, $splitResult2->getOrderStorage());
+                /**
+                 * чтобы предотвратить повторную регистрацию пользователя и создание адреса
+                 */
+                $storage2->setUserId($storage1->getUserId());
+                $storage2->setAddressId($storage1->getAddressId());
+
+                $this->saveOrder($order2, $storage2);
                 $this->setOrderPropertyByCode($order2, 'RELATED_ORDER_ID', $order->getId());
                 try {
                     $order2->save();
