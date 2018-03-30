@@ -7,7 +7,6 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -45,6 +44,11 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
+/**
+ * Class OrderService
+ *
+ * @package FourPaws\SaleBundle\Service
+ */
 class OrderService
 {
     public const PAYMENT_CASH = 'cash';
@@ -153,7 +157,8 @@ class OrderService
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider
-    ) {
+    )
+    {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -808,7 +813,7 @@ class OrderService
                     if (isset($properties['APARTMENT'])) {
                         $address[] = 'кв. ' . $properties['APARTMENT'];
                     }
-                    $address = implode(', ', $address);
+                    $address = \implode(', ', $address);
                 }
                 break;
         }

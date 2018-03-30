@@ -5,17 +5,41 @@ namespace FourPaws\SaleBundle\Payment;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
-use RBS;
+use FourPaws\SaleBundle\Exception\PaymentException;
+
+/**
+ * @todo remove this shit
+ */
+include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
 
 /**
  * Class Sberbank
  *
  * RBS (Sberbank ecom extension)
  *
+ * @see RBS
  * @package FourPaws\SaleBundle\Payment
  */
-class Sberbank extends RBS
+class Sberbank
 {
+    /**
+     * АДРЕС ТЕСТОВОГО ШЛЮЗА
+     *
+     * @var string
+     */
+    const test_url = \TEST_URL;
+
+    /**
+     * АДРЕС БОЕВОГО ШЛЮЗА
+     *
+     * @var string
+     */
+    const prod_url = \PROD_URL;
+
+    private const SUCCESS_CODE = 0;
+
+    private const ERROR_CODES = [1, 2, 3, 4, 5, 7, 8, 999];
+
     /**
      * ЛОГИН МЕРЧАНТА
      *
@@ -71,8 +95,6 @@ class Sberbank extends RBS
     public function __construct($user_name, $password, $two_stage, $test_mode, $logging)
     {
         [$this->user_name, $this->password, $this->two_stage, $this->test_mode, $this->logging] = \func_get_args();
-
-        parent::__construct($user_name, $password, $two_stage, $test_mode, $logging);
     }
 
     /**
@@ -98,6 +120,7 @@ class Sberbank extends RBS
         if (\SITE_CHARSET !== 'UTF-8') {
             global $APPLICATION;
             $dataEncoded = $APPLICATION->ConvertCharset($dataEncoded, 'windows-1251', 'UTF-8');
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
             $data = $APPLICATION->ConvertCharsetArray($data, 'windows-1251', 'UTF-8');
         }
 
@@ -148,7 +171,7 @@ class Sberbank extends RBS
 
         return $response;
     }
-    
+
     /**
      * ЛОГГЕР
      *
@@ -174,7 +197,7 @@ class Sberbank extends RBS
      */
     public function reversePayment(string $orderId): array
     {
-        $data = ['orderId' => $orderId];
+        $data = \compact('orderId');
 
         return $this->gatewayQuery('reverse.do', $data);
     }
@@ -197,15 +220,47 @@ class Sberbank extends RBS
     /**
      * @param string $orderId
      * @param int $amount
+     * @param array $fiscal
      *
-     * @return array|mixed[]
+     * @return array
      *
      * @throws ArgumentException
      */
-    public function depositPayment(string $orderId, int $amount): array
+    public function depositPayment(string $orderId, int $amount, array $fiscal = []): array
     {
-        $data = \compact('orderId', 'amount');
+        $data = \array_merge(\compact('orderId', 'amount'), $fiscal);
 
         return $this->gatewayQuery('deposit.do', $data);
+    }
+
+    /**
+     * @param $response
+     *
+     * @return bool
+     *
+     * @throws PaymentException
+     */
+    public function parseResponse($response): bool
+    {
+        if (!\is_array($response) || !\in_array((int)$response['errorCode'], self::ERROR_CODES, true)) {
+            /** @noinspection ForgottenDebugOutputInspection */
+            throw new PaymentException(
+                \sprintf(
+                    'Unknown payment exception from response %s',
+                    \var_export($response)
+                )
+            );
+        }
+
+        if ((int)$response['errorCode'] !== self::SUCCESS_CODE) {
+            throw new PaymentException(
+                \sprintf(
+                    'Deposit payment error: %s',
+                    $response['errorMessage']
+                )
+            );
+        }
+
+        return true;
     }
 }

@@ -14,11 +14,14 @@ use Bitrix\Main\Application as BitrixApp;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderPaymentComponent extends \CBitrixComponent
@@ -29,6 +32,13 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
 
+    /**
+     * {@inheritdoc}
+     *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     */
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -37,7 +47,10 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
         parent::__construct($component);
     }
 
-    public function onPrepareComponentParams($params)
+    /**
+     * {@inheritdoc}
+     */
+    public function onPrepareComponentParams($params): array
     {
         $params['ORDER_ID'] = (int)$params['ORDER_ID'];
         $params['HASH'] = $params['HASH'] ?? '';
