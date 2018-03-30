@@ -46,14 +46,14 @@ if ($storage->getUserId()) {
 function showDeliveryDateSelector(CalculationResultInterface $delivery, OrderStorage $storage, string $name)
 {
     $result = '
-    <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-pickup-date" name="' . $name . '">
+    <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date" name="' . $name . '">
         <option value="" disabled="disabled" selected="selected">выберите</option>';
     $start = $delivery->getPeriodFrom();
     $end = $delivery->getPeriodTo();
     for ($i = 0; $i < ($end - $start); $i++) {
         $date = (new DateTime())->modify('+' . ($start + $i) . ' days');
         $dateString = FormatDate('l, d.m.Y', $date->getTimestamp());
-        $result .= '<option value="<?= $i ?>" ' . (($storage->getDeliveryDate() === $i) ? 'selected="selected"' : '') . '>
+        $result .= '<option value="' . $i . '" ' . (($storage->getDeliveryDate() === $i) ? 'selected="selected"' : '') . '>
         ' . $dateString . '</option>';
     }
     $result .= '</select>';
@@ -292,9 +292,10 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     $delivery2 = $arResult['SPLIT_RESULT']['2']['DELIVERY'];
     $storage2 = $arResult['SPLIT_RESULT']['2']['STORAGE'];
     ?>
-    <div class="delivery-block__type js-hidden-valid-fields" data-delivery="750" data-full="<?= $basket->getPrice() ?>"
+    <div class="delivery-block__type js-hidden-valid-fields" data-delivery="<?= $delivery1->getPrice() ?>"
+         data-full="<?= $basket->getPrice() ?>"
          data-type="twoDeliveries">
-        <div class="b-input-line b-input-line--desired-date">
+        <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
             <div class="b-input-line__label-wrapper"><span
                         class="b-input-line__label">Желаемая дата доставки первого заказа</span>
             </div>
@@ -317,7 +318,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--desired-date">
+        <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
             <div class="b-input-line__label-wrapper"><span
                         class="b-input-line__label">Желаемая дата доставки второго заказа</span>
             </div>
