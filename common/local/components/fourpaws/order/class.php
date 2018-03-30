@@ -9,6 +9,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Sale\Order;
+use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -18,6 +25,7 @@ use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -25,6 +33,7 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -143,12 +152,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /**
      * @throws Exception
      * @throws OrderCreateException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
      * @throws ApplicationCreateException
      */
     protected function prepareResult(): void
@@ -257,21 +266,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             try {
                 if (null !== $delivery) {
-                    $tmpStorage = clone $storage;
-                    $tmpStorage->setDeliveryId($delivery->getDeliveryId());
-                    [$splitResult1, $splitResult2] = $this->orderService->splitOrder($tmpStorage);
-                    $this->arResult['SPLIT_RESULT'] = [
-                        '1' => [
-                            'ORDER' => $splitResult1->getOrder(),
-                            'STORAGE' => $splitResult1->getOrderStorage(),
-                            'DELIVERY' => (clone $delivery)->setStockResult($splitResult1->getStockResult())
-                        ],
-                        '2' => [
-                            'ORDER' => $splitResult2->getOrder(),
-                            'STORAGE' => $splitResult2->getOrderStorage(),
-                            'DELIVERY' => (clone $delivery)->setStockResult($splitResult2->getStockResult())
-                        ]
-                    ];
+                    $this->splitOrder($delivery, $storage);
                 }
             } catch (OrderSplitException $e) {
                 // проверяется на этапе валидации $storage
@@ -295,19 +290,38 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
                 $selectedDelivery = $delivery;
             }
+
+            try {
+                if ($storage->isSplit()) {
+                    $this->splitOrder($selectedDelivery, $storage);
+                }
+            } catch (OrderSplitException $e) {
+                $this->logger->error(sprintf('failed to split order: %s', $e->getMessage()));
+            }
+
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
 
             $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
                 try {
+                    $basketForRequest = $basket;
+                    if ($storage->isPartialGet()) {
+                        /** @var Order $order1 */
+                        $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
+                        $basketForRequest = $order1->getBasket();
+                    }
+
                     $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
-                        $basket,
+                        $basketForRequest,
                         $user->getDiscountCardNumber()
                     );
-                    $chequeRequest->setPaidByBonus($basket->getPrice());
+                    $chequeRequest->setPaidByBonus($basketForRequest->getPrice());
 
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getAvailablePayment());
+                    $this->arResult['MAX_BONUS_SUM'] = min(
+                        floor($cheque->getAvailablePayment()),
+                        $basketForRequest->getPrice() * OrderService::MAX_BONUS_PAYMENT
+                    );
                 } catch (ExecuteException $e) {
                     /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
                     $this->logger->error($e->getMessage());
@@ -362,5 +376,40 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 ? $partialPickup
                 : $partialPickup->setStockResult($pickup->getStockResult()->getAvailable());
         }
+    }
+
+    /**
+     * @param CalculationResultInterface $delivery
+     * @param OrderStorage $storage
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws OrderCreateException
+     * @throws OrderSplitException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws UserMessageException
+     * @throws DeliveryNotAvailableException
+     * @throws StoreNotFoundException
+     */
+    protected function splitOrder(CalculationResultInterface $delivery, OrderStorage $storage)
+    {
+        $tmpStorage = clone $storage;
+        $tmpStorage->setDeliveryId($delivery->getDeliveryId());
+        [$splitResult1, $splitResult2] = $this->orderService->splitOrder($tmpStorage);
+        $this->arResult['SPLIT_RESULT'] = [
+            '1' => [
+                'ORDER' => $splitResult1->getOrder(),
+                'STORAGE' => $splitResult1->getOrderStorage(),
+                'DELIVERY' => (clone $delivery)->setStockResult($splitResult1->getStockResult())
+            ],
+            '2' => [
+                'ORDER' => $splitResult2->getOrder(),
+                'STORAGE' => $splitResult2->getOrderStorage(),
+                'DELIVERY' => (clone $delivery)->setStockResult($splitResult2->getStockResult())
+            ]
+        ];
     }
 }

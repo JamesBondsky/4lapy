@@ -327,7 +327,7 @@ class OrderStorage
      * @Serializer\SerializedName("PARTIAL_GET")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $partialGet = true;
+    protected $partialGet = false;
 
     /**
      * Сумма оплаты бонусами

@@ -55,6 +55,9 @@ $declension = new Declension('товар', 'товара', 'товаров');
         <div class="b-order">
             <form action="<?= $arResult['ORDER_PAY_URL'] ?>" method="get">
                 <input type="hidden" name="ORDER_ID" value="<?= $order->getId() ?>">
+                <?php if ($arParams['HASH']) { ?>
+                    <input type="hidden" name="HASH" value="<?= $order->getHash() ?>">
+                <?php } ?>
                 <input type="hidden" name="PAY" value="Y">
                 <div class="b-order__ord-wrapper">
                     <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $order->getId() ?>
@@ -79,6 +82,9 @@ $declension = new Declension('товар', 'товара', 'товаров');
                 <hr class="b-hr b-hr--gotopay">
                 <form action="<?= $arResult['RELATED_ORDER_PAY_URL'] ?>" method="get">
                     <input type="hidden" name="ORDER_ID" value="<?= $relatedOrder->getId() ?>">
+                    <?php if ($arParams['HASH']) { ?>
+                        <input type="hidden" name="HASH" value="<?= $relatedOrder->getHash() ?>">
+                    <?php } ?>
                     <input type="hidden" name="PAY" value="Y">
                     <div class="b-order__ord-wrapper">
                         <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $relatedOrder->getId() ?>

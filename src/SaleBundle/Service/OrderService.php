@@ -770,6 +770,16 @@ class OrderService implements LoggerAwareInterface
             throw new OrderSplitException($e->getMessage());
         }
 
+        $maxBonusesForOrder1 = floor(
+            min($storage1->getBonus(), $basket1->getPrice() * static::MAX_BONUS_PAYMENT)
+        );
+        if ($storage1->getBonus() > $maxBonusesForOrder1) {
+            $storage1->setBonus($maxBonusesForOrder1);
+            $storage2->setBonus(floor($storage1->getBonus() - $maxBonusesForOrder1));
+        } else {
+            $storage2->setBonus(0);
+        }
+
         $order1 = $this->initOrder($storage1, $basket1);
         $order2 = $this->initOrder($storage2, $basket2);
 
