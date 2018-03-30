@@ -82,7 +82,9 @@ class StockResultCollection extends ArrayCollection
                 return $stockResult->getStores()->exists(
                     function (
                         /** @noinspection PhpUnusedParameterInspection */
-                        $i, Store $stockResultStore) use ($store) {
+                        $i,
+                        Store $stockResultStore
+                    ) use ($store) {
                         return $stockResultStore->getXmlId() === $store->getXmlId();
                     }
                 );
@@ -100,6 +102,19 @@ class StockResultCollection extends ArrayCollection
         return $this->filter(
             function (StockResult $stockResult) use ($offer) {
                 return $stockResult->getOffer()->getId() === $offer->getId();
+            }
+        );
+    }
+
+    /**
+     * @param int $id
+     * @return StockResultCollection
+     */
+    public function filterByOfferId(int $id): StockResultCollection
+    {
+        return $this->filter(
+            function (StockResult $stockResult) use ($id) {
+                return $stockResult->getOffer()->getId() === $id;
             }
         );
     }

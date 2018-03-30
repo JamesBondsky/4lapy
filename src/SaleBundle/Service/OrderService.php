@@ -699,39 +699,22 @@ class OrderService implements LoggerAwareInterface
      *
      * @param OrderStorage $storage
      *
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
      * @throws OrderCreateException
      * @throws OrderSplitException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @throws ApplicationCreateException
      * @return OrderSplitResult[]
      */
     public function splitOrder(OrderStorage $storage): array
     {
-        $updateBasket = function (Basket $basket, StockResultCollection $stockResultCollection) {
-            /** @var BasketItem $basketItem */
-            foreach ($basket as $i => $basketItem) {
-                $found = false;
-                /** @var StockResult $stockResultElement */
-                foreach ($stockResultCollection as $stockResultElement) {
-                    if ($stockResultElement->getOffer()->getId() === $basketItem->getProductId()) {
-                        $found = true;
-                        $basketItem->setField('QUANTITY', $stockResultElement->getAmount());
-                        break;
-                    }
-                }
-
-                if (!$found) {
-                    $basket->deleteItem($i);
-                }
-            }
-        };
-
         if (!$this->canSplitOrder($storage)) {
             throw new OrderSplitException('Cannot split order');
         }
@@ -743,13 +726,36 @@ class OrderService implements LoggerAwareInterface
 
         $basket = $this->basketService->getBasket();
         $delivery = $this->orderStorageService->getSelectedDelivery($storage);
+        /** @noinspection PhpUnusedLocalVariableInspection */
         [$available, $delayed] = $this->splitStockResult($storage, $delivery->getStockResult());
 
-        $basket1 = clone $basket;
-        $updateBasket($basket1, $available);
+        try {
+            /** @var Basket $basket1 */
+            $basket1 = Basket::create(SITE_ID);
+            $basket2 = Basket::create(SITE_ID);
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $amount = $delayed->filterByOfferId($basketItem->getProductId())->getAmount();
+                $quantity1 = 0;
+                $quantity2 = 0;
+                if (!$amount) {
+                    $basketItem->delete();
+                    $quantity1 = $amount;
+                } elseif ($amount !== (int)$basketItem->getQuantity()) {
+                    $quantity1 = $basketItem->getQuantity() - $amount;
+                    $quantity2 = $amount;
+                }
 
-        $basket2 = clone $basket;
-        $updateBasket($basket2, $delayed);
+                if ($quantity1) {
+                    $this->basketService->addOfferToBasket($basketItem->getProductId(), $quantity1, [], false);
+                }
+                if ($quantity2) {
+                    $this->basketService->addOfferToBasket($basketItem->getProductId(), $quantity1, [], false);
+                }
+            }
+        } catch (\Exception $e) {
+            throw new OrderSplitException($e->getMessage());
+        }
 
         $order1 = $this->initOrder($storage1, $basket1);
         $order2 = $this->initOrder($storage2, $basket2);

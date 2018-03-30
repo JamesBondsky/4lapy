@@ -75,6 +75,7 @@ class BasketService
      * @param int|null $quantity
      * @param array $rewriteFields
      * @param bool $save
+     * @param Basket|null $basket
      *
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
@@ -86,7 +87,8 @@ class BasketService
         int $offerId,
         int $quantity = null,
         array $rewriteFields = [],
-        bool $save = true
+        bool $save = true,
+        ?Basket $basket = null
     ): BasketItem
     {
         if ($quantity < 0) {
@@ -110,7 +112,7 @@ class BasketService
         }
 
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
-            $this->getBasket(),
+            $basket instanceof Basket ? $basket : $this->getBasket(),
             $fields,
             $this->getContext()
         );
