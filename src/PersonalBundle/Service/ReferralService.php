@@ -514,6 +514,8 @@ class ReferralService
                                 [
                                     'ID'           => $referral->getId(),
                                     'UF_MODERATED' => $referral->isModerate() ? 'Y' : 'N',
+                                    'UF_CARD'      => $referral->getCard(),
+                                    'UF_USER_ID'   => $referral->getUserId(),
                                 ]
                             );
                         }
