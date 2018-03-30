@@ -7,7 +7,6 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -32,7 +31,6 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\FastOrderNotDeliveryException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -143,6 +141,9 @@ class OrderService
      * @var StoreService
      */
     protected $storeService;
+
+    /** @var  array $paySystemServiceCache */
+    private $paySystemServiceCache = [];
 
     /**
      * OrderService constructor.
@@ -886,5 +887,29 @@ class OrderService
         }
 
         return $result;
+    }
+
+    /**
+     * @return null|\Bitrix\Sale\PaySystem\Service
+     */
+    public function getCashPaySystemService()
+    {
+        $paySystemService = null;
+        if (!isset($this->paySystemServiceCache['cash'])) {
+            $this->paySystemServiceCache['cash'] = null;
+            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH);
+            if ($data) {
+                $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
+                    $data
+                );
+            }
+        }
+
+        if ($this->paySystemServiceCache['cash']) {
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystemService */
+            $paySystemService = clone $this->paySystemServiceCache['cash'];
+        }
+
+        return $paySystemService;
     }
 }

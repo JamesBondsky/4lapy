@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -31,6 +32,7 @@ use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Helper\OrderCopy;
 use FourPaws\SaleBundle\Service\NotificationService;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -43,12 +45,16 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class OrderSubscribeService
 {
+    use LazyLoggerAwareTrait;
+
     /** @var OrderSubscribeRepository $orderSubscribeRepository */
     private $orderSubscribeRepository;
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
     /** @var OrderService $personalOrderService */
     private $personalOrderService;
+    /** @var \FourPaws\SaleBundle\Service\OrderService $saleOrderService */
+    private $saleOrderService;
     /** @var DeliveryService $deliveryService */
     private $deliveryService;
     /** @var UserFieldEnumService $userFieldEnumService */
@@ -65,9 +71,18 @@ class OrderSubscribeService
     ];
     /** @var array Исключаемые свойства заказа */
     private $orderExcludeProps = [
-        'IS_EXPORTED', 'DELIVERY_DATE', 'DELIVERY_INTERVAL',
-        /** @todo: Уточнить насчет этих свойств */
+        // заказ выгружен в SAP, всегда N
+        'IS_EXPORTED',
+        // из приложения
         'FROM_APP',
+        // ???
+        //'SHIPMENT_PLACE_CODE',
+        // сообщения по заказу отправлены
+        'COMPLETE_MESSAGE_SENT',
+        'BONUS_COUNT',
+        // эти свойства задаются при копировании заказа
+        'DELIVERY_DATE', 'DELIVERY_INTERVAL', 'COM_WAY',
+        'IS_SUBSCRIBE', 'COPY_ORDER_ID',
     ];
 
     /**
@@ -88,7 +103,7 @@ class OrderSubscribeService
      * @return OrderService
      * @throws ApplicationCreateException
      */
-    public function getOrderService(): OrderService
+    public function getPersonalOrderService(): OrderService
     {
         if (!isset($this->orderService)) {
             $this->personalOrderService = Application::getInstance()->getContainer()->get(
@@ -97,6 +112,21 @@ class OrderSubscribeService
         }
 
         return $this->personalOrderService;
+    }
+
+    /**
+     * @return \FourPaws\SaleBundle\Service\OrderService
+     * @throws ApplicationCreateException
+     */
+    public function getOrderService(): \FourPaws\SaleBundle\Service\OrderService
+    {
+        if (!isset($this->saleOrderService)) {
+            $this->saleOrderService = Application::getInstance()->getContainer()->get(
+                \FourPaws\SaleBundle\Service\OrderService::class
+            );
+        }
+
+        return $this->saleOrderService;
     }
 
     /**
@@ -236,7 +266,7 @@ class OrderSubscribeService
      */
     public function getOrderById(int $orderId)
     {
-        return $this->getOrderService()->getOrderById($orderId);
+        return $this->getPersonalOrderService()->getOrderById($orderId);
     }
 
     /**
@@ -266,7 +296,7 @@ class OrderSubscribeService
             $params['filter']['=ORDER_SUBSCRIBE.UF_ACTIVE'] = 1;
         }
 
-        return $this->getOrderService()->getUserOrders($params);
+        return $this->getPersonalOrderService()->getUserOrders($params);
     }
 
     /**
@@ -434,15 +464,20 @@ class OrderSubscribeService
     }
 
     /**
-     * @param int $copyOrderId
+     * @param int $originOrderId
      * @param bool $checkActiveSubscribe
      * @return Result
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
      * @throws NotFoundException
+     * @throws NotImplementedException
+     * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Exception
      */
-    public function copyOrderById(int $copyOrderId, bool $checkActiveSubscribe = true)
+    public function copyOrderById(int $originOrderId, bool $checkActiveSubscribe = true)
     {
-        $orderSubscribe = $this->getSubscribeByOrderId($copyOrderId, $checkActiveSubscribe);
+        $orderSubscribe = $this->getSubscribeByOrderId($originOrderId, $checkActiveSubscribe);
         if (!$orderSubscribe) {
             throw new NotFoundException('Подписка на заказ не найдена', 100);
         }
@@ -455,101 +490,182 @@ class OrderSubscribeService
      * @param \DateTime|null $deliveryDate
      * @return Result
      * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws RuntimeException
+     * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Exception
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyBasketException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyShipmentsException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
      */
     public function copyOrder(OrderSubscribe $orderSubscribe, \DateTime $deliveryDate = null)
     {
         $result = new Result();
 
-        $copyOrderId = $orderSubscribe->getOrderId();
         $resultData = [
             'NEW_ORDER_ID' => 0
         ];
+
+        $originOrderId = $orderSubscribe->getOrderId();
+
+        $connection = \Bitrix\Main\Application::getConnection();
+        $connection->startTransaction();
+
+        $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+
+        // Система должна создавать заказ по подписке автоматически с учетом условий подписки на
+        // доставку путем копирования заказа:
+        // − Исходного заказа, если создается первый заказ по подписке;
+        // − Предыдущего заказа по подписке, если создается не первый заказ по подписке.
+        $copyOrderId = $orderSubscribeHistoryService->getLastCopyOrderId($originOrderId);
+        if ($copyOrderId <= 0) {
+            $copyOrderId = $originOrderId;
+        }
+
+        try {
+            if (!$deliveryDate) {
+                $deliveryDate = $orderSubscribe->getNextDeliveryDate();
+            }
+
+            $orderCopyHelper = new OrderCopy($copyOrderId);
+            $orderCopyHelper->appendBasketItemExcludeProps(
+                $this->basketItemExcludeProps
+            );
+            $orderCopyHelper->appendOrderExcludeProps(
+                $this->orderExcludeProps
+            );
+
+            // копирование базовых данных заказа
+            $orderCopyHelper->doBasicCopy();
+/** @todo Что с этим? */
+/*
+Если на дату создания заказа по подписке в составе заказа есть товар А, для которого срок доставки изменился и который не может быть доставлен к дате готовности заказа к выдаче, Система должна выполнить следующие действия:
+−	Установить для атрибута заказа «Communic» значение «03 – Телефонный звонок (анализ)». Требования к параметрам заказа определены в документе «4lapy_Интеграция_SAP»;
+−	Добавить к заказу комментарий для оператора с текстом: «Заказ должен быть готов к выдаче <дата готовности заказа к выдаче без товара А>, плановая дата готовности <дата, в которую может быть доступен к выдаче заказ с товаром А>. Причина: <товар А>»;
+−	Изменить дату исполнения заказа на дату, в которую заказ с товаром А может быть доступен к выдаче.
+Оператор должен позвонить пользователю и предложить варианты:
+
+−	Доставить заказ с товаром А в дату, когда может быть доступен к выдаче заказ с товаром А;
+−	Доставить заказ без товара А в плановую дату доставки заказа по подписке. При выборе этого варианта оператор должен удалить товар А из заказа и изменить дату исполнения заказа на дату готовности заказа к выдаче.
+Независимо от выбранного пользователем варианта Система не должна изменять параметры подписки на доставку, по которой был создан текущий заказ.
+*/
+
+/** @todo Уточнить режим флага: Разрешить покупку при отсутствии товара (включая разрешение отрицательного количества товара) */
+            // 1. Если товара нет в наличии, но товар есть на Сайте, при оформлении подписки передавать товар
+            // в заказе без анализа остатка товара.
+            // 2. Если товара нет на Сайте (из SAP получен признак не отображать товар на Сайте,
+            // для случая вывода товара из ассортимента), то удаляем этот товар из заказа.
+            // 3. Если всех товаров заказа по подписке нет,
+            // нужно деактировать подписку и отправить пользователю уведомление.
+            $newOrderBasket = $orderCopyHelper->getNewOrder()->getBasket();
+//_log_array($newOrderBasket->count(), '$newOrderBasket');
+//_log_array($newOrderBasket, '$newOrderBasket');
+            //if ($newOrderBasket->getOrderableItems()->isEmpty()) {
+            if ($newOrderBasket->count() <= 0) {
+                // Корзина пуста. Деактивация подписки и отправка уведомления
+//                $this->update(
+//                    $orderSubscribe->getId(),
+//                    [
+//                        'ACTIVE' => 'Y'
+//                    ]
+//                );
+/** @todo Отправка уведомления пользователю */
+                throw new RuntimeException('Корзина заказа пуста. Подписка отменена.', 201);
+            }
+
+            // в заказах по подписке только оплата наличными может быть
+            $cashPaySystemService = $this->getOrderService()->getCashPaySystemService();
+//_log_array($cashPaySystemService, '$cashPaySystemService');
+            if (!$cashPaySystemService) {
+                throw new RuntimeException('Не удалось получить платежную систему "Оплата наличными"', 101);
+            }
+            $orderCopyHelper->setPayment($cashPaySystemService);
+
+            // заполнение специальных свойств
+            $orderCopyHelper->setPropValueByCode(
+                'DELIVERY_INTERVAL',
+                $orderSubscribe->getDeliveryTime()
+            );
+            $orderCopyHelper->setPropValueByCode(
+                'DELIVERY_DATE',
+                $deliveryDate->format('d.m.Y')
+            );
+            $orderCopyHelper->setPropValueByCode(
+                'IS_SUBSCRIBE',
+                'Y'
+            );
+            $orderCopyHelper->setPropValueByCode(
+                'COPY_ORDER_ID',
+                $copyOrderId
+            );
+            // значение параметра: «Communic» значение «07 – Подписка»
+            $orderCopyHelper->setPropValueByCode(
+                'COM_WAY',
+                OrderPropertyService::COMMUNICATION_SUBSCRIBE
+            );
+
+            // финализация заказа и сохранение в БД
+            $orderCopyHelper->doFinalAction();
+//_log_array($orderCopyHelper, '$orderCopyHelper');
+            $saveResult = $orderCopyHelper->save();
+            if ($saveResult->isSuccess()) {
+                $resultData['NEW_ORDER_ID'] = $saveResult->getId();
+            } else {
+                $result->addErrors(
+                    $saveResult->getErrors()
+                );
+            }
+        } catch (\Exception $exception) {
+            $result->addError(
+                new Error($exception->getMessage(), 'orderCopyException')
+            );
+        }
+
         if ($result->isSuccess()) {
-
-            $connection = \Bitrix\Main\Application::getConnection();
-            $connection->startTransaction();
-
             try {
                 if (!$deliveryDate) {
                     $deliveryDate = $orderSubscribe->getNextDeliveryDate();
                 }
 
-                $orderCopyHelper = new OrderCopy($copyOrderId);
-                $orderCopyHelper->appendBasketItemExcludeProps(
-                    $this->basketItemExcludeProps
+                $addResult = $orderSubscribeHistoryService->add(
+                    $orderSubscribe,
+                    $resultData['NEW_ORDER_ID'],
+                    $deliveryDate
                 );
-                $orderCopyHelper->appendOrderExcludeProps(
-                    $this->orderExcludeProps
-                );
-
-                $orderCopyHelper->doFullCopy();
-                $orderCopyHelper->setPropValueByCode(
-                    'DELIVERY_INTERVAL',
-                    $orderSubscribe->getDeliveryTime()
-                );
-                $orderCopyHelper->setPropValueByCode(
-                    'DELIVERY_DATE',
-                    $deliveryDate->format('d.m.Y')
-                );
-                $orderCopyHelper->setPropValueByCode(
-                    'IS_SUBSCRIBE',
-                    'Y'
-                );
-                // значение параметра: «Communic» значение «07 – Подписка»
-                $orderCopyHelper->setPropValueByCode(
-                    'COM_WAY',
-                    '07'
-                );
-                $saveResult = $orderCopyHelper->save();
-                if (!$saveResult->isSuccess()) {
+                if (!$addResult->isSuccess()) {
                     $result->addErrors(
-                        $saveResult->getErrors()
+                        $addResult->getErrors()
                     );
                 }
-
-                $resultData['NEW_ORDER_ID'] = $saveResult->getId();
             } catch (\Exception $exception) {
                 $result->addError(
-                    new Error($exception->getMessage(), 'orderCopyException')
+                    new Error($exception->getMessage(), 'orderSubscribeHistoryAddException')
                 );
             }
+        }
 
-            if ($result->isSuccess()) {
-                try {
-                    if (!$deliveryDate) {
-                        $deliveryDate = $orderSubscribe->getNextDeliveryDate();
-                    }
+        // закрываем транзакцию
+        if ($result->isSuccess()) {
+            $connection->commitTransaction();
+            // отправка уведомлений во внешние системы
+//          $this->doNewOrderIntegration($resultData['NEW_ORDER_ID']);
+        } else {
+            $connection->rollbackTransaction();
+        }
 
-                    $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
-
-                    $addResult = $orderSubscribeHistoryService->add(
-                        $orderSubscribe,
-                        $resultData['NEW_ORDER_ID'],
-                        $deliveryDate
-                    );
-                    if (!$addResult->isSuccess()) {
-                        $result->addErrors(
-                            $addResult->getErrors()
-                        );
-                    }
-                } catch (\Exception $exception) {
-                    $result->addError(
-                        new Error($exception->getMessage(), 'orderSubscribeHistoryAddException')
-                    );
-                }
-            }
-
-            // закрываем транзакцию
-            if ($result->isSuccess()) {
-                $connection->commitTransaction();
-                // отправка уведомлений во внешние системы
-                $this->doNewOrderIntegration($resultData['NEW_ORDER_ID']);
-            } else {
-                $connection->rollbackTransaction();
-            }
+        if (!$result->isSuccess()) {
+            $this->log()->critical(
+                sprintf(
+                    'Ошибка копирования заказа по подписке - %s',
+                    implode("\n", $result->getErrorMessages())
+                )
+            );
         }
 
         $result->setData($resultData);
@@ -567,13 +683,9 @@ class OrderSubscribeService
     {
         $order = \Bitrix\Sale\Order::load($orderId);
 
-        /** @var \FourPaws\SaleBundle\Service\OrderService $saleOrderService */
-        $saleOrderService = Application::getInstance()->getContainer()->get(
-            \FourPaws\SaleBundle\Service\OrderService::class
-        );
-
+        $saleOrderService = $this->getOrderService();
         if ($saleOrderService->isOnlinePayment($order)) {
-            // у заказа онлайн-оплата (что, вообще-то, странно для заказа по подписке),
+            // у заказа онлайн-оплата (чего, вообще-то, не должно быть у заказа по подписке),
             // а значит, отправка во внешние системы будет после получения оплаты
             return;
         }

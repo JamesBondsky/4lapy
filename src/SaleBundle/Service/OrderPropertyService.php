@@ -21,6 +21,8 @@ class OrderPropertyService
 
     const COMMUNICATION_PHONE_ANALYSIS = '03';
 
+    const COMMUNICATION_SUBSCRIBE = '07';
+
     /**
      * @var OrderPropertyVariantRepository
      */

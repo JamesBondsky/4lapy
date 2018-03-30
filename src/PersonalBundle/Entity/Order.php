@@ -173,8 +173,8 @@ class Order extends BaseEntity
     /** @var array */
     protected $statusMain = [];
 
-    /** @var OrderService $orderService */
-    private $orderService = null;
+    /** @var OrderService $personalOrderService */
+    private $personalOrderService = null;
 
     /** @var array $orderItems */
     private $orderItems = [];
@@ -642,7 +642,7 @@ class Order extends BaseEntity
     public function getPayment(): OrderPayment
     {
         if (!$this->payment) {
-            $this->payment = $this->getOrderService()->getPayment($this->getPaySystemId());
+            $this->payment = $this->getPersonalOrderService()->getPayment($this->getPaySystemId());
         }
 
         return $this->payment;
@@ -664,7 +664,7 @@ class Order extends BaseEntity
     public function getDelivery(): OrderDelivery
     {
         if (!$this->delivery) {
-            $this->delivery = $this->getOrderService()->getDelivery($this->getId());
+            $this->delivery = $this->getPersonalOrderService()->getDelivery($this->getId());
         }
 
         return $this->delivery;
@@ -711,7 +711,7 @@ class Order extends BaseEntity
     public function getProps(): ArrayCollection
     {
         if (!$this->props && $this->getId()) {
-            $this->props = $this->getOrderService()->getOrderProps($this->getId());
+            $this->props = $this->getPersonalOrderService()->getOrderProps($this->getId());
         }
 
         return $this->props ?? new ArrayCollection();
@@ -734,7 +734,7 @@ class Order extends BaseEntity
     public function getStore(): Store
     {
         if (!$this->store && $this->getId()) {
-            $this->store = $this->getOrderService()->getStore($this);
+            $this->store = $this->getPersonalOrderService()->getStore($this);
         }
 
         return $this->store;
@@ -828,14 +828,14 @@ class Order extends BaseEntity
      * @return OrderService
      * @throws ApplicationCreateException
      */
-    protected function getOrderService(): OrderService
+    protected function getPersonalOrderService(): OrderService
     {
-        if (!$this->orderService) {
+        if (!$this->personalOrderService) {
             $appCont = Application::getInstance()->getContainer();
-            $this->orderService = $appCont->get('order.service');
+            $this->personalOrderService = $appCont->get('order.service');
         }
 
-        return $this->orderService;
+        return $this->personalOrderService;
     }
 
     /**
@@ -850,7 +850,9 @@ class Order extends BaseEntity
     protected function getOrderItems(): array
     {
         if (!$this->orderItems) {
-            $this->orderItems = $this->getOrderService()->getOrderItems($this->getId());
+            $this->orderItems = $this->getPersonalOrderService()->getOrderItems(
+                $this->getId()
+            );
         }
 
         return $this->orderItems;

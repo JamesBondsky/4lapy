@@ -19,6 +19,8 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\OrderCopyBasketException;
+use FourPaws\SaleBundle\Exception\OrderCopyShipmentsException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\OrderService;
 
@@ -88,7 +90,11 @@ class OrderCopy
             throw new NotFoundException('Копируемый заказ не найден', 100);
         }
 
-        $this->newOrder = Order::create($this->oldOrder->getSiteId(), $this->oldOrder->getUserId(), $this->oldOrder->getCurrency());
+        $this->newOrder = Order::create(
+            $this->oldOrder->getSiteId(),
+            $this->oldOrder->getUserId(),
+            $this->oldOrder->getCurrency()
+        );
         if (!$this->newOrder) {
             throw new OrderCreateException('Не удалось создать новый заказ для заполнения', 100);
         }
@@ -97,6 +103,31 @@ class OrderCopy
         $this->newOrder->setPersonTypeId(
             $this->oldOrder->getPersonTypeId()
         );
+    }
+
+    /**
+     * Выполняет копию базовых данных заказа
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentTypeException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderCopyBasketException
+     * @throws OrderCopyShipmentsException
+     * @throws \Exception
+     */
+    public function doBasicCopy()
+    {
+        $this->copyFields();
+        $this->copyBasket();
+        $this->copyProps();
+        $this->copyShipments();
+        $this->copyPayments();
+        $this->copyTax();
     }
 
     /**
@@ -110,16 +141,14 @@ class OrderCopy
      * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws OrderCopyBasketException
+     * @throws OrderCopyShipmentsException
      * @throws OrderCreateException
      * @throws \Exception
      */
     public function doFullCopy()
     {
-        $this->copyFields();
-        $this->copyBasket();
-        $this->copyProps();
-        $this->copyShipments();
-        $this->copyPayments();
+        $this->doBasicCopy();
         $this->doFinalAction();
     }
 
@@ -161,7 +190,7 @@ class OrderCopy
      * @throws ArgumentOutOfRangeException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws OrderCreateException
+     * @throws OrderCopyBasketException
      * @throws \Exception
      */
     public function copyBasket()
@@ -172,46 +201,49 @@ class OrderCopy
 
         $oldBasketItems = $oldBasket->getBasketItems();
         foreach ($oldBasketItems as $oldBasketItem) {
+            $isSuccess = true;
             /** @var BasketItem $oldBasketItem */
             // копирование значений полей позиции корзины
             $newBasketItem = $newBasket->createItem(
                 $oldBasketItem->getField('MODULE'),
                 $oldBasketItem->getField('PRODUCT_ID')
             );
-
             $oldBasketItemValues = $this->filterCopyBasketItemFields($oldBasketItem->getFieldValues());
             $newBasketItem->setField('NAME', $oldBasketItemValues['NAME']);
             $tmpResult = $newBasketItem->setFields($oldBasketItemValues);
             if (!$tmpResult->isSuccess()) {
-                throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 200);
+                $isSuccess = false;
             }
 
-            // копирование свойств позиции корзины
-            $newBasketPropertyCollection = $newBasketItem->getPropertyCollection();
-            $oldItemPropertyList = [];
-            if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
-                $oldItemPropertyList = $this->filterCopyBasketItemProps($oldPropertyCollection->getPropertyValues());
-            }
-            foreach ($oldItemPropertyList as $oldItemPropertyFields) {
-                unset($oldItemPropertyFields['ID'], $oldItemPropertyFields['BASKET_ID']);
-                $newBasketPropertyItem = $newBasketPropertyCollection->createItem([]);
-                $tmpResult = $newBasketPropertyItem->setFields($oldItemPropertyFields);
-                if (!$tmpResult->isSuccess()) {
-                    throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 300);
+            if ($isSuccess) {
+                // копирование свойств позиции корзины
+                $newBasketPropertyCollection = $newBasketItem->getPropertyCollection();
+                $oldItemPropertyList = [];
+                if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
+                    $oldItemPropertyList = $this->filterCopyBasketItemProps($oldPropertyCollection->getPropertyValues());
+                }
+                foreach ($oldItemPropertyList as $oldItemPropertyFields) {
+                    unset($oldItemPropertyFields['ID'], $oldItemPropertyFields['BASKET_ID']);
+                    $newBasketPropertyItem = $newBasketPropertyCollection->createItem([]);
+                    $tmpResult = $newBasketPropertyItem->setFields($oldItemPropertyFields);
+                    if (!$tmpResult->isSuccess()) {
+                        $isSuccess = false;
+                        break;
+                    }
                 }
             }
 
-            $this->setOldBasket2NewMap($oldBasketItem->getId(), $newBasketItem->getInternalIndex());
+            if ($isSuccess) {
+                $this->setOldBasket2NewMap($oldBasketItem->getId(), $newBasketItem->getInternalIndex());
+            } else {
+                $newBasketItem->delete();
+            }
         }
 
         // привязка корзины к новому заказу
         $tmpResult = $this->newOrder->setBasket($newBasket);
         if (!$tmpResult->isSuccess()) {
-            throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 500);
-        }
-
-        if ($this->newOrder->getBasket()->getOrderableItems()->isEmpty()) {
-            throw new OrderCreateException('Корзина пуста', 600);
+            throw new OrderCopyBasketException(implode("\n", $tmpResult->getErrorMessages()), 500);
         }
     }
 
@@ -301,7 +333,7 @@ class OrderCopy
      * @throws ArgumentOutOfRangeException
      * @throws ArgumentTypeException
      * @throws NotSupportedException
-     * @throws OrderCreateException
+     * @throws OrderCopyShipmentsException
      * @throws \Exception
      */
     public function copyShipments()
@@ -353,7 +385,7 @@ class OrderCopy
 
         $tmpResult = $newShipmentCollect->calculateDelivery();
         if (!$tmpResult->isSuccess()) {
-            throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 700);
+            throw new OrderCopyShipmentsException(implode("\n", $tmpResult->getErrorMessages()), 700);
         }
     }
 
@@ -381,6 +413,41 @@ class OrderCopy
             $newPayment->setField('PAY_SYSTEM_NAME', $oldPayment->getPaymentSystemName());
             $newPayment->setField('SUM', $this->newOrder->getPrice());
         }
+    }
+
+    /**
+     * Очищает способы оплаты в новом заказе
+     */
+    public function clearPayments()
+    {
+        $newPaymentCollect = $this->newOrder->getPaymentCollection();
+        //$newPaymentCollect->clearCollection();
+        foreach ($newPaymentCollect as $payment) {
+            /** @var Payment $payment */
+            if ($payment->isInner()) {
+                continue;
+            }
+            $payment->delete();
+        }
+    }
+
+    /**
+     * @param \Bitrix\Sale\PaySystem\Service $paySystemService
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws \Exception
+     */
+    public function setPayment(\Bitrix\Sale\PaySystem\Service $paySystemService)
+    {
+        $this->clearPayments();
+        $newPaymentCollect = $this->newOrder->getPaymentCollection();
+        $newPayment = $newPaymentCollect->createItem($paySystemService);
+        $newPayment->setField('SUM', $this->newOrder->getPrice());
+    }
+
+    public function copyTax()
+    {
+        /** @todo */
     }
 
     /**

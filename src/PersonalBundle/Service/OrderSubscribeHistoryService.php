@@ -5,6 +5,7 @@ namespace FourPaws\PersonalBundle\Service;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\AddResult;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -57,7 +58,9 @@ class OrderSubscribeHistoryService
     public function getOrderSubscribeService(): OrderSubscribeService
     {
         if (!isset($this->orderService)) {
-            $this->orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
+            $this->orderSubscribeService = Application::getInstance()->getContainer()->get(
+                'order_subscribe.service'
+            );
         }
 
         return $this->orderSubscribeService;
@@ -139,7 +142,61 @@ class OrderSubscribeHistoryService
      */
     public function getSubsDataByOrderSubscribe(OrderSubscribe $orderSubscribe): string
     {
-        return serialize($orderSubscribe->getAllFields());
+        $fields = $orderSubscribe->getAllFields();
+        if ($fields['UF_DATE_CREATE'] && $fields['UF_DATE_CREATE'] instanceof DateTime) {
+            $fields['UF_DATE_CREATE'] = $fields['UF_DATE_CREATE']->toString();
+        }
+        if ($fields['UF_DATE_EDIT'] && $fields['UF_DATE_EDIT'] instanceof DateTime) {
+            $fields['UF_DATE_EDIT'] = $fields['UF_DATE_EDIT']->toString();
+        }
+        if ($fields['UF_DATE_START'] && $fields['UF_DATE_START'] instanceof DateTime) {
+            $fields['UF_DATE_START'] = $fields['UF_DATE_START']->toString();
+        }
+
+        return serialize($fields);
+    }
+
+    /**
+     * Возвращает id последней копии заказа, созданного по подписке
+     *
+     * @param int $originOrderId
+     * @return int
+     * @throws ArgumentException
+     */
+    public function getLastCopyOrderId(int $originOrderId): int
+    {
+        $lastCopyOrderId = 0;
+        $params = [
+            'order' => [
+                'UF_NEW_ORDER_ID' => 'desc',
+            ],
+            'filter' => [
+                'UF_ORIGIN_ORDER_ID' => $originOrderId,
+                '!=ORDER.ID' => false,
+            ],
+            'runtime' => [
+                new ReferenceField(
+                    'ORDER',
+                    \Bitrix\Sale\Internals\OrderTable::getEntity(),
+                    [
+                        '=this.UF_NEW_ORDER_ID' => 'ref.ID',
+                    ],
+                    [
+                        //'join_type' => 'inner'
+                    ]
+                ),
+            ],
+            'limit' => 1,
+            'select' => [
+                'ID', 'UF_NEW_ORDER_ID'
+            ]
+        ];
+        $item = $this->findBy($params)->fetch();
+        if ($item) {
+            $lastCopyOrderId = $item['UF_NEW_ORDER_ID'];
+        }
+
+        return $lastCopyOrderId;
     }
 
     /**
