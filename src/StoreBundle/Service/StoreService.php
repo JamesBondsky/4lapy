@@ -609,10 +609,11 @@ class StoreService implements LoggerAwareInterface
         }
         $code = $request->get('code');
         if (!empty($code)) {
-            if (\is_array($code)) {
+            $codeList = json_decode($code, true);
+            if (\is_array($codeList)) {
                 $dadataLocationAdapter = new DaDataLocationAdapter();
                 /** @var BitrixLocation $bitrixLocation */
-                $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
+                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
                 $result['UF_LOCATION'] = $bitrixLocation->getCode();
             } else {
                 $result['UF_LOCATION'] = $code;
