@@ -16,6 +16,7 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
@@ -197,6 +198,11 @@ interface CalculationResultInterface
      * @return CalculationResultInterface
      */
     public function setDateOffset(int $offset): CalculationResultInterface;
+
+    /**
+     * @return DeliveryScheduleResult|null
+     */
+    public function getShipmentResult(): ?DeliveryScheduleResult;
 
     /**
      * @return float

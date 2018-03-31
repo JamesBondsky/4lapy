@@ -16,6 +16,9 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var Order $order */
 $order = $arResult['ORDER'];
+
+/** @var Order $relatedOrder */
+$relatedOrder = $arResult['RELATED_ORDER'];
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -50,8 +53,8 @@ $order = $arResult['ORDER'];
         <hr class="b-hr b-hr--order b-hr--top-line"/>
         <div class="b-order__block b-order__block--no-border">
             <div class="b-order__content b-order__content--no-border b-order__content--step-five">
-                <h2 class="b-title b-title--order-heading b-title--block"><? $APPLICATION->ShowTitle() ?>
-                </h2>
+                <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $order->getId() ?>
+                    оформлен</h2>
                 <?php if ($arResult['ORDER_PROPERTIES']['EMAIL']) {
                     ?>
                     <div class="b-order__text-block">
@@ -135,23 +138,34 @@ $order = $arResult['ORDER'];
         </div>
         <div class="b-order__block b-order__block--no-border b-order__block--no-flex">
             <div class="b-order__content b-order__content--no-border b-order__content--no-padding b-order__content--no-flex">
-                <?php /* @todo частичное получение заказа */ ?>
-                <?php /*
-                <hr class="b-hr b-hr--order b-hr--step-five"/>
-                <h2 class="b-title b-title--order-heading b-title--block">Заказ №11020042 оформлен</h2>
-                <div class="b-order__text-block">
-                    <p>В нем находятся товары "под заказ". Мы также отправили на адрес
-                        <a class="b-link b-link--blue-bold" href="mailto:ya_zakazal@gmail.com" title="">ya_zakazal@gmail.com
-                        </a>письмо со всеми подробностями заказа.
-                    </p>
-                    <p>Условия оплаты и доставки совпадают с заказом выше.</p>
-                </div>
-                <h2 class="b-title b-title--order-heading b-title--block">Как получить заказ</h2>
+                <?php if ($relatedOrder) { ?>
+                    <hr class="b-hr b-hr--order b-hr--step-five"/>
+                    <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $relatedOrder->getId() ?>
+                        оформлен</h2>
+                    <div class="b-order__text-block">
+                        <p>В нем находятся товары "под заказ".
+                            <?php if ($arResult['ORDER_PROPERTIES']['EMAIL']) { ?>
+                                Мы также отправили на адрес
+                                <a class="b-link b-link--blue-bold"
+                                   href="mailto:<?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?>"
+                                   title=""><?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?>
+                                </a>письмо со всеми подробностями заказа.
+                            <?php } ?>
+                        </p>
+                        <p>Условия оплаты и доставки совпадают с заказом выше.</p>
+                    </div>
+                    <h2 class="b-title b-title--order-heading b-title--block">Как получить заказ</h2>
 
-                <div class="b-order__text-block">
-                    <p>Ваш заказ вы можете получить <b>в пятницу, 15 сентября c 15:00.</b></p>
-                </div>
-                 */ ?>
+                    <div class="b-order__text-block">
+                        <p>Ваш заказ вы можете получить
+                            <b><?= DeliveryTimeHelper::showByDate($arResult['RELATED_ORDER_DELIVERY']['DELIVERY_DATE']) ?></b>
+                        </p>
+                        <?php if (!$arResult['ORDER_DELIVERY']['IS_PICKUP']) { ?>
+                            <p><b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                            </p>
+                        <?php } ?>
+                    </div>
+                <?php } ?>
                 <?php if ($arResult['ORDER_REGISTERED']) {
                     ?>
                     <hr class="b-hr b-hr--order"/>

@@ -22,7 +22,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\SmsService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Exception\FastOrderNotDeliveryException;
+use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
@@ -174,7 +174,8 @@ class FastOrderController extends Controller
         }
 
         try {
-            $order = $this->orderService->createOrder($orderStorage, true, true);
+            $order = $this->orderService->initOrder($orderStorage);
+            $this->orderService->saveOrder($order, $orderStorage, true);
             if ($order instanceof Order && $order->getId() > 0) {
                 if (isset($_SESSION['NEW_USER']) && !empty($_SESSION['NEW_USER'])) {
                     $this->smsService->sendSms('Ваш логин: ' . $_SESSION['NEW_USER']['LOGIN'] . '. Ваш пароль: ' . $_SESSION['NEW_USER']['PASSWORD'],
@@ -200,7 +201,7 @@ class FastOrderController extends Controller
             $logger = LoggerFactory::create('params');
             $logger->error('Ошибка параметров - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
-        } catch (FastOrderNotDeliveryException $e) {
+        } catch (DeliveryNotAvailableException $e) {
             return $this->ajaxMess->getOrderCreateError('Доставка выбранных позиций в вашем регионе недоступна, пожалуйста попробуйте заказать другие товары или дождитесь появления данных товаров в вашем регионе');
         } catch (OrderCreateException $e) {
             return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');

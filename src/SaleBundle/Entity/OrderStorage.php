@@ -223,6 +223,44 @@ class OrderStorage
     protected $deliveryInterval = 0;
 
     /**
+     * Разделение заказов
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("ORDER_SPLIT")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $split = false;
+
+    /**
+     * Дата доставки для второго заказа (индекс выбранного значения из select'а)
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("DELIVERY_DATE2")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $secondDeliveryDate = 0;
+
+    /**
+     * Интервал доставки для второго заказа (индекс выбранного значения из select'а)
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("DELIVERY_INTERVAL2")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $secondDeliveryInterval = 0;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("USER_DESCRIPTION2")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $secondComment;
+
+    /**
      * Код места доставки (или код терминала DPD)
      *
      * @var string
@@ -282,14 +320,6 @@ class OrderStorage
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $cityCode = '';
-
-    /**
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("PARTIAL_GET")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $partialGet = true;
 
     /**
      * Сумма оплаты бонусами
@@ -704,6 +734,78 @@ class OrderStorage
     }
 
     /**
+     * @return bool
+     */
+    public function isSplit(): bool
+    {
+        return $this->split;
+    }
+
+    /**
+     * @param bool $split
+     * @return OrderStorage
+     */
+    public function setSplit(bool $split): OrderStorage
+    {
+        $this->split = $split;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSecondDeliveryDate(): int
+    {
+        return $this->secondDeliveryDate;
+    }
+
+    /**
+     * @param int $secondDeliveryDate
+     * @return OrderStorage
+     */
+    public function setSecondDeliveryDate(int $secondDeliveryDate): OrderStorage
+    {
+        $this->secondDeliveryDate = $secondDeliveryDate;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSecondDeliveryInterval(): int
+    {
+        return $this->secondDeliveryInterval;
+    }
+
+    /**
+     * @param int $secondDeliveryInterval
+     * @return OrderStorage
+     */
+    public function setSecondDeliveryInterval(int $secondDeliveryInterval): OrderStorage
+    {
+        $this->secondDeliveryInterval = $secondDeliveryInterval;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSecondComment(): string
+    {
+        return $this->secondComment;
+    }
+
+    /**
+     * @param string $secondComment
+     * @return OrderStorage
+     */
+    public function setSecondComment(string $secondComment): OrderStorage
+    {
+        $this->secondComment = $secondComment;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getDeliveryPlaceCode(): string
@@ -819,26 +921,6 @@ class OrderStorage
     public function setCityCode(string $cityCode): OrderStorage
     {
         $this->cityCode = trim($cityCode);
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPartialGet(): bool
-    {
-        return $this->partialGet ?? true;
-    }
-
-    /**
-     * @param bool $partialGet
-     *
-     * @return OrderStorage
-     */
-    public function setPartialGet(bool $partialGet): OrderStorage
-    {
-        $this->partialGet = $partialGet;
 
         return $this;
     }
