@@ -14,6 +14,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
@@ -305,7 +306,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             if ($user) {
                 try {
                     $basketForRequest = $basket;
-                    if ($storage->isPartialGet()) {
+                    if ($storage->isSplit() && $this->orderService->canGetPartial($storage, $selectedDelivery)) {
                         /** @var Order $order1 */
                         $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
                         $basketForRequest = $order1->getBasket();
@@ -353,6 +354,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if (null !== $pickup) {
+            $storage = clone $storage;
             try {
                 $selectedShopCode = $storage->getDeliveryPlaceCode();
                 $shops = $pickup->getStockResult()->getStores();
@@ -368,31 +370,36 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 );
                 return;
             }
+            $storage->setDeliveryId($pickup->getDeliveryId());
 
-            $available = $pickup->getStockResult()->getAvailable();
-
-            $partialPickup = clone $pickup;
+            [$available, $delayed] = $this->orderService->splitStockResult($storage, $pickup);
             $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
-                ? $partialPickup
-                : $partialPickup->setStockResult($pickup->getStockResult()->getAvailable());
+                ? null
+                : (clone $pickup)->setStockResult($available);
+            $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderService->canGetPartial($storage, $pickup);
+            $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderService->canSplitOrder($storage);
+            $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
+            $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
         }
     }
 
     /**
      * @param CalculationResultInterface $delivery
      * @param OrderStorage $storage
+     *
      * @throws ApplicationCreateException
-     * @throws NotFoundException
-     * @throws OrderCreateException
-     * @throws OrderSplitException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotAvailableException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
-     * @throws UserMessageException
-     * @throws DeliveryNotAvailableException
+     * @throws OrderCreateException
+     * @throws OrderSplitException
      * @throws StoreNotFoundException
+     * @throws UserMessageException
+     * @throws SystemException
      */
     protected function splitOrder(CalculationResultInterface $delivery, OrderStorage $storage)
     {

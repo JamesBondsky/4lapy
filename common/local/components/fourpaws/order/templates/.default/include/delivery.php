@@ -333,12 +333,12 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
         <?php } ?>
         <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
             <div class="b-input-line__label-wrapper">
-                <label class="b-input-line__label" for="order-comment">Комментарий к заказу
+                <label class="b-input-line__label" for="order-comment2">Комментарий к заказу
                 </label>
             </div>
             <div class="b-input b-input--registration-form"><textarea
                         class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
-                        id="order-comment" name="comment2"><?= $storage->getSecondComment() ?></textarea>
+                        id="order-comment2" name="comment2"><?= $storage->getSecondComment() ?></textarea>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>

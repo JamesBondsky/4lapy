@@ -168,7 +168,7 @@ class OrderStorageService
         $data = $request->request->all();
 
         $mapping = [
-            'order-pick-time' => 'partialGet',
+            'order-pick-time' => 'split',
             'shopId' => 'deliveryPlaceCode',
             'pay-type' => 'paymentId',
         ];
@@ -216,8 +216,6 @@ class OrderStorageService
                             default:
                                 $data['split'] = 0;
                         }
-                    } else {
-                        // @todo pickup
                     }
                 } catch (DeliveryNotFoundException $e) {
                 }

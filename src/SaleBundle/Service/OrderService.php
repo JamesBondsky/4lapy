@@ -850,7 +850,8 @@ class OrderService implements LoggerAwareInterface
             /**
              * Если выбрано частичное получение, то второй заказ не создается
              */
-            if (!$storage->isPartialGet()) {
+            $delivery = $this->orderStorageService->getSelectedDelivery($storage);
+            if (!$this->canGetPartial($storage, $delivery)) {
                 /**
                  * чтобы предотвратить повторное создание адреса
                  */
@@ -1136,7 +1137,7 @@ class OrderService implements LoggerAwareInterface
     {
         $result = false;
         if ($delivery->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE &&
-            $storage->isPartialGet() &&
+            $storage->isSplit() &&
             $delivery->getStockResult()->getByRequest()->isEmpty()
         ) {
             $result = true;

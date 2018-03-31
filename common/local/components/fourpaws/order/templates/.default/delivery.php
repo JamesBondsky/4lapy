@@ -114,23 +114,23 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                             <span class="b-choice-recovery__second">курьером</span>
                                         </span>
                                     </span>
-                                    <span class="b-choice-recovery__addition-text">
+                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($delivery) ?>,
-                                        <?= mb_strtolower(CurrencyHelper::formatPrice($delivery->getPrice(), true)) ?>
+                                        <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                     </span>
-                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
-                                        <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
+                                        <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                 </label>
                                 <?php
                             } ?>
                             <?php if ($pickup) {
                                 ?>
                                 <?php
-                                $available = $pickup->getStockResult()->getAvailable();
-                                if (!$available->isEmpty() && $storage->isPartialGet()) {
+                                $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
+                                if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
                                     $price = $available->getPrice();
                                 } else {
                                     $price = $pickup->getStockResult()->getPrice();
@@ -203,11 +203,11 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
         <?php
         $basketPrice = $basket->getPrice();
         if ($isPickup) {
-            $stockResultByShop = $selectedDelivery->getStockResult();
-            if ($storage->isPartialGet()) {
-                $basketPrice = $stockResultByShop->getAvailable()->getPrice();
+            $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
+            if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
+                $basketPrice = $available->getPrice();
             } else {
-                $basketPrice = $stockResultByShop->getPrice();
+                $basketPrice = $pickup->getStockResult()->getPrice();
             }
         }
         ?>

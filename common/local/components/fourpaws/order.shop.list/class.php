@@ -113,7 +113,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         $storage = clone $this->orderStorageService->getStorage();
-        $storage->setPartialGet(true);
         $canGetPartial = $this->orderService->canGetPartial($storage, $pickupDelivery);
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);

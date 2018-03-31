@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
@@ -16,7 +18,7 @@ use FourPaws\StoreBundle\Entity\Store;
 /**
  * @var array $arResult
  * @var array $arParams
- * @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $pickup
+ * @var CalculationResultInterface $pickup
  * @var
  */
 
@@ -28,16 +30,17 @@ $storage = $arResult['STORAGE'];
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
 
-$stockResultByShop = $pickup->getStockResult();
-$available = $stockResultByShop->getAvailable();
-$delayed = $stockResultByShop->getDelayed();
+/** @var StockResultCollection $available */
+$available = $arResult['PICKUP_STOCKS_AVAILABLE'];
+/** @var StockResultCollection $delayed */
+$delayed = $arResult['PICKUP_STOCKS_DELAYED'];
 
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
-$canGetPartial = !$available->isEmpty() && !$delayed->isEmpty();
-$partialGet = $storage->isPartialGet() && $canGetPartial;
-$partialPickup = $arResult['PARTIAL_PICKUP'];
-
+$canGetPartial = $arResult['PARTIAL_PICKUP_AVAILABLE'];
+$canSplit = $arResult['SPLIT_PICKUP_AVAILABLE'];
+$partialGet = $storage->isSplit() && ($canGetPartial ||  $canSplit);
+$partialPickup = $arResult['PARTIAL_PICKUP'] ?? $pickup;
 ?>
 
 <li class="b-radio-tab__tab js-email-recovery">
@@ -84,7 +87,7 @@ $partialPickup = $arResult['PARTIAL_PICKUP'];
     <div class="b-input-line b-input-line--partially">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--order-full">
             <span class="b-input-line__label js-parts-info">
-                <?php if (!$delayed->isEmpty() && !$available->isEmpty()) { ?>
+                <?php if ($canGetPartial || $canSplit) { ?>
                     Заказ в наличии частично
                 <?php } elseif ($available->isEmpty()) { ?>
                     Требуется ждать поставки со склада
@@ -93,7 +96,7 @@ $partialPickup = $arResult['PARTIAL_PICKUP'];
                 <?php } ?>
             </span>
         </div>
-        <div class="b-radio b-radio--tablet-big" <?= $canGetPartial ? '' : 'style="display:none"' ?>>
+        <div class="b-radio b-radio--tablet-big" <?= ($canGetPartial || $canSplit) ? '' : 'style="display:none"' ?>>
             <input class="b-radio__input ok"
                    type="radio"
                    name="order-pick-time"
@@ -113,20 +116,18 @@ $partialPickup = $arResult['PARTIAL_PICKUP'];
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price js-price-block">
-                            <?= CurrencyHelper::formatPrice($available->getPrice()) ?>
+                            <?= CurrencyHelper::formatPrice($canGetPartial ? $available->getPrice() : $pickup->getStockResult()->getPrice()) ?>
                         </div>
                     </li>
                 </ul>
             </div>
-            <div class="b-radio__addition-text js-excluded-parts" <?= $delayed->isEmpty(
-            ) ? 'style="display:none"' : '' ?>>
+            <div class="b-radio__addition-text js-excluded-parts" <?= $delayed->isEmpty() ? 'style="display:none"' : '' ?>>
                 <p>За исключением:</p>
                 <ol class="js-delay-items">
                     <?php /** @var StockResult $item */ ?>
                     <?php foreach ($delayed as $item) { ?>
                         <li>
-                            <?= $item->getOffer()->getName() ?> <?= ($item->getAmount() > 1) ? ('(' . $item->getAmount(
-                                ) . ' шт)') : '' ?>
+                            <?= $item->getOffer()->getName() ?> <?= ($item->getAmount() > 1) ? ('(' . $item->getAmount() . ' шт)') : '' ?>
                         </li>
                     <?php } ?>
                 </ol>
@@ -152,7 +153,7 @@ $partialPickup = $arResult['PARTIAL_PICKUP'];
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--myself js-full-price js-price-block">
-                            <?= CurrencyHelper::formatPrice($stockResultByShop->getPrice()) ?>
+                            <?= CurrencyHelper::formatPrice($pickup->getStockResult()->getPrice()) ?>
                         </div>
                     </li>
                 </ul>
