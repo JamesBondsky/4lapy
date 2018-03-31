@@ -112,8 +112,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             return $result;
         }
 
-        $storage = clone $this->orderStorageService->getStorage();
-        $canGetPartial = $this->orderService->canGetPartial($storage, $pickupDelivery);
+        $canGetPartial = $this->orderStorageService->canGetPartial($pickupDelivery);
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
@@ -148,7 +147,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             foreach ($bestShops as $store) {
                 $fullResult = (clone $pickupDelivery)->setSelectedStore($store);
 
-                [$available, $delayed] = $this->orderService->splitStockResult($storage, $pickupDelivery);
+                [$available, $delayed] = $this->orderStorageService->splitStockResult($pickupDelivery);
                 if (!$fullResult->isSuccess()) {
                     continue;
                 }

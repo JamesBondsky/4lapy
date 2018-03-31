@@ -670,39 +670,6 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * Можно ли разделить заказ
-     *
-     * @param OrderStorage $storage
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws DeliveryNotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws StoreNotFoundException
-     * @throws SystemException
-     * @throws UserMessageException
-     * @return bool
-     */
-    public function canSplitOrder(OrderStorage $storage): bool
-    {
-        $result = false;
-        try {
-            $delivery = $this->orderStorageService->getSelectedDelivery($storage);
-            /**
-             * Для самовывоза DPD разделения заказов нет
-             */
-            if (!$delivery instanceof DpdPickupResult) {
-                [$available, $delayed] = $this->splitStockResult($storage, $delivery);
-
-                $result = !$available->isEmpty() && !$delayed->isEmpty();
-            }
-        } catch (NotFoundException $e) {
-        }
-        return $result;
-    }
-
-    /**
      * Разделение заказа на два.
      * В первом будут товары из регулярного ассортимента,
      * во втором - товары под заказ
@@ -726,7 +693,8 @@ class OrderService implements LoggerAwareInterface
      */
     public function splitOrder(OrderStorage $storage): array
     {
-        if (!$this->canSplitOrder($storage)) {
+        $delivery = $this->orderStorageService->getSelectedDelivery($storage);
+        if (!$this->orderStorageService->canSplitOrder($delivery)) {
             throw new OrderSplitException('Cannot split order');
         }
 
@@ -737,9 +705,8 @@ class OrderService implements LoggerAwareInterface
         $storage2->setComment($storage->getSecondComment());
 
         $basket = $this->basketService->getBasket();
-        $delivery = $this->orderStorageService->getSelectedDelivery($storage);
         /** @noinspection PhpUnusedLocalVariableInspection */
-        [$available, $delayed] = $this->splitStockResult($storage, $delivery);
+        [$available, $delayed] = $this->orderStorageService->splitStockResult($delivery);
 
         try {
             /** @var Basket $basket1 */
@@ -851,7 +818,7 @@ class OrderService implements LoggerAwareInterface
              * Если выбрано частичное получение, то второй заказ не создается
              */
             $delivery = $this->orderStorageService->getSelectedDelivery($storage);
-            if (!$this->canGetPartial($storage, $delivery)) {
+            if (!$this->orderStorageService->canGetPartial($delivery)) {
                 /**
                  * чтобы предотвратить повторное создание адреса
                  */
@@ -1103,45 +1070,5 @@ class OrderService implements LoggerAwareInterface
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
-    }
-
-    /**
-     * @param OrderStorage $storage
-     * @param CalculationResultInterface $delivery
-     *
-     * @return StockResultCollection[]
-     */
-    public function splitStockResult(OrderStorage $storage, CalculationResultInterface $delivery): array
-    {
-        $stockResultCollection = $delivery->getStockResult();
-        if ($this->canGetPartial($storage, $delivery)) {
-            $available = $stockResultCollection->getAvailable();
-            $delayed = $stockResultCollection->getDelayed();
-        } else {
-            $available = $stockResultCollection->getRegular();
-            $delayed = $stockResultCollection->getByRequest();
-        }
-
-        return [$available, $delayed];
-    }
-
-    /**
-     * Возможно ли частичное получение заказа
-     *
-     * @param OrderStorage $storage
-     * @param CalculationResultInterface $delivery
-     *
-     * @return bool
-     */
-    public function canGetPartial(OrderStorage $storage, CalculationResultInterface $delivery): bool
-    {
-        $result = false;
-        if ($delivery->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE &&
-            $storage->isSplit() &&
-            $delivery->getStockResult()->getByRequest()->isEmpty()
-        ) {
-            $result = true;
-        }
-        return $result;
     }
 }

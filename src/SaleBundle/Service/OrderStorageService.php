@@ -16,7 +16,9 @@ use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -215,6 +217,13 @@ class OrderStorageService
                                 break;
                             default:
                                 $data['split'] = 0;
+                        }
+                    } elseif ((int)$data['split'] === 1) {
+                        $tmpStorage = clone $storage;
+                        $tmpStorage->setDeliveryId($data['deliveryId']);
+                        $pickup = $this->getSelectedDelivery($tmpStorage);
+                        if (!$this->canSplitOrder($pickup) && !$this->canGetPartial($pickup)) {
+                            $data['split'] = 0;
                         }
                     }
                 } catch (DeliveryNotFoundException $e) {
@@ -474,5 +483,64 @@ class OrderStorageService
     public function storageToArray(OrderStorage $storage): array
     {
         return $this->storageRepository->toArray($storage);
+    }
+
+    /**
+     * Можно ли разделить заказ
+     * @param CalculationResultInterface $delivery
+     *
+     * @return bool
+     */
+    public function canSplitOrder(CalculationResultInterface $delivery): bool
+    {
+        $result = false;
+        /**
+         * Для самовывоза DPD разделения заказов нет
+         */
+        if (!$delivery instanceof DpdPickupResult) {
+            [$available, $delayed] = $this->splitStockResult($delivery);
+
+            $result = !$available->isEmpty() && !$delayed->isEmpty();
+        }
+        return $result;
+    }
+
+    /**
+     * Возможно ли частичное получение заказа
+     *
+     * @param CalculationResultInterface $delivery
+     *
+     * @return bool
+     */
+    public function canGetPartial(CalculationResultInterface $delivery): bool
+    {
+        $result = false;
+        if ($delivery->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE &&
+            $delivery->getStockResult()->getByRequest()->isEmpty() &&
+            !$delivery->getStockResult()->getAvailable()->isEmpty() &&
+            !$delivery->getStockResult()->getDelayed()->isEmpty()
+        ) {
+            $result = true;
+        }
+        return $result;
+    }
+
+    /**
+     * @param CalculationResultInterface $delivery
+     *
+     * @return StockResultCollection[]
+     */
+    public function splitStockResult(CalculationResultInterface $delivery): array
+    {
+        $stockResultCollection = $delivery->getStockResult();
+        if ($delivery->getStockResult()->getByRequest()->isEmpty()) {
+            $available = $stockResultCollection->getAvailable();
+            $delayed = $stockResultCollection->getDelayed();
+        } else {
+            $available = $stockResultCollection->getRegular();
+            $delayed = $stockResultCollection->getByRequest();
+        }
+
+        return [$available, $delayed];
     }
 }

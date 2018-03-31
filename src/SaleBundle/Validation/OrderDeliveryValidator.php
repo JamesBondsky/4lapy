@@ -59,7 +59,6 @@ class OrderDeliveryValidator extends ConstraintValidator
      * @param Constraint $constraint
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws DeliveryNotFoundException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -111,22 +110,16 @@ class OrderDeliveryValidator extends ConstraintValidator
         /**
          * Проверка, что выбрана доступная доставка
          */
-        $deliveryMethods = $this->orderStorageService->getDeliveries($entity);
-        $delivery = null;
-        /** @var CalculationResultInterface $deliveryMethod */
-        foreach ($deliveryMethods as $deliveryMethod) {
-            if ($deliveryId === $deliveryMethod->getDeliveryId()) {
-                $delivery = $deliveryMethod;
-                break;
-            }
-        }
-        if (null === $delivery) {
+        try {
+            $delivery = $this->orderStorageService->getSelectedDelivery($entity);
+
+        } catch (DeliveryNotFoundException $e) {
             $this->context->addViolation($constraint->deliveryIdMessage);
 
             return;
         }
 
-        if ($entity->isSplit() && !$this->orderService->canSplitOrder($entity)) {
+        if ($entity->isSplit() && !$this->orderStorageService->canSplitOrder($delivery)) {
             $this->context->addViolation($constraint->orderSplitMessage);
 
             return;
