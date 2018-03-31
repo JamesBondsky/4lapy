@@ -7,6 +7,7 @@ use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
@@ -39,7 +40,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
 $canGetPartial = $arResult['PARTIAL_PICKUP_AVAILABLE'];
 $canSplit = $arResult['SPLIT_PICKUP_AVAILABLE'];
-$partialGet = $storage->isSplit() && ($canGetPartial ||  $canSplit);
+$partialGet = $storage->isSplit() && ($canGetPartial || $canSplit);
 $partialPickup = $arResult['PARTIAL_PICKUP'] ?? $pickup;
 ?>
 
@@ -112,7 +113,8 @@ $partialPickup = $arResult['PARTIAL_PICKUP'] ?? $pickup;
                         <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price js-price-block">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed js-my-pickup js-pickup-time">
-                                    Забрать <?= DeliveryTimeHelper::showTime($partialPickup) ?></div>
+                                    Забрать <?= DeliveryTimeHelper::showTime($partialPickup,
+                                        ['SHOW_TIME' => $pickup instanceof PickupResult]) ?></div>
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price js-price-block">

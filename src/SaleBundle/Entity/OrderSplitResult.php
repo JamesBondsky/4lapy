@@ -7,6 +7,7 @@ namespace FourPaws\SaleBundle\Entity;
 
 use Bitrix\Sale\Order;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 
 class OrderSplitResult
 {
@@ -16,8 +17,8 @@ class OrderSplitResult
     /** @var OrderStorage */
     protected $orderStorage;
 
-    /** @var StockResultCollection */
-    protected $stockResult;
+    /** @var CalculationResultInterface */
+    protected $delivery;
 
     /**
      * @return Order
@@ -56,20 +57,20 @@ class OrderSplitResult
     }
 
     /**
-     * @return StockResultCollection
+     * @return CalculationResultInterface
      */
-    public function getStockResult(): StockResultCollection
+    public function getDelivery(): CalculationResultInterface
     {
-        return $this->stockResult;
+        return $this->delivery;
     }
 
     /**
-     * @param StockResultCollection $stockResult
+     * @param CalculationResultInterface $delivery
      * @return OrderSplitResult
      */
-    public function setStockResult(StockResultCollection $stockResult): OrderSplitResult
+    public function setDelivery(CalculationResultInterface $delivery): OrderSplitResult
     {
-        $this->stockResult = $stockResult;
+        $this->delivery = $delivery;
         return $this;
     }
 }

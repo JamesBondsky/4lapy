@@ -208,10 +208,13 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param OrderStorage $storage
      * @param Basket|null $basket
+     * @param CalculationResultInterface|null
      *
+     * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -219,11 +222,12 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @throws DeliveryNotAvailableException
-     * @return Order
      */
-    public function initOrder(OrderStorage $storage, ?Basket $basket = null): Order
-    {
+    public function initOrder(
+        OrderStorage $storage,
+        ?Basket $basket = null,
+        ?CalculationResultInterface $selectedDelivery = null
+    ): Order {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
@@ -237,10 +241,12 @@ class OrderService implements LoggerAwareInterface
             throw new OrderCreateException('Корзина пуста');
         }
 
-        try {
-            $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
-        } catch (NotFoundException $e) {
-            throw new DeliveryNotAvailableException('Нет доступных доставок');
+        if (null === $selectedDelivery) {
+            try {
+                $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
+            } catch (NotFoundException $e) {
+                throw new DeliveryNotAvailableException('Нет доступных доставок');
+            }
         }
         $selectedDelivery = clone $selectedDelivery;
 
@@ -693,7 +699,7 @@ class OrderService implements LoggerAwareInterface
      */
     public function splitOrder(OrderStorage $storage): array
     {
-        $delivery = $this->orderStorageService->getSelectedDelivery($storage);
+        $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
         if (!$this->orderStorageService->canSplitOrder($delivery)) {
             throw new OrderSplitException('Cannot split order');
         }
@@ -750,7 +756,17 @@ class OrderService implements LoggerAwareInterface
             $storage2->setBonus(0);
         }
 
-        $order1 = $this->initOrder($storage1, $basket1);
+        /**
+         * Требуется пересчет стоимости доставки
+         */
+        $tmpDeliveries = $this->deliveryService->getByBasket(
+            $basket1,
+            '',
+            [$delivery->getDeliveryCode()],
+            $storage1->getCurrentDate()
+        );
+        $tmpDelivery = reset($tmpDeliveries);
+        $order1 = $this->initOrder($storage1, $basket1, $tmpDelivery);
         $order2 = $this->initOrder($storage2, $basket2);
 
         /**
@@ -773,10 +789,10 @@ class OrderService implements LoggerAwareInterface
         return [
             (new OrderSplitResult())->setOrderStorage($storage1)
                 ->setOrder($order1)
-                ->setStockResult($available),
+                ->setDelivery($tmpDelivery),
             (new OrderSplitResult())->setOrderStorage($storage2)
                 ->setOrder($order2)
-                ->setStockResult($delayed),
+                ->setDelivery($delivery),
         ];
     }
 

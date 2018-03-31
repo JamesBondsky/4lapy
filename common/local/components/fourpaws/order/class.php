@@ -411,12 +411,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
             '1' => [
                 'ORDER' => $splitResult1->getOrder(),
                 'STORAGE' => $splitResult1->getOrderStorage(),
-                'DELIVERY' => (clone $delivery)->setStockResult($splitResult1->getStockResult())
+                'DELIVERY' => $splitResult1->getDelivery()
             ],
             '2' => [
                 'ORDER' => $splitResult2->getOrder(),
                 'STORAGE' => $splitResult2->getOrderStorage(),
-                'DELIVERY' => (clone $delivery)->setStockResult($splitResult2->getStockResult())
+                'DELIVERY' => $splitResult2->getDelivery()
             ]
         ];
     }
