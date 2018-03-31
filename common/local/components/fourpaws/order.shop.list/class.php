@@ -84,7 +84,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     protected function prepareResult(array $city = [])
     {
         if ($pickupDelivery = $this->getPickupDelivery()) {
-            /* @todo поправить метро у магазинов */
             /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
             $router = Application::getInstance()->getContainer()->get('router');
             /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
@@ -112,6 +111,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         if (!$pickupDelivery = $this->getPickupDelivery()) {
             return $result;
         }
+
+        $storage = clone $this->orderStorageService->getStorage();
+        $storage->setPartialGet(true);
+        $canGetPartial = $this->orderService->canGetPartial($storage, $pickupDelivery);
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
@@ -145,20 +148,18 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $shopCount = 0;
             foreach ($bestShops as $store) {
                 $fullResult = (clone $pickupDelivery)->setSelectedStore($store);
+
+                [$available, $delayed] = $this->orderService->splitStockResult($storage, $pickupDelivery);
                 if (!$fullResult->isSuccess()) {
                     continue;
                 }
                 $shopCount++;
-                $partialResult = (clone $fullResult)->setStockResult($fullResult->getStockResult()->getAvailable());
+                $partialResult = (clone $fullResult)->setStockResult($available);
 
                 $metro = $store->getMetro();
                 $address = !empty($metro)
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
-
-                /** @var StockResultCollection $available */
-                $available = $partialResult->getStockResult();
-                $delayed = $fullResult->getStockResult()->getDelayed();
 
                 $partsDelayed = [];
                 /** @var StockResult $item */
@@ -189,6 +190,14 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     $orderType = 'delay';
                 }
 
+                if ($canGetPartial) {
+                    $price = $available->isEmpty() ?
+                        $fullResult->getStockResult()->getPrice() :
+                        $available->getPrice();
+                } else {
+                    $price = $fullResult->getStockResult()->getPrice();
+                }
+
                 $result['items'][] = [
                     'id' => $store->getXmlId(),
                     'adress' => $address,
@@ -214,9 +223,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'order' => $orderType,
                     'parts_available' => $partsAvailable,
                     'parts_delayed' => $partsDelayed,
-                    'price' => $available->isEmpty() ?
-                        WordHelper::numberFormat($fullResult->getStockResult()->getPrice()) :
-                        WordHelper::numberFormat($available->getPrice()),
+                    'price' => WordHelper::numberFormat($price),
                     'full_price' => WordHelper::numberFormat($fullResult->getStockResult()->getPrice()),
                     /* @todo поменять местами gps_s и gps_n */
                     'gps_n' => $store->getLongitude(),

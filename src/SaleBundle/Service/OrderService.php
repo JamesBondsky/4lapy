@@ -28,6 +28,7 @@ use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
@@ -679,6 +680,7 @@ class OrderService implements LoggerAwareInterface
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
      * @return bool
      */
@@ -691,7 +693,7 @@ class OrderService implements LoggerAwareInterface
              * Для самовывоза DPD разделения заказов нет
              */
             if (!$delivery instanceof DpdPickupResult) {
-                [$available, $delayed] = $this->splitStockResult($storage, $delivery->getStockResult());
+                [$available, $delayed] = $this->splitStockResult($storage, $delivery);
 
                 $result = !$available->isEmpty() && !$delayed->isEmpty();
             }
@@ -719,6 +721,7 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderSplitException
      * @throws StoreNotFoundException
      * @throws UserMessageException
+     * @throws SystemException
      * @return OrderSplitResult[]
      */
     public function splitOrder(OrderStorage $storage): array
@@ -736,7 +739,7 @@ class OrderService implements LoggerAwareInterface
         $basket = $this->basketService->getBasket();
         $delivery = $this->orderStorageService->getSelectedDelivery($storage);
         /** @noinspection PhpUnusedLocalVariableInspection */
-        [$available, $delayed] = $this->splitStockResult($storage, $delivery->getStockResult());
+        [$available, $delayed] = $this->splitStockResult($storage, $delivery);
 
         try {
             /** @var Basket $basket1 */
@@ -1103,12 +1106,14 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param OrderStorage $storage
-     * @param StockResultCollection $stockResultCollection
+     * @param CalculationResultInterface $delivery
+     *
      * @return StockResultCollection[]
      */
-    protected function splitStockResult(OrderStorage $storage, StockResultCollection $stockResultCollection): array
+    public function splitStockResult(OrderStorage $storage, CalculationResultInterface $delivery): array
     {
-        if ($storage->isPartialGet() && $stockResultCollection->getByRequest()->isEmpty()) {
+        $stockResultCollection = $delivery->getStockResult();
+        if ($this->canGetPartial($storage, $delivery)) {
             $available = $stockResultCollection->getAvailable();
             $delayed = $stockResultCollection->getDelayed();
         } else {
@@ -1117,5 +1122,25 @@ class OrderService implements LoggerAwareInterface
         }
 
         return [$available, $delayed];
+    }
+
+    /**
+     * Возможно ли частичное получение заказа
+     *
+     * @param OrderStorage $storage
+     * @param CalculationResultInterface $delivery
+     *
+     * @return bool
+     */
+    public function canGetPartial(OrderStorage $storage, CalculationResultInterface $delivery): bool
+    {
+        $result = false;
+        if ($delivery->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE &&
+            $storage->isPartialGet() &&
+            $delivery->getStockResult()->getByRequest()->isEmpty()
+        ) {
+            $result = true;
+        }
+        return $result;
     }
 }
