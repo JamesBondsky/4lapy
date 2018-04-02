@@ -129,13 +129,14 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getFiltersToShow() as $filter) {
+                    foreach ($filterCollection->getIterator() as $filter) {
+                        if (!($filter instanceof ActionsFilter)) {
+                            continue;
+                        }
                         if (!$filter->hasAvailableVariants()) {
                             continue;
                         }
-                        if (!($filter instanceof ActionsFilter)) {
-                            continue;
-                        } ?>
+                         ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
