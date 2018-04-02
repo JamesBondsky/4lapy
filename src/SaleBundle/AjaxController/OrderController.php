@@ -152,7 +152,8 @@ class OrderController extends Controller
         }
 
         $delivery->setDateOffset($date);
-        $intervals = $delivery->getAvailableIntervals();
+        $intervals = $delivery->getAvailableIntervals($date);
+
         /** @var Interval $interval */
         foreach ($intervals as $i => $interval) {
             $result[] = [
@@ -279,6 +280,9 @@ class OrderController extends Controller
             if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
                 $url->setPath('/sale/payment/');
                 $url->addParams(['ORDER_ID' => $order->getId()]);
+                if (!$this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')->getValue()) {
+                    $url->addParams(['PAY' => 'Y']);
+                }
             }
         }
 

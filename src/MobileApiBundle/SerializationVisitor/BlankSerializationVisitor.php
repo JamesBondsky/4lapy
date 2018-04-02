@@ -10,12 +10,16 @@ use JMS\Serializer\Context;
 use JMS\Serializer\JsonSerializationVisitor;
 use JMS\Serializer\Metadata\PropertyMetadata;
 
+/**
+ * Class BlankSerializationVisitor
+ * @package FourPaws\MobileApiBundle\SerializationVisitor
+ */
 class BlankSerializationVisitor extends JsonSerializationVisitor
 {
     /**
      * {@inheritDoc}
      */
-    public function visitProperty(PropertyMetadata $metadata, $data, Context $context)
+    public function visitProperty(PropertyMetadata $metadata, $data, Context $context): void
     {
         parent::visitProperty($metadata, $data, $context);
         $k = $this->namingStrategy->translateName($metadata);
@@ -24,6 +28,14 @@ class BlankSerializationVisitor extends JsonSerializationVisitor
         }
     }
 
+    /**
+     *
+     *
+     * @param string $k
+     * @param array $type
+     * @param Context $context
+     *
+     */
     protected function setBlankValue(string $k, array $type, Context $context)
     {
         switch ($type['name']) {

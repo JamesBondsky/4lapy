@@ -143,6 +143,12 @@ class InnerPickupHandler extends DeliveryHandlerBase
             $stockResult = static::getStocks($basket, $offers, $availableStores, $stockResult);
         }
 
+        if ($stockResult->getAvailable()->isEmpty() && $stockResult->getDelayed()->isEmpty()) {
+            $result->addError(new Error('Товары не в наличии'));
+
+            return $result;
+        }
+
         $data = [
             'STOCK_RESULT' => $stockResult,
             'INTERVALS' => $this->getIntervals($shipment)

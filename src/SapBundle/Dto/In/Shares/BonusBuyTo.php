@@ -6,7 +6,10 @@
 
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
+use Bitrix\Iblock\ElementTable;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -14,7 +17,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\SapBundle\Dto\In\Shares
  */
-class BonusBuyTo
+class BonusBuyTo implements BonusBuyGroupInterface
 {
     /**
      * Содержит количество единиц подарка.
@@ -101,18 +104,18 @@ class BonusBuyTo
     }
 
     /**
-     * @return bool
+     * @return float
      */
-    public function isPercent(): bool
+    public function getPercent(): float
     {
         return $this->percent;
     }
 
     /**
-     * @param bool $percent
+     * @param float $percent
      * @return BonusBuyTo
      */
-    public function setPercent(bool $percent): BonusBuyTo
+    public function setPercent(float $percent): BonusBuyTo
     {
         $this->percent = $percent;
 
@@ -137,5 +140,53 @@ class BonusBuyTo
         $this->bonusBuyTotems = $bonusBuyTotems;
 
         return $this;
+    }
+
+    /**
+     * Возвращает массив XML_ID, пришедших в импорте
+     *
+     * @return array
+     */
+    public function getProductXmlIds(): array
+    {
+        $result = [];
+
+        if (!empty($this->bonusBuyTotems) && $this->bonusBuyTotems->count() >= 1) {
+
+            $result = $this->bonusBuyTotems->map(function (BonusBuyToItem $item) {
+                return $item->getOfferId();
+            })->toArray();
+
+            $result = array_filter($result);
+        }
+        return $result;
+    }
+
+    /**
+     * Возвращает массив ID предложений, существующих на сайте
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     *
+     * @return array
+     */
+    public function getProductIds(): array
+    {
+        $result = [];
+
+        if ($xmlIds = $this->getProductXmlIds()) {
+            $res = ElementTable::getList([
+                'select' => ['ID'],
+                'filter' => [
+                    '=XML_ID' => $xmlIds,
+                    '=IBLOCK.CODE' => IblockCode::OFFERS,
+                    '=IBLOCK.TYPE.ID' => IblockType::CATALOG,
+                ],
+            ]);
+            while ($elem = $res->fetch()) {
+                $result[] = $elem['ID'];
+            }
+            $result = array_filter($result);
+        }
+        return $result;
     }
 }

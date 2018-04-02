@@ -55,9 +55,9 @@ switch ($pickup['PERIOD_TYPE']) {
                 ); ?>
             <?php } ?>
         <?php } else { ?>
-            В течение <?= $pickup['PERIOD_FROM'] ?>&nbsp;<?php WordHelper::declension(
+            В течение <?= $pickup['PERIOD_FROM'] ?>&nbsp;<?= WordHelper::declension(
                 $pickup['PERIOD_FROM'],
-                ['день', 'дня', 'дней']
+                ['дня', 'дней', 'дней']
             ) ?>
         <?php } ?>
     </div>

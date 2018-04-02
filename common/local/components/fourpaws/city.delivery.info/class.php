@@ -107,7 +107,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         /** @var City $defaultCity */
         $defaultCity = $this->locationService->getDefaultCity();
 
-        if ($defaultLocation['CODE'] === $currentLocation['CODE']) {
+        if ($this->isDefaultLocation($currentLocation['CODE'])) {
             $currentDeliveryResult = $defaultDeliveryResult;
             $currentPickupResult = $defaultPickupResult;
             $currentCity = $defaultCity;
@@ -134,15 +134,15 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $this->arResult = [
             'CURRENT' => [
                 'LOCATION' => $currentLocation,
-                'CITY'     => [
-                    'NAME'  => $currentCity->getName(),
+                'CITY' => [
+                    'NAME' => $currentCity->getName(),
                     'PHONE' => PhoneHelper::formatPhone($currentCity->getPhone()),
                 ],
             ],
             'DEFAULT' => [
                 'LOCATION' => $defaultLocation,
-                'CITY'     => [
-                    'NAME'  => $defaultCity->getName(),
+                'CITY' => [
+                    'NAME' => $defaultCity->getName(),
                     'PHONE' => PhoneHelper::formatPhone($defaultCity->getPhone()),
                 ],
             ],
@@ -150,30 +150,30 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
         if ($currentDeliveryResult) {
             $this->arResult['CURRENT']['DELIVERY'] = [
-                'PRICE'       => $currentDeliveryResult->getPrice(),
-                'FREE_FROM'   => $currentDeliveryResult->getFreeFrom(),
-                'INTERVALS'   => $currentDeliveryResult->getIntervals(),
+                'PRICE' => $currentDeliveryResult->getPrice(),
+                'FREE_FROM' => $currentDeliveryResult->getFreeFrom(),
+                'INTERVALS' => $currentDeliveryResult->getIntervals(),
                 'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $currentDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
-                'CODE'        => $currentDeliveryResult->getDeliveryCode(),
+                'CODE' => $currentDeliveryResult->getDeliveryCode(),
             ];
         }
 
         if ($defaultDeliveryResult) {
             $this->arResult['DEFAULT']['DELIVERY'] = [
-                'PRICE'       => $defaultDeliveryResult->getPrice(),
-                'FREE_FROM'   => $defaultDeliveryResult->getFreeFrom(),
-                'INTERVALS'   => $defaultDeliveryResult->getIntervals(),
+                'PRICE' => $defaultDeliveryResult->getPrice(),
+                'FREE_FROM' => $defaultDeliveryResult->getFreeFrom(),
+                'INTERVALS' => $defaultDeliveryResult->getIntervals(),
                 'PERIOD_FROM' => $defaultDeliveryResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $defaultDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
-                'CODE'        => $defaultDeliveryResult->getDeliveryCode(),
+                'CODE' => $defaultDeliveryResult->getDeliveryCode(),
             ];
         }
 
         if ($currentPickupResult) {
             $this->arResult['CURRENT']['PICKUP'] = [
-                'PRICE'       => $currentPickupResult->getPrice(),
-                'CODE'        => $currentPickupResult->getDeliveryCode(),
+                'PRICE' => $currentPickupResult->getPrice(),
+                'CODE' => $currentPickupResult->getDeliveryCode(),
                 'PERIOD_FROM' => $currentPickupResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $currentPickupResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
             ];
@@ -181,8 +181,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
         if ($defaultPickupResult) {
             $this->arResult['DEFAULT']['PICKUP'] = [
-                'PRICE'       => $defaultPickupResult->getPrice(),
-                'CODE'        => $defaultPickupResult->getDeliveryCode(),
+                'PRICE' => $defaultPickupResult->getPrice(),
+                'CODE' => $defaultPickupResult->getDeliveryCode(),
                 'PERIOD_FROM' => $defaultPickupResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $defaultPickupResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
             ];
@@ -242,5 +242,14 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         );
 
         return reset($filtered);
+    }
+
+    /**
+     * @param string $code
+     * @return bool
+     */
+    protected function isDefaultLocation(string $code): bool
+    {
+        return $code === $this->locationService->getDefaultLocation()['CODE'];
     }
 }
