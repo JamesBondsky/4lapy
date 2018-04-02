@@ -18,18 +18,18 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -42,6 +42,7 @@ use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -157,8 +158,7 @@ class OrderService implements LoggerAwareInterface
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider
-    )
-    {
+    ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -1087,5 +1087,78 @@ class OrderService implements LoggerAwareInterface
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
+    }
+
+    /**
+     * @param Order $order
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function processPaymentError(Order $order): void
+    {
+        /** @todo костыль */
+        if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => static::PAYMENT_CASH]])->fetch()) {
+            $this->log()->error('cash payment not found');
+            return;
+        }
+        $paySystemId = $payment['ID'];
+        $sapConsumer = Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
+        $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer) {
+            try {
+                $payment = $this->getOrderPayment($order);
+                $payment->setField('PAY_SYSTEM_ID', $paySystemId);
+                $paySystem = $payment->getPaySystem();
+                $payment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+                $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
+                if ($commWay->getValue() !== OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS) {
+                    $commWay->setValue(OrderPropertyService::COMMUNICATION_PHONE);
+                }
+                $order->save();
+                /** @todo костыль */
+                $sapConsumer->consume(Order::load($order->getId()));
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [
+                    'order' => $order->getId()
+                ]);
+            }
+        };
+
+        $updateOrder($order);
+        if ($this->hasRelatedOrder($order)) {
+            $relatedOrder = $this->getRelatedOrder($order);
+            if (!$relatedOrder->isPaid()) {
+                $updateOrder($relatedOrder);
+            }
+        }
+    }
+
+    public function hasRelatedOrder(Order $order): bool
+    {
+        return (int)$this->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')->getValue() > 0;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws NotFoundException
+     * @return Order
+     */
+    public function getRelatedOrder(Order $order): Order
+    {
+        $relatedOrder = Order::load(
+            (int)$this->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')->getValue()
+        );
+
+        if (!$relatedOrder instanceof Order) {
+            throw new NotFoundException(sprintf('Related order for order %s not found', $order->getId()));
+        }
+
+        return $relatedOrder;
     }
 }

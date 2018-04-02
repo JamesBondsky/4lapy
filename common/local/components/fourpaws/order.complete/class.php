@@ -134,10 +134,8 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 $user ? $user->getId() : null,
                 $this->arParams['HASH']
             );
-            $relatedOrderId = $this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')
-                ->getValue();
-            if ($relatedOrderId) {
-                $relatedOrder = $this->orderService->getOrderById($relatedOrderId, false);
+            if ($this->orderService->hasRelatedOrder($order)) {
+                $relatedOrder = $this->orderService->getRelatedOrder($order);
                 if ($relatedOrder->getId() < $order->getId()) {
                     $tmp = $relatedOrder;
                     $relatedOrder = $order;

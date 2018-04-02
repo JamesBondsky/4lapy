@@ -64,10 +64,8 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
                     $userId,
                     $this->arParams['HASH']
                 );
-                $relatedOrderId = $this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')
-                    ->getValue();
-                if ($relatedOrderId) {
-                    $relatedOrder = $this->orderService->getOrderById($relatedOrderId, false);
+                if ($this->orderService->hasRelatedOrder($order)) {
+                    $relatedOrder = $this->orderService->getRelatedOrder($order);
                 }
             } catch (NotFoundException $e) {
                 Tools::process404('', true, true, true);
@@ -102,8 +100,6 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
                 $this->includeResultFile($actionFile);
 
                 $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
-
-                $path = '/sale/order/complete/' . $order->getId();
                 if ($relatedOrder && !$relatedOrder->isPaid()) {
                     $url->setPath('/sale/payment');
                     $url->addParams(['ORDER_ID' => $order->getId()]);
@@ -119,6 +115,8 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
 
                 LocalRedirect($url->getUri());
             } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
+                $this->orderService->processPaymentError($order);
+                $this->arResult['ERRORS'][] = $e->getMessage();
             }
         } catch (\Exception $e) {
             try {
