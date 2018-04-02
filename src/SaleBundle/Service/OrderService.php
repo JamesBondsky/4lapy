@@ -139,13 +139,13 @@ class OrderService implements LoggerAwareInterface
     /**
      * OrderService constructor.
      *
-     * @param AddressService $addressService
-     * @param BasketService $basketService
-     * @param CurrentUserProviderInterface $currentUserProvider
-     * @param DeliveryService $deliveryService
-     * @param StoreService $storeService
-     * @param OrderStorageService $orderStorageService
-     * @param UserCitySelectInterface $userCityProvider
+     * @param AddressService                    $addressService
+     * @param BasketService                     $basketService
+     * @param CurrentUserProviderInterface      $currentUserProvider
+     * @param DeliveryService                   $deliveryService
+     * @param StoreService                      $storeService
+     * @param OrderStorageService               $orderStorageService
+     * @param UserCitySelectInterface           $userCityProvider
      * @param UserRegistrationProviderInterface $userRegistrationProvider
      */
     public function __construct(
@@ -157,8 +157,7 @@ class OrderService implements LoggerAwareInterface
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider
-    )
-    {
+    ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -174,10 +173,10 @@ class OrderService implements LoggerAwareInterface
     /**
      * Получение заказа по id
      *
-     * @param int $id id заказа
-     * @param bool $check выполнять ли проверки
-     * @param int $userId id пользователя, к которому привязан заказ
-     * @param string $hash хеш заказа (проверяется, если не передан userId)
+     * @param int    $id     id заказа
+     * @param bool   $check  выполнять ли проверки
+     * @param int    $userId id пользователя, к которому привязан заказ
+     * @param string $hash   хеш заказа (проверяется, если не передан userId)
      *
      * @throws NotFoundException
      * @throws ArgumentNullException
@@ -208,7 +207,7 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param OrderStorage $storage
-     * @param Basket|null $basket
+     * @param Basket|null  $basket
      * @param CalculationResultInterface|null
      *
      * @return Order
@@ -255,120 +254,118 @@ class OrderService implements LoggerAwareInterface
          * Задание способов доставки
          */
         $propertyValueCollection = $order->getPropertyCollection();
-        if ($storage->getDeliveryId()) {
-            $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
-            if (!$locationProp) {
-                throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
+        $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
+        if (!$locationProp) {
+            throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
+        }
+        $locationProp->setValue($selectedCity['CODE']);
+
+        $selectedDelivery->setDateOffset($storage->getDeliveryDate());
+        if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+            /** @var Interval $interval */
+            if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
+                $selectedDelivery->setSelectedInterval($interval);
             }
-            $locationProp->setValue($selectedCity['CODE']);
+        }
 
-            $selectedDelivery->setDateOffset($storage->getDeliveryDate());
-            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
-                /** @var Interval $interval */
-                if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
-                    $selectedDelivery->setSelectedInterval($interval);
-                }
-            }
+        if ($this->deliveryService->isDelivery($selectedDelivery)) {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
+        }
 
-            if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                /** @noinspection PhpInternalEntityUsedInspection */
-                $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
-            }
-
-            $shipmentCollection = $order->getShipmentCollection();
-            $shipment = $shipmentCollection->createItem();
-            $shipmentItemCollection = $shipment->getShipmentItemCollection();
-            try {
-                /** @var BasketItem $item */
-                foreach ($order->getBasket() as $item) {
-                    $shipmentItem = $shipmentItemCollection->createItem($item);
-                    $shipmentItem->setQuantity($item->getQuantity());
-                }
-
-                $shipment->setFields(
-                    [
-                        'DELIVERY_ID' => $selectedDelivery->getDeliveryId(),
-                        'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
-                        'CURRENCY' => $order->getCurrency(),
-                        'PRICE_DELIVERY' => $selectedDelivery->getPrice(),
-                        'CUSTOM_PRICE_DELIVERY' => 'Y',
-                    ]
-                );
-            } catch (\Exception $e) {
-                $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
-                    'deliveryId' => $selectedDelivery->getDeliveryId(),
-                ]);
-                throw new OrderCreateException('Ошибка при создании отгрузки');
+        $shipmentCollection = $order->getShipmentCollection();
+        $shipment = $shipmentCollection->createItem();
+        $shipmentItemCollection = $shipment->getShipmentItemCollection();
+        try {
+            /** @var BasketItem $item */
+            foreach ($order->getBasket() as $item) {
+                $shipmentItem = $shipmentItemCollection->createItem($item);
+                $shipmentItem->setQuantity($item->getQuantity());
             }
 
-            $shipmentCollection->calculateDelivery();
+            $shipment->setFields(
+                [
+                    'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME'         => $selectedDelivery->getDeliveryName(),
+                    'CURRENCY'              => $order->getCurrency(),
+                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
+                ]
+            );
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
+                'deliveryId' => $selectedDelivery->getDeliveryId(),
+            ]);
+            throw new OrderCreateException('Ошибка при создании отгрузки');
+        }
 
-            $deliveryDate = $selectedDelivery->getDeliveryDate();
+        $shipmentCollection->calculateDelivery();
 
-            /**
-             * Задание свойств заказа, связанных с доставкой
-             */
-            /** @var PropertyValue $propertyValue */
-            foreach ($propertyValueCollection as $propertyValue) {
-                $code = $propertyValue->getProperty()['CODE'];
-                switch ($code) {
-                    case 'SHIPMENT_PLACE_CODE':
-                        $shipmentResult = $selectedDelivery->getShipmentResult();
-                        if ($shipmentResult instanceof DeliveryScheduleResult) {
-                            $value = $shipmentResult->getSchedule()->getSenderCode();
-                        } else {
-                            continue 2;
-                        }
-                        break;
-                    case 'DELIVERY_PLACE_CODE':
-                        if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
-                            $value = $storage->getDeliveryPlaceCode();
-                        } else {
-                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
-                        }
-                        break;
-                    case 'DPD_TERMINAL_CODE':
-                        if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
-                            continue 2;
-                        }
-                        $value = $storage->getDeliveryPlaceCode();
-                        break;
-                    case 'DELIVERY_DATE':
-                        $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
-                        break;
-                    case 'DELIVERY_INTERVAL':
-                        /**
-                         * У доставок есть выбор интервала доставки
-                         */
-                        if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if ($interval = $selectedDelivery->getSelectedInterval()) {
-                                $value = sprintf(
-                                    '%s:00-%s:00',
-                                    str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
-                                    str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
-                                );
-                            } else {
-                                continue 2;
-                            }
-                        } else {
-                            $value = sprintf(
-                                '%s:00-23:59',
-                                $deliveryDate->format('H')
-                            );
-                        }
+        $deliveryDate = $selectedDelivery->getDeliveryDate();
 
-                        break;
-                    case 'REGION_COURIER_FROM_DC':
-                        $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
-                            ? BitrixUtils::BX_BOOL_FALSE
-                            : BitrixUtils::BX_BOOL_TRUE;
-                        break;
-                    default:
+        /**
+         * Задание свойств заказа, связанных с доставкой
+         */
+        /** @var PropertyValue $propertyValue */
+        foreach ($propertyValueCollection as $propertyValue) {
+            $code = $propertyValue->getProperty()['CODE'];
+            switch ($code) {
+                case 'SHIPMENT_PLACE_CODE':
+                    $shipmentResult = $selectedDelivery->getShipmentResult();
+                    if ($shipmentResult instanceof DeliveryScheduleResult) {
+                        $value = $shipmentResult->getSchedule()->getSenderCode();
+                    } else {
                         continue 2;
-                }
+                    }
+                    break;
+                case 'DELIVERY_PLACE_CODE':
+                    if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                        $value = $storage->getDeliveryPlaceCode();
+                    } else {
+                        $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                    }
+                    break;
+                case 'DPD_TERMINAL_CODE':
+                    if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
+                        continue 2;
+                    }
+                    $value = $storage->getDeliveryPlaceCode();
+                    break;
+                case 'DELIVERY_DATE':
+                    $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
+                    break;
+                case 'DELIVERY_INTERVAL':
+                    /**
+                     * У доставок есть выбор интервала доставки
+                     */
+                    if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                        if ($interval = $selectedDelivery->getSelectedInterval()) {
+                            $value = sprintf(
+                                '%s:00-%s:00',
+                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
+                            );
+                        } else {
+                            continue 2;
+                        }
+                    } else {
+                        $value = sprintf(
+                            '%s:00-23:59',
+                            $deliveryDate->format('H')
+                        );
+                    }
 
-                $propertyValue->setValue($value);
+                    break;
+                case 'REGION_COURIER_FROM_DC':
+                    $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
+                        ? BitrixUtils::BX_BOOL_FALSE
+                        : BitrixUtils::BX_BOOL_TRUE;
+                    break;
+                default:
+                    continue 2;
             }
+
+            $propertyValue->setValue($value);
         }
 
         /**
@@ -396,7 +393,7 @@ class OrderService implements LoggerAwareInterface
                 }
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()), [
-                    'userId' => $storage->getUserId(),
+                    'userId'  => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
                 ]);
                 throw new OrderCreateException('Bonus payment failed');
@@ -411,7 +408,7 @@ class OrderService implements LoggerAwareInterface
                 $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('order payment failed: %s', $e->getMessage()), [
-                    'userId' => $storage->getUserId(),
+                    'userId'  => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
                 ]);
                 throw new OrderCreateException('Order payment failed');
@@ -453,7 +450,7 @@ class OrderService implements LoggerAwareInterface
             'BUILDING',
             'APARTMENT',
             'PORCH',
-            'FLOOR'
+            'FLOOR',
         ];
         $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery);
 
@@ -505,9 +502,9 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order        $order
      * @param OrderStorage $storage
-     * @param bool $fastOrder
+     * @param bool         $fastOrder
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -600,7 +597,7 @@ class OrderService implements LoggerAwareInterface
                 /* нужно для expertsender */
                 /** пароль еще нужен для смс быстрого заказа */
                 $_SESSION['NEW_USER'] = [
-                    'LOGIN' => $storage->getPhone(),
+                    'LOGIN'    => $storage->getPhone(),
                     'PASSWORD' => $password,
                 ];
 
@@ -646,15 +643,15 @@ class OrderService implements LoggerAwareInterface
                 $storage->setAddressId($address->getId());
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
-                    'city' => $address->getCity(),
+                    'city'     => $address->getCity(),
                     'location' => $address->getCityLocation(),
-                    'userId' => $address->getUserId(),
-                    'street' => $address->getStreet(),
-                    'house' => $address->getHouse(),
-                    'housing' => $address->getHousing(),
+                    'userId'   => $address->getUserId(),
+                    'street'   => $address->getStreet(),
+                    'house'    => $address->getHouse(),
+                    'housing'  => $address->getHousing(),
                     'entrance' => $address->getEntrance(),
-                    'floor' => $address->getFloor(),
-                    'flat' => $address->getFlat(),
+                    'floor'    => $address->getFloor(),
+                    'flat'     => $address->getFlat(),
                 ]);
             }
         }
@@ -666,11 +663,11 @@ class OrderService implements LoggerAwareInterface
             }
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
-            if($order->getId() > 0) {
+            if ($order->getId() > 0) {
                 Order::delete($order->getId());
             }
             $this->log()->error(sprintf('failed to create order: %s', $e->getMessage()), [
-                'fuserId' => $storage->getFuserId()
+                'fuserId' => $storage->getFuserId(),
             ]);
             throw new OrderCreateException('failed to save order');
         }
@@ -787,7 +784,7 @@ class OrderService implements LoggerAwareInterface
             }
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to update shipment price: %s', $e->getMessage()), [
-                'fuserId' => $storage->getFuserId()
+                'fuserId' => $storage->getFuserId(),
             ]);
         }
 
@@ -851,8 +848,8 @@ class OrderService implements LoggerAwareInterface
                     $order2->save();
                 } catch (\Exception $e) {
                     $this->log()->error('failed to set related order id', [
-                        'order' => $order2->getId(),
-                        'relatedOrder' => $order->getId()
+                        'order'        => $order2->getId(),
+                        'relatedOrder' => $order->getId(),
                     ]);
                 }
                 $this->setOrderPropertyByCode($order, 'RELATED_ORDER_ID', $order2->getId());
@@ -860,8 +857,8 @@ class OrderService implements LoggerAwareInterface
                     $order->save();
                 } catch (\Exception $e) {
                     $this->log()->error('failed to set related order id', [
-                        'order' => $order->getId(),
-                        'relatedOrder' => $order2->getId()
+                        'order'        => $order->getId(),
+                        'relatedOrder' => $order2->getId(),
                     ]);
                 }
             }
@@ -907,6 +904,7 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     *
      * @return string
      * @throws ObjectNotFoundException
      */
@@ -916,7 +914,7 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order  $order
      * @param string $code
      *
      * @throws NotFoundException
@@ -935,9 +933,9 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order  $order
      * @param string $code
-     * @param $value
+     * @param        $value
      */
     public function setOrderPropertyByCode(Order $order, string $code, $value): void
     {
