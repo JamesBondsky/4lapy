@@ -2,13 +2,17 @@
 
 namespace FourPaws\Enum;
 
+/**
+ * Class IblockType
+ * @package FourPaws\Enum
+ */
 class IblockType
 {
-    const CATALOG     = 'catalog';
-    
-    const MENU        = 'menu';
-    
-    const REFERENCE_BOOKS = 'reference_books';
-    
-    const PUBLICATION = 'publications';
+    public const CATALOG = 'catalog';
+
+    public const MENU = 'menu';
+
+    public const REFERENCE_BOOKS = 'reference_books';
+
+    public const PUBLICATION = 'publications';
 }

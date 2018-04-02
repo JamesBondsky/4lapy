@@ -170,6 +170,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                         'min' => 'минимальное значение', //+
                         'max' => 'максимальное значение',
                         'sum' => 'сумма',
+                        'single' => 'одно',
                     ],
                     'defaultText' => 'минимальное значение',
                     'defaultValue' => 'min',
@@ -208,17 +209,6 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
     /**
      *
      * @param $arOneCondition
-     *
-     * @return array|bool|string
-     */
-    public static function Parse($arOneCondition)
-    {
-        return parent::Parse($arOneCondition);
-    }
-
-    /**
-     *
-     * @param $arOneCondition
      * @param $arParams
      * @param $arControl
      * @param array|bool $arSubs
@@ -229,31 +219,25 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
     public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false): string
     {
         $result = '';
+
+        /**
+         * @todo обработать все варианты параметров
+         */
         if (
-            /**
-             * @todo обработать все варианты параметров
-             */
             $arOneCondition['Filtration_operator'] === 'separate'
-            && $arOneCondition['Count_operator'] === 'min'
-            && \is_array($arSubs) && \count($arSubs) === 1
+            && \in_array($arOneCondition['Count_operator'], ['min', 'max', 'single'], true)
+            && \is_array($arSubs) && \count($arSubs) >= 1
         ) {
-            $result = '$originalOrder = ' . $arParams['ORDER'] . ';' . PHP_EOL;
-            $result .= '$applyCount = ' . current($arSubs) . PHP_EOL;
-            $result .= static::class . '::apply(' . $arParams['ORDER'] . ', ';
-            $result .= var_export($arOneCondition['Value'], true) . ',$applyCount);' . PHP_EOL;
-            $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
-        } elseif (
-            $arOneCondition['Filtration_operator'] === 'separate'
-            && $arOneCondition['Count_operator'] === 'min'
-            && \is_array($arSubs) && \count($arSubs) > 1
-        ) {
+            if($arOneCondition['Count_operator'] === 'single') {
+                $arOneCondition['Count_operator'] = '(int)(bool)min';
+            }
             $result = '$counts = []; $i = 0; $originalOrder = ' . $arParams['ORDER'] . ';' . PHP_EOL;
             foreach ($arSubs as $sub) {
                 $result .= '$counts[$i][\'cnt\'] = ' . $sub . PHP_EOL;
                 $result .= '$counts[$i++][\'res\'] = ' . $arParams['ORDER'] . ';' . PHP_EOL;
                 $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
             }
-            $result .= '$applyCount = min(array_column($counts, \'cnt\'));' . PHP_EOL;
+            $result .= '$applyCount = ' . $arOneCondition['Count_operator'] . '(array_column($counts, \'cnt\'));' . PHP_EOL;
             $result .= 'foreach($counts as $k => $elem) {' . PHP_EOL;
             $result .= '    ' . $arParams['ORDER'] . ' = $elem[\'res\'];' . PHP_EOL;
             $result .= '    ' . static::class . '::apply(' . $arParams['ORDER'] . ', ';

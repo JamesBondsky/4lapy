@@ -18,11 +18,32 @@ if (!$basketItemId = $basketItem->getId()) {
         $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
     }
 }
-
+$promoLink = $component->getPromoLink($basketItem);
 $image = $component->getImage($basketItem->getProductId());
 $templateData['OFFERS'][$offer->getId().'_'.$basketItem->getQuantity()] = $offer;
 $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
 <div class="b-item-shopping js-remove-shopping">
+    <?php
+    if(\is_array($promoLink) && !empty($promoLink)) {
+        foreach ($promoLink as $oneLink) {
+            ?>
+            <div class="b-gift-order b-gift-order--shopping js-open-gift">
+                <div class="b-gift-order__info">
+                    <span class="b-gift-order__text">Товар участвует в акции
+                        <span class="b-icon b-icon--shopping-gift js-icon-shopping-gift">
+                            <?= new SvgDecorator('icon-arrow-down', 10, 6); ?>
+                        </span>
+                        <span class="b-gift-order__dash js-dash">- </span>
+                        <span class="b-gift-order__text-additional js-dropdown-gift">
+                            <?= $oneLink['name']; ?>
+                        </span>
+                    </span>
+                </div>
+            </div>
+    <?php
+        }
+    }
+    ?>
     <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
     <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
         <?php if (null !== $image) { ?>
