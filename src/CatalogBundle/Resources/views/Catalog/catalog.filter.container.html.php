@@ -94,7 +94,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </a>
     </div>
 </aside>
-<main class="b-catalog__main" role="main">
+<main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
         <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
            href="javascript:void(0);"

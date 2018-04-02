@@ -2,6 +2,8 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
+use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -34,9 +36,20 @@ class CityController extends Controller
      */
     public function setAction(Request $request): JsonResponse
     {
-        $code = $request->request->get('code') ?? '';
-        $name = $request->request->get('name') ?? '';
-        $regionName = $request->request->get('region_name') ?? '';
+        $code = $request->get('code');
+        if(\is_array($code)){
+            $dadataLocationAdapter = new DaDataLocationAdapter();
+            /** @var BitrixLocation $bitrixLocation */
+            $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
+
+            $code = $bitrixLocation->getCode();
+            $name = $bitrixLocation->getName();
+            $regionName = $bitrixLocation->getRegion();
+        } else {
+            $code = $request->request->get('code') ?? '';
+            $name = $request->request->get('name') ?? '';
+            $regionName = $request->request->get('region_name') ?? '';
+        }
 
         try {
             $city = $this->userService->setSelectedCity($code, $name, $regionName);
@@ -54,7 +67,7 @@ class CityController extends Controller
      *
      * @return JsonResponse
      */
-    public function getAction(Request $request) : JsonResponse
+    public function getAction(Request $request): JsonResponse
     {
         try {
             $city = $this->userService->getSelectedCity();

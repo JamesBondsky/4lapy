@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -24,8 +24,11 @@ $deliveryService = Application::getInstance()->getContainer()->get('delivery.ser
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-/** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $selectedDelivery */
+/** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
+if (!empty($arResult['SPLIT_RESULT'])) {
+    $selectedDelivery = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
+}
 
 /** @var BasketBase $basket */
 $basket = $arResult['BASKET'];
@@ -45,15 +48,9 @@ foreach ($payments as $i => $payment) {
     }
 }
 
-/**
- * @todo фикс цены. Нужен до тех пор, пока не реализовано разделение заказов
- */
 $basketPrice = $basket->getPrice();
-if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
-    $basketPrice = $selectedDelivery->getStockResult()
-                                    ->filterByStore($arResult['SELECTED_SHOP'])
-                                    ->getAvailable()
-                                    ->getPrice();
+if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
+    $basketPrice = $arResult['PARTIAL_PICKUP']->getStockResult()->getPrice();
 }
 
 /** @var User $user */

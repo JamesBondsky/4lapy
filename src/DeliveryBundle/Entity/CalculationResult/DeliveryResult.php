@@ -7,7 +7,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 
@@ -16,7 +15,6 @@ class DeliveryResult extends BaseResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      */
     public function doCalculateDeliveryDate(): void
@@ -63,7 +61,6 @@ class DeliveryResult extends BaseResult
 
     /**
      * @return int
-     * @throws NotFoundException
      * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws StoreNotFoundException

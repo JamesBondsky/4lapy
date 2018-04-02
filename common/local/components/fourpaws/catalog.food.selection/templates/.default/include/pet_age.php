@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
-<div class="b-quest b-quest--step-<?= $nextStep ?> js-quest js-quest--step-<?= $nextStep ?> <?=$required ? ' js-block-required' : ''?>" style="display: block">
+<div class="b-quest js-quest <?=$required ? ' js-block-required' : ''?>" style="display: block">
     <h4 class="b-quest__subtitle">Возраст</h4>
     <?php /** @var IblockSect $item */
     foreach ($sections as $key => $item) {

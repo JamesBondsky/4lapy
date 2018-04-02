@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
-<div class="b-quest b-quest--step-<?= $nextStep ?> js-quest js-quest--step-<?= $nextStep ?> <?=$required ? ' js-block-required' : ''?>" style="display: block">
+<div class="b-quest js-quest <?=$required ? ' js-block-required' : ''?>" style="display: block">
     <h4 class="b-quest__subtitle">Особенности</h4>
     <div class="b-select b-select--recall b-select--q-food">
         <select class="b-select__block b-select__block--recall b-select__block--q-food"
@@ -22,8 +22,7 @@ if (!\is_array($sections) || empty($sections)) {
                 data-select="<?= ++$_SESSION['SELECT_NUMBER'] ?>"
                 data-url="<?=$nextUrl?>"
             <?=$required ? ' required="required"' : ''?>>
-            <option disabled="disabled" selected="selected">--Не выбрано--</option>
-            <option value="0">Не важно</option>
+            <option value="0" <?=$val === 0 ? ' selected="selected"' : ''?>>Не важно</option>
             <?php /** @var IblockSect $item */
             foreach ($sections as $key => $item) {
                 ?>

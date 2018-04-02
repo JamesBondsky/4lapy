@@ -7,22 +7,28 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
-use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
 
 class NotificationService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     /**
      * @var OrderService
@@ -55,7 +61,7 @@ class NotificationService implements LoggerAwareInterface
      * @param SmsService $smsService
      * @param StoreService $storeService
      * @param ExpertsenderService $emailService
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function __construct(
         OrderService $orderService,
@@ -80,28 +86,30 @@ class NotificationService implements LoggerAwareInterface
             );
         }
 
-        $this->setLogger(LoggerFactory::create('sale_notification'));
+        $this->withLogName('sale_notification');
     }
 
     /**
      * @param Order $order
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
      */
     public function sendNewOrderMessage(Order $order): void
     {
-        try {
-            $this->orderService->getOnlinePayment($order);
-
+        /**
+         * Заказ не должен быть с оплатой "онлайн"
+         */
+        if ($this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
             return;
-        } catch (NotFoundException $e) {
-            // заказ не должен быть с оплатой "онлайн"
         }
 
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
             $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
-            $this->logger->error($e->getMessage());
+            $this->log()->error($e->getMessage());
         }
 
         $smsTemplate = null;
@@ -130,17 +138,21 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws ApplicationCreateException
      */
     public function sendOrderPaymentMessage(Order $order): void
     {
-        try {
-            $payment = $this->orderService->getOnlinePayment($order);
-        } catch (NotFoundException $e) {
+        /**
+         * Заказ должен быть с оплатой "онлайн"
+         */
+        if ($this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
             return;
         }
 
-        if (!$payment->isPaid()) {
+        if (!$this->orderService->getOrderPayment($order)->isPaid()) {
             return;
         }
 
@@ -148,7 +160,7 @@ class NotificationService implements LoggerAwareInterface
             $transactionId = $this->emailService->sendOrderNewEmail($order);
             $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
-            $this->logger->error($e->getMessage());
+            $this->log()->error($e->getMessage());
         }
         $parameters = $this->getOrderData($order);
         $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
@@ -173,8 +185,15 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function sendOrderStatusMessage(Order $order): void
     {
@@ -223,7 +242,7 @@ class NotificationService implements LoggerAwareInterface
                 }
                 $this->logMessage($order, $transactionId);
             } catch (ExpertsenderServiceException $e) {
-                $this->logger->error($e->getMessage());
+                $this->log()->error($e->getMessage());
             }
         }
 
@@ -296,7 +315,7 @@ class NotificationService implements LoggerAwareInterface
                 ];
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->log()->error($e->getMessage());
             return [];
         }
 
@@ -311,7 +330,7 @@ class NotificationService implements LoggerAwareInterface
     {
         $email = $this->orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue();
 
-        $this->logger->notice(
+        $this->log()->notice(
             sprintf(
                 'message %s for order %s sent successfully to %s',
                 $transactionId,

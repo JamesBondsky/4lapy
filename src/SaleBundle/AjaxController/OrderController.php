@@ -16,6 +16,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -133,7 +134,7 @@ class OrderController extends Controller
     {
         $result = [];
         $date = (int)$request->get('deliveryDate', 0);
-        $deliveries = $this->orderService->getDeliveries($this->orderStorageService->getStorage());
+        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         $delivery = null;
         foreach ($deliveries as $deliveryItem) {
             if (!$this->deliveryService->isDelivery($deliveryItem)) {
@@ -264,7 +265,7 @@ class OrderController extends Controller
 
         try {
             $order = $this->orderService->createOrder($storage);
-        } catch (OrderCreateException $e) {
+        } catch (OrderCreateException|OrderSplitException $e) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
@@ -281,9 +282,7 @@ class OrderController extends Controller
             }
         }
 
-        if (!$this->userAuthProvider->isAuthorized()) {
-            $url->addParams(['HASH' => $order->getHash()]);
-        }
+        $url->addParams(['HASH' => $order->getHash()]);
 
         return JsonSuccessResponse::create(
             '',
