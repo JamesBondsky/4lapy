@@ -15,6 +15,7 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
+use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Type\TextContent;
@@ -1718,7 +1719,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $this->normsOfUse;
     }
-    
+
     /**
      * Возвращает информацию, на основе которой Elasticsearch будет строить механизм автодополнения
      *
@@ -1857,20 +1858,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return array
-     */
-    public function getActions()
-    {
-        // @todo возвращать коллекцию акций, когда они будут реализованы
-        return [];
-    }
-
-    /**
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return bool
      */
     public function hasActions(): bool
     {
-        return !empty($this->getActions());
+        $result = false;
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            $result |= $offer->getOldPrice() > $offer->getPrice();
+        }
+
+        return $result;
     }
 
     /**
