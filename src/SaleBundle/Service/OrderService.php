@@ -1110,23 +1110,30 @@ class OrderService implements LoggerAwareInterface
         $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer) {
             try {
                 $payment = $this->getOrderPayment($order);
-                $payment->setField('PAY_SYSTEM_ID', $paySystemId);
-                $paySystem = $payment->getPaySystem();
-                $payment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+                if ($payment->isPaid() ||
+                    $payment->getPaySystem()->getField('CODE') !== OrderService::PAYMENT_ONLINE
+                ) {
+                    return;
+                }
+                $newPayment = $order->getPaymentCollection()->createItem();
+                $newPayment->setField('SUM', $payment->getSum());
+                $newPayment->setField('PAY_SYSTEM_ID', $paySystemId);
+                $paySystem = $newPayment->getPaySystem();
+                $newPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+                $payment->delete();
                 $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
                 if ($commWay->getValue() !== OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS) {
                     $commWay->setValue(OrderPropertyService::COMMUNICATION_PHONE);
                 }
+                $order->setFieldNoDemand('PAY_SYSTEM_ID', $paySystemId);
                 $order->save();
-                /** @todo костыль */
-                $sapConsumer->consume(Order::load($order->getId()));
+                $sapConsumer->consume($order);
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [
                     'order' => $order->getId()
                 ]);
             }
         };
-
         $updateOrder($order);
         if ($this->hasRelatedOrder($order)) {
             $relatedOrder = $this->getRelatedOrder($order);

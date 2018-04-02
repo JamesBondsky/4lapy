@@ -258,7 +258,7 @@ class OrderStorage
      * @Serializer\SerializedName("USER_DESCRIPTION2")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $secondComment;
+    protected $secondComment = '';
 
     /**
      * Код места доставки (или код терминала DPD)
