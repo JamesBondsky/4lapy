@@ -14,6 +14,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Internals\PaymentTable;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -110,7 +112,8 @@ class FastOrderController extends Controller
         $requestType = $request->get('type', 'basket');
         if ($requestType === 'card') {
             /** add to basket
-             @see \FourPaws\SaleBundle\AjaxController\BasketController */
+             * @see \FourPaws\SaleBundle\AjaxController\BasketController
+             */
             $offerId = (int)$request->get('offerId', 0);
             if ($offerId === 0) {
                 $offerId = (int)$request->get('offerid', 0);
@@ -120,13 +123,12 @@ class FastOrderController extends Controller
             try {
                 $this->basketService->addOfferToBasket($offerId, $quantity);
                 $addData = [
-                    'miniBasket' => $this->basketViewService->getMiniBasketHtml(true)
+                    'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 ];
 
             } catch (BaseExceptionInterface $e) {
                 return $this->ajaxMess->getSystemError();
-            }
-            catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
+            } catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
@@ -165,8 +167,10 @@ class FastOrderController extends Controller
         $name = $request->get('name', '');
 
         $orderStorage->setPhone($phone)
-                     ->setName($name)
-                     ->setFuserId($this->currentUserProvider->getCurrentFUserId());
+            ->setName($name)
+            ->setFuserId($this->currentUserProvider->getCurrentFUserId())
+            /** оплата наличными при доставке ставим всегда */
+            ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID']);
 
         if ($this->userAuthProvider->isAuthorized()) {
             try {
@@ -175,8 +179,7 @@ class FastOrderController extends Controller
                 $orderStorage->setUserId($user->getId());
             } catch (NotAuthorizedException $e) {
                 /** никогда не сработает */
-            }
-            catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error('Ошибка параметров - ' . $e->getMessage());
             }
