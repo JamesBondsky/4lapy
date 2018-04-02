@@ -117,7 +117,8 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
     {
         $hour = $result->getDeliveryDate()->format('G');
 
-        return ($hour >= $this->getFrom()) && ($hour < $this->getTo());
+        $to = ($this->getTo() === 0) ? 24 : $this->getTo();
+        return ($hour >= $this->getFrom()) && ($hour < $to);
     }
 
     /**

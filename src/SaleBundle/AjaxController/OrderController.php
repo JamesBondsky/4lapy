@@ -152,7 +152,8 @@ class OrderController extends Controller
         }
 
         $delivery->setDateOffset($date);
-        $intervals = $delivery->getAvailableIntervals();
+        $intervals = $delivery->getAvailableIntervals($date);
+
         /** @var Interval $interval */
         foreach ($intervals as $i => $interval) {
             $result[] = [
