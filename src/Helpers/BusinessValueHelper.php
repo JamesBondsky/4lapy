@@ -13,6 +13,8 @@ use Exception;
  */
 class BusinessValueHelper
 {
+    protected const DEFAULT_TTL = 36000;
+
     protected const DEFAULT_PAYSYSTEM_SETTINGS = [
         'USER_NAME', 'PASSWORD', 'TEST_MODE', 'TWO_STAGE', 'LOGGING'
     ];
@@ -36,6 +38,7 @@ class BusinessValueHelper
                 ->where('PROVIDER_KEY', 'VALUE')
                 ->setSelect(['*'])
                 ->setSelect(['CODE_KEY', 'CONSUMER_KEY', 'PROVIDER_VALUE'])
+                ->setCacheTtl(static::DEFAULT_TTL)
                 ->exec()
                 ->fetchAll();
         } catch (Exception $e) {
