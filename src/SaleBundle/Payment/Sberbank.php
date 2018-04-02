@@ -27,14 +27,14 @@ class Sberbank
      *
      * @var string
      */
-    const test_url = \TEST_URL;
+    private const test_url = \TEST_URL;
 
     /**
      * АДРЕС БОЕВОГО ШЛЮЗА
      *
      * @var string
      */
-    const prod_url = \PROD_URL;
+    private const prod_url = \PROD_URL;
 
     private const SUCCESS_CODE = 0;
 
@@ -151,12 +151,7 @@ class Sberbank
             $response = $client->post($url . $method, $data);
         }
 
-        if (!$response) {
-            $response = [
-                'errorCode' => 999,
-                'errorMessage' => 'The server does not have SSL/TLS encryption on port 443',
-            ];
-        } else {
+        if ($response) {
             if (\SITE_CHARSET !== 'UTF-8') {
                 global $APPLICATION;
                 $APPLICATION->ConvertCharset($response, 'windows-1251', 'UTF-8');
@@ -167,6 +162,11 @@ class Sberbank
             if ($this->logging) {
                 $this->log($url, $method, $data, $response);
             }
+        } else {
+            $response = [
+                'errorCode' => 999,
+                'errorMessage' => 'The server does not have SSL/TLS encryption on port 443',
+            ];
         }
 
         return $response;
@@ -181,11 +181,17 @@ class Sberbank
      * @param string $method
      * @param mixed[] $data
      * @param mixed[] $response
-     * @return integer
+     *
+     * @return void
      */
-    protected function log($url, $method, $data, $response): int
+    protected function log($url, $method, $data, $response): void
     {
-        return AddMessage2Log('RBS PAYMENT ' . $url . $method . ' REQUEST: ' . \json_encode($data) . ' RESPONSE: ' . \json_encode($response), 'sberbank.ecom');
+        $message = \sprintf(
+            'RBS PAYMENT %s%s REQUEST: %s RESPONSE: %s sberbank.ecom',
+            $url, $method, \json_encode($data), \json_encode($response)
+        );
+
+        \AddMessage2Log($message);
     }
 
     /**

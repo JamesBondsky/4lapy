@@ -12,9 +12,8 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\NotImplementedException;
-use Bitrix\Sale\BusinessValue;
-use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order as SaleOrder;
+use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
@@ -188,29 +187,23 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     /**
      * Init payment
      *
+     * @todo shit code
+     *
      * @return void
      */
     public function initPayment(): void
     {
         /** @noinspection PhpIncludeInspection */
         require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
-        dump(BusinessValue::get('PAYSYSTEM_3'));
-        dump(PaySystemActionTable::getById(3)->fetch());
-
-
-        /** @noinspection PhpDeprecationInspection */
-        $paySystemAction = new \CSalePaySystemAction();
-
-
+        $settings = BusinessValueHelper::getPaysystemSettings(3, ['USER_NAME', 'PASSWORD', 'TEST_MODE', 'TWO_STAGE', 'LOGGING']);
 
         $this->sberbankProcessing = new Sberbank(
-            $paySystemAction->GetParamValue('USER_NAME'),
-            $paySystemAction->GetParamValue('PASSWORD'),
-            $paySystemAction->GetParamValue('TEST_MODE') === 'Y',
-            true,
-            true
+            $settings['USER_NAME'],
+            $settings['PASSWORD'],
+            $settings['TWO_STAGE'] === 'Y',
+            $settings['TEST_MODE'] === 'Y',
+            $settings['LOGGING'] === 'Y'
         );
-        dump($this->sberbankProcessing);
     }
 
     /**
@@ -223,8 +216,10 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      */
-    private function getFiscalization(SaleOrder $order, User $user, Order $paymentTask): ?array {
+    private function getFiscalization(SaleOrder $order, User $user, Order $paymentTask): ?array
+    {
         $config = Option::get(self::MODULE_PROVIDER_CODE, self::OPTION_FISCALIZATION_CODE, []);
+        /** @noinspection UnserializeExploitsInspection */
         $config = \unserialize($config, []);
 
         if ($config['ENABLE'] !== 'Y') {
