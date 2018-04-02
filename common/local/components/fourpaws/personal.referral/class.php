@@ -170,6 +170,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 if ($redirect) {
                     $tagCache->abortTagCache();
                     $cache->abortDataCache();
+                    TaggedCacheHelper::clearManagedCache(['personal:referral:'.$curUser->getId()]);
                     LocalRedirect($request->getRequestUri());
                     die();
                 }

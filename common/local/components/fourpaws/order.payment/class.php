@@ -140,6 +140,12 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
                     } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
                         $this->orderService->processPaymentError($order);
                         $this->arResult['ERRORS'][] = $e->getMessage();
+                        $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
+
+                        if (!empty($this->arParams['HASH'])) {
+                            $url->addParams(['HASH' => $this->arParams['HASH']]);
+                        }
+                        LocalRedirect($url->getUri());
                     }
                 }
             }

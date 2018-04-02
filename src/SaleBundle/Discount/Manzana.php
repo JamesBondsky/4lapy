@@ -85,7 +85,7 @@ class Manzana implements LoggerAwareInterface
              */
             return;
         }
-
+        
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $user = $this->userService->getCurrentUser();

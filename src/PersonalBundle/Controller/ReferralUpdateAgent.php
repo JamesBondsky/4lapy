@@ -19,6 +19,7 @@ use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Referral as ManzanaReferral;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -113,7 +114,9 @@ class ReferralUpdateAgent
                                                 ) : '',
                                             'UF_MODERATED'        => 'N',
                                         ];
-                                        $referralService->update($data);
+                                        if($referralService->update($data)){
+                                            TaggedCacheHelper::clearManagedCache(['personal:referral:'.$data['UF_USER_ID']]);
+                                        }
                                     } catch (ManzanaServiceException $e) {
                                         $loggerManzana->error('манзана не работает - '.$e->getMessage());
                                         /** Если манзана недоступна просто не будет обновления */
