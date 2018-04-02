@@ -85,6 +85,7 @@ class ReferralService
 
     /**
      * @param PageNavigation|null $nav
+     * @param bool $main
      *
      * @throws EmptyEntityClass
      * @throws ServiceNotFoundException
@@ -99,7 +100,7 @@ class ReferralService
      * @throws ServiceCircularReferenceException
      * @return array
      */
-    public function getCurUserReferrals(PageNavigation $nav = null): array
+    public function getCurUserReferrals(PageNavigation $nav = null, bool $main = true): array
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -132,22 +133,21 @@ class ReferralService
                 $instance = Application::getInstance();
             } catch (SystemException $e) {
                 $logger = LoggerFactory::create('system');
-                $logger->error('Ошибка получения инстанса'.$e->getMessage());
+                $logger->error('Ошибка получения инстанса' . $e->getMessage());
             }
-            $curUserId = $this->curUserService->getCurrentUserId();
             $cache = $instance->getCache();
             $referrals = new ArrayCollection();
 
             if ($cache->initCache($cacheTime,
                 serialize($filter),
-                __FUNCTION__.'\ReferralsByFilter')) {
+                __FUNCTION__ . '\ReferralsByFilter')) {
                 $result = $cache->getVars();
                 $referrals = $result['referrals'];
             } elseif ($cache->startDataCache()) {
                 $tagCache = null;
                 if (\defined('BX_COMP_MANAGED_CACHE')) {
                     $tagCache = $instance->getTaggedCache();
-                    $tagCache->startTagCache(__FUNCTION__.'\ReferralsByFilter');
+                    $tagCache->startTagCache(__FUNCTION__ . '\ReferralsByFilter');
                 }
 
                 $referrals = $this->referralRepository->findBy(
@@ -158,7 +158,7 @@ class ReferralService
 
                 if ($tagCache !== null) {
                     TaggedCacheHelper::addManagedCacheTags([
-                        'highloadblock:field:user:'. $curUserId
+                        'highloadblock:field:user:' . $curUserId,
                     ], $tagCache);
                     $tagCache->endTagCache();
                 }
@@ -175,7 +175,7 @@ class ReferralService
             $this->referralRepository->clearNav();
         }
 
-        [, $haveAdd, $referrals] = $this->setDataByManzana($curUser, $referrals);
+        [, $haveAdd, $referrals] = $this->setDataByManzana($curUser, $referrals, $main);
 
         return [$referrals, $haveAdd];
     }
@@ -343,7 +343,7 @@ class ReferralService
                 [
                     'UF_USER_ID'           => $this->referralRepository->curUserService->getCurrentUserId(),
                     '>UF_CARD_CLOSED_DATE' => new Date(),
-                    'UF_MODERATED'         => 0,
+                    'UF_MODERATED'         => [0, null, ''],
                 ]
             );
         } catch (ObjectPropertyException $e) {
@@ -404,6 +404,7 @@ class ReferralService
     /**
      * @param User            $curUser
      * @param ArrayCollection $referrals
+     * @param bool $main
      *
      * @return array
      * @throws ApplicationCreateException
@@ -412,7 +413,8 @@ class ReferralService
      */
     private function setDataByManzana(
         User $curUser,
-        ArrayCollection $referrals
+        ArrayCollection $referrals,
+        bool $main = true
     ): array {
         $arCards = [];
         $referralsList = [];
@@ -444,6 +446,9 @@ class ReferralService
                     continue;
                 }
                 if (!\array_key_exists($cardNumber, $arCards)) {
+                    if(!$main){
+                        continue;
+                    }
                     $data = [
                         'UF_CARD'    => $cardNumber,
                         'UF_USER_ID' => $curUser->getId(),
