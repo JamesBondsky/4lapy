@@ -665,6 +665,10 @@ class OrderService implements LoggerAwareInterface
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
             }
         } catch (\Exception $e) {
+            /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
+            if($order->getId() > 0) {
+                Order::delete($order->getId());
+            }
             $this->log()->error(sprintf('failed to create order: %s', $e->getMessage()), [
                 'fuserId' => $storage->getFuserId()
             ]);
