@@ -132,22 +132,21 @@ class ReferralService
                 $instance = Application::getInstance();
             } catch (SystemException $e) {
                 $logger = LoggerFactory::create('system');
-                $logger->error('Ошибка получения инстанса'.$e->getMessage());
+                $logger->error('Ошибка получения инстанса' . $e->getMessage());
             }
-            $curUserId = $this->curUserService->getCurrentUserId();
             $cache = $instance->getCache();
             $referrals = new ArrayCollection();
 
             if ($cache->initCache($cacheTime,
                 serialize($filter),
-                __FUNCTION__.'\ReferralsByFilter')) {
+                __FUNCTION__ . '\ReferralsByFilter')) {
                 $result = $cache->getVars();
                 $referrals = $result['referrals'];
             } elseif ($cache->startDataCache()) {
                 $tagCache = null;
                 if (\defined('BX_COMP_MANAGED_CACHE')) {
                     $tagCache = $instance->getTaggedCache();
-                    $tagCache->startTagCache(__FUNCTION__.'\ReferralsByFilter');
+                    $tagCache->startTagCache(__FUNCTION__ . '\ReferralsByFilter');
                 }
 
                 $referrals = $this->referralRepository->findBy(
@@ -158,7 +157,7 @@ class ReferralService
 
                 if ($tagCache !== null) {
                     TaggedCacheHelper::addManagedCacheTags([
-                        'highloadblock:field:user:'. $curUserId
+                        'highloadblock:field:user:' . $curUserId,
                     ], $tagCache);
                     $tagCache->endTagCache();
                 }
@@ -343,7 +342,7 @@ class ReferralService
                 [
                     'UF_USER_ID'           => $this->referralRepository->curUserService->getCurrentUserId(),
                     '>UF_CARD_CLOSED_DATE' => new Date(),
-                    'UF_MODERATED'         => 0,
+                    'UF_MODERATED'         => [0, null, ''],
                 ]
             );
         } catch (ObjectPropertyException $e) {
