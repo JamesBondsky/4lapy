@@ -128,6 +128,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     </div>
 </div>
 <div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields active" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
+    <input type="hidden" class="js-order-address-city js-no-valid" value="<?=$arResult['SELECTED_CITY']['NAME']?>">
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
             <?php if ($showNewAddressFormHeader) {
@@ -146,7 +147,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
             } ?>
         </div>
     </div>
-    <div class="b-input-line b-input-line--street">
+    <div class="b-input-line b-input-line--street js-order-address-street">
         <div class="b-input-line__label-wrapper">
             <label class="b-input-line__label" for="order-address-street">Улица
             </label><span class="b-input-line__require">(обязательно)</span>
@@ -164,7 +165,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
         </div>
     </div>
     <div class="b-radio-tab__address-house">
-        <div class="b-input-line b-input-line--house b-input-line--house-address js-small-input">
+        <div class="b-input-line b-input-line--house b-input-line--house-address js-small-input js-only-number js-order-address-house">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-address-house">Дом
                 </label><span class="b-input-line__require">(обязательно)</span>
