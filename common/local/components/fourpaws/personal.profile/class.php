@@ -222,7 +222,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         $data = [
             'UF_PHONE_CONFIRMED' => true,
+            'PERSONAL_PHONE' => $phone
         ];
+
         try {
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
@@ -388,20 +390,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $user = $userRepository->find($id);
 
-            $data = ['PERSONAL_PHONE' => $phone];
             $oldPhone = '';
             if ($user !== null) {
                 $oldPhone = $user->getPersonalPhone();
             }
-            if ($oldPhone !== $phone) {
-                $data['UF_PHONE_CONFIRMED'] = false;
-            }
-            $res = $userRepository->updateData($id, $data);
-            if (!$res) {
-                return $this->ajaxMess->getUpdateError();
-            }
-
-            TaggedCacheHelper::clearManagedCache(['personal:profile:' . $id]);
 
             if (!empty($oldPhone)) {
                 //Посылаем смс о смененном номере телефона
