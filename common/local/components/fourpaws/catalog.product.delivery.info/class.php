@@ -153,4 +153,13 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
 
         return $offer->getStocks()->filterByStores($stores)->count();
     }
+
+    /**
+     * @param string $code
+     * @return bool
+     */
+    protected function isDefaultLocation(string $code): bool
+    {
+        return false;
+    }
 }
