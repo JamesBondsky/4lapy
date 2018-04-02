@@ -157,7 +157,8 @@ class OrderService implements LoggerAwareInterface
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider
-    ) {
+    )
+    {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -1057,7 +1058,7 @@ class OrderService implements LoggerAwareInterface
                     if (isset($properties['APARTMENT'])) {
                         $address[] = 'кв. ' . $properties['APARTMENT'];
                     }
-                    $address = implode(', ', $address);
+                    $address = \implode(', ', $address);
                 }
                 break;
         }
