@@ -155,16 +155,25 @@ $relatedOrder = $arResult['RELATED_ORDER'];
                         <p>Условия оплаты и доставки совпадают с заказом выше.</p>
                     </div>
                     <h2 class="b-title b-title--order-heading b-title--block">Как получить заказ</h2>
-
-                    <div class="b-order__text-block">
-                        <p>Ваш заказ вы можете получить
-                            <b><?= DeliveryTimeHelper::showByDate($arResult['RELATED_ORDER_DELIVERY']['DELIVERY_DATE']) ?></b>
-                        </p>
-                        <?php if (!$arResult['ORDER_DELIVERY']['IS_PICKUP']) { ?>
-                            <p><b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                    <?php if ($arResult['ORDER_DELIVERY']['IS_PICKUP']) { ?>
+                        <div class="b-order__text-block">
+                            <p>Ваш заказ вы можете получить
+                                <b><?= DeliveryTimeHelper::showByDate($arResult['RELATED_ORDER_DELIVERY']['DELIVERY_DATE']) ?></b>
                             </p>
-                        <?php } ?>
-                    </div>
+                        </div>
+                    <?php } else { ?>
+                        <div class="b-order__text-block">
+                            <p>Ваш заказ будет доставлен <b><?= DeliveryTimeHelper::showByDate(
+                                        $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_DATE'],
+                                        0,
+                                        ['SHOW_TIME' => false, 'SHORT' => false]
+                                    ) ?></b>
+                            </p>
+                            <p>
+                                <b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                            </p>
+                        </div>
+                    <?php } ?>
                 <?php } ?>
                 <?php if ($arResult['ORDER_REGISTERED']) {
                     ?>
