@@ -114,7 +114,7 @@ $items = $arResult['ITEMS'];
                                                 На модерации
                                             </div>
                                             <?php
-                                        } else { ?>
+                                        } elseif($item->getDateEndActive() !== null) { ?>
                                             <div class="b-account-referal-item__status b-account-referal-item__status--<?= !$item->isEndActiveDate(
                                             ) ? 'active' : 'not-active' ?>">
                                                 <?= !$item->isEndActiveDate() ? 'Активна до ' : 'Неактивна c ' ?>
