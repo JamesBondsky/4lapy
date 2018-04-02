@@ -13,6 +13,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\UserMessageException;
+use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -28,7 +30,6 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -75,11 +76,6 @@ class StoreService implements LoggerAwareInterface
      */
     protected $storeRepository;
 
-    /**
-     * @var StockRepository
-     */
-    protected $stockRepository;
-
     /** @var  PickupResultInterface */
     protected $pickupDelivery;
 
@@ -92,12 +88,10 @@ class StoreService implements LoggerAwareInterface
     public function __construct(
         LocationService $locationService,
         StoreRepository $storeRepository,
-        StockRepository $stockRepository,
         DeliveryService $deliveryService
     ) {
         $this->locationService = $locationService;
         $this->storeRepository = $storeRepository;
-        $this->stockRepository = $stockRepository;
         $this->deliveryService = $deliveryService;
         $this->setLogger(LoggerFactory::create('StoreService'));
     }
@@ -607,8 +601,17 @@ class StoreService implements LoggerAwareInterface
         }
         $code = $request->get('code');
         if (!empty($code)) {
-            $result['UF_LOCATION'] = $code;
+            $codeList = json_decode($code, true);
+            if (\is_array($codeList)) {
+                $dadataLocationAdapter = new DaDataLocationAdapter();
+                /** @var BitrixLocation $bitrixLocation */
+                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
+                $result['UF_LOCATION'] = $bitrixLocation->getCode();
+            } else {
+                $result['UF_LOCATION'] = $code;
+            }
         }
+
         $search = $request->get('search');
         if (!empty($search)) {
             $result[] = [

@@ -13,8 +13,9 @@ $APPLICATION->IncludeComponent(
     'fourpaws:order.payment',
     '',
     [
-        'ORDER_ID'   => $_REQUEST['ORDER_ID'],
-        'HASH'       => $_REQUEST['HASH'],
+        'ORDER_ID' => $_REQUEST['ORDER_ID'],
+        'HASH' => $_REQUEST['HASH'],
+        'PAY' => $_REQUEST['PAY'] === 'Y' ? 'Y' : 'N'
     ],
     false,
     ['HIDE_ICONS' => 'Y']

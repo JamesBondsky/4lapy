@@ -5,10 +5,10 @@
  */
 
 namespace FourPaws\SaleBundle\Service;
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Order;
 use CUser;
-
 
 /**
  * Class PaymentService
@@ -29,14 +29,21 @@ class PaymentService
      * @todo переделать на сериализацию
      *
      * @param Order $order
-     * @param CUser $user
+     * @param CUser|array $user
      * @param int $taxSystem
      *
      * @return array
      */
-    public function getFiscalization(Order $order, CUser $user, int $taxSystem): array
+    public function getFiscalization(Order $order, $user, int $taxSystem): array
     {
         $amount = 0; //Для фискализации общая сумма берется путем суммирования округленных позиций.
+        if ($user instanceof \CUser) {
+            $userEmail = $user->GetEmail();
+            $userName = $user->GetFullName();
+        } else {
+            $userEmail = ['email'];
+            $userName = ['name'];
+        }
 
         $fiscal = [
             'orderBundle' => [
@@ -63,10 +70,10 @@ class PaymentService
 
         if (!$fiscal['orderBundle']['customerDetails']['email'] || !$fiscal['orderBundle']['customerDetails']['contact']) {
             if (!$fiscal['orderBundle']['customerDetails']['email']) {
-                $fiscal['orderBundle']['customerDetails']['email'] = $user->GetEmail();
+                $fiscal['orderBundle']['customerDetails']['email'] = $userEmail;
             }
             if (!$fiscal['orderBundle']['customerDetails']['contact']) {
-                $fiscal['orderBundle']['customerDetails']['contact'] = $user->GetFullName();
+                $fiscal['orderBundle']['customerDetails']['contact'] = $userName;
             }
         }
 
@@ -91,6 +98,7 @@ class PaymentService
 
         $itemsCnt = 1;
         $arCheck = null;
+        $itemMap = [];
 
         /** @var \Bitrix\Sale\BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
@@ -118,6 +126,8 @@ class PaymentService
                     'taxType' => $vatGateway[$taxType],
                 ],
             ];
+
+            $itemMap[(int)\preg_replace('~^(.*#)~', '', $basketItem->getField('PRODUCT_XML_ID'))] = $basketItem->getProductId();
         }
 
         if ($order->getDeliveryPrice() > 0) {
@@ -139,6 +149,6 @@ class PaymentService
             $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
         }
 
-        return \compact('amount', 'fiscal');
+        return \compact('amount', 'fiscal', 'itemMap');
     }
 }

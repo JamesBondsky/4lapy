@@ -5,17 +5,41 @@ namespace FourPaws\SaleBundle\Payment;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
-use RBS;
+use FourPaws\SaleBundle\Exception\PaymentException;
+
+/**
+ * @todo remove this shit
+ */
+include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
 
 /**
  * Class Sberbank
  *
  * RBS (Sberbank ecom extension)
  *
+ * @see RBS
  * @package FourPaws\SaleBundle\Payment
  */
-class Sberbank extends RBS
+class Sberbank
 {
+    /**
+     * АДРЕС ТЕСТОВОГО ШЛЮЗА
+     *
+     * @var string
+     */
+    private const test_url = \TEST_URL;
+
+    /**
+     * АДРЕС БОЕВОГО ШЛЮЗА
+     *
+     * @var string
+     */
+    private const prod_url = \PROD_URL;
+
+    private const SUCCESS_CODE = 0;
+
+    private const ERROR_CODES = [1, 2, 3, 4, 5, 7, 8, 999];
+
     /**
      * ЛОГИН МЕРЧАНТА
      *
@@ -71,8 +95,6 @@ class Sberbank extends RBS
     public function __construct($user_name, $password, $two_stage, $test_mode, $logging)
     {
         [$this->user_name, $this->password, $this->two_stage, $this->test_mode, $this->logging] = \func_get_args();
-
-        parent::__construct($user_name, $password, $two_stage, $test_mode, $logging);
     }
 
     /**
@@ -98,6 +120,7 @@ class Sberbank extends RBS
         if (\SITE_CHARSET !== 'UTF-8') {
             global $APPLICATION;
             $dataEncoded = $APPLICATION->ConvertCharset($dataEncoded, 'windows-1251', 'UTF-8');
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
             $data = $APPLICATION->ConvertCharsetArray($data, 'windows-1251', 'UTF-8');
         }
 
@@ -128,12 +151,7 @@ class Sberbank extends RBS
             $response = $client->post($url . $method, $data);
         }
 
-        if (!$response) {
-            $response = [
-                'errorCode' => 999,
-                'errorMessage' => 'The server does not have SSL/TLS encryption on port 443',
-            ];
-        } else {
+        if ($response) {
             if (\SITE_CHARSET !== 'UTF-8') {
                 global $APPLICATION;
                 $APPLICATION->ConvertCharset($response, 'windows-1251', 'UTF-8');
@@ -144,11 +162,16 @@ class Sberbank extends RBS
             if ($this->logging) {
                 $this->log($url, $method, $data, $response);
             }
+        } else {
+            $response = [
+                'errorCode' => 999,
+                'errorMessage' => 'The server does not have SSL/TLS encryption on port 443',
+            ];
         }
 
         return $response;
     }
-    
+
     /**
      * ЛОГГЕР
      *
@@ -158,11 +181,17 @@ class Sberbank extends RBS
      * @param string $method
      * @param mixed[] $data
      * @param mixed[] $response
-     * @return integer
+     *
+     * @return void
      */
-    protected function log($url, $method, $data, $response): int
+    protected function log($url, $method, $data, $response): void
     {
-        return AddMessage2Log('RBS PAYMENT ' . $url . $method . ' REQUEST: ' . \json_encode($data) . ' RESPONSE: ' . \json_encode($response), 'sberbank.ecom');
+        $message = \sprintf(
+            'RBS PAYMENT %s%s REQUEST: %s RESPONSE: %s sberbank.ecom',
+            $url, $method, \json_encode($data), \json_encode($response)
+        );
+
+        \AddMessage2Log($message);
     }
 
     /**
@@ -174,7 +203,7 @@ class Sberbank extends RBS
      */
     public function reversePayment(string $orderId): array
     {
-        $data = ['orderId' => $orderId];
+        $data = \compact('orderId');
 
         return $this->gatewayQuery('reverse.do', $data);
     }
@@ -197,15 +226,47 @@ class Sberbank extends RBS
     /**
      * @param string $orderId
      * @param int $amount
+     * @param array $fiscal
      *
-     * @return array|mixed[]
+     * @return array
      *
      * @throws ArgumentException
      */
-    public function depositPayment(string $orderId, int $amount): array
+    public function depositPayment(string $orderId, int $amount, array $fiscal = []): array
     {
-        $data = \compact('orderId', 'amount');
+        $data = \array_merge(\compact('orderId', 'amount'), $fiscal);
 
         return $this->gatewayQuery('deposit.do', $data);
+    }
+
+    /**
+     * @param $response
+     *
+     * @return bool
+     *
+     * @throws PaymentException
+     */
+    public function parseResponse($response): bool
+    {
+        if (!\is_array($response) || !\in_array((int)$response['errorCode'], self::ERROR_CODES, true)) {
+            /** @noinspection ForgottenDebugOutputInspection */
+            throw new PaymentException(
+                \sprintf(
+                    'Unknown payment exception from response %s',
+                    \var_export($response)
+                )
+            );
+        }
+
+        if ((int)$response['errorCode'] !== self::SUCCESS_CODE) {
+            throw new PaymentException(
+                \sprintf(
+                    'Deposit payment error: %s',
+                    $response['errorMessage']
+                )
+            );
+        }
+
+        return true;
     }
 }

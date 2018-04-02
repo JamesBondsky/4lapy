@@ -8,8 +8,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCitySelectorComponent extends \CBitrixComponent
@@ -24,8 +27,11 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
 
         return $params;
     }
-
-    /** {@inheritdoc} */
+    
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
+     * {@inheritdoc}
+     */
     public function executeComponent()
     {
         try {
@@ -40,9 +46,13 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
             }
         }
     }
-
+    
     /**
      * @return $this
+     *
+     * @throws Exception
+     * @throws IblockNotFoundException
+     * @throws ApplicationCreateException
      */
     protected function prepareResult()
     {
@@ -56,7 +66,7 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()
                                   ->getContainer()
-                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+                                  ->get(UserCitySelectInterface::class);
 
         if ($citySetRoute = $routes->get('fourpaws_user_ajax_city_set')) {
             $this->arResult['CITY_SET_URL'] = $citySetRoute->getPath();

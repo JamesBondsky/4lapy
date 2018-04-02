@@ -6,6 +6,6 @@
 
 namespace FourPaws\SaleBundle\Exception;
 
-class FastOrderCreateException extends \Exception implements BaseExceptionInterface
+class DeliveryNotAvailableException extends OrderCreateException
 {
 }

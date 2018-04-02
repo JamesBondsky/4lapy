@@ -3,17 +3,30 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
+use Bitrix\Sale\UserMessageException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -64,22 +77,36 @@ class OrderStorageService
     protected $userAccountService;
 
     /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
+    /**
+     * @var CalculationResultInterface[]
+     */
+    protected $deliveries;
+
+    /**
      * OrderStorageService constructor.
      *
      * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param DatabaseStorageRepository $storageRepository
+     * @param UserAccountService $userAccountService
+     * @param DeliveryService $deliveryService
      */
     public function __construct(
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
         DatabaseStorageRepository $storageRepository,
-        UserAccountService $userAccountService
+        UserAccountService $userAccountService,
+        DeliveryService $deliveryService
     ) {
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->storageRepository = $storageRepository;
         $this->userAccountService = $userAccountService;
+        $this->deliveryService = $deliveryService;
     }
 
     /**
@@ -110,8 +137,9 @@ class OrderStorageService
     }
 
     /**
-     * @param int $fuserId
+     * @param int|null $fuserId
      *
+     * @throws OrderStorageSaveException
      * @return bool|OrderStorage
      */
     public function getStorage(int $fuserId = null)
@@ -132,10 +160,28 @@ class OrderStorageService
      * @param Request $request
      * @param string $step
      *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return OrderStorage
      */
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
+        $data = $request->request->all();
+
+        $mapping = [
+            'order-pick-time' => 'split',
+            'shopId' => 'deliveryPlaceCode',
+            'pay-type' => 'paymentId',
+        ];
+
+        foreach ($data as $name => $value) {
+            if (isset($mapping[$name])) {
+                $data[$mapping[$name]] = $value;
+                unset($data[$name]);
+            }
+        }
+
         /**
          * Чтобы нельзя было, например, обойти проверку капчи,
          * отправив в POST данные со всех форм разом
@@ -153,6 +199,36 @@ class OrderStorageService
                 ];
                 break;
             case self::DELIVERY_STEP:
+
+                try {
+                    $deliveryCode = $this->deliveryService->getDeliveryCodeById(
+                        (int)$data['deliveryId']
+                    );
+                    if (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+                        switch ($data['delyveryType']) {
+                            case 'twoDeliveries':
+                                $data['deliveryInterval'] = $data['deliveryInterval1'];
+                                $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
+                                $data['deliveryDate'] = $data['deliveryDate1'];
+                                $data['secondDeliveryDate'] = $data['deliveryDate2'];
+                                $data['comment'] = $data['comment1'];
+                                $data['secondComment'] = $data['comment2'];
+                                $data['split'] = 1;
+                                break;
+                            default:
+                                $data['split'] = 0;
+                        }
+                    } elseif ((int)$data['split'] === 1) {
+                        $tmpStorage = clone $storage;
+                        $tmpStorage->setDeliveryId($data['deliveryId']);
+                        $pickup = $this->getSelectedDelivery($tmpStorage);
+                        if (!$this->canSplitOrder($pickup) && !$this->canGetPartial($pickup)) {
+                            $data['split'] = 0;
+                        }
+                    }
+                } catch (DeliveryNotFoundException $e) {
+                }
+
                 $availableValues = [
                     'deliveryId',
                     'addressId',
@@ -168,6 +244,10 @@ class OrderStorageService
                     'comment',
                     'partialGet',
                     'shopId',
+                    'split',
+                    'secondDeliveryDate',
+                    'secondDeliveryInterval',
+                    'secondComment'
                 ];
                 break;
             case self::PAYMENT_STEP:
@@ -177,16 +257,8 @@ class OrderStorageService
                 ];
         }
 
-        $mapping = [
-            'order-pick-time' => 'partialGet',
-            'shopId'          => 'deliveryPlaceCode',
-            'pay-type'        => 'paymentId',
-        ];
-
-        foreach ($request->request as $name => $value) {
-            if (!\in_array($name, $availableValues, true) &&
-                !\in_array($mapping[$name], $availableValues, true)
-            ) {
+        foreach ($data as $name => $value) {
+            if (!\in_array($name, $availableValues, true)) {
                 continue;
             }
 
@@ -317,6 +389,67 @@ class OrderStorageService
     }
 
     /**
+     * @param OrderStorage $storage
+     * @param bool $reload
+     *
+     * @throws ArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
+     * @throws ApplicationCreateException
+     * @throws DeliveryNotFoundException
+     * @throws StoreNotFoundException
+     * @return CalculationResultInterface[]
+     */
+    public function getDeliveries(OrderStorage $storage, $reload = false): array
+    {
+        if (null === $this->deliveries || $reload) {
+            $this->deliveries = $this->deliveryService->getByBasket(
+                $this->basketService->getBasket()->getOrderableItems(),
+                '',
+                [],
+                $storage->getCurrentDate()
+            );
+        }
+
+        return $this->deliveries;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     * @return CalculationResultInterface
+     */
+    public function getSelectedDelivery(OrderStorage $storage): CalculationResultInterface
+    {
+        $deliveries = $this->getDeliveries($storage);
+        $selectedDelivery = current($deliveries);
+        if ($deliveryId = $storage->getDeliveryId()) {
+            /** @var CalculationResultInterface $delivery */
+            foreach ($deliveries as $delivery) {
+                if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
+                    $selectedDelivery = $delivery;
+                    break;
+                }
+            }
+        }
+
+        if (!$selectedDelivery) {
+            throw new NotFoundException('No deliveries available');
+        }
+
+        return $selectedDelivery;
+    }
+
+    /**
      * Получение максимального кол-ва бонусов, которыми можно оплатить заказ
      *
      * @param OrderStorage $storage
@@ -333,7 +466,7 @@ class OrderStorageService
         try {
             $this->userAccountService->refreshUserBalance();
             $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
-                                                ->getCurrentBudget();
+                ->getCurrentBudget();
         } catch (NotFoundException $e) {
         }
 
@@ -350,5 +483,64 @@ class OrderStorageService
     public function storageToArray(OrderStorage $storage): array
     {
         return $this->storageRepository->toArray($storage);
+    }
+
+    /**
+     * Можно ли разделить заказ
+     * @param CalculationResultInterface $delivery
+     *
+     * @return bool
+     */
+    public function canSplitOrder(CalculationResultInterface $delivery): bool
+    {
+        $result = false;
+        /**
+         * Для самовывоза DPD разделения заказов нет
+         */
+        if (!$delivery instanceof DpdPickupResult) {
+            [$available, $delayed] = $this->splitStockResult($delivery);
+
+            $result = !$available->isEmpty() && !$delayed->isEmpty();
+        }
+        return $result;
+    }
+
+    /**
+     * Возможно ли частичное получение заказа
+     *
+     * @param CalculationResultInterface $delivery
+     *
+     * @return bool
+     */
+    public function canGetPartial(CalculationResultInterface $delivery): bool
+    {
+        $result = false;
+        if ($delivery->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE &&
+            $delivery->getStockResult()->getByRequest()->isEmpty() &&
+            !$delivery->getStockResult()->getAvailable()->isEmpty() &&
+            !$delivery->getStockResult()->getDelayed()->isEmpty()
+        ) {
+            $result = true;
+        }
+        return $result;
+    }
+
+    /**
+     * @param CalculationResultInterface $delivery
+     *
+     * @return StockResultCollection[]
+     */
+    public function splitStockResult(CalculationResultInterface $delivery): array
+    {
+        $stockResultCollection = $delivery->getStockResult();
+        if ($delivery->getStockResult()->getByRequest()->isEmpty()) {
+            $available = $stockResultCollection->getAvailable();
+            $delayed = $stockResultCollection->getDelayed();
+        } else {
+            $available = $stockResultCollection->getRegular();
+            $delayed = $stockResultCollection->getByRequest();
+        }
+
+        return [$available, $delayed];
     }
 }

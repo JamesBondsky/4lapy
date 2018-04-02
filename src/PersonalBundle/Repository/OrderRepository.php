@@ -196,6 +196,9 @@ class OrderRepository extends BaseRepository
         $allWeight = 0;
         $allSum = 0;
         while ($item = $basketRes->fetch()) {
+            /**
+             * @var array $item
+             */
             if (!isset($items[$item['PRODUCT_ID']])) {
                 if (empty($item['PROPERTY_SELECTED'])) {
                     if (!empty($item['PROPERTY_SIZE'])) {
