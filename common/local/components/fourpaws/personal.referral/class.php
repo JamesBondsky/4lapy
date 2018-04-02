@@ -165,7 +165,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 /** @var ArrayCollection $items
                  * @var bool $redirect
                  */
-                [$items, $redirect] = $this->referralService->getCurUserReferrals($nav);
+                $main = empty($referralType) && empty($referralType);
+                [$items, $redirect] = $this->referralService->getCurUserReferrals($nav, $main);
                 if ($redirect) {
                     $tagCache->abortTagCache();
                     $cache->abortDataCache();
