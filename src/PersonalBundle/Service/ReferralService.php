@@ -85,6 +85,7 @@ class ReferralService
 
     /**
      * @param PageNavigation|null $nav
+     * @param bool $main
      *
      * @throws EmptyEntityClass
      * @throws ServiceNotFoundException
@@ -99,7 +100,7 @@ class ReferralService
      * @throws ServiceCircularReferenceException
      * @return array
      */
-    public function getCurUserReferrals(PageNavigation $nav = null): array
+    public function getCurUserReferrals(PageNavigation $nav = null, bool $main = true): array
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -174,7 +175,7 @@ class ReferralService
             $this->referralRepository->clearNav();
         }
 
-        [, $haveAdd, $referrals] = $this->setDataByManzana($curUser, $referrals);
+        [, $haveAdd, $referrals] = $this->setDataByManzana($curUser, $referrals, $main);
 
         return [$referrals, $haveAdd];
     }
@@ -403,6 +404,7 @@ class ReferralService
     /**
      * @param User            $curUser
      * @param ArrayCollection $referrals
+     * @param bool $main
      *
      * @return array
      * @throws ApplicationCreateException
@@ -411,7 +413,8 @@ class ReferralService
      */
     private function setDataByManzana(
         User $curUser,
-        ArrayCollection $referrals
+        ArrayCollection $referrals,
+        bool $main = true
     ): array {
         $arCards = [];
         $referralsList = [];
@@ -443,6 +446,9 @@ class ReferralService
                     continue;
                 }
                 if (!\array_key_exists($cardNumber, $arCards)) {
+                    if(!$main){
+                        continue;
+                    }
                     $data = [
                         'UF_CARD'    => $cardNumber,
                         'UF_USER_ID' => $curUser->getId(),
