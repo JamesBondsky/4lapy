@@ -18,6 +18,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -30,6 +31,8 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
@@ -45,6 +48,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
+/** @noinspection EfferentObjectCouplingInspection */
 
 /**
  * Class BasketComponent
@@ -69,6 +73,8 @@ class BasketComponent extends CBitrixComponent
      * @var CouponSessionStorage
      */
     private $couponsStorage;
+
+    private $promoDescriptions = [];
 
     /**
      * BasketComponent constructor.
@@ -129,6 +135,7 @@ class BasketComponent extends CBitrixComponent
         }
 
         $this->arResult['BASKET'] = $basket;
+        $this->loadPromoDescriptions();
         if (!$this->arParams['MINI_BASKET']) {
             $this->setCoupon();
             $this->arResult['USER'] = null;
@@ -147,7 +154,8 @@ class BasketComponent extends CBitrixComponent
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
                     $this->arResult['MAX_BONUS_SUM'] = \floor($cheque->getAvailablePayment());
                 }
-            } catch (NotAuthorizedException $e) {
+            }  /** @noinspection BadExceptionsProcessingInspection */
+            catch (NotAuthorizedException|ExecuteException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
@@ -185,13 +193,15 @@ class BasketComponent extends CBitrixComponent
      */
     public function getOffer(int $id): ?Offer
     {
+        $result = null;
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
             if ($item->getId() === $id) {
-                return $item;
+                $result = $item;
+                break;
             }
         }
-        return null;
+        return $result;
     }
 
     /**
@@ -222,7 +232,8 @@ class BasketComponent extends CBitrixComponent
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             try {
                 $fastOrderClass = new FourPawsFastOrderComponent();
-            } catch (SystemException $e) {
+            } /** @noinspection PhpRedundantCatchClauseInspection */
+            catch (SystemException $e) {
                 $fastOrderClass = null;
                 $logger = LoggerFactory::create('system');
                 $logger->error('Ошибка загрузки компонента - ' . $e->getMessage());
@@ -380,6 +391,78 @@ class BasketComponent extends CBitrixComponent
         return $page;
     }
 
+    /**
+     * Подгружает названия и ссылки на описания акций по XML_ID
+     *
+     */
+    private function loadPromoDescriptions()
+    {
+        /** @var Basket $basket */
+        $basket = $this->arResult['BASKET'];
+        /** @var Order $order */
+        $order = $basket->getOrder();
+        $applyResult = $order->getDiscount()->getApplyResult(true);
+        if (\is_array($applyResult['DISCOUNT_LIST'])) {
+            $discountMap = array_column($applyResult['DISCOUNT_LIST'], 'REAL_DISCOUNT_ID', 'ID');
+            $res = \CIBlockElement::GetList(
+                ['ID' => 'ASC'],
+                [
+                    'PROPERTY_BASKET_RULES' => array_values($discountMap),
+                    'IBLOCK_CODE' => IblockCode::SHARES,
+                    'IBLOCK_TYPE' => IblockType::PUBLICATION
+                ],
+                false,
+                false,
+                ['NAME', 'DETAIL_PAGE_URL', 'PROPERTY_BASKET_RULES']
+            );
+            while ($elem = $res->GetNext()) {
+                if (\is_array($elem['PROPERTY_BASKET_RULES_VALUE'])) {
+                    foreach ($elem['PROPERTY_BASKET_RULES_VALUE'] as $ruleId) {
+                        $this->promoDescriptions[$ruleId] = [
+                            'url' => $elem['DETAIL_PAGE_URL'],
+                            'name' => $elem['NAME']
+                        ];
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     *
+     * @param BasketItem $basketItem
+     *
+     * @return array
+     */
+    public function getPromoLink(BasketItem $basketItem): array
+    {
+        $result = [];
+        /**
+         * @var BasketItemCollection $basketItemCollection
+         * @var Order $order
+         */
+        if (
+            ($basketItemCollection = $basketItem->getCollection())
+            &&
+            ($order = $basketItemCollection->getOrder())
+            &&
+            ($discount = $order->getDiscount())
+            &&
+            ($applyResult = $discount->getApplyResult())
+            &&
+            \is_array($applyResult['RESULT']['BASKET'])
+            &&
+            isset($applyResult['RESULT']['BASKET'][$basketItem->getId()])
+        ) {
+            foreach (array_column($applyResult['RESULT']['BASKET'][$basketItem->getId()], 'DISCOUNT_ID') as $fakeId) {
+                if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
+                    $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
+                }
+            }
+        }
+        return $result;
+    }
     /**
      * Set coupon and coupon discount
      *

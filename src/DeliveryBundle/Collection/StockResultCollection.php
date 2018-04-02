@@ -5,7 +5,6 @@ namespace FourPaws\DeliveryBundle\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Entity\StockResult;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 
@@ -48,6 +47,30 @@ class StockResultCollection extends ArrayCollection
     }
 
     /**
+     * @return StockResultCollection
+     */
+    public function getRegular(): StockResultCollection
+    {
+        return $this->filter(
+            function (StockResult $stockResult) {
+                return !$stockResult->getOffer()->isByRequest();
+            }
+        );
+    }
+
+    /**
+     * @return StockResultCollection
+     */
+    public function getByRequest(): StockResultCollection
+    {
+        return $this->filter(
+            function (StockResult $stockResult) {
+                return $stockResult->getOffer()->isByRequest();
+            }
+        );
+    }
+
+    /**
      * @param Store $store
      *
      * @return StockResultCollection
@@ -57,7 +80,11 @@ class StockResultCollection extends ArrayCollection
         return $this->filter(
             function (StockResult $stockResult) use ($store) {
                 return $stockResult->getStores()->exists(
-                    function ($i, Store $stockResultStore) use ($store) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $i,
+                        Store $stockResultStore
+                    ) use ($store) {
                         return $stockResultStore->getXmlId() === $store->getXmlId();
                     }
                 );
@@ -80,6 +107,19 @@ class StockResultCollection extends ArrayCollection
     }
 
     /**
+     * @param int $id
+     * @return StockResultCollection
+     */
+    public function filterByOfferId(int $id): StockResultCollection
+    {
+        return $this->filter(
+            function (StockResult $stockResult) use ($id) {
+                return $stockResult->getOffer()->getId() === $id;
+            }
+        );
+    }
+
+    /**
      * @return int
      */
     public function getAmount(): int
@@ -97,7 +137,6 @@ class StockResultCollection extends ArrayCollection
      * @param bool $skipUnavailable
      *
      * @return StoreCollection
-     * @throws NotFoundException
      */
     public function getStores($skipUnavailable = true): StoreCollection
     {
@@ -115,10 +154,6 @@ class StockResultCollection extends ArrayCollection
                     $result[$store->getXmlId()] = $store;
                 }
             }
-        }
-
-        if ($result->isEmpty()) {
-            throw new NotFoundException('No stores found');
         }
 
         return $result;

@@ -8,7 +8,6 @@ namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
-use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Mail\Event;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
@@ -62,7 +61,7 @@ class ReferralService
 
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
-    /** @var \Psr\Log\LoggerInterface  */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
     /**
@@ -127,13 +126,47 @@ class ReferralService
         }
         $curUser = $this->referralRepository->curUserService->getCurrentUser();
         if (!empty($filter)) {
-            $filter['UF_USER_ID'] = $curUser->getId();
-            $referrals = $this->referralRepository->findBy(
-                [
-                    'filter' => $filter,
-                    'ttl'    => 360000,
-                ]
-            );
+            $filter['UF_USER_ID'] = $curUserId = $curUser->getId();
+            $cacheTime = 360000;
+            try {
+                $instance = Application::getInstance();
+            } catch (SystemException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->error('Ошибка получения инстанса'.$e->getMessage());
+            }
+            $curUserId = $this->curUserService->getCurrentUserId();
+            $cache = $instance->getCache();
+            $referrals = new ArrayCollection();
+
+            if ($cache->initCache($cacheTime,
+                serialize($filter),
+                __FUNCTION__.'\ReferralsByFilter')) {
+                $result = $cache->getVars();
+                $referrals = $result['referrals'];
+            } elseif ($cache->startDataCache()) {
+                $tagCache = null;
+                if (\defined('BX_COMP_MANAGED_CACHE')) {
+                    $tagCache = $instance->getTaggedCache();
+                    $tagCache->startTagCache(__FUNCTION__.'\ReferralsByFilter');
+                }
+
+                $referrals = $this->referralRepository->findBy(
+                    [
+                        'filter' => $filter,
+                    ]
+                );
+
+                if ($tagCache !== null) {
+                    TaggedCacheHelper::addManagedCacheTags([
+                        'highloadblock:field:user:'. $curUserId
+                    ], $tagCache);
+                    $tagCache->endTagCache();
+                }
+
+                $cache->endDataCache([
+                    'referrals' => $referrals,
+                ]);
+            }
         } else {
             $referrals = $this->referralRepository->findByCurUser();
         }
@@ -340,126 +373,6 @@ class ReferralService
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
-    /**
-     * @param User            $curUser
-     * @param ArrayCollection $referrals
-     *
-     * @return array
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws \Exception
-     */
-    private function setDataByManzana(
-        User $curUser,
-        ArrayCollection $referrals
-    ): array {
-        $arCards = [];
-        if (!$referrals->isEmpty()) {
-            /** @var Referral $item */
-            foreach ($referrals as $key => $item) {
-                $arCards[$item->getCard()] = $key;
-            }
-        }
-        $referralsList = $referrals->toArray();
-
-        $manzanaReferrals = [];
-        try {
-            $manzanaReferrals = $this->manzanaService->getUserReferralList($curUser);
-        } catch (ManzanaServiceException $e) {
-            $this->logger->critical('Ошибка манзаны - '.$e->getMessage());
-        } catch (NotAuthorizedException $e) {
-            /** прерываем выполнение если неавторизованы */
-            return [false,false];
-        }
-        $haveAdd = false;
-        if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
-            /** @var ManzanaReferal $item */
-            foreach ($manzanaReferrals as $item) {
-                if (!empty($item->cardNumber)) {
-                    if (!array_key_exists($item->cardNumber, $arCards)) {
-                        $data = [
-                            'UF_CARD'    => $item->cardNumber,
-                            'UF_USER_ID' => $curUser->getId(),
-                        ];
-                        try {
-                            $skip = false;
-                            $card = null;
-                            try {
-                                $card = $this->manzanaService->searchCardByNumber($item->cardNumber);
-                            } catch (CardNotFoundException $e) {
-                                $skip = true;
-                            }
-                            catch (\Exception $e){
-                                $this->logger->critical('Ошибка манзаны - '.$e->getMessage());
-                            }
-                            if (!$skip) {
-                                $cardInfo = null;
-                                if (!empty(!empty($card->contactId))) {
-                                    $cardInfo = $this->manzanaService->getCardInfo($item->cardNumber, $card->contactId);
-                                }
-                                if (!empty($card->phone)) {
-                                    try {
-                                        $phone = PhoneHelper::normalizePhone((string)$card->phone);
-                                    } catch (WrongPhoneNumberException $e) {
-                                        $phone = '';
-                                    }
-                                } else {
-                                    $phone = '';
-                                }
-                                /** @noinspection SlowArrayOperationsInLoopInspection */
-                                $data = array_merge(
-                                    $data,
-                                    [
-                                        'UF_NAME'             => (string)$card->firstName,
-                                        'UF_LAST_NAME'        => (string)$card->lastName,
-                                        'UF_SECOND_NAME'      => (string)$card->secondName,
-                                        'UF_EMAIL'            => (string)$card->email,
-                                        'UF_PHONE'            => $phone,
-                                        'UF_CARD_CLOSED_DATE' => $cardInfo instanceof
-                                        CardByContractCards ? $cardInfo->getExpireDate()->format(
-                                            'd.m.Y'
-                                        ) : '',
-                                        'UF_MODERATED'        => $item->isQuestionnaireActual === 'Не указано' ? 'Y' : 'N',
-                                    ]
-                                );
-                                try {
-                                    $this->add($data);
-                                    $haveAdd = true;
-                                } catch (BitrixRuntimeException $e) {
-                                    $this->logger->error('Ошибка добавления реферрала - '.$e->getMessage());
-                                } catch (\Exception $e) {
-                                    $this->logger->error('Ошибка добавления реферрала - '.$e->getMessage());
-                                }
-                            }
-                        } catch (ManzanaServiceException $e) {
-                            $this->logger->critical('Ошибка манзаны - '.$e->getMessage());
-                            /** скипаем при ошибке манзаны */
-                        }
-                    }
-                    /** @var Referral $referral */
-                    else {
-                        $referral =& $referralsList[$arCards[$item->cardNumber]];
-                        if ($referral instanceof Referral) {
-                            $referral->setBonus((float)$item->sumReferralBonus);
-                            $lastModerate = $referral->isModerate();
-                            $referral->setModerate($item->isQuestionnaireActual === 'Не указано');
-                            if ($lastModerate !== $referral->isModerate()) {
-                                $this->update(
-                                    [
-                                        'ID'           => $referral->getId(),
-                                        'UF_MODERATED' => $referral->isModerate() ? 'Y' : 'N',
-                                    ]
-                                );
-                            }
-                        }
-                    }
-                }
-                unset($referral);
-            }
-        }
-        $referrals = new ArrayCollection($referralsList);
-        return [true, $haveAdd, $referrals];
-    }
 
     /**
      * @return ArrayCollection|Referral[]
@@ -480,11 +393,137 @@ class ReferralService
     public function delete(int $id, int $userId = 0): bool
     {
         $res = $this->referralRepository->delete($id);
-        if($res && $userId > 0) {
+        if ($res && $userId > 0) {
             TaggedCacheHelper::clearManagedCache([
                 'personal:referral:' . $userId,
             ]);
         }
         return $res;
+    }
+
+    /**
+     * @param User            $curUser
+     * @param ArrayCollection $referrals
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws \Exception
+     */
+    private function setDataByManzana(
+        User $curUser,
+        ArrayCollection $referrals
+    ): array {
+        $arCards = [];
+        $referralsList = [];
+        if (!$referrals->isEmpty()) {
+            $referralsList = $referrals->toArray();
+            /** @var Referral $item */
+            foreach ($referralsList as $key => $item) {
+                if (!empty($item->getCard())) {
+                    $arCards[(int)$item->getCard()] = $key;
+                }
+            }
+        }
+
+        $manzanaReferrals = [];
+        try {
+            $manzanaReferrals = $this->manzanaService->getUserReferralList($curUser);
+        } catch (ManzanaServiceException $e) {
+            $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+        } catch (NotAuthorizedException $e) {
+            /** прерываем выполнение если неавторизованы */
+            return [false, false, new ArrayCollection($referralsList)];
+        }
+        $haveAdd = false;
+        if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
+            /** @var ManzanaReferal $item */
+            foreach ($manzanaReferrals as $item) {
+                $cardNumber = (int)$item->cardNumber;
+                if (empty($item->cardNumber) || $cardNumber === 0) {
+                    continue;
+                }
+                if (!\array_key_exists($cardNumber, $arCards)) {
+                    $data = [
+                        'UF_CARD'    => $cardNumber,
+                        'UF_USER_ID' => $curUser->getId(),
+                    ];
+                    try {
+                        $skip = false;
+                        $card = null;
+                        try {
+                            $card = $this->manzanaService->searchCardByNumber($cardNumber);
+                        } catch (CardNotFoundException $e) {
+                            $skip = true;
+                        } catch (\Exception $e) {
+                            $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+                        }
+                        if (!$skip) {
+                            $cardInfo = null;
+                            if (!empty(!empty($card->contactId))) {
+                                $cardInfo = $this->manzanaService->getCardInfo($cardNumber, $card->contactId);
+                            }
+                            if (!empty($card->phone)) {
+                                try {
+                                    $phone = PhoneHelper::normalizePhone((string)$card->phone);
+                                } catch (WrongPhoneNumberException $e) {
+                                    $phone = '';
+                                }
+                            } else {
+                                $phone = '';
+                            }
+                            /** @noinspection SlowArrayOperationsInLoopInspection */
+                            $data = array_merge(
+                                $data,
+                                [
+                                    'UF_NAME'             => (string)$card->firstName,
+                                    'UF_LAST_NAME'        => (string)$card->lastName,
+                                    'UF_SECOND_NAME'      => (string)$card->secondName,
+                                    'UF_EMAIL'            => (string)$card->email,
+                                    'UF_PHONE'            => $phone,
+                                    'UF_CARD_CLOSED_DATE' => $cardInfo instanceof
+                                    CardByContractCards ? $cardInfo->getExpireDate()->format(
+                                        'd.m.Y'
+                                    ) : '',
+                                    'UF_MODERATED'        => $item->isModerated() ? 'Y' : 'N',
+                                ]
+                            );
+                            try {
+                                if ($this->add($data)) {
+                                    $haveAdd = true;
+                                }
+                            } catch (BitrixRuntimeException $e) {
+                                $this->logger->error('Ошибка добавления реферрала - ' . $e->getMessage());
+                            } catch (\Exception $e) {
+                                $this->logger->error('Ошибка добавления реферрала - ' . $e->getMessage());
+                            }
+                        }
+                    } catch (ManzanaServiceException $e) {
+                        $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+                        /** скипаем при ошибке манзаны */
+                    }
+                } /** @var Referral $referral */
+                else {
+                    $referral =& $referralsList[$arCards[$cardNumber]];
+                    if ($referral instanceof Referral) {
+                        $referral->setBonus((float)$item->sumReferralBonus);
+                        $lastModerate = $referral->isModerate();
+                        $referral->setModerate($item->isModerated());
+                        if ($lastModerate !== $referral->isModerate()) {
+                            $this->update(
+                                [
+                                    'ID'           => $referral->getId(),
+                                    'UF_MODERATED' => $referral->isModerate() ? 'Y' : 'N',
+                                    'UF_CARD'      => $referral->getCard(),
+                                    'UF_USER_ID'   => $referral->getUserId(),
+                                ]
+                            );
+                        }
+                    }
+                }
+                unset($referral);
+            }
+        }
+        return [true, $haveAdd, new ArrayCollection($referralsList)];
     }
 }

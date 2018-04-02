@@ -8,17 +8,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\Application as BitrixApp;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderPaymentComponent extends \CBitrixComponent
@@ -29,6 +34,13 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
 
+    /**
+     * {@inheritdoc}
+     *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     */
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -37,7 +49,10 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
         parent::__construct($component);
     }
 
-    public function onPrepareComponentParams($params)
+    /**
+     * {@inheritdoc}
+     */
+    public function onPrepareComponentParams($params): array
     {
         $params['ORDER_ID'] = (int)$params['ORDER_ID'];
         $params['HASH'] = $params['HASH'] ?? '';
@@ -48,13 +63,22 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
     /** {@inheritdoc} */
     public function executeComponent()
     {
+        global $APPLICATION;
+        if ($this->arParams['SET_TITLE'] === BitrixUtils::BX_BOOL_TRUE) {
+            $APPLICATION->SetTitle('Перейти к оплате');
+        }
+
         try {
             $order = null;
-
+            $relatedOrder = null;
             try {
                 $userId = $this->currentUserProvider->getCurrentUserId();
             } catch (NotAuthorizedException $e) {
                 $userId = null;
+            }
+
+            if ((int)$this->arParams['ORDER_ID'] === 0) {
+                Tools::process404('', true, true, true);
             }
 
             try {
@@ -64,6 +88,11 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
                     $userId,
                     $this->arParams['HASH']
                 );
+                $relatedOrderId = $this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')
+                    ->getValue();
+                if ($relatedOrderId) {
+                    $relatedOrder = $this->orderService->getOrderById($relatedOrderId, false);
+                }
             } catch (NotFoundException $e) {
                 Tools::process404('', true, true, true);
             }
@@ -71,7 +100,7 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
             /**
              * Попытка повторной оплаты заказа
              */
-            if ($order->isPaid()) {
+            if ($order->isPaid() && ((null === $relatedOrder) || $relatedOrder->isPaid())) {
                 Tools::process404('', true, true, true);
             }
 
@@ -95,26 +124,38 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
                 Tools::process404('', true, true, true);
             }
 
-            $service = PaySystemManager::getObjectById($payment->getPaymentSystemId());
-            if ($service) {
-                $context = BitrixApp::getInstance()->getContext();
+            if ($this->arParams['PAY'] === BitrixUtils::BX_BOOL_TRUE) {
+                $service = PaySystemManager::getObjectById($paymentItem->getPaymentSystemId());
+                if ($service) {
+                    $context = BitrixApp::getInstance()->getContext();
 
-                try {
-                    $result = $service->initiatePay(
-                        $payment,
-                        $context->getRequest()
-                    );
-                    if ($result->isSuccess()) {
-                        $this->arResult['IS_SUCCESS'] = 'Y';
-                    } else {
-                        $this->arResult['ERRORS'] = $result->getErrorMessages();
+                    try {
+                        $result = $service->initiatePay(
+                            $paymentItem,
+                            $context->getRequest()
+                        );
+                        if ($result->isSuccess()) {
+                            $this->arResult['IS_SUCCESS'] = 'Y';
+                        } else {
+                            $this->arResult['ERRORS'] = $result->getErrorMessages();
+                        }
+                    } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
+                        $this->arResult['ERRORS'][] = $e->getMessage();
                     }
-                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
-                    $this->arResult['ERRORS'][] = $e->getMessage();
                 }
             }
 
-            $this->includeComponentTemplate();
+            $this->arResult['ORDER'] = $order;
+            $url = new Uri($APPLICATION->GetCurPage());
+            $this->arResult['ORDER_PAY_URL'] = $url->getUri();
+
+            if ($relatedOrder) {
+                $this->arResult['RELATED_ORDER'] = $relatedOrder;
+                $this->arResult['RELATED_ORDER_PAY_URL'] = $url->getUri();
+            }
+            if ($this->arResult['ERRORS'] || $this->arParams['PAY'] !== BitrixUtils::BX_BOOL_TRUE) {
+                $this->includeComponentTemplate();
+            }
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component_order_payment');

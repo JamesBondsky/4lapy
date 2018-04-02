@@ -94,7 +94,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </a>
     </div>
 </aside>
-<main class="b-catalog__main" role="main">
+<main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
         <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
            href="javascript:void(0);"
@@ -129,13 +129,14 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getFiltersToShow() as $filter) {
+                    foreach ($filterCollection->getIterator() as $filter) {
+                        if (!($filter instanceof ActionsFilter)) {
+                            continue;
+                        }
                         if (!$filter->hasAvailableVariants()) {
                             continue;
                         }
-                        if (!($filter instanceof ActionsFilter)) {
-                            continue;
-                        } ?>
+                         ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {

@@ -89,11 +89,14 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                           data-url="<?= $arResult['URL']['DELIVERY_VALIDATION'] ?>"
                           method="post"
                           id="order-step">
-                        <input type="hidden" name="shopId" class="js-no-valid" value="<?= /** @noinspection PhpUnhandledExceptionInspection */
-                        $pickup ? $pickup->getSelectedStore()->getXmlId() : '' ?>">
+                        <input type="hidden" name="shopId" class="js-no-valid"
+                               value="<?= /** @noinspection PhpUnhandledExceptionInspection */
+                               $pickup ? $pickup->getSelectedStore()->getXmlId() : '' ?>">
+                        <input type="hidden" name="delyveryType"
+                               value="<?= $storage->isSplit() ? 'twoDeliveries' : 'oneDelivery' ?>" class="js-no-valid">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) {
-    ?>
+                                ?>
                                 <input class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                        id="order-delivery-address"
                                        type="radio"
@@ -111,23 +114,23 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                             <span class="b-choice-recovery__second">курьером</span>
                                         </span>
                                     </span>
-                                    <span class="b-choice-recovery__addition-text">
+                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($delivery) ?>,
-                                        <?= mb_strtolower(CurrencyHelper::formatPrice($delivery->getPrice(), true)) ?>
+                                        <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                     </span>
-                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
-                                        <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
+                                        <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                 </label>
-                            <?php
-} ?>
-                            <?php if ($pickup) {
-        ?>
                                 <?php
-                                $available = $pickup->getStockResult()->getAvailable();
-                                if (!$available->isEmpty() && $storage->isPartialGet()) {
+                            } ?>
+                            <?php if ($pickup) {
+                                ?>
+                                <?php
+                                $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
+                                if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
                                     $price = $available->getPrice();
                                 } else {
                                     $price = $pickup->getStockResult()->getPrice();
@@ -155,7 +158,8 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                                     $pickup
                                                 ),
                                             ]
-                                        ) ?>, <?= mb_strtolower(CurrencyHelper::formatPrice($pickup->getPrice(), true)) ?>
+                                        ) ?>, <?= mb_strtolower(CurrencyHelper::formatPrice($pickup->getPrice(),
+                                            true)) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
@@ -170,26 +174,26 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                         ) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
-                            <?php
-    } ?>
+                                <?php
+                            } ?>
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) {
-        ?>
+                                ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDeliveryId !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
-                            <?php
-    } ?>
+                                <?php
+                            } ?>
                             <?php if ($pickup) {
-        ?>
+                                ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
                                     <?= $selectedDeliveryId !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
-                            <?php
-    } ?>
+                                <?php
+                            } ?>
                         </ul>
                     </form>
                 </article>
@@ -199,12 +203,11 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
         <?php
         $basketPrice = $basket->getPrice();
         if ($isPickup) {
-            $stockResultByShop = $selectedDelivery->getStockResult();
-            /* todo это нужно до тех пор, пока не реализовано разделение заказа */
-            if ($storage->isPartialGet()) {
-                $basketPrice = $stockResultByShop->getAvailable()->getPrice();
+            $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
+            if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
+                $basketPrice = $available->getPrice();
             } else {
-                $basketPrice = $stockResultByShop->getPrice();
+                $basketPrice = $pickup->getStockResult()->getPrice();
             }
         }
         ?>

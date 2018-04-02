@@ -5,6 +5,8 @@ namespace FourPaws\External;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
@@ -93,16 +95,6 @@ class ExpertsenderService implements LoggerAwareInterface
             $params['subscribe'] = 0;
         }
         if (!empty($user->getEmail())) {
-            /** получение id подписчика по старому email */
-            $userIdResult = $this->client->getUserId($user->getEmail());
-            if ($userIdResult->isOk()) {
-                $expertSenderId = $userIdResult->getId();
-            }
-
-            if(!empty($expertSenderId)){
-                /** @todo сделать нормальный эксепшн и его обработку */
-                throw new ExpertsenderServiceException('такая почта уже заведена в системел');
-            }
             $addUserToList = new AddUserToList();
             $addUserToList->setForce(true);
             $addUserToList->setMode('AddAndUpdate');
@@ -127,6 +119,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 $addUserToList->addProperty(new Property(48, 'string',
                     BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
                 $apiResult = $this->client->addUserToList($addUserToList);
+
                 if ($apiResult->isOk()) {
                     return true;
                 }
@@ -407,9 +400,11 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @return int
      * @throws ApplicationCreateException
      * @throws ExpertsenderServiceException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @return int
      */
     public function sendOrderNewEmail(Order $order): int
     {
@@ -443,14 +438,7 @@ class ExpertsenderService implements LoggerAwareInterface
             new Snippet('order_date', $order->getDateInsert()->format('d.m.Y')),
         ];
 
-        $isOnlinePayment = false;
-        try {
-            $orderService->getOnlinePayment($order);
-            $isOnlinePayment = true;
-        } catch (NotFoundException $e) {
-            //не требуется
-        }
-
+        $isOnlinePayment = $orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE;
         if ($properties['USER_REGISTERED'] === BitrixUtils::BX_BOOL_TRUE) {
             // зарегистрированный пользователь
             if ($isOnlinePayment) {

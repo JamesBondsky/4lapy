@@ -2,11 +2,19 @@
 
 namespace FourPaws\CatalogBundle\EventController;
 
-use Bitrix\Main\Application as BitrixApplication;
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\EventManager;
-use Bitrix\Main\SystemException;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\Search\Helper\IndexHelper;
 
 /**
  * Class Event
@@ -37,15 +45,19 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnProductAdd', [static::class, 'clearProductCache']);
 
         /** очистка кеша при изменении элемента инфоблока */
-        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'clearIblockItemCache']);
+        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'clearIblockItemCache'], 'iblock');
+
+        /** запуск переиндексации товаров при изменении товара */
+        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'reindexProduct'], 'iblock');
+        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'reindexOffer'], 'iblock');
     }
 
     /**
      *
      *
-     * @param string   $eventName
+     * @param string $eventName
      * @param callable $callback
-     * @param string   $module
+     * @param string $module
      *
      */
     public static function initHandler(string $eventName, callable $callback, string $module = 'catalog'): void
@@ -77,5 +89,40 @@ class Event implements ServiceHandlerInterface
         TaggedCacheHelper::clearManagedCache([
             'iblock:item:' . $arFields['ID'],
         ]);
+    }
+
+    /**
+     * @param $fields
+     * @throws IblockNotFoundException
+     * @throws ApplicationCreateException
+     */
+    public static function reindexProduct($fields): void
+    {
+        if ((int)$fields['IBLOCK_ID'] === (int)IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)) {
+            /** @var IndexHelper $indexHelper */
+            $indexHelper = Application::getInstance()->getContainer()->get('search.index_helper');
+            $product = (new ProductQuery())->withFilterParameter('ID', $fields['ID'])->exec()->first();
+            if ($product) {
+                $indexHelper->indexProduct($product);
+            }
+        }
+    }
+
+    /**
+     * @param $fields
+     * @throws IblockNotFoundException
+     * @throws ApplicationCreateException
+     */
+    public static function reindexOffer($fields): void
+    {
+        if ((int)$fields['IBLOCK_ID'] === (int)IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)) {
+            /** @var IndexHelper $indexHelper */
+            $indexHelper = Application::getInstance()->getContainer()->get('search.index_helper');
+            /** @var Offer $offer */
+            $offer = (new OfferQuery())->withFilterParameter('ID', $fields['ID'])->exec()->first();
+            if ($offer) {
+                $indexHelper->indexProduct($offer->getProduct());
+            }
+        }
     }
 }

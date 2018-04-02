@@ -120,7 +120,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return \DateTime
      */
@@ -342,7 +341,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                     $this->getIntervals()
                 );
             } catch (NotFoundException $e) {
-                return $this->getIntervals()->first();
+                $this->selectedInterval = $this->getIntervals()->first();
             }
         }
 
@@ -363,17 +362,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @throws NotFoundException
      * @return Store
      */
     public function getSelectedStore(): Store
     {
         if (!$this->selectedStore instanceof Store) {
-            try {
-                $this->setSelectedStore($this->getStockResult()->getStores()->first());
-            } catch (NotFoundException $e) {
+            $stores = $this->getStockResult()->getStores();
+            if ($stores->isEmpty()) {
                 $this->addError(new Error('Нет складов с доступными товарами'));
-                $this->setSelectedStore($this->getStockResult()->getStores(false)->first());
+            } else {
+                $this->setSelectedStore($stores->first());
             }
         }
 
@@ -394,7 +392,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      */
     protected function doCalculateDeliveryDate(): void
@@ -614,7 +611,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return int
      */
@@ -631,7 +627,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return string
      */
@@ -682,7 +677,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @param bool $internalCall
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws StoreNotFoundException
      * @return bool
      */

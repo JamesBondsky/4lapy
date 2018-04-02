@@ -13,7 +13,6 @@ use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
-
 foreach ($filters as $filter) {
     if ($filter instanceof PriceFilter) {
         ?>

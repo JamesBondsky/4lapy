@@ -19,9 +19,9 @@ use Bitrix\Main\Result;
 class BitrixProxyException extends \Exception implements BaseExceptionInterface
 {
 
-    const UNDEFINED_EXCEPTION = 0;
-    const NO_IBLOCK_ELEMENT = 100;
-    const SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY = 101;
+    public const UNDEFINED_EXCEPTION = 0;
+    public const NO_IBLOCK_ELEMENT = 100;
+    public const SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY = 101;
 
     private static $messages = [
         self::NO_IBLOCK_ELEMENT => 'Товар не найден',

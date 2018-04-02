@@ -72,7 +72,7 @@ if(!$hasOffer){
     return;
 }
 ?>
-    <div class="b-product-card">
+    <div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>" data-url="/ajax/catalog/product-info/">
         <div class="b-container">
             <?php $APPLICATION->IncludeComponent(
                 'fourpaws:breadcrumbs',
@@ -315,7 +315,6 @@ if(!$hasOffer){
                 </div>
             </div>
         </div>
-    </div>
 <?php
 
 /**

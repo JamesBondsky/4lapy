@@ -3,15 +3,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\StoreBundle\Collection\StockCollection;
-use Doctrine\Common\Collections\ArrayCollection;
 
 CBitrixComponent::includeComponentClass('fourpaws:city.delivery.info');
 
@@ -28,6 +35,11 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
      */
     protected $stockService;
 
+    /**
+     * FourPawsCatalogProductDeliveryInfoComponent constructor.
+     * @param CBitrixComponent|null $component
+     * @throws ApplicationCreateException
+     */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
@@ -47,11 +59,18 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         }
 
         $params['OFFER'] = $params['OFFER'] instanceof Offer ? $params['OFFER'] : null;
-        $params['STOCKS'] = $params['STOCKS'] instanceof StockCollection ? $params['STOCKS'] : null;
 
         return parent::onPrepareComponentParams($params);
     }
 
+    /**
+     * @return $this|void
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws CityNotFoundException
+     */
     protected function prepareResult()
     {
         if (!$this->arParams['OFFER']) {
@@ -60,7 +79,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         parent::prepareResult();
 
         if (isset($this->arResult['DEFAULT']['PICKUP']) &&
-            $this->arResult['DEFAULT']['PICKUP']['CODE'] == DeliveryService::INNER_PICKUP_CODE
+            $this->arResult['DEFAULT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
         ) {
             $this->arResult['DEFAULT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
                 $this->arResult['DEFAULT']['LOCATION']['CODE']
@@ -68,22 +87,11 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         }
 
         if (isset($this->arResult['CURRENT']['PICKUP']) &&
-            $this->arResult['CURRENT']['PICKUP']['CODE'] == DeliveryService::INNER_PICKUP_CODE
+            $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
         ) {
-            if ($this->arResult['CURRENT']['LOCATION']['CODE'] == $this->arResult['DEFAULT']['LOCATION']['CODE']) {
+            if ($this->arResult['CURRENT']['LOCATION']['CODE'] === $this->arResult['DEFAULT']['LOCATION']['CODE']) {
                 $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->arResult['DEFAULT']['PICKUP']['SHOP_COUNT'];
             } else {
-                $stores = $this->storeService->getByLocation(
-                    $this->arResult['CURRENT']['LOCATION']['CODE'],
-                    StoreService::TYPE_SHOP
-                );
-
-                if (!$this->arParams['STOCKS']) {
-                    /** @var Offer $offer */
-                    $offer = $this->arParams['OFFER'];
-                    $this->stockService->getStocks(new ArrayCollection([$offer]), $stores);
-                    $this->arParams['STOCKS'] = $offer->getStocks();
-                }
                 $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
                     $this->arResult['CURRENT']['LOCATION']['CODE']
                 );
@@ -95,7 +103,15 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
      * @param string $locationCode
      * @param array $possibleDeliveryCodes
      *
-     * @return null|CalculationResult[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
+     * @throws DeliveryNotFoundException
+     * @return CalculationResultInterface[]|null
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
@@ -107,12 +123,10 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
     }
 
     /**
-     * @param string $code
-     * @param int $iblockId
-     *
-     * @return null|Offer
+     * @param int $id
+     * @return Offer|null
      */
-    protected function getOffer(int $id)
+    protected function getOffer(int $id): ?Offer
     {
         return (new OfferQuery($id))
             ->withFilterParameter('ID', $id)
@@ -120,6 +134,13 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
             ->first();
     }
 
+    /**
+     * @param string $locationCode
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return int
+     */
     protected function getShopCount(string $locationCode)
     {
         $stores = $this->storeService->getByLocation(
@@ -130,8 +151,15 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         /** @var Offer $offer */
         $offer = $this->arParams['OFFER'];
 
-        $this->stockService->getStocks(new ArrayCollection([$offer]), $stores);
+        return $offer->getStocks()->filterByStores($stores)->count();
+    }
 
-        return $offer->getStocks()->count();
+    /**
+     * @param string $code
+     * @return bool
+     */
+    protected function isDefaultLocation(string $code): bool
+    {
+        return false;
     }
 }

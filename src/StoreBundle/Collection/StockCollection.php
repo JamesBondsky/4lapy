@@ -2,7 +2,6 @@
 
 namespace FourPaws\StoreBundle\Collection;
 
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Entity\Store;

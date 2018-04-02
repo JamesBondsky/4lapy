@@ -45,25 +45,24 @@ class BonusBuyConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     public function consume($data): bool
     {
-        if (!$this->support($data)) {
-            return false;
+        $success = false;
+        if ($this->support($data)) {
+            $this->log()->info('Импортируется акция из Bonus Buy');
+
+            try {
+                $success = true;
+
+                $this->sharesService->import($data);
+            } catch (\Exception $e) {
+                $success = false;
+
+                $this->log()->error(\sprintf('Импортируется акции: %s', $e->getMessage()));
+            }
         }
 
-        $this->log()->info('Импортируется акция из Bonus Buy');
-        
-        try {
-            $success = true;
-
-            $this->sharesService->export($data);
-        } catch (\Exception $e) {
-            $success = false;
-
-            $this->log()->error(\sprintf('Импортируется акции: %s', $e->getMessage()));
-        }
-        
         return $success;
     }
-    
+
     /**
      * @param $data
      *

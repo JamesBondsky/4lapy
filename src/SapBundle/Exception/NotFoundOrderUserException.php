@@ -6,6 +6,11 @@
 
 namespace FourPaws\SapBundle\Exception;
 
+/**
+ * Class NotFoundOrderUserException
+ *
+ * @package FourPaws\SapBundle\Exception;
+ */
 class NotFoundOrderUserException extends RuntimeException
 {
 }
