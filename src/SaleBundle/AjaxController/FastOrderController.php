@@ -21,9 +21,12 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\SmsService;
+use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -103,25 +106,31 @@ class FastOrderController extends Controller
     public function loadAction(Request $request): JsonResponse
     {
         $basketData = [];
+        $addData = [];
         $requestType = $request->get('type', 'basket');
         if ($requestType === 'card') {
-            $basketController = new BasketController($this->basketService, $this->basketViewService);
+            /** add to basket
+             @see \FourPaws\SaleBundle\AjaxController\BasketController */
+            $offerId = (int)$request->get('offerId', 0);
+            if ($offerId === 0) {
+                $offerId = (int)$request->get('offerid', 0);
+            }
+            $quantity = (int)$request->get('quantity', 1);
+
             try {
-                $response = $basketController->addAction($request);
-                if ($response->isOk()) {
-                    if ($response instanceof JsonErrorResponse) {
-                        return $response;
-                    }
-                    $basketData = json_decode($response->getContent());
-                } else {
-                    return $this->ajaxMess->getSystemError();
-                }
-            } catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
+                $this->basketService->addOfferToBasket($offerId, $quantity);
+                $addData = [
+                    'miniBasket' => $this->basketViewService->getMiniBasketHtml(true)
+                ];
+
+            } catch (BaseExceptionInterface $e) {
+                return $this->ajaxMess->getSystemError();
+            }
+            catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
             }
-
         }
         global $APPLICATION;
         ob_start();
@@ -137,8 +146,8 @@ class FastOrderController extends Controller
         );
         $html = ob_get_clean();
         $data = ['html' => $html];
-        if (!empty($basketData->data->miniBasket)) {
-            $data['miniBasket'] = $basketData->data->miniBasket;
+        if (!empty($addData['miniBasket'])) {
+            $data['miniBasket'] = $addData['miniBasket'];
         }
         return JsonSuccessResponse::createWithData('подгружено', $data);
     }
