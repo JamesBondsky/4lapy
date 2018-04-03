@@ -115,7 +115,7 @@ class ReferralService
                 case 'active':
                     /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                     /** Дата окончания активности должна быть больше текущей даты */
-                    $filter['=>UF_CARD_CLOSED_DATE'] = new Date();
+                    $filter['>=UF_CARD_CLOSED_DATE'] = new Date();
                     $filter['UF_MODERATED'] = [0,null,''];
                     break;
                 case 'moderated':
