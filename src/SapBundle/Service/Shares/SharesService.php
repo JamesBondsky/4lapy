@@ -41,6 +41,7 @@ use RuntimeException;
 /**
  * @todo уменьшить Efferent coupling
  */
+
 /**
  * Class SharesService
  *
@@ -109,20 +110,22 @@ class SharesService implements LoggerAwareInterface
             try {
                 $this->connection->startTransaction();
 
-                if ($this->tryDeleteShare($share) && $this->tryDeleteBasketRule($share)) {
+                if ($share->isDelete()) {
+                    $this->tryDeleteShare($share);
+                    $this->tryDeleteBasketRule($share);
                     continue;
                 }
-
+                /** работа с ПРСК */
                 $basketRule = $this->basketRuleFactory($share, $promo);
-
                 if ($existBasketRule = $this->basketRulesRepository->findOneByXmlId($share->getShareNumber())) {
                     $basketRule->setId($existBasketRule->getId());
                     $this->basketRulesRepository->update($basketRule);
                 } else {
                     $this->basketRulesRepository->create($basketRule);
                 }
+                /** работа с ПРСК  конец*/
 
-                $entity = $this->transformDtoToEntity($share, $promo);
+                $entity = $this->transformDtoToEntity($share, $promo, $basketRule);
 
                 /** @noinspection BadExceptionsProcessingInspection */
                 try {
@@ -132,10 +135,9 @@ class SharesService implements LoggerAwareInterface
                     $entity->withCode($exists->getCode());
 
                     $this->tryUpdateShare($entity);
-                    /**
-                     * @todo Good Exceptions Processing
-                     */
-                } /** @noinspection BadExceptionsProcessingInspection */ catch (NotFoundShareException $e) {
+
+                } /** @noinspection BadExceptionsProcessingInspection */
+                catch (NotFoundShareException $e) {
                     $this->tryAddShare($entity);
                 }
 
@@ -280,10 +282,11 @@ class SharesService implements LoggerAwareInterface
     /**
      * @param BonusBuyShare $share
      * @param BonusBuy $promo
+     * @param BasketRule $basketRule
      *
      * @return Share
      */
-    private function transformDtoToEntity(BonusBuyShare $share, BonusBuy $promo): Share
+    private function transformDtoToEntity(BonusBuyShare $share, BonusBuy $promo, BasketRule $basketRule): Share
     {
         $items = $share->getBonusBuyFrom();
         $products = $items->map(function (BonusBuyFrom $item) {
@@ -309,42 +312,38 @@ class SharesService implements LoggerAwareInterface
             ->withPreviewText((new TextContent())->withText($share->getDescription()))
             ->withPropertyLabel($share->getMark())
             ->withPropertyOnlyMp('N')
-            ->withPropertyProducts($products);
+            ->withPropertyProducts($products)
+            ->withPropertyBasketRules([$basketRule->getId()]);
 
         return $entity;
     }
 
+
     /**
+     *
+     *
      * @param BonusBuyShare $share
      *
-     * @return bool
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
-    private function tryDeleteShare(BonusBuyShare $share): bool
+    private function tryDeleteShare(BonusBuyShare $share)
     {
-        $res = false;
-        if ($share->isDelete()) {
-            try {
-                $result = $this->repository->delete($this->findShare($share));
+        try {
+            $result = $this->repository->delete($this->findShare($share));
 
-                if (!$result->isSuccess()) {
-                    throw new CantDeleteShareException(\implode(', ', $result->getErrorMessages()));
-                }
-
-                $this->log()->info(
-                    \sprintf(
-                        'Акция #%s удалена',
-                        $share->getShareNumber()
-                    )
-                );
-            } catch (CantDeleteShareException | NotFoundShareException $e) {
-                $this->log()->error($e->getMessage());
+            if (!$result->isSuccess()) {
+                throw new CantDeleteShareException(\implode(', ', $result->getErrorMessages()));
             }
 
-            $res = true;
+            $this->log()->info(
+                \sprintf(
+                    'Акция #%s удалена',
+                    $share->getShareNumber()
+                )
+            );
+        } catch (CantDeleteShareException | NotFoundShareException $e) {
+            $this->log()->error($e->getMessage());
         }
-
-        return $res;
     }
 
     /**
@@ -404,40 +403,33 @@ class SharesService implements LoggerAwareInterface
         }
     }
 
+
     /**
      *
      *
      * @param BonusBuyShare $share
      *
-     * @return bool
      * @throws \RuntimeException
      */
-    private function tryDeleteBasketRule(BonusBuyShare $share): bool
+    private function tryDeleteBasketRule(BonusBuyShare $share)
     {
-        $result = false;
-        if ($share->isDelete()) {
-            try {
-                if (!$basketRule = $this->basketRulesRepository->findOneByXmlId($share->getShareNumber())) {
-                    throw new BitrixEntityProxyException(
-                        (new DeleteResult())->addError(new Error('правило корзины не найдено'))
-                    );
-                }
-
-                $this->basketRulesRepository->delete($basketRule);
-
-                $this->log()->info(
-                    \sprintf(
-                        'Правило корзины #%s удалено',
-                        $share->getShareNumber()
-                    )
+        try {
+            if (!$basketRule = $this->basketRulesRepository->findOneByXmlId($share->getShareNumber())) {
+                throw new BitrixEntityProxyException(
+                    (new DeleteResult())->addError(new Error('правило корзины не найдено'))
                 );
-            } catch (ArgumentException | SapBundleException $e) {
-                $this->log()->error($e->getMessage()); // warning ?
             }
 
-            $result = true;
-        }
+            $this->basketRulesRepository->delete($basketRule);
 
-        return $result;
+            $this->log()->info(
+                \sprintf(
+                    'Правило корзины #%s удалено',
+                    $share->getShareNumber()
+                )
+            );
+        } catch (ArgumentException | SapBundleException $e) {
+            $this->log()->error($e->getMessage()); // warning ?
+        }
     }
 }
