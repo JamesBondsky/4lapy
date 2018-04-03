@@ -248,10 +248,16 @@ class OrderService
         $orderCollection = $this->orderRepository->getUserOrders($params);
         if (!$orderCollection->isEmpty()) {
             /** @var Order $order */
-            foreach ($orderCollection as &$order) {
+            foreach ($orderCollection as $key => &$order) {
                 /** @todo вынести все получения из цикла и сделать по феншую без запросов в цикле */
                 if (!$order->isManzana() && $order->getId() > 0) {
+                    /** @var ArrayCollection $items */
                     list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
+                    /** удаляем к чертям заказы без товаров */
+                    if($items->isEmpty()){
+                        unset($orderCollection[$key]);
+                        continue;
+                    }
                     $order->setItems($items);
                     $order->setAllWeight((float)$allWeight);
                     $order->setItemsSum((float)$itemsSum);
