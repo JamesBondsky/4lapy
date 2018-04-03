@@ -189,7 +189,7 @@ class Referral extends BaseEntity
     {
         $dateEndActive = $this->getDateEndActive();
         if ($dateEndActive instanceof Date) {
-            return DateHelper::replaceRuMonth($dateEndActive->format('d #m# Y'), DateHelper::NOMINATIVE);
+            return DateHelper::replaceRuMonth($dateEndActive->format('d #m# Y'), DateHelper::GENITIVE);
         }
         
         return '';
