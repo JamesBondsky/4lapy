@@ -168,7 +168,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                  * @var bool $redirect
                  */
                 $main = empty($referralType) && empty($referralType);
-                [$items, $redirect] = $this->referralService->getCurUserReferrals($nav, $main);
+                [$items, $redirect, $this->arResult['BONUS']] = $this->referralService->getCurUserReferrals($nav, $main);
+                if ($this->arResult['BONUS'] > 0) {
+                    /** отбрасываем дробную часть - нужно ли? */
+                    $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
+                }
                 if ($redirect) {
                     $tagCache->abortTagCache();
                     $cache->abortDataCache();
@@ -189,7 +193,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 /** @noinspection ForeachSourceInspection */
                 foreach ($items as $item) {
                     if ($item instanceof Referral) {
-                        $this->arResult['BONUS'] += $item->getBonus();
                         $cardId = $item->getCard();
                         $cacheItems[$cardId] = [
                             'bonus'         => $item->getBonus(),
@@ -198,9 +201,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                             'dateEndActive' => $item->getDateEndActive(),
                         ];
                     }
-                }
-                if ($this->arResult['BONUS'] > 0) {
-                    $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
                 }
             }
 
