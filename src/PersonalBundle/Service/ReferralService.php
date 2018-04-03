@@ -423,7 +423,7 @@ class ReferralService
             /** @var Referral $item */
             foreach ($referralsList as $key => $item) {
                 if (!empty($item->getCard())) {
-                    $arCards[(int)$item->getCard()] = $key;
+                    $arCards[$item->getCard()] = $key;
                 }
             }
         }
@@ -441,8 +441,8 @@ class ReferralService
         if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
             /** @var ManzanaReferal $item */
             foreach ($manzanaReferrals as $item) {
-                $cardNumber = (int)$item->cardNumber;
-                if (empty($item->cardNumber) || $cardNumber === 0) {
+                $cardNumber = $item->cardNumber;
+                if (empty($item->cardNumber)) {
                     continue;
                 }
                 if (!\array_key_exists($cardNumber, $arCards)) {
@@ -465,7 +465,7 @@ class ReferralService
                         }
                         if (!$skip) {
                             $cardInfo = null;
-                            if (!empty(!empty($card->contactId))) {
+                            if (!empty($card->contactId)) {
                                 $cardInfo = $this->manzanaService->getCardInfo($cardNumber, $card->contactId);
                             }
                             if (!empty($card->phone)) {
@@ -511,18 +511,53 @@ class ReferralService
                 else {
                     $referral =& $referralsList[$arCards[$cardNumber]];
                     if ($referral instanceof Referral) {
+                        $cardDate = '';
+
                         $referral->setBonus((float)$item->sumReferralBonus);
                         $lastModerate = $referral->isModerate();
                         $referral->setModerate($item->isModerated());
-                        if ($lastModerate !== $referral->isModerate()) {
-                            $this->update(
-                                [
-                                    'ID'           => $referral->getId(),
-                                    'UF_MODERATED' => $referral->isModerate() ? 'Y' : 'N',
-                                    'UF_CARD'      => $referral->getCard(),
-                                    'UF_USER_ID'   => $referral->getUserId(),
-                                ]
-                            );
+                        if($referral->getDateEndActive() === null){
+                            try {
+                                $skip = false;
+                                $card = null;
+                                try {
+                                    $card = $this->manzanaService->searchCardByNumber($cardNumber);
+                                } catch (CardNotFoundException $e) {
+                                    $skip = true;
+                                } catch (\Exception $e) {
+                                    $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+                                }
+                                if (!$skip) {
+                                    $cardInfo = null;
+                                    if (!empty($card->contactId)) {
+                                        $cardInfo = $this->manzanaService->getCardInfo($cardNumber, $card->contactId);
+                                        $cardDate = $cardInfo instanceof
+                                        CardByContractCards ? $cardInfo->getExpireDate()->format(
+                                            'd.m.Y'
+                                        ) : '';
+                                    }
+                                }
+                            } catch (ManzanaServiceException $e) {
+                                $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+                                /** скипаем при ошибке манзаны */
+                            }
+                        }
+                        if ($lastModerate !== $referral->isModerate() || !empty($cardDate)) {
+                            $data = [
+                                'ID'           => $referral->getId(),
+                                'UF_MODERATED' => $referral->isModerate() ? 'Y' : 'N',
+                                'UF_CARD'      => $referral->getCard(),
+                                'UF_USER_ID'   => $referral->getUserId(),
+                            ];
+                            if(!empty($cardDate)){
+                                $data['UF_CARD_CLOSED_DATE'] = $cardDate;
+                            }
+                            if($lastModerate !== $referral->isModerate()){
+                                $data['UF_MODERATED'] = $referral->isModerate() ? 'Y' : 'N';
+                            }
+                            if($this->update($data)){
+                                TaggedCacheHelper::clearManagedCache(['personal:referral:'.$referral->getUserId()]);
+                            }
                         }
                     }
                 }
