@@ -17,6 +17,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -26,7 +27,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsOrderPaymentComponent extends \CBitrixComponent
+class FourPawsOrderPaymentComponent extends FourPawsComponent
 {
     /** @var OrderService */
     protected $orderService;
@@ -56,12 +57,13 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
     {
         $params['ORDER_ID'] = (int)$params['ORDER_ID'];
         $params['HASH'] = $params['HASH'] ?? '';
+        $params['CACHE_TYPE'] = 'N';
 
         return parent::onPrepareComponentParams($params);
     }
 
     /** {@inheritdoc} */
-    public function executeComponent()
+    public function prepareResult(): void
     {
         global $APPLICATION;
         if ($this->arParams['SET_TITLE'] === BitrixUtils::BX_BOOL_TRUE) {
@@ -138,6 +140,10 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
                             $this->arResult['ERRORS'] = $result->getErrorMessages();
                         }
                     } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
+                        $this->log()->notice(sprintf('payment error: %s', $e->getMessage()), [
+                            'order' => $order->getId(),
+                            'code' => $e->getCode()
+                        ]);
                         $this->orderService->processPaymentError($order);
                         $this->arResult['ERRORS'][] = $e->getMessage();
                         $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());

@@ -13,6 +13,7 @@ use Bitrix\Iblock\Component\Tools;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -20,7 +21,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
+class FourPawsOrderPaymentResultComponent extends FourPawsComponent
 {
     /** @var OrderService */
     protected $orderService;
@@ -36,17 +37,18 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
         parent::__construct($component);
     }
 
-    public function onPrepareComponentParams($params)
+    public function onPrepareComponentParams($params): array
     {
         $params['ORDER_ID'] = (int)$params['ORDER_ID'];
         $params['HASH'] = $params['HASH'] ?? '';
         $params['REDIRECT_URL'] = $params['REDIRECT_URL'] ?? '';
+        $params['CACHE_TYPE'] = 'N';
 
         return parent::onPrepareComponentParams($params);
     }
 
     /** {@inheritdoc} */
-    public function executeComponent()
+    public function prepareResult(): void
     {
         try {
             $order = null;
@@ -114,6 +116,10 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
                     $url->addParams(['ORDER_ID' => $order->getId()]);
                 }
             } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
+                $this->log()->notice(sprintf('payment error: %s', $e->getMessage()), [
+                    'order' => $order->getId(),
+                    'code' => $e->getCode()
+                ]);
                 $this->orderService->processPaymentError($order);
                 $this->arResult['ERRORS'][] = $e->getMessage();
             }
@@ -131,19 +137,13 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
 
     /**
      * @param string $actionFile
-     *
-     * @return bool
      */
-    protected function includeResultFile(string $actionFile): bool
+    protected function includeResultFile(string $actionFile)
     {
         if (is_dir($_SERVER['DOCUMENT_ROOT'] . $actionFile) &&
             file_exists($_SERVER['DOCUMENT_ROOT'] . $actionFile . '/result.php')
         ) {
             require $_SERVER['DOCUMENT_ROOT'] . $actionFile . '/result.php';
-
-            return true;
         }
-
-        return false;
     }
 }
