@@ -118,13 +118,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
             $request = Application::getInstance()->getContext()->getRequest();
 
-            $emailGet = $request->get('email');
-            $hash = $request->get('hash');
+            $emailGet = (string)$request->get('email');
+            $hash = (string)$request->get('hash');
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 try {
-                    if ($confirmService::checkConfirmEmail($hash)) {
+                    if ($confirmService::checkCode($hash, 'email_register')) {
                         try {
                             $userRepository = $this->currentUserProvider->getUserRepository();
                             $userId = $userRepository->findIdentifierByRawLogin($emailGet);
@@ -173,7 +173,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
             }
 
-            $code = $request->get('code');
+            $code = (string)$request->get('code');
             $user_id = (int)$request->get('user_id');
             if ($user_id > 0 && !empty($code)) {
                 if (!$this->userAuthorizationService->isAuthorized()) {
