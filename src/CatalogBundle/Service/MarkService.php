@@ -88,12 +88,12 @@ final class MarkService
      */
     private function getMarkTemplate(Offer $offer): string
     {
-        if ($offer->isNew()) {
-            return self::GREEN_TEMPLATE;
-        }
-
         if ($offer->isHit()) {
             return self::YELLOW_TEMPLATE;
+        }
+
+        if ($offer->isNew()) {
+            return self::GREEN_TEMPLATE;
         }
 
         return self::DEFAULT_TEMPLATE;
