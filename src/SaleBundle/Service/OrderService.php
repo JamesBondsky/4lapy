@@ -209,7 +209,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param OrderStorage $storage
      * @param Basket|null  $basket
-     * @param CalculationResultInterface|null
+     * @param CalculationResultInterface|null $selectedDelivery
      *
      * @return Order
      * @throws ApplicationCreateException
@@ -1124,11 +1124,9 @@ class OrderService implements LoggerAwareInterface
                 $paySystem = $newPayment->getPaySystem();
                 $newPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
                 $payment->delete();
+                $newPayment->save();
                 $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
-                if ($commWay->getValue() !== OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS) {
-                    $commWay->setValue(OrderPropertyService::COMMUNICATION_PHONE);
-                }
-                $order->setFieldNoDemand('PAY_SYSTEM_ID', $paySystemId);
+                $commWay->setValue(OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS);
                 $order->save();
                 $sapConsumer->consume($order);
             } catch (\Exception $e) {
