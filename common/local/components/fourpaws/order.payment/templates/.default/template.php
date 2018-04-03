@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arResult
  */
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\Grid\Declension;
 use Bitrix\Sale\Order;
 use FourPaws\Helpers\CurrencyHelper;
@@ -36,7 +37,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
             </div>
         <?php } ?>
     </div>
-<?php } else {
+<?php } elseif ($arParams['PAY'] !== BitrixUtils::BX_BOOL_TRUE) {
     /** @var Order $order */
     $order = $arResult['ORDER'];
     $orderWeight = $order->getBasket()->getWeight();
