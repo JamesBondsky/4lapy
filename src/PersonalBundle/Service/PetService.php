@@ -219,6 +219,7 @@ class PetService
     {
         if (empty($data['UF_PHOTO_TMP'])) {
             unset($data['UF_PHOTO']);
+            $this->petRepository->addFileList(['UF_PHOTO' => 'skip']);
         } else {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
@@ -233,7 +234,6 @@ class PetService
 
         if ($entity->getUserId() === 0) {
             $entity->setUserId($updateEntity->getUserId());
-            unset($data['UF_PHOTO']);
         }
 
         $res = $this->petRepository->setEntity($entity)->update();
