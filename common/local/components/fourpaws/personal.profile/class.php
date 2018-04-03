@@ -222,10 +222,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         $data = [
             'UF_PHONE_CONFIRMED' => true,
+            'PERSONAL_PHONE' => $phone
         ];
+
         try {
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
+
+                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+
+                if (!empty($oldPhone)) {
+                    //Посылаем смс о смененном номере телефона
+                    $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
+                    $smsService = $container->get('sms.service');
+                    $smsService->sendSms($text, $oldPhone);
+                }
 
                 try {
                     /** @var ManzanaService $manzanaService */
@@ -385,32 +396,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
         try {
             $container = App::getInstance()->getContainer();
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $user = $userRepository->find($id);
 
-            $data = ['PERSONAL_PHONE' => $phone];
-            $oldPhone = '';
-            if ($user !== null) {
-                $oldPhone = $user->getPersonalPhone();
-            }
-            if ($oldPhone !== $phone) {
-                $data['UF_PHONE_CONFIRMED'] = false;
-            }
-            $res = $userRepository->updateData($id, $data);
-            if (!$res) {
-                return $this->ajaxMess->getUpdateError();
-            }
-
-            TaggedCacheHelper::clearManagedCache(['personal:profile:' . $id]);
-
-            if (!empty($oldPhone)) {
-                //Посылаем смс о смененном номере телефона
-                $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
-                $smsService = $container->get('sms.service');
-                $smsService->sendSms($text, $oldPhone);
-            }
-
-            $mess = 'Телефон обновлен';
+            $mess = 'Начато обновление телефона';
 
             try {
                 /** @var ConfirmCodeService $confirmService */

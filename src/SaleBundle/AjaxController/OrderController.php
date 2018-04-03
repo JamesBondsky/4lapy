@@ -280,7 +280,7 @@ class OrderController extends Controller
             if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
                 $url->setPath('/sale/payment/');
                 $url->addParams(['ORDER_ID' => $order->getId()]);
-                if (!$this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')->getValue()) {
+                if (!$this->orderService->hasRelatedOrder($order)) {
                     $url->addParams(['PAY' => 'Y']);
                 }
             }

@@ -550,13 +550,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
 
     /**
-     * @param $cardID
-     * @param $contactId
+     * @param string $cardID
+     * @param string $contactId
      *
      * @return CardByContractCards|null
      * @throws ManzanaServiceException
      */
-    public function getCardInfo($cardID, $contactId)
+    public function getCardInfo(string $cardID, string $contactId): ?CardByContractCards
     {
         $cards = $this->getCardsByContactId($contactId);
         if (\is_array($cards) && !empty($cards)) {

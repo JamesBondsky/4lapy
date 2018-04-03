@@ -29,10 +29,10 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\External\Manzana\Exception\ExecuteException;
-use FourPaws\External\ManzanaPosService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Manzana\Exception\ExecuteException;
+use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
@@ -123,20 +123,20 @@ class BasketComponent extends CBitrixComponent
         if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
             $basket = $this->basketService->getBasket();
         }
-
-        /** оставляем в малой корзине для актуализации */
+    
         $this->offerCollection = $this->basketService->getOfferCollection();
-        $this->setItems($basket);
-
-        // привязывать к заказу нужно для расчета скидок
-        if (null === $order = $basket->getOrder()) {
-            $order = Order::create(SITE_ID);
-            $order->setBasket($basket);
+        if (!$this->arParams['MINI_BASKET']) {
+            $this->setItems($basket);
         }
 
         $this->arResult['BASKET'] = $basket;
-        $this->loadPromoDescriptions();
         if (!$this->arParams['MINI_BASKET']) {
+            // привязывать к заказу нужно для расчета скидок
+            if (null === $order = $basket->getOrder()) {
+                $order = Order::create(SITE_ID);
+                $order->setBasket($basket);
+            }
+            $this->loadPromoDescriptions();
             $this->setCoupon();
             $this->arResult['USER'] = null;
             $this->arResult['USER_ACCOUNT'] = null;

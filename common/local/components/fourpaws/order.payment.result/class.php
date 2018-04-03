@@ -64,10 +64,8 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
                     $userId,
                     $this->arParams['HASH']
                 );
-                $relatedOrderId = $this->orderService->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')
-                    ->getValue();
-                if ($relatedOrderId) {
-                    $relatedOrder = $this->orderService->getOrderById($relatedOrderId, false);
+                if ($this->orderService->hasRelatedOrder($order)) {
+                    $relatedOrder = $this->orderService->getRelatedOrder($order);
                 }
             } catch (NotFoundException $e) {
                 Tools::process404('', true, true, true);
@@ -98,28 +96,28 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
             }
 
             $actionFile = $payment->getPaySystem()->getFieldsValues()['ACTION_FILE'];
+            $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
+
+            if (!empty($this->arParams['HASH'])) {
+                $url->addParams(['HASH' => $this->arParams['HASH']]);
+            }
+
+            if (!empty($this->arParams['REDIRECT_URL'])) {
+                $url->setPath($this->arParams['REDIRECT_URL']);
+                $url->addParams(['ORDER_ID' => $order->getId()]);
+            }
+
             try {
                 $this->includeResultFile($actionFile);
-
-                $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
-
-                $path = '/sale/order/complete/' . $order->getId();
                 if ($relatedOrder && !$relatedOrder->isPaid()) {
                     $url->setPath('/sale/payment');
                     $url->addParams(['ORDER_ID' => $order->getId()]);
                 }
-                if (!empty($this->arParams['HASH'])) {
-                    $url->addParams(['HASH' => $this->arParams['HASH']]);
-                }
-
-                if (!empty($this->arParams['REDIRECT_URL'])) {
-                    $url->setPath($this->arParams['REDIRECT_URL']);
-                    $url->addParams(['ORDER_ID' => $order->getId()]);
-                }
-
-                LocalRedirect($url->getUri());
             } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
+                $this->orderService->processPaymentError($order);
+                $this->arResult['ERRORS'][] = $e->getMessage();
             }
+            LocalRedirect($url->getUri());
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component_order_payment_result');
