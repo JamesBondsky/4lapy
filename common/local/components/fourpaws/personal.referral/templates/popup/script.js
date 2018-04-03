@@ -7,13 +7,19 @@ $('body').on('change keydown keyup', 'form.js-referal-form input#number-card', f
                    type:     $(this).data('method'),
                    dataType: "json"
                }).done(function (result) {
-            var $form = $('form.js-referal-form');
-            if (result.success && !!result.data && result.data.length > 0) {
-                $form.find('input#last-name').val(result.data.card.last_name);
-                $form.find('input#first-name').val(result.data.card.name);
-                $form.find('input#patronymic').val(result.data.card.second_name);
-                $form.find('input#phone-referal').val(result.data.card.phone);
-                $form.find('input#email-referal').val(result.data.card.email);
+            if (result.success && !!result.data) {
+                var $form = $('form.js-referal-form');
+                var data = result.data;
+                if (data.length > 0 && !!data.card) {
+                    var card = result.data.card;
+                    if (card.length > 0) {
+                        $form.find('input#last-name').val(card.last_name);
+                        $form.find('input#first-name').val(card.name);
+                        $form.find('input#patronymic').val(card.second_name);
+                        $form.find('input#phone-referal').val(card.phone);
+                        $form.find('input#email-referal').val(card.email);
+                    }
+                }
             }
         });
     }
