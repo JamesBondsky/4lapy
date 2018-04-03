@@ -116,7 +116,7 @@ class ReferralRepository extends BaseHlRepository
 
             if ($tagCache !== null) {
                 TaggedCacheHelper::addManagedCacheTags([
-                    'highloadblock:field:user:'. $curUserId
+                    'hlb:field:referral_user:'. $curUserId
                 ], $tagCache);
                 $tagCache->endTagCache();
             }

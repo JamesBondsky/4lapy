@@ -106,15 +106,16 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         /** @todo здесь тоже можно делать обновление динамически, так как это влияет только на товары */
         $this->currentUserProvider->refreshUserBonusPercent($user);
 
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getCachePath() ?: $this->getPath())) {
+            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $cachePath)) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
+                $tagCache->startTagCache($cachePath);
             }
             try {
                 $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);
@@ -145,7 +146,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             'sum'         => $bonus->getSum(),
             'paidByBonus' => $bonus->getCredit(),
             'realDiscount' => $bonus->getRealDiscount(),
-        ], $this->getPath())) {
+        ], $cachePath)) {
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:bonus:'. $user->getId(),
                 'order:'. $user->getId(),

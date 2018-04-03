@@ -57,6 +57,7 @@ class CItemsListComponent extends CBitrixComponent
             /**Получение инфоблоков если не установлены*/
 
             $cache = Application::getInstance()->getCache();
+            $cachePath = $this->getCachePath() ?: $this->getPath();
             if ($cache->initCache(
                 $params['CACHE_TIME'],
                 serialize(
@@ -65,7 +66,7 @@ class CItemsListComponent extends CBitrixComponent
                         'TYPE'        => 'full_iblocks',
                     ]
                 ),
-                $this->getCachePath() ?: $this->getPath()
+                $cachePath
             )) {
                 $vars = $cache->getVars();
                 $params['IBLOCK_ID'] = $vars['IBLOCK_ID'];
