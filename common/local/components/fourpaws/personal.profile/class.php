@@ -229,6 +229,15 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
 
+                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+
+                if (!empty($oldPhone)) {
+                    //Посылаем смс о смененном номере телефона
+                    $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
+                    $smsService = $container->get('sms.service');
+                    $smsService->sendSms($text, $oldPhone);
+                }
+
                 try {
                     /** @var ManzanaService $manzanaService */
                     $manzanaService = $container->get('manzana.service');
@@ -387,22 +396,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
         try {
             $container = App::getInstance()->getContainer();
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $user = $userRepository->find($id);
 
-            $oldPhone = '';
-            if ($user !== null) {
-                $oldPhone = $user->getPersonalPhone();
-            }
-
-            if (!empty($oldPhone)) {
-                //Посылаем смс о смененном номере телефона
-                $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
-                $smsService = $container->get('sms.service');
-                $smsService->sendSms($text, $oldPhone);
-            }
-
-            $mess = 'Телефон обновлен';
+            $mess = 'Начато обновление телефона';
 
             try {
                 /** @var ConfirmCodeService $confirmService */
