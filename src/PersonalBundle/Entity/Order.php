@@ -626,10 +626,12 @@ class Order extends BaseEntity
             /** @todo рассчитанная дата доставки */
             /** @var OrderProp $prop */
             $prop = $this->getProps()->get('DELIVERY_DATE');
-            /** @var Date|null $date */
-            $date = new Date($prop->getValue());
-            if ($date instanceof Date) {
-                $formatedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
+            if($prop !== null) {
+                /** @var Date|null $date */
+                $date = new Date($prop->getValue());
+                if ($date instanceof Date) {
+                    $formatedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
+                }
             }
         }
 

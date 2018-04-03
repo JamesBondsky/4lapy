@@ -192,10 +192,12 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                     $nav->getOffset(), $nav->getPageSize(), true));
                 $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
+                $this->abortResultCache();
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
             } catch (\Exception $e) {
+                $this->abortResultCache();
                 $logger = LoggerFactory::create('my_orders');
                 $logger->error('error - '.$e->getMessage());
                 /** Показываем пустую страницу с заказами */
