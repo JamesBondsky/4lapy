@@ -16,6 +16,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Card;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -69,6 +70,7 @@ class ReferralController extends Controller
             return $this->ajaxMess->getNeedAuthError();
         }
         $data = $request->request->all();
+        TrimArr($data);
         if (empty($data)) {
             return $this->ajaxMess->getEmptyDataError();
         }
@@ -76,9 +78,15 @@ class ReferralController extends Controller
             $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
         }
         try {
-            if (!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])) {
-                return $this->ajaxMess->getWrongCardNumber();
+            /** если не нашли карту валидируем ее, иначе делаем вид что ок */
+            try {
+                $this->referralService->manzanaService->searchCardByNumber($data['UF_CARD']);
+            } catch(CardNotFoundException $e){
+                if (!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])) {
+                    return $this->ajaxMess->getWrongCardNumber();
+                }
             }
+
         }
         catch (ManzanaServiceException $e) {
             $logger = LoggerFactory::create('manzana');
@@ -88,6 +96,7 @@ class ReferralController extends Controller
         $data['UF_MODERATED'] = 'Y';
         try {
             if ($this->referralService->add($data)) {
+                TaggedCacheHelper::clearManagedCache(['personal:referral:'.$data['UF_USER_ID']]);
                 return JsonSuccessResponse::create(
                     'Реферал добавлен, ожидайте модерации',
                     200,
@@ -136,10 +145,13 @@ class ReferralController extends Controller
         }
         /** @var Card $currentCard */
         try {
-            if(!$this->referralService->manzanaService->validateCardByNumber($card)){
-                return $this->ajaxMess->getWrongCardNumber();
-            }
             $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
+            /** убираем проверку - ибо если карта есть будет возвращать ошибку
+             * @todo удалить
+             */
+//            if(!$this->referralService->manzanaService->validateCardByNumber($card)){
+//                return $this->ajaxMess->getWrongCardNumber();
+//            }
             $cardInfo = [
                 'last_name'   => $currentCard->lastName,
                 'name'        => $currentCard->firstName,
