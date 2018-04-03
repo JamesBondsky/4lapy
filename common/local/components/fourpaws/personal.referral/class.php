@@ -87,7 +87,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = 24 * 60 * 60;
-        $params['MANZANA_CACHE_TIME'] = 1 * 60 * 60;
+        /** манзана кешируется на час */
+        $params['MANZANA_CACHE_TIME'] = 60 * 60;
         return $params;
     }
 
@@ -140,13 +141,14 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $this->arResult['search'] = $search = (string)$request->get('search');
         $referralType = (string)$request->get('referral_type');
         $cacheItems = [];
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId'        => $curUser->getId(),
                        'page'          => $nav->getCurrentPage(),
                        'search'        => $search,
                        'referral_type' => $referralType,
             ]),
-            $this->getCachePath() ?: $this->getPath())) {
+            $cachePath)) {
             $result = $cache->getVars();
             $nav = $result['NAV'];
             $this->arResult['BONUS'] = $result['BONUS'];
@@ -159,7 +161,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
+                $tagCache->startTagCache($cachePath);
             }
             try {
                 /** @var ArrayCollection $items
@@ -206,7 +208,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 TaggedCacheHelper::addManagedCacheTags([
                     'personal:referral',
                     'personal:referral:' . $curUser->getId(),
-                    'highloadblock:field:user:' . $curUser->getId(),
+                    'hlb:field:referral_user:' . $curUser->getId(),
                 ], $tagCache);
                 $tagCache->endTagCache();
             }
@@ -237,7 +239,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 'bonus'      => $this->arResult['BONUS'],
                 'search'     => $search,
                 'referral_type' => $referralType,
-            ]
+            ],
+            $cachePath
         )) {
             $this->arResult['referral_type'] = $this->referralService->getReferralType();
             $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
@@ -245,7 +248,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:referral',
                 'personal:referral:' . $curUser->getId(),
-                'highloadblock:field:user:' . $curUser->getId(),
+                'hlb:field:referral_user:' . $curUser->getId(),
             ]);
 
             $this->includeComponentTemplate();

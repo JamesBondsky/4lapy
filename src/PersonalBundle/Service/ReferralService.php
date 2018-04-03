@@ -114,8 +114,9 @@ class ReferralService
             switch ($referralType) {
                 case 'active':
                     /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-                    $filter['<=UF_CARD_CLOSED_DATE'] = new Date();
-                    $filter['UF_MODERATED'] = 0;
+                    /** Дата окончания активности должна быть больше текущей даты */
+                    $filter['=>UF_CARD_CLOSED_DATE'] = new Date();
+                    $filter['UF_MODERATED'] = [0,null,''];
                     break;
                 case 'moderated':
                     $filter['UF_MODERATED'] = 1;
@@ -158,7 +159,7 @@ class ReferralService
 
                 if ($tagCache !== null) {
                     TaggedCacheHelper::addManagedCacheTags([
-                        'highloadblock:field:user:' . $curUserId,
+                        'hlb:field:referral_user:' . $curUserId,
                     ], $tagCache);
                     $tagCache->endTagCache();
                 }
@@ -545,7 +546,6 @@ class ReferralService
                         if ($lastModerate !== $referral->isModerate() || !empty($cardDate)) {
                             $data = [
                                 'ID'           => $referral->getId(),
-                                'UF_MODERATED' => $referral->isModerate() ? 'Y' : 'N',
                                 'UF_CARD'      => $referral->getCard(),
                                 'UF_USER_ID'   => $referral->getUserId(),
                             ];
@@ -555,8 +555,13 @@ class ReferralService
                             if($lastModerate !== $referral->isModerate()){
                                 $data['UF_MODERATED'] = $referral->isModerate() ? 'Y' : 'N';
                             }
-                            if($this->update($data)){
-                                TaggedCacheHelper::clearManagedCache(['personal:referral:'.$referral->getUserId()]);
+                            if(\count($data) > 3){
+                                /** обновляем сущность полностью, чтобы данные не пропадали */
+                                $updateData = $this->referralRepository->entityToData($referral);
+                                $updateData = array_merge($updateData,$data);
+                                if($this->update($updateData)) {
+                                    TaggedCacheHelper::clearManagedCache(['personal:referral:' . $referral->getUserId()]);
+                                }
                             }
                         }
                     }
