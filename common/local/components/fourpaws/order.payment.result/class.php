@@ -8,7 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
@@ -50,95 +49,86 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
     /** {@inheritdoc} */
     public function prepareResult(): void
     {
+        $order = null;
+        $relatedOrder = null;
         try {
-            $order = null;
-            $relatedOrder = null;
-            try {
-                $userId = $this->currentUserProvider->getCurrentUserId();
-            } catch (NotAuthorizedException $e) {
-                $userId = null;
+            $userId = $this->currentUserProvider->getCurrentUserId();
+        } catch (NotAuthorizedException $e) {
+            $userId = null;
+        }
+
+        try {
+            $order = $this->orderService->getOrderById(
+                (int)$this->arParams['ORDER_ID'],
+                true,
+                $userId,
+                $this->arParams['HASH']
+            );
+            if ($this->orderService->hasRelatedOrder($order)) {
+                $relatedOrder = $this->orderService->getRelatedOrder($order);
+            }
+        } catch (NotFoundException $e) {
+            Tools::process404('', true, true, true);
+        }
+
+        /**
+         * Попытка повторной оплаты заказа
+         */
+        if ($order->isPaid() && ((null === $relatedOrder) || $relatedOrder->isPaid())) {
+            Tools::process404('', true, true, true);
+        }
+
+        $paymentItem = null;
+
+        /** @var Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isInner()) {
+                continue;
             }
 
-            try {
-                $order = $this->orderService->getOrderById(
-                    (int)$this->arParams['ORDER_ID'],
-                    true,
-                    $userId,
-                    $this->arParams['HASH']
-                );
-                if ($this->orderService->hasRelatedOrder($order)) {
-                    $relatedOrder = $this->orderService->getRelatedOrder($order);
-                }
-            } catch (NotFoundException $e) {
-                Tools::process404('', true, true, true);
-            }
-
-            /**
-             * Попытка повторной оплаты заказа
-             */
-            if ($order->isPaid() && ((null === $relatedOrder) || $relatedOrder->isPaid())) {
-                Tools::process404('', true, true, true);
-            }
-
-            $paymentItem = null;
-
-            /** @var Payment $payment */
-            foreach ($order->getPaymentCollection() as $payment) {
-                if ($payment->isInner()) {
-                    continue;
-                }
-
-                if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
-                    $paymentItem = $payment;
-                }
-            }
-
-            if (!$paymentItem || !$service = PaySystemManager::getObjectById($payment->getPaymentSystemId())) {
-                Tools::process404('', true, true, true);
-            }
-
-            $actionFile = $payment->getPaySystem()->getFieldsValues()['ACTION_FILE'];
-            $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
-
-            if (!empty($this->arParams['HASH'])) {
-                $url->addParams(['HASH' => $this->arParams['HASH']]);
-            }
-
-            if (!empty($this->arParams['REDIRECT_URL'])) {
-                $url->setPath($this->arParams['REDIRECT_URL']);
-                $url->addParams(['ORDER_ID' => $order->getId()]);
-            }
-
-            try {
-                $this->includeResultFile($actionFile);
-                if ($relatedOrder && !$relatedOrder->isPaid()) {
-                    $url->setPath('/sale/payment');
-                    $url->addParams(['ORDER_ID' => $order->getId()]);
-                }
-            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
-                $this->log()->notice(sprintf('payment error: %s', $e->getMessage()), [
-                    'order' => $order->getId(),
-                    'code' => $e->getCode()
-                ]);
-                $this->orderService->processPaymentError($order);
-                $this->arResult['ERRORS'][] = $e->getMessage();
-            }
-            LocalRedirect($url->getUri());
-        } catch (\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('component_order_payment_result');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
+            if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
+                $paymentItem = $payment;
             }
         }
 
-        $this->includeComponentTemplate();
+        if (!$paymentItem || !$service = PaySystemManager::getObjectById($payment->getPaymentSystemId())) {
+            Tools::process404('', true, true, true);
+        }
+
+        $actionFile = $payment->getPaySystem()->getFieldsValues()['ACTION_FILE'];
+        $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
+
+        if (!empty($this->arParams['HASH'])) {
+            $url->addParams(['HASH' => $this->arParams['HASH']]);
+        }
+
+        if (!empty($this->arParams['REDIRECT_URL'])) {
+            $url->setPath($this->arParams['REDIRECT_URL']);
+            $url->addParams(['ORDER_ID' => $order->getId()]);
+        }
+
+        try {
+            $this->includeResultFile($actionFile);
+            if ($relatedOrder && !$relatedOrder->isPaid()) {
+                $url->setPath('/sale/payment');
+                $url->addParams(['ORDER_ID' => $order->getId()]);
+            }
+        } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
+            $this->log()->notice(sprintf('payment error: %s', $e->getMessage()), [
+                'order' => $order->getId(),
+                'code' => $e->getCode()
+            ]);
+            $this->orderService->processPaymentError($order);
+            $this->arResult['ERRORS'][] = $e->getMessage();
+        }
+
+        LocalRedirect($url->getUri());
     }
 
     /**
      * @param string $actionFile
      */
-    protected function includeResultFile(string $actionFile)
+    protected function includeResultFile(string $actionFile): void
     {
         if (is_dir($_SERVER['DOCUMENT_ROOT'] . $actionFile) &&
             file_exists($_SERVER['DOCUMENT_ROOT'] . $actionFile . '/result.php')
