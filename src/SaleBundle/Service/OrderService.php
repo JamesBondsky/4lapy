@@ -1127,7 +1127,6 @@ class OrderService implements LoggerAwareInterface
                 $newPayment->save();
                 $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
                 $commWay->setValue(OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS);
-//                $order->setFieldNoDemand('PAY_SYSTEM_ID', $paySystemId);
                 $order->save();
                 $sapConsumer->consume($order);
             } catch (\Exception $e) {
