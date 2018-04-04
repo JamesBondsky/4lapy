@@ -6,6 +6,7 @@
 
 namespace FourPaws\SapBundle\Dto\In\StoresStock;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
 /**
@@ -27,6 +28,10 @@ class StoresStock
      */
     public function getItems(): Collection
     {
+        if (!$this->items) {
+            $this->items = new ArrayCollection();
+        }
+
         return $this->items;
     }
 
@@ -38,6 +43,7 @@ class StoresStock
     public function setItems(Collection $items): StoresStock
     {
         $this->items = $items;
+
         return $this;
     }
 }

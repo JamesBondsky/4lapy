@@ -29,14 +29,11 @@ class BlankSerializationVisitor extends JsonSerializationVisitor
     }
 
     /**
-     *
-     *
      * @param string $k
      * @param array $type
      * @param Context $context
-     *
      */
-    protected function setBlankValue(string $k, array $type, Context $context)
+    protected function setBlankValue(string $k, array $type, Context $context): void
     {
         switch ($type['name']) {
             case 'NULL':

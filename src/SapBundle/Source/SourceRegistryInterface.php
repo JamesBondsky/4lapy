@@ -6,6 +6,11 @@
 
 namespace FourPaws\SapBundle\Source;
 
+/**
+ * Interface SourceRegistryInterface
+ *
+ * @package FourPaws\SapBundle\Source
+ */
 interface SourceRegistryInterface
 {
     /**
