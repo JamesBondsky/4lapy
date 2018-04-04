@@ -32,11 +32,26 @@ class DaDataLocationAdapter extends BaseAdapter
             $locationService = Application::getInstance()->getContainer()->get('location.service');
             $country = !empty($entity->getCountry()) ? $entity->getCountry() : '';
             $city = !empty($entity->getCity()) ? $entity->getCity() : '';
-            $region = !empty($entity->getRegion()) && $city !== $entity->getRegion() ? ' '.$entity->getRegion() : '';
-            $cities = $locationService->findLocationCity($city, $country.$region, 1, true);
-            $city = reset($cities);
-            $city['REGION'] = $entity->getRegion();
-            $bitrixLocation = $this->convertDataToEntity($city, BitrixLocation::class);
+            $region = !empty($entity->getRegion()) && $city !== $entity->getRegion() ? ' '.str_replace('/','', $entity->getRegion()) : '';
+            /** из-за того что битрикс не сортирует по релевантности получаем количество адресов больше чем надо
+             * и щем в нем нужный нам адрес - количество для поиска надо подобрать, на 100 работает
+             */
+            $cities = $locationService->findLocationCity($city, $country.$region, 100, true);
+            $countCities = \count($cities);
+            if($countCities > 1){
+                foreach ($cities as $bitrixCity) {
+                    if($bitrixCity['NAME'] === $city){
+                        $selectedCity = $bitrixCity;
+                        break;
+                    }
+                }
+            }
+            if(!isset($selectedCity)){
+                $selectedCity = reset($cities);
+            }
+
+            $selectedCity['REGION'] = $entity->getRegion();
+            $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
 
         } catch (CityNotFoundException $e) {
             /** не нашли - возвращаем пустой объект - должно быть сведено к 0*/
