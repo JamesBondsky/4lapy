@@ -204,11 +204,10 @@ class Event implements ServiceHandlerInterface
                 return false;
             }
             unset($_SESSION['MANZANA_UPDATE']);
-            $client = null;
 
             $userService = $container->get(CurrentUserProviderInterface::class);
             $user = $userService->getUserRepository()->find((int)$fields['ID']);
-            if (!($user instanceof User)) {
+            if ($user === null) {
                 return false;
             }
 
@@ -225,12 +224,10 @@ class Event implements ServiceHandlerInterface
                 $client = new Client();
             }
 
-            if ($client !== null && $user !== null) {
-                /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
-                $userService->setClientPersonalDataByCurUser($client, $user);
+            /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
+            $userService->setClientPersonalDataByCurUser($client, $user);
 
-                $manzanaService->updateContactAsync($client);
-            }
+            $manzanaService->updateContactAsync($client);
         }
         return true;
     }
