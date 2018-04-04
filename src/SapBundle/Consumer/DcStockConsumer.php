@@ -6,10 +6,12 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use FourPaws\Enum\IblockCode;
@@ -18,7 +20,13 @@ use FourPaws\SapBundle\Dto\In\DcStock\DcStock;
 use FourPaws\SapBundle\Dto\In\DcStock\StockItem;
 use FourPaws\SapBundle\Exception\InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 
+/**
+ * Class DcStockConsumer
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
 class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -38,10 +46,10 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param DcStock $dcStock
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      * @return bool
      */
     public function consume($dcStock): bool
@@ -99,7 +107,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @return int
      */
     protected function getOffersIBlockId(): int
@@ -110,7 +118,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @return Result
      */
     protected function getOfferElementDataByXmlId($xmlId): Result
@@ -153,7 +161,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param string $xmlId
      * @param bool $refreshCache
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @return Result
      */
     protected function getStoreDataByXmlId(string $xmlId, $refreshCache = false): Result
@@ -195,7 +203,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param string $xmlId
      * @param bool $refreshCache
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @return array
      */
     protected function getStoreByXmlId(string $xmlId, $refreshCache = false): array
@@ -235,6 +243,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param StockItem $stockItem
      *
      * @return Result
+     * @throws \RuntimeException
      */
     protected function createStore($stockItem) : Result
     {
@@ -310,8 +319,8 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param StockItem $stockItem
      * @param bool      $getExtResult
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
      * @throws \Exception
      * @return Result
      */
@@ -381,7 +390,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         if ($result->isSuccess()) {
             $offerData = $offerElementDataResult->getData();
             $storeData = $storeDataResult->getData();
-            $stockValue = $stockItem->getStockValue();
+            $stockValue = floor($stockItem->getStockValue());
 
             $items = StoreProductTable::getList(
                 [
@@ -450,7 +459,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @return array
      */
     private function getOfferElementByXmlId($xmlId): array
