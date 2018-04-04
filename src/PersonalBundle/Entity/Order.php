@@ -900,5 +900,4 @@ class Order extends BaseEntity
     {
         return $this->getItems()->isEmpty();
     }
-
 }

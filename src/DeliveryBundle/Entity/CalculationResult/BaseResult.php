@@ -751,6 +751,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     protected function resetResult(): void
     {
+/** @todo А здесь не надо сбрасывать $this->periodFrom ? */
         $this->deliveryDate = null;
         $this->errors = new ErrorCollection();
         $this->isSuccess = true;
