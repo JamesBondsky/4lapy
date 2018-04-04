@@ -56,35 +56,35 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 {
     use ManzanaServiceTrait;
 
-    const METHOD_AUTHENTICATE = 'Authenticate';
+    public const METHOD_AUTHENTICATE = 'Authenticate';
 
-    const METHOD_EXECUTE = 'Execute';
+    public const METHOD_EXECUTE = 'Execute';
 
-    const CONTRACT_ADVANCED_BALANCE = 'advanced_balance';
+    public const CONTRACT_ADVANCED_BALANCE = 'advanced_balance';
 
-    const CONTRACT_CARD_ATTACH = 'card_attach';
+    public const CONTRACT_CARD_ATTACH = 'card_attach';
 
-    const CONTRACT_CARD_VALIDATE = 'card_validate';
+    public const CONTRACT_CARD_VALIDATE = 'card_validate';
 
-    const CONTRACT_CARDS = 'cards';
+    public const CONTRACT_CARDS = 'cards';
 
-    const CONTRACT_CHANGE_CARD = 'contact_card_update';
+    public const CONTRACT_CHANGE_CARD = 'contact_card_update';
 
-    const CONTRACT_CLIENT_SEARCH = 'client_search';
+    public const CONTRACT_CLIENT_SEARCH = 'client_search';
 
-    const CONTRACT_CONTACT = 'contact';
+    public const CONTRACT_CONTACT = 'contact';
 
-    const CONTRACT_CONTACT_CHEQUES = 'contact_cheques';
+    public const CONTRACT_CONTACT_CHEQUES = 'contact_cheques';
 
-    const CONTRACT_CONTACT_REFERRAL_CARDS = 'Contact_Referral_Cards';
+    public const CONTRACT_CONTACT_REFERRAL_CARDS = 'Contact_Referral_Cards';
 
-    const CONTRACT_CONTACT_UPDATE = 'contact_update';
+    public const CONTRACT_CONTACT_UPDATE = 'contact_update';
 
-    const CONTRACT_CHEQUE_ITEMS = 'cheque_items';
+    public const CONTRACT_CHEQUE_ITEMS = 'cheque_items';
 
-    const CONTRACT_SEARCH_CARD_BY_NUMBER = 'search_cards_by_number';
+    public const CONTRACT_SEARCH_CARD_BY_NUMBER = 'search_cards_by_number';
 
-    const CONTRACT_CHEQUES = 'cheques';
+    public const CONTRACT_CHEQUES = 'cheques';
 
     protected $sessionId;
 
@@ -611,6 +611,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             /** @var Cheques $resCheques */
             $resCheques = $this->serializer->deserialize($result, Cheques::class, 'xml');
             /** @var $resCheques ->cheques $cheques */
+            /** @noinspection PhpUndefinedMethodInspection */
+            /** метод есть так как ArrayCollection */
             $cheques = $resCheques->cheques->toArray();
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -664,6 +666,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             /** @var ChequeItems $resChequeItems */
             $resChequeItems = $this->serializer->deserialize($result, ChequeItems::class, 'xml');
             /** @var ChequeItem[] $resCheques ->cheques */
+            /** @noinspection PhpUndefinedMethodInspection*/
+            /** метод есть, так как ArrayCollection */
             $chequeItems = $resChequeItems->chequeItems->toArray();
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -726,11 +730,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             return $card->status === CardByContractCards::CARD_STATUS_ACTIVE;
         });
 
-        if (count($activeCards) === 1) {
+        if (\count($activeCards) === 1) {
             return $activeCards[0];
         }
 
-        if (count($activeCards) > 1) {
+        if (\count($activeCards) > 1) {
             throw new TooManyActiveCardFound(sprintf('Card is not found to user with contact id: %s', $contactId));
         }
 
@@ -744,7 +748,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @return bool
      * @throws ManzanaServiceException
      */
-    public function changeCard(string $card_from, string $card_to)
+    public function changeCard(string $card_from, string $card_to): bool
     {
         try {
             $bag = new ParameterBag(['card_from' => $card_from, 'card_to' => $card_to]);
