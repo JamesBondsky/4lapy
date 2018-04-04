@@ -10,7 +10,6 @@ use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use DateTimeImmutable;
 use Exception;
-use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
@@ -28,7 +27,7 @@ use Throwable;
  */
 class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 {
-    const METHOD_EXECUTE = 'ProcessRequestInfo';
+    public const METHOD_EXECUTE = 'ProcessRequestInfo';
 
     use ManzanaServiceTrait;
 
@@ -46,7 +45,6 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
         $request = new SoftChequeRequest();
 
-        $iterator = 0;
         /** @var BasketItem $item */
         foreach ($basket->getBasketItems() as $k => $item) {
             $sum += $item->getBasePrice() * $item->getQuantity();
@@ -57,9 +55,9 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             if (\strpos($xmlId, '#')) {
                 $xmlId = \explode('#', $xmlId)[1];
             }
-
+            $basketCode = (int)str_replace('n', '', $item->getBasketCode());
             $chequePosition =
-                (new ChequePosition())->setChequeItemNumber($iterator++)
+                (new ChequePosition())->setChequeItemNumber($basketCode)
                     ->setSumm($item->getBasePrice() * $item->getQuantity())
                     ->setQuantity($item->getQuantity())
                     ->setPrice($item->getBasePrice())
@@ -131,7 +129,6 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @throws ExecuteException
      *
-     * @throws ManzanaPromocodeUnavailableException
      * @return SoftChequeResponse
      */
     public function processChequeWithCoupons(SoftChequeRequest $chequeRequest, string $coupon): SoftChequeResponse
@@ -184,9 +181,14 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             ->setDatetime(new DateTimeImmutable())
             ->setRequestId($requestId);
 
-        $chequeRequest->getItems()->forAll(function ($k, ChequePosition $item) use ($requestId) {
-            $item->setChequeId($requestId);
-        });
+        $chequeRequest->getItems()->forAll(
+            function (
+                /** @noinspection PhpUnusedParameterInspection */
+                $k,
+                ChequePosition $item
+            ) use ($requestId) {
+                $item->setChequeId($requestId);
+            });
     }
 
     /**
@@ -199,15 +201,16 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $this->prepareRequest($chequeRequest);
 
         return
-            ['request_options' =>
-                [
-                    'request' => [
-                        'Requests' => [
-                            $chequeRequest::ROOT_NAME => $this->serializer->toArray($chequeRequest),
+            [
+                'request_options' =>
+                    [
+                        'request' => [
+                            'Requests' => [
+                                $chequeRequest::ROOT_NAME => $this->serializer->toArray($chequeRequest),
+                            ],
                         ],
+                        'orgName' => $this->parameters['organization_name'],
                     ],
-                    'orgName' => $this->parameters['organization_name'],
-                ],
             ];
     }
 
@@ -227,6 +230,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param SoftChequeRequest $chequeRequest
      *
      * @throws ExecuteException
+     *
      * @return SoftChequeResponse
      */
     protected function execute(SoftChequeRequest $chequeRequest): SoftChequeResponse
