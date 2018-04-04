@@ -145,9 +145,9 @@ class UserService implements
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @return User
+     * @return User|null
      */
-    public function getCurrentUser(): User
+    public function getCurrentUser(): ?User
     {
         return $this->userRepository->find($this->getCurrentUserId());
     }
