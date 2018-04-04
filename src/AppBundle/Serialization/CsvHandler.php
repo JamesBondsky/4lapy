@@ -79,6 +79,7 @@ class CsvHandler implements SubscribingHandlerInterface
 
                 return $this->toCsv($result, $delimiter, $enclosure, $escape);
             }, $data);
+            array_unshift($result, $this->toCsv($header, $delimiter, $enclosure, $escape));
         }
 
         return $result;
