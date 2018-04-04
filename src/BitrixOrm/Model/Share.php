@@ -76,6 +76,12 @@ class Share extends IblockElement
     protected $PROPERTY_PRODUCTS = [];
 
     /**
+     * @var string[]
+     * @Type("array")
+     */
+    protected $PROPERTY_BASKET_RULES = [];
+
+    /**
      * @var OfferCollection
      */
     protected $products;
@@ -273,5 +279,28 @@ class Share extends IblockElement
             $this->products = (new OfferQuery())->withFilter(['=XML_ID' => $this->getPropertyProducts()])->exec();
         }
         return $this->products;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getPropertyBasketRules(): array
+    {
+        return $this->PROPERTY_BASKET_RULES;
+    }
+
+    /*
+     * Как же у меня бомбит от вашего with вместо set
+     */
+
+    /**
+     * @param string[] $propertyBasketRules
+     *
+     * @return Share
+     */
+    public function withPropertyBasketRules(array $propertyBasketRules): Share
+    {
+        $this->PROPERTY_BASKET_RULES = $propertyBasketRules;
+        return $this;
     }
 }

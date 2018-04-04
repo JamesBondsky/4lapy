@@ -11,6 +11,11 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
+/**
+ * Class DirectorySourceFinderBuilder
+ *
+ * @package FourPaws\SapBundle\Service
+ */
 class DirectorySourceFinderBuilder
 {
     private $fileSystem;
@@ -59,7 +64,7 @@ class DirectorySourceFinderBuilder
      *
      * @throws IOException
      */
-    public function checkPath(string $path)
+    public function checkPath(string $path): void
     {
         if (!$this->fileSystem->exists($path)) {
             $this->fileSystem->mkdir($path, '0775');

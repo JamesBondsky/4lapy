@@ -374,8 +374,7 @@ class OrderService implements LoggerAwareInterface
          */
         if ($storage->getPaymentId()) {
             $paymentCollection = $order->getPaymentCollection();
-            $sum = $order->getBasket()->getOrderableItems()->getPrice();
-            $sum += $order->getDeliveryPrice();
+            $sum = $order->getBasket()->getOrderableItems()->getPrice() + $order->getDeliveryPrice();
 
             /**
              * Нужно для оплаты бонусами
@@ -654,6 +653,18 @@ class OrderService implements LoggerAwareInterface
                     'floor'    => $address->getFloor(),
                     'flat'     => $address->getFlat(),
                 ]);
+            }
+        }
+
+        /**
+         * @todo костыль
+         * При создании заказа корзина пересчитывается и скидка по промокоду сбрасывается
+         * Это фикс не допускает пересчет корзины
+         */
+        if ($this->basketService->getPromocodeDiscount()) {
+            /** @var BasketItem $basketItem */
+            foreach ($order->getBasket() as $basketItem) {
+                $basketItem->setField('CUSTOM_PRICE', 'Y');
             }
         }
 

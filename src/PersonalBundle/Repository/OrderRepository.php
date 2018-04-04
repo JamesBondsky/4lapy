@@ -130,21 +130,14 @@ class OrderRepository extends BaseRepository
         );
 
         /**
-         * WAT
-         * @todo Зачем все это?
+         * получаем свойства для обращения к свойствам и кешируем запросы на долгое время, ибо меняться будет крайне редко
          */
         $volumePropId = PropertyTable::query()
                             ->where('IBLOCK_ID', $iblockId)
                             ->whereIn('CODE', 'VOLUME_REFERENCE')
                             ->setCacheTtl($queryCacheTtl)
                             ->setSelect(['ID'])
-                            ->exec();
-
-
-
-
-
-
+                            ->exec()->fetch()['ID'];
 
         $sizePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
             'CODE',
@@ -190,7 +183,6 @@ class OrderRepository extends BaseRepository
                 IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
                 Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
             ))
-            ->setCacheTtl($queryCacheTtl)
             ->exec();
         $result = new ArrayCollection();
         $items = [];

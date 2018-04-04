@@ -68,7 +68,7 @@ parameters:
   sap.schedule.directory.out: '%sap.directory%/ArchSchedule/'
   sap.schedule.directory.error: '%sap.directory%/ArchSchedule_Errors/'
 
-  sap.shop.directory.in: '%sap.directory%/SAPBW/'
+  sap.shop.directory.in: '%sap.directory%/'
   sap.shop.directory.out: '%sap.directory%/SAPBW/'
   sap.shop.directory.error: '%sap.directory%/SAPBW_Errors/'
 

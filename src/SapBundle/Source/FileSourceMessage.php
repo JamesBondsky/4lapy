@@ -30,7 +30,7 @@ class FileSourceMessage extends SourceMessage implements FileSourceInterface
      *
      * @return $this
      */
-    public function setName(string $name)
+    public function setName(string $name): self
     {
         $this->name = $name;
         
@@ -50,7 +50,7 @@ class FileSourceMessage extends SourceMessage implements FileSourceInterface
      *
      * @return $this
      */
-    public function setDirectory(string $directory)
+    public function setDirectory(string $directory): self
     {
         $this->directory = $directory;
         
