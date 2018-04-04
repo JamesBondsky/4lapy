@@ -45,33 +45,33 @@ class Event implements ServiceHandlerInterface
 
         $prefix = 'Address';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
 
         $prefix = 'Pet';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
 
         /** обновление данных в манзане по питомцам */
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, 'updateManzanaPets']);
         self::initHandler($prefix . 'OnAfterAdd', [static::class, 'updateManzanaPets']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, 'updateManzanaPets']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, 'prepareDelUpdateManzanaPets']);
         self::initHandler($prefix . 'OnAfterDelete', [static::class, 'updateManzanaPets']);
 
 
         $prefix = 'Referral';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
 
         $prefix = 'Comments';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
     }
 
@@ -88,6 +88,17 @@ class Event implements ServiceHandlerInterface
             $eventName,
             $callback
         );
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function AddressClearCacheAdd(BitrixEvent $event): void
+    {
+        $fields = $event->getParameter('fields');
+        if (!empty($fields['UF_USER_ID'])) {
+            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
+        }
     }
 
     /**
@@ -127,11 +138,11 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      */
-    public static function AddressClearCacheAdd(BitrixEvent $event): void
+    public static function PetClearCacheAdd(BitrixEvent $event): void
     {
         $fields = $event->getParameter('fields');
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -172,11 +183,11 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      */
-    public static function PetClearCacheAdd(BitrixEvent $event): void
+    public static function ReferralClearCacheAdd(BitrixEvent $event): void
     {
         $fields = $event->getParameter('fields');
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -217,11 +228,11 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      */
-    public static function ReferralClearCacheAdd(BitrixEvent $event): void
+    public static function CommentsClearCacheAdd(BitrixEvent $event): void
     {
         $fields = $event->getParameter('fields');
-        if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
+        if (!empty($fields['UF_OBJECT_ID'])) {
+            static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
         }
     }
 
@@ -254,17 +265,6 @@ class Event implements ServiceHandlerInterface
 
         $fields = static::getHlItemFieldsById('Comments', $id);
 
-        if (!empty($fields['UF_OBJECT_ID'])) {
-            static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
-        }
-    }
-
-    /**
-     * @param BitrixEvent $event
-     */
-    public static function CommentsClearCacheAdd(BitrixEvent $event): void
-    {
-        $fields = $event->getParameter('fields');
         if (!empty($fields['UF_OBJECT_ID'])) {
             static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
         }
