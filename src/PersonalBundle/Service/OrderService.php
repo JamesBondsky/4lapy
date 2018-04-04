@@ -181,6 +181,7 @@ class OrderService
                             $i++;
                             if ((int)$chequeItem->number < 2000000) {
                                 $item = new OrderItem();
+                                $item->setId($chequeItem->number);
                                 if ((int)$chequeItem->number > 1000000) {
                                     $item->setArticle($chequeItem->number);
                                 }

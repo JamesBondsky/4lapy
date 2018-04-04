@@ -37,11 +37,13 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
             <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
                 <?= $order->getStatus() ?>
                 <?php /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */ ?>
-                <span><?= \in_array($order->getStatus(), [
+                <span>
+                    <?= \in_array($order->getStatusId(), [
                         $component::STATUS_IN_ASSEMBLY_1,
                         $component::STATUS_IN_ASSEMBLY_2,
                         $component::STATUS_IN_POINT_ISSUE,
-                    ], true) ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?></span>
+                    ], true) ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?>
+                </span>
             </div>
             <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
                 <?= $order->getDelivery()->getDeliveryName() ?>
@@ -153,12 +155,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                     × <?= $item->getQuantity() ?> шт
                                 </div>
                             <?php } ?>
-                            <?php if ($item->getBonus() > 0) { ?>
-                                <div class="b-list-order__bonus">
-                                    + <?= $item->getBonus() . ' ' . WordHelper::declension($item->getBonus(),
-                                        ['бонус', 'бонуса', 'бонусов']) ?>
-                                </div>
-                            <?php } ?>
+                            <div class="b-list-order__bonus js-order-item-bonus-<?=$order->isManzana() ? 'manzana-' : ''?><?=$item->getId()?>"></div>
                         </div>
                     </div>
                 </li>
