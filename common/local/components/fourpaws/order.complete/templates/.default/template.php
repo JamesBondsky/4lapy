@@ -175,26 +175,27 @@ $relatedOrder = $arResult['RELATED_ORDER'];
                         </div>
                     <?php } ?>
                 <?php } ?>
-                <?php if ($arResult['ORDER_REGISTERED']) {
-                    ?>
-                    <hr class="b-hr b-hr--order"/>
-                    <div class="b-order__text-block">
+                <hr class="b-hr b-hr--order"/>
+                <div class="b-order__text-block">
+                    <?php if ($arResult['ORDER_REGISTERED']) {
+                        ?>
                         <h5 class="b-order__text-list-heading">Также мы создали вам личный кабинет, где вы можете:</h5>
                         <ul class="b-order__text-list">
                             <li class="b-order__text-item">отслеживать статус заказа;</li>
                             <li class="b-order__text-item">повторять заказы в 1 клик;</li>
                             <li class="b-order__text-item">управлять адресами доставки.</li>
                         </ul>
-                        <p>Перейти в
-                            <a class="b-link b-link--inherit b-link--orange" href="/personal/" title="">личный
-                                кабинет</a>.
-                        </p>
-                        <p>Перейти на
-                            <a class="b-link b-link--inherit b-link--orange" href="/" title="">главную страницу</a>.
-                        </p>
-                    </div>
-                    <?php
-                } ?>
+                        <?php
+                    } ?>
+                    <p>Перейти в
+                        <a class="b-link b-link--inherit b-link--orange" href="/personal/" title="">личный
+                            кабинет</a>.
+                    </p>
+                    <p>Перейти на
+                        <a class="b-link b-link--inherit b-link--orange" href="/" title="">главную страницу</a>.
+                    </p>
+                </div>
+
             </div>
         </div>
     </div>
