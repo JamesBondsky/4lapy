@@ -33,6 +33,13 @@ class SapService
      */
     private $pipelineRegistry;
 
+    /**
+     * SapService constructor.
+     *
+     * @param ConsumerRegistryInterface $consumerRegistry
+     * @param SourceRegistryInterface $sourceRegistry
+     * @param PipelineRegistry $pipelineRegistry
+     */
     public function __construct(
         ConsumerRegistryInterface $consumerRegistry,
         SourceRegistryInterface $sourceRegistry,
@@ -48,7 +55,7 @@ class SapService
      * @param string $pipelineCode
      * @throws NotFoundPipelineException
      */
-    public function execute(string $pipelineCode)
+    public function execute(string $pipelineCode): void
     {
         foreach ($this->pipelineRegistry->generator($pipelineCode) as $sourceMessage) {
             if ($this->consumerRegistry->consume($sourceMessage->getData())) {
