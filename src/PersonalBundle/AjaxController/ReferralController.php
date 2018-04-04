@@ -70,6 +70,7 @@ class ReferralController extends Controller
             return $this->ajaxMess->getNeedAuthError();
         }
         $data = $request->request->all();
+        TrimArr($data);
         if (empty($data)) {
             return $this->ajaxMess->getEmptyDataError();
         }
@@ -77,9 +78,15 @@ class ReferralController extends Controller
             $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
         }
         try {
-            if (!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])) {
-                return $this->ajaxMess->getWrongCardNumber();
+            /** если не нашли карту валидируем ее, иначе делаем вид что ок */
+            try {
+                $this->referralService->manzanaService->searchCardByNumber($data['UF_CARD']);
+            } catch(CardNotFoundException $e){
+                if (!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])) {
+                    return $this->ajaxMess->getWrongCardNumber();
+                }
             }
+
         }
         catch (ManzanaServiceException $e) {
             $logger = LoggerFactory::create('manzana');
@@ -138,10 +145,13 @@ class ReferralController extends Controller
         }
         /** @var Card $currentCard */
         try {
-            if(!$this->referralService->manzanaService->validateCardByNumber($card)){
-                return $this->ajaxMess->getWrongCardNumber();
-            }
             $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
+            /** убираем проверку - ибо если карта есть будет возвращать ошибку
+             * @todo удалить
+             */
+//            if(!$this->referralService->manzanaService->validateCardByNumber($card)){
+//                return $this->ajaxMess->getWrongCardNumber();
+//            }
             $cardInfo = [
                 'last_name'   => $currentCard->lastName,
                 'name'        => $currentCard->firstName,

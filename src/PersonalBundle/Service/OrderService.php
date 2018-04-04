@@ -247,6 +247,18 @@ class OrderService
     public function getUserOrders(array $params): ArrayCollection
     {
         $orderCollection = $this->orderRepository->getUserOrders($params);
+        if (!$orderCollection->isEmpty()) {
+            /** @var Order $order */
+            foreach ($orderCollection as $key => $order) {
+                if (!$order->isManzana() && $order->getId() > 0) {
+                    /** удаляем к чертям заказы без товаров */
+                    if ($order->isItemsEmpty()) {
+                        unset($orderCollection[$key]);
+                        continue;
+                    }
+                }
+            }
+        }
 
         return $orderCollection;
     }

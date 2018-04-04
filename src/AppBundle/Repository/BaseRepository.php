@@ -499,8 +499,13 @@ class BaseRepository
         $fileList = $this->getFileList();
         if (!empty($fileList)) {
             foreach ($fileList as $code => $file) {
-                if (\array_key_exists($code, $data) && (int)$data[$code] === 1) {
-                    $data[$code] = $file;
+                if (\array_key_exists($code, $data)){
+                    if((int)$data[$code] === 1) {
+                        $data[$code] = $file;
+                    } elseif($file === 'skip') {
+                        /** если прпоуск - удаляем чтобы не обновилась */
+                        unset($data[$code]);
+                    }
                 }
             }
         }

@@ -15,11 +15,13 @@ use FourPaws\SaleBundle\Repository\OrderPropertyVariantRepository;
 
 class OrderPropertyService
 {
-    const COMMUNICATION_SMS = '01';
+    public const COMMUNICATION_SMS = '01';
 
-    const COMMUNICATION_PHONE = '02';
+    public const COMMUNICATION_PHONE = '02';
 
-    const COMMUNICATION_PHONE_ANALYSIS = '03';
+    public const COMMUNICATION_PHONE_ANALYSIS = '03';
+
+    public const COMMUNICATION_PAYMENT_ANALYSIS = '06';
 
     const COMMUNICATION_SUBSCRIBE = '07';
 
@@ -74,6 +76,7 @@ class OrderPropertyService
     /**
      * @param OrderProperty $property
      *
+     * @throws \Bitrix\Main\ArgumentException
      * @return OrderPropertyVariantCollection
      */
     public function getPropertyVariants(OrderProperty $property): OrderPropertyVariantCollection

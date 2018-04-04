@@ -114,7 +114,25 @@ class ReferralUpdateAgent
                                                 ) : '',
                                             'UF_MODERATED'        => 'N',
                                         ];
-                                        if($referralService->update($data)){
+                                        if($card->firstName){
+                                            $data['UF_NAME'] = $card->firstName;
+                                        }
+                                        if($card->lastName){
+                                            $data['UF_LAST_NAME'] = $card->lastName;
+                                        }
+                                        if($card->secondName){
+                                            $data['UF_SECOND_NAME'] = $card->secondName;
+                                        }
+                                        if($card->email){
+                                            $data['UF_EMAIL'] = $card->email;
+                                        }
+                                        if($phone){
+                                            $data['UF_PHONE'] = $phone;
+                                        }
+                                        /** обновляем сущность полностью, чтобы данные не пропадали */
+                                        $updateData = $referralService->referralRepository->entityToData($referral);
+                                        $updateData = array_merge($updateData,$data);
+                                        if($referralService->update($updateData)){
                                             TaggedCacheHelper::clearManagedCache(['personal:referral:'.$data['UF_USER_ID']]);
                                         }
                                     } catch (ManzanaServiceException $e) {

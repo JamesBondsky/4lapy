@@ -2,6 +2,10 @@
 
 namespace FourPaws\DeliveryBundle\AjaxController;
 
+use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
+use FourPaws\App\Response\JsonErrorResponse;
+use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,10 +20,23 @@ class InfoController extends Controller
 {
     /**
      * @Route("/get/", methods={"GET"})
+     * @param Request $request
+     *
+     * @return JsonResponse
      */
-    public function getAction(Request $request)
+    public function getAction(Request $request): JsonResponse
     {
         $code = $request->query->get('code');
+        if(\is_array($code)){
+            $dadataLocationAdapter = new DaDataLocationAdapter();
+            /** @var BitrixLocation $bitrixLocation */
+            $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
+
+            $code = $bitrixLocation->getCode();
+        }
+        if(\is_array($code)){
+            return JsonErrorResponse::create('ошибка обработки адреса');
+        }
         global $APPLICATION;
         ob_start();
         $APPLICATION->IncludeComponent(

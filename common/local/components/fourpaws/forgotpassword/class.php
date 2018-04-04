@@ -88,10 +88,10 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             $this->arResult['STEP'] = 'begin';
 
             $request = Application::getInstance()->getContext()->getRequest();
-            $backUrl = $request->get('backurl');
+            $backUrl = (string)$request->get('backurl');
 
             /** авторизация и показ сообщения об успешной смене */
-            $confirmAuth = $request->get('confirm_auth');
+            $confirmAuth = (string)$request->get('confirm_auth');
             if (!empty($confirmAuth)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
@@ -111,13 +111,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 }
             }
 
-            $emailGet = $request->get('email');
-            $hash = $request->get('hash');
+            $emailGet = (string)$request->get('email');
+            $hash = (string)$request->get('hash');
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 try {
-                    if ($confirmService::checkConfirmEmail($hash)) {
+                    if ($confirmService::checkCode($hash, 'email_forgot')) {
                         if ($backUrl === static::BASKET_BACK_URL) {
                             $this->authService->authorize($request->get('user_id'));
                             LocalRedirect($backUrl);

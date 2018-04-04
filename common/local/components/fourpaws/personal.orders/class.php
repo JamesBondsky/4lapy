@@ -139,9 +139,10 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         }
 
         $cache = $instance->getCache();
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $userId]),
-            $this->getCachePath() ?: $this->getPath())
+            $cachePath)
         ) {
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
@@ -149,7 +150,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
+                $tagCache->startTagCache($cachePath);
             }
             try {
                 $manzanaOrders = $this->orderService->getManzanaOrders();
@@ -172,7 +173,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])
+            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId], $cachePath)
         ) {
             $activeOrders = $closedOrders = new ArrayCollection();
             try {
@@ -190,10 +191,12 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                     $nav->getOffset(), $nav->getPageSize(), true));
                 $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
+                $this->abortResultCache();
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
             } catch (\Exception $e) {
+                $this->abortResultCache();
                 $logger = LoggerFactory::create('my_orders');
                 $logger->error('error - '.$e->getMessage());
                 /** Показываем пустую страницу с заказами */

@@ -198,6 +198,7 @@ class Order extends BaseEntity
     public function setAccountNumber(string $accountNumber): Order
     {
         $this->accountNumber = $accountNumber;
+
         return $this;
     }
 
@@ -217,6 +218,7 @@ class Order extends BaseEntity
     public function setPaySystemId(int $paySystemId): Order
     {
         $this->paySystemId = $paySystemId;
+
         return $this;
     }
 
@@ -236,6 +238,7 @@ class Order extends BaseEntity
     public function setDeliveryId(int $deliveryId): Order
     {
         $this->deliveryId = $deliveryId;
+
         return $this;
     }
 
@@ -255,6 +258,7 @@ class Order extends BaseEntity
     public function setDateInsert(DateTime $dateInsert): Order
     {
         $this->dateInsert = $dateInsert;
+
         return $this;
     }
 
@@ -274,6 +278,7 @@ class Order extends BaseEntity
     public function setDateUpdate(DateTime $dateUpdate): Order
     {
         $this->dateUpdate = $dateUpdate;
+
         return $this;
     }
 
@@ -293,6 +298,7 @@ class Order extends BaseEntity
     public function setPersonTypeID(string $personTypeID): Order
     {
         $this->personTypeID = $personTypeID;
+
         return $this;
     }
 
@@ -312,6 +318,7 @@ class Order extends BaseEntity
     public function setUserId(int $userId): Order
     {
         $this->userId = $userId;
+
         return $this;
     }
 
@@ -331,6 +338,7 @@ class Order extends BaseEntity
     public function setPayed(bool $payed): Order
     {
         $this->payed = $payed;
+
         return $this;
     }
 
@@ -350,6 +358,7 @@ class Order extends BaseEntity
     public function setDatePayed(DateTime $datePayed): Order
     {
         $this->datePayed = $datePayed;
+
         return $this;
     }
 
@@ -369,6 +378,7 @@ class Order extends BaseEntity
     public function setStatusId(string $statusId): Order
     {
         $this->statusId = $statusId;
+
         return $this;
     }
 
@@ -386,6 +396,7 @@ class Order extends BaseEntity
                 $this->setStatusLang($res->fetch());
             }
         }
+
         return $this->getStatusLang()['NAME'] ?? '';
     }
 
@@ -405,6 +416,7 @@ class Order extends BaseEntity
     public function setDateStatus(DateTime $dateStatus): Order
     {
         $this->dateStatus = $dateStatus;
+
         return $this;
     }
 
@@ -424,6 +436,7 @@ class Order extends BaseEntity
     public function setPrice(float $price): Order
     {
         $this->price = $price;
+
         return $this;
     }
 
@@ -443,6 +456,7 @@ class Order extends BaseEntity
     public function setCurrency(string $currency): Order
     {
         $this->currency = $currency;
+
         return $this;
     }
 
@@ -462,6 +476,7 @@ class Order extends BaseEntity
     public function setSumPaid(float $sumPaid): Order
     {
         $this->sumPaid = $sumPaid;
+
         return $this;
     }
 
@@ -481,6 +496,7 @@ class Order extends BaseEntity
     public function setDateCanceled(DateTime $dateCanceled): Order
     {
         $this->dateCanceled = $dateCanceled;
+
         return $this;
     }
 
@@ -509,6 +525,7 @@ class Order extends BaseEntity
     public function setItems(ArrayCollection $items): Order
     {
         $this->items = $items;
+
         return $this;
     }
 
@@ -575,6 +592,7 @@ class Order extends BaseEntity
     public function setAllWeight(float $allWeight): Order
     {
         $this->allWeight = $allWeight;
+
         return $this;
     }
 
@@ -590,7 +608,8 @@ class Order extends BaseEntity
     public function getFormatedAllWeight(): float
     {
         $allWeight = $this->getAllWeight();
-        return $allWeight > 0 ? number_format(round($allWeight / 1000, 2),2,'.',' ') : 0;
+
+        return $allWeight > 0 ? number_format(round($allWeight / 1000, 2), 2, '.', ' ') : 0;
     }
 
     /**
@@ -673,7 +692,7 @@ class Order extends BaseEntity
     /**
      * @param OrderDelivery $delivery
      */
-    public function setDelivery(OrderDelivery $delivery)
+    public function setDelivery(OrderDelivery $delivery): void
     {
         $this->delivery = $delivery;
     }
@@ -790,6 +809,7 @@ class Order extends BaseEntity
                 ->exec()
                 ->fetch());
         }
+
         return $this->getStatusMain()['SORT'];
     }
 
@@ -871,4 +891,14 @@ class Order extends BaseEntity
 
         return $this->bitrixOrder;
     }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isItemsEmpty(): bool
+    {
+        return $this->getItems()->isEmpty();
+    }
+
 }

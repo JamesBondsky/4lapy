@@ -237,7 +237,7 @@ class CCommentsComponent extends \CBitrixComponent
             TaggedCacheHelper::addManagedCacheTags([
                 'comments:objectId:' . $this->arParams['OBJECT_ID'],
                 'comments:type:' . $this->arParams['TYPE'],
-                'highloadblock:field:objectId:' . $this->arParams['OBJECT_ID'],
+                'hlb:field:comments_objectId:' . $this->arParams['OBJECT_ID'],
                 'catalog:comments',
             ]);
 

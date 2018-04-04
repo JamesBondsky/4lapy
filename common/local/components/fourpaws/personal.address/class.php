@@ -99,7 +99,7 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
 
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:address:'. $this->currentUserProvider->getCurrentUserId(),
-                'highloadblock:field:user:'. $this->currentUserProvider->getCurrentUserId()
+                'hlb:field:address_user:'. $this->currentUserProvider->getCurrentUserId()
             ]);
 
             $this->includeComponentTemplate();
