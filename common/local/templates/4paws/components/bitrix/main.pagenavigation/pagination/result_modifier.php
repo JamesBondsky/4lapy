@@ -44,7 +44,7 @@ while ($page <= (int)$arResult['END_PAGE']) {
             }
         } elseif ($page === $countItemsBetweenDot && $arResult['CURRENT_PAGE'] < ($countItemsBetweenDot - 1)) {
             $arResult['START_BETWEEN_BEGIN'] = $page;
-            $arResult['START_BETWEEN_END'] = $page = $arResult['END_PAGE'];
+            $arResult['START_BETWEEN_END'] = $page = $arResult['END_PAGE']-1;
             $arResult['END_BETWEEN_BEGIN'] = $arResult['END_BETWEEN_END'] = -1;
             $i = 0;
             continue;
@@ -54,7 +54,7 @@ while ($page <= (int)$arResult['END_PAGE']) {
             && $page !== $arResult['END_PAGE'] && $arResult['END_BETWEEN_BEGIN'] === 0) {
 
             $arResult['END_BETWEEN_BEGIN'] = $page;
-            $arResult['END_BETWEEN_END'] = $page = $arResult['END_PAGE'];
+            $arResult['END_BETWEEN_END'] = $page = $arResult['END_PAGE']-1;
             $i = 0;
         }
     }
