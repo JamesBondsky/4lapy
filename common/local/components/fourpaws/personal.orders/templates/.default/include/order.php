@@ -155,12 +155,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                     × <?= $item->getQuantity() ?> шт
                                 </div>
                             <?php } ?>
-                            <?php if ($item->getBonus() > 0) { ?>
-                                <div class="b-list-order__bonus">
-                                    + <?= $item->getBonus() . ' ' . WordHelper::declension($item->getBonus(),
-                                        ['бонус', 'бонуса', 'бонусов']) ?>
-                                </div>
-                            <?php } ?>
+                            <div class="b-list-order__bonus js-order-item-bonus-<?=$order->isManzana() ? 'manzana-' : ''?><?=$item->getId()?>"></div>
                         </div>
                     </div>
                 </li>
