@@ -180,13 +180,19 @@ class PetService
             'ryby',
             'gryzuny',
             'ptitsy-gryzuny',
+            '90000001',
             'koshki-sobaki',
+            '3@11',
         ];
-        $client->ffBird = \in_array('ptitsy', $types, true) || \in_array('ptitsy-gryzuny', $types, true) ? 1 : 0;
-        $client->ffCat = \in_array('koshki', $types, true) || \in_array('koshki-sobaki', $types, true) ? 1 : 0;
-        $client->ffDog = \in_array('sobaki', $types, true) || \in_array('koshki-sobaki', $types, true) ? 1 : 0;
+        $client->ffBird = \in_array('ptitsy', $types, true) || \in_array('ptitsy-gryzuny', $types,
+            true) || \in_array('90000001', $types, true) ? 1 : 0;
+        $client->ffCat = \in_array('koshki', $types, true) || \in_array('koshki-sobaki', $types,
+            true) || \in_array('3@11', $types, true) ? 1 : 0;
+        $client->ffDog = \in_array('sobaki', $types, true) || \in_array('koshki-sobaki', $types,
+            true) || \in_array('3@11', $types, true) ? 1 : 0;
         $client->ffFish = \in_array('ryby', $types, true) ? 1 : 0;
-        $client->ffRodent = \in_array('gryzuny', $types, true) || \in_array('ptitsy-gryzuny', $types, true) ? 1 : 0;
+        $client->ffRodent = \in_array('gryzuny', $types, true) || \in_array('ptitsy-gryzuny', $types,
+            true) || \in_array('90000001', $types, true) ? 1 : 0;
         $others = 0;
         if (\is_array($types) && !empty($types)) {
             foreach ($types as $type) {
