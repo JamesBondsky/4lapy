@@ -51,7 +51,7 @@ class CsvHandler implements SubscribingHandlerInterface
      */
     public function serialize(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
     {
-
+        
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
@@ -112,6 +112,4 @@ class CsvHandler implements SubscribingHandlerInterface
             $escape
         );
     }
-
-    protected function toCsv()
 }
