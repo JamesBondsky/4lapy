@@ -212,8 +212,9 @@ class Event implements ServiceHandlerInterface
                 return false;
             }
 
+            $manzanaService = $container->get('manzana.service');
+
             try {
-                $manzanaService = $container->get('manzana.service');
                 $client = new Client();
                 if (!empty($user->getManzanaNormalizePersonalPhone())) {
                     $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
@@ -224,7 +225,7 @@ class Event implements ServiceHandlerInterface
                 $client = new Client();
             }
 
-            if ($client instanceof Client && $user instanceof User) {
+            if ($client !== null && $user !== null) {
                 /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
                 $userService->setClientPersonalDataByCurUser($client, $user);
 

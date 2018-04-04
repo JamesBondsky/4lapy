@@ -226,6 +226,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         ];
 
         try {
+            $_SESSION['MANZANA_UPDATE'] = true;
+            /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
 
@@ -236,35 +238,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
                     $smsService = $container->get('sms.service');
                     $smsService->sendSms($text, $oldPhone);
-                }
-
-                try {
-                    /** @var ManzanaService $manzanaService */
-                    $manzanaService = $container->get('manzana.service');
-                    $client = null;
-                    if (empty($oldPhone)) {
-                        $client = new Client();
-                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                    } else {
-                        try {
-                            $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
-                            $client = new Client();
-                            $client->contactId = $contactId;
-                            $client->phone = PhoneHelper::getManzanaPhone($phone);
-                        } catch (ManzanaServiceException $e) {
-                            $client = new Client();
-                            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                        } catch (WrongPhoneNumberException $e) {
-                            return $this->ajaxMess->getWrongPhoneNumberException();
-                        }
-                    }
-
-                    if ($client instanceof Client) {
-                        $manzanaService->updateContactAsync($client);
-                    }
-                } catch (\Exception $e) {
-                    $logger = LoggerFactory::create('manzana');
-                    $logger->error('manzana error - ' . $e->getMessage());
                 }
 
                 return JsonSuccessResponse::create('Телефон верифицирован');
