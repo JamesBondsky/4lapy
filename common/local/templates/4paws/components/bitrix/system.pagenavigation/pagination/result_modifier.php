@@ -85,7 +85,7 @@ while ($navRecordGroup <= $countPages) {
             }
         } elseif ($navRecordGroup === $countItemsBetweenDot && $curPage < ($countItemsBetweenDot - 1)) {
             $arResult['START_BETWEEN_BEGIN'] = $navRecordGroup;
-            $arResult['START_BETWEEN_END'] = $navRecordGroup = $countPages;
+            $arResult['START_BETWEEN_END'] = $navRecordGroup = $countPages-1;
             $arResult['END_BETWEEN_BEGIN'] = $arResult['END_BETWEEN_END'] = -1;
             $i = 0;
             continue;
@@ -95,7 +95,7 @@ while ($navRecordGroup <= $countPages) {
             && $navRecordGroup !== $countPages && $arResult['END_BETWEEN_BEGIN'] === 0) {
 
             $arResult['END_BETWEEN_BEGIN'] = $navRecordGroup;
-            $arResult['END_BETWEEN_END'] = $navRecordGroup = $countPages;
+            $arResult['END_BETWEEN_END'] = $navRecordGroup = $countPages-1;
             $i = 0;
         }
     }
