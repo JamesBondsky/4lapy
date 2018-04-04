@@ -48,8 +48,19 @@ class Referral
      */
     public $isQuestionnaireActual;
 
-    public function isModerated()
+    /**
+     * @return bool
+     */
+    public function isModerated(): bool
     {
         return $this->isQuestionnaireActual === 'Не указано';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSuccessModerate(): bool
+    {
+        return $this->isQuestionnaireActual === 'Да';
     }
 }
