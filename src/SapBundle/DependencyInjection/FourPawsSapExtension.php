@@ -23,6 +23,10 @@ use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\DependencyInjection\ConfigurableExtension;
 
+/**
+ * Class FourPawsSapExtension
+ * @package FourPaws\SapBundle\DependencyInjection
+ */
 class FourPawsSapExtension extends ConfigurableExtension
 {
     /**
@@ -48,7 +52,7 @@ class FourPawsSapExtension extends ConfigurableExtension
     /**
      * @param ContainerBuilder $container
      */
-    protected function registerConsumerTags(ContainerBuilder $container)
+    protected function registerConsumerTags(ContainerBuilder $container): void
     {
         $container->registerForAutoconfiguration(ConsumerInterface::class)->addTag('sap.consumer');
     }
@@ -56,7 +60,7 @@ class FourPawsSapExtension extends ConfigurableExtension
     /**
      * @param ContainerBuilder $container
      */
-    protected function registerSourceTags(ContainerBuilder $container)
+    protected function registerSourceTags(ContainerBuilder $container): void
     {
         $container->registerForAutoconfiguration(SourceInterface::class)->addTag('sap.source');
     }
@@ -67,7 +71,7 @@ class FourPawsSapExtension extends ConfigurableExtension
      *
      * @throws \Exception
      */
-    protected function configDirectoryFinder(array $directorySources, ContainerBuilder $container)
+    protected function configDirectoryFinder(array $directorySources, ContainerBuilder $container): void
     {
         foreach ($directorySources as $name => $source) {
             $container->register('sap.source.finder.' . $name)
@@ -145,7 +149,7 @@ class FourPawsSapExtension extends ConfigurableExtension
      *
      * @throws InvalidArgumentException
      */
-    protected function configOrderService(array $out, ContainerBuilder $container)
+    protected function configOrderService(array $out, ContainerBuilder $container): void
     {
 
         /**

@@ -85,7 +85,7 @@ class Event implements ServiceHandlerInterface
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
         if(!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -103,7 +103,7 @@ class Event implements ServiceHandlerInterface
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -115,7 +115,7 @@ class Event implements ServiceHandlerInterface
     {
         $fields = $event->getParameter('fields');
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -135,7 +135,7 @@ class Event implements ServiceHandlerInterface
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
         if(!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -153,7 +153,7 @@ class Event implements ServiceHandlerInterface
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -165,7 +165,7 @@ class Event implements ServiceHandlerInterface
     {
         $fields = $event->getParameter('fields');
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -185,7 +185,7 @@ class Event implements ServiceHandlerInterface
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
         if(!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -203,7 +203,7 @@ class Event implements ServiceHandlerInterface
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
         if (!empty(['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -215,7 +215,7 @@ class Event implements ServiceHandlerInterface
     {
         $fields = $event->getParameter('fields');
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -235,7 +235,7 @@ class Event implements ServiceHandlerInterface
             $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
         }
         if(!empty($fields['UF_OBJECT_ID'])) {
-            static::HlFieldClearCache('objectId', $fields['UF_OBJECT_ID']);
+            static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
         }
     }
 
@@ -253,7 +253,7 @@ class Event implements ServiceHandlerInterface
         $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
 
         if (!empty($fields['UF_OBJECT_ID'])) {
-            static::HlFieldClearCache('objectId', $fields['UF_OBJECT_ID']);
+            static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
         }
     }
 
@@ -265,7 +265,7 @@ class Event implements ServiceHandlerInterface
     {
         $fields = $event->getParameter('fields');
         if (!empty($fields['UF_OBJECT_ID'])) {
-            static::HlFieldClearCache('objectId', $fields['UF_OBJECT_ID']);
+            static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
         }
     }
 
@@ -275,7 +275,7 @@ class Event implements ServiceHandlerInterface
     protected static function HlItemClearCache($id): void
     {
         TaggedCacheHelper::clearManagedCache([
-            'highloadblock:item:' . $id,
+            'hlb:item:' . $id,
         ]);
     }
 
@@ -286,7 +286,7 @@ class Event implements ServiceHandlerInterface
     protected static function HlFieldClearCache($type, $value): void
     {
         TaggedCacheHelper::clearManagedCache([
-            'highloadblock:field:' . $type . ':' . $value,
+            'hlb:field:' . $type . ':' . $value,
         ]);
     }
 }

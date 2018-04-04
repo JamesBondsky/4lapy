@@ -23,7 +23,9 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -142,16 +144,17 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         }
 
         $cache = $instance->getCache();
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $userId]),
-            $this->getCachePath() ?: $this->getPath())) {
+            $cachePath)) {
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
         } elseif ($cache->startDataCache()) {
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
+                $tagCache->startTagCache($cachePath);
             }
             try {
                 $manzanaOrders = $this->orderService->getManzanaOrders();
@@ -171,10 +174,14 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
         }
 
+        /** имитация постранички */
+        $nav = new PageNavigation('nav-orders');
+        $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])) {
+            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId, 'page'=>$nav->getCurrentPage()], $cachePath)) {
             $activeOrders = $closedOrders = new ArrayCollection();
             try {
                 $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
@@ -183,18 +190,19 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 /** Сортировка по дате и статусу общих заказов */
                 $allClosedOrdersList = $allClosedOrders->toArray();
                 usort($allClosedOrdersList, ['FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate']);
+
                 /** имитация постранички */
-                $nav = new PageNavigation('nav-orders');
-                $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
                 $nav->setRecordCount($allClosedOrders->count());
                 $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
                 $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
+                $this->abortResultCache();
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
             } catch (\Exception $e) {
+                $this->abortResultCache();
                 $logger = LoggerFactory::create('my_orders');
                 $logger->error('error - '.$e->getMessage());
                 /** Показываем пустую страницу с заказами */
@@ -214,6 +222,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 'personal:orders:'. $userId,
                 'order:'. $userId
             ]);
+
+            $this->setResultCacheKeys(['ACTIVE_ORDERS', 'CLOSED_ORDERS']);
 
             $this->includeComponentTemplate($page);
         }
@@ -331,5 +341,35 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             LocalRedirect($this->arParams['PATH_TO_BASKET']);
         }
+    }
+
+    public function getCurrentUserService()
+    {
+        return $this->currentUserProvider;
+    }
+
+    /**
+     * @param OrderItem $item
+     * @param int       $percent
+     *
+     * @return string
+     */
+    public function getItemBonus(OrderItem $item, int $percent): string
+    {
+        $bonusText = '';
+        $bonus = \round($item->getPrice() * $item->getQuantity() * $percent / 100, 2);
+        if ($bonus <= 0) {
+            return $bonusText;
+        }
+
+        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
+        $floorBonus = \floor($bonus);
+        $div = ($bonus - $floorBonus) * 100;
+
+        return \sprintf(
+            '+ %s %s',
+            WordHelper::numberFormat($bonus),
+            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
+        );
     }
 }

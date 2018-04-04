@@ -222,38 +222,22 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         $data = [
             'UF_PHONE_CONFIRMED' => true,
+            'PERSONAL_PHONE' => $phone
         ];
+
         try {
+            $_SESSION['MANZANA_UPDATE'] = true;
+            /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
 
-                try {
-                    /** @var ManzanaService $manzanaService */
-                    $manzanaService = $container->get('manzana.service');
-                    $client = null;
-                    if (empty($oldPhone)) {
-                        $client = new Client();
-                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                    } else {
-                        try {
-                            $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
-                            $client = new Client();
-                            $client->contactId = $contactId;
-                            $client->phone = $phone;
-                        } catch (ManzanaServiceException $e) {
-                            $client = new Client();
-                            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                        } catch (WrongPhoneNumberException $e) {
-                            return $this->ajaxMess->getWrongPhoneNumberException();
-                        }
-                    }
+                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
 
-                    if ($client instanceof Client) {
-                        $manzanaService->updateContactAsync($client);
-                    }
-                } catch (\Exception $e) {
-                    $logger = LoggerFactory::create('manzana');
-                    $logger->error('manzana error - ' . $e->getMessage());
+                if (!empty($oldPhone)) {
+                    //Посылаем смс о смененном номере телефона
+                    $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
+                    $smsService = $container->get('sms.service');
+                    $smsService->sendSms($text, $oldPhone);
                 }
 
                 return JsonSuccessResponse::create('Телефон верифицирован');
@@ -385,32 +369,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
         try {
             $container = App::getInstance()->getContainer();
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $user = $userRepository->find($id);
 
-            $data = ['PERSONAL_PHONE' => $phone];
-            $oldPhone = '';
-            if ($user !== null) {
-                $oldPhone = $user->getPersonalPhone();
-            }
-            if ($oldPhone !== $phone) {
-                $data['UF_PHONE_CONFIRMED'] = false;
-            }
-            $res = $userRepository->updateData($id, $data);
-            if (!$res) {
-                return $this->ajaxMess->getUpdateError();
-            }
-
-            TaggedCacheHelper::clearManagedCache(['personal:profile:' . $id]);
-
-            if (!empty($oldPhone)) {
-                //Посылаем смс о смененном номере телефона
-                $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
-                $smsService = $container->get('sms.service');
-                $smsService->sendSms($text, $oldPhone);
-            }
-
-            $mess = 'Телефон обновлен';
+            $mess = 'Начато обновление телефона';
 
             try {
                 /** @var ConfirmCodeService $confirmService */

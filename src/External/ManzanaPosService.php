@@ -220,7 +220,16 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $rawResult = $rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
 
-        return $this->serializer->fromArray(\json_decode(\json_encode($rawResult), true), SoftChequeResponse::class);
+        $rawResult = \json_decode(\json_encode($rawResult), true);
+        /**
+         * Если в запросе был один товар, то возвращается неверная структура
+         */
+        if (!empty($rawResult['Item']) && !isset($rawResult['Item'][0])) {
+            $rawResult['Item'] = [
+                $rawResult['Item']
+            ];
+        }
+        return $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
     }
 
     /**

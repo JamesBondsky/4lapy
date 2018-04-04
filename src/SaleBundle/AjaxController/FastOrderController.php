@@ -14,6 +14,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Internals\PaymentTable;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -21,9 +23,12 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\SmsService;
+use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -103,25 +108,31 @@ class FastOrderController extends Controller
     public function loadAction(Request $request): JsonResponse
     {
         $basketData = [];
+        $addData = [];
         $requestType = $request->get('type', 'basket');
         if ($requestType === 'card') {
-            $basketController = new BasketController($this->basketService, $this->basketViewService);
+            /** add to basket
+             * @see \FourPaws\SaleBundle\AjaxController\BasketController
+             */
+            $offerId = (int)$request->get('offerId', 0);
+            if ($offerId === 0) {
+                $offerId = (int)$request->get('offerid', 0);
+            }
+            $quantity = (int)$request->get('quantity', 1);
+
             try {
-                $response = $basketController->addAction($request);
-                if ($response->isOk()) {
-                    if ($response instanceof JsonErrorResponse) {
-                        return $response;
-                    }
-                    $basketData = json_decode($response->getContent());
-                } else {
-                    return $this->ajaxMess->getSystemError();
-                }
+                $this->basketService->addOfferToBasket($offerId, $quantity);
+                $addData = [
+                    'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+                ];
+
+            } catch (BaseExceptionInterface $e) {
+                return $this->ajaxMess->getSystemError();
             } catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
             }
-
         }
         global $APPLICATION;
         ob_start();
@@ -137,8 +148,8 @@ class FastOrderController extends Controller
         );
         $html = ob_get_clean();
         $data = ['html' => $html];
-        if (!empty($basketData->data->miniBasket)) {
-            $data['miniBasket'] = $basketData->data->miniBasket;
+        if (!empty($addData['miniBasket'])) {
+            $data['miniBasket'] = $addData['miniBasket'];
         }
         return JsonSuccessResponse::createWithData('подгружено', $data);
     }
@@ -156,8 +167,10 @@ class FastOrderController extends Controller
         $name = $request->get('name', '');
 
         $orderStorage->setPhone($phone)
-                     ->setName($name)
-                     ->setFuserId($this->currentUserProvider->getCurrentFUserId());
+            ->setName($name)
+            ->setFuserId($this->currentUserProvider->getCurrentFUserId())
+            /** оплата наличными при доставке ставим всегда */
+            ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID']);
 
         if ($this->userAuthProvider->isAuthorized()) {
             try {
@@ -166,8 +179,7 @@ class FastOrderController extends Controller
                 $orderStorage->setUserId($user->getId());
             } catch (NotAuthorizedException $e) {
                 /** никогда не сработает */
-            }
-            catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error('Ошибка параметров - ' . $e->getMessage());
             }

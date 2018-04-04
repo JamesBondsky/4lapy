@@ -118,40 +118,53 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
             $request = Application::getInstance()->getContext()->getRequest();
 
-            $emailGet = $request->get('email');
-            $hash = $request->get('hash');
+            $emailGet = (string)$request->get('email');
+            $hash = (string)$request->get('hash');
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 try {
-                    if ($confirmService::checkConfirmEmail($hash)) {
+                    if ($confirmService::checkCode($hash, 'email_register')) {
                         try {
                             $userRepository = $this->currentUserProvider->getUserRepository();
                             $userId = $userRepository->findIdentifierByRawLogin($emailGet);
                             if ($userId > 0) {
-                                $user = $userRepository->find($userId);
-                                if ($user instanceof User) {
+                                $user = null;
+                                if($this->userAuthorizationService->isAuthorized()){
+                                    $isAuthorized = true;
+                                    $curUser = $this->currentUserProvider->getCurrentUser();
+                                    if($curUser->getId() === $userId){
+                                        $user = $curUser;
+                                    }
+                                }
+                                else{
+                                    $isAuthorized = false;
+                                    $user = $userRepository->find($userId);
+                                }
+                                if ($user !== null) {
                                     $user->setEmailConfirmed(true);
-                                    $res = $this->currentUserProvider->getUserRepository()->update($user);
+                                    $res = $userRepository->update($user);
                                     if ($res) {
-                                        $this->userAuthorizationService->authorize($userId);
+                                        if(!$isAuthorized){
+                                            $this->userAuthorizationService->authorize($userId);
+                                        }
                                     } else {
-                                        ShowError('Не удалось подтвердить эл. почту');
+                                        $this->showError('Не удалось подтвердить эл. почту');
                                         return false;
                                     }
                                 } else {
-                                    ShowError('Не найден пользователь');
+                                    $this->showError('Не найден пользователь');
                                     return false;
                                 }
                             } else {
-                                ShowError('Не найден активный пользователь c эл. почтой ' . $emailGet);
+                                $this->showError('Не найден активный пользователь c эл. почтой ' . $emailGet);
                                 return false;
                             }
                         } catch (TooManyUserFoundException $e) {
-                            ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                            $this->showError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
                             return false;
                         } catch (UsernameNotFoundException $e) {
-                            ShowError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                            $this->showError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
                             return false;
                         }
                         if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
@@ -164,16 +177,16 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                             LocalRedirect(static::PERSONAL_URL);
                         }
                     } else {
-                        ShowError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
+                        $this->showError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
                         return false;
                     }
                 } catch (ExpiredConfirmCodeException|NotFoundConfirmedCodeException $e) {
-                    ShowError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
+                    $this->showError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
                     return false;
                 }
             }
 
-            $code = $request->get('code');
+            $code = (string)$request->get('code');
             $user_id = (int)$request->get('user_id');
             if ($user_id > 0 && !empty($code)) {
                 if (!$this->userAuthorizationService->isAuthorized()) {
@@ -190,11 +203,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         global $APPLICATION;
                         $APPLICATION->SetTitle('Ура, можно покупать!');
                     } else {
-                        ShowError('Проверка не пройдена');
+                        $this->showError('Проверка не пройдена');
                         return false;
                     }
                 } catch (ExpiredConfirmCodeException|NotFoundConfirmedCodeException $e) {
-                    ShowError('Проверка не пройдена');
+                    $this->showError('Проверка не пройдена');
                     return false;
                 }
             } else {
@@ -221,6 +234,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             }
         }
         return true;
+    }
+
+    /**
+     * @param $error
+     */
+    public function showError($error): void
+    {
+        $this->arResult['ERROR_MESSAGE'] = $error;
+        $this->includeComponentTemplate('error');
     }
 
     /**

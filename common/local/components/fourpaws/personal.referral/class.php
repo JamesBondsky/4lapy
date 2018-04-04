@@ -87,7 +87,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = 24 * 60 * 60;
-        $params['MANZANA_CACHE_TIME'] = 1 * 60 * 60;
+        /** манзана кешируется на час */
+        $params['MANZANA_CACHE_TIME'] = 60 * 60;
         return $params;
     }
 
@@ -138,27 +139,44 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = $instance->getContext()->getRequest();
         $this->arResult['search'] = $search = (string)$request->get('search');
+        $referralType = (string)$request->get('referral_type');
         $cacheItems = [];
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $curUser->getId(), 'page'=>$nav->getCurrentPage(), 'search'=>$search]),
-            $this->getCachePath() ?: $this->getPath())) {
+            serialize(['userId'        => $curUser->getId(),
+                       'page'          => $nav->getCurrentPage(),
+                       'search'        => $search,
+                       'referral_type' => $referralType,
+            ]),
+            $cachePath)) {
             $result = $cache->getVars();
             $nav = $result['NAV'];
             $this->arResult['BONUS'] = $result['BONUS'];
             $cacheItems = $result['cacheItems'];
+
+            $this->arResult['COUNT'] = $result['COUNT'];
+            $this->arResult['COUNT_ACTIVE'] = $result['COUNT_ACTIVE'];
+            $this->arResult['COUNT_MODERATE'] = $result['COUNT_MODERATE'];
         } elseif ($cache->startDataCache()) {
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
+                $tagCache->startTagCache($cachePath);
             }
             try {
                 /** @var ArrayCollection $items
-                 * @var bool $redirect*/
-                [$items, $redirect] = $this->referralService->getCurUserReferrals($nav);
-                if($redirect){
+                 * @var bool $redirect
+                 */
+                $main = empty($referralType) && empty($referralType);
+                [$items, $redirect, $this->arResult['BONUS']] = $this->referralService->getCurUserReferrals($nav, $main);
+                if ($this->arResult['BONUS'] > 0) {
+                    /** отбрасываем дробную часть - нужно ли? */
+                    $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
+                }
+                if ($redirect) {
                     $tagCache->abortTagCache();
                     $cache->abortDataCache();
+                    TaggedCacheHelper::clearManagedCache(['personal:referral:'.$curUser->getId()]);
                     LocalRedirect($request->getRequestUri());
                     die();
                 }
@@ -175,7 +193,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 /** @noinspection ForeachSourceInspection */
                 foreach ($items as $item) {
                     if ($item instanceof Referral) {
-                        $this->arResult['BONUS'] += $item->getBonus();
                         $cardId = $item->getCard();
                         $cacheItems[$cardId] = [
                             'bonus'         => $item->getBonus(),
@@ -185,24 +202,29 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                         ];
                     }
                 }
-                if ($this->arResult['BONUS'] > 0) {
-                    $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
-                }
             }
 
             if ($tagCache !== null) {
                 TaggedCacheHelper::addManagedCacheTags([
                     'personal:referral',
-                    'personal:referral:'. $curUser->getId(),
-                    'highloadblock:field:user:'. $curUser->getId()
+                    'personal:referral:' . $curUser->getId(),
+                    'hlb:field:referral_user:' . $curUser->getId(),
                 ], $tagCache);
                 $tagCache->endTagCache();
             }
 
+            $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
+            $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
+            $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
+
             $cache->endDataCache([
-                'NAV'            => $nav,
-                'BONUS' => $this->arResult['BONUS'],
+                'NAV'        => $nav,
+                'BONUS'      => $this->arResult['BONUS'],
                 'cacheItems' => $cacheItems,
+
+                'COUNT'          => $this->arResult['COUNT'],
+                'COUNT_ACTIVE'   => $this->arResult['COUNT_ACTIVE'],
+                'COUNT_MODERATE' => $this->arResult['COUNT_MODERATE'],
             ]);
         }
 
@@ -212,22 +234,21 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arParams['CACHE_TIME'],
             [
                 'cacheItems' => $cacheItems,
-                'count'=>$nav->getRecordCount(),
-                'page'=>$nav->getCurrentPage(),
-                'bonus' => $this->arResult['BONUS'],
-                'search' => $search
-            ]
+                'count'      => $nav->getRecordCount(),
+                'page'       => $nav->getCurrentPage(),
+                'bonus'      => $this->arResult['BONUS'],
+                'search'     => $search,
+                'referral_type' => $referralType,
+            ],
+            $cachePath
         )) {
-            $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
-            $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
-            $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
             $this->arResult['referral_type'] = $this->referralService->getReferralType();
             $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
 
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:referral',
-                'personal:referral:'. $curUser->getId(),
-                'highloadblock:field:user:'. $curUser->getId()
+                'personal:referral:' . $curUser->getId(),
+                'hlb:field:referral_user:' . $curUser->getId(),
             ]);
 
             $this->includeComponentTemplate();

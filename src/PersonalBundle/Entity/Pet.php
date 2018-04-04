@@ -96,7 +96,7 @@ class Pet extends BaseEntity
      */
     public function getName() : string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
 
     /**
@@ -116,7 +116,7 @@ class Pet extends BaseEntity
      */
     public function getUserId() : int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
 
     /**
@@ -238,7 +238,7 @@ class Pet extends BaseEntity
      */
     public function getType() : int
     {
-        return $this->type;
+        return $this->type ?? 0;
     }
 
     /**
@@ -269,7 +269,7 @@ class Pet extends BaseEntity
             }
         }
 
-        return $this->codeType;
+        return $this->codeType ?? '';
     }
 
     /**
@@ -277,7 +277,7 @@ class Pet extends BaseEntity
      */
     public function getBreed() : string
     {
-        return $this->breed;
+        return $this->breed ?? '';
     }
 
     /**
@@ -350,9 +350,9 @@ class Pet extends BaseEntity
     }
 
     /**
-     * @return Date
+     * @return Date|null
      */
-    public function getBirthday() : Date
+    public function getBirthday() : ?Date
     {
         if (!($this->birthday instanceof Date)) {
             return null;
@@ -389,7 +389,7 @@ class Pet extends BaseEntity
             $this->setStringGender($this->getGender());
         }
 
-        return $this->stringGender;
+        return $this->stringGender ?? '';
     }
 
     /**
@@ -406,7 +406,7 @@ class Pet extends BaseEntity
      */
     public function getGender() : int
     {
-        return $this->gender;
+        return $this->gender ?? 0;
     }
 
     /**

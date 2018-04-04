@@ -3,6 +3,7 @@
 use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -104,9 +105,9 @@ $items = $arResult['ITEMS'];
                                     </div>
                                     <div class="b-account-referal-item__column">
                                         <div class="b-account-referal-item__bonus">Начислено бонусов
-                                            <span class="b-account-referal-item__number"><span><?= $item->getBonus(
-                                                    ) ?></span><span
-                                                        class="b-ruble b-ruble--referal-item">&nbsp;₽</span></span>
+                                            <span class="b-account-referal-item__number">
+                                                <span><?= WordHelper::numberFormat($item->getBonus()) ?></span>
+                                                <span class="b-ruble b-ruble--referal-item">&nbsp;₽</span></span>
                                         </div>
                                         <?php
                                         if ($item->isModerate()) { ?>
@@ -114,7 +115,7 @@ $items = $arResult['ITEMS'];
                                                 На модерации
                                             </div>
                                             <?php
-                                        } else { ?>
+                                        } elseif($item->getDateEndActive() !== null && $item->getBonus() > 0) { ?>
                                             <div class="b-account-referal-item__status b-account-referal-item__status--<?= !$item->isEndActiveDate(
                                             ) ? 'active' : 'not-active' ?>">
                                                 <?= !$item->isEndActiveDate() ? 'Активна до ' : 'Неактивна c ' ?>

@@ -10,10 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $closedOrders = $arResult['CLOSED_ORDERS'];
 /** @var ArrayCollection $activeOrders */
 $activeOrders = $arResult['ACTIVE_ORDERS'];
-if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
-    /** @todo нужен шаблон пустых заказов */
-    return;
-}
 ?>
 <?php if (!$activeOrders->isEmpty()) { ?>
     <div class="b-account__accordion">

@@ -12,6 +12,10 @@ use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
 
+/**
+ * Class CsvHandler
+ * @package FourPaws\AppBundle\Serialization
+ */
 class CsvHandler implements SubscribingHandlerInterface
 {
     public const DEFAULT_DELIMITER = ',';

@@ -148,6 +148,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $this->arResult['OFFERS']   = [];
         //кешируем выборку из манзаны и базы с первичной обработкой на 15 минут
         $cache = $instance->getCache();
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache(
             $this->arParams['MANZANA_CACHE_TIME'],
             serialize(
@@ -157,7 +158,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                     'LIMIT_MANZANA_CHEQUE' => $this->arParams['LIMIT_MANZANA_CHEQUE'],
                 ]
             ),
-            $this->getCachePath() ?: $this->getPath()
+            $cachePath
         )) {
             $vars              = $cache->getVars(); // достаем переменные из кеша
             $this->sortItems   = $vars['sortItems'];
@@ -168,7 +169,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             $tagCache = null;
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getCachePath() ?: $this->getPath());
+                $tagCache->startTagCache($cachePath);
             }
             //получение данных из манзаны
             list($xmlIds, $allItems) = $this->getXmlIdsByManzana();
@@ -237,12 +238,12 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         //кешируем вывод
         if ($this->startResultCache(
             $this->arParams['CACHE_TIME'],
-            
             [
                 'USER_ID' => $userId,
                 'TYPE'    => 'PERSONAL_TOP',
                 'IDS'     => array_keys($this->sortItems),
-            ]
+            ],
+            $cachePath
         )) {
             //сортировка по цене
             Collection::sortByColumn(
