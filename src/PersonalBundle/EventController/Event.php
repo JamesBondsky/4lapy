@@ -109,6 +109,9 @@ class Event implements ServiceHandlerInterface
     public static function AddressClearCacheUpdate(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         static::HlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
@@ -127,6 +130,9 @@ class Event implements ServiceHandlerInterface
     public static function AddressClearCacheDelete(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
 
         $fields = static::getHlItemFieldsById('Address', $id);
 
@@ -154,6 +160,9 @@ class Event implements ServiceHandlerInterface
     public static function PetClearCacheUpdate(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         static::HlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
@@ -172,6 +181,9 @@ class Event implements ServiceHandlerInterface
     public static function PetClearCacheDelete(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
 
         $fields = static::getHlItemFieldsById('Pet', $id);
 
@@ -199,6 +211,9 @@ class Event implements ServiceHandlerInterface
     public static function ReferralClearCacheUpdate(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         static::HlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
@@ -217,6 +232,9 @@ class Event implements ServiceHandlerInterface
     public static function ReferralClearCacheDelete(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
 
         $fields = static::getHlItemFieldsById('Referral', $id);
 
@@ -244,6 +262,9 @@ class Event implements ServiceHandlerInterface
     public static function CommentsClearCacheUpdate(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         static::HlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_OBJECT_ID'])) {
@@ -262,6 +283,9 @@ class Event implements ServiceHandlerInterface
     public static function CommentsClearCacheDelete(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
 
         $fields = static::getHlItemFieldsById('Comments', $id);
 
@@ -281,6 +305,9 @@ class Event implements ServiceHandlerInterface
     public function prepareDelUpdateManzanaPets(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id] = static::getHlItemFieldsById('Pet', $id);
     }
 
@@ -296,6 +323,9 @@ class Event implements ServiceHandlerInterface
     public static function updateManzanaPets(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         if(!empty($id) && !empty($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id])){
             /** для удаления */
             $fields = $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS'];
