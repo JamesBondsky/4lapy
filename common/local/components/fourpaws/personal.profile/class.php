@@ -250,7 +250,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                             $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
                             $client = new Client();
                             $client->contactId = $contactId;
-                            $client->phone = $phone;
+                            $client->phone = PhoneHelper::getManzanaPhone($phone);
                         } catch (ManzanaServiceException $e) {
                             $client = new Client();
                             $this->currentUserProvider->setClientPersonalDataByCurUser($client);
