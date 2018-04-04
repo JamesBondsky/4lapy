@@ -1,16 +1,16 @@
 <?php
 /**
- * @var array                 $arParams
- * @var array                 $arResult
+ * @var array $arParams
+ * @var array $arResult
  *
  * @var CatalogElementSnippet $component
  *
- * @var Product               $product
- * @var OfferCollection       $offers
- * @var Offer                 $offer
- * @var Offer                 $currentOffer
+ * @var Product $product
+ * @var OfferCollection $offers
+ * @var Offer $offer
+ * @var Offer $currentOffer
  *
- * @global \CMain             $APPLICATION
+ * @global \CMain $APPLICATION
  */
 
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -31,7 +31,8 @@ $offers = $product->getOffers();
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER']; ?>
 
-<div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item" data-productid="<?= $product->getId() ?>">
+<div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
+     data-productid="<?= $product->getId() ?>">
     <?= $component->getMarkService()->getMark($currentOffer) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
@@ -61,13 +62,13 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 'fourpaws:comments',
                 'catalog.snippet',
                 [
-                    'HL_ID'              => HighloadHelper::getIdByName('Comments'),
-                    'OBJECT_ID'          => $productId,
-                    'SORT_DESC'          => 'Y',
-                    'ITEMS_COUNT'        => 5,
+                    'HL_ID' => HighloadHelper::getIdByName('Comments'),
+                    'OBJECT_ID' => $productId,
+                    'SORT_DESC' => 'Y',
+                    'ITEMS_COUNT' => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
-                    'TYPE'               => 'catalog',
-                    'ITEM_LINK'          => $product->getDetailPageUrl() . '#new-review',
+                    'TYPE' => 'catalog',
+                    'ITEM_LINK' => $product->getDetailPageUrl() . '#new-review',
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
@@ -76,14 +77,15 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         <div class="b-common-item__rank-wrapper">
             &nbsp
             <?php
-            if($currentOffer->isNew()){?>
+            if ($currentOffer->isNew()) {
+                ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
             <?php }
-            if($currentOffer->isShare()){
+            if ($currentOffer->isShare()) {
                 /** @var IblockElement $share */
-                $share = $currentOffer->getShare()->first();?>
-                <span class="b-common-item__rank-text b-common-item__rank-text--red"><?=$share->getName()?></span>
-            <?php }?>
+                $share = $currentOffer->getShare()->first(); ?>
+                <span class="b-common-item__rank-text b-common-item__rank-text--red"><?= $share->getName() ?></span>
+            <?php } ?>
         </div>
         <?php if ($offers->count() > 1) {
 
@@ -208,21 +210,28 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         //
         // Информация об особенностях покупки товара
         //
-        ob_start();
-
-        /** @todo инфо о скидке */
-
-        if ($currentOffer->isByRequest()) { ?>
-            <div class="b-common-item__info-wrap">
+        ?>
+        <div class="b-common-item__additional-information">
+            <div class="b-common-item__benefin js-sale-block" style="display: none">
+                <span class="b-common-item__prev-price js-sale-origin">
+                    <?= $currentOffer->getOldPrice() ?>
+                    <span class="b-ruble b-ruble--prev-price">₽</span>
+                </span>
+                <span class="b-common-item__discount">
+                    <span class="b-common-item__disc">Скидка</span>
+                    <span class="b-common-item__discount-price js-sale-sale">
+                        <?= $currentOffer->getOldPrice() - $currentOffer->getPrice() ?>
+                    </span>
+                    <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span>
+                    </span>
+                </span>
+            </div>
+            <div class="b-common-item__info-wrap" style="display: none">
                 <span class="b-common-item__text">Только под заказ</span>
             </div>
-        <?php }
-
-        /** @todo инфо о доставке/самовывозе */
-        $addInfo = ob_get_clean();
-        if (!empty($addInfo)) {
-            echo '<div class="b-common-item__additional-information">' . $addInfo . '</div>';
-        }
-        ?>
+            <div class="b-common-item__info-wrap" style="display: none">
+                <span class="b-common-item__text">Самовывоз/span>
+            </div>
+        </div>
     </div>
 </div>

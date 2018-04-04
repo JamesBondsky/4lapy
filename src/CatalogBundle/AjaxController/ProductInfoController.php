@@ -2,7 +2,12 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -49,7 +54,7 @@ class ProductInfoController extends Controller
      * ProductInfoController constructor.
      * @param ValidatorInterface $validator
      * @param SearchService $searchService
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function __construct(ValidatorInterface $validator, SearchService $searchService)
     {
@@ -72,7 +77,11 @@ class ProductInfoController extends Controller
      * @param Request $request
      * @param ProductListRequest $productListRequest
      * @return JsonResponse
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ApplicationCreateException
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
@@ -99,7 +108,12 @@ class ProductInfoController extends Controller
                         $currentOffer = $offer;
                     }
                     $response['products'][$product->getId()][$offer->getId()] = [
-                        'available' => !$offer->getStocks()->isEmpty()
+                        'available' => !$offer->getStocks()->isEmpty(),
+                        'byRequest' => $offer->isByRequest(),
+                        'pickup' => $product->isPickupAvailable(),
+                        'delivery' => $product->isDeliveryAvailable(),
+                        'price' => $offer->getPrice(),
+                        'oldPrice' => $offer->getOldPrice() ?: $offer->getPrice()
                     ];
                 }
             }
