@@ -242,8 +242,8 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param StockItem $stockItem
      *
-     * @return Result
      * @throws \RuntimeException
+     * @return Result
      */
     protected function createStore($stockItem) : Result
     {
