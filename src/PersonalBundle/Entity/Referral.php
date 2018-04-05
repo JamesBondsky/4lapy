@@ -246,7 +246,7 @@ class Referral extends BaseEntity
         if (!empty($name)
             && !empty($secondName)
             && !empty($lastName)) {
-            $fullName = $name . ' ' . $secondName . $lastName;
+            $fullName = $name . ' ' . $secondName . ' '. $lastName;
         } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($lastName)
                                                                         && !empty($name)) {
             $fullName = $lastName . ' ' . $name;
