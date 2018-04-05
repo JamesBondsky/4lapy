@@ -442,6 +442,7 @@ class ReferralService
         bool $needLoadAllItems = true
     ): array {
         $arCards = [];
+        $arReferralCards = [];
         $referralsList = [];
         $allBonus = 0;
         if (!$referrals->isEmpty()) {
@@ -463,6 +464,15 @@ class ReferralService
             $fullReferralsList = $this->referralRepository->findByCurUser()->toArray();
         } else {
             $fullReferralsList = $referralsList;
+        }
+
+        if (!empty($referralsList)) {
+            /** @var Referral $item */
+            foreach ($referralsList as $key => $item) {
+                if (!empty($item->getCard())) {
+                    $arReferralCards[$item->getCard()] = $key;
+                }
+            }
         }
 
         if (!empty($fullReferralsList)) {
@@ -547,7 +557,7 @@ class ReferralService
                     }
                 } /** @var Referral $referral */
                 else {
-                    $referral =& $referralsList[$arCards[$cardNumber]];
+                    $referral =& $fullReferralsList[$arCards[$cardNumber]];
                     if ($referral instanceof Referral) {
                         $cardDate = '';
 
@@ -642,6 +652,9 @@ class ReferralService
                                     }
                                 }
                             }
+                        }
+                        if(array_key_exists($cardNumber, $arReferralCards)) {
+                            $referralsList[$arReferralCards[$cardNumber]] = $referral;
                         }
                     }
                 }
