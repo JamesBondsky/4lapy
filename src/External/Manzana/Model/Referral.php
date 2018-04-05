@@ -20,35 +20,35 @@ use JMS\Serializer\Annotation\XmlRoot;
  */
 class Referral
 {
-    public const IS_MODERATED = 1;
-    public const SUCCESS_MODERATE = 200000;
-    public const CANCEL_MODERATE = 200001;
+    public const IS_MODERATED = ['Не указано', '1'];
+    public const SUCCESS_MODERATE = ['Да', '200000'];
+    public const CANCEL_MODERATE = ['Нет', '200001'];
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("card_number")
      */
     public $cardNumber;
-    
+
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("referral_number")
      */
     public $referralNumber;
-    
+
     /**
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("sum_referral_bonus")
      */
     public $sumReferralBonus;
-    
+
     /**
      * Актуальность реферала
      * 1 - Не указано, 2000 - Да, 2001 - Нет
      * @XmlElement(cdata=false)
-     * @Type("int")
+     * @Type("string")
      * @SerializedName("is_questionnaire_actual")
      */
     public $isQuestionnaireActual;
@@ -58,7 +58,7 @@ class Referral
      */
     public function isModerated(): bool
     {
-        return $this->isQuestionnaireActual === static::IS_MODERATED;
+        return \in_array($this->isQuestionnaireActual, static::IS_MODERATED, true);
     }
 
     /**
@@ -66,7 +66,7 @@ class Referral
      */
     public function isSuccessModerate(): bool
     {
-        return $this->isQuestionnaireActual === static::SUCCESS_MODERATE;
+        return \in_array($this->isQuestionnaireActual, static::SUCCESS_MODERATE, true);
     }
 
     /**
@@ -74,6 +74,6 @@ class Referral
      */
     public function isCancelModerate(): bool
     {
-        return $this->isQuestionnaireActual === static::CANCEL_MODERATE;
+        return \in_array($this->isQuestionnaireActual, static::CANCEL_MODERATE, true);
     }
 }

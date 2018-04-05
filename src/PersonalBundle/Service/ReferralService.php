@@ -516,6 +516,7 @@ class ReferralService
                         } catch (CardNotFoundException $e) {
                             $skip = true;
                         } catch (\Exception $e) {
+                            $skip = true;
                             $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
                         }
                         if (!$skip) {
@@ -585,6 +586,7 @@ class ReferralService
                                 } catch (CardNotFoundException $e) {
                                     $skip = true;
                                 } catch (\Exception $e) {
+                                    $skip = true;
                                     $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
                                 }
                                 if (!$skip) {
