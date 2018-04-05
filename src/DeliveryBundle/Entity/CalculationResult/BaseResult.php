@@ -751,11 +751,13 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     protected function resetResult(): void
     {
-/** @todo А здесь не надо сбрасывать $this->periodFrom ? */
         $this->deliveryDate = null;
         $this->errors = new ErrorCollection();
         $this->isSuccess = true;
         $this->warnings = new ErrorCollection();
+
+        $this->periodFrom = null;
+        $this->selectedInterval = null;
     }
 
     public function __clone()

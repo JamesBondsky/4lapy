@@ -468,8 +468,16 @@ class OrderCopy
     /**
      * Сохранение заказа в базу
      *
+     * @return \Bitrix\Sale\Result
+     * @throws ArgumentException
+     * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectNotFoundException
      * @throws OrderCreateException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
      */
     public function save()
     {

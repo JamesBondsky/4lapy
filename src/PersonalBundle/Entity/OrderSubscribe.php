@@ -10,6 +10,7 @@ use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use JMS\Serializer\Annotation as Serializer;
@@ -86,13 +87,13 @@ class OrderSubscribe extends BaseEntity
      */
     protected $lastCheck;
 
-    /** @var OrderSubscribeService */
+    /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService;
-    /** @var UserFieldEnumService */
+    /** @var UserFieldEnumService $userFieldEnumService */
     private $userFieldEnumService;
-    /** @var null|Order */
+    /** @var null|Order $order */
     private $order;
-    /** @var UserFieldEnumValue */
+    /** @var UserFieldEnumValue $deliveryFrequencyEntity */
     private $deliveryFrequencyEntity;
 
     /**
@@ -284,23 +285,29 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @param string $baseDateValue Базовая дата для расчета в формате d.m.Y
+     * @param string|\DateTime $baseDate Базовая дата для расчета в формате d.m.Y
      * @return \DateTime
      * @throws ApplicationCreateException
+     * @throws InvalidArgumentException
      * @throws RuntimeException
      * @throws \Exception
      */
-    public function getNextDeliveryDate(string $baseDateValue = '') : \DateTime
+    public function getNextDeliveryDate($baseDate = null) : \DateTime
     {
         $dateStartRaw = $this->getDateStart();
         if (!$dateStartRaw) {
             throw new RuntimeException('Дата первой поставки не задана', 100);
         }
-
-        $result = null;
-
         // принудительное приведение к требуемому формату - время нам здесь не нужно
-        $baseDateValue = (new \DateTime($baseDateValue))->format('d.m.Y');
+        $baseDate = $baseDate ?: '';
+        if (is_string($baseDate)) {
+            $baseDateValue = (new \DateTime($baseDate))->format('d.m.Y');
+        } elseif ($baseDate instanceof \DateTime) {
+            $baseDateValue = $baseDate->format('d.m.Y');
+        } else {
+            throw new InvalidArgumentException('Дата задана некорректно');
+        }
+        $result = null;
 
         $dateStart = new \DateTime($dateStartRaw->format('d.m.Y'));
         $baseDate = new \DateTime($baseDateValue);

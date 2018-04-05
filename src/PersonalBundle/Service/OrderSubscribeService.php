@@ -27,9 +27,10 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyResult;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
-use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Helper\OrderCopy;
 use FourPaws\SaleBundle\Service\NotificationService;
@@ -220,7 +221,7 @@ class OrderSubscribeService
      * @return ArrayCollection
      * @throws \Exception
      */
-    public function getSubscriptionsByOrder($orderId, bool $filterActive = true)
+    public function getSubscriptionsByOrder($orderId, bool $filterActive = true): ArrayCollection
     {
         $params = [];
         if ($filterActive) {
@@ -250,7 +251,7 @@ class OrderSubscribeService
      * @return ArrayCollection
      * @throws \Exception
      */
-    public function getSubscriptionsByUser($userId, $filterActive = true)
+    public function getSubscriptionsByUser($userId, $filterActive = true): ArrayCollection
     {
         $params = [];
         if ($filterActive) {
@@ -344,7 +345,7 @@ class OrderSubscribeService
      * @param string $periodType
      * @return int
      */
-    protected function convertCalcResultPeriodValue($periodValue, string $periodType)
+    protected function convertCalcResultPeriodValue($periodValue, string $periodType): int
     {
         $result = 0;
         $periodValue = (float)$periodValue;
@@ -370,7 +371,8 @@ class OrderSubscribeService
     }
 
     /**
-     * Возвращает CalculationResult для уже созданного заказа
+     * Возвращает CalculationResult для уже созданного заказа.
+     * CalculationResult берется от клона заказа.
      *
      * @param \Bitrix\Sale\Order $bitrixOrder
      * @return BaseResult|null
@@ -383,7 +385,7 @@ class OrderSubscribeService
     {
         $calculationResult = null;
         if ($bitrixOrder->getId() && !$bitrixOrder->isClone()) {
-            // делаем клон заказа, чтобы методы расчета доставки не изменили оригинальный заказ
+            // !!! делаем клон заказа, чтобы методы расчета доставки не изменили оригинальный заказ !!!
             $bitrixOrderCloned = $bitrixOrder->createClone();
 
             $deliveryService = $this->getDeliveryService();
@@ -413,34 +415,28 @@ class OrderSubscribeService
     }
 
     /**
-     * @param OrderSubscribe $orderSubscribe
-     * @return BaseResult
+     * Возвращает дату, когда заказ может быть доставлен
+     *
+     * @param BaseResult $calculationResult
+     * @param \DateTime|null $currentDate
+     * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotFoundException
-     * @throws NotImplementedException
-     * @throws NotSupportedException
-     * @throws RuntimeException
-     * @throws \Exception
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getDeliveryCalculationResultBySubscribe(OrderSubscribe $orderSubscribe): BaseResult
+    public function getOrderDeliveryDate(BaseResult $calculationResult, \DateTime $currentDate = null): \DateTime
     {
-        $order = $orderSubscribe->getOrder();
-        $bitrixOrder = $order ? $order->getBitrixOrder() : null;
-        if (!$bitrixOrder) {
-            throw new NotFoundException('Заказ не найден', 100);
+        $tmpCalculationResult = clone $calculationResult;
+        if ($currentDate) {
+            $tmpCalculationResult->setCurrentDate((clone $currentDate));
         }
+        $tmpDeliveryDate = $tmpCalculationResult->getDeliveryDate();
+        $deliveryDate = clone $tmpDeliveryDate;
 
-        /** @var BaseResult $calculationResult */
-        $calculationResult = $this->getDeliveryCalculationResult($bitrixOrder);
-        if (!$calculationResult || !$calculationResult->isSuccess()) {
-            throw new RuntimeException('Не удалось рассчитать доставку', 200);
-        }
+        // добавляем 1 день для подстраховки
+        $deliveryDate->add(new \DateInterval('P1D'));
 
-        return $calculationResult;
+        return $deliveryDate;
     }
 
     /**
@@ -455,35 +451,15 @@ class OrderSubscribeService
      * @throws ArgumentException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderNextCreateDate(
-        BaseResult $calculationResult,
-        \DateTime $deliveryDate,
-        \DateTime $currentDate = null
-    ): \DateTime {
+    public function getDateForOrderCreate(BaseResult $calculationResult, \DateTime $deliveryDate, \DateTime $currentDate = null): \DateTime
+    {
+        $calculatedDeliveryDate = $this->getOrderDeliveryDate($calculationResult, $currentDate);
+        // сколько дней займет доставка
+        $deliveryDays = $calculatedDeliveryDate->diff($currentDate)->days;
 
-        $tmpCalculationResult = clone $calculationResult;
-        if ($currentDate) {
-            $tmpCalculationResult->setCurrentDate((clone $currentDate));
-        }
-
-        $tmpVal = $this->convertCalcResultPeriodValue(
-            $tmpCalculationResult->getPeriodFrom(),
-            $tmpCalculationResult->getPeriodType()
-        );
-        $minDays = $tmpVal > 0 ? $tmpVal : 1;
-        /*
-        $tmpVal = $this->convertCalcResultPeriodValue(
-            $tmpCalculationResult->getPeriodTo(),
-            $tmpCalculationResult->getPeriodType()
-        );
-        $maxDays = $tmpVal > 0 ? $tmpVal : 1;
-        */
-
-        // для подстраховки прибавляем еще один день к минимальному сроку доставки
-        $subDays = $minDays + 1;
         // принудительно отбрасываем время
-        $resultDate = new \DateTime($deliveryDate->format('d.m.Y')) ;
-        $resultDate->sub(new \DateInterval('P'.$subDays.'D'));
+        $resultDate = new \DateTime($deliveryDate->format('d.m.Y'));
+        $resultDate->sub(new \DateInterval('P'.$deliveryDays.'D'));
 
         return $resultDate;
     }
@@ -491,345 +467,369 @@ class OrderSubscribeService
     /**
      * @param int $originOrderId
      * @param bool $checkActiveSubscribe
-     * @return Result
+     * @return OrderSubscribeCopyResult
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Exception
      */
-    public function copyOrderById(int $originOrderId, bool $checkActiveSubscribe = true)
+    public function copyOrderById(int $originOrderId, bool $checkActiveSubscribe = true): OrderSubscribeCopyResult
     {
         $orderSubscribe = $this->getSubscribeByOrderId($originOrderId, $checkActiveSubscribe);
         if (!$orderSubscribe) {
             throw new NotFoundException('Подписка на заказ не найдена', 100);
         }
+        $params = new OrderSubscribeCopyParams($orderSubscribe);
 
-        return $this->copyOrder($orderSubscribe);
+        return $this->copyOrder($params);
     }
 
     /**
-     * @param OrderSubscribe $orderSubscribe
+     * @param OrderSubscribeCopyParams $params
      * @param bool $deactivateIfEmpty Деактивировать подписку, если заказ пустой
-     * @param \DateTime|null $deliveryDate
-     * @param BaseResult|null $deliveryCalculationResult
-     * @param string $currentDateValue
-     * @return Result
+     * @return OrderSubscribeCopyResult
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      * @throws \Bitrix\Main\Db\SqlQueryException
      */
-    public function copyOrder(
-        OrderSubscribe $orderSubscribe,
-        $deactivateIfEmpty = true,
-        \DateTime $deliveryDate = null,
-        BaseResult $deliveryCalculationResult = null,
-        string $currentDateValue = ''
-    ) {
-        $result = new Result();
-
-        $resultData = [
-            'NEW_ORDER_ID' => 0
-        ];
-
-        $originOrderId = $orderSubscribe->getOrderId();
-
-        // принудительное приведение к требуемому формату - время нам здесь не нужно
-        $currentDateValue = (new \DateTime($currentDateValue))->format('d.m.Y');
-        $currentDate = new \DateTime($currentDateValue);
-
-        $connection = \Bitrix\Main\Application::getConnection();
-        $connection->startTransaction();
+    public function copyOrder(OrderSubscribeCopyParams $params, bool $deactivateIfEmpty = true): OrderSubscribeCopyResult
+    {
+        $result = new OrderSubscribeCopyResult();
 
         $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
 
-        // Система должна создавать заказ по подписке автоматически с учетом условий подписки на
-        // доставку путем копирования заказа:
-        // − Исходного заказа, если создается первый заказ по подписке;
-        // − Предыдущего заказа по подписке, если создается не первый заказ по подписке.
-        $copyOrderId = $orderSubscribeHistoryService->getLastCopyOrderId($originOrderId);
-        if ($copyOrderId <= 0) {
-            $copyOrderId = $originOrderId;
+        $orderSubscribe = $params->getOrderSubscribe();
+        // текущая дата
+        $currentDate = $params->getCurrentDate();
+
+/** @todo какое значение параметра по умолчанию */
+        // значение свойтсва COM_WAY заказа (SAP: Communic)
+        $comWayValue = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
+        // Комментарий для оператора
+        $orderComments = '';
+
+        // id заказа, копия которого будет создаваться
+        $copyOrderId = $params->getCopyOrderId();
+
+        // следующая ближайшая дата доставки по подписке
+        $deliveryDate = null;
+        try {
+            $deliveryDate = $params->getDeliveryDate();
+        } catch (\Exception $exception) {
+            $result->addError(
+                new Error(
+                    $exception->getMessage(),
+                    'getDeliveryDateException'
+                )
+            );
         }
 
-        if ($result->isSuccess() && !$deliveryDate) {
+        //
+        // Проверки
+        //
+        $resultDeliveryDate = $deliveryDate;
+        if ($result->isSuccess()) {
+            /*
+            Если на дату создания заказа по подписке в составе заказа есть товар А,
+            для которого срок доставки изменился и который не может быть доставлен к дате готовности заказа к выдаче,
+            Система должна выполнить следующие действия:
+            − Установить для атрибута заказа «Communic» значение «07 – Подписка». Требования к параметрам заказа
+            определены в документе «4lapy_Интеграция_SAP»;
+            − Добавить к заказу комментарий для оператора с текстом:
+            «Заказ должен быть готов к выдаче <дата готовности заказа к выдаче без товара А>,
+            плановая дата готовности <дата, в которую может быть доступен к выдаче заказ с товаром А>. Причина: <товар А>»;
+            − Изменить дату исполнения заказа на дату, в которую заказ с товаром А может быть доступен к выдаче.
+
+            Оператор должен позвонить пользователю и предложить варианты:
+            − Доставить заказ с товаром А в дату, когда может быть доступен к выдаче заказ с товаром А;
+            − Доставить заказ без товара А в плановую дату доставки заказа по подписке.
+            При выборе этого варианта оператор должен удалить товар А из заказа и изменить дату исполнения
+            заказа на дату готовности заказа к выдаче.
+
+            Независимо от выбранного пользователем варианта Система не должна изменять параметры подписки на доставку,
+            по которой был создан текущий заказ.
+            */
+
+            $deliveryCalculationResult = null;
             try {
-                $deliveryDate = $orderSubscribe->getNextDeliveryDate();
+                // Результат расчета сроков и определения возможности доставки копируемого заказа.
+                // !!! Метод работает с клоном объекта заказа !!!
+                $deliveryCalculationResult = $params->getCopyOrderDeliveryCalculationResult();
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
-                        'getNextDeliveryDateException'
-                    )
-                );
-            }
-        }
-
-        if ($result->isSuccess() && !$deliveryCalculationResult) {
-            try {
-                // расчет сроков и определение возможности доставки заказа
-                $deliveryCalculationResult = $this->getDeliveryCalculationResultBySubscribe($orderSubscribe);
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'getDeliveryCalculationResultException'
-                    )
-                );
-            }
-        }
-
-        if ($result->isSuccess() && $deliveryCalculationResult) {
-            $notGetInTime = false;
-            try {
-                // дата, когда нужно создать заказ, чтобы доставить его к сроку
-                // (результат может быть меньше текущей даты)
-                $orderCreateDate = $this->getOrderNextCreateDate($deliveryCalculationResult, $deliveryDate, $currentDate);
-                if ($orderCreateDate < $currentDate) {
-                    // заказ не может быть доставлен к установленному сроку
-                    $notGetInTime = true;
-                }
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'getOrderNextCreateDateException'
+                        'getCopyOrderDeliveryCalculationResultException'
                     )
                 );
             }
 
-            if ($notGetInTime) {
-                /*
-                Если на дату создания заказа по подписке в составе заказа есть товар А, для которого срок доставки изменился
-                и который не может быть доставлен к дате готовности заказа к выдаче, Система должна выполнить следующие действия:
-                −	Установить для атрибута заказа «Communic» значение «03 – Телефонный звонок (анализ)». Требования к параметрам заказа
-                определены в документе «4lapy_Интеграция_SAP»;
-                −	Добавить к заказу комментарий для оператора с текстом: «Заказ должен быть готов к выдаче <дата готовности заказа к выдаче без товара А>,
-                плановая дата готовности <дата, в которую может быть доступен к выдаче заказ с товаром А>. Причина: <товар А>»;
-                −	Изменить дату исполнения заказа на дату, в которую заказ с товаром А может быть доступен к выдаче.
-
-                Оператор должен позвонить пользователю и предложить варианты:
-                −	Доставить заказ с товаром А в дату, когда может быть доступен к выдаче заказ с товаром А;
-                −	Доставить заказ без товара А в плановую дату доставки заказа по подписке. При выборе этого варианта оператор должен удалить товар
-                А из заказа и изменить дату исполнения заказа на дату готовности заказа к выдаче.
-                Независимо от выбранного пользователем варианта Система не должна изменять параметры подписки на доставку, по которой был создан текущий заказ.
-                */
+            if ($deliveryCalculationResult) {
+                $notGetInTime = false;
                 try {
-                    // делаем расчет даты доставки по одной позиции
-/** @todo сформировать текст комментария */
-                    $offersList = $deliveryCalculationResult->getStockResult()->getOffers();
-                    foreach ($offersList as $offer) {
-                        $tmpDeliveryCalculationResult = clone $deliveryCalculationResult;
-                        $tmpDeliveryCalculationResult->setCurrentDate((clone $currentDate));
-                        $tmpDeliveryCalculationResult->setStockResult(
-                            $deliveryCalculationResult->getStockResult()->filterByOffer($offer)
-                        );
-                        $tmpDeliveryCalculationResult->getDeliveryDate();
+                    // дата, когда нужно создать заказ, чтобы доставить его к сроку
+                    // (результат может быть меньше текущей даты)
+                    $orderCreateDate = $params->getDateForOrderCreate();
+                    if ($orderCreateDate < $currentDate) {
+                        // заказ не может быть доставлен к установленному сроку
+                        $notGetInTime = true;
                     }
                 } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
                             $exception->getMessage(),
-                            'offerCalculationDeliveryDateException'
+                            'getDateForOrderCreateException'
                         )
                     );
                 }
-            }
-        }
 
-        $orderCopyHelper = null;
-        if ($result->isSuccess()) {
-            try {
-                $orderCopyHelper = new OrderCopy($copyOrderId);
+                if ($notGetInTime) {
+                    $comWayValue = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
 
-                $orderCopyHelper->appendBasketItemExcludeProps(
-                    $this->basketItemExcludeProps
-                );
-                $orderCopyHelper->appendOrderExcludeProps(
-                    $this->orderExcludeProps
-                );
-
-                // копирование базовых данных заказа
-                $orderCopyHelper->doBasicCopy();
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'orderCopyException'
-                    )
-                );
-            }
-        }
-
-        if ($result->isSuccess()) {
-            // 1. Если товара нет в наличии, но товар есть на Сайте, при оформлении подписки передавать товар
-            // в заказе без анализа остатка товара.
-            //  *- это по умолчанию будет делаться при флаге "Разрешить покупку при отсутствии товара" у торгового предложения*
-            // 2. Если товара нет на Сайте (из SAP получен признак не отображать товар на Сайте,
-            // для случая вывода товара из ассортимента), то удаляем этот товар из заказа.
-            // 3. Если всех товаров заказа по подписке нет,
-            // нужно деактировать подписку и отправить пользователю уведомление.
-            $newOrderBasket = $orderCopyHelper->getNewOrder()->getBasket();
-            //if ($newOrderBasket->getOrderableItems()->isEmpty()) {
-            if ($newOrderBasket->count() <= 0) {
-                if ($deactivateIfEmpty) {
-                    // Корзина пуста. Деактивация подписки и отправка уведомления
                     try {
-                        $resultData['deactivateResult'] = $this->deactivateSubscription($orderSubscribe);
-                        if (!$resultData['deactivateResult']->isSuccess()) {
-                            $result->addError(
-                                new Error(
-                                    'Ошибка деактивации подписки',
-                                    'subscriptionDeactivateError'
-                                )
+                        // делаем расчет даты доставки по каждой позиции отдельно
+                        $offersList = $deliveryCalculationResult->getStockResult()->getOffers(true);
+                        $products = [];
+                        foreach ($offersList as $offer) {
+                            /** @var \FourPaws\Catalog\Model\Offer $offer */
+                            $tmpDeliveryCalculationResult = clone $deliveryCalculationResult;
+                            $tmpDeliveryCalculationResult->setCurrentDate((clone $currentDate));
+                            $tmpDeliveryCalculationResult->setStockResult(
+                                $deliveryCalculationResult->getStockResult()->filterByOffer($offer)
                             );
+                            $tmpOrderCreate = $this->getDateForOrderCreate($tmpDeliveryCalculationResult, $deliveryDate, $currentDate);
+                            if ($tmpOrderCreate < $currentDate) {
+                                $products[] = '['.$offer->getXmlId().'] '.$offer->getName();
+                                // работаем через внутренний метод, т.к. в нем учитывается дополнительное время по подписке
+                                $tmpDeliveryDate = $this->getOrderDeliveryDate($tmpDeliveryCalculationResult, $currentDate);
+                                if ($tmpDeliveryDate > $deliveryDate) {
+                                    $resultDeliveryDate = $tmpDeliveryDate;
+                                }
+                            }
                         }
+                        $orderComments .= 'Заказ должен быть готов к выдаче '.$deliveryDate->format('d.m.Y').', ';
+                        $orderComments .= 'плановая дата готовности '.$resultDeliveryDate->format('d.m.Y').' ';
+                        $orderComments .= 'Причина: '.implode('; ', $products);
                     } catch (\Exception $exception) {
                         $result->addError(
                             new Error(
                                 $exception->getMessage(),
-                                'deactivateSubscriptionException'
+                                'offerCalculationDeliveryDateException'
                             )
                         );
                     }
                 }
-                $result->addError(
-                    new Error(
-                        'Корзина заказа пуста',
-                        'orderBasketEmpty'
-                    )
-                );
             }
         }
 
-        // в заказах по подписке только оплата наличными может быть
+        //
+        // Создание копии заказа
+        //
         if ($result->isSuccess()) {
-            $cashPaySystemService = $this->getOrderService()->getCashPaySystemService();
-            if ($cashPaySystemService) {
+            $connection = \Bitrix\Main\Application::getConnection();
+            $connection->startTransaction();
+
+            $orderCopyHelper = null;
+            if ($result->isSuccess()) {
                 try {
-                    $orderCopyHelper->setPayment($cashPaySystemService);
+                    $orderCopyHelper = new OrderCopy($copyOrderId);
+                    $result->setOrderCopyHelper($orderCopyHelper);
+
+                    $orderCopyHelper->appendBasketItemExcludeProps(
+                        $this->basketItemExcludeProps
+                    );
+                    $orderCopyHelper->appendOrderExcludeProps(
+                        $this->orderExcludeProps
+                    );
+
+                    // копирование базовых данных заказа
+                    $orderCopyHelper->doBasicCopy();
+
+                    if ($orderComments !== '') {
+                        $orderCopyHelper->getNewOrder()->setField('COMMENTS', $orderComments);
+                    }
                 } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
                             $exception->getMessage(),
-                            'orderSetPaymentException'
+                            'orderCopyException'
                         )
                     );
-               }
-            } else {
-                $result->addError(
-                    new Error(
-                        'Не удалось получить платежную систему "Оплата наличными"',
-                        'orderCashPaymentNotFound'
-                    )
-                );
+                }
             }
-        }
 
-        // заполнение специальных свойств
-        if ($result->isSuccess()) {
-            try {
-                $orderCopyHelper->setPropValueByCode(
-                    'DELIVERY_INTERVAL',
-                    $orderSubscribe->getDeliveryTime()
-                );
-                $orderCopyHelper->setPropValueByCode(
-                    'DELIVERY_DATE',
-                    $deliveryDate->format('d.m.Y')
-                );
-                $orderCopyHelper->setPropValueByCode(
-                    'IS_SUBSCRIBE',
-                    'Y'
-                );
-                $orderCopyHelper->setPropValueByCode(
-                    'COPY_ORDER_ID',
-                    $copyOrderId
-                );
-                // значение параметра: «Communic» значение «07 – Подписка»
-                $orderCopyHelper->setPropValueByCode(
-                    'COM_WAY',
-                    OrderPropertyService::COMMUNICATION_SUBSCRIBE
-                );
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'orderSetPropsException'
-                    )
-                );
+            if ($result->isSuccess()) {
+                // 1. Если товара нет в наличии, но товар есть на Сайте, при оформлении подписки передавать товар
+                // в заказе без анализа остатка товара.
+                //  *- это по умолчанию будет делаться при флаге "Разрешить покупку при отсутствии товара" у торгового предложения*
+                // 2. Если товара нет на Сайте (из SAP получен признак не отображать товар на Сайте,
+                // для случая вывода товара из ассортимента), то удаляем этот товар из заказа.
+                // 3. Если всех товаров заказа по подписке нет,
+                // нужно деактировать подписку и отправить пользователю уведомление.
+                $newOrderBasket = $orderCopyHelper->getNewOrder()->getBasket();
+                //if ($newOrderBasket->getOrderableItems()->isEmpty()) {
+                if ($newOrderBasket->count() <= 0) {
+                    if ($deactivateIfEmpty) {
+                        // Корзина пуста. Деактивация подписки и отправка уведомления
+                        try {
+                            $deactivateResult = $this->deactivateSubscription($orderSubscribe);
+                            $result->offsetSetData('deactivateResult', $deactivateResult);
+                            if (!$deactivateResult->isSuccess()) {
+                                $result->addError(
+                                    new Error(
+                                        'Ошибка деактивации подписки',
+                                        'subscriptionDeactivateError'
+                                    )
+                                );
+                            }
+                        } catch (\Exception $exception) {
+                            $result->addError(
+                                new Error(
+                                    $exception->getMessage(),
+                                    'deactivateSubscriptionException'
+                                )
+                            );
+                        }
+                    }
+                    $result->addError(
+                        new Error(
+                            'Корзина заказа пуста',
+                            'orderBasketEmpty'
+                        )
+                    );
+                }
             }
-        }
 
-        // финализация заказа и сохранение в БД
-        if ($result->isSuccess()) {
-            try {
-                $orderCopyHelper->doFinalAction();
-                $resultData['saveResult'] = $orderCopyHelper->save();
-                if ($resultData['saveResult']->isSuccess()) {
-                    $resultData['NEW_ORDER_ID'] = $resultData['saveResult']->getId();
+            // в заказах по подписке только оплата наличными может быть
+            if ($result->isSuccess()) {
+                $cashPaySystemService = $this->getOrderService()->getCashPaySystemService();
+                if ($cashPaySystemService) {
+                    try {
+                        $orderCopyHelper->setPayment($cashPaySystemService);
+                    } catch (\Exception $exception) {
+                        $result->addError(
+                            new Error(
+                                $exception->getMessage(),
+                                'orderSetPaymentException'
+                            )
+                        );
+                    }
                 } else {
                     $result->addError(
                         new Error(
-                            'Ошибка сохранения заказа',
-                            'orderSaveError'
+                            'Не удалось получить платежную систему "Оплата наличными"',
+                            'orderCashPaymentNotFound'
                         )
                     );
                 }
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'orderFinalActionsException'
-                    )
-                );
             }
-        }
 
-        // добавление записи о созданном заказе в историю
-        if ($result->isSuccess()) {
-            try {
-                $resultData['historyAddResult'] = $orderSubscribeHistoryService->add(
-                    $orderSubscribe,
-                    $resultData['NEW_ORDER_ID'],
-                    $deliveryDate
-                );
-                if (!$resultData['historyAddResult']->isSuccess()) {
+            // заполнение специальных свойств
+            if ($result->isSuccess()) {
+                try {
+                    $orderCopyHelper->setPropValueByCode(
+                        'DELIVERY_INTERVAL',
+                        $orderSubscribe->getDeliveryTime()
+                    );
+                    $orderCopyHelper->setPropValueByCode(
+                        'DELIVERY_DATE',
+                        $resultDeliveryDate->format('d.m.Y')
+                    );
+                    $orderCopyHelper->setPropValueByCode(
+                        'IS_SUBSCRIBE',
+                        'Y'
+                    );
+                    $orderCopyHelper->setPropValueByCode(
+                        'COPY_ORDER_ID',
+                        $copyOrderId
+                    );
+                    $orderCopyHelper->setPropValueByCode(
+                        'COM_WAY',
+                        $comWayValue
+                    );
+                } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
-                            'Ошибка сохранения записи в истории',
-                            'orderHistoryAddError'
+                            $exception->getMessage(),
+                            'orderSetPropsException'
                         )
                     );
                 }
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'orderSubscribeHistoryAddException'
-                    )
-                );
             }
-        }
 
-        // отправка уведомлений во внешние системы
-        if ($result->isSuccess()) {
-            try {
-                $this->doNewOrderIntegration($resultData['NEW_ORDER_ID']);
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'newOrderIntegrationException'
-                    )
-                );
+            // финализация заказа и сохранение в БД
+            if ($result->isSuccess()) {
+                try {
+                    $orderCopyHelper->doFinalAction();
+                    $saveResult = $orderCopyHelper->save();
+                    $result->setOrderSaveResult($saveResult);
+                    if (!$saveResult->isSuccess()) {
+                        $result->addError(
+                            new Error(
+                                'Ошибка сохранения заказа',
+                                'orderSaveError'
+                            )
+                        );
+                    }
+                } catch (\Exception $exception) {
+                    $result->addError(
+                        new Error(
+                            $exception->getMessage(),
+                            'orderFinalActionsException'
+                        )
+                    );
+                }
             }
-        }
 
-        // закрываем транзакцию
-        if ($result->isSuccess()) {
-            $connection->commitTransaction();
-        } else {
-            $connection->rollbackTransaction();
+            // добавление записи о созданном заказе в историю
+            if ($result->isSuccess()) {
+                try {
+                    $historyAddResult = $orderSubscribeHistoryService->add(
+                        $orderSubscribe,
+                        $result->getNewOrderId(),
+                        $deliveryDate
+                    );
+                    $result->offsetSetData('historyAddResult', $historyAddResult);
+                    if (!$historyAddResult->isSuccess()) {
+                        $result->addError(
+                            new Error(
+                                'Ошибка сохранения записи в истории',
+                                'orderHistoryAddError'
+                            )
+                        );
+                    }
+                } catch (\Exception $exception) {
+                    $result->addError(
+                        new Error(
+                            $exception->getMessage(),
+                            'orderSubscribeHistoryAddException'
+                        )
+                    );
+                }
+            }
+
+            // отправка уведомлений во внешние системы
+            if ($result->isSuccess()) {
+                try {
+                    $this->doNewOrderIntegration($result->getNewOrderId());
+                } catch (\Exception $exception) {
+                    $result->addError(
+                        new Error(
+                            $exception->getMessage(),
+                            'newOrderIntegrationException'
+                        )
+                    );
+                }
+            }
+
+            // закрываем транзакцию
+            if ($result->isSuccess()) {
+                $connection->commitTransaction();
+            } else {
+                $connection->rollbackTransaction();
+            }
         }
 
         if (!$result->isSuccess()) {
@@ -841,8 +841,6 @@ class OrderSubscribeService
             );
         }
 
-        $result->setData($resultData);
-
         return $result;
     }
 
@@ -850,31 +848,14 @@ class OrderSubscribeService
      * Обрабатывает подписку на заказ и если пришло время создания очередного заказа - создает его
      *
      * @param OrderSubscribe $orderSubscribe
-     * @param string $currentDateValue
+     * @param bool $deactivateIfEmpty
+     * @param string|\DateTime $currentDate
      * @return Result
-     * @throws ApplicationCreateException
+     * @throws InvalidArgumentException
      */
-    public function processOrderSubscribe(OrderSubscribe $orderSubscribe, string $currentDateValue = ''): Result
+    public function processOrderSubscribe(OrderSubscribe $orderSubscribe, bool $deactivateIfEmpty = true, $currentDate = null): Result
     {
         $result = new Result();
-
-        // принудительное приведение к требуемому формату - время нам здесь не нужно
-        $currentDateValue = (new \DateTime($currentDateValue))->format('d.m.Y');
-        $currentDate = new \DateTime($currentDateValue);
-        $currentDateValue = $currentDate->format('d.m.Y');
-
-        $data = [
-            'SUBSCRIBE_ID' => $orderSubscribe->getId(),
-            'OLD_ORDER_ID' => $orderSubscribe->getOrderId(),
-            'NEW_ORDER_ID' => 0,
-            'currentDate' => $currentDate,
-            'deliveryDate' => null,
-            'alreadyCreated' => false,
-            'orderCreateDate' => null,
-            'canCopyOrder' => false,
-        ];
-
-        $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
 
         if ($result->isSuccess()) {
             try {
@@ -899,107 +880,97 @@ class OrderSubscribeService
             }
         }
 
+        $copyParams = new OrderSubscribeCopyParams($orderSubscribe);
+        $copyParams->setCurrentDate($currentDate);
+
+        $data = [
+            'copyParams' => $copyParams,
+            'copyResult' => null,
+            'alreadyCreated' => false,
+            'canCopyOrder' => false,
+        ];
+
         if ($result->isSuccess()) {
+            $deliveryDate = null;
             try {
-                // следующая дата, на которую необходимо доставить заказ
-                $data['deliveryDate'] = $orderSubscribe->getNextDeliveryDate($currentDateValue);
+                // следующая ближайшая дата по подписке, на которую необходимо доставить заказ
+                $deliveryDate = $copyParams->getDeliveryDate();
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
-                        'getNextDeliveryDateException'
+                        'getDeliveryDateException'
                     )
                 );
             }
-        }
-
-        if ($result->isSuccess()) {
-            try {
-                // проверим, не создавался ли уже заказ для этой даты
-                /** @noinspection PhpUndefinedVariableInspection */
-                $data['alreadyCreated'] = $orderSubscribeHistoryService->wasOrderCreated(
-                    $orderSubscribe->getOrderId(),
-                    $data['deliveryDate']
-                );
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error(
-                        $exception->getMessage(),
-                        'wasOrderCreatedException'
-                    )
-                );
-            }
-        }
-
-        $deliveryCalculationResult = null;
-        if ($result->isSuccess()) {
-            if (!$data['alreadyCreated']) {
+            if ($deliveryDate) {
                 try {
-                    // расчет сроков и определение возможности доставки заказа
-                    $deliveryCalculationResult = $this->getDeliveryCalculationResultBySubscribe($orderSubscribe);
+                    // проверим, не создавался ли уже заказ для этой даты
+                    $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+                    $data['alreadyCreated'] = $orderSubscribeHistoryService->wasOrderCreated(
+                        $copyParams->getOriginOrderId(),
+                        $deliveryDate
+                    );
                 } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
                             $exception->getMessage(),
-                            'getDeliveryCalculationResultException'
+                            'wasOrderCreatedException'
                         )
                     );
-                }
-                if ($deliveryCalculationResult) {
-                    try {
-                        // дата, когда нужно создать заказ, чтобы доставить его к сроку
-                        // (результат может быть меньше текущей даты)
-                        $data['orderCreateDate'] = $this->getOrderNextCreateDate(
-                            $deliveryCalculationResult,
-                            $data['deliveryDate'],
-                            $data['currentDate']
-                        );
-                    } catch (\Exception $exception) {
-                        $result->addError(
-                            new Error(
-                                $exception->getMessage(),
-                                'getOrderNextCreateDateException'
-                            )
-                        );
-                    }
                 }
             }
         }
 
-        if ($result->isSuccess()) {
-            if (!$data['alreadyCreated']) {
-                if ($data['orderCreateDate'] <= $data['currentDate']) {
-                    // наступила или уже прошла дата создания заказа
-                    // (если дата меньше текущей, то заказ будет создан с комментариями для оператора)
-                    $data['canCopyOrder'] = true;
-                }
+        if ($result->isSuccess() && !$data['alreadyCreated']) {
+            $deliveryCalculationResult = null;
+            try {
+                // Результат расчета сроков и определения возможности доставки заказа
+                $deliveryCalculationResult = $copyParams->getCopyOrderDeliveryCalculationResult();
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error(
+                        $exception->getMessage(),
+                        'getCopyOrderDeliveryCalculationResultException'
+                    )
+                );
             }
-
-            if ($data['canCopyOrder']) {
+            if ($deliveryCalculationResult) {
                 try {
-                    /** @noinspection PhpUndefinedVariableInspection */
-                    $copyOrderResult = $this->copyOrder(
-                        $orderSubscribe,
-                        true,
-                        $data['deliveryDate'],
-                        $deliveryCalculationResult,
-                        $currentDateValue
-                    );
-                    if ($copyOrderResult->isSuccess()) {
-                        $data['NEW_ORDER_ID'] = $copyOrderResult->getData()['NEW_ORDER_ID'];
-                    } else {
-                        $result->addErrors(
-                            $copyOrderResult->getErrors()
-                        );
+                    // дата, когда нужно создать заказ, чтобы доставить его к сроку
+                    // (результат может быть меньше текущей даты)
+                    $orderCreateDate = $copyParams->getDateForOrderCreate();
+                    if ($orderCreateDate <= $copyParams->getCurrentDate()) {
+                        // наступила или уже прошла дата создания заказа
+                        // (если дата меньше текущей, то заказ будет создан с комментариями для оператора)
+                        $data['canCopyOrder'] = true;
                     }
                 } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
                             $exception->getMessage(),
-                            'copyOrderException'
+                            'getOrderNextCreateDateException'
                         )
                     );
                 }
+            }
+        }
+
+        if ($result->isSuccess() && $data['canCopyOrder']) {
+            try {
+                $data['copyResult'] = $this->copyOrder($copyParams, $deactivateIfEmpty);
+                if (!$data['copyResult']->isSuccess()) {
+                    $result->addErrors(
+                        $data['copyResult']->getErrors()
+                    );
+                }
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error(
+                        $exception->getMessage(),
+                        'copyOrderException'
+                    )
+                );
             }
         }
 
@@ -1013,12 +984,13 @@ class OrderSubscribeService
      *
      * @param int $limit Лимит подписок за шаг
      * @param int $checkIntervalHours Время, вычитаемое от текущей даты, для запроса подписок
-     * @param string $currentDateValue
+     * @param string|\DateTime $currentDate
+     * @param bool $extResult
      * @return Result
-     * @throws ApplicationCreateException
+     * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, string $currentDateValue = ''): Result
+    public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, $currentDate = null, bool $extResult = false): Result
     {
         $result = new Result();
         $resultData = [];
@@ -1046,9 +1018,10 @@ class OrderSubscribeService
         $checkOrdersList = $this->orderSubscribeRepository->findBy($params);
         foreach ($checkOrdersList as $orderSubscribe) {
             /** @var OrderSubscribe $orderSubscribe */
-            $curResult = $this->processOrderSubscribe($orderSubscribe, $currentDateValue);
-
-            $resultData[] = $curResult;
+            $curResult = $this->processOrderSubscribe($orderSubscribe, true, $currentDate);
+            if ($extResult) {
+                $resultData[] = $curResult;
+            }
             if (!$curResult->isSuccess() && $result->isSuccess()) {
                 $result->addError(
                     new Error(
@@ -1115,7 +1088,7 @@ class OrderSubscribeService
             ]
         );
         if ($updateResult->isSuccess()) {
-            /** @todo Отправка уведомления пользователю */
+/** @todo Отправка уведомления пользователю */
         }
 
         return $updateResult;

@@ -23,7 +23,7 @@ class OrderPropertyService
 
     public const COMMUNICATION_PAYMENT_ANALYSIS = '06';
 
-    const COMMUNICATION_SUBSCRIBE = '07';
+    public const COMMUNICATION_SUBSCRIBE = '07';
 
     /**
      * @var OrderPropertyVariantRepository

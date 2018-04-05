@@ -71,6 +71,8 @@ class OrderSubscribeHistoryService
      * @param \DateTime $deliveryDate
      * @return bool
      * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     public function wasOrderCreated(int $originOrderId, \DateTime $deliveryDate): bool
     {
@@ -162,6 +164,7 @@ class OrderSubscribeHistoryService
      * @param int $originOrderId
      * @return int
      * @throws ArgumentException
+     * @throws SystemException
      */
     public function getLastCopyOrderId(int $originOrderId): int
     {
@@ -203,6 +206,8 @@ class OrderSubscribeHistoryService
      * @param array $params
      * @return \Bitrix\Main\DB\Result
      * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     protected function findBy(array $params): \Bitrix\Main\DB\Result
     {
