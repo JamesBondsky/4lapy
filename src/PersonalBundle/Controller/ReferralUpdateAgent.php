@@ -154,11 +154,14 @@ class ReferralUpdateAgent
                                         $loggerSystem->error('произошла ошибка удаления реферала ' . $e->getMessage());
                                     }
                                 }
-                            } elseif (!$manzanaReferral->isSuccessModerate() && !$manzanaReferral->isModerated()) {
+                            } elseif ($manzanaReferral->isCancelModerate()) {
                                 /** ставим пометку что модерация отменена */
                                 /** обновляем сущность полностью, чтобы данные не пропадали */
                                 $updateData = $referralService->referralRepository->entityToData($referral);
-                                $data = ['UF_CANCEL_MODERATE' => 'Y', 'UF_MODERATED' => 'N'];
+                                $data = [
+                                    'UF_CANCEL_MODERATE' => 'Y',
+                                    'UF_MODERATED'       => 'N',
+                                ];
                                 /** @noinspection SlowArrayOperationsInLoopInspection */
                                 $updateData = array_merge($updateData, $data);
                                 try {

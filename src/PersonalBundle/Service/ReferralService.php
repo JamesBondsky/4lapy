@@ -555,6 +555,7 @@ class ReferralService
                         $lastModerate = $referral->isModerate();
                         $lastCancelModerate = $referral->isCancelModerate();
                         $referral->setModerate($item->isModerated());
+                        $referral->setCancelModerate($item->isCancelModerate());
                         if ($referral->getDateEndActive() === null) {
                             try {
                                 $skip = false;
@@ -593,10 +594,12 @@ class ReferralService
                             /** @noinspection NotOptimalIfConditionsInspection */
                             $isCancelModerate = false;
                             if ($lastCancelModerate !== $referral->isCancelModerate()) {
-                                $isCancelModerate = true;
                                 $data['UF_CANCEL_MODERATE'] = $referral->isCancelModerate() ? 'Y' : 'N';
-                                if($data['UF_CANCEL_MODERATE'] === 'Y' && $data['UF_MODERATED'] === 'Y'){
-                                    $data['UF_MODERATED'] = 'N';
+                                if($data['UF_CANCEL_MODERATE'] === 'Y' ){
+                                    $isCancelModerate = true;
+                                    if($data['UF_MODERATED'] === 'Y') {
+                                        $data['UF_MODERATED'] = 'N';
+                                    }
                                 }
                             }
                             if ($lastModerate !== $referral->isModerate()) {
