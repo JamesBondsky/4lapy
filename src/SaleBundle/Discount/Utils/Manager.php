@@ -73,30 +73,27 @@ class Manager
                         ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
+                    /**
+                     * @todo не сохранять подарки
+                     */
                     $basketService
                         ->getCleaner('gift')
                         ->processOrder();
 
-                    // Автоматически добавляем подарки
                     $basketService
                         ->getAdder('detach')
                         ->processOrder();
 
-                    // Удаляем подарки, акции которых не выполнились
-                    $basketService
-                        ->getCleaner('detach')
-                        ->processOrder();
-
-                    $promocode = $couponStorage->getApplicableCoupon();
-                    if ($promocode) {
-                        $manzana->setPromocode($promocode);
+                    $promoCode = $couponStorage->getApplicableCoupon();
+                    if ($promoCode) {
+                        $manzana->setPromocode($promoCode);
                     }
 
                     try {
                         $basketService->setDiscountBeforeManzana();
                         $manzana->calculate();
                     } catch (ManzanaPromocodeUnavailableException $e) {
-                        $couponStorage->delete($promocode);
+                        $couponStorage->delete($promoCode);
                     }
                 }
             }

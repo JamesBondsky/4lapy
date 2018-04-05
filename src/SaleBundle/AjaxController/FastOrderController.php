@@ -22,7 +22,6 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
-use FourPaws\External\SmsService;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
@@ -67,8 +66,6 @@ class FastOrderController extends Controller
     private $basketService;
     /** @var BasketViewService */
     private $basketViewService;
-    /** @var SmsService */
-    private $smsService;
 
     /**
      * OrderController constructor.
@@ -79,7 +76,6 @@ class FastOrderController extends Controller
      * @param AjaxMess                     $ajaxMess
      * @param BasketService                $basketService
      * @param BasketViewService            $basketViewService
-     * @param SmsService                   $smsService
      */
     public function __construct(
         OrderService $orderService,
@@ -87,8 +83,7 @@ class FastOrderController extends Controller
         CurrentUserProviderInterface $currentUserProvider,
         AjaxMess $ajaxMess,
         BasketService $basketService,
-        BasketViewService $basketViewService,
-        SmsService $smsService
+        BasketViewService $basketViewService
     ) {
         $this->orderService = $orderService;
         $this->userAuthProvider = $userAuthProvider;
@@ -96,7 +91,6 @@ class FastOrderController extends Controller
         $this->ajaxMess = $ajaxMess;
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
-        $this->smsService = $smsService;
     }
 
     /**
@@ -189,11 +183,6 @@ class FastOrderController extends Controller
             $order = $this->orderService->initOrder($orderStorage);
             $this->orderService->saveOrder($order, $orderStorage, true);
             if ($order instanceof Order && $order->getId() > 0) {
-                if (isset($_SESSION['NEW_USER']) && !empty($_SESSION['NEW_USER'])) {
-                    $this->smsService->sendSms('Ваш логин: ' . $_SESSION['NEW_USER']['LOGIN'] . '. Ваш пароль: ' . $_SESSION['NEW_USER']['PASSWORD'],
-                        $_SESSION['NEW_USER']['LOGIN']);
-                    unset($_SESSION['NEW_USER']);
-                }
                 if ($request->get('type', 'basket') === 'card') {
                     ob_start();
                     require_once App::getDocumentRoot()

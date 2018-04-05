@@ -499,7 +499,6 @@ class ExpertsenderService implements LoggerAwareInterface
             if (!$apiResult->isOk()) {
                 throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             }
-            unset($_SESSION['NEW_USER']);
             return $transactionId;
         } catch (GuzzleException|\Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
