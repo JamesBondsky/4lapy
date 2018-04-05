@@ -118,14 +118,15 @@ $showTab = !$noItems || !empty($arResult['search']) || !empty($arResult['referra
                                                     На модерации
                                                 </div>
                                                 <?php
-                                            } elseif($item->getDateEndActive() !== null && $item->getBonus() > 0) { ?>
+                                            }/** @todo показ даты активности карты */
+                                            /*elseif($item->getDateEndActive() !== null && $item->getBonus() > 0) { ?>
                                                 <div class="b-account-referal-item__status b-account-referal-item__status--<?= !$item->isEndActiveDate(
                                                 ) ? 'active' : 'not-active' ?>">
                                                     <?= !$item->isEndActiveDate() ? 'Активна до ' : 'Неактивна c ' ?>
                                                     <span><?= $item->getFormatedActiveDate() ?></span>
                                                 </div>
                                                 <?php
-                                            } ?>
+                                            } */?>
                                         </div>
                                     </div>
                                 </li>
