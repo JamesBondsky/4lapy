@@ -167,7 +167,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 /** @var ArrayCollection $items
                  * @var bool $redirect
                  */
-                $main = empty($referralType) && empty($referralType);
+                $main = empty($referralType) && empty($search);
                 [$items, $redirect, $this->arResult['BONUS']] = $this->referralService->getCurUserReferrals($nav, $main);
                 if ($this->arResult['BONUS'] > 0) {
                     /** отбрасываем дробную часть - нужно ли? */
@@ -198,7 +198,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                             'bonus'         => $item->getBonus(),
                             'card'          => $cardId,
                             'moderated'     => $item->isModerate(),
-                            'dateEndActive' => $item->getDateEndActive(),
+//                            'dateEndActive' => $item->getDateEndActive(),
                         ];
                     }
                 }
