@@ -377,7 +377,7 @@ class Referral extends BaseEntity
      */
     public function isCancelModerate(): bool
     {
-        return $this->cancelModerate;
+        return $this->cancelModerate ?? false;
     }
 
     /**
