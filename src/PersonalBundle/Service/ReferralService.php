@@ -595,16 +595,16 @@ class ReferralService
                             $isCancelModerate = false;
                             if ($lastCancelModerate !== $referral->isCancelModerate()) {
                                 $data['UF_CANCEL_MODERATE'] = $referral->isCancelModerate() ? 'Y' : 'N';
-                                if($data['UF_CANCEL_MODERATE'] === 'Y' ){
+                                if ($data['UF_CANCEL_MODERATE'] === 'Y') {
                                     $isCancelModerate = true;
-                                    if($data['UF_MODERATED'] === 'Y') {
+                                    if ($data['UF_MODERATED'] === 'Y') {
                                         $data['UF_MODERATED'] = 'N';
                                     }
                                 }
                             }
                             if ($lastModerate !== $referral->isModerate()) {
                                 $data['UF_MODERATED'] = $referral->isModerate() ? 'Y' : 'N';
-                                if($data['UF_MODERATED'] === 'Y' && $data['UF_CANCEL_MODERATE'] === 'Y'){
+                                if ($data['UF_MODERATED'] === 'Y' && $data['UF_CANCEL_MODERATE'] === 'Y') {
                                     $data['UF_CANCEL_MODERATE'] = 'N';
                                 }
                             }
@@ -616,7 +616,7 @@ class ReferralService
                                 if ($this->update($updateData)) {
                                     TaggedCacheHelper::clearManagedCache(['personal:referral:' . $referral->getUserId()]);
 
-                                    if($isCancelModerate) {
+                                    if ($isCancelModerate) {
                                         /** если произошла отмена модерации то отправляем письмо или смс */
                                         $container = App::getInstance()->getContainer();
                                         $userService = $container->get(CurrentUserProviderInterface::class);
@@ -628,7 +628,7 @@ class ReferralService
                                                         'EVENT_NAME' => 'ReferralModeratedCancel',
                                                         'LID'        => SITE_ID,
                                                         'C_FIELDS'   => [
-                                                            'CARD'       => $referral->getCard(),
+                                                            'CARD'  => $referral->getCard(),
                                                             'EMAIL' => $user->getEmail(),
                                                         ],
                                                     ]
