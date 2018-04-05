@@ -614,6 +614,7 @@ class ReferralService
                                     TaggedCacheHelper::clearManagedCache(['personal:referral:' . $referral->getUserId()]);
 
                                     if($isCancelModerate) {
+                                        /** если произошла отмена модерации то отправляем письмо или смс */
                                         $container = App::getInstance()->getContainer();
                                         $userService = $container->get(CurrentUserProviderInterface::class);
                                         $user = $userService->getUserRepository()->find($referral->getUserId());

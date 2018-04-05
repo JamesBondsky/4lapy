@@ -161,27 +161,36 @@ class ReferralUpdateAgent
                                 $data = ['UF_CANCEL_MODERATE' => 'Y', 'UF_MODERATED' => 'N'];
                                 /** @noinspection SlowArrayOperationsInLoopInspection */
                                 $updateData = array_merge($updateData, $data);
-                                if ($referralService->update($updateData)) {
-                                    TaggedCacheHelper::clearManagedCache(['personal:referral:' . $data['UF_USER_ID']]);
-                                    $userService = $container->get(CurrentUserProviderInterface::class);
-                                    $user = $userService->getUserRepository()->find($referral->getUserId());
-                                    if($user !== null) {
-                                        if ($user->hasEmail()) {
-                                            Event::send(
-                                                [
-                                                    'EVENT_NAME' => 'ReferralModeratedCancel',
-                                                    'LID'        => SITE_ID,
-                                                    'C_FIELDS'   => [
-                                                        'CARD'       => $referral->getCard(),
-                                                        'EMAIL' => $user->getEmail(),
-                                                    ],
-                                                ]
-                                            );
-                                        } elseif (!empty($user->getPersonalPhone())) {
-                                            $smsService = $container->get('sms.service');
-                                            $smsService->sendSms('Реферал с номером карты '.$referral->getCard().' не прошел модерацию', $user->getNormalizePersonalPhone());
+                                try {
+                                    if ($referralService->update($updateData)) {
+                                        TaggedCacheHelper::clearManagedCache(['personal:referral:' . $data['UF_USER_ID']]);
+
+                                        /** если произошла отмена модерации то отправляем письмо или смс */
+                                        $userService = $container->get(CurrentUserProviderInterface::class);
+                                        $user = $userService->getUserRepository()->find($referral->getUserId());
+                                        if ($user !== null) {
+                                            if ($user->hasEmail()) {
+                                                Event::send(
+                                                    [
+                                                        'EVENT_NAME' => 'ReferralModeratedCancel',
+                                                        'LID'        => SITE_ID,
+                                                        'C_FIELDS'   => [
+                                                            'CARD'  => $referral->getCard(),
+                                                            'EMAIL' => $user->getEmail(),
+                                                        ],
+                                                    ]
+                                                );
+                                            } elseif (!empty($user->getPersonalPhone())) {
+                                                $smsService = $container->get('sms.service');
+                                                $smsService->sendSms('Реферал с номером карты ' . $referral->getCard() . ' не прошел модерацию',
+                                                    $user->getNormalizePersonalPhone());
+                                            }
                                         }
                                     }
+                                } catch (EmptyEntityClass $e) {
+                                    /** не вознкнет - всегда передается массив данных */
+                                } catch (\Exception $e) {
+                                    $loggerReferal->error('При обновлении возникла ошибка - ' . $e->getMessage());
                                 }
                             }
                         }
