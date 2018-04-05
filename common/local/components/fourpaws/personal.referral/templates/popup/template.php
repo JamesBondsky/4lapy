@@ -63,7 +63,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="patronymic"
-                           name="UF_SECOND_NAME	"/>
+                           name="UF_SECOND_NAME"/>
                 </div>
             </div>
             <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">

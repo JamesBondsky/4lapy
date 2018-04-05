@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Helpers\DateHelper;
@@ -87,6 +88,15 @@ class Referral extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $moderate;
+
+    /**
+     * @var bool
+     * @Serializer\Type("bitrix_bool_d7")
+     * @Serializer\SerializedName("UF_CANCEL_MODERATE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $cancelModerate;
     
     /**
      * @var Date
@@ -198,15 +208,16 @@ class Referral extends BaseEntity
     /**
      * @return null|Date
      */
-    public function getDateEndActive()
+    public function getDateEndActive(): ?Date
     {
         return $this->dateEndActive ?? null;
     }
-    
+
     /**
      * @param null|Date|string $dateEndActive
      *
      * @return self
+     * @throws ObjectException
      */
     public function setDateEndActive($dateEndActive) : self
     {
@@ -235,7 +246,7 @@ class Referral extends BaseEntity
         if (!empty($name)
             && !empty($secondName)
             && !empty($lastName)) {
-            $fullName = $name . ' ' . $secondName . $lastName;
+            $fullName = $name . ' ' . $secondName . ' '. $lastName;
         } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($lastName)
                                                                         && !empty($name)) {
             $fullName = $lastName . ' ' . $name;
@@ -359,5 +370,21 @@ class Referral extends BaseEntity
         $this->bonus = $bonus;
         
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCancelModerate(): bool
+    {
+        return $this->cancelModerate ?? false;
+    }
+
+    /**
+     * @param bool $cancelModerate
+     */
+    public function setCancelModerate(bool $cancelModerate): void
+    {
+        $this->cancelModerate = $cancelModerate;
     }
 }
