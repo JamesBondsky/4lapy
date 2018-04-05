@@ -94,6 +94,7 @@ class ReferralController extends Controller
             return $this->ajaxMess->getSystemError();
         }
         $data['UF_MODERATED'] = 'Y';
+        $data['UF_CANCEL_MODERATE'] = 'N';
         try {
             if ($this->referralService->add($data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:referral:'.$data['UF_USER_ID']]);
