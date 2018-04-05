@@ -181,8 +181,8 @@ class ReferralService
             $this->referralRepository->clearNav();
         }
 
-        [, $haveAdd, $referrals, $allBonus] = $this->setDataByManzana($curUser, $referrals, $main,
-            $nav->getPageCount() > 1);
+        $needLoadAllItems = $nav->getPageCount() > 1 ;
+        [, $haveAdd, $referrals, $allBonus] = $this->setDataByManzana($curUser, $referrals, $main, $needLoadAllItems);
 
         return [$referrals, $haveAdd, $allBonus];
     }
