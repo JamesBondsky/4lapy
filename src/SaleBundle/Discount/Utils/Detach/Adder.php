@@ -70,6 +70,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                             ],
                                         ]
                                     ];
+                                    /**
+                                     * вызывает то же событие, но у нас обработчик заблокирован пока выполняется
+                                     */
                                     $newBasketItem = $this->basketService->addOfferToBasket(
                                         $basketItem->getProductId(),
                                         $applyCount,

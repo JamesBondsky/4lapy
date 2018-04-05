@@ -134,10 +134,10 @@ class Manzana implements LoggerAwareInterface
          * @var BasketItem $item
          */
         foreach ($basket as $item) {
-            $itemXmlId = (int)\preg_replace('~^(.*#)~', '', $item->getField('PRODUCT_XML_ID'));
+            $basketCode = (int) str_replace('n', '', $item->getBasketCode());
 
-            $manzanaItems->map(function (ChequePosition $position) use ($itemXmlId, $item) {
-                if ($position->getArticleId() === $itemXmlId) {
+            $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item) {
+                if ($position->getChequeItemNumber() === $basketCode) {
                     $price = $position->getSummDiscounted() / $position->getQuantity();
 
                     /** @noinspection PhpInternalEntityUsedInspection */

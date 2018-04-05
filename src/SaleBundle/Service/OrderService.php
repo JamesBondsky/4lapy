@@ -1057,19 +1057,19 @@ class OrderService implements LoggerAwareInterface
                         $properties['CITY'],
                         $properties['STREET'],
                     ];
-                    if (isset($properties['HOUSE'])) {
+                    if (!empty($properties['HOUSE'])) {
                         $address[] = $properties['HOUSE'];
                     }
-                    if (isset($properties['BUILDING'])) {
+                    if (!empty($properties['BUILDING'])) {
                         $address[] = 'корпус ' . $properties['BUILDING'];
                     }
-                    if (isset($properties['PORCH'])) {
+                    if (!empty($properties['PORCH'])) {
                         $address[] = 'подъезд ' . $properties['PORCH'];
                     }
-                    if (isset($properties['FLOOR'])) {
+                    if (!empty($properties['FLOOR'])) {
                         $address[] = 'этаж ' . $properties['FLOOR'];
                     }
-                    if (isset($properties['APARTMENT'])) {
+                    if (!empty($properties['APARTMENT'])) {
                         $address[] = 'кв. ' . $properties['APARTMENT'];
                     }
                     $address = \implode(', ', $address);
