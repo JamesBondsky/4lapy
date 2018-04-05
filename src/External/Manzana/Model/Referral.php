@@ -20,6 +20,9 @@ use JMS\Serializer\Annotation\XmlRoot;
  */
 class Referral
 {
+    public const IS_MODERATED = 1;
+    public const SUCCESS_MODERATE = 200000;
+    public const CANCEL_MODERATE = 200001;
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
@@ -55,7 +58,7 @@ class Referral
      */
     public function isModerated(): bool
     {
-        return $this->isQuestionnaireActual === 1;
+        return $this->isQuestionnaireActual === static::IS_MODERATED;
     }
 
     /**
@@ -63,7 +66,7 @@ class Referral
      */
     public function isSuccessModerate(): bool
     {
-        return $this->isQuestionnaireActual === 2000;
+        return $this->isQuestionnaireActual === static::SUCCESS_MODERATE;
     }
 
     /**
@@ -71,6 +74,6 @@ class Referral
      */
     public function isCancelModerate(): bool
     {
-        return $this->isQuestionnaireActual === 2001;
+        return $this->isQuestionnaireActual === static::CANCEL_MODERATE;
     }
 }
