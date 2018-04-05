@@ -27,6 +27,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -190,13 +191,28 @@ class OrderStorageService
         switch ($step) {
             case self::AUTH_STEP:
                 $availableValues = [
-                    'name',
-                    'phone',
-                    'email',
                     'altPhone',
                     'communicationWay',
                     'captchaFilled',
                 ];
+
+                if (!$storage->getUserId()) {
+                    $availableValues[] = 'name';
+                    $availableValues[] = 'phone';
+                    $availableValues[] = 'email';
+                } else {
+                    try {
+                        $user = $this->currentUserProvider->getCurrentUser();
+                        if ($user &&
+                            !$user->getEmail() &&
+                            $storage->getUserId() === $user->getId()
+                        ) {
+                            $availableValues[] = 'email';
+                        }
+                    } catch (NotAuthorizedException $e) {
+                    }
+                }
+
                 break;
             case self::DELIVERY_STEP:
 
