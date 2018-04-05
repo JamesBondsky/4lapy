@@ -41,35 +41,61 @@ class ArrayCommaString implements SubscribingHandlerInterface
                 'method'    => 'deserialize',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'xml',
+                'type'      => 'array_comma_string',
+                'method'    => 'deserialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'array_comma_string',
+                'method'    => 'deserialize',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format'    => 'json',
+                'type'      => 'array_comma_string',
+                'method'    => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'xml',
+                'type'      => 'array_comma_string',
+                'method'    => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'csv',
                 'type'      => 'array_comma_string',
                 'method'    => 'serialize',
             ],
         ];
     }
 
+    /**
+     * @param JsonSerializationVisitor $visitor
+     * @param                          $data
+     * @param array                    $type
+     * @param Context                  $context
+     *
+     * @return mixed
+     */
     public function serialize(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
     {
-        return $visitor->getNavigator()->accept(
-            \is_array($data) ? implode(',', $data) : '',
-            [
-                'name'   => 'string',
-                'params' => $type['params'],
-            ],
-            $context
-        );
+        return \is_array($data) ? implode(',', $data) : '';
     }
 
+    /**
+     * @param JsonDeserializationVisitor $visitor
+     * @param                            $data
+     * @param array                      $type
+     * @param Context                    $context
+     *
+     * @return mixed
+     */
     public function deserialize(JsonDeserializationVisitor $visitor, $data, array $type, Context $context)
     {
-        return $visitor->getNavigator()->accept(
-            \is_string($data) ? explode(',', $data) : [],
-            [
-                'name'   => 'array',
-                'params' => $type['params'],
-            ],
-            $context
-        );
+        return \is_string($data) ? explode(',', $data) : [];
     }
 }

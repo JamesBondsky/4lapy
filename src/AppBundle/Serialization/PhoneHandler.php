@@ -29,8 +29,32 @@ class PhoneHandler implements SubscribingHandlerInterface
                 'method'    => 'deserialize',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'xml',
+                'type'      => 'phone',
+                'method'    => 'deserialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'phone',
+                'method'    => 'deserialize',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format'    => 'json',
+                'type'      => 'phone',
+                'method'    => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'xml',
+                'type'      => 'phone',
+                'method'    => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'csv',
                 'type'      => 'phone',
                 'method'    => 'serialize',
             ],

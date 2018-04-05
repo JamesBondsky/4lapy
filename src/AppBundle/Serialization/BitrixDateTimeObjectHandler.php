@@ -35,10 +35,34 @@ class BitrixDateTimeObjectHandler implements SubscribingHandlerInterface
                 'method' => 'deserialize',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format' => 'xml',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'deserialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format' => 'csv',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'deserialize',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format' => 'json',
                 'type' => 'bitrix_date_time_object',
                 'method' => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format' => 'xml',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'serializeCsv',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format' => 'csv',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'serializeCsv',
             ],
         ];
     }
@@ -74,6 +98,7 @@ class BitrixDateTimeObjectHandler implements SubscribingHandlerInterface
 
 
     /**
+     * формат d.m.Y H:i:s
      * @noinspection MoreThanThreeArgumentsInspection
      *
      * @param JsonDeserializationVisitor $visitor
@@ -91,12 +116,43 @@ class BitrixDateTimeObjectHandler implements SubscribingHandlerInterface
         Context $context
     ) {
         if ($data instanceof BitrixDateTime) {
-            $data = new \DateTime();
-            $data->setTimestamp($data->getTimestamp());
+            $returnData = new \DateTime();
+            $returnData->setTimestamp($data->getTimestamp());
         } else {
-            $data = null;
+            if(\is_string($data) && !empty($data)){
+                $returnData = \DateTime::createFromFormat('d.m.Y H:i:s', $data);
+            }
+            else{
+                $returnData = null;
+            }
         }
 
+        return $returnData;
+    }
+
+    /**
+     * формат d.m.Y H:i:s
+     * @noinspection MoreThanThreeArgumentsInspection
+     *
+     * @param JsonSerializationVisitor $visitor
+     * @param                                          $data
+     * @param array $type
+     * @param Context $context
+     *
+     * @return mixed
+     */
+    public function serializeCsv(
+        /** @noinspection PhpUnusedParameterInspection */
+        JsonSerializationVisitor $visitor,
+        $data,
+        array $type,
+        Context $context
+    ) {
+        if ($data instanceof \DateTime) {
+            $data = $data->format('d.m.Y H:i:s');
+        } else {
+            $data = '';
+        }
         return $data;
     }
 }

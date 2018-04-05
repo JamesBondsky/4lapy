@@ -17,7 +17,9 @@ class BitrixBooleanHandler implements SubscribingHandlerInterface
     public const BITRIX_TRUE     = 'Y';
     
     public const BITRIX_TRUE_INT = '1';
-    
+
+    public const BITRIX_FALSE_INT = '0';
+
     public const BITRIX_FALSE    = 'N';
 
     /**
@@ -35,10 +37,34 @@ class BitrixBooleanHandler implements SubscribingHandlerInterface
                 'method'    => 'deserialize',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'xml',
+                'type'      => 'bitrix_bool',
+                'method'    => 'deserialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'bitrix_bool',
+                'method'    => 'deserialize',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format'    => 'json',
                 'type'      => 'bitrix_bool',
                 'method'    => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'bitrix_bool',
+                'method'    => 'serializeCsv',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'bitrix_bool',
+                'method'    => 'serializeCsv',
             ],
         ];
     }
@@ -57,14 +83,7 @@ class BitrixBooleanHandler implements SubscribingHandlerInterface
     {
         $data = $data ? self::BITRIX_TRUE : self::BITRIX_FALSE;
         
-        return $visitor->getNavigator()->accept(
-            $data,
-            [
-                'name'   => 'string',
-                'params' => $type['params'],
-            ],
-            $context
-        );
+        return $data;
     }
 
     /**
@@ -79,15 +98,25 @@ class BitrixBooleanHandler implements SubscribingHandlerInterface
      */
     public function deserialize(JsonDeserializationVisitor $visitor, $data, array $type, Context $context)
     {
-        $data = ($data === self::BITRIX_TRUE || $data === self::BITRIX_TRUE_INT);
+        $data = ($data === self::BITRIX_TRUE || $data === self::BITRIX_TRUE_INT || $data === true);
         
-        return $visitor->getNavigator()->accept(
-            $data,
-            [
-                'name'   => 'bool',
-                'params' => $type['params'],
-            ],
-            $context
-        );
+        return $data;
+    }
+
+    /**
+     *
+     *
+     * @param JsonSerializationVisitor $visitor
+     * @param $data
+     * @param array $type
+     * @param Context $context
+     *
+     * @return mixed
+     */
+    public function serializeCsv(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        $data = $data ? self::BITRIX_TRUE_INT : self::BITRIX_FALSE_INT;
+
+        return $data;
     }
 }

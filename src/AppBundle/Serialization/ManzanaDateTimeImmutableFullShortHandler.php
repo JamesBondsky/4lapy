@@ -6,6 +6,7 @@
 
 namespace FourPaws\AppBundle\Serialization;
 
+use FourPaws\MobileApiBundle\SerializationVisitor\BlankSerializationVisitor;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
@@ -23,10 +24,10 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         return [
             [
-                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
-                'format'    => 'xml',
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
                 'type'      => 'manzana_date_time_short',
-                'method'    => 'deserializeXml',
+                'method'    => 'serializeJson',
             ],
             [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
@@ -35,16 +36,28 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
                 'method'    => 'serializeXml',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'manzana_date_time_short',
+                'method'    => 'serializeCsv',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
                 'format'    => 'json',
                 'type'      => 'manzana_date_time_short',
                 'method'    => 'deserializeJson',
             ],
             [
-                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
-                'format'    => 'json',
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'xml',
                 'type'      => 'manzana_date_time_short',
-                'method'    => 'serializeJson',
+                'method'    => 'deserializeXml',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'manzana_date_time_short',
+                'method'    => 'deserializeCsv',
             ],
         ];
     }
@@ -62,9 +75,13 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         /** format Y-m-d\TH:i:s.u */
         if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return '';
+            }
         }
-        
+
         return $data->format('Y-m-d\TH:i:s.u');
     }
 
@@ -81,9 +98,13 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         /** format Y-m-d\TH:i:s.u */
         if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return null;
+            }
         }
-        
+
         return $data;
     }
 
@@ -100,7 +121,11 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         /** format Y-m-d\TH:i:s.u */
         if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return '';
+            }
         }
 
         return $data->format('Y-m-d\TH:i:s.u');
@@ -119,7 +144,11 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         /** format Y-m-d\TH:i:s.u */
         if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return null;
+            }
         }
 
         return $data;

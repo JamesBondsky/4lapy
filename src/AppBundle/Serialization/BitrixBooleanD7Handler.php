@@ -27,10 +27,34 @@ class BitrixBooleanD7Handler implements SubscribingHandlerInterface
                 'method'    => 'deserialize',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'xml',
+                'type'      => 'bitrix_bool_d7',
+                'method'    => 'deserialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'bitrix_bool_d7',
+                'method'    => 'deserialize',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format'    => 'json',
                 'type'      => 'bitrix_bool_d7',
                 'method'    => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'xml',
+                'type'      => 'bitrix_bool_d7',
+                'method'    => 'serializeCsv',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'bitrix_bool_d7',
+                'method'    => 'serializeCsv',
             ],
         ];
     }
@@ -61,5 +85,19 @@ class BitrixBooleanD7Handler implements SubscribingHandlerInterface
         $data = ($data === self::BITRIX_TRUE || $data === self::BITRIX_TRUE_INT || $data === true);
 
         return $data;
+    }
+
+    /**
+     * @param JsonSerializationVisitor $visitor
+     * @param bool                     $data
+     * @param array                    $type
+     * @param Context                  $context
+     *
+     * @return bool
+     */
+    public function serializeCsv(JsonSerializationVisitor $visitor, bool $data, array $type, Context $context): bool
+    {
+        /** в csv вроде 1 или 0 */
+        return $data ? 1 : 0;
     }
 }

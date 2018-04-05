@@ -6,6 +6,7 @@
 
 namespace FourPaws\AppBundle\Serialization;
 
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
@@ -28,14 +29,38 @@ class BitrixDateHandler implements SubscribingHandlerInterface
                 'method'    => 'deserialize',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'bitrix_date',
+                'method'    => 'deserialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'bitrix_date',
+                'method'    => 'deserialize',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format'    => 'json',
                 'type'      => 'bitrix_date',
                 'method'    => 'serialize',
             ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'bitrix_date',
+                'method'    => 'serializeCsv',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'bitrix_date',
+                'method'    => 'serializeCsv',
+            ],
         ];
-    }/** @noinspection MoreThanThreeArgumentsInspection */
-    
+    }
+
     /**
      * @param JsonSerializationVisitor                 $visitor
      * @param                                          $data
@@ -51,8 +76,8 @@ class BitrixDateHandler implements SubscribingHandlerInterface
         }
         
         return $data;
-    }/** @noinspection MoreThanThreeArgumentsInspection */
-    
+    }
+
     /**
      * @param JsonDeserializationVisitor                 $visitor
      * @param                                            $data
@@ -65,13 +90,34 @@ class BitrixDateHandler implements SubscribingHandlerInterface
     {
         if (!($data instanceof Date)) {
             if (\strlen($data) > 0) {
-                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-                $data = new Date($data, 'd.m.Y');
+                try {
+                    $data = new Date($data, 'd.m.Y');
+                } catch (ObjectException $e) {
+                    $data = null;
+                }
             } else {
                 $data = null;
             }
         }
         
         return $data;
+    }
+
+    /**
+     * формат d.m.Y
+     * @param JsonSerializationVisitor                 $visitor
+     * @param                                          $data
+     * @param array                                    $type
+     * @param Context                                  $context
+     *
+     * @return mixed
+     */
+    public function serializeCsv(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        if (!($data instanceof Date)) {
+            $data = '';
+        }
+
+        return $data->format('d.m.Y');
     }
 }
