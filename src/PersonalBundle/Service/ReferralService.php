@@ -463,7 +463,7 @@ class ReferralService
         }
 
         /** если больше одной страницы грузим всех рефералов, чтобы не было дублирония при добавлении */
-        if ($needLoadAllItems) {
+        if ($needLoadAllItems || empty($referralsList)) {
             $fullReferralsList = $this->referralRepository->findByCurUser()->toArray();
         } else {
             $fullReferralsList = $referralsList;
@@ -489,7 +489,9 @@ class ReferralService
             }
         }
         else{
-            $arReferralCards = $arCards;
+            if (!empty($referralsList)) {
+                $arReferralCards = $arCards;
+            }
         }
 
         if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
