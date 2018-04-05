@@ -445,18 +445,21 @@ class ReferralService
         $arReferralCards = [];
         $referralsList = [];
         $allBonus = 0;
+        $haveAdd = false;
+        $success = false;
         if (!$referrals->isEmpty()) {
             $referralsList = $referrals->toArray();
         }
 
-        $manzanaReferrals = [];
         try {
             $manzanaReferrals = $this->manzanaService->getUserReferralList($curUser);
         } catch (ManzanaServiceException $e) {
+            /** если нет данных от манзаны то дальнейшее выполнение бесполезно */
             $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+            return [$success, $haveAdd, new ArrayCollection($referralsList), $allBonus];
         } catch (NotAuthorizedException $e) {
             /** прерываем выполнение если неавторизованы */
-            return [false, false, new ArrayCollection($referralsList), $allBonus];
+            return [$success, $haveAdd, new ArrayCollection($referralsList), $allBonus];
         }
 
         /** если больше одной страницы грузим всех рефералов, чтобы не было дублирония при добавлении */
@@ -464,15 +467,6 @@ class ReferralService
             $fullReferralsList = $this->referralRepository->findByCurUser()->toArray();
         } else {
             $fullReferralsList = $referralsList;
-        }
-
-        if (!empty($referralsList)) {
-            /** @var Referral $item */
-            foreach ($referralsList as $key => $item) {
-                if (!empty($item->getCard())) {
-                    $arReferralCards[$item->getCard()] = $key;
-                }
-            }
         }
 
         if (!empty($fullReferralsList)) {
@@ -484,7 +478,20 @@ class ReferralService
             }
         }
 
-        $haveAdd = false;
+        if ($needLoadAllItems) {
+            if (!empty($referralsList)) {
+                /** @var Referral $item */
+                foreach ($referralsList as $key => $item) {
+                    if (!empty($item->getCard())) {
+                        $arReferralCards[$item->getCard()] = $key;
+                    }
+                }
+            }
+        }
+        else{
+            $arReferralCards = $arCards;
+        }
+
         if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
             /** @var ManzanaReferal $item */
             foreach ($manzanaReferrals as $item) {
@@ -555,10 +562,13 @@ class ReferralService
                         $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
                         /** скипаем при ошибке манзаны */
                     }
-                } /** @var Referral $referral */
-                else {
-                    $referral =& $fullReferralsList[$arCards[$cardNumber]];
-                    if ($referral instanceof Referral) {
+                } else {
+                    /** @var Referral $referral */
+                    $referral = null;
+                    if(array_key_exists($cardNumber, $arCards)) {
+                        $referral =& $fullReferralsList[$arCards[$cardNumber]];
+                    }
+                    if ($referral !== null) {
                         $cardDate = '';
 
                         $referral->setBonus((float)$item->sumReferralBonus);
@@ -661,6 +671,7 @@ class ReferralService
                 unset($referral);
             }
         }
-        return [true, $haveAdd, new ArrayCollection($referralsList), $allBonus];
+        $success = true;
+        return [$success, $haveAdd, new ArrayCollection($referralsList), $allBonus];
     }
 }
