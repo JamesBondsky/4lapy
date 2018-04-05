@@ -66,17 +66,9 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
             $user = $this->currentUserProvider->getCurrentUser();
             $data['UF_USER_ID'] = $user->getId();
 
-            /**
-             * Если пользователь не задал контактные данные вручную,
-             * заполняем их из его профиля
-             */
-            if (!$data['PROPERTY_NAME']) {
-                $data['PROPERTY_NAME'] = $user->getName();
-            }
-            if (!$data['PROPERTY_PHONE']) {
-                $data['PROPERTY_PHONE'] = $user->getPersonalPhone();
-            }
-            if (!$data['PROPERTY_EMAIL']) {
+            $data['PROPERTY_NAME'] = $user->getName();
+            $data['PROPERTY_PHONE'] = $user->getPersonalPhone();
+            if ($user->getEmail()) {
                 $data['PROPERTY_EMAIL'] = $user->getEmail();
             }
 

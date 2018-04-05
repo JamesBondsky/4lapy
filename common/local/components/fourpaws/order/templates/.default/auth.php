@@ -14,6 +14,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
+use FourPaws\UserBundle\Entity\User;
 
 /**
  * @var array $arParams
@@ -55,6 +56,8 @@ $communicationWays = $orderPropertyService->getPropertyVariants($orderPropertySe
 /** @var OrderPropertyVariant $currentCommWay */
 $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
 
+/** @var User $user */
+$user = $arResult['USER'];
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -99,7 +102,8 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                        placeholder=""
                                        name="name"
                                        value="<?= $storage->getName() ?>"
-                                       data-url="">
+                                       data-url=""
+                                    <?= $user ? 'disabled="disabled"' : '' ?>>
                                 <div class="b-error">
                                     <span class="js-message"></span>
                                 </div>
@@ -125,7 +129,8 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                            placeholder=""
                                            name="phone"
                                            value="<?= $storage->getPhone() ?>"
-                                           data-url="">
+                                           data-url=""
+                                        <?= $user ? 'disabled="disabled"' : '' ?>>
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>
@@ -153,7 +158,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                            placeholder=""
                                            name="email"
                                            value="<?= $storage->getEmail() ?>"
-                                           data-url="">
+                                        <?= $user && $user->getEmail() ? 'disabled="disabled"' : '' ?>>
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>
