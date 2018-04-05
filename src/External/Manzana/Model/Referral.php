@@ -36,14 +36,16 @@ class Referral
     
     /**
      * @XmlElement(cdata=false)
-     * @Type("string")
+     * @Type("float")
      * @SerializedName("sum_referral_bonus")
      */
     public $sumReferralBonus;
     
     /**
+     * Актуальность реферала
+     * 1 - Не указано, 2000 - Да, 2001 - Нет
      * @XmlElement(cdata=false)
-     * @Type("string")
+     * @Type("int")
      * @SerializedName("is_questionnaire_actual")
      */
     public $isQuestionnaireActual;
@@ -53,7 +55,7 @@ class Referral
      */
     public function isModerated(): bool
     {
-        return $this->isQuestionnaireActual === 'Не указано';
+        return $this->isQuestionnaireActual === 1;
     }
 
     /**
@@ -61,6 +63,14 @@ class Referral
      */
     public function isSuccessModerate(): bool
     {
-        return $this->isQuestionnaireActual === 'Да';
+        return $this->isQuestionnaireActual === 2000;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCancelModerate(): bool
+    {
+        return $this->isQuestionnaireActual === 2001;
     }
 }
