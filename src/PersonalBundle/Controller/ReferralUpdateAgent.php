@@ -92,10 +92,11 @@ class ReferralUpdateAgent
                                         $manzanaReferral->cardNumber
                                     );
                                     try {
-                                        $cardInfo = $referralService->manzanaService->getCardInfo(
-                                            $manzanaReferral->cardNumber,
-                                            $card->contactId
-                                        );
+                                        /** @todo обновление даты активности карты */
+//                                        $cardInfo = $referralService->manzanaService->getCardInfo(
+//                                            $manzanaReferral->cardNumber,
+//                                            $card->contactId
+//                                        );
                                         try {
                                             $phone = PhoneHelper::normalizePhone($card->phone);
                                         } catch (WrongPhoneNumberException $e) {
@@ -104,11 +105,12 @@ class ReferralUpdateAgent
                                         $data = [
                                             'ID'                  => $referral->getId(),
                                             'UF_CARD'             => $manzanaReferral->cardNumber,
-                                            'UF_CARD_CLOSED_DATE' => $cardInfo instanceof
-                                            CardByContractCards ? $cardInfo->getExpireDate()
-                                                ->format(
-                                                    'd.m.Y'
-                                                ) : '',
+                                            /** @todo обновление даты активности карты */
+//                                            'UF_CARD_CLOSED_DATE' => $cardInfo instanceof
+//                                            CardByContractCards ? $cardInfo->getExpireDate()
+//                                                ->format(
+//                                                    'd.m.Y'
+//                                                ) : '',
                                             'UF_MODERATED'        => 'N',
                                             'UF_CANCEL_MODERATE'  => 'N',
                                         ];

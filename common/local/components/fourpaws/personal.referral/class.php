@@ -198,7 +198,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                             'bonus'         => $item->getBonus(),
                             'card'          => $cardId,
                             'moderated'     => $item->isModerate(),
-                            'dateEndActive' => $item->getDateEndActive(),
+//                            'dateEndActive' => $item->getDateEndActive(),
                         ];
                     }
                 }

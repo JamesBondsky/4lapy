@@ -118,7 +118,8 @@ class ReferralService
                 case 'active':
                     /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                     /** Дата окончания активности должна быть больше текущей даты */
-                    $filter['>=UF_CARD_CLOSED_DATE'] = new Date();
+                    /** @todo фильтр по дате активности карты */
+//                    $filter['>=UF_CARD_CLOSED_DATE'] = new Date();
                     $filter['UF_MODERATED'] = [0, null, ''];
                     $filter['UF_CANCEL_MODERATE'] = [0, null, ''];
                     break;
@@ -349,7 +350,8 @@ class ReferralService
             return $this->referralRepository->getCount(
                 [
                     'UF_USER_ID'           => $this->referralRepository->curUserService->getCurrentUserId(),
-                    '>UF_CARD_CLOSED_DATE' => new Date(),
+                    /** @todo фильтр по дате активности карты */
+//                    '>UF_CARD_CLOSED_DATE' => new Date(),
                     'UF_MODERATED'         => [0, null, ''],
                     'UF_CANCEL_MODERATE'   => [0, null, ''],
                 ]
@@ -524,10 +526,10 @@ class ReferralService
                                 $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
                             }
                             if (!$skip) {
-                                $cardInfo = null;
-                                if (!empty($card->contactId)) {
-                                    $cardInfo = $this->manzanaService->getCardInfo($cardNumber, $card->contactId);
-                                }
+//                                $cardInfo = null;
+//                                if (!empty($card->contactId)) {
+//                                    $cardInfo = $this->manzanaService->getCardInfo($cardNumber, $card->contactId);
+//                                }
                                 if (!empty($card->phone)) {
                                     try {
                                         $phone = PhoneHelper::normalizePhone((string)$card->phone);
@@ -546,10 +548,11 @@ class ReferralService
                                         'UF_SECOND_NAME'      => (string)$card->secondName,
                                         'UF_EMAIL'            => (string)$card->email,
                                         'UF_PHONE'            => $phone,
-                                        'UF_CARD_CLOSED_DATE' => $cardInfo instanceof
-                                        CardByContractCards ? $cardInfo->getExpireDate()->format(
-                                            'd.m.Y'
-                                        ) : '',
+                                        /** @todo обновление даты активности карты */
+//                                        'UF_CARD_CLOSED_DATE' => $cardInfo instanceof
+//                                        CardByContractCards ? $cardInfo->getExpireDate()->format(
+//                                            'd.m.Y'
+//                                        ) : '',
                                         'UF_MODERATED'        => $item->isModerated() ? 'Y' : 'N',
                                     ]
                                 );
@@ -581,43 +584,45 @@ class ReferralService
                             $lastCancelModerate = $referral->isCancelModerate();
                             $referral->setModerate($item->isModerated());
                             $referral->setCancelModerate($item->isCancelModerate());
-                            if ($referral->getDateEndActive() === null) {
-                                try {
-                                    $skip = false;
-                                    $card = null;
-                                    try {
-                                        $card = $this->manzanaService->searchCardByNumber($cardNumber);
-                                    } catch (CardNotFoundException $e) {
-                                        $skip = true;
-                                    } catch (\Exception $e) {
-                                        $skip = true;
-                                        $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
-                                    }
-                                    if (!$skip) {
-                                        $cardInfo = null;
-                                        if (!empty($card->contactId)) {
-                                            $cardInfo = $this->manzanaService->getCardInfo($cardNumber,
-                                                $card->contactId);
-                                            $cardDate = $cardInfo instanceof
-                                            CardByContractCards ? $cardInfo->getExpireDate()->format(
-                                                'd.m.Y'
-                                            ) : '';
-                                        }
-                                    }
-                                } catch (ManzanaServiceException $e) {
-                                    $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
-                                    /** скипаем при ошибке манзаны */
-                                }
-                            }
+                            /** @todo обновление даты активности карты */
+//                            if ($referral->getDateEndActive() === null) {
+//                                try {
+//                                    $skip = false;
+//                                    $card = null;
+//                                    try {
+//                                        $card = $this->manzanaService->searchCardByNumber($cardNumber);
+//                                    } catch (CardNotFoundException $e) {
+//                                        $skip = true;
+//                                    } catch (\Exception $e) {
+//                                        $skip = true;
+//                                        $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+//                                    }
+//                                    if (!$skip) {
+//                                        $cardInfo = null;
+//                                        if (!empty($card->contactId)) {
+//                                            $cardInfo = $this->manzanaService->getCardInfo($cardNumber,
+//                                                $card->contactId);
+//                                            $cardDate = $cardInfo instanceof
+//                                            CardByContractCards ? $cardInfo->getExpireDate()->format(
+//                                                'd.m.Y'
+//                                            ) : '';
+//                                        }
+//                                    }
+//                                } catch (ManzanaServiceException $e) {
+//                                    $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+//                                    /** скипаем при ошибке манзаны */
+//                                }
+//                            }
                             if (!empty($cardDate) || $lastModerate !== $referral->isModerate() || $lastCancelModerate !== $referral->isCancelModerate()) {
                                 $data = [
                                     'ID'         => $referral->getId(),
                                     'UF_CARD'    => $referral->getCard(),
                                     'UF_USER_ID' => $referral->getUserId(),
                                 ];
-                                if (!empty($cardDate)) {
-                                    $data['UF_CARD_CLOSED_DATE'] = $cardDate;
-                                }
+                                /** @todo обновление даты активности карты */
+//                                if (!empty($cardDate)) {
+//                                    $data['UF_CARD_CLOSED_DATE'] = $cardDate;
+//                                }
                                 /** @noinspection NotOptimalIfConditionsInspection */
                                 $isCancelModerate = false;
                                 if ($lastCancelModerate !== $referral->isCancelModerate()) {
