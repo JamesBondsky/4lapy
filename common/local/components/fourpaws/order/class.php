@@ -304,29 +304,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
-                try {
-                    $basketForRequest = $basket;
-                    if ($storage->isSplit() && $this->orderStorageService->canGetPartial($selectedDelivery)) {
-                        /** @var Order $order1 */
-                        $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
-                        $basketForRequest = $order1->getBasket();
-                    }
-
-                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
-                        $basketForRequest,
-                        $user->getDiscountCardNumber()
-                    );
-                    $chequeRequest->setPaidByBonus($basketForRequest->getPrice());
-
-                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = min(
-                        floor($cheque->getAvailablePayment()),
-                        $basketForRequest->getPrice() * OrderService::MAX_BONUS_PAYMENT
-                    );
-                } catch (ExecuteException $e) {
-                    /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
-                    $this->logger->error($e->getMessage());
+                $basketForRequest = $basket;
+                if ($storage->isSplit() && $this->orderStorageService->canGetPartial($selectedDelivery)) {
+                    /** @var Order $order1 */
+                    $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
+                    $basketForRequest = $order1->getBasket();
                 }
+
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basketForRequest);
             }
         }
 

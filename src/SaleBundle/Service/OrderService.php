@@ -94,11 +94,6 @@ class OrderService implements LoggerAwareInterface
     public const STATUS_DELIVERED = 'J';
 
     /**
-     * 90% заказа можно оплатить бонусами
-     */
-    public const MAX_BONUS_PAYMENT = 0.9;
-
-    /**
      * @var AddressService
      */
     protected $addressService;
@@ -745,7 +740,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $maxBonusesForOrder1 = floor(
-            min($storage1->getBonus(), $basket1->getPrice() * static::MAX_BONUS_PAYMENT)
+            min($storage1->getBonus(), $basket1->getPrice() * BasketService::MAX_BONUS_PAYMENT)
         );
         if ($storage1->getBonus() > $maxBonusesForOrder1) {
             $storage1->setBonus($maxBonusesForOrder1);
