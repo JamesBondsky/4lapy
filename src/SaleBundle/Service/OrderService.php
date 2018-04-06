@@ -479,23 +479,39 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $this->updateCommWayProperty($order, $selectedDelivery);
-
         return $order;
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param Order $order
      * @param OrderStorage $storage
+     * @param CalculationResultInterface|null $selectedDelivery
      * @param bool $fastOrder
      *
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
      * @throws OrderCreateException
+     * @throws StoreNotFoundException
      * @throws SystemException
+     * @throws UserMessageException
      */
-    public function saveOrder(Order $order, OrderStorage $storage, bool $fastOrder = false): void
-    {
+    public function saveOrder(
+        Order $order,
+        OrderStorage $storage,
+        ?CalculationResultInterface $selectedDelivery = null,
+        bool $fastOrder = false
+    ): void {
+        if (null === $selectedDelivery) {
+            $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
+        }
+
+
         /**
          * Три ситуации:
          * 1) Если юзер авторизован, то привязываем заказ к нему
@@ -586,6 +602,8 @@ class OrderService implements LoggerAwareInterface
             break;
         }
 
+        $this->updateCommWayProperty($order, $selectedDelivery);
+
         /**
          * Сохраняем адрес, если:
          * 1) пользователь только что зарегистрирован
@@ -593,7 +611,7 @@ class OrderService implements LoggerAwareInterface
          */
         if (!$fastOrder &&
             $needCreateAddress &&
-            \in_array($this->getOrderDeliveryCode($order), $this->deliveryService::DELIVERY_CODES, true)
+            $this->deliveryService->isDelivery($selectedDelivery)
         ) {
             $address = $this->compileOrderAddress($order);
 
@@ -809,7 +827,7 @@ class OrderService implements LoggerAwareInterface
             $order2 = $splitResult2->getOrder();
             $storage2 = $splitResult2->getOrderStorage();
 
-            $this->saveOrder($order, $storage1);
+            $this->saveOrder($order, $storage1, $splitResult1->getDelivery());
             /**
              * Если выбрано частичное получение, то второй заказ не создается
              */
@@ -820,7 +838,7 @@ class OrderService implements LoggerAwareInterface
                  */
                 $storage2->setAddressId($storage1->getAddressId());
 
-                $this->saveOrder($order2, $storage2);
+                $this->saveOrder($order2, $storage2, $splitResult2->getDelivery());
                 $this->setOrderPropertyByCode($order2, 'RELATED_ORDER_ID', $order->getId());
                 try {
                     $order2->save();
@@ -921,6 +939,7 @@ class OrderService implements LoggerAwareInterface
         foreach ($order->getPropertyCollection() as $propertyValue) {
             if ($propertyValue->getField('CODE') === $code) {
                 $propertyValue->setValue($value);
+                break;
             }
         }
     }
