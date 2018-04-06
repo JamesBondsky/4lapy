@@ -105,29 +105,20 @@ class Event implements ServiceHandlerInterface
         );
     }
 
-    /**
-     * @param array $user
-     *
-     * @throws SystemException
-     * @throws RuntimeException
-     */
-    public static function updateUserAccountBalance(array $user): void
+    public static function updateUserAccountBalance(): void
     {
-        $userId = (int)$user['user_fields']['ID'];
-        if($userId > 1) {
-            try {
-                $container = Application::getInstance()->getContainer();
-                $userService = $container->get(CurrentUserProviderInterface::class);
-                $userAccountService = $container->get(UserAccountService::class);
-
-                $userEntity = $userService->getUserRepository()->find($userId);
-                list(, $bonus) = $userAccountService->refreshUserBalance($userEntity);
-
-                $userService->refreshUserBonusPercent($userEntity, $bonus);
-            } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException | ConstraintDefinitionException | InvalidIdentifierException | ValidationException | NotAuthorizedException $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Что-то сломалось : ' . $e->getMessage());
-            }
+        try {
+            $container = Application::getInstance()->getContainer();
+            $userService = $container->get(CurrentUserProviderInterface::class);
+            $userAccountService = $container->get(UserAccountService::class);
+            $user = $userService->getCurrentUser();
+            list(, $bonus) = $userAccountService->refreshUserBalance($user);
+            $userService->refreshUserBonusPercent($user, $bonus);
+        } catch (NotAuthorizedException $e) {
+            // обработка не требуется
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('failed to update user account balance: ' . $e->getMessage());
         }
     }
 
