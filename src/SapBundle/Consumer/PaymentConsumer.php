@@ -61,7 +61,7 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
 
             $this->log()->critical(\sprintf('Ошибка обработки задания на оплату: %s', $e->getMessage()));
         }
-        die;
+
         return $success;
     }
 

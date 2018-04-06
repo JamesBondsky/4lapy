@@ -3,11 +3,22 @@
 namespace FourPaws\PersonalBundle\EventController;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Event
@@ -32,25 +43,35 @@ class Event implements ServiceHandlerInterface
     {
         self::$eventManager = $eventManager;
 
-        /** очистка кеша  */
         $prefix = 'Address';
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
+        /** сброс кеша */
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
 
         $prefix = 'Pet';
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
+        /** сброс кеша */
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
 
+        /** обновление данных в манзане по питомцам */
+        self::initHandler($prefix . 'OnAfterAdd', [static::class, 'updateManzanaPets']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, 'updateManzanaPets']);
+        self::initHandler($prefix . 'OnBeforeDelete', [static::class, 'prepareDelUpdateManzanaPets']);
+        self::initHandler($prefix . 'OnAfterDelete', [static::class, 'updateManzanaPets']);
+
+
         $prefix = 'Referral';
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
+        /** сброс кеша */
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
 
         $prefix = 'Comments';
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
+        /** сброс кеша */
         self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix . 'ClearCacheAdd']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix . 'ClearCacheUpdate']);
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
     }
 
@@ -71,45 +92,6 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param BitrixEvent $event
-     *
-     * @throws \Exception
-     */
-    public static function AddressClearCacheUpdate(BitrixEvent $event): void
-    {
-        $id = $event->getParameter('id');
-        static::HlItemClearCache($id);
-        $fields = $event->getParameter('fields');
-        if (!isset($fields['UF_USER_ID'])) {
-            /** @var DataManager $dm */
-            $dm = HLBlockFactory::createTableObject('Address');
-            $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
-        }
-        if(!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
-        }
-    }
-
-    /**
-     * @param BitrixEvent $event
-     *
-     * @throws \Exception
-     */
-    public static function AddressClearCacheDelete(BitrixEvent $event): void
-    {
-        $id = $event->getParameter('id');
-
-        /** @var DataManager $dm */
-        $dm = HLBlockFactory::createTableObject('Address');
-        $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
-
-        if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
-        }
-    }
-
-    /**
-     * @param BitrixEvent $event
-     *
      */
     public static function AddressClearCacheAdd(BitrixEvent $event): void
     {
@@ -124,18 +106,19 @@ class Event implements ServiceHandlerInterface
      *
      * @throws \Exception
      */
-    public static function PetClearCacheUpdate(BitrixEvent $event): void
+    public static function AddressClearCacheUpdate(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         static::HlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
-            /** @var DataManager $dm */
-            $dm = HLBlockFactory::createTableObject('Pet');
-            $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
+            $fields = static::getHlItemFieldsById('Address', $id);
         }
         if(!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -144,22 +127,22 @@ class Event implements ServiceHandlerInterface
      *
      * @throws \Exception
      */
-    public static function PetClearCacheDelete(BitrixEvent $event): void
+    public static function AddressClearCacheDelete(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
 
-        /** @var DataManager $dm */
-        $dm = HLBlockFactory::createTableObject('Pet');
-        $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
+        $fields = static::getHlItemFieldsById('Address', $id);
 
         if (!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('address_user', $fields['UF_USER_ID']);
         }
     }
 
     /**
      * @param BitrixEvent $event
-     *
      */
     public static function PetClearCacheAdd(BitrixEvent $event): void
     {
@@ -174,18 +157,19 @@ class Event implements ServiceHandlerInterface
      *
      * @throws \Exception
      */
-    public static function ReferralClearCacheUpdate(BitrixEvent $event): void
+    public static function PetClearCacheUpdate(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         static::HlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
-            /** @var DataManager $dm */
-            $dm = HLBlockFactory::createTableObject('Referral');
-            $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
+            $fields = static::getHlItemFieldsById('Pet', $id);
         }
         if(!empty($fields['UF_USER_ID'])) {
-            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
+            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
         }
     }
 
@@ -194,22 +178,22 @@ class Event implements ServiceHandlerInterface
      *
      * @throws \Exception
      */
-    public static function ReferralClearCacheDelete(BitrixEvent $event): void
+    public static function PetClearCacheDelete(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
 
-        /** @var DataManager $dm */
-        $dm = HLBlockFactory::createTableObject('Referral');
-        $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
+        $fields = static::getHlItemFieldsById('Pet', $id);
 
-        if (!empty(['UF_USER_ID'])) {
-            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
+        if (!empty($fields['UF_USER_ID'])) {
+            static::HlFieldClearCache('pets_user', $fields['UF_USER_ID']);
         }
     }
 
     /**
      * @param BitrixEvent $event
-     *
      */
     public static function ReferralClearCacheAdd(BitrixEvent $event): void
     {
@@ -224,15 +208,67 @@ class Event implements ServiceHandlerInterface
      *
      * @throws \Exception
      */
+    public static function ReferralClearCacheUpdate(BitrixEvent $event): void
+    {
+        $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
+        static::HlItemClearCache($id);
+        $fields = $event->getParameter('fields');
+        if (!isset($fields['UF_USER_ID'])) {
+            $fields = static::getHlItemFieldsById('Referral', $id);
+        }
+        if(!empty($fields['UF_USER_ID'])) {
+            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @throws \Exception
+     */
+    public static function ReferralClearCacheDelete(BitrixEvent $event): void
+    {
+        $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
+
+        $fields = static::getHlItemFieldsById('Referral', $id);
+
+        if (!empty(['UF_USER_ID'])) {
+            static::HlFieldClearCache('referral_user', $fields['UF_USER_ID']);
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function CommentsClearCacheAdd(BitrixEvent $event): void
+    {
+        $fields = $event->getParameter('fields');
+        if (!empty($fields['UF_OBJECT_ID'])) {
+            static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @throws \Exception
+     */
     public static function CommentsClearCacheUpdate(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
         static::HlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_OBJECT_ID'])) {
-            /** @var DataManager $dm */
-            $dm = HLBlockFactory::createTableObject('Comments');
-            $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
+            $fields = static::getHlItemFieldsById('Comments', $id);
         }
         if(!empty($fields['UF_OBJECT_ID'])) {
             static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
@@ -247,10 +283,11 @@ class Event implements ServiceHandlerInterface
     public static function CommentsClearCacheDelete(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
 
-        /** @var DataManager $dm */
-        $dm = HLBlockFactory::createTableObject('Comments');
-        $fields = $dm::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
+        $fields = static::getHlItemFieldsById('Comments', $id);
 
         if (!empty($fields['UF_OBJECT_ID'])) {
             static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
@@ -260,12 +297,69 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws \Exception
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
      */
-    public static function CommentsClearCacheAdd(BitrixEvent $event): void
+    public function prepareDelUpdateManzanaPets(BitrixEvent $event): void
     {
-        $fields = $event->getParameter('fields');
-        if (!empty($fields['UF_OBJECT_ID'])) {
-            static::HlFieldClearCache('comments_objectId', $fields['UF_OBJECT_ID']);
+        $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
+        $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id] = static::getHlItemFieldsById('Pet', $id);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @throws \Exception
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
+     * @throws \RuntimeException
+     */
+    public static function updateManzanaPets(BitrixEvent $event): void
+    {
+        $id = $event->getParameter('id');
+        if(\is_array($id)){
+            $id = $id['ID'];
+        }
+        if(!empty($id) && !empty($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id])){
+            /** для удаления */
+            $fields = $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS'];
+            unset($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS']);
+        } else{
+            $fields = $event->getParameter('fields');
+            /** для обновления, если эти данные не пришли */
+            if (!isset($fields['UF_USER_ID'])) {
+                $fields = static::getHlItemFieldsById('Pet', $id);
+            }
+        }
+        $logger = LoggerFactory::create('event_updateManzanaPets');
+        try {
+            $container = Application::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            $logger->error('ошибка загрузки сервиса - '.$e->getMessage());
+            return;
+        }
+        try {
+            $petService = $container->get('pet.service');
+        } catch (ServiceCircularReferenceException|ServiceNotFoundException $e){
+            $logger->error('ошибка загрузки сервиса - '.$e->getMessage());
+            return;
+        }
+        try {
+            $petService->updateManzanaPets((int)$fields['UF_USER_ID']);
+        } catch (ApplicationCreateException|ServiceCircularReferenceException|ServiceNotFoundException $e){
+            $logger->error('ошибка загрузки сервиса - '.$e->getMessage());
+            return;
+        } catch (ObjectPropertyException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger->error('ошибка параметров - '.$e->getMessage());
+            return;
+        } catch (NotAuthorizedException $e) {
+            return;
         }
     }
 
@@ -288,5 +382,20 @@ class Event implements ServiceHandlerInterface
         TaggedCacheHelper::clearManagedCache([
             'hlb:field:' . $type . ':' . $value,
         ]);
+    }
+
+    /**
+     * @param string $entityName
+     * @param int $id
+     *
+     * @return array|false
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected static function getHlItemFieldsById(string $entityName, int $id)
+    {
+        return HLBlockFactory::createTableObject($entityName)::query()->addFilter('=ID', $id)->addSelect('*')->exec()->fetch();
     }
 }

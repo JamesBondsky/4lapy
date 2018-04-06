@@ -2,11 +2,13 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\UserBundle\Service\UserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -19,6 +21,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CityController extends Controller
 {
+    use LazyLoggerAwareTrait;
+
     /**@var UserService */
     protected $userService;
 
@@ -37,7 +41,7 @@ class CityController extends Controller
     public function setAction(Request $request): JsonResponse
     {
         $code = $request->get('code');
-        if(\is_array($code)){
+        if (\is_array($code)) {
             $dadataLocationAdapter = new DaDataLocationAdapter();
             /** @var BitrixLocation $bitrixLocation */
             $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
@@ -53,11 +57,27 @@ class CityController extends Controller
 
         try {
             $city = $this->userService->setSelectedCity($code, $name, $regionName);
+            $response = JsonSuccessResponse::createWithData(
+                'Город успешно выбран.',
+                $city,
+                200,
+                ['reload' => true]
+            );
+        } catch (CityNotFoundException $e) {
+            $response = JsonErrorResponse::create($e->getMessage());
         } catch (\Exception $e) {
-            return JsonErrorResponse::create($e->getMessage());
+            $this->log()->error(
+                sprintf('cannot set user city: %s', $e->getMessage()),
+                [
+                    'code' => $code,
+                    'name' => $name,
+                    'regionName' => $regionName
+                ]
+            );
+            $response = JsonErrorResponse::create($e->getMessage());
         }
 
-        return JsonSuccessResponse::createWithData('Город успешно выбран.', $city, 200, ['reload' => true]);
+        return $response;
     }
 
     /**
@@ -71,10 +91,12 @@ class CityController extends Controller
     {
         try {
             $city = $this->userService->getSelectedCity();
+            $response = JsonSuccessResponse::createWithData('', $city);
         } catch (\Exception $e) {
-            return JsonErrorResponse::create($e->getMessage());
+            $this->log()->error(sprintf('cannot get user city: %s', $e->getMessage()));
+            $response = JsonErrorResponse::create($e->getMessage());
         }
 
-        return JsonSuccessResponse::createWithData('', $city);
+        return $response;
     }
 }

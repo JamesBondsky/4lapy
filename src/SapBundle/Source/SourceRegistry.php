@@ -11,9 +11,14 @@ use FourPaws\SapBundle\Model\SourceCollection;
 use Generator;
 use InvalidArgumentException;
 
+/**
+ * Class SourceRegistry
+ *
+ * @package FourPaws\SapBundle\Source
+ */
 class SourceRegistry implements SourceRegistryInterface
 {
-    protected $collection;
+    public $collection;
 
     /**
      * SourceRegistry constructor.

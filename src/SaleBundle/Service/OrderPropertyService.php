@@ -21,6 +21,10 @@ class OrderPropertyService
 
     public const COMMUNICATION_PHONE_ANALYSIS = '03';
 
+    public const COMMUNICATION_ONE_CLICK = '04';
+
+    public const COMMUNICATION_ADDRESS_ANALYSIS = '05';
+
     public const COMMUNICATION_PAYMENT_ANALYSIS = '06';
 
     public const COMMUNICATION_SUBSCRIBE = '07';

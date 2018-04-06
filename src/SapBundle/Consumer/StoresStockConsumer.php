@@ -6,19 +6,29 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
+use Exception;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\StoresStock\StockItem;
 use FourPaws\SapBundle\Dto\In\StoresStock\StoresStock;
 use FourPaws\SapBundle\Exception\InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 
+/**
+ * Class StoresStockConsumer
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
 class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -38,9 +48,12 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param StoresStock $storesStock
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
+     * @throws SystemException
+     * @throws Exception
+     * @throws RuntimeException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
      * @return bool
      */
     public function consume($storesStock): bool
@@ -50,46 +63,39 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
         }
 
         $result = true;
+        $errorCount = 0;
 
         $this->log()->info(sprintf('Импортируется %s остатков', $storesStock->getItems()->count()));
 
         foreach ($storesStock->getItems() as $id => $stockItem) {
-            $this->log()->debug(
-                sprintf(
-                    'Импортируется остаток %s для оффера с xml id %s для склада %s',
-                    $id + 1,
-                    $stockItem->getOfferXmlId(),
-                    $stockItem->getStoreCode()
-                )
-            );
-
             if (!$stockItem instanceof StockItem) {
                 throw new InvalidArgumentException(sprintf('Trying to pass not %s object', StockItem::class));
             }
 
             $setResult = $this->setOfferStock($stockItem);
-            $result &= $setResult->isSuccess();
-            if ($setResult->isSuccess()) {
-                $this->log()->debug(
+
+            if (!$setResult->isSuccess()) {
+                $errorCount++;
+                $this->log()->error(
                     sprintf(
-                        'Проимпортирован остаток %s для оффера с xml id %s  для склада %s',
+                        'Ошибка импорта остатка %s для оффера с xml id %s для склада %s: %s',
                         $id + 1,
                         $stockItem->getOfferXmlId(),
-                        $stockItem->getStoreCode()
+                        $stockItem->getStoreCode(),
+                        \implode(', ', $setResult->getErrorMessages())
                     )
                 );
-            } else {
-                foreach ($setResult->getErrors() as $error) {
-                    $this->log()->error(
-                        sprintf(
-                            'Ошибка импорта остатка %s для оффера с xml id %s для склада %s: %s',
-                            $id + 1,
-                            $stockItem->getOfferXmlId(),
-                            $stockItem->getStoreCode(),
-                            $error->getMessage()
-                        )
-                    );
-                }
+            }
+
+            if (!($id % 100)) {
+                $this->log()->debug(
+                    \sprintf(
+                        'Проимпортировано остатков %d, ошибок: %d, успешно %d',
+                        $id + 1,
+                        $errorCount,
+                        $id + 1 - $errorCount
+                    )
+                );
             }
         }
 
@@ -107,7 +113,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @return int
      */
     protected function getOffersIBlockId(): int
@@ -118,7 +124,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @return Result
      */
     protected function getOfferElementDataByXmlId($xmlId): Result
@@ -147,7 +153,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
             } else {
                 $result->addError(
                     new Error(
-                        'Не найден элемент торгового предложения по внешнему коду: '.$xmlId,
+                        'Не найден элемент торгового предложения по внешнему коду: ' . $xmlId,
                         'offerElementNotFound'
                     )
                 );
@@ -160,13 +166,16 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @return array
      */
     private function getOfferElementByXmlId($xmlId): array
     {
         $return = [];
-        if (!isset($this->offersCache[$xmlId])) {
+
+        if (isset($this->offersCache[$xmlId])) {
+            $return = $this->offersCache[$xmlId];
+        } else {
             $items = \CIBlockElement::GetList(
                 [
                     'ID' => 'ASC',
@@ -190,8 +199,6 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
             if ($this->maxOffersCacheSize > 0 && \count($this->offersCache) > $this->maxOffersCacheSize) {
                 $this->offersCache = \array_slice($this->offersCache, 1, null, true);
             }
-        } else {
-            $return = $this->offersCache[$xmlId];
         }
 
         return $return;
@@ -201,7 +208,8 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param string $xmlId
      * @param bool $refreshCache
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws SystemException
+     * @throws ArgumentException
      * @return Result
      */
     protected function getStoreDataByXmlId(string $xmlId, $refreshCache = false): Result
@@ -243,7 +251,8 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param string $xmlId
      * @param bool $refreshCache
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws SystemException
+     * @throws ArgumentException
      * @return array
      */
     protected function getStoreByXmlId(string $xmlId, $refreshCache = false): array
@@ -252,7 +261,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
         if ($refreshCache || !isset($this->storesCache[$xmlId])) {
             $items = StoreTable::getList(
                 [
-                    'order'  => [
+                    'order' => [
                         'ID' => 'ASC',
                     ],
                     'filter' => [
@@ -282,9 +291,11 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param StockItem $stockItem
      *
+     * @throws RuntimeException
      * @return Result
+     *
      */
-    protected function createStore($stockItem) : Result
+    protected function createStore($stockItem): Result
     {
         $result = new Result();
 
@@ -302,7 +313,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $addResult = null;
         try {
             $addResult = StoreTable::add($fields);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $errorMsg = sprintf(
                 'Ошибка создания склада с внешним кодом %s: %s',
                 $xmlId,
@@ -356,11 +367,12 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param StockItem $stockItem
-     * @param bool      $getExtResult
+     * @param bool $getExtResult
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Exception
+     * @throws SystemException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws Exception
      * @return Result
      */
     protected function setOfferStock(StockItem $stockItem, $getExtResult = true): Result
@@ -394,6 +406,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
                         break;
                     }
                 }
+                /** @noinspection NotOptimalIfConditionsInspection */
                 if (!$storeDataResult->isSuccess()) {
                     $result->addErrors($storeDataResult->getErrors());
                 }
@@ -403,7 +416,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
         if ($result->isSuccess()) {
             $offerData = $offerElementDataResult->getData();
             $storeData = $storeDataResult->getData();
-            $stockValue = $stockItem->getStockValue();
+            $stockValue = floor($stockItem->getStockValue());
 
             $items = StoreProductTable::getList(
                 [
@@ -417,6 +430,10 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
                 ]
             );
             $wasUpdated = false;
+
+            /**
+             * @var array $item
+             */
             while ($item = $items->fetch()) {
                 if ($wasUpdated) {
                     // Удаление возможных дублей

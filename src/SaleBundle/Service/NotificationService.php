@@ -23,9 +23,7 @@ use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
 
@@ -134,9 +132,12 @@ class NotificationService implements LoggerAwareInterface
                 break;
         }
 
+
         if ($smsTemplate) {
             $this->sendSms($smsTemplate, $parameters, true);
         }
+
+        $this->sendNewUserSms($parameters);
     }
 
     /**
@@ -167,6 +168,7 @@ class NotificationService implements LoggerAwareInterface
         }
         $parameters = $this->getOrderData($order);
         $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
+        $this->sendNewUserSms($parameters);
     }
 
     /**
@@ -323,6 +325,21 @@ class NotificationService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $parameters
+     */
+    protected function sendNewUserSms(array $parameters): void
+    {
+        if (!isset($_SESSION['NEW_USER']) || empty($_SESSION['NEW_USER'])) {
+            return;
+        }
+
+        $parameters['login'] = $_SESSION['NEW_USER']['LOGIN'];
+        $parameters['password'] = $_SESSION['NEW_USER']['PASSWORD'];
+        $this->sendSms('FourPawsSaleBundle:Sms:order.new.user.html.php', $parameters, true);
+        unset($_SESSION['NEW_USER']);
     }
 
     /**

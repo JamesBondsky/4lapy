@@ -553,12 +553,12 @@ class Order extends BaseEntity
 
     public function getFormatedDateInsert(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateInsert()->format('d #n# Y'), DateHelper::GENITIVE);
+        return DateHelper::replaceRuMonth($this->getDateInsert()->format('j #n# Y'), DateHelper::GENITIVE);
     }
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('d #n# Y'), DateHelper::GENITIVE);
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'), DateHelper::GENITIVE);
     }
 
     public function getFormatedPrice()

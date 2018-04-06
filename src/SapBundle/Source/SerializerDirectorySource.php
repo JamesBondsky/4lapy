@@ -10,6 +10,11 @@ use JMS\Serializer\SerializerInterface;
 use RuntimeException;
 use Symfony\Component\Finder\Finder;
 
+/**
+ * Class SerializerDirectorySource
+ *
+ * @package FourPaws\SapBundle\Source
+ */
 class SerializerDirectorySource extends DirectorySource
 {
     /**
@@ -41,6 +46,11 @@ class SerializerDirectorySource extends DirectorySource
         $this->format = $format;
     }
 
+    /**
+     * @param $data
+     *
+     * @return array|\JMS\Serializer\scalar|object
+     */
     protected function convert($data)
     {
         return $this->serializer->deserialize($data, $this->type, $this->format);

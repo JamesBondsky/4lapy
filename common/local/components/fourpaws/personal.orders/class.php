@@ -12,7 +12,6 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
@@ -23,7 +22,9 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -170,11 +171,22 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
         }
 
+        /** имитация постранички */
+        $nav = new PageNavigation('nav-orders');
+        $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
-        if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId], $cachePath)
-        ) {
+        $startResultCacheRes = $this->startResultCache(
+            $this->arParams['CACHE_TIME'],
+            [
+                'manzanaOrders' => $manzanaOrders->getKeys(),
+                'USER_ID' => $userId,
+                'page' => $nav->getCurrentPage()
+            ],
+            $cachePath
+        );
+        if ($startResultCacheRes) {
             $activeOrders = $closedOrders = new ArrayCollection();
             try {
                 $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
@@ -183,9 +195,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 /** Сортировка по дате и статусу общих заказов */
                 $allClosedOrdersList = $allClosedOrders->toArray();
                 usort($allClosedOrdersList, ['FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate']);
+
                 /** имитация постранички */
-                $nav = new PageNavigation('nav-orders');
-                $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
                 $nav->setRecordCount($allClosedOrders->count());
                 $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
@@ -213,6 +224,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 'order:'. $userId
             ]);
 
+            //$this->setResultCacheKeys(['ACTIVE_ORDERS', 'CLOSED_ORDERS']);
             $this->endResultCache();
         }
 
@@ -331,5 +343,35 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             LocalRedirect($this->arParams['PATH_TO_BASKET']);
         }
+    }
+
+    public function getCurrentUserService()
+    {
+        return $this->currentUserProvider;
+    }
+
+    /**
+     * @param OrderItem $item
+     * @param int       $percent
+     *
+     * @return string
+     */
+    public function getItemBonus(OrderItem $item, int $percent): string
+    {
+        $bonusText = '';
+        $bonus = \round($item->getPrice() * $item->getQuantity() * $percent / 100, 2);
+        if ($bonus <= 0) {
+            return $bonusText;
+        }
+
+        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
+        $floorBonus = \floor($bonus);
+        $div = ($bonus - $floorBonus) * 100;
+
+        return \sprintf(
+            '+ %s %s',
+            WordHelper::numberFormat($bonus),
+            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
+        );
     }
 }
