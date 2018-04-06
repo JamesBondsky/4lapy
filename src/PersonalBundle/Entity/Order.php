@@ -15,6 +15,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\Annotation as Serializer;
@@ -879,7 +880,8 @@ class Order extends BaseEntity
     }
 
     /**
-     * @return \Bitrix\Sale\Order|null
+     * @return \Bitrix\Sale\Order
+     * @throws BitrixOrderNotFoundException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\NotImplementedException
      */
@@ -887,6 +889,9 @@ class Order extends BaseEntity
     {
         if (!isset($this->bitrixOrder)) {
             $this->bitrixOrder = \Bitrix\Sale\Order::load($this->getId());
+        }
+        if (!$this->bitrixOrder) {
+            throw new BitrixOrderNotFoundException('Заказ не найден');
         }
 
         return $this->bitrixOrder;

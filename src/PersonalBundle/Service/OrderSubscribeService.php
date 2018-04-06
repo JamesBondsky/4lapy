@@ -264,6 +264,7 @@ class OrderSubscribeService
     /**
      * @param int $orderId
      * @return Order|null
+     * @throws ApplicationCreateException
      * @throws \Exception
      */
     public function getOrderById(int $orderId)
@@ -503,16 +504,14 @@ class OrderSubscribeService
         $orderSubscribe = $params->getOrderSubscribe();
         // текущая дата
         $currentDate = $params->getCurrentDate();
-
-/** @todo какое значение параметра по умолчанию */
         // значение свойтсва COM_WAY заказа (SAP: Communic)
-        $comWayValue = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
+        $comWayValue = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
         // Комментарий для оператора
         $orderComments = '';
-
         // id заказа, копия которого будет создаваться
         $copyOrderId = $params->getCopyOrderId();
-
+        // флаг необходимости выполнения деактивации подписки
+        $deactivateSubscription = false;
         // следующая ближайшая дата доставки по подписке
         $deliveryDate = null;
         try {
@@ -586,8 +585,6 @@ class OrderSubscribeService
                 }
 
                 if ($notGetInTime) {
-                    $comWayValue = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
-
                     try {
                         // делаем расчет даты доставки по каждой позиции отдельно
                         $offersList = $deliveryCalculationResult->getStockResult()->getOffers(true);
@@ -624,11 +621,25 @@ class OrderSubscribeService
             }
         }
 
+        $cashPaySystemService = null;
+        if ($result->isSuccess()) {
+            $cashPaySystemService = $this->getOrderService()->getCashPaySystemService();
+            if (!$cashPaySystemService) {
+                $result->addError(
+                    new Error(
+                        'Не удалось получить платежную систему "Оплата наличными"',
+                        'orderCashPaymentNotFound'
+                    )
+                );
+            }
+        }
+
         //
         // Создание копии заказа
         //
         if ($result->isSuccess()) {
             $connection = \Bitrix\Main\Application::getConnection();
+            // !!! Старт транзакции !!!
             $connection->startTransaction();
 
             $orderCopyHelper = null;
@@ -672,26 +683,9 @@ class OrderSubscribeService
                 //if ($newOrderBasket->getOrderableItems()->isEmpty()) {
                 if ($newOrderBasket->count() <= 0) {
                     if ($deactivateIfEmpty) {
-                        // Корзина пуста. Деактивация подписки и отправка уведомления
-                        try {
-                            $deactivateResult = $this->deactivateSubscription($orderSubscribe);
-                            $result->offsetSetData('deactivateResult', $deactivateResult);
-                            if (!$deactivateResult->isSuccess()) {
-                                $result->addError(
-                                    new Error(
-                                        'Ошибка деактивации подписки',
-                                        'subscriptionDeactivateError'
-                                    )
-                                );
-                            }
-                        } catch (\Exception $exception) {
-                            $result->addError(
-                                new Error(
-                                    $exception->getMessage(),
-                                    'deactivateSubscriptionException'
-                                )
-                            );
-                        }
+                        // Если всех товаров заказа по подписки нет, нужно деактировать подписку и отправить пользователю уведомление.
+                        // Фактическая отписка будет ниже, вне блока транзакции
+                        $deactivateSubscription = true;
                     }
                     $result->addError(
                         new Error(
@@ -703,24 +697,14 @@ class OrderSubscribeService
             }
 
             // в заказах по подписке только оплата наличными может быть
-            if ($result->isSuccess()) {
-                $cashPaySystemService = $this->getOrderService()->getCashPaySystemService();
-                if ($cashPaySystemService) {
-                    try {
-                        $orderCopyHelper->setPayment($cashPaySystemService);
-                    } catch (\Exception $exception) {
-                        $result->addError(
-                            new Error(
-                                $exception->getMessage(),
-                                'orderSetPaymentException'
-                            )
-                        );
-                    }
-                } else {
+            if ($result->isSuccess() && $cashPaySystemService) {
+                try {
+                    $orderCopyHelper->setPayment($cashPaySystemService);
+                } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
-                            'Не удалось получить платежную систему "Оплата наличными"',
-                            'orderCashPaymentNotFound'
+                            $exception->getMessage(),
+                            'orderSetPaymentException'
                         )
                     );
                 }
@@ -824,11 +808,34 @@ class OrderSubscribeService
                 }
             }
 
-            // закрываем транзакцию
+            // !!! Конец транзакции !!!
             if ($result->isSuccess()) {
                 $connection->commitTransaction();
             } else {
                 $connection->rollbackTransaction();
+            }
+        }
+
+        if ($deactivateSubscription) {
+            // Деактивация подписки
+            try {
+                $deactivateResult = $this->deactivateSubscription($orderSubscribe, true);
+                $result->offsetSetData('deactivateResult', $deactivateResult);
+                if (!$deactivateResult->isSuccess()) {
+                    $result->addError(
+                        new Error(
+                            'Ошибка деактивации подписки',
+                            'subscriptionDeactivateError'
+                        )
+                    );
+                }
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error(
+                        $exception->getMessage(),
+                        'deactivateSubscriptionException'
+                    )
+                );
             }
         }
 
@@ -853,9 +860,18 @@ class OrderSubscribeService
      * @return Result
      * @throws InvalidArgumentException
      */
-    public function processOrderSubscribe(OrderSubscribe $orderSubscribe, bool $deactivateIfEmpty = true, $currentDate = null): Result
+    public function processOrderSubscribe(OrderSubscribe $orderSubscribe, bool $deactivateIfEmpty = true, $currentDate = ''): Result
     {
         $result = new Result();
+
+        if (!$orderSubscribe->isActive()) {
+            $result->addError(
+                new Error(
+                    'Подписка отменена',
+                    'orderSubscribeNotActive'
+                )
+            );
+        }
 
         if ($result->isSuccess()) {
             try {
@@ -990,7 +1006,7 @@ class OrderSubscribeService
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, $currentDate = null, bool $extResult = false): Result
+    public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, $currentDate = '', bool $extResult = false): Result
     {
         $result = new Result();
         $resultData = [];
@@ -1073,22 +1089,35 @@ class OrderSubscribeService
 
     /**
      * @param OrderSubscribe $orderSubscribe
+     * @param bool $sendNotifications
      * @return UpdateResult
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
      * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws NotImplementedException
      * @throws SystemException
      * @throws \Exception
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
-    protected function deactivateSubscription(OrderSubscribe $orderSubscribe)
+    protected function deactivateSubscription(OrderSubscribe $orderSubscribe, bool $sendNotifications = true)
     {
         $updateResult = $this->update(
             $orderSubscribe->getId(),
             [
-                'ACTIVE' => 0
+                'UF_ACTIVE' => 0
             ]
         );
         if ($updateResult->isSuccess()) {
-/** @todo Отправка уведомления пользователю */
+            $orderSubscribe->setActive(false);
+            if ($sendNotifications) {
+                /** @var NotificationService $notificationService */
+                $notificationService = Application::getInstance()->getContainer()->get(
+                    NotificationService::class
+                );
+                $notificationService->sendUnsubscribeOrderMessage($orderSubscribe);
+            }
         }
 
         return $updateResult;

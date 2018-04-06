@@ -449,6 +449,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      * @throws Exception
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\NotImplementedException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
     public function getTimeVariants(): array
     {

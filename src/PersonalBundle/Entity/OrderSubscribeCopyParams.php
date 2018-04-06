@@ -197,6 +197,7 @@ class OrderSubscribeCopyParams
      * @throws \Bitrix\Main\SystemException
      * @throws \Exception
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getCopyOrderDeliveryCalculationResult(): BaseResult
@@ -204,8 +205,7 @@ class OrderSubscribeCopyParams
         if (!$this->copyOrderDeliveryCalculationResult) {
             $copyOrderId = $this->getCopyOrderId();
             if ($copyOrderId == $this->getOriginOrderId()) {
-                $personalOrder = $this->getOrderSubscribe()->getOrder();
-                $bitrixOrder = $personalOrder ? $personalOrder->getBitrixOrder() : null;
+                $bitrixOrder = $this->getOrderSubscribe()->getOrder()->getBitrixOrder();
             } else {
                 $bitrixOrder = \Bitrix\Sale\Order::load($copyOrderId);
             }

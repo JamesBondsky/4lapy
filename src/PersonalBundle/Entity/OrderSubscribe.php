@@ -11,8 +11,10 @@ use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
+use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\UserBundle\Entity\User;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -95,6 +97,8 @@ class OrderSubscribe extends BaseEntity
     private $order;
     /** @var UserFieldEnumValue $deliveryFrequencyEntity */
     private $deliveryFrequencyEntity;
+    /** @var User $user */
+    private $user;
 
     /**
      * @return array
@@ -407,8 +411,9 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @return Order|null
+     * @return Order
      * @throws ApplicationCreateException
+     * @throws NotFoundException
      * @throws \Exception
      */
     public function getOrder()
@@ -417,6 +422,9 @@ class OrderSubscribe extends BaseEntity
             $this->order = $this->getOrderSubscribeService()->getOrderById(
                 $this->getOrderId()
             );
+        }
+        if (!$this->order) {
+            throw new NotFoundException('Карточка заказа не найдена');
         }
 
         return $this->order;
@@ -555,5 +563,28 @@ class OrderSubscribe extends BaseEntity
         }
 
         return $result;
+    }
+
+    /**
+     * @return User
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws \Exception
+     */
+    public function getUser() : User
+    {
+        if (!isset($this->user)) {
+            $this->user = null;
+            $subscribeService = $this->getOrderSubscribeService();
+            $userRepository = $subscribeService->getCurrentUserService()->getUserRepository();
+            $this->user = $userRepository->find(
+                $this->getOrder()->getUserId()
+            );
+        }
+        if (!$this->user) {
+            throw new NotFoundException('Пользователь не найден');
+        }
+
+        return $this->user;
     }
 }
