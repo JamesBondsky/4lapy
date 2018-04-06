@@ -14,6 +14,7 @@ use Bitrix\Catalog\StoreTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Exception;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\DcStock\DcStock;
@@ -46,6 +47,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param DcStock $dcStock
      *
+     * @throws Exception
      * @throws IblockNotFoundException
      * @throws ArgumentException
      * @throws InvalidArgumentException
@@ -59,39 +61,51 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         }
 
         $result = true;
+        $errorCount = 0;
 
         $this->log()->info(sprintf('Импортируется %s остатков', $dcStock->getItems()->count()));
+
         foreach ($dcStock->getItems() as $id => $stockItem) {
-            $this->log()->debug(sprintf(
-                'Импортируется остаток %s для оффера с xml id %s для склада %s',
-                $id + 1,
-                $stockItem->getOfferXmlId(),
-                $stockItem->getPlantCode()
-            ));
+
             if (!$stockItem instanceof StockItem) {
                 throw new InvalidArgumentException(sprintf('Trying to pass not %s object', StockItem::class));
             }
+
             $setResult = $this->setOfferStock($stockItem);
-            $result &= $setResult->isSuccess();
-            if ($setResult->isSuccess()) {
-                $this->log()->debug(sprintf(
-                    'Проимпортирован остаток %s для оффера с xml id %s  для склада %s',
-                    $id + 1,
-                    $stockItem->getOfferXmlId(),
-                    $stockItem->getPlantCode()
-                ));
-            } else {
-                foreach ($setResult->getErrors() as $error) {
-                    $this->log()->error(sprintf(
+
+            if (!$setResult->isSuccess()) {
+                $errorCount++;
+                $this->log()->error(
+                    sprintf(
                         'Ошибка импорта остатка %s для оффера с xml id %s для склада %s: %s',
                         $id + 1,
                         $stockItem->getOfferXmlId(),
                         $stockItem->getPlantCode(),
-                        $error->getMessage()
-                    ));
-                }
+                        \implode(', ', $setResult->getErrorMessages())
+                    )
+                );
+            }
+
+            if (!($id % 100)) {
+                $this->log()->debug(
+                    \sprintf(
+                        'Проимпортировано остатков %d, ошибок: %d, успешно %d',
+                        $id + 1,
+                        $errorCount,
+                        $id + 1 - $errorCount
+                    )
+                );
             }
         }
+
+        $this->log()->debug(
+            \sprintf(
+                'Импорт завершен. Проимпортировано остатков %d, ошибок: %d, успешно %d',
+                $id ?? 0 + 1,
+                $errorCount,
+                $id ?? 0 + 1 - $errorCount
+            )
+        );
 
         return $result;
     }
@@ -263,7 +277,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $addResult = null;
         try {
             $addResult = StoreTable::add($fields);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $errorMsg = sprintf(
                 'Ошибка создания склада с внешним кодом %s: %s',
                 $xmlId,
@@ -321,7 +335,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @throws IblockNotFoundException
      * @throws ArgumentException
-     * @throws \Exception
+     * @throws Exception
      * @return Result
      */
     protected function setOfferStock(StockItem $stockItem, $getExtResult = true): Result
