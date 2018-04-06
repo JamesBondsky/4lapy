@@ -116,6 +116,7 @@ if ($orderSubscribe) {
                 echo $order->getStatus();
                 echo ' ';
                 echo '<span>';
+                echo ' ';
                 /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
                 $checkStatuses = [
                     OrderService::STATUS_IN_ASSEMBLY_1,
@@ -124,6 +125,7 @@ if ($orderSubscribe) {
                 ];
                 echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
                 echo $order->getFormatedDateStatus();
+                echo ' ';
                 echo '</span>';
                 ?>
             </div>
