@@ -34,6 +34,7 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
@@ -138,15 +139,21 @@ class OrderService implements LoggerAwareInterface
     protected $storeService;
 
     /**
+     * @var LocationService
+     */
+    protected $locationService;
+
+    /**
      * OrderService constructor.
      *
-     * @param AddressService                    $addressService
-     * @param BasketService                     $basketService
-     * @param CurrentUserProviderInterface      $currentUserProvider
-     * @param DeliveryService                   $deliveryService
-     * @param StoreService                      $storeService
-     * @param OrderStorageService               $orderStorageService
-     * @param UserCitySelectInterface           $userCityProvider
+     * @param AddressService $addressService
+     * @param BasketService $basketService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param DeliveryService $deliveryService
+     * @param StoreService $storeService
+     * @param LocationService $locationService
+     * @param OrderStorageService $orderStorageService
+     * @param UserCitySelectInterface $userCityProvider
      * @param UserRegistrationProviderInterface $userRegistrationProvider
      */
     public function __construct(
@@ -154,6 +161,7 @@ class OrderService implements LoggerAwareInterface
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
         DeliveryService $deliveryService,
+        LocationService $locationService,
         StoreService $storeService,
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
@@ -167,17 +175,17 @@ class OrderService implements LoggerAwareInterface
         $this->orderStorageService = $orderStorageService;
         $this->userCityProvider = $userCityProvider;
         $this->userRegistrationProvider = $userRegistrationProvider;
-        $this->withLogName('OrderService');
+        $this->locationService = $locationService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
      * Получение заказа по id
      *
-     * @param int    $id     id заказа
-     * @param bool   $check  выполнять ли проверки
-     * @param int    $userId id пользователя, к которому привязан заказ
-     * @param string $hash   хеш заказа (проверяется, если не передан userId)
+     * @param int $id id заказа
+     * @param bool $check выполнять ли проверки
+     * @param int $userId id пользователя, к которому привязан заказ
+     * @param string $hash хеш заказа (проверяется, если не передан userId)
      *
      * @throws NotFoundException
      * @throws ArgumentNullException
@@ -208,10 +216,9 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param OrderStorage $storage
-     * @param Basket|null  $basket
+     * @param Basket|null $basket
      * @param CalculationResultInterface|null $selectedDelivery
      *
-     * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
@@ -222,7 +229,9 @@ class OrderService implements LoggerAwareInterface
      * @throws ObjectPropertyException
      * @throws OrderCreateException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
+     * @return Order
      */
     public function initOrder(
         OrderStorage $storage,
@@ -286,10 +295,10 @@ class OrderService implements LoggerAwareInterface
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
-                    'DELIVERY_NAME'         => $selectedDelivery->getDeliveryName(),
-                    'CURRENCY'              => $order->getCurrency(),
-                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
+                    'DELIVERY_ID' => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
+                    'CURRENCY' => $order->getCurrency(),
+                    'PRICE_DELIVERY' => $selectedDelivery->getPrice(),
                     'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
@@ -393,7 +402,7 @@ class OrderService implements LoggerAwareInterface
                 }
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()), [
-                    'userId'  => $storage->getUserId(),
+                    'userId' => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
                 ]);
                 throw new OrderCreateException('Bonus payment failed');
@@ -408,7 +417,7 @@ class OrderService implements LoggerAwareInterface
                 $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('order payment failed: %s', $e->getMessage()), [
-                    'userId'  => $storage->getUserId(),
+                    'userId' => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
                 ]);
                 throw new OrderCreateException('Order payment failed');
@@ -465,66 +474,28 @@ class OrderService implements LoggerAwareInterface
 
             $value = $arrayStorage[$key] ?? null;
 
-            /**
-             * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
-             * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
-             * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
-             */
-            if ($selectedDelivery &&
-                $code === 'COM_WAY' &&
-                ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isInnerDelivery($selectedDelivery))
-            ) {
-                $changeCommunicationWay = false;
-                $stockResult = $selectedDelivery->getStockResult();
-                if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
-                    $changeCommunicationWay = true;
-                } elseif ($this->deliveryService->isInnerDelivery($selectedDelivery)) {
-                    if (($selectedDelivery->getDeliveryZone() === DeliveryService::ZONE_2) &&
-                        !$stockResult->getDelayed()->isEmpty()
-                    ) {
-                        $changeCommunicationWay = true;
-                    }
-                }
-                if ($changeCommunicationWay) {
-                    $totalPrice = $order->getBasket()->getOrderableItems()->getPrice();
-                    $availablePrice = $stockResult->getAvailable()->getPrice();
-                    if ($availablePrice > $totalPrice * 0.9) {
-                        $value = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
-                    }
-                }
-            }
             if (null !== $value) {
                 $propertyValue->setValue($value);
             }
         }
 
+        $this->updateCommWayProperty($order, $selectedDelivery);
+
         return $order;
     }
 
     /**
-     * @param Order        $order
+     * @param Order $order
      * @param OrderStorage $storage
-     * @param bool         $fastOrder
+     * @param bool $fastOrder
      *
-     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
-     * @throws DeliveryNotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @throws OrderCreateException
-     * @throws StoreNotFoundException
      * @throws SystemException
-     * @throws UserMessageException
      */
     public function saveOrder(Order $order, OrderStorage $storage, bool $fastOrder = false): void
     {
-        try {
-            $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
-        } catch (NotFoundException $e) {
-            throw new OrderCreateException('No deliveries available');
-        }
-
         /**
          * Три ситуации:
          * 1) Если юзер авторизован, то привязываем заказ к нему
@@ -555,7 +526,6 @@ class OrderService implements LoggerAwareInterface
             }
             if (!$storage->getAddressId()) {
                 $needCreateAddress = true;
-                $addressUserId = $storage->getUserId();
             }
         } else {
             $users = $this->currentUserProvider->getUserRepository()->findBy(
@@ -589,7 +559,6 @@ class OrderService implements LoggerAwareInterface
 
                 /** @noinspection PhpInternalEntityUsedInspection */
                 $order->setFieldNoDemand('USER_ID', $user->getId());
-                $addressUserId = $user->getId();
                 $needCreateAddress = true;
                 $newUser = true;
 
@@ -597,7 +566,7 @@ class OrderService implements LoggerAwareInterface
                 /* нужно для expertsender */
                 /** пароль еще нужен для смс быстрого заказа */
                 $_SESSION['NEW_USER'] = [
-                    'LOGIN'    => $storage->getPhone(),
+                    'LOGIN' => $storage->getPhone(),
                     'PASSWORD' => $password,
                 ];
 
@@ -624,48 +593,45 @@ class OrderService implements LoggerAwareInterface
          */
         if (!$fastOrder &&
             $needCreateAddress &&
-            $selectedDelivery &&
-            $this->deliveryService->isDelivery($selectedDelivery)
+            \in_array($this->getOrderDeliveryCode($order), $this->deliveryService::DELIVERY_CODES, true)
         ) {
-            $address = (new Address())
-                ->setCity($storage->getCity())
-                ->setCityLocation($storage->getCityCode())
-                ->setUserId($addressUserId)
-                ->setStreet($storage->getStreet())
-                ->setHouse($storage->getHouse())
-                ->setHousing($storage->getBuilding())
-                ->setEntrance($storage->getPorch())
-                ->setFloor($storage->getFloor())
-                ->setFlat($storage->getApartment());
+            $address = $this->compileOrderAddress($order);
 
             try {
                 $this->addressService->add($address);
                 $storage->setAddressId($address->getId());
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
-                    'city'     => $address->getCity(),
+                    'city' => $address->getCity(),
                     'location' => $address->getCityLocation(),
-                    'userId'   => $address->getUserId(),
-                    'street'   => $address->getStreet(),
-                    'house'    => $address->getHouse(),
-                    'housing'  => $address->getHousing(),
+                    'userId' => $address->getUserId(),
+                    'street' => $address->getStreet(),
+                    'house' => $address->getHouse(),
+                    'housing' => $address->getHousing(),
                     'entrance' => $address->getEntrance(),
-                    'floor'    => $address->getFloor(),
-                    'flat'     => $address->getFlat(),
+                    'floor' => $address->getFloor(),
+                    'flat' => $address->getFlat(),
                 ]);
             }
         }
 
-        /**
-         * @todo костыль
-         * При создании заказа корзина пересчитывается и скидка по промокоду сбрасывается
-         * Это фикс не допускает пересчет корзины
-         */
-        if ($this->basketService->getPromocodeDiscount()) {
-            /** @var BasketItem $basketItem */
-            foreach ($order->getBasket() as $basketItem) {
-                $basketItem->setField('CUSTOM_PRICE', 'Y');
+        try {
+            /**
+             * @todo костыль
+             * При создании заказа корзина пересчитывается и скидка по промокоду сбрасывается
+             * Это фикс не допускает пересчет корзины
+             */
+            if ($this->basketService->getPromocodeDiscount()) {
+                /** @var BasketItem $basketItem */
+                foreach ($order->getBasket() as $basketItem) {
+                    $basketItem->setField('CUSTOM_PRICE', 'Y');
+                }
             }
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to set custom price for basket items: %s', $e->getMessage()), [
+                'fuserId' => $storage->getFuserId(),
+                'userId' => $storage->getUserId()
+            ]);
         }
 
         try {
@@ -860,7 +826,7 @@ class OrderService implements LoggerAwareInterface
                     $order2->save();
                 } catch (\Exception $e) {
                     $this->log()->error('failed to set related order id', [
-                        'order'        => $order2->getId(),
+                        'order' => $order2->getId(),
                         'relatedOrder' => $order->getId(),
                     ]);
                 }
@@ -869,7 +835,7 @@ class OrderService implements LoggerAwareInterface
                     $order->save();
                 } catch (\Exception $e) {
                     $this->log()->error('failed to set related order id', [
-                        'order'        => $order->getId(),
+                        'order' => $order->getId(),
                         'relatedOrder' => $order2->getId(),
                     ]);
                 }
@@ -926,7 +892,7 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order  $order
+     * @param Order $order
      * @param string $code
      *
      * @throws NotFoundException
@@ -945,7 +911,7 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order  $order
+     * @param Order $order
      * @param string $code
      * @param        $value
      */
@@ -972,7 +938,7 @@ class OrderService implements LoggerAwareInterface
         foreach ($order->getPropertyCollection() as $propertyValue) {
             $code = $propertyValue->getField('CODE');
             if (\in_array($propertyValue->getField('CODE'), $codes, true)) {
-                $result[$code] = $propertyValue->getValue();
+                $result[$code] = (string)$propertyValue->getValue();
             }
         }
 
@@ -982,7 +948,9 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws NotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return string
      */
     public function getOrderDeliveryCode(Order $order): string
@@ -1006,6 +974,8 @@ class OrderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return string
      */
     public function getOrderDeliveryAddress(Order $order): string
@@ -1016,13 +986,6 @@ class OrderService implements LoggerAwareInterface
                 'DPD_TERMINAL_CODE',
                 'DELIVERY_PLACE_CODE',
                 'CITY_CODE',
-                'CITY',
-                'STREET',
-                'HOUSE',
-                'BUILDING',
-                'PORCH',
-                'FLOOR',
-                'APARTMENT',
             ]
         );
         $address = '';
@@ -1052,28 +1015,7 @@ class OrderService implements LoggerAwareInterface
                 }
                 break;
             case \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
-                if ($properties['CITY'] && $properties['STREET']) {
-                    $address = [
-                        $properties['CITY'],
-                        $properties['STREET'],
-                    ];
-                    if (!empty($properties['HOUSE'])) {
-                        $address[] = $properties['HOUSE'];
-                    }
-                    if (!empty($properties['BUILDING'])) {
-                        $address[] = 'корпус ' . $properties['BUILDING'];
-                    }
-                    if (!empty($properties['PORCH'])) {
-                        $address[] = 'подъезд ' . $properties['PORCH'];
-                    }
-                    if (!empty($properties['FLOOR'])) {
-                        $address[] = 'этаж ' . $properties['FLOOR'];
-                    }
-                    if (!empty($properties['APARTMENT'])) {
-                        $address[] = 'кв. ' . $properties['APARTMENT'];
-                    }
-                    $address = \implode(', ', $address);
-                }
+                $address = (string)$this->compileOrderAddress($order);
                 break;
         }
 
@@ -1105,6 +1047,7 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -1179,5 +1122,123 @@ class OrderService implements LoggerAwareInterface
         }
 
         return $relatedOrder;
+    }
+
+    /**
+     * @param Order $order
+     * @param CalculationResultInterface $delivery
+     * @param bool $isFastOrder
+     *
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    protected function updateCommWayProperty(
+        Order $order,
+        CalculationResultInterface $delivery,
+        bool $isFastOrder = false
+    ): void {
+        $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
+        $value = $commWay->getValue();
+        $changed = false;
+
+        $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
+        $stockResult = $delivery->getStockResult();
+
+        /**
+         * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
+         * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
+         * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
+         */
+        if ($this->deliveryService->isInnerPickup($delivery) ||
+            ($deliveryFromShop && !$stockResult->getDelayed()->isEmpty())
+        ) {
+            $totalPrice = $order->getBasket()->getPrice();
+            $availablePrice = $stockResult->getAvailable()->getPrice();
+            if ($availablePrice > $totalPrice * 0.9) {
+                $value = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
+                $changed = true;
+            }
+        }
+
+        if (!$changed) {
+            switch (true) {
+                case $isFastOrder:
+                    $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
+                    break;
+                //@todo заказ по подписке
+//                case $isSubscribe:
+//                    $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
+//                    break;
+                case !$this->validateAddress($order):
+                    $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
+                    break;
+                case $this->deliveryService->isDpdPickup($delivery):
+                case $this->deliveryService->isDpdDelivery($delivery):
+                    $value = OrderPropertyService::COMMUNICATION_PHONE;
+                    break;
+                case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
+                    $value = OrderPropertyService::COMMUNICATION_SMS;
+                    break;
+            }
+        }
+
+        $commWay->setValue($value);
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return bool
+     */
+    protected function validateAddress(Order $order): bool
+    {
+        $result = true;
+        if (\in_array($this->getOrderDeliveryCode($order), $this->deliveryService::DELIVERY_CODES, true)) {
+            $address = $this->compileOrderAddress($order);
+
+            $result = $this->locationService->validateAddress($address);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return Address
+     */
+    protected function compileOrderAddress(Order $order): Address
+    {
+        $properties = $this->getOrderPropertiesByCode($order, [
+            'CITY_CODE',
+            'CITY',
+            'STREET',
+            'HOUSE',
+            'BUILDING',
+            'PORCH',
+            'FLOOR',
+            'APARTMENT'
+        ]);
+
+        $address = (new Address())
+            ->setCity($properties['CITY'])
+            ->setCityLocation($properties['CITY_CODE'])
+            ->setStreet($properties['STREET'])
+            ->setHouse($properties['HOUSE'])
+            ->setHousing($properties['BUILDING'])
+            ->setEntrance($properties['PORCH'])
+            ->setFloor($properties['FLOOR'])
+            ->setFlat($properties['APARTMENT']);
+
+        if ($order->getUserId()) {
+            $address->setUserId($order->getUserId());
+        }
+
+        return $address;
     }
 }

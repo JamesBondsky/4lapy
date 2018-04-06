@@ -24,6 +24,7 @@ use FourPaws\LocationBundle\Enum\CitiesSectionCode;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
+use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -547,6 +548,19 @@ class LocationService
         }
 
         return $this->getDefaultCity();
+    }
+
+    /**
+     * Валидация адреса в DaData
+     *
+     * @param Address $address
+     *
+     * @return bool
+     */
+    public function validateAddress(Address $address): bool
+    {
+        // @todo validate
+        return true;
     }
 
     /**
