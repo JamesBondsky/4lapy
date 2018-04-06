@@ -66,6 +66,10 @@ services:
     calls:
       - [setServiceLogger]
 
+  dadata.service:
+    class: FourPaws\External\DaDataService
+    arguments: ['%dadata.token%', '%dadata.secret%']
+
   manzana.pos.service:
     class: FourPaws\External\ManzanaPosService
     arguments: ['@jms_serializer', '@manzana.pos.soap', '%manzana_pos%']
