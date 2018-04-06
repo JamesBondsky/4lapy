@@ -66,7 +66,6 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $this->log()->info(sprintf('Импортируется %s остатков', $dcStock->getItems()->count()));
 
         foreach ($dcStock->getItems() as $id => $stockItem) {
-
             if (!$stockItem instanceof StockItem) {
                 throw new InvalidArgumentException(sprintf('Trying to pass not %s object', StockItem::class));
             }

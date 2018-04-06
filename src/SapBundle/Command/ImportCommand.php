@@ -7,7 +7,7 @@
 namespace FourPaws\SapBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Exception;
+use FourPaws\AppBundle\Service\LockerInterface;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
 use FourPaws\SapBundle\Service\SapService;
 use Psr\Log\LoggerAwareInterface;
@@ -39,6 +39,10 @@ class ImportCommand extends Command implements LoggerAwareInterface
      * @var SapService
      */
     protected $sapService;
+    /**
+     * @var LockerInterface
+     */
+    private $lockerService;
 
     /**
      * ImportCommand constructor.
@@ -46,14 +50,14 @@ class ImportCommand extends Command implements LoggerAwareInterface
      * @param SapService $sapService
      * @param PipelineRegistry $pipelineRegistry
      *
+     * @param LockerInterface $lockerService
      * @throws LogicException
-     * @throws Exception
-     * @throws \InvalidArgumentException
      */
-    public function __construct(SapService $sapService, PipelineRegistry $pipelineRegistry)
+    public function __construct(SapService $sapService, PipelineRegistry $pipelineRegistry, LockerInterface $lockerService)
     {
         $this->pipelineRegistry = $pipelineRegistry;
         $this->sapService = $sapService;
+        $this->lockerService = $lockerService;
 
         parent::__construct();
     }
@@ -93,14 +97,24 @@ class ImportCommand extends Command implements LoggerAwareInterface
         $available = $this->pipelineRegistry->getCollection()->getKeys();
         $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
 
+        if ($this->lockerService->isLocked($pipeline)) {
+            throw new RuntimeException(
+                \sprintf(
+                    'Pipeline %s is locked',
+                    $pipeline
+                ));
+        }
+
         if (!\in_array($pipeline, $available, true)) {
             throw new InvalidArgumentException(
                 \sprintf(
                     'Wrong pipeline %s, available: %s',
                     $pipeline,
                     \implode(', ', $available)
-            ));
+                ));
         }
+
+        $this->lockerService->lock($pipeline);
 
         try {
             $this->sapService->execute($pipeline);
@@ -108,5 +122,7 @@ class ImportCommand extends Command implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->log()->error(\sprintf('Unknown error: %s', $e->getMessage()));
         }
+
+        $this->lockerService->unlock($pipeline);
     }
 }
