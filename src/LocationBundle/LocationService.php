@@ -20,10 +20,13 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\DaDataService;
+use FourPaws\External\Exception\DaDataExecuteException;
 use FourPaws\LocationBundle\Enum\CitiesSectionCode;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
+use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -55,11 +58,18 @@ class LocationService
     public const REGION_SERVICE_CODE = 'REGION';
 
     /**
-     * LocationService constructor.
+     * @var DaDataService
      */
-    public function __construct()
+    protected $daDataService;
+
+    /**
+     * LocationService constructor.
+     *
+     * @param DaDataService $daDataService
+     */
+    public function __construct(DaDataService $daDataService)
     {
-        $this->withLogName('LocationService');
+        $this->daDataService = $daDataService;
     }
 
     /**
@@ -547,6 +557,27 @@ class LocationService
         }
 
         return $this->getDefaultCity();
+    }
+
+    /**
+     * Валидация адреса
+     *
+     * @param Address $address
+     *
+     * @return bool
+     */
+    public function validateAddress(Address $address): bool
+    {
+        $result = false;
+        try {
+            $result = $this->daDataService->isValidAddress($address);
+        } catch (DaDataExecuteException $e) {
+            $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
+                'address' => (string)$address
+            ]);
+        }
+
+        return $result;
     }
 
     /**
