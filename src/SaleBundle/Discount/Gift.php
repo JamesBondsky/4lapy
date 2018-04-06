@@ -22,7 +22,7 @@ use FourPaws\SaleBundle\Exception\InvalidArgumentException;
  * @package FourPaws\SaleBundle\Discount
  * @todo переместить в соотвествующую папку и неймспейс
  */
-class Gift extends \CSaleActionGiftCtrlGroup
+class Gift extends \CSaleActionCtrlAction
 {
     /**
      *
@@ -59,6 +59,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
      */
     public static function GetControlShow($arParams): array
     {
+        $arAtoms = static::GetAtomsEx();
         $description = parent::GetControlShow($arParams);
         $description['label'] = 'Предоставить выбор подарка';
         $description['containsOneAction'] = false;
@@ -66,7 +67,10 @@ class Gift extends \CSaleActionGiftCtrlGroup
             'ADD_CONTROL' => 'Добавить условие',
             'SELECT_CONTROL' => 'Выбрать условие'
         ];
-
+        $description['control'] = [
+            'предоставить подарок',
+            $arAtoms['Count_operator'],
+        ];
         return $description;
     }
 
@@ -84,6 +88,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
     {
         $result = '$applyCount = 0; $originalOrder = $arOrder;';
 
+
         if (null !== $arSubs && \is_array($arSubs) && !empty($arSubs) && implode('', $arSubs)) {
             $subs = [];
             foreach ($arSubs as $elem) {
@@ -93,7 +98,11 @@ class Gift extends \CSaleActionGiftCtrlGroup
                 } else {
                     // функция для фильтрации корзины и определения сколько подарков выдавать.
                     // todo если функций несколько, то вычислить пересечение результатов фильтрации и минимальное количество выполений фильтра (но пока она одна)
-                    $result .= '$applyCount = ' . $elem;
+                    $countOperator = '';
+                    if ($arOneCondition['Count_operator'] === 'once') {
+                        $countOperator = '(int)(bool)';
+                    }
+                    $result .= '$applyCount = ' . $countOperator . $elem;
                 }
             }
             $subs = \json_encode($subs);
@@ -154,6 +163,36 @@ class Gift extends \CSaleActionGiftCtrlGroup
 
     /**
      *
+     * @param $arParams
+     *
+     * @return array|string
+     */
+    public static function GetConditionShow($arParams)
+    {
+        $result = false;
+
+        if (isset($arParams['ID']) && $arParams['ID'] === static::GetControlID()) {
+            $arControl = [
+                'ID' => $arParams['ID'],
+                'ATOMS' => static::GetAtomsEx(false, true)
+            ];
+            $result = static::CheckAtoms($arParams['DATA'], $arParams, $arControl, true);
+        }
+
+        return $result;
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    public static function GetAtoms(): array
+    {
+        return static::GetAtomsEx();
+    }
+
+    /**
      *
      * @param bool $strControlID
      * @param bool $boolEx
@@ -162,37 +201,30 @@ class Gift extends \CSaleActionGiftCtrlGroup
      */
     public static function GetAtomsEx($strControlID = false, $boolEx = false): array
     {
-        $boolEx = (bool)$boolEx;
+        $boolEx = (true === $boolEx);
+
         $arAtomList = [
-            'count' => [
+            'Count_operator' => [
                 'JS' => [
-                    'id' => 'count',
-                    'name' => 'count',
-                    'type' => 'input',
-                    'defaultValue' => 1,
+                    'id' => 'Count_operator',
+                    'name' => 'Count_operator',
+                    'type' => 'select',
+                    'values' => [
+                        'condition_count' => 'столько, сколько выполняется условие',
+                        'once' => 'один раз',
+                    ],
+                    'defaultText' => 'столько, сколько выполняется условие',
+                    'defaultValue' => 'condition_count',
+                    'first_option' => '...'
                 ],
                 'ATOM' => [
-                    'ID' => 'count',
-                    'FIELD_TYPE' => 'int',
-                    'MULTIPLE' => 'N',
-                    'VALIDATE' => ''
-                ]
-            ],
-            'list' => [
-                'JS' => [
-                    'id' => 'list',
-                    'name' => 'list',
-                    'type' => 'input',
-                    'defaultValue' => '',
-                ],
-                'ATOM' => [
-                    'ID' => 'list',
+                    'ID' => 'Count_operator',
                     'FIELD_TYPE' => 'string',
+                    'FIELD_LENGTH' => 255,
                     'MULTIPLE' => 'N',
-                    'VALIDATE' => ''
+                    'VALIDATE' => 'list'
                 ]
             ],
-            // todo Добавить настройку "сколько раз применять акцию"
         ];
 
         if (!$boolEx) {
@@ -202,7 +234,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
             unset($arOneAtom);
         }
 
-        return parent::GetAtomsEx($strControlID, $boolEx);
+        return $arAtomList;
     }
 
 
