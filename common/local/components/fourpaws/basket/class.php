@@ -143,19 +143,9 @@ class BasketComponent extends CBitrixComponent
             try {
                 $user = $this->currentUserService->getCurrentUser();
                 $this->arResult['USER'] = $user;
-                $orderableBasket = $basket->getOrderableItems();
-                $this->arResult['MAX_BONUS_SUM'] = 0;
-                if (!$orderableBasket->isEmpty()) {
-                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
-                        $orderableBasket,
-                        $user->getDiscountCardNumber()
-                    );
-                    $chequeRequest->setPaidByBonus($orderableBasket->getPrice());
-                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = \floor($cheque->getAvailablePayment());
-                }
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
             }  /** @noinspection BadExceptionsProcessingInspection */
-            catch (NotAuthorizedException|ExecuteException $e) {
+            catch (NotAuthorizedException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
