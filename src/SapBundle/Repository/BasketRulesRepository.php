@@ -121,11 +121,12 @@ class BasketRulesRepository
     }
 
     /**
-     *DiscountGroupTable
      *
      * @param string $xmlId
      *
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     *
      * @return BasketRule|null
      */
     public function findOneByXmlId(string $xmlId): ? BasketRule

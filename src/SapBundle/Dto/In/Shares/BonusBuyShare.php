@@ -16,8 +16,8 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class BonusBuyShare
 {
-    const ACT_MODIFY = 'MODI';
-    const ACT_DELETE = 'DELE';
+    public const ACT_MODIFY = 'MODI';
+    public const ACT_DELETE = 'DELE';
 
     /**
      * Код региона
@@ -115,12 +115,12 @@ class BonusBuyShare
      * Purchase_Item не учитывается
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\SerializedName("RM_NR")
+     * @Serializer\SerializedName("FLDVAL")
      * @Serializer\Type("float")
      *
      * @var string
      */
-    protected $amount = '';
+    protected $minPriceSum = '';
 
     /**
      * Содержит тип механики акции. Варианты значений:
@@ -305,18 +305,19 @@ class BonusBuyShare
     /**
      * @return string
      */
-    public function getAmount(): string
+    public function getMinPriceSum(): string
     {
-        return $this->amount;
+        return $this->minPriceSum;
     }
 
     /**
-     * @param string $amount
+     * @param string $minPriceSum
+     *
      * @return BonusBuyShare
      */
-    public function setAmount(string $amount): BonusBuyShare
+    public function setMinPriceSum(string $minPriceSum): BonusBuyShare
     {
-        $this->amount = $amount;
+        $this->minPriceSum = $minPriceSum;
 
         return $this;
     }
