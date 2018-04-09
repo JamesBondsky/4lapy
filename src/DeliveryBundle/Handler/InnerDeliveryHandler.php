@@ -15,6 +15,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
@@ -162,6 +163,20 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
+            return $result;
+        }
+
+        $hasDelivery = true;
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            if (!$offer->getProduct()->isDeliveryAvailable()) {
+                $result->addError(new Error(
+                    sprintf('Доставка товара %s недоступна', $offer->getId())
+                ));
+                $hasDelivery = false;
+            }
+        }
+        if (!$hasDelivery) {
             return $result;
         }
 
