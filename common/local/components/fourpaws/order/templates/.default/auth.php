@@ -138,7 +138,7 @@ $user = $arResult['USER'];
                                 <span class="b-input-line__comment js-comment">Для проверки статуса заказов на сайте</span>
                             </div>
                         </div>
-                        <div class="b-input-line">
+                        <div class="b-input-line js-no-valid">
                             <div class="b-input-line__label-wrapper js-information-comment">
                                 <label class="b-input-line__label" for="order-email">
                                     Эл. почта
