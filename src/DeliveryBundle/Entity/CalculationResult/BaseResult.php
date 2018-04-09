@@ -373,7 +373,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             if ($stores->isEmpty()) {
                 $this->addError(new Error('Нет складов с доступными товарами'));
             } else {
-                $this->setSelectedStore($stores->first());
+                $this->selectedStore = $stores->first();
             }
         }
 
