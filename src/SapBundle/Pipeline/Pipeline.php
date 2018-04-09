@@ -10,13 +10,21 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\SapBundle\Source\SourceInterface;
 
+/**
+ * Class Pipeline
+ *
+ * @package FourPaws\SapBundle\Pipeline
+ */
 class Pipeline implements PipelineInterface
 {
     /**
      * @var Collection|SourceInterface[]
      */
     protected $sourceCollection;
-    
+
+    /**
+     * Pipeline constructor.
+     */
     public function __construct()
     {
         $this->sourceCollection = new ArrayCollection();
