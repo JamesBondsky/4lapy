@@ -1,6 +1,6 @@
-<?php use Bitrix\Main\Application;
+<?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 } ?>
 <main class="b-wrapper" role="main">
@@ -15,13 +15,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
         </div>
     </div>
 </main>
-<?php /** показываем попап если пришли со страницы оформления заказа */
-$request = Application::getInstance()->getContext()->getRequest();
-if($request->getRequestedPageDirectory() === '/personal' && (string)$request->get('create_order') === 'Y'){
-    /** запуск с задержкой - без нее не рабит */?>
-    <script type="text/javascript">
-        $(function(){
-            setTimeout(function(){$('header div.b-header-info div.b-header-info__item--person a.js-open-popup').trigger('click');}, 50);
-        });
-    </script>
-<?php }?>
+<?php /** показываем попап если выбило эту форму
+ * запуск с задержкой - без нее не рабит */ ?>
+<script type="text/javascript">
+    $(function () {
+        setTimeout(function () {
+            $('header div.b-header-info div.b-header-info__item--person a.js-open-popup').trigger('click');
+        }, 50);
+    });
+</script>
