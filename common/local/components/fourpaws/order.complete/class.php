@@ -59,7 +59,9 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
 
     /**
      * FourPawsOrderCompleteComponent constructor.
+     *
      * @param null $component
+     *
      * @throws ApplicationCreateException
      */
     public function __construct($component = null)
@@ -170,7 +172,10 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         /**
          * флаг, что пользователь был зарегистрирован при оформлении заказа
          */
-        $this->arResult['ORDER_REGISTERED'] = !$isAuthorized;
+        $this->arResult['ORDER_REGISTERED'] = $this->orderService->getOrderPropertyByCode(
+                $order,
+                'USER_REGISTERED'
+        )->getValue() !== 'Y';
 
         if (null !== $relatedOrder) {
             $this->arResult['RELATED_ORDER'] = $relatedOrder;
