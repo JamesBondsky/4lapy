@@ -17,6 +17,7 @@ use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -28,7 +29,9 @@ class ImportCommand extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const ARGUMENT_PIPELINE = 'pipeline';
+    private const ARGUMENT_PIPELINE = 'pipeline';
+    private const OPTION_FORCE = 'force';
+    private const OPTION_FORCE_SHORTCUT = 'f';
 
     /**
      * @var PipelineRegistry
@@ -49,8 +52,8 @@ class ImportCommand extends Command implements LoggerAwareInterface
      *
      * @param SapService $sapService
      * @param PipelineRegistry $pipelineRegistry
-     *
      * @param LockerInterface $lockerService
+     *
      * @throws LogicException
      */
     public function __construct(SapService $sapService, PipelineRegistry $pipelineRegistry, LockerInterface $lockerService)
@@ -79,6 +82,12 @@ class ImportCommand extends Command implements LoggerAwareInterface
                         $this->pipelineRegistry->getCollection()->getKeys()
                     )
                 )
+            )
+            ->addOption(
+                self::OPTION_FORCE,
+                self::OPTION_FORCE_SHORTCUT,
+                InputOption::VALUE_NONE,
+                'Force - with unlock pipeline.'
             );
     }
 
@@ -96,6 +105,11 @@ class ImportCommand extends Command implements LoggerAwareInterface
     {
         $available = $this->pipelineRegistry->getCollection()->getKeys();
         $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
+        $force = $input->getOption(self::OPTION_FORCE);
+
+        if ($force) {
+            $this->lockerService->unlock($pipeline);
+        }
 
         if ($this->lockerService->isLocked($pipeline)) {
             throw new RuntimeException(
