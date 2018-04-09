@@ -182,7 +182,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 ->setStores($storesAvailable)
                 ->setPrice($basketItem->getPrice());
 
-            $stocks = $offer->getStocks();
+            $stocks = $offer->getAllStocks();
             if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
                 if ($availableAmount < $neededAmount) {
                     $stockResult->setAmount($availableAmount);

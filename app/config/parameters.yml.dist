@@ -75,3 +75,6 @@ parameters:
   sap.bonus_buy.directory.in: '%sap.directory%/'
   sap.bonus_buy.directory.out: '%sap.directory%/BB/'
   sap.bonus_buy.directory.error: '%sap.directory%/BB_Errors/'
+
+  dadata.token: '0dcef0791577b221d3334ca85082e2d505e35d70'
+  dadata.secret: 'f798e4ebee26ac9806f48297a67db0265e72497a'

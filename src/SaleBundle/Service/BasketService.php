@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
@@ -32,6 +33,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -40,8 +42,10 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * Class BasketService
  * @package FourPaws\SaleBundle\Service
  */
-class BasketService
+class BasketService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /** @var Basket */
     private $basket;
     /** @var CurrentUserProviderInterface */
@@ -53,6 +57,9 @@ class BasketService
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $firstDiscount = 0.0;
+
+    /** Оплата бонусами до 90% заказа */
+    public const MAX_BONUS_PAYMENT = 0.9;
 
     /**
      * BasketService constructor.
@@ -522,5 +529,43 @@ class BasketService
     public function setPromocodeDiscount(float $promocodeDiscount): void
     {
         $this->promocodeDiscount = $promocodeDiscount - $this->firstDiscount;
+    }
+
+    /**
+     * Получение максимального кол-ва бонусов, которыми можно оплатить корзину
+     *
+     * @param Basket|null $basket
+     *
+     * @return float
+     */
+    public function getMaxBonusesForPayment(?Basket $basket = null): float
+    {
+        $result = 0;
+        if (!$basket) {
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+            $basket = $this->getBasket()->getOrderableItems();
+        }
+
+        if (!$basket->isEmpty()) {
+            try {
+                $user = $this->currentUserProvider->getCurrentUser();
+                if ($user->getDiscountCardNumber()) {
+                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
+                        $basket,
+                        $user->getDiscountCardNumber()
+                    );
+                    $chequeRequest->setPaidByBonus($basket->getPrice());
+
+                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
+                    $result = $cheque->getAvailablePayment();
+                }
+            } catch (ExecuteException $e) {
+                $this->log()->error(sprintf('failed to get bonuses for payment: %s', $e->getMessage()));
+            } catch (NotAuthorizedException $e) {
+                // обработка не требуется
+            }
+        }
+
+        return floor(min($basket->getPrice() * static::MAX_BONUS_PAYMENT, $result));
     }
 }

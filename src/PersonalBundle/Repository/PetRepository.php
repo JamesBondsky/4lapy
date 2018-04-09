@@ -6,6 +6,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Pet;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -84,6 +85,25 @@ class PetRepository extends BaseHlRepository
         return $this->findBy(
             [
                 'filter' => ['UF_USER_ID' => $this->curUserService->getCurrentUserId()],
+            ]
+        );
+    }
+
+    /**
+     * @param User|int $user
+     * @return ArrayCollection|Pet[]
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws NotAuthorizedException
+     * @throws ServiceCircularReferenceException
+     * @throws ObjectPropertyException
+     */
+    public function findByUser($user): ArrayCollection
+    {
+        $userId = $user instanceof User ? $user->getId() : $user;
+        return $this->findBy(
+            [
+                'filter' => ['UF_USER_ID' => $userId],
             ]
         );
     }
