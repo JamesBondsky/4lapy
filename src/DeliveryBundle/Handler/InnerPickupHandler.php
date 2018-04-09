@@ -16,6 +16,7 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -31,7 +32,9 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
     /**
      * InnerPickupHandler constructor.
+     *
      * @param array $initParams
+     *
      * @throws ArgumentNullException
      * @throws ArgumentTypeException
      * @throws SystemException
@@ -133,6 +136,20 @@ class InnerPickupHandler extends DeliveryHandlerBase
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
+            return $result;
+        }
+
+        $hasDelivery = true;
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            if (!$offer->getProduct()->isPickupAvailable()) {
+                $result->addError(new Error(
+                    sprintf('Самовывоз товара %s недоступен', $offer->getId())
+                ));
+                $hasDelivery = false;
+            }
+        }
+        if (!$hasDelivery) {
             return $result;
         }
 
