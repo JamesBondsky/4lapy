@@ -198,6 +198,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 true
             );
             $this->arResult['ORDER_DELIVERY']['IS_DPD_PICKUP'] = $deliveryCode === DeliveryService::DPD_PICKUP_CODE;
+            $this->arResult['ORDER_DELIVERY']['IS_DPD_DELIVERY'] = $deliveryCode === DeliveryService::DPD_DELIVERY_CODE;
             if ($this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']) {
                 $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->deliveryService->getDpdTerminalByCode(
                     $this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']
