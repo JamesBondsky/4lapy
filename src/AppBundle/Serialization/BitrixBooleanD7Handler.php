@@ -2,11 +2,15 @@
 
 namespace FourPaws\AppBundle\Serialization;
 
+use FourPaws\AppBundle\SerializationVisitor\CsvDeserializationVisitor;
+use FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
+use JMS\Serializer\XmlDeserializationVisitor;
+use JMS\Serializer\XmlSerializationVisitor;
 
 class BitrixBooleanD7Handler implements SubscribingHandlerInterface
 {
@@ -30,13 +34,13 @@ class BitrixBooleanD7Handler implements SubscribingHandlerInterface
                 'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
                 'format'    => 'xml',
                 'type'      => 'bitrix_bool_d7',
-                'method'    => 'deserialize',
+                'method'    => 'deserializeXml',
             ],
             [
                 'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
                 'format'    => 'csv',
                 'type'      => 'bitrix_bool_d7',
-                'method'    => 'deserialize',
+                'method'    => 'deserializeCsv',
             ],
             [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
@@ -48,7 +52,7 @@ class BitrixBooleanD7Handler implements SubscribingHandlerInterface
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format'    => 'xml',
                 'type'      => 'bitrix_bool_d7',
-                'method'    => 'serializeCsv',
+                'method'    => 'serializeXml',
             ],
             [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
@@ -73,6 +77,32 @@ class BitrixBooleanD7Handler implements SubscribingHandlerInterface
     }
 
     /**
+     * @param XmlSerializationVisitor $visitor
+     * @param bool                     $data
+     * @param array                    $type
+     * @param Context                  $context
+     *
+     * @return bool
+     */
+    public function serializeXml(XmlSerializationVisitor $visitor, bool $data, array $type, Context $context): bool
+    {
+        return $data ? 1 : 0;
+    }
+
+    /**
+     * @param CsvSerializationVisitor $visitor
+     * @param bool                     $data
+     * @param array                    $type
+     * @param Context                  $context
+     *
+     * @return bool
+     */
+    public function serializeCsv(CsvSerializationVisitor $visitor, bool $data, array $type, Context $context): bool
+    {
+        return $data ? 1 : 0;
+    }
+
+    /**
      * @param JsonDeserializationVisitor $visitor
      * @param string|int|bool            $data
      * @param array                      $type
@@ -88,16 +118,32 @@ class BitrixBooleanD7Handler implements SubscribingHandlerInterface
     }
 
     /**
-     * @param JsonSerializationVisitor $visitor
-     * @param bool                     $data
-     * @param array                    $type
-     * @param Context                  $context
+     * @param XmlDeserializationVisitor $visitor
+     * @param string|int|bool            $data
+     * @param array                      $type
+     * @param Context                    $context
      *
-     * @return bool
+     * @return mixed
      */
-    public function serializeCsv(JsonSerializationVisitor $visitor, bool $data, array $type, Context $context): bool
+    public function deserializeXml(XmlDeserializationVisitor $visitor, $data, array $type, Context $context): bool
     {
-        /** в csv вроде 1 или 0 */
-        return $data ? 1 : 0;
+        $data = ($data === self::BITRIX_TRUE || $data === self::BITRIX_TRUE_INT || $data === true);
+
+        return $data;
+    }
+
+    /**
+     * @param CsvDeserializationVisitor $visitor
+     * @param string|int|bool            $data
+     * @param array                      $type
+     * @param Context                    $context
+     *
+     * @return mixed
+     */
+    public function deserializeCsv(CsvDeserializationVisitor $visitor, $data, array $type, Context $context): bool
+    {
+        $data = ($data === self::BITRIX_TRUE || $data === self::BITRIX_TRUE_INT || $data === true);
+
+        return $data;
     }
 }

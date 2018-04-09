@@ -6,6 +6,8 @@
 
 namespace FourPaws\AppBundle\Serialization;
 
+use FourPaws\AppBundle\SerializationVisitor\CsvDeserializationVisitor;
+use FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor;
 use FourPaws\MobileApiBundle\SerializationVisitor\BlankSerializationVisitor;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
@@ -64,6 +66,29 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
 
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
+     * @param JsonSerializationVisitor                  $visitor
+     * @param                                          $data
+     * @param array                                    $type
+     * @param Context                                  $context
+     *
+     * @return mixed
+     */
+    public function serializeJson(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        /** format Y-m-d\TH:i:s.u */
+        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return '';
+            }
+        }
+
+        return $data->format('Y-m-d\TH:i:s.u');
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
      * @param XmlSerializationVisitor                  $visitor
      * @param                                          $data
      * @param array                                    $type
@@ -83,6 +108,52 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
         }
 
         return $data->format('Y-m-d\TH:i:s.u');
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
+     * @param CsvSerializationVisitor                  $visitor
+     * @param                                          $data
+     * @param array                                    $type
+     * @param Context                                  $context
+     *
+     * @return mixed
+     */
+    public function serializeCsv(CsvSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        /** format Y-m-d\TH:i:s.u */
+        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return '';
+            }
+        }
+
+        return $data->format('Y-m-d\TH:i:s.u');
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
+     * @param JsonDeserializationVisitor                    $visitor
+     * @param                                            $data
+     * @param array                                      $type
+     * @param Context                                    $context
+     *
+     * @return mixed
+     */
+    public function deserializeJson(JsonDeserializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        /** format Y-m-d\TH:i:s.u */
+        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return $data;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -110,37 +181,14 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
 
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
-     * @param JsonSerializationVisitor                  $visitor
-     * @param                                          $data
-     * @param array                                    $type
-     * @param Context                                  $context
-     *
-     * @return mixed
-     */
-    public function serializeJson(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
-    {
-        /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            try {
-                $data = new \DateTimeImmutable($data);
-            } catch (\Exception $e) {
-                return '';
-            }
-        }
-
-        return $data->format('Y-m-d\TH:i:s.u');
-    }
-
-    /** @noinspection MoreThanThreeArgumentsInspection */
-    /**
-     * @param JsonDeserializationVisitor                    $visitor
+     * @param CsvDeSerializationVisitor                    $visitor
      * @param                                            $data
      * @param array                                      $type
      * @param Context                                    $context
      *
      * @return mixed
      */
-    public function deserializeJson(JsonDeserializationVisitor $visitor, $data, array $type, Context $context)
+    public function deserializeCsv(CsvDeSerializationVisitor $visitor, $data, array $type, Context $context)
     {
         /** format Y-m-d\TH:i:s.u */
         if (!empty($data) && !($data instanceof \DateTimeImmutable)) {

@@ -8,69 +8,50 @@ use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\Metadata\PropertyMetadata;
-use JMS\Serializer\NullAwareVisitorInterface;
 use phpDocumentor\Reflection\Types\Scalar;
 
 /**
  * Class CsvSerializationVisitor
  * @package FourPaws\AppBundle\Serialization
  */
-class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisitorInterface
+class CsvSerializationVisitor extends AbstractVisitor
 {
-
-    private $result;
     private $navigator;
+    private $result;
 
     /** @noinspection PhpMissingParentCallCommonInspection
      *
-     * @param string  $data
+     * @param array   $data
      * @param array   $type
      * @param Context $context
      *
-     * @return array
+     * @return mixed
      *
      * @throws NotSupportedException
      */
-    public function visitArray($data, array $type, Context $context): array
+    public function visitArray($data, array $type, Context $context)
     {
-        $res = [];
-        if (!empty($data)) {
-            $res = explode('|', $data);
+        $res = '';
+        if (\is_array($data) && !empty($data)) {
+            $res = implode('|', $data);
         }
         return $res;
     }
 
     /**
-     * Determine if a value conveys a null value.
-     * An example could be an xml element (Dom, SimpleXml, ...) that is tagged with a xsi:nil attribute
-     *
-     * @param mixed $value
-     *
-     * @return bool
-     */
-    public function isNull($value): bool
-    {
-        return $value === '';
-    }
-
-    /**
-     * @param mixed   $data
-     * @param array   $type
-     *
-     * @param Context $context
+     * @param mixed $data
+     * @param array $type
      *
      * @return mixed
      */
     public function visitNull($data, array $type, Context $context)
     {
-        return null;
+        return '';
     }
 
     /**
-     * @param mixed   $data
-     * @param array   $type
-     *
-     * @param Context $context
+     * @param mixed $data
+     * @param array $type
      *
      * @return mixed
      */
@@ -80,42 +61,36 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
     }
 
     /**
-     * @param mixed   $data
-     * @param array   $type
-     *
-     * @param Context $context
+     * @param mixed $data
+     * @param array $type
      *
      * @return mixed
      */
     public function visitBoolean($data, array $type, Context $context)
     {
-        return (int)$data === 1;
+        return $data ? 1 : 0;
     }
 
     /**
-     * @param mixed   $data
-     * @param array   $type
-     *
-     * @param Context $context
+     * @param mixed $data
+     * @param array $type
      *
      * @return mixed
      */
     public function visitDouble($data, array $type, Context $context)
     {
-        return (double)$data;
+        return (string)$data;
     }
 
     /**
-     * @param mixed   $data
-     * @param array   $type
-     *
-     * @param Context $context
+     * @param mixed $data
+     * @param array $type
      *
      * @return mixed
      */
     public function visitInteger($data, array $type, Context $context)
     {
-        return (int)$data;
+        return (string)$data;
     }
 
     /**
@@ -125,11 +100,9 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      * @param mixed         $data
      * @param array         $type
      *
-     * @param Context       $context
-     *
      * @return void
      */
-    public function startVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context): void
+    public function startVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context)
     {
         // TODO: Implement startVisitingObject() method.
         /** нихрена не делаем */
@@ -139,11 +112,9 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      * @param PropertyMetadata $metadata
      * @param mixed            $data
      *
-     * @param Context          $context
-     *
      * @return void
      */
-    public function visitProperty(PropertyMetadata $metadata, $data, Context $context): void
+    public function visitProperty(PropertyMetadata $metadata, $data, Context $context)
     {
         $v = $this->accessor->getValue($data, $metadata);
 
@@ -172,8 +143,6 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      * @param mixed         $data
      * @param array         $type
      *
-     * @param Context       $context
-     *
      * @return mixed
      */
     public function endVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context)
@@ -186,7 +155,7 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      * @deprecated use Context::getNavigator/Context::accept instead
      * @return GraphNavigator
      */
-    public function getNavigator(): GraphNavigator
+    public function getNavigator()
     {
         return $this->navigator;
     }
@@ -198,7 +167,7 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      *
      * @return void
      */
-    public function setNavigator(GraphNavigator $navigator): void
+    public function setNavigator(GraphNavigator $navigator)
     {
         $this->navigator = $navigator;
     }
