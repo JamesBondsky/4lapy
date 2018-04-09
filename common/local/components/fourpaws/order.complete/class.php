@@ -8,7 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -16,12 +15,14 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
@@ -37,7 +38,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsOrderCompleteComponent extends \CBitrixComponent
+class FourPawsOrderCompleteComponent extends FourPawsComponent
 {
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
@@ -77,53 +78,33 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         parent::__construct($component);
     }
 
-    /** {@inheritdoc} */
-    public function executeComponent()
-    {
-        /** @var \CMain $APPLICATION */
-        global $APPLICATION;
-        try {
-            $this->prepareResult();
-
-            if ($this->arParams['SET_TITLE'] === 'Y') {
-                $APPLICATION->SetTitle('Заказ оформлен');
-            }
-
-            $this->includeComponentTemplate();
-        } catch (\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
-            }
-        }
-    }
-
     /**
+     * @global \CMain $APPLICATION
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws Exception
-     * @throws ExecuteException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      * @throws SystemException
      * @throws ValidationException
-     *
-     * @return $this
      */
-    protected function prepareResult()
+    public function prepareResult(): void
     {
+        global $APPLICATION;
+        if ($this->arParams['SET_TITLE'] === 'Y') {
+            $APPLICATION->SetTitle('Заказ оформлен');
+        }
+
         $user = null;
-        $isAuthorized = false;
         $order = null;
         $relatedOrder = null;
         try {
             $user = $this->currentUserProvider->getCurrentUser();
-            $isAuthorized = true;
         } catch (NotAuthorizedException $e) {
         }
         /**
@@ -175,7 +156,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         $this->arResult['ORDER_REGISTERED'] = $this->orderService->getOrderPropertyByCode(
                 $order,
                 'USER_REGISTERED'
-        )->getValue() !== 'Y';
+            )->getValue() !== 'Y';
 
         if (null !== $relatedOrder) {
             $this->arResult['RELATED_ORDER'] = $relatedOrder;
@@ -209,8 +190,6 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 );
             }
         }
-
-        return $this;
     }
 
     /**
@@ -225,7 +204,6 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
      * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws SystemException
-     * @throws ExecuteException
      * @return array
      */
     protected function getOrderProperties(Order $order, User $user): array
@@ -237,20 +215,24 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             /**
              * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
              */
-            if ($user->getDiscountCardNumber() &&
-                ($propertyCode === 'BONUS_COUNT') &&
+            if (($propertyCode === 'BONUS_COUNT') &&
+                $user->getDiscountCardNumber() &&
                 (null === $propertyValue->getValue())
             ) {
-                if ($order->getPaymentCollection()->getInnerPayment()->getSum()) {
+                try {
+
                     $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                         $this->manzanaPosService->buildRequestFromBasket(
                             $order->getBasket(),
                             $user->getDiscountCardNumber()
                         )
                     );
-
                     $propertyValue->setValue($cheque->getChargedBonus());
-                } else {
+
+                } catch (ExecuteException $e) {
+                    $this->log()->error('failed to get charged bonus', [
+                        'orderId' => $order->getId()
+                    ]);
                     $propertyValue->setValue(0);
                 }
                 $order->save();
@@ -266,6 +248,8 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
      * @param array $properties
      *
      * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      * @return array
      */
     protected function getDeliveryData(Order $order, array $properties): array
