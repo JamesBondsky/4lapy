@@ -6,15 +6,12 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -22,7 +19,6 @@ use FourPaws\Search\SearchService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Templating\DelegatingEngine;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -59,6 +55,8 @@ class ProductInfoController extends Controller
 
     /**
      * @Route("/", methods={"GET"})
+     *
+     * @global \CMain $APPLICATION
      * @param Request $request
      * @param ProductListRequest $productListRequest
      *
@@ -96,7 +94,12 @@ class ProductInfoController extends Controller
                         $currentOffer = $offer;
                     }
                     $response['products'][$product->getId()][$offer->getId()] = [
-                        'available' => !$offer->getStocks()->isEmpty()
+                        'available' => !$offer->getStocks()->isEmpty(),
+                        'byRequest' => $offer->isByRequest(),
+                        'pickup' => $product->isPickupAvailable(),
+                        'delivery' => $product->isDeliveryAvailable(),
+                        'price' => $offer->getPrice(),
+                        'oldPrice' => $offer->getOldPrice() ?: $offer->getPrice()
                     ];
                 }
             }
