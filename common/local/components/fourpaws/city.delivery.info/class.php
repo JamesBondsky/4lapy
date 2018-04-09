@@ -39,7 +39,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * FourPawsCityDeliveryInfoComponent constructor.
+     *
      * @param CBitrixComponent|null $component
+     *
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
@@ -80,6 +82,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             } catch (\RuntimeException $e) {
             }
         }
+
+        return \array_filter([$this->arResult['CURRENT']['DELIVERY'], $this->arResult['CURRENT']['PICKUP']]);
     }
 
     /**
@@ -246,6 +250,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * @param string $code
+     *
      * @return bool
      */
     protected function isDefaultLocation(string $code): bool
