@@ -585,6 +585,12 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        $this->setOrderPropertyByCode(
+            $order,
+            'USER_REGISTERED',
+            $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
+        );
+
         /** @var PropertyValue $propertyValue */
         foreach ($order->getPropertyCollection() as $propertyValue) {
             $code = $propertyValue->getProperty()['CODE'];
