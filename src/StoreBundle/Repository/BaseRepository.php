@@ -2,7 +2,11 @@
 
 namespace FourPaws\StoreBundle\Repository;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\AppBundle\Construction\UnserializeObjectConstructor;
 use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -93,28 +97,30 @@ abstract class BaseRepository implements RepositoryInterface
     /**
      * @param int $id
      *
-     * @throws InvalidIdentifierException
+     * @throws ArgumentException
      * @throws ConstraintDefinitionException
-     * @return null|BaseEntity
+     * @throws InvalidIdentifierException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return BaseEntity|null
      */
     public function find(int $id): ?BaseEntity
     {
         $this->checkIdentifier($id);
 
         $result = $this->findBy(['ID' => $id], [], 1)->first();
-        if (!$result instanceof BaseEntity) {
-            return null;
-        }
-
-        return $result;
+        return $result instanceof BaseEntity ? $result : null;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param array $criteria
      * @param array $orderBy
-     * @param null|int $limit
-     * @param null|int $offset
+     * @param int|null $limit
+     * @param int|null $offset
      *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return BaseCollection
      */
     public function findBy(
@@ -129,13 +135,14 @@ abstract class BaseRepository implements RepositoryInterface
 
         $criteria = array_merge($this->getDefaultFilter(), $criteria);
 
-        $entities = $this->table::query()
-                                  ->setSelect(['*', 'UF_*'])
-                                  ->setFilter($criteria)
-                                  ->setOrder($orderBy)
-                                  ->setLimit($limit)
-                                  ->setOffset($offset)
-                                  ->exec();
+        $query = $this->table::query()
+            ->setSelect(['*', 'UF_*'])
+            ->setFilter($criteria)
+            ->setOrder($orderBy)
+            ->setLimit($limit)
+            ->setOffset($offset);
+
+        $entities = $this->modifyQuery($query)->exec();
 
         $result = [];
         while ($entity = $entities->fetch()) {
@@ -230,5 +237,14 @@ abstract class BaseRepository implements RepositoryInterface
         if ($result->count()) {
             throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
         }
+    }
+
+    /**
+     * @param Query $query
+     * @return Query
+     */
+    protected function modifyQuery(Query $query): Query
+    {
+        return $query;
     }
 }

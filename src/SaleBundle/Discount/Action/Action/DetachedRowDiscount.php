@@ -88,6 +88,9 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
             $arAtoms['Filtration_operator'],
             'количество применений',
             $arAtoms['Count_operator'],
+            $arAtoms['All'],
+            'выполнены. доп JSON',
+            $arAtoms['Additional_JSON'],
         ];
 
         return $description;
@@ -184,6 +187,40 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                     'VALIDATE' => 'list'
                 ]
             ],
+            'All' => [
+                'JS' => [
+                    'id' => 'All',
+                    'name' => 'aggregator',
+                    'type' => 'select',
+                    'values' => [
+                        'AND' => 'все условия',
+                        'OR' => 'любое из условий'
+                    ],
+                    'defaultText' => 'все условия',
+                    'defaultValue' => 'AND',
+                    'first_option' => '...'
+                ],
+                'ATOM' => [
+                    'ID' => 'All',
+                    'FIELD_TYPE' => 'string',
+                    'FIELD_LENGTH' => 255,
+                    'MULTIPLE' => 'N',
+                    'VALIDATE' => 'list'
+                ]
+            ],
+            'Additional_JSON' => [
+                'JS' => [
+                    'id' => 'Additional_JSON',
+                    'name' => 'Additional_JSON',
+                    'type' => 'input'
+                ],
+                'ATOM' => [
+                    'ID' => 'Additional_JSON',
+                    'FIELD_TYPE' => 'string',
+                    'MULTIPLE' => 'N',
+                    'VALIDATE' => ''
+                ]
+            ],
         ];
 
         if (!$boolEx) {
@@ -224,11 +261,11 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
          * @todo обработать все варианты параметров
          */
         if (
-            $arOneCondition['Filtration_operator'] === 'separate'
+            \in_array($arOneCondition['Filtration_operator'], ['separate', 'union'], true)
             && \in_array($arOneCondition['Count_operator'], ['min', 'max', 'single'], true)
             && \is_array($arSubs) && \count($arSubs) >= 1
         ) {
-            if($arOneCondition['Count_operator'] === 'single') {
+            if ($arOneCondition['Count_operator'] === 'single') {
                 $arOneCondition['Count_operator'] = '(int)(bool)min';
             }
             $result = '$counts = []; $i = 0; $originalOrder = ' . $arParams['ORDER'] . ';' . PHP_EOL;
@@ -238,6 +275,15 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
             }
             $result .= '$applyCount = ' . $arOneCondition['Count_operator'] . '(array_column($counts, \'cnt\'));' . PHP_EOL;
+
+            if ($arOneCondition['All'] === 'AND') {
+                $result .= '$minCount = min(array_column($counts, \'cnt\'));' . PHP_EOL;
+                $result .= '$applyCount = $minCount > 0 ? $applyCount : 0;' . PHP_EOL;
+            }
+
+            if ($arOneCondition['Filtration_operator'] === 'union') {
+                $result .= static::class . '::unionFilterResults($counts);' . PHP_EOL;
+            }
             $result .= 'foreach($counts as $k => $elem) {' . PHP_EOL;
             $result .= '    ' . $arParams['ORDER'] . ' = $elem[\'res\'];' . PHP_EOL;
             $result .= '    ' . static::class . '::apply(' . $arParams['ORDER'] . ', ';
@@ -247,6 +293,25 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
         }
 
         return $result;
+    }
+
+    /**
+     * @internal
+     *
+     * @param array $counts
+     *
+     */
+    public static function unionFilterResults(array &$counts)
+    {
+        $result = [];
+        foreach ($counts as $elem) {
+            if (empty($result)) {
+                $result = $elem;
+            } else {
+                $result['res']['BASKET_ITEMS'] += $elem['res']['BASKET_ITEMS'];
+            }
+        }
+        $counts = [$result];
     }
 
     /**

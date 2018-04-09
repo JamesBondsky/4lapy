@@ -6,7 +6,12 @@
 
 namespace FourPaws\StoreBundle\Repository;
 
+use Bitrix\Catalog\StoreTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
@@ -144,7 +149,35 @@ class DeliveryScheduleRepository extends BaseRepository
     protected function getDefaultFilter(): array
     {
         return [
-            '!UF_TYPE' => false
+            '!UF_TYPE' => false,
+            'SENDER_STORE.ACTIVE' => 'Y',
+            'RECEIVER_STORE.ACTIVE' => 'Y'
         ];
+    }
+
+    /**
+     * @param Query $query
+     *
+     * @throws ArgumentException
+     * @throws SystemException
+     * @return Query
+     */
+    protected function modifyQuery(Query $query): Query
+    {
+        $query->registerRuntimeField(
+            new ReferenceField(
+                'SENDER_STORE',
+                StoreTable::class,
+                ['=this.UF_SENDER' => 'ref.XML_ID'],
+                ['join_type' => 'INNER'])
+        )->registerRuntimeField(
+            new ReferenceField(
+                'RECEIVER_STORE',
+                StoreTable::class,
+                ['=this.UF_RECEIVER' => 'ref.XML_ID'],
+                ['join_type' => 'INNER'])
+        );
+
+        return parent::modifyQuery($query);
     }
 }

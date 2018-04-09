@@ -440,4 +440,31 @@ class Address extends BaseEntity
         $this->details = $details;
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        $map = [
+            ['value' => $this->city, 'prefix' => ''],
+            ['value' => $this->street, 'prefix' => ''],
+            ['value' => $this->house, 'prefix' => ''],
+            ['value' => $this->housing, 'prefix' => 'корпус'],
+            ['value' => $this->entrance, 'prefix' => 'подъезд'],
+            ['value' => $this->floor, 'prefix' => 'этаж'],
+            ['value' => $this->flat, 'prefix' => 'кв.'],
+            ['value' => $this->intercomCode, 'prefix' => 'код домофона']
+        ];
+
+        $result = \array_filter(\array_map(function ($item) {
+            $result = '';
+            if ($item['value']) {
+                $result = $item['prefix'] ? $item['prefix'] . ' ' . $item['value'] : $item['value'];
+            }
+            return $result;
+        }, $map));
+
+        return implode(', ', $result);
+    }
 }

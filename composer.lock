@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "a15fb86be167705a448d0f6c09d73409",
+    "content-hash": "2d1b1041abc42991e3c3ed380e1d064f",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -1011,6 +1011,43 @@
                 "rest"
             ],
             "time": "2018-02-28T13:57:04+00:00"
+        },
+        {
+            "name": "gietos/dadata",
+            "version": "1.1.11",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/gietos/dadata.git",
+                "reference": "8fadeae1e55a8bebf2f0295b138d99125d736e5f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/gietos/dadata/zipball/8fadeae1e55a8bebf2f0295b138d99125d736e5f",
+                "reference": "8fadeae1e55a8bebf2f0295b138d99125d736e5f",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.2",
+                "php": ">=5.5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Dadata\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sergey Kasatkin",
+                    "email": "spam@onsky.ru"
+                }
+            ],
+            "description": "Dadata API client (https://dadata.ru)",
+            "time": "2017-10-24T14:22:51+00:00"
         },
         {
             "name": "giggsey/libphonenumber-for-php",

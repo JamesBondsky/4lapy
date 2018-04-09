@@ -145,9 +145,9 @@ class UserService implements
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @return User|null
+     * @return User
      */
-    public function getCurrentUser(): ?User
+    public function getCurrentUser(): User
     {
         return $this->userRepository->find($this->getCurrentUserId());
     }
@@ -254,7 +254,6 @@ class UserService implements
      * @throws CityNotFoundException
      * @throws NotAuthorizedException
      * @throws BitrixRuntimeException
-     * @throws SystemException
      * @return array|bool
      */
     public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
@@ -267,13 +266,8 @@ class UserService implements
             $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
         }
 
-        if ($city) {
-            /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
-            setcookie('user_city_id', $city['CODE'], 86400 * 30);
-
-            if ($this->isAuthorized()) {
-                $this->userRepository->updateData($this->getCurrentUserId(), ['UF_LOCATION' => $city['CODE']]);
-            }
+        if ($city && $this->isAuthorized()) {
+            $this->userRepository->updateData($this->getCurrentUserId(), ['UF_LOCATION' => $city['CODE']]);
         }
 
         return $city ?: false;
