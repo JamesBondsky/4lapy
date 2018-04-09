@@ -104,11 +104,6 @@ class OrderService implements LoggerAwareInterface
     public const STATUS_IN_ASSEMBLY_2 = 'W';
 
     /**
-     * 90% заказа можно оплатить бонусами
-     */
-    public const MAX_BONUS_PAYMENT = 0.9;
-
-    /**
      * @var AddressService
      */
     protected $addressService;
@@ -153,7 +148,7 @@ class OrderService implements LoggerAwareInterface
      */
     protected $locationService;
 
-    /** @var  array $paySystemServiceCache */
+    /** @var array $paySystemServiceCache */
     private $paySystemServiceCache = [];
 
     /**
@@ -603,6 +598,12 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        $this->setOrderPropertyByCode(
+            $order,
+            'USER_REGISTERED',
+            $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
+        );
+
         /** @var PropertyValue $propertyValue */
         foreach ($order->getPropertyCollection() as $propertyValue) {
             $code = $propertyValue->getProperty()['CODE'];
@@ -758,7 +759,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $maxBonusesForOrder1 = floor(
-            min($storage1->getBonus(), $basket1->getPrice() * static::MAX_BONUS_PAYMENT)
+            min($storage1->getBonus(), $basket1->getPrice() * BasketService::MAX_BONUS_PAYMENT)
         );
         if ($storage1->getBonus() > $maxBonusesForOrder1) {
             $storage1->setBonus($maxBonusesForOrder1);
@@ -1195,12 +1196,11 @@ class OrderService implements LoggerAwareInterface
         }
 
         if (!$changed) {
-            $isSubscribe = $this->isSubscribe($order);
             switch (true) {
                 case $isFastOrder:
                     $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
                     break;
-                case $isSubscribe:
+                case $this->isSubscribe($order):
                     $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
                     break;
                 case !$this->validateAddress($order):

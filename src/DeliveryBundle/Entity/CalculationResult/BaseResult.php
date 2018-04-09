@@ -341,7 +341,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                     $this->getIntervals()
                 );
             } catch (NotFoundException $e) {
-                $this->selectedInterval = $this->getIntervals()->first();
+                if (!$this->getIntervals()->isEmpty()) {
+                    $this->selectedInterval = $this->getIntervals()->first();
+                }
             }
         }
 

@@ -20,7 +20,6 @@ if (!\is_array($sections) || empty($sections)) {
     <div class="b-select b-select--recall b-select--q-food">
         <select class="b-select__block b-select__block--recall b-select__block--q-food"
                 name="food_spec"
-                data-select="<?= ++$_SESSION['SELECT_NUMBER'] ?>"
                 data-url="<?=$nextUrl?>"
             <?=$required ? ' required="required"' : ''?>>
             <option value="0" <?=$val === 0 ? ' selected="selected"' : ''?>>Любой</option>

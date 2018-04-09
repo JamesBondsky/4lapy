@@ -115,8 +115,13 @@ $relatedOrder = $arResult['RELATED_ORDER'];
                                     ['SHOW_TIME' => false, 'SHORT' => false]
                                 ) ?></b> по
                             адресу
-                            <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
-                        <p><b>Время доставки: </b><?= $arResult['ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?></p>
+                            <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b>
+                        </p>
+                        <?php if (!$arResult['ORDER_DELIVERY']['IS_DPD_DELIVERY']) { ?>
+                            <p>
+                                <b>Время доставки: </b><?= $arResult['ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                            </p>
+                        <?php } ?>
                         <?php
                     } ?>
                 </div>
@@ -169,9 +174,11 @@ $relatedOrder = $arResult['RELATED_ORDER'];
                                         ['SHOW_TIME' => false, 'SHORT' => false]
                                     ) ?></b>
                             </p>
-                            <p>
-                                <b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
-                            </p>
+                            <?php if (!$arResult['ORDER_DELIVERY']['IS_DPD_DELIVERY']) { ?>
+                                <p>
+                                    <b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                                </p>
+                            <?php } ?>
                         </div>
                     <?php } ?>
                 <?php } ?>

@@ -17,22 +17,19 @@ if (!\is_array($sections) || empty($sections)) {
 <div class="b-quest js-quest <?=$required ? ' js-block-required' : ''?>" style="display: block">
     <h4 class="b-quest__subtitle">Размер</h4>
     <?php /** @var IblockSect $item */
-    foreach ($sections as $key => $item) {
-        ?>
+    foreach ($sections as $key => $item) { ?>
         <div class="b-radio b-radio--q-food">
             <input class="b-radio__input"
                    name="pet_size"
-                   id="id-quest-size-<?= $key ?>"
-                   data-radio="<?= ++$_SESSION['RADIO_NUMBER'] ?>"
+                   id="id-quest-pet_size-<?= $key ?>"
                    type="radio"
                    value="<?= $item->getId() ?>"
                    data-url="<?=$nextUrl?>"
                 <?=$required ? ' required="required"' : ''?>
                 <?=$val === $item->getId() ? ' checked="checked"' : ''?>>
-            <label class="b-radio__label b-radio__label--q-food" for="id-quest-size-<?= $key ?>">
+            <label class="b-radio__label b-radio__label--q-food" for="id-quest-pet_size-<?= $key ?>">
                 <span class="b-radio__text-label"><?= $item->getName() ?></span>
             </label>
         </div>
-    <?php
-    } ?>
+    <?php } ?>
 </div>

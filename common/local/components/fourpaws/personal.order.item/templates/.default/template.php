@@ -168,7 +168,7 @@ if ($orderSubscribe) {
                 ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--pay-account b-link--pay-account"
-                       href="/sale/payment/?ORDER_ID=<?= $order->getId() ?>"
+                       href="<?= '/sale/payment/?ORDER_ID='.$order->getId() ?>"
                        title="Оплатить">
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>

@@ -47,15 +47,11 @@ class FoodSelectionController extends Controller
      */
     public function beginAction(Request $request): JsonResponse
     {
-        $values = $request->query->all();
-        \TrimArr($values);
-        foreach ($values as $key => $val) {
-            if ((int)$val <= 0) {
-                unset($values[$key]);
-            }
-        }
+        /** оставляем токо одно значение, ибо все остальное надо сбросить */
+        $values = ['pet_type'=>$request->get('pet_type')];
 
         if (!empty($values['pet_type'])) {
+            /** нужно для определения ттого показывать или нет доп. поле собак */
             $petTypeCode = current($this->foodSelectionService->getSections(
                 [
                     'filter' => ['ID' => $values['pet_type']],
@@ -138,6 +134,7 @@ class FoodSelectionController extends Controller
             }
         }
 
+        /** подгружаем так же необязательные поля */
         $full_fields = true;
         ob_start();
         /** @noinspection PhpIncludeInspection */
@@ -160,6 +157,7 @@ class FoodSelectionController extends Controller
         }
         unset($values['food_consistence']);
         try {
+            /** дополнительные итемы */
             $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems);
         } catch (ArgumentException|SystemException $e) {
             $alsoItems = [];
