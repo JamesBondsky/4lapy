@@ -149,7 +149,7 @@ if(!$hasOffer){
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
                             
                             /** наличие меняется аяксом */?>
-                            <li class="b-tab-title__item js-tab-item">
+                            <li class="b-tab-title__item js-tab-item disable">
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Наличие в магазинах"
                                    data-tab="availability">
