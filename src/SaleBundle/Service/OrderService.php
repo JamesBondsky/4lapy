@@ -1171,8 +1171,8 @@ class OrderService implements LoggerAwareInterface
          * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
          * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
          */
-        if ($this->deliveryService->isInnerPickup($delivery) ||
-            ($deliveryFromShop && !$stockResult->getDelayed()->isEmpty())
+        if (($this->deliveryService->isInnerPickup($delivery) || $deliveryFromShop) &&
+            !$stockResult->getDelayed()->isEmpty()
         ) {
             $totalPrice = $order->getBasket()->getPrice();
             $availablePrice = $stockResult->getAvailable()->getPrice();

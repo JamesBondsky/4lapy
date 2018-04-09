@@ -39,6 +39,10 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
 $selectedPayment = null;
 /** @var array $payments */
 $payments = $arResult['PAYMENTS'];
+$selectedPayment = current(array_filter($payments, function($item) {
+    return $item['CODE'] === OrderService::PAYMENT_CASH;
+}));
+
 foreach ($payments as $i => $payment) {
     if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
        unset($payments[$i]);
@@ -46,6 +50,9 @@ foreach ($payments as $i => $payment) {
     if ((int)$payment['ID'] === $storage->getPaymentId()) {
         $selectedPayment = $payment;
     }
+}
+if (!$selectedPayment) {
+    $selectedPayment = current($payments);
 }
 
 $basketPrice = $basket->getPrice();
@@ -123,7 +130,7 @@ $user = $arResult['USER'];
                                        name="pay-type"
                                        data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
                                        value="<?= $payment['ID'] ?>"
-                                    <?= (int)$payment['ID'] === $storage->getPaymentId() ? 'checked="checked"' : '' ?>/>
+                                    <?= (int)$payment['ID'] === (int)$selectedPayment['ID'] ? 'checked="checked"' : '' ?>/>
                                 <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
                                     <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
