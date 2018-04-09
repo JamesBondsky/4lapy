@@ -118,17 +118,8 @@ class Calculator extends DPD
             }
         }
 
-        $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
-
-        $intervals = new IntervalCollection();
-        $intervals->add(
-            (new Interval())->setFrom($interval[0])
-                            ->setTo($interval[1])
-        );
-
         CalculationResultFactory::$dpdData[$profileCode] = [
             'TERMINALS'    => $terminals,
-            'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
             'STOCK_RESULT' => $stockResult,
             'DELIVERY_ZONE' => $deliveryService->getDeliveryZoneCodeByLocation(

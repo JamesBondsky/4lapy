@@ -6,6 +6,7 @@
 namespace FourPaws\DeliveryBundle\Factory;
 
 use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
@@ -26,6 +27,7 @@ class CalculationResultFactory
     /**
      * @param CalculationResult $bitrixResult
      * @param BaseService $service
+     *
      * @return CalculationResultInterface
      * @throws UnknownDeliveryException
      */
@@ -73,7 +75,11 @@ class CalculationResultFactory
         if (static::$dpdData[$serviceCode]['STOCK_RESULT'] instanceof StockResultCollection) {
             $result->setStockResult(static::$dpdData[$serviceCode]['STOCK_RESULT']);
         }
-        $result->setIntervals(static::$dpdData[$serviceCode]['INTERVALS']);
+
+        if (static::$dpdData[$serviceCode]['INTERVALS'] instanceof IntervalCollection) {
+            $result->setIntervals(static::$dpdData[$serviceCode]['INTERVALS']);
+        }
+
         $result->setDeliveryZone(static::$dpdData[$serviceCode]['DELIVERY_ZONE']);
         unset(static::$dpdData[$serviceCode]);
     }
@@ -81,6 +87,7 @@ class CalculationResultFactory
     /**
      * @param CalculationResultInterface $result
      * @param CalculationResult $bitrixResult
+     *
      * @return CalculationResultInterface
      */
     protected static function fillDeliveryData(
