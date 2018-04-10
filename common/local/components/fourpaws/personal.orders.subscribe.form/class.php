@@ -83,7 +83,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->setAction($this->prepareAction());
             $this->doAction();
         } catch (\Exception $exception) {
-            $this->log()->critical(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            $this->log()->critical(
+                sprintf(
+                    '%s exception: %s',
+                    __FUNCTION__,
+                    $exception->getMessage()
+                )
+            );
             throw $exception;
         }
 

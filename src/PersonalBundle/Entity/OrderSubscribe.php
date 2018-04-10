@@ -89,8 +89,6 @@ class OrderSubscribe extends BaseEntity
      */
     protected $lastCheck;
 
-    /** @var OrderSubscribeService $orderSubscribeService */
-    private $orderSubscribeService;
     /** @var UserFieldEnumService $userFieldEnumService */
     private $userFieldEnumService;
     /** @var null|Order $order */
@@ -388,12 +386,11 @@ class OrderSubscribe extends BaseEntity
      */
     protected function getOrderSubscribeService() : OrderSubscribeService
     {
-        if (!$this->orderSubscribeService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
-        }
+        $appCont = Application::getInstance()->getContainer();
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = $appCont->get('order_subscribe.service');
 
-        return $this->orderSubscribeService;
+        return $orderSubscribeService;
     }
 
     /**

@@ -1,7 +1,9 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use FourPaws\App\Application;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -10,6 +12,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
 {
     use LazyLoggerAwareTrait;
+
+    /** @var OrderSubscribeService $orderSubscribeService */
+    private $orderSubscribeService = null;
 
     public function __construct($component = null)
     {
@@ -43,5 +48,19 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
         }
 
         return $this->arResult;
+    }
+
+    /**
+     * @return OrderSubscribeService
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getOrderSubscribeService(): OrderSubscribeService
+    {
+        if (!$this->orderSubscribeService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
+        }
+
+        return $this->orderSubscribeService;
     }
 }

@@ -22,8 +22,6 @@ class OrderSubscribeCopyParams
     private $dateForOrderCreate;
     /** @var int $copyOrderId */
     private $copyOrderId;
-    /** @var OrderSubscribeService $orderSubscribeService */
-    private $orderSubscribeService;
     /** @var BaseResult $orderSubscribeService */
     private $copyOrderDeliveryCalculationResult;
 
@@ -43,13 +41,12 @@ class OrderSubscribeCopyParams
      */
     protected function getOrderSubscribeService()
     {
-        if (!$this->orderSubscribeService) {
-            $this->orderSubscribeService = Application::getInstance()->getContainer()->get(
-                'order_subscribe.service'
-            );
-        }
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = Application::getInstance()->getContainer()->get(
+            'order_subscribe.service'
+        );
 
-        return $this->orderSubscribeService;
+        return $orderSubscribeService;
     }
 
     /**
@@ -174,6 +171,8 @@ class OrderSubscribeCopyParams
             // − Предыдущего заказа по подписке, если создается не первый заказ по подписке.
             $originOrderId = $this->getOriginOrderId();
             $this->copyOrderId = $orderSubscribeHistoryService->getLastCopyOrderId($originOrderId);
+/** @todo для отладки, не забыть убрать */
+$this->copyOrderId = 0;
             if ($this->copyOrderId <= 0) {
                 $this->copyOrderId = $originOrderId;
             }

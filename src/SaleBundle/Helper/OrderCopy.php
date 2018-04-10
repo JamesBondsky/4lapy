@@ -40,7 +40,10 @@ class OrderCopy
             'NOTES', 'PRODUCT_PROVIDER_CLASS', 'CANCEL_CALLBACK_FUNC', 'ORDER_CALLBACK_FUNC',
             'PAY_CALLBACK_FUNC', 'DETAIL_PAGE_URL', 'CATALOG_XML_ID',
             'PRODUCT_XML_ID', 'VAT_RATE', 'MEASURE_NAME', 'MEASURE_CODE',
-            'BASE_PRICE', 'VAT_INCLUDED'
+            'BASE_PRICE', 'VAT_INCLUDED',
+//'DELAY',
+//'CUSTOM_PRICE',
+//'SUBSCRIBE',
         ],
         /** Исключаемые поля корзины (по умолчанию) */
         'basketItemExcludeFields' => [],
@@ -198,12 +201,40 @@ class OrderCopy
         $oldBasket = $this->oldOrder->getBasket();
         /** @var Basket $newBasket */
         $newBasket = Basket::create($oldBasket->getSiteId());
-
+//foreach ($oldBasket->getBasketItems() as $item) {
+    /** @var \Bitrix\Sale\BasketItem $item */
+//_log_array($item->getFieldValues(), '$item0');
+//}
+$GLOBALS['AAAA'] = true;
         $oldBasketItems = $oldBasket->getBasketItems();
         foreach ($oldBasketItems as $oldBasketItem) {
+
             $isSuccess = true;
             /** @var BasketItem $oldBasketItem */
-            // копирование значений полей позиции корзины
+            $propValues = $oldBasketItem->getPropertyCollection()->getPropertyValues();
+            if ($propValues && !empty($propValues['IS_GIFT']['VALUE'])) {
+                // пропускаем подарки
+                continue;
+            }
+
+            /*
+            $tmpFields = [
+                'PRODUCT_ID' => $oldBasketItem->getProductId(),
+                'QUANTITY' => $oldBasketItem->getQuantity(),
+                'MODULE' => $oldBasketItem->getField('MODULE'),
+                'PRODUCT_PROVIDER_CLASS' => $oldBasketItem->getField('PRODUCT_PROVIDER_CLASS'),
+            ];
+            $result = \Bitrix\Catalog\Product\Basket::addProductToBasket(
+                $newBasket,
+                $tmpFields,
+                [
+                    'USER_ID' => $this->oldOrder->getUserId(),
+                    'SITE_ID' => $this->oldOrder->getSiteId(),
+                ]
+            );
+            $newBasketItem = $result->getData()['BASKET_ITEM'];
+            */
+
             $newBasketItem = $newBasket->createItem(
                 $oldBasketItem->getField('MODULE'),
                 $oldBasketItem->getField('PRODUCT_ID')
@@ -242,6 +273,11 @@ class OrderCopy
 
         // привязка корзины к новому заказу
         $tmpResult = $this->newOrder->setBasket($newBasket);
+$GLOBALS['AAAA'] = false;
+//foreach ($this->newOrder->getBasket()->getBasketItems() as $item) {
+    /** @var \Bitrix\Sale\BasketItem $item */
+//_log_array($item->getFieldValues(), '$item');
+//}
         if (!$tmpResult->isSuccess()) {
             throw new OrderCopyBasketException(implode("\n", $tmpResult->getErrorMessages()), 500);
         }
@@ -266,6 +302,7 @@ class OrderCopy
                 }
             }
         }
+
         $oldOrderPropsByCode = $this->filterCopyOrderProps($oldOrderPropsByCode);
         foreach ($oldOrderPropsByCode as $propCode => $value) {
             $this->setPropValueByCode($propCode, $value);

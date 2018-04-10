@@ -174,9 +174,6 @@ class Order extends BaseEntity
     /** @var array */
     protected $statusMain = [];
 
-    /** @var OrderService $personalOrderService */
-    private $personalOrderService = null;
-
     /** @var array $orderItems */
     private $orderItems = [];
 
@@ -836,27 +833,16 @@ class Order extends BaseEntity
     }
 
     /**
-     * @return bool
-     */
-    public function canBeSubscribed(): bool
-    {
-        $result = $this->isPayed();
-
-        return $result;
-    }
-
-    /**
      * @return OrderService
      * @throws ApplicationCreateException
      */
-    protected function getPersonalOrderService(): OrderService
+    private function getPersonalOrderService(): OrderService
     {
-        if (!$this->personalOrderService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->personalOrderService = $appCont->get('order.service');
-        }
+        $appCont = Application::getInstance()->getContainer();
+        /** @var OrderService $service */
+        $service = $appCont->get('order.service');
 
-        return $this->personalOrderService;
+        return $service;
     }
 
     /**

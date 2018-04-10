@@ -192,6 +192,19 @@ class OrderSubscribeService
     }
 
     /**
+     * Может ли быть заказ подписан
+     *
+     * @param Order $order
+     * @return bool
+     */
+    public function canBeSubscribed(Order $order): bool
+    {
+        $result = $order->isPayed();
+
+        return $result;
+    }
+
+    /**
      * @return UserFieldEnumCollection
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -844,7 +857,11 @@ class OrderSubscribeService
                 sprintf(
                     'Ошибка копирования заказа по подписке - %s',
                     implode("\n", $result->getErrorMessages())
-                )
+                ),
+                [
+                    'ORIGIN_ORDER_ID' => $params->getOriginOrderId(),
+                    'COPY_ORDER_ID' => $params->getCopyOrderId(),
+                ]
             );
         }
 
@@ -1063,6 +1080,8 @@ class OrderSubscribeService
      */
     protected function doNewOrderIntegration(int $orderId)
     {
+/** @todo для отладки, не забыть убрать */
+return;
         $order = \Bitrix\Sale\Order::load($orderId);
 
         $saleOrderService = $this->getOrderService();

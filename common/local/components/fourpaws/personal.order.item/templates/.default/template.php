@@ -16,7 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CMain $APPLICATION
  * @var array $arParams
  * @var array $arResult
- * @var CBitrixComponent $component
+ * @var FourPawsPersonalCabinetOrderItemComponent $component
  * @var CBitrixComponentTemplate $this
  * @var string $templateName
  * @var string $componentPath
@@ -26,6 +26,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $order = $arResult['ORDER'];
 
 /** @var OrderSubscribe $orderSubscribe */
+// ORDER_SUBSCRIBE приходит только если нужно вывести форму редактирования подписки
 $orderSubscribe = $arParams['ORDER_SUBSCRIBE'] ?? null;
 
 /**
@@ -35,7 +36,23 @@ $orderSubscribe = $arParams['ORDER_SUBSCRIBE'] ?? null;
  */
 $subscribeOrderAddControls = '';
 $subscribeOrderEditControls = '';
-if ($order->canBeSubscribed()) {
+
+$genSubscribeControls = false;
+if (!$genSubscribeControls && $component->getOrderSubscribeService()->canBeSubscribed($order)) {
+    $genSubscribeControls = true;
+}
+if (!$genSubscribeControls && $orderSubscribe) {
+    $genSubscribeControls = true;
+}
+$tmpOrderSubscribe = null;
+if (!$genSubscribeControls && !$orderSubscribe) {
+    // здесь проверяем, нет ли уже оформленной подписки на заказ,
+    // на который по новым условиям уже подписаться нельзя
+    $tmpOrderSubscribe = $component->getOrderSubscribeService()->getSubscribeByOrderId($order->getId());
+    $genSubscribeControls = $tmpOrderSubscribe ? true : false;
+}
+
+if ($genSubscribeControls) {
     /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $subscribeFormComponent */
     $subscribeFormComponent = $APPLICATION->IncludeComponent(
         'fourpaws:personal.orders.subscribe.form',
@@ -50,6 +67,7 @@ if ($order->canBeSubscribed()) {
             'HIDE_ICONS' => 'Y',
         ]
     );
+
     if ($subscribeFormComponent->arResult['CONTROLS_HTML']) {
         if ($orderSubscribe) {
             // элементы управления подпиской

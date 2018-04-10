@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CMain $APPLICATION
  * @var array $arParams
  * @var array $arResult
- * @var CBitrixComponent $component
+ * @var FourPawsPersonalCabinetOrdersSubscribeFormComponent $component
  * @var CBitrixComponentTemplate $this
  * @var string $templateName
  * @var string $componentPath
@@ -34,13 +34,18 @@ if (!$arResult['ORDER']) {
 
 /** @var Order $order */
 $order = $arResult['ORDER'];
-
-if (!$order->canBeSubscribed()) {
-    return;
-}
-
 /** @var OrderSubscribe $orderSubscribe */
 $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
+
+// следует иметь в виду, что заказ может быть подписан,
+// но подписка на него по новым условиям уже может быть недоступна
+if ($orderSubscribe && !$orderSubscribe->isActive()) {
+    return;
+}
+$canBeSubscribed = $component->getOrderSubscribeService()->canBeSubscribed($order);
+if (!$canBeSubscribed && !$orderSubscribe) {
+    return;
+}
 
 /**
  * Элементы управления, выводимые на странице списка заказов
@@ -52,7 +57,7 @@ if ($orderSubscribe && $orderSubscribe->isActive()) {
         Оформлена подписка на&nbsp;доставку
     </a>
     <?php
-} else {
+} elseif ($canBeSubscribed) {
     ?>
     <a href="javascript:void(0)" class="b-accordion-order-item__subscribe js-open-popup" data-popup-id="<?=$attrPopupId?>">
         Подписаться на&nbsp;доставку
@@ -69,18 +74,24 @@ if ($arParams['SHOW_SUBSCRIBE_ACTION'] === 'Y') {
  * Элементы управления, выводимые на странице списка подписанных заказов
  */
 ob_start();
-if ($orderSubscribe) {
+if ($orderSubscribe && $orderSubscribe->isActive()) {
     ?>
     <div class="b-accordion-order-item__subscribe-link">
-        <a class="b-accordion-order-item__edit js-open-popup js-subscribe-delivery-edit"
-           href="javascript:void(0);"
-           title="Редактировать подписку"
-           data-popup-id="<?= $attrPopupId ?>">
+        <?php
+        if ($canBeSubscribed) {
+            ?>
+            <a class="b-accordion-order-item__edit js-open-popup js-subscribe-delivery-edit"
+               href="javascript:void(0);"
+               title="Редактировать подписку"
+               data-popup-id="<?= $attrPopupId ?>">
             <span class="b-icon b-icon--account-block">
                 <?= new SvgDecorator('icon-edit', 23, 20) ?>
             </span>
-            <span>Редактировать</span>
-        </a>
+                <span>Редактировать</span>
+            </a>
+            <?php
+        }
+        ?>
         <a class="b-accordion-order-item__del-subscribe js-delete"
            href="javascript:void(0);"
            title="Удалить подписку"
