@@ -67,19 +67,18 @@ class MigrateData extends Command implements LoggerAwareInterface
                            sprintf('Migration type, one or more of this: %s', implode(', ', Factory::AVAILABLE_TYPES)))
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
-    
-    /**
+
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
      * @param InputInterface  $input
      * @param OutputInterface $output
-     *
-     * @return null
      *
      * @throws DeInvalidArgumentException
      * @throws IblockNotFoundException
      * @throws InvalidArgumentException
      * @throws RuntimeException
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): void
     {
         $migratorInstaller = new Installer($this->logger);
         
@@ -96,7 +95,8 @@ class MigrateData extends Command implements LoggerAwareInterface
             $input->setArgument(self::ARG_MIGRATE_LIST, [$limit]);
             $limit = 100;
         }
-        
+
+        /** @noinspection ForeachSourceInspection */
         foreach ($input->getArgument(self::ARG_MIGRATE_LIST) as $type) {
             $client = (new Factory())->getClient($type, ['limit' => $limit]);
             $client->save();
