@@ -20,6 +20,7 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Manzana\Exception\ExecuteException;
@@ -304,29 +305,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
-                try {
-                    $basketForRequest = $basket;
-                    if ($storage->isSplit() && $this->orderStorageService->canGetPartial($selectedDelivery)) {
-                        /** @var Order $order1 */
-                        $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
-                        $basketForRequest = $order1->getBasket();
-                    }
-
-                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
-                        $basketForRequest,
-                        $user->getDiscountCardNumber()
-                    );
-                    $chequeRequest->setPaidByBonus($basketForRequest->getPrice());
-
-                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = min(
-                        floor($cheque->getAvailablePayment()),
-                        $basketForRequest->getPrice() * OrderService::MAX_BONUS_PAYMENT
-                    );
-                } catch (ExecuteException $e) {
-                    /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
-                    $this->logger->error($e->getMessage());
+                $basketForRequest = $basket;
+                if ($storage->isSplit() && $this->orderStorageService->canGetPartial($selectedDelivery)) {
+                    /** @var Order $order1 */
+                    $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
+                    $basketForRequest = $order1->getBasket();
                 }
+
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basketForRequest);
             }
         }
 
@@ -354,6 +340,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if (null !== $pickup) {
+            /** @var PickupResultInterface $pickup */
             $storage = clone $storage;
             try {
                 $selectedShopCode = $storage->getDeliveryPlaceCode();
@@ -362,7 +349,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $pickup->setSelectedStore($shops[$selectedShopCode]);
                 }
 
-                $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedStore();
+                $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedShop();
             } catch (NotFoundException $e) {
                 $this->logger->error(sprintf(
                         'Order has pickup delivery with no shops available. Delivery location: %s',

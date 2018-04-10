@@ -7,7 +7,7 @@
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use Bitrix\Iblock\ElementTable;
-use Bitrix\Main\ArgumentException;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -173,40 +173,43 @@ class BonusBuyFrom implements BonusBuyGroupInterface
         return $this;
     }
 
+
     /**
      * Возвращает массив XML_ID, пришедших в импорте
      *
-     * @return array
+     * @return ArrayCollection
      */
-    public function getProductXmlIds(): array
+    public function getProductXmlIds(): ArrayCollection
     {
-        $result = [];
         /**
          * больше одного, так как в первом содержится количество элементов
          */
         if (!empty($this->bonusBuyFromItems) && $this->bonusBuyFromItems->count() > 1) {
-
+            /** @var ArrayCollection $result */
             $result = $this->bonusBuyFromItems->map(function (BonusBuyFromItem $item) {
                 return $item->getOfferId();
-            })->toArray();
+            });
 
-            $result = array_filter($result);
+            $result = $result->filter(
+                function ($e) {
+                    return (bool)$e;
+                }
+            );
         }
-        return $result;
+        return $result ?? new ArrayCollection();
     }
 
     /**
      * Возвращает массив ID предложений, существующих на сайте
      *
-     * @throws ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\ArgumentException
      *
-     * @return array
+     * @return ArrayCollection
      */
-    public function getProductIds(): array
+    public function getProductIds(): ArrayCollection
     {
-        $result = [];
-
-        if ($xmlIds = $this->getProductXmlIds()) {
+        if ($xmlIds = $this->getProductXmlIds()->toArray()) {
             $res = ElementTable::getList([
                 'select' => ['ID'],
                 'filter' => [
@@ -215,11 +218,13 @@ class BonusBuyFrom implements BonusBuyGroupInterface
                     '=IBLOCK.TYPE.ID' => IblockType::CATALOG,
                 ],
             ]);
+            $result = [];
             while ($elem = $res->fetch()) {
                 $result[] = $elem['ID'];
             }
             $result = array_filter($result);
+            $result = new ArrayCollection($result);
         }
-        return $result;
+        return $result ?? new ArrayCollection();
     }
 }

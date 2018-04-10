@@ -36,7 +36,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    const CACHE_TAG = 'delivery_schedule';
+    public const CACHE_TAG = 'delivery_schedule';
     /**
      * @var DeliveryScheduleRepository
      */
@@ -73,7 +73,14 @@ class DeliveryScheduleService implements LoggerAwareInterface
      */
     public function findSchedule(DeliverySchedule $schedule): DeliveryScheduleEntity
     {
-        $scheduleEntity = $this->repository->findBy(['=UF_XML_ID' => $schedule->getXmlId()])->first();
+        try {
+            $scheduleEntity = $this->repository->findBy(['=UF_XML_ID' => $schedule->getXmlId()])->first();
+        } catch (SystemException $e) {
+            /**
+             * Обработка ниже. Всё сводится к отсутствию расписания.
+             */
+            $scheduleEntity = null;
+        }
 
         if (!$scheduleEntity) {
             throw new NotFoundScheduleException(
@@ -151,7 +158,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
      * @throws SystemException
      * @throws ApplicationCreateException
      */
-    public function processSchedules(DeliverySchedules $deliverySchedules)
+    public function processSchedules(DeliverySchedules $deliverySchedules): void
     {
         foreach ($deliverySchedules->getSchedules() as $schedule) {
             $this->processSchedule($schedule);
@@ -202,9 +209,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         if ($weekDays->count()) {
             $days = $this->serializer->toArray($weekDays->first());
-            $days = \array_filter(\array_values($days), function ($k, $v) {
+            $days = \array_keys(\array_filter(\array_values($days), function ($k, $v) {
                 return $k && $v;
-            }, \ARRAY_FILTER_USE_BOTH);
+            }, \ARRAY_FILTER_USE_BOTH));
 
             $entity->setDaysOfWeek($days);
 

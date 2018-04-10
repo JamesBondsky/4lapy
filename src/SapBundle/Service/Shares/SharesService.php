@@ -190,6 +190,7 @@ class SharesService implements LoggerAwareInterface
      * @throws \FourPaws\SapBundle\Exception\RuntimeException
      * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
      * @throws ArgumentException
+     * @throws \Bitrix\Main\SystemException
      *
      * @return BasketRule
      */
@@ -205,7 +206,6 @@ class SharesService implements LoggerAwareInterface
             $activeTo = $promo->getEndDate();
             $name = $share->getDescription();
             $xmlId = $share->getShareNumber();
-            $countOperator = $promo->isApplyOnce() ? 'single' : 'min';
         } /** @noinspection PhpUndefinedClassInspection */
         catch (\TypeError $e) {
             throw new InvalidArgumentException($e->getMessage());
@@ -215,19 +215,27 @@ class SharesService implements LoggerAwareInterface
             if ($share->getBonusBuyTo()->count() !== 1 || $share->getBonusBuyFrom()->count() !== 1) {
                 throw new InvalidArgumentException('У акций типа Z006 должна быть только одна группа элементов');
             }
+            try {
+                $countOperator = $promo->isApplyOnce() ? 'single' : 'min';
+            } /** @noinspection PhpUndefinedClassInspection */
+            catch (\TypeError $e) {
+                throw new InvalidArgumentException($e->getMessage());
+            }
             /**
              * @var BonusBuyTo $itemsTo
              */
             $itemsTo = $share->getBonusBuyTo()->first();
             $discountPercent = $itemsTo->getPercent();
-            $products = $itemsTo->getProductIds();
+            $products = $itemsTo->getProductIds()->toArray();
             /**
              * @var BonusBuyFrom $itemsFrom
              */
             $itemsFrom = $share->getBonusBuyFrom()->first();
             $countCondition = $itemsFrom->getGroupQuantity() - 1;
-            if (!ArrayHelper::arraysEquals($products, $itemsFrom->getProductIds())) {
-                throw new InvalidArgumentException('У акций типа Z006 должны быть одинаковые товары в группах за и на которые дают скидки');
+            if (!ArrayHelper::arraysEquals($products, $itemsFrom->getProductIds()->toArray())) {
+                throw new InvalidArgumentException(
+                    'У акций типа Z006 должны быть одинаковые товары в группах за и на которые дают скидки'
+                );
             }
             $filtrationOperator = 'separate';
 
@@ -257,6 +265,72 @@ class SharesService implements LoggerAwareInterface
                                         'DATA' => [
                                             'logic' => 'Equal',
                                             'value' => $products
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+
+        } elseif ($type === 'Z008') {
+
+            try {
+                $countOperator = $promo->isApplyOnce() ? 'once' : 'condition_count';
+            } /** @noinspection PhpUndefinedClassInspection */
+            catch (\TypeError $e) {
+                throw new InvalidArgumentException($e->getMessage());
+            }
+            if ($share->getBonusBuyTo()->count() !== 1 || $share->getBonusBuyFrom()->count() !== 1) {
+                throw new InvalidArgumentException('У акций типа Z008 должна быть только одна группа элементов');
+            }
+            if ($share->getMinPriceSum() < 1) {
+                throw new InvalidArgumentException('У акций типа Z008 должна быть установлена цена начала действия');
+            }
+            /**
+             * @var BonusBuyTo $itemsTo
+             */
+            $itemsTo = $share->getBonusBuyTo()->first();
+            $productsTo = $itemsTo->getProductIds()->toArray();
+            $giftsCount = $itemsTo->getQuantity();
+            /**
+             * @var BonusBuyFrom $itemsFrom
+             */
+            $itemsFrom = $share->getBonusBuyFrom()->first();
+            $productsFrom = $itemsFrom->getProductIds()->toArray();
+
+            $actions = [
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => [
+                    'All' => 'AND'
+                ],
+                'CHILDREN' => [
+                    [
+                        'CLASS_ID' => 'ADV:Gift',
+                        'DATA' => [
+                            'Count_operator' => $countOperator
+                        ],
+                        'CHILDREN' => [
+                            [
+                                'CLASS_ID' => 'GifterElement',
+                                'DATA' => [
+                                    'count' => $giftsCount,
+                                    'list' => $productsTo
+                                ]
+                            ],
+                            [
+                                'CLASS_ID' => 'ADV:BasketFilterBasePriceRatio',
+                                'DATA' => [
+                                    'All' => 'AND',
+                                    'Value' => $share->getMinPriceSum(),
+                                ],
+                                'CHILDREN' => [
+                                    [
+                                        'CLASS_ID' => 'CondIBElement',
+                                        'DATA' => [
+                                            'logic' => 'Equal',
+                                            'value' => $productsFrom
                                         ]
                                     ]
                                 ]
@@ -410,6 +484,7 @@ class SharesService implements LoggerAwareInterface
      * @param BonusBuyShare $share
      *
      * @throws \RuntimeException
+     * @throws \Bitrix\Main\SystemException
      */
     private function tryDeleteBasketRule(BonusBuyShare $share)
     {

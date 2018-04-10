@@ -6,12 +6,20 @@
 
 namespace FourPaws\DeliveryBundle\Dpd;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -21,6 +29,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use Ipolh\DPD\Delivery\DPD;
 
@@ -45,12 +54,15 @@ class Calculator extends DPD
      * @param array $arOrder
      * @param int $STEP
      * @param bool $TEMP
+     *
      * @return array
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws StoreNotFoundException
      */
     public function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
@@ -69,7 +81,7 @@ class Calculator extends DPD
         } catch (NotFoundException $e) {
             $result = [
                 'RESULT' => 'ERROR',
-                'TEXT'   => 'Доставка не найдена',
+                'TEXT' => 'Доставка не найдена',
             ];
 
             return $result;
@@ -98,11 +110,27 @@ class Calculator extends DPD
                 $arOrder['LOCATION_FROM'],
                 $basket
             )) {
+                $deliveryErrors = [];
+                /** @var Offer $offer */
+                foreach ($offers as $offer) {
+                    if (!$offer->getProduct()->isDeliveryAvailable()) {
+                        $deliveryErrors[] = sprintf('Доставка товара %s недоступна', $offer->getId());
+                    }
+                }
+                if (!empty($deliveryErrors)) {
+                    $result = [
+                        'RESULT' => 'ERROR',
+                        'TEXT' => implode(', ', $deliveryErrors),
+                    ];
+
+                    return $result;
+                }
+
                 $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable);
                 if (!$stockResult->getUnavailable()->isEmpty()) {
                     $result = [
                         'RESULT' => 'ERROR',
-                        'TEXT'   => 'Присутствуют товары не в наличии',
+                        'TEXT' => 'Присутствуют товары не в наличии',
                     ];
 
                     return $result;
@@ -118,17 +146,8 @@ class Calculator extends DPD
             }
         }
 
-        $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
-
-        $intervals = new IntervalCollection();
-        $intervals->add(
-            (new Interval())->setFrom($interval[0])
-                            ->setTo($interval[1])
-        );
-
         CalculationResultFactory::$dpdData[$profileCode] = [
             'TERMINALS'    => $terminals,
-            'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
             'STOCK_RESULT' => $stockResult,
             'DELIVERY_ZONE' => $deliveryService->getDeliveryZoneCodeByLocation(
@@ -146,7 +165,7 @@ class Calculator extends DPD
     {
         $defaultDimensions = [
             'WEIGHT' => 1, // 1g
-            'WIDTH'  => 100, // 10cm
+            'WIDTH' => 100, // 10cm
             'HEIGHT' => 100, // 10cm
             'LENGTH' => 100, // 10cm
         ];
@@ -164,9 +183,10 @@ class Calculator extends DPD
     /**
      * @param array $arOrder
      * @param array $arConfig
+     *
      * @return array
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
      */
     public function Compability($arOrder, $arConfig)
     {

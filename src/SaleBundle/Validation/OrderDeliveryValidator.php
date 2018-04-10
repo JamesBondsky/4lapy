@@ -57,6 +57,7 @@ class OrderDeliveryValidator extends ConstraintValidator
      * @param mixed $entity
      *
      * @param Constraint $constraint
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
@@ -82,6 +83,11 @@ class OrderDeliveryValidator extends ConstraintValidator
             }
 
             $delivery->setDateOffset($dateIndex);
+
+            if ($delivery->getIntervals()->isEmpty()) {
+                return;
+            }
+
             $intervals = $delivery->getAvailableIntervals();
             if (!$intervals->isEmpty()) {
                 if (($intervalIndex < 1) || $intervalIndex > $intervals->count()) {

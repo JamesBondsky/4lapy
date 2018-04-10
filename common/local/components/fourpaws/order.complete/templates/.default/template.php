@@ -19,6 +19,8 @@ $order = $arResult['ORDER'];
 
 /** @var Order $relatedOrder */
 $relatedOrder = $arResult['RELATED_ORDER'];
+$bonusCount = $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] + $arResult['RELATED_ORDER_PROPERTIES']['BONUS_COUNT'];
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -35,14 +37,14 @@ $relatedOrder = $arResult['RELATED_ORDER'];
             </span>Идёт подсчёт баллов ...
         </div>
          */ ?>
-        <?php if (!empty($arResult['ORDER_PROPERTIES']['BONUS_COUNT'])) { ?>
+        <?php if ($bonusCount > 0) { ?>
             <div class="b-order__text-block b-order__text-block--top-line js">
-                <p>Вы получили <?= $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] ?>
+                <p>Вы получили <?= $bonusCount ?>
                     <?= (new Declension(
                         'бонусный балл',
                         'бонусных балла',
                         'бонусных баллов'
-                    ))->get($arResult['ORDER_PROPERTIES']['BONUS_COUNT']) ?>.
+                    ))->get($bonusCount) ?>.
                     Узнать, <a class="b-link b-link--inherit b-link--orange"
                                href="/customer/bonus-program/"
                                title="как получить и потратить баллы.">
@@ -115,8 +117,13 @@ $relatedOrder = $arResult['RELATED_ORDER'];
                                     ['SHOW_TIME' => false, 'SHORT' => false]
                                 ) ?></b> по
                             адресу
-                            <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
-                        <p><b>Время доставки: </b><?= $arResult['ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?></p>
+                            <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b>
+                        </p>
+                        <?php if (!$arResult['ORDER_DELIVERY']['IS_DPD_DELIVERY']) { ?>
+                            <p>
+                                <b>Время доставки: </b><?= $arResult['ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                            </p>
+                        <?php } ?>
                         <?php
                     } ?>
                 </div>
@@ -169,9 +176,11 @@ $relatedOrder = $arResult['RELATED_ORDER'];
                                         ['SHOW_TIME' => false, 'SHORT' => false]
                                     ) ?></b>
                             </p>
-                            <p>
-                                <b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
-                            </p>
+                            <?php if (!$arResult['ORDER_DELIVERY']['IS_DPD_DELIVERY']) { ?>
+                                <p>
+                                    <b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                                </p>
+                            <?php } ?>
                         </div>
                     <?php } ?>
                 <?php } ?>

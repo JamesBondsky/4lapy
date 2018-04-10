@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use Bitrix\Iblock\ElementTable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -145,35 +146,35 @@ class BonusBuyTo implements BonusBuyGroupInterface
     /**
      * Возвращает массив XML_ID, пришедших в импорте
      *
-     * @return array
+     * @return ArrayCollection
      */
-    public function getProductXmlIds(): array
+    public function getProductXmlIds(): ArrayCollection
     {
-        $result = [];
-
         if (!empty($this->bonusBuyTotems) && $this->bonusBuyTotems->count() >= 1) {
 
             $result = $this->bonusBuyTotems->map(function (BonusBuyToItem $item) {
                 return $item->getOfferId();
-            })->toArray();
-
-            $result = array_filter($result);
+            });
+            $result = $result->filter(
+                function ($e) {
+                    return (bool)$e;
+                }
+            );
         }
-        return $result;
+        return $result ?? new ArrayCollection();
     }
 
     /**
      * Возвращает массив ID предложений, существующих на сайте
      *
+     * @throws \Bitrix\Main\SystemException
      * @throws \Bitrix\Main\ArgumentException
      *
-     * @return array
+     * @return ArrayCollection
      */
-    public function getProductIds(): array
+    public function getProductIds(): ArrayCollection
     {
-        $result = [];
-
-        if ($xmlIds = $this->getProductXmlIds()) {
+        if ($xmlIds = $this->getProductXmlIds()->toArray()) {
             $res = ElementTable::getList([
                 'select' => ['ID'],
                 'filter' => [
@@ -182,11 +183,13 @@ class BonusBuyTo implements BonusBuyGroupInterface
                     '=IBLOCK.TYPE.ID' => IblockType::CATALOG,
                 ],
             ]);
+            $result = [];
             while ($elem = $res->fetch()) {
                 $result[] = $elem['ID'];
             }
             $result = array_filter($result);
+            $result = new ArrayCollection($result);
         }
-        return $result;
+        return $result ?? new ArrayCollection();
     }
 }

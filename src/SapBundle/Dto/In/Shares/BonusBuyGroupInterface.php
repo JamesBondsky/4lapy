@@ -9,6 +9,7 @@
 
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Interface BonusBuyGroupInterface
@@ -19,14 +20,14 @@ interface BonusBuyGroupInterface
     /**
      * Возвращает массив XML_ID, пришедших в импорте
      *
-     * @return array
+     * @return ArrayCollection
      */
-    public function getProductXmlIds(): array;
+    public function getProductXmlIds(): ArrayCollection;
 
     /**
      * Возвращает массив ID предложений, существующих на сайте
      *
-     * @return array
+     * @return ArrayCollection
      */
-    public function getProductIds(): array;
+    public function getProductIds(): ArrayCollection;
 }

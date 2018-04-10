@@ -235,6 +235,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param OrderDtoIn $orderDto
      *
+     * @throws NotFoundProductException
+     * @throws SystemException
      * @throws ArgumentNullException
      * @throws NotImplementedException
      * @throws ArgumentException
@@ -444,9 +446,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                  * Только штуки
                  */
                 ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
+                /**
+                 * @todo
+                 */
                 ->setChargeBonus(true)
-                ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
                 ->setDeliveryShipmentPoint($this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE'));
+
+                if ($orderDto->getDeliveryType() !== SapOrder::DELIVERY_TYPE_CONTRACTOR) {
+                    $offer->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
+                }
 
             $collection->add($offer);
             $position++;
@@ -666,9 +674,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
      *
+     * @throws NotFoundProductException
+     * @throws SystemException
      * @throws RuntimeException
      */
     private function setBasketFromDto(Order $order, OrderDtoIn $orderDto): void

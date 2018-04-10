@@ -341,7 +341,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                     $this->getIntervals()
                 );
             } catch (NotFoundException $e) {
-                $this->selectedInterval = $this->getIntervals()->first();
+                if (!$this->getIntervals()->isEmpty()) {
+                    $this->selectedInterval = $this->getIntervals()->first();
+                }
             }
         }
 
@@ -371,7 +373,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             if ($stores->isEmpty()) {
                 $this->addError(new Error('Нет складов с доступными товарами'));
             } else {
-                $this->setSelectedStore($stores->first());
+                $this->selectedStore = $stores->first();
             }
         }
 

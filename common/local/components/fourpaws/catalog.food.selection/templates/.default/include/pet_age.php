@@ -22,14 +22,13 @@ if (!\is_array($sections) || empty($sections)) {
         <div class="b-radio b-radio--q-food">
             <input class="b-radio__input"
                    name="pet_age"
-                   id="id-quest-age-<?= $key ?>"
-                   data-radio="<?= ++$_SESSION['RADIO_NUMBER'] ?>"
+                   id="id-quest-pet_age-<?= $key ?>"
                    type="radio"
                    value="<?= $item->getId() ?>"
                    data-url="<?=$nextUrl?>"
                 <?=$required ? ' required="required"' : ''?>
                 <?=$val === $item->getId() ? ' checked="checked"' : ''?>>
-            <label class="b-radio__label b-radio__label--q-food" for="id-quest-age-<?= $key ?>">
+            <label class="b-radio__label b-radio__label--q-food" for="id-quest-pet_age-<?= $key ?>">
                 <span class="b-radio__text-label"><?= $item->getName() ?></span>
             </label>
         </div>
