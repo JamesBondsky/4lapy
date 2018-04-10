@@ -9,10 +9,12 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Order;
 use Exception;
@@ -83,19 +85,24 @@ class BasketService implements LoggerAwareInterface
      * @param array $rewriteFields
      * @param bool $save
      * @param Basket|null $basket
+     * @param bool $merge
      *
-     * @throws InvalidArgumentException
-     * @throws BitrixProxyException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws ObjectNotFoundException
      * @return BasketItem
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws Exception
+     * @throws ObjectNotFoundException
+     * @throws \Bitrix\Main\LoaderException
      */
     public function addOfferToBasket(
         int $offerId,
         int $quantity = null,
         array $rewriteFields = [],
         bool $save = true,
-        ?Basket $basket = null
+        ?Basket $basket = null,
+        bool $merge = true
     ): BasketItem
     {
         if ($quantity < 0) {
@@ -122,7 +129,8 @@ class BasketService implements LoggerAwareInterface
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
             $basket,
             $fields,
-            $this->getContext()
+            $this->getContext(),
+            $merge
         );
 
         if (!$result->isSuccess()) {
@@ -209,12 +217,12 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param int|null $discountId
      *
-     * @throws NotFoundException
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     *
      * @return array
      */
     public function getGiftGroupOfferCollection(?int $discountId = null): array
@@ -249,13 +257,14 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     *
-     *
      * @param bool|null $reload
-     *
      * @param int $fUserId
      *
      * @return Basket
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
      */
     public function getBasket(bool $reload = null, int $fUserId = 0): Basket
     {
@@ -269,6 +278,7 @@ class BasketService implements LoggerAwareInterface
             }
 
             $this->basket = Basket::loadItemsForFUser($fUserId, SITE_ID);
+            $this->refreshAvailability($this->basket);
         }
 
         return $this->basket;
@@ -341,7 +351,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      *
-     * @param BasketItem $basketItem
+     * @param Basket $basket
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -353,31 +363,62 @@ class BasketService implements LoggerAwareInterface
      *
      * @return BasketItem
      */
-    public function refreshItemAvailability(BasketItem $basketItem): BasketItem
+    public function refreshAvailability(Basket $basket): Basket
     {
         $offerCollection = $this->getOfferCollection();
-        /** @var Offer $offer */
-        foreach ($offerCollection as $offer) {
-            if ($offer->getId() !== (int)$basketItem->getProductId()) {
-                continue;
-            }
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            foreach ($offerCollection as $offer) {
+                if ($offer->getId() !== (int)$basketItem->getProductId()) {
+                    continue;
+                }
 
-            $delay = $offer->getStocks()->isEmpty();
-            if ($basketItem->isDelay() !== $delay) {
-                $basketItem->setField(
-                    'DELAY',
-                    $delay ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
-                );
-            }
+                $toUpdate = [];
+                $delay = false;
 
-            break;
+                if (!$offer->getProduct()->isPickupAvailable() && !$offer->getProduct()->isDeliveryAvailable()) {
+                    $delay = true;
+                }
+
+                $amount = $offer->getStocks()->getTotalAmount();
+                if ($amount === 0) {
+                    $delay = true;
+                }
+
+                if ($basketItem->isDelay() !== $delay) {
+                    $toUpdate['DELAY'] = $delay ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE;
+                }
+
+
+                $diff = (int)$basketItem->getQuantity() - $amount;
+                if (!$delay && $diff > 0) {
+                    $toUpdate['QUANTITY'] = $amount;
+                    $this->addOfferToBasket(
+                        (int)$basketItem->getProductId(),
+                        $diff,
+                        [
+                            'DELAY' => 'Y'
+                        ],
+                        false,
+                        $basket,
+                        false
+                    );
+                }
+
+                if (!empty($toUpdate)) {
+                    $basketItem->setFields($toUpdate);
+                }
+
+                break;
+            }
         }
 
-        return $basketItem;
+        return $basket;
     }
 
     /**
-     * @todo Избавиться от этих двух методов, перенеся их непосредственно в обработчики акций, однако необходимо отделить общую часть от проектной
+     * @todo Избавиться от этих двух методов, перенеся их непосредственно в обработчики акций, однако необходимо
+     *     отделить общую часть от проектной
      */
     /**
      * @param string $type
@@ -567,5 +608,56 @@ class BasketService implements LoggerAwareInterface
         }
 
         return floor(min($basket->getPrice() * static::MAX_BONUS_PAYMENT, $result));
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @param string $code
+     *
+     * @return null|string
+     */
+    public function getBasketItemPropertyValue(BasketItem $basketItem, string $code): ?string
+    {
+        $result = null;
+        /** @var BasketPropertyItem $property */
+        foreach ($basketItem->getPropertyCollection() as $property) {
+            if ($property->getField('CODE') === $code) {
+                $result = $property->getField('VALUE');
+            }
+        }
+
+        return $result;
+    }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
+     * @param BasketItem $basketItem
+     * @param string $name
+     * @param string $code
+     * @param string $value
+     *
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
+     * @throws NotSupportedException
+     * @throws NotImplementedException
+     */
+    public function setBasketItemPropertyValue(BasketItem $basketItem, string $name, string $code, string $value): void
+    {
+        $found = false;
+        /** @var BasketPropertyItem $property */
+        foreach ($basketItem->getPropertyCollection() as $property) {
+            if ($property->getField('CODE') === $code) {
+                $property->setField('VALUE', $value);
+                $found = true;
+            }
+        }
+
+        if (!$found) {
+            $property = $basketItem->getPropertyCollection()->createItem();
+            $property->setFields([
+                'NAME' => $name,
+                'CODE' => $code,
+                'VALUE' => $value
+            ]);
+        }
     }
 }

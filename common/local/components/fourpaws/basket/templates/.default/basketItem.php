@@ -84,7 +84,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                     <?php }
                 } ?>
             </a>
-            <?php if ($useOffer && $offer->getQuantity() > 0 && !$offer->isByRequest()) { ?>
+            <?php if ($useOffer && !$basketItem->isDelay() && $offer->getQuantity() > 0 && !$offer->isByRequest()) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?=$offer->getId()?>">
                     <?php if ($arParams['IS_AJAX']) {
                         echo $offer->getBonusFormattedText((int)$user_discount, $basketItem->getQuantity());
@@ -98,7 +98,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
         if ($useOffer) {
             $maxQuantity = $offer->getQuantity();
         }
-        if ($offer->getQuantity() > 0) { ?>
+        if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
             <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
                 <a class="b-plus-minus__minus js-minus" data-url="/ajax/sale/basket/update/"
                    href="javascript:void(0);"></a>

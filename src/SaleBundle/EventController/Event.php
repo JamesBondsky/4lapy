@@ -72,9 +72,6 @@ class Event implements ServiceHandlerInterface
 
         ###   Обработчики скидок EOF   ###
 
-
-        self::initHandler('OnSaleBasketItemRefreshData', [static::class, 'updateItemAvailability']);
-
         /** отправка email */
         self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
         self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);

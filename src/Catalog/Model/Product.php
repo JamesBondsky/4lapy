@@ -1881,7 +1881,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         // @todo учитывать региональные ограничения
         $result = [self::AVAILABILITY_PICKUP];
-        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator())) {
+        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator() || $this->isDeliveryAreaRestrict())) {
             $result[] = self::AVAILABILITY_DELIVERY;
         }
         if ($this->isByRequest()) {
@@ -1896,7 +1896,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function isDeliveryAvailable(): bool
     {
-        return in_array(
+        return \in_array(
             self::AVAILABILITY_DELIVERY,
             $this->getDeliveryAvailability(),
             true
@@ -1908,7 +1908,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function isPickupAvailable(): bool
     {
-        return in_array(
+        return \in_array(
             self::AVAILABILITY_PICKUP,
             $this->getDeliveryAvailability(),
             true
