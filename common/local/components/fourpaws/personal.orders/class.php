@@ -174,7 +174,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** имитация постранички */
         $nav = new PageNavigation('nav-orders');
         $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
         $startResultCacheRes = $this->startResultCache(
@@ -217,6 +216,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $storeService = App::getInstance()->getContainer()->get('store.service');
                 $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
             }
+
 
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:orders',

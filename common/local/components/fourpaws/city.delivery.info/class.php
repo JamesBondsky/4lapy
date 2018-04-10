@@ -39,7 +39,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * FourPawsCityDeliveryInfoComponent constructor.
+     *
      * @param CBitrixComponent|null $component
+     *
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
@@ -80,6 +82,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             } catch (\RuntimeException $e) {
             }
         }
+
+        return \array_filter([$this->arResult['CURRENT']['DELIVERY'], $this->arResult['CURRENT']['PICKUP']]);
     }
 
     /**
@@ -155,7 +159,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'INTERVALS' => $currentDeliveryResult->getIntervals(),
                 'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $currentDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
+                'DELIVERY_DATE' => $currentDeliveryResult->getDeliveryDate(),
                 'CODE' => $currentDeliveryResult->getDeliveryCode(),
+                'RESULT' => $currentDeliveryResult
             ];
         }
 
@@ -166,7 +172,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'INTERVALS' => $defaultDeliveryResult->getIntervals(),
                 'PERIOD_FROM' => $defaultDeliveryResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $defaultDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
+                'DELIVERY_DATE' => $defaultDeliveryResult->getDeliveryDate(),
                 'CODE' => $defaultDeliveryResult->getDeliveryCode(),
+                'RESULT' => $defaultDeliveryResult
             ];
         }
 
@@ -176,6 +184,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'CODE' => $currentPickupResult->getDeliveryCode(),
                 'PERIOD_FROM' => $currentPickupResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $currentPickupResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
+                'DELIVERY_DATE' => $currentPickupResult->getDeliveryDate(),
+                'RESULT' => $currentPickupResult
             ];
         }
 
@@ -185,6 +195,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'CODE' => $defaultPickupResult->getDeliveryCode(),
                 'PERIOD_FROM' => $defaultPickupResult->getPeriodFrom(),
                 'PERIOD_TYPE' => $defaultPickupResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
+                'DELIVERY_DATE' => $defaultPickupResult->getDeliveryDate(),
+                'RESULT' => $defaultPickupResult
             ];
         }
 
@@ -246,6 +258,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * @param string $code
+     *
      * @return bool
      */
     protected function isDefaultLocation(string $code): bool

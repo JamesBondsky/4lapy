@@ -192,7 +192,7 @@ class DateHelper
     /**
      * Враппер для FormatDate. Доп. возможности
      *  - ll - отображение для недели в винительном падеже (в пятницу, в субботу)
-     *
+     *  - XX - 'Сегодня', 'Завтра'
      * @param string $dateFormat
      * @param int $timestamp
      *
@@ -200,8 +200,8 @@ class DateHelper
      */
     public static function formatDate(string $dateFormat, int $timestamp)
     {
+        $date = (new \DateTime)->setTimestamp($timestamp);
         if (false !== mb_strpos($dateFormat, 'll')) {
-            $date = (new \DateTime)->setTimestamp($timestamp);
             $str = null;
             switch ($date->format('w')) {
                 case 0:
@@ -229,6 +229,18 @@ class DateHelper
             if (null !== $str) {
                 $dateFormat = str_replace('ll', $str, $dateFormat);
             }
+        }
+        if (false !== mb_strpos($dateFormat, 'X')) {
+            $str = '';
+            switch ($date->diff(new \DateTime())->days) {
+                case 0:
+                    $str = 'Сегодня';
+                    break;
+                case 1:
+                    $str = 'Завтра';
+                    break;
+            }
+            $dateFormat = str_replace('XX', $str, $dateFormat);
         }
 
         return FormatDate($dateFormat, $timestamp);

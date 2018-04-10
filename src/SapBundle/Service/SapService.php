@@ -6,6 +6,7 @@
 
 namespace FourPaws\SapBundle\Service;
 
+use FourPaws\AppBundle\Service\LockerInterface;
 use FourPaws\SapBundle\Consumer\ConsumerRegistryInterface;
 use FourPaws\SapBundle\Exception\NotFoundPipelineException;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
@@ -32,6 +33,10 @@ class SapService
      * @var PipelineRegistry
      */
     private $pipelineRegistry;
+    /**
+     * @var LockerInterface
+     */
+    private $locker;
 
     /**
      * SapService constructor.
@@ -39,19 +44,22 @@ class SapService
      * @param ConsumerRegistryInterface $consumerRegistry
      * @param SourceRegistryInterface $sourceRegistry
      * @param PipelineRegistry $pipelineRegistry
+     * @param LockerInterface $locker
      */
     public function __construct(
         ConsumerRegistryInterface $consumerRegistry,
         SourceRegistryInterface $sourceRegistry,
-        PipelineRegistry $pipelineRegistry
-    ) {
+        PipelineRegistry $pipelineRegistry,
+        LockerInterface $locker
+    )
+    {
         $this->consumerRegistry = $consumerRegistry;
         $this->sourceRegistry = $sourceRegistry;
         $this->pipelineRegistry = $pipelineRegistry;
+        $this->locker = $locker;
     }
 
     /**
-     *
      * @param string $pipelineCode
      * @throws NotFoundPipelineException
      */

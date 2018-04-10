@@ -99,6 +99,15 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
             }
         }
 
+        $this->log()->debug(
+            \sprintf(
+                'Импорт завершен. Проимпортировано остатков %d, ошибок: %d, успешно %d',
+                $id ?? 0 + 1,
+                $errorCount,
+                $id ?? 0 + 1 - $errorCount
+            )
+        );
+
         return $result;
     }
 

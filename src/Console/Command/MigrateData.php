@@ -13,6 +13,7 @@ use Psr\Log\LogLevel;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
+use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -30,17 +31,28 @@ class MigrateData extends Command implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     
-    const ARG_MIGRATE_LIST = 'migrate-list';
-    
-    const ARG_LIMIT        = 'limit';
-    
-    public function __construct($name = null)
+    private const ARG_MIGRATE_LIST = 'migrate-list';
+    private const ARG_LIMIT        = 'limit';
+
+    /**
+     * MigrateData constructor.
+     *
+     * @param string $name
+     *
+     * @throws LogicException
+     */
+    public function __construct(?string $name = null)
     {
         parent::__construct($name);
         $this->setLogger(new Logger('Migrator', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
-    
-    protected function configure()
+
+    /**
+     * Configure command
+     *
+     * @throws InvalidArgumentException
+     */
+    protected function configure(): void
     {
         /**
          * @todo переделать подсказку для addArgument на Reflection
