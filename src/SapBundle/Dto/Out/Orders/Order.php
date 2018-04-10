@@ -11,16 +11,18 @@ use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class Order
+ *
  * @package FourPaws\SapBundle\Dto\Out\Orders
+ *
  * @Serializer\XmlRoot(name="ns0:mt_OrdersIM")
  * @Serializer\XmlNamespace(uri="urn:4lapy.ru:BITRIX_2_ERP:DataExchange", prefix="ns0")
  */
 class Order
 {
-    const DEFAULT_CONTRACTOR_CODE = '0000802070';
+    public const DEFAULT_CONTRACTOR_CODE = '0000802070';
 
-    const ORDER_SOURCE_MOBILE_APP = 'MOBI';
-    const ORDER_SOURCE_SITE = 'DFUE';
+    public const ORDER_SOURCE_MOBILE_APP = 'MOBI';
+    public const ORDER_SOURCE_SITE = 'DFUE';
 
     /**
      * Содержит номер заказа в Системе.
