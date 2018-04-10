@@ -443,7 +443,7 @@ class StoreService implements LoggerAwareInterface
                     . '>по адресу</option>';
             }
             $haveMetro = false;
-            foreach ($storeCollection as $store) {
+            foreach ($storeCollection as $key => $store) {
                 $metro = $store->getMetro();
 
                 if (!empty($metro) && !$haveMetro) {
@@ -487,7 +487,7 @@ class StoreService implements LoggerAwareInterface
                     'gps_n' => $gpsS, //revert $gpsN
                 ];
 
-                if ($store->getId() === (int)$params['activeStoreId']) {
+                if (($params['activeStoreId'] === 'first' && $key === 0) || ($params['activeStoreId'] !== 'first' && $store->getId() === (int)$params['activeStoreId'])) {
                     $item['active'] = true;
                 }
 

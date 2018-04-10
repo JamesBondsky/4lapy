@@ -670,6 +670,7 @@ class LocationService
                 ];
             }
             $result[] = [
+                'ID' => $item['VALUE'],
                 'CODE' => $item['CODE'],
                 'NAME' => $item['DISPLAY'],
                 'TYPE' => $types[$item['TYPE_ID']],
