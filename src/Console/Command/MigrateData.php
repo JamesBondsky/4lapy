@@ -103,8 +103,6 @@ class MigrateData extends Command implements LoggerAwareInterface
         }
         
         $this->logResult();
-        
-        return null;
     }
     
     /**

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/local.env.php';
 
 define('BX_USE_MYSQLI', true);
