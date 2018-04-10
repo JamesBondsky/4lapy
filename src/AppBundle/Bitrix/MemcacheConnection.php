@@ -36,7 +36,7 @@ final class MemcacheConnection
         if (!self::$memcache) {
             $memcache = new Memcache();
             if (!$memcache->connect($host, $port)) {
-                throw new MemcacheException('Memcache is not configured or down');
+                //throw new MemcacheException('Memcache is not configured or down');
             }
 
             self::$memcache = $memcache;
