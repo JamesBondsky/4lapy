@@ -54,7 +54,7 @@ final class MemcacheConnection
             /** @noinspection PhpUndefinedConstantInspection */
             $port = \defined('BX_MEMCACHE_PORT') && (int)\BX_MEMCACHE_PORT ? (int)\BX_MEMCACHE_PORT : self::DEFAULT_MEMCACHE_PORT;
             /** @noinspection PhpUndefinedConstantInspection */
-            $host = \defined('BX_MEMCACHE_HOST') && (int)\BX_MEMCACHE_HOST ? (int)\BX_MEMCACHE_HOST : self::DEFAULT_MEMCACHE_HOST;
+            $host = \defined('BX_MEMCACHE_HOST') && \BX_MEMCACHE_HOST ? \BX_MEMCACHE_HOST : self::DEFAULT_MEMCACHE_HOST;
 
             $memcache = new Memcache();
             if (!$memcache->connect($host, $port)) {
