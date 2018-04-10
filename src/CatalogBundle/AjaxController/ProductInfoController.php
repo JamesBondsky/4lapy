@@ -2,14 +2,16 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
-use FourPaws\App\Application;
-use FourPaws\App\Response\JsonErrorResponse;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -17,7 +19,6 @@ use FourPaws\Search\SearchService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Templating\DelegatingEngine;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -41,41 +42,35 @@ class ProductInfoController extends Controller
     protected $searchService;
 
     /**
-     * @var DelegatingEngine
-     */
-    protected $renderer;
-
-    /**
      * ProductInfoController constructor.
+     *
      * @param ValidatorInterface $validator
      * @param SearchService $searchService
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct(ValidatorInterface $validator, SearchService $searchService)
     {
         $this->validator = $validator;
         $this->searchService = $searchService;
-
-        $container = Application::getInstance()->getContainer();
-        if ($container->has('templating')) {
-            $this->renderer = $container->get('templating');
-        } elseif ($container->has('twig')) {
-            $this->renderer = $container->get('twig');
-        } else {
-            throw new \LogicException('You can not use the "render" method if the Templating Component or the Twig Bundle are not available.');
-        }
     }
 
     /**
      * @Route("/", methods={"GET"})
      *
+     * @global \CMain $APPLICATION
      * @param Request $request
      * @param ProductListRequest $productListRequest
+     *
      * @return JsonResponse
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ApplicationCreateException
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
+        global $APPLICATION;
+
         $response = [
             'products' => []
         ];
@@ -99,16 +94,30 @@ class ProductInfoController extends Controller
                         $currentOffer = $offer;
                     }
                     $response['products'][$product->getId()][$offer->getId()] = [
-                        'available' => !$offer->getStocks()->isEmpty()
+                        'available' => !$offer->getStocks()->isEmpty(),
+                        'byRequest' => $offer->isByRequest(),
+                        'pickup' => $product->isPickupAvailable(),
+                        'delivery' => $product->isDeliveryAvailable(),
+                        'price' => $offer->getPrice(),
+                        'oldPrice' => $offer->getOldPrice() ?: $offer->getPrice()
                     ];
                 }
             }
 
             if ($currentOffer) {
-                $response['deliveryHtml'] = $this->renderer->render(
-                    'FourPawsCatalogBundle:Catalog:ajax.productDetail.info.html.php',
-                    ['offer' => $currentOffer]
+                ob_start();
+                $deliveries = $APPLICATION->IncludeComponent(
+                    'fourpaws:catalog.product.delivery.info',
+                    'detail',
+                    [
+                        'OFFER' => $currentOffer
+                    ],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
                 );
+
+                $response['deliveryHtml'] = ob_get_clean();
+                $response['products'][$product->getId()][$currentOffer->getId()]['available'] = !empty($deliveries);
             }
         }
         return JsonSuccessResponse::createWithData('', $response);

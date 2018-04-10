@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/local.env.php';
 
 define('BX_USE_MYSQLI', true);
@@ -26,6 +30,9 @@ define('CACHED_b_agent', 3660);
 define('CACHED_menu', 3600);
 
 define('BX_COMP_MANAGED_CACHE', true);
+
+define('BX_MEMCACHE_HOST', getenv('BX_MEMCACHE_HOST'));
+define('BX_MEMCACHE_PORT', getenv('BX_MEMCACHE_PORT'));
 
 define('BX_UTF', true);
 define('BX_FILE_PERMISSIONS', 0664);

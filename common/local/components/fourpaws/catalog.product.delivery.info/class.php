@@ -11,8 +11,10 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -78,24 +80,12 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         }
         parent::prepareResult();
 
-        if (isset($this->arResult['DEFAULT']['PICKUP']) &&
-            $this->arResult['DEFAULT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
-        ) {
-            $this->arResult['DEFAULT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
-                $this->arResult['DEFAULT']['LOCATION']['CODE']
-            );
-        }
-
         if (isset($this->arResult['CURRENT']['PICKUP']) &&
             $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
         ) {
-            if ($this->arResult['CURRENT']['LOCATION']['CODE'] === $this->arResult['DEFAULT']['LOCATION']['CODE']) {
-                $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->arResult['DEFAULT']['PICKUP']['SHOP_COUNT'];
-            } else {
-                $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
-                    $this->arResult['CURRENT']['LOCATION']['CODE']
-                );
-            }
+            $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
+                $this->arResult['CURRENT']['PICKUP']['RESULT']
+            );
         }
     }
 
@@ -135,23 +125,30 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
     }
 
     /**
-     * @param string $locationCode
-     *
+     * @param PickupResultInterface $pickup
+     * @return int
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @return int
+     * @throws DeliveryNotFoundException
+     * @throws NotFoundException
      */
-    protected function getShopCount(string $locationCode)
+    protected function getShopCount(PickupResultInterface $pickup)
     {
-        $stores = $this->storeService->getByLocation(
-            $locationCode,
-            StoreService::TYPE_SHOP
-        );
+        $shops = $pickup->getBestShops();
+        $pickup = clone $pickup;
 
-        /** @var Offer $offer */
-        $offer = $this->arParams['OFFER'];
+        $count = 0;
+        /** @var Store $shop */
+        foreach ($shops as $shop) {
+            $pickup->setSelectedStore($shop);
+            if ($pickup->isSuccess()) {
+                $count++;
+            } else {
+                break;
+            }
+        }
 
-        return $offer->getStocks()->filterByStores($stores)->count();
+        return $count;
     }
 
     /**

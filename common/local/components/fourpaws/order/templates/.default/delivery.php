@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Sale\Basket;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
@@ -21,7 +22,7 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
-/** @var CalculationResultInterface $pickup */
+/** @var PickupResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
@@ -91,7 +92,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                           id="order-step">
                         <input type="hidden" name="shopId" class="js-no-valid"
                                value="<?= /** @noinspection PhpUnhandledExceptionInspection */
-                               $pickup ? $pickup->getSelectedStore()->getXmlId() : '' ?>">
+                               $pickup ? $pickup->getSelectedShop()->getXmlId() : '' ?>">
                         <input type="hidden" name="delyveryType"
                                value="<?= $storage->isSplit() ? 'twoDeliveries' : 'oneDelivery' ?>" class="js-no-valid">
                         <div class="b-choice-recovery b-choice-recovery--order-step">

@@ -13,6 +13,7 @@ use Psr\Log\LogLevel;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
+use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -30,17 +31,28 @@ class MigrateData extends Command implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     
-    const ARG_MIGRATE_LIST = 'migrate-list';
-    
-    const ARG_LIMIT        = 'limit';
-    
-    public function __construct($name = null)
+    private const ARG_MIGRATE_LIST = 'migrate-list';
+    private const ARG_LIMIT        = 'limit';
+
+    /**
+     * MigrateData constructor.
+     *
+     * @param string $name
+     *
+     * @throws LogicException
+     */
+    public function __construct(?string $name = null)
     {
         parent::__construct($name);
         $this->setLogger(new Logger('Migrator', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
-    
-    protected function configure()
+
+    /**
+     * Configure command
+     *
+     * @throws InvalidArgumentException
+     */
+    protected function configure(): void
     {
         /**
          * @todo переделать подсказку для addArgument на Reflection
@@ -55,19 +67,18 @@ class MigrateData extends Command implements LoggerAwareInterface
                            sprintf('Migration type, one or more of this: %s', implode(', ', Factory::AVAILABLE_TYPES)))
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
-    
-    /**
+
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
      * @param InputInterface  $input
      * @param OutputInterface $output
-     *
-     * @return null
      *
      * @throws DeInvalidArgumentException
      * @throws IblockNotFoundException
      * @throws InvalidArgumentException
      * @throws RuntimeException
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): void
     {
         $migratorInstaller = new Installer($this->logger);
         
@@ -84,15 +95,14 @@ class MigrateData extends Command implements LoggerAwareInterface
             $input->setArgument(self::ARG_MIGRATE_LIST, [$limit]);
             $limit = 100;
         }
-        
+
+        /** @noinspection ForeachSourceInspection */
         foreach ($input->getArgument(self::ARG_MIGRATE_LIST) as $type) {
             $client = (new Factory())->getClient($type, ['limit' => $limit]);
             $client->save();
         }
         
         $this->logResult();
-        
-        return null;
     }
     
     /**

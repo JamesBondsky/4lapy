@@ -49,6 +49,25 @@ class PickupResult extends BaseResult implements PickupResultInterface
     }
 
     /**
+     * @return Store
+     */
+    public function getSelectedShop(): Store
+    {
+        return $this->getSelectedStore();
+    }
+
+    /**
+     * @param Store $selectedStore
+     *
+     * @return PickupResultInterface
+     */
+    public function setSelectedShop(Store $selectedStore): PickupResultInterface
+    {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->setSelectedStore($selectedStore);
+    }
+
+    /**
      * @return StoreCollection
      */
     public function getBestShops(): StoreCollection
