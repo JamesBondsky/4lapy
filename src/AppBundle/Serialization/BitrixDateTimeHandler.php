@@ -138,7 +138,7 @@ class BitrixDateTimeHandler implements SubscribingHandlerInterface
             if (\strlen($data) > 0) {
                 /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                 try {
-                    $data = new DateTime($data, 'd.m.Y H:i:s', \date_default_timezone_get());
+                    $data = new DateTime($data, 'd.m.Y H:i:s');
                 } catch (ObjectException $e) {
                     $data = null;
                 }
@@ -164,7 +164,7 @@ class BitrixDateTimeHandler implements SubscribingHandlerInterface
             if (\strlen($data) > 0) {
                 /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                 try {
-                    $data = new DateTime($data, 'd.m.Y H:i:s', \date_default_timezone_get());
+                    $data = new DateTime($data, 'd.m.Y H:i:s');
                 } catch (ObjectException $e) {
                     $data = null;
                 }
@@ -190,7 +190,7 @@ class BitrixDateTimeHandler implements SubscribingHandlerInterface
             if (\strlen($data) > 0) {
                 /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                 try {
-                    $data = new DateTime($data, 'd.m.Y H:i:s', \date_default_timezone_get());
+                    $data = new DateTime($data, 'd.m.Y H:i:s');
                 } catch (ObjectException $e) {
                     $data = null;
                 }

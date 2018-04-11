@@ -3,7 +3,6 @@
 namespace FourPaws\AppBundle\SerializationVisitor;
 
 use JMS\Serializer\AbstractVisitor;
-use JMS\Serializer\Accessor\AccessorStrategyInterface;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Metadata\ClassMetadata;
@@ -20,6 +19,9 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
 
     private $result;
     private $navigator;
+    private $delimiter = ';';
+    private $strDelimiter = "\r\n";
+    private $data;
 
     /** @noinspection PhpMissingParentCallCommonInspection
      *
@@ -35,7 +37,17 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
     {
         $res = [];
         if (!empty($data)) {
-            $res = explode('|', $data);
+            $newRes = [];
+            if(\is_array($data)) {
+                foreach ($data as $item) {
+                    $newRes[] = $context->getNavigator()->accept($item, $this->getElementType($type), $context);
+                }
+                $res = $newRes;
+            }
+
+            if(empty($newRes)) {
+                $res = explode('|', $data);
+            }
         }
         return $res;
     }
@@ -131,8 +143,7 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      */
     public function startVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context): void
     {
-        // TODO: Implement startVisitingObject() method.
-        /** нихрена не делаем */
+        $this->data = new $metadata->name();
     }
 
     /**
@@ -145,24 +156,18 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      */
     public function visitProperty(PropertyMetadata $metadata, $data, Context $context): void
     {
-        $v = $this->accessor->getValue($data, $metadata);
+        $k = $this->namingStrategy->translateName($metadata);
+        $v = $data[$k];
 
         $v = $this->navigator->accept($v, $metadata->type, $context);
         if ((null === $v && $context->shouldSerializeNull() !== true)
-            || (true === $metadata->skipWhenEmpty && ($v instanceof \ArrayObject || is_array($v)) && 0 === count($v))
+            || (true === $metadata->skipWhenEmpty && ($v instanceof \ArrayObject || \is_array($v)) && 0 === \count($v))
         ) {
             return;
         }
 
-        $k = $this->namingStrategy->translateName($metadata);
-
-        if ($metadata->inline) {
-            if (is_array($v) || ($v instanceof \ArrayObject)) {
-                $this->data = array_merge($this->data, (array)$v);
-            }
-        } else {
-            $this->data[$k] = $v;
-        }
+        /** установка занчений класса */
+        $this->accessor->setValue($this->data, $v, $metadata);
     }
 
     /**
@@ -178,8 +183,7 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      */
     public function endVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context)
     {
-        // TODO: Implement endVisitingObject() method.
-        /** нихрена не делаем */
+        $this->result[] = $this->data;
     }
 
     /**
@@ -208,6 +212,35 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      */
     public function getResult()
     {
+        if(\count($this->result) === 1){
+            $this->result = current($this->result);
+        }
         return $this->result;
+    }
+
+    /**
+     * @param string $data
+     *
+     * @return array
+     */
+    public function prepare($data): array
+    {
+        $explode = explode($this->strDelimiter, $data);
+        $header = explode($this->delimiter, $explode[0]);
+        $res = [];
+        foreach ($explode as $key => $val) {
+            if ($key > 0) {
+                $explode = explode($this->delimiter, $val);
+                $fields = [];
+                foreach ($explode as $headerKey => $fieldVal) {
+                    $fields[$header[$headerKey]] = $fieldVal;
+                }
+                $res[] = $fields;
+            }
+        }
+        if (\count($res) === 1) {
+            $res = current($res);
+        }
+        return $res;
     }
 }

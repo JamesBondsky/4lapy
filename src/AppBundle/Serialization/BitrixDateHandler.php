@@ -52,13 +52,13 @@ class BitrixDateHandler implements SubscribingHandlerInterface
             ],
             [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
-                'format'    => 'json',
+                'format'    => 'xml',
                 'type'      => 'bitrix_date',
                 'method'    => 'serializeXml',
             ],
             [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
-                'format'    => 'json',
+                'format'    => 'csv',
                 'type'      => 'bitrix_date',
                 'method'    => 'serializeCsv',
             ],

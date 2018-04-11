@@ -3,12 +3,10 @@
 namespace FourPaws\AppBundle\SerializationVisitor;
 
 use JMS\Serializer\AbstractVisitor;
-use JMS\Serializer\Accessor\AccessorStrategyInterface;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\Metadata\PropertyMetadata;
-use phpDocumentor\Reflection\Types\Scalar;
 
 /**
  * Class CsvSerializationVisitor
@@ -18,6 +16,9 @@ class CsvSerializationVisitor extends AbstractVisitor
 {
     private $navigator;
     private $result;
+    private $delimiter = ';';
+    private $data;
+    private $strDelimiter = "\r\n";
 
     /** @noinspection PhpMissingParentCallCommonInspection
      *
@@ -33,7 +34,19 @@ class CsvSerializationVisitor extends AbstractVisitor
     {
         $res = '';
         if (\is_array($data) && !empty($data)) {
-            $res = implode('|', $data);
+            $resData = [];
+            $hasRes = false;
+            foreach ($data as $key => $val) {
+                if (\is_object($val)) {
+                    $hasRes = true;
+                    $resData[$key] = $context->getNavigator()->accept($val, $this->getElementType($type), $context);
+                }
+            }
+            if (!$hasRes) {
+                $res = implode('|', $data);
+            } else {
+                $res = implode($this->strDelimiter, $resData);
+            }
         }
         return $res;
     }
@@ -104,8 +117,7 @@ class CsvSerializationVisitor extends AbstractVisitor
      */
     public function startVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context)
     {
-        // TODO: Implement startVisitingObject() method.
-        /** нихрена не делаем */
+        $this->data = [];
     }
 
     /**
@@ -128,7 +140,7 @@ class CsvSerializationVisitor extends AbstractVisitor
         $k = $this->namingStrategy->translateName($metadata);
 
         if ($metadata->inline) {
-            if (is_array($v) || ($v instanceof \ArrayObject)) {
+            if (\is_array($v) || ($v instanceof \ArrayObject)) {
                 $this->data = array_merge($this->data, (array)$v);
             }
         } else {
@@ -147,8 +159,7 @@ class CsvSerializationVisitor extends AbstractVisitor
      */
     public function endVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context)
     {
-        // TODO: Implement endVisitingObject() method.
-        /** нихрена не делаем */
+        $this->result[] = $this->data;
     }
 
     /**
@@ -173,10 +184,45 @@ class CsvSerializationVisitor extends AbstractVisitor
     }
 
     /**
-     * @return object|array|scalar
+     * @return string
      */
-    public function getResult()
+    public function getResult(): string
     {
-        return $this->result;
+        return $this->getFirstLine($this->result) . $this->strDelimiter . $this->getBody($this->result);
+    }
+
+    /**
+     * @param array $res
+     *
+     * @return string
+     */
+    private function getFirstLine(array $res): string
+    {
+        if (\is_int(key($res))) {
+            $firstLine = implode($this->delimiter, array_keys(current($res)));
+        } else {
+            $firstLine = implode($this->delimiter, array_keys($res));
+        }
+
+        return $firstLine;
+    }
+
+    /**
+     * @param array $res
+     *
+     * @return string
+     */
+    private function getBody(array $res): string
+    {
+        $formattedValues = [];
+        foreach ($res as $key => $val) {
+            if (\is_array($val)) {
+                $formattedValues[] = $this->getBody($val);
+            }
+        }
+        if (empty($formattedValues)) {
+            $formattedValues[] = implode($this->delimiter, $res);
+        }
+        return implode($this->strDelimiter, $formattedValues);
     }
 }

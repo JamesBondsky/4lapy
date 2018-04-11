@@ -10,6 +10,39 @@ $APPLICATION->SetPageProperty('title', 'Зоомагазин Четыре лап
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
 $APPLICATION->SetTitle('Главная страница');
 
+$container = \FourPaws\App\Application::getInstance()->getContainer();
+//$seializer = $container->get(\JMS\Serializer\SerializerInterface::class);
+$seializerBuilder = new \JMS\Serializer\SerializerBuilder();
+$propertyNamingStrategy = $container->getParameter('jms_serializer.identical_property_naming_strategy.class');
+$nameStrategy = $container->getParameter('jms_serializer.serialized_name_annotation_strategy.class');
+$nameStrategy = new $nameStrategy(new $propertyNamingStrategy());
+$deserializeClass = $container->getParameter('jms_serializer.csv_deserialization_visitor.class');
+$serializeClass = $container->getParameter('jms_serializer.csv_serialization_visitor.class');
+$seializerBuilder->setDeserializationVisitor('csv', new $deserializeClass($nameStrategy));
+$seializerBuilder->setSerializationVisitor('csv', new $serializeClass($nameStrategy));
+$seializerBuilder->configureHandlers(function(JMS\Serializer\Handler\HandlerRegistry $registry) {
+    /** @todo цикл перебора */
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\BitrixBooleanHandler());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\ArrayCommaString());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\ArrayOrFalseHandler());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\BitrixBooleanD7Handler());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\BitrixDateHandler());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\BitrixDateTimeHandler());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\BitrixDateTimeObjectHandler());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\ManzanaDateTimeImmutableFullShortHandler());
+        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\PhoneHandler());
+//        $registry->registerSubscribingHandler(new \FourPaws\AppBundle\Serialization\CsvHandler());
+    });
+$seializer = $seializerBuilder->build();
+
+$userService = $container->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class);
+$curUser = $userService->getCurrentUser();
+$users = $userService->getUserRepository()->findBy(['ACTIVE'=>'Y'],[],3);
+
+$res = $seializer->serialize($users, 'csv', \JMS\Serializer\SerializationContext::create()->setGroups('read'));
+echo $res;
+$res = $seializer->deserialize($res, sprintf('array<%s>',\FourPaws\UserBundle\Entity\User::class),'csv',\JMS\Serializer\DeserializationContext::create()->setGroups('read'));
+var_dump($res);
 
 $APPLICATION->IncludeComponent('bitrix:news.list',
     'index.slider',
