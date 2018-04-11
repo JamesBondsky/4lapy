@@ -639,7 +639,7 @@ class UserService implements
      * @throws ArgumentException
      * @throws ObjectPropertyException
      */
-    public function refreshUserReferral(User $user): bool
+    public function refreshUserOpt(User $user): bool
     {
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $contact = $manzanaService->getContactByUser($user);
