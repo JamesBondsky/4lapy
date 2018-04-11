@@ -20,10 +20,12 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
+use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -56,6 +58,7 @@ class UserService implements
     use LazyLoggerAwareTrait;
 
     public const BASE_DISCOUNT = 3;
+    public const GROUP_OPT = 30;
     /**
      * @var \CAllUser|\CUser
      */
@@ -94,6 +97,7 @@ class UserService implements
      * @param string $rawLogin
      * @param string $password
      *
+     * @throws \Exception
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
@@ -161,6 +165,7 @@ class UserService implements
     }
 
     /**
+     * @throws \Exception
      * @throws NotAuthorizedException
      * @return int
      */
@@ -177,6 +182,7 @@ class UserService implements
      *
      * @param User $user
      *
+     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws RuntimeException
@@ -369,6 +375,7 @@ class UserService implements
      *
      * @param int $id
      *
+     * @throws \Exception
      * @throws NotAuthorizedException
      * @throws AvatarSelfAuthorizationException
      * @return bool
@@ -480,6 +487,7 @@ class UserService implements
      * @return int
      *
      * получение либо скидки пользователя либо базовой
+     * @throws \RuntimeException
      */
     public function getDiscount(): int
     {
@@ -497,7 +505,7 @@ class UserService implements
     }
 
     /**
-     * @param User $user
+     * @param User           $user
      *
      * @param null|UserBonus $userBonus
      *
@@ -570,7 +578,7 @@ class UserService implements
     /**
      * Обновление бонуса текущего пользователя
      *
-     * @param null|User $user
+     * @param null|User      $user
      * @param null|UserBonus $bonus
      *
      * @throws SystemException
@@ -578,7 +586,7 @@ class UserService implements
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      */
-    public function refreshUserBonusPercent(?User $user = null, ?UserBonus $bonus=null): void
+    public function refreshUserBonusPercent(?User $user = null, ?UserBonus $bonus = null): void
     {
         if (!$user) {
             try {
@@ -605,6 +613,51 @@ class UserService implements
                 );
             }
         }
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     */
+    public function refreshUserReferral(User $user):bool
+    {
+        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $contact = $manzanaService->getContactByUser($user);
+        $groupsList = [];
+        $groups = $user->getGroups()->toArray();
+        /** @var Group $group */
+        foreach ($groups as $group) {
+            $groupsList[] = $group->getId();
+        }
+        if ($contact->isOpt() && !$user->isOpt()) {
+            /** установка оптовика */
+            $groupsList[] = static::GROUP_OPT;
+            \CUser::SetUserGroup($user->getId(), $groupsList);
+            $this->logout();
+            $this->authorize($user->getId());
+            TaggedCacheHelper::clearManagedCache(['personal:referral:'.$user->getId()]);
+            return true;
+        }
+        if (!$contact->isOpt() && $user->isOpt()) {
+            /** убираем оптовика */
+            unset($groupsList[\array_search(static::GROUP_OPT, $groupsList, true)]);
+            \CUser::SetUserGroup($user->getId(), $groupsList);
+            $this->logout();
+            $this->authorize($user->getId());
+            TaggedCacheHelper::clearManagedCache(['personal:referral:'.$user->getId()]);
+            return true;
+        }
+        return false;
     }
 
     /**
