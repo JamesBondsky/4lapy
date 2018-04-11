@@ -9,7 +9,10 @@ namespace FourPaws\UserBundle\Service;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\GroupTable;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
@@ -58,7 +61,7 @@ class UserService implements
     use LazyLoggerAwareTrait;
 
     public const BASE_DISCOUNT = 3;
-    public const GROUP_OPT = 30;
+    public const GROUP_OPT_CODE = 'opt';
     /**
      * @var \CAllUser|\CUser
      */
@@ -146,6 +149,7 @@ class UserService implements
     }
 
     /**
+     * @throws \Exception
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -254,6 +258,7 @@ class UserService implements
      * @param string $name
      * @param string $parentName
      *
+     * @throws \Exception
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -354,6 +359,7 @@ class UserService implements
     /**
      * @param int $id
      *
+     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws NotAuthorizedException
      * @return array
@@ -456,6 +462,7 @@ class UserService implements
     /**
      * Возврат к авторизации под исходным пользователем
      *
+     * @throws \Exception
      * @throws NotAuthorizedException
      * @return bool
      */
@@ -628,8 +635,11 @@ class UserService implements
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
      */
-    public function refreshUserReferral(User $user):bool
+    public function refreshUserReferral(User $user): bool
     {
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $contact = $manzanaService->getContactByUser($user);
@@ -637,24 +647,24 @@ class UserService implements
         $groups = $user->getGroups()->toArray();
         /** @var Group $group */
         foreach ($groups as $group) {
-            $groupsList[] = $group->getId();
+            $groupsList[$group->getCode()] = $group->getId();
         }
         if ($contact->isOpt() && !$user->isOpt()) {
             /** установка оптовика */
-            $groupsList[] = static::GROUP_OPT;
+            $groupsList[] = GroupTable::query()->setFilter(['CODE' => static::GROUP_OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
             \CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
-            TaggedCacheHelper::clearManagedCache(['personal:referral:'.$user->getId()]);
+            TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
             return true;
         }
         if (!$contact->isOpt() && $user->isOpt()) {
             /** убираем оптовика */
-            unset($groupsList[\array_search(static::GROUP_OPT, $groupsList, true)]);
+            unset($groupsList[static::GROUP_OPT_CODE]);
             \CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
-            TaggedCacheHelper::clearManagedCache(['personal:referral:'.$user->getId()]);
+            TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
             return true;
         }
         return false;
