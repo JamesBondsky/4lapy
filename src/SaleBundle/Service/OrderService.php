@@ -11,6 +11,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -39,6 +40,7 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -217,14 +219,15 @@ class OrderService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
      * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
+     * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws OrderCreateException
      * @throws StoreNotFoundException
-     * @throws SystemException
      * @throws UserMessageException
      * @return Order
      */
@@ -692,8 +695,10 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws OrderSplitException
      * @throws StoreNotFoundException
-     * @throws UserMessageException
      * @throws SystemException
+     * @throws UserMessageException
+     * @throws LoaderException
+     * @throws BitrixProxyException
      * @return OrderSplitResult[]
      */
     public function splitOrder(OrderStorage $storage): array
@@ -803,8 +808,12 @@ class OrderService implements LoggerAwareInterface
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
+     * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException

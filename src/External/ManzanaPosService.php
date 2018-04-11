@@ -47,14 +47,19 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
         /** @var BasketItem $item */
         foreach ($basket->getBasketItems() as $k => $item) {
-            $sum += $item->getBasePrice() * $item->getQuantity();
-            $sumDiscounted += $item->getPrice() * $item->getQuantity();
-
             $xmlId = $item->getField('PRODUCT_XML_ID');
 
             if (\strpos($xmlId, '#')) {
                 $xmlId = \explode('#', $xmlId)[1];
             }
+
+            if (null === $xmlId) {
+                continue;
+            }
+
+            $sum += $item->getBasePrice() * $item->getQuantity();
+            $sumDiscounted += $item->getPrice() * $item->getQuantity();
+
             $basketCode = (int)str_replace('n', '', $item->getBasketCode());
             $chequePosition =
                 (new ChequePosition())->setChequeItemNumber($basketCode)

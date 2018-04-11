@@ -1168,7 +1168,6 @@ class Offer extends IblockElement
     /**
      * @throws ArgumentException
      * @throws ServiceNotFoundException
-     * @throws \Exception
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @return int
@@ -1326,12 +1325,12 @@ class Offer extends IblockElement
      * @throws ServiceCircularReferenceException
      * @throws ArgumentException
      * @throws ApplicationCreateException
-     * @throws \Exception
      */
     public function isAvailable(): bool
     {
-        /** @todo сделать обработку исключений */
-        return $this->isActive() && $this->getQuantity() > 0;
+        return $this->isActive() &&
+            $this->getQuantity() > 0 &&
+            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable());
     }
 
     /**
