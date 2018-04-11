@@ -9,6 +9,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -85,24 +86,21 @@ class BasketService implements LoggerAwareInterface
      * @param array $rewriteFields
      * @param bool $save
      * @param Basket|null $basket
-     * @param bool $merge
      *
      * @return BasketItem
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws BitrixProxyException
-     * @throws Exception
      * @throws ObjectNotFoundException
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      */
     public function addOfferToBasket(
         int $offerId,
         int $quantity = null,
         array $rewriteFields = [],
         bool $save = true,
-        ?Basket $basket = null,
-        bool $merge = true
+        ?Basket $basket = null
     ): BasketItem
     {
         if ($quantity < 0) {
@@ -129,8 +127,7 @@ class BasketService implements LoggerAwareInterface
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
             $basket,
             $fields,
-            $this->getContext(),
-            $merge
+            $this->getContext()
         );
 
         if (!$result->isSuccess()) {
@@ -264,7 +261,9 @@ class BasketService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
-     * @throws Exception
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      */
     public function getBasket(bool $reload = null, int $fUserId = 0): Basket
     {
@@ -304,8 +303,12 @@ class BasketService implements LoggerAwareInterface
     /**
      * Возвращает OfferCollection содержащих товары корзины и возможные подарки
      *
-     * @throws InvalidArgumentException
-     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      * @return OfferCollection
      */
     public function getOfferCollection(): OfferCollection
@@ -314,8 +317,13 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @throws InvalidArgumentException
      *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      * @return OfferCollection
      */
     private function loadOfferCollection(): OfferCollection
@@ -350,59 +358,98 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     *
      * @param Basket $basket
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws InvalidArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws Exception
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     *
-     * @return BasketItem
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
+     * @return Basket
      */
     public function refreshAvailability(Basket $basket): Basket
     {
+        $isTemporary = function (BasketItem $basketItem): bool {
+            $property = $basketItem->getPropertyCollection()->getPropertyValues()['IS_TEMPORARY'];
+            return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
+        };
+
+        $temporaryItems = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            if (!$isTemporary($basketItem)) {
+                continue;
+            }
+
+            $temporaryItems[$basketItem->getProductId()] = $basketItem;
+        }
+
         $offerCollection = $this->getOfferCollection();
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
+            /** @var Offer $offer */
             foreach ($offerCollection as $offer) {
                 if ($offer->getId() !== (int)$basketItem->getProductId()) {
                     continue;
                 }
 
-                $toUpdate = [];
+                $temporaryItem = null;
+                $quantity = (int)$basketItem->getQuantity();
+                if (isset($temporaryItems[$basketItem->getProductId()])) {
+                    /** @var BasketItem $temporaryItem */
+                    $temporaryItem = $temporaryItems[$basketItem->getProductId()];
+                    $quantity += (int)$temporaryItem->getQuantity();
+                }
+
                 $delay = false;
-
-                if (!$offer->getProduct()->isPickupAvailable() && !$offer->getProduct()->isDeliveryAvailable()) {
+                if (!$offer->isAvailable()) {
                     $delay = true;
                 }
 
-                $amount = $offer->getStocks()->getTotalAmount();
-                if ($amount === 0) {
-                    $delay = true;
-                }
+                if ($delay) {
+                    if (null !== $temporaryItem) {
+                        $temporaryItem->delete();
+                    }
 
-                if ($basketItem->isDelay() !== $delay) {
-                    $toUpdate['DELAY'] = $delay ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE;
-                }
+                    if (!$basketItem->isDelay()) {
+                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                    }
+                    $toUpdate['QUANTITY'] = $quantity;
+                } else {
+                    $maxAmount = $offer->getStocks()->getTotalAmount();
+                    $diff = $quantity - $maxAmount;
+                    if ($diff > 0) {
+                        $toUpdate['QUANTITY'] = $maxAmount;
+                        if (null === $temporaryItem) {
+                            $this->addOfferToBasket(
+                                (int)$basketItem->getProductId(),
+                                $diff,
+                                [
+                                    'DELAY' => 'Y',
+                                    'PROPS' => [
+                                        [
+                                            'NAME' => 'IS_TEMPORARY',
+                                            'CODE' => 'IS_TEMPORARY',
+                                            'VALUE' => 'Y'
+                                        ]
+                                    ]
+                                ],
+                                false,
+                                $basket
+                            );
+                        }
+                    } else {
+                        if ((int)$basketItem->getQuantity() !== $quantity) {
+                            $toUpdate['QUANTITY'] = $quantity;
+                        }
 
-
-                $diff = (int)$basketItem->getQuantity() - $amount;
-                if (!$delay && $diff > 0) {
-                    $toUpdate['QUANTITY'] = $amount;
-                    $this->addOfferToBasket(
-                        (int)$basketItem->getProductId(),
-                        $diff,
-                        [
-                            'DELAY' => 'Y'
-                        ],
-                        false,
-                        $basket,
-                        false
-                    );
+                        if (null !== $temporaryItem) {
+                            $temporaryItem->delete();
+                        }
+                    }
                 }
 
                 if (!empty($toUpdate)) {
@@ -417,6 +464,51 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * @param Basket $basket
+     *
+     * @return Basket
+     * @throws ObjectNotFoundException
+     */
+    public function removeTemporaryItems(Basket $basket): Basket
+    {
+        $isTemporary = function (BasketItem $basketItem): bool {
+            $property = $basketItem->getPropertyCollection()->getPropertyValues()['IS_TEMPORARY'];
+            return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
+        };
+
+        $tmpItems = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            if (!$isTemporary($basketItem)) {
+                continue;
+            }
+
+            $tmpItems[$basketItem->getProductId()] = $basketItem->getQuantity();
+            $basketItem->delete();
+        }
+
+        foreach ($basket as $basketItem) {
+            if (!isset($tmpItems[$basketItem->getProductId()])) {
+                continue;
+            }
+
+            try {
+                $basketItem->setField(
+                    'QUANTITY',
+                    $basketItem->getQuantity() + $tmpItems[$basketItem->getProductId()]
+                );
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('failed to restore item quantity: %s', $e->getMessage()), [
+                    'basketId' => $basketItem->getId(),
+                    'offerId' => $basketItem->getProductId(),
+                ]);
+            }
+        }
+
+        return $basket;
+    }
+
+    /**
      * @todo Избавиться от этих двух методов, перенеся их непосредственно в обработчики акций, однако необходимо
      *     отделить общую часть от проектной
      */
@@ -424,10 +516,13 @@ class BasketService implements LoggerAwareInterface
      * @param string $type
      * @param bool $renew
      *
-     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     *
      * @return AdderInterface
      */
     public function getAdder(string $type, bool $renew = false): AdderInterface
@@ -469,10 +564,13 @@ class BasketService implements LoggerAwareInterface
      * @param string $type
      * @param bool $renew
      *
-     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     *
      * @return CleanerInterface
      */
     public function getCleaner(string $type, bool $renew = false): CleanerInterface
@@ -510,6 +608,12 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      * @return float
      */
     public function getBasketBonus(): float
@@ -577,6 +681,12 @@ class BasketService implements LoggerAwareInterface
      *
      * @param Basket|null $basket
      *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      * @return float
      */
     public function getMaxBonusesForPayment(?Basket $basket = null): float
