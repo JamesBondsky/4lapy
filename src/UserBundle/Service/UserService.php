@@ -18,6 +18,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Enum\UserGroup;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -61,7 +62,6 @@ class UserService implements
     use LazyLoggerAwareTrait;
 
     public const BASE_DISCOUNT = 3;
-    public const GROUP_OPT_CODE = 'opt';
     /**
      * @var \CAllUser|\CUser
      */
@@ -651,7 +651,7 @@ class UserService implements
         }
         if ($contact->isOpt() && !$user->isOpt()) {
             /** установка оптовика */
-            $groupsList[] = GroupTable::query()->setFilter(['CODE' => static::GROUP_OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            $groupsList[] = GroupTable::query()->setFilter(['CODE' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
             \CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
@@ -660,7 +660,7 @@ class UserService implements
         }
         if (!$contact->isOpt() && $user->isOpt()) {
             /** убираем оптовика */
-            unset($groupsList[static::GROUP_OPT_CODE]);
+            unset($groupsList[UserGroup::OPT_CODE]);
             \CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
