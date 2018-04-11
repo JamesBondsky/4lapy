@@ -9,6 +9,7 @@ use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\SaleBundle\Helper\OrderCopy;
 
 class OrderSubscribeCopyParams
 {
@@ -22,24 +23,32 @@ class OrderSubscribeCopyParams
     private $dateForOrderCreate;
     /** @var int $copyOrderId */
     private $copyOrderId;
-    /** @var BaseResult $orderSubscribeService */
+    /** @var BaseResult $copyOrderDeliveryCalculationResult */
     private $copyOrderDeliveryCalculationResult;
+    /** @var BaseResult $newOrderDeliveryCalculationResult */
+    private $newOrderDeliveryCalculationResult;
+    /** @var OrderCopy $orderCopyHelper */
+    private $orderCopyHelper;
+    /** @var array $copyOrderParams */
+    private $copyOrderParams;
 
     /**
      * CopyOrderParams constructor.
      *
      * @param OrderSubscribe $orderSubscribe
+     * @param array $copyOrderParams
      */
-    public function __construct(OrderSubscribe $orderSubscribe)
+    public function __construct(OrderSubscribe $orderSubscribe, array $copyOrderParams = [])
     {
         $this->orderSubscribe = $orderSubscribe;
+        $this->copyOrderParams = $copyOrderParams;
     }
 
     /**
      * @return OrderSubscribeService|object
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function getOrderSubscribeService()
+    protected function getOrderSubscribeService(): OrderSubscribeService
     {
         /** @var OrderSubscribeService $orderSubscribeService */
         $orderSubscribeService = Application::getInstance()->getContainer()->get(
@@ -52,9 +61,110 @@ class OrderSubscribeCopyParams
     /**
      * @return OrderSubscribe
      */
-    public function getOrderSubscribe()
+    public function getOrderSubscribe(): OrderSubscribe
     {
         return $this->orderSubscribe;
+    }
+
+    /**
+     * @return OrderCopy
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getOrderCopyHelper(): OrderCopy
+    {
+        if (!$this->orderCopyHelper) {
+            $this->orderCopyHelper = new OrderCopy(
+                $this->getCopyOrderId()
+            );
+
+            if (isset($this->copyOrderParams['orderExcludeProps'])) {
+                $this->orderCopyHelper->appendOrderExcludeProps(
+                    $this->copyOrderParams['orderExcludeProps']
+                );
+            }
+            if (isset($this->copyOrderParams['basketItemExcludeProps'])) {
+                $this->orderCopyHelper->appendBasketItemExcludeProps(
+                    $this->copyOrderParams['basketItemExcludeProps']
+                );
+            }
+            if (isset($this->copyOrderParams['orderCopyFields'])) {
+                $this->orderCopyHelper->appendOrderCopyFields(
+                    $this->copyOrderParams['orderCopyFields']
+                );
+            }
+        }
+
+        return $this->orderCopyHelper;
+    }
+
+    /**
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyBasketException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyShipmentsException
+     */
+    public function doCopyOrder()
+    {
+        if (!$this->getOrderCopyHelper()->isBasketCopied()) {
+            $this->getOrderCopyHelper()->doBasicCopy();
+        }
+    }
+
+    /**
+     * @return \Bitrix\Sale\Order
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyBasketException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyShipmentsException
+     */
+    public function getNewOrder(): \Bitrix\Sale\Order
+    {
+        $this->doCopyOrder();
+
+        return $this->getOrderCopyHelper()->getNewOrder();
+    }
+
+    /**
+     * @return \Bitrix\Sale\Result
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyBasketException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyShipmentsException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
+     */
+    public function saveNewOrder(): \Bitrix\Sale\Result
+    {
+        $this->doCopyOrder();
+        $this->getOrderCopyHelper()->doFinalAction();
+
+        return $this->getOrderCopyHelper()->save();
     }
 
     /**
@@ -171,8 +281,6 @@ class OrderSubscribeCopyParams
             // − Предыдущего заказа по подписке, если создается не первый заказ по подписке.
             $originOrderId = $this->getOriginOrderId();
             $this->copyOrderId = $orderSubscribeHistoryService->getLastCopyOrderId($originOrderId);
-/** @todo для отладки, не забыть убрать */
-$this->copyOrderId = 0;
             if ($this->copyOrderId <= 0) {
                 $this->copyOrderId = $originOrderId;
             }
@@ -225,8 +333,45 @@ $this->copyOrderId = 0;
     }
 
     /**
+     * Возвращает CalculationResult для нового заказа
+     * CalculationResult берется от клона копируемого заказа.
+     *
+     * @return BaseResult
+     * @throws RuntimeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyBasketException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCopyShipmentsException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getNewOrderDeliveryCalculationResult(): BaseResult
+    {
+        if (!$this->newOrderDeliveryCalculationResult) {
+            $bitrixOrder = $this->getNewOrder();
+            $orderSubscribeService = $this->getOrderSubscribeService();
+            $calculationResult = $orderSubscribeService->getDeliveryCalculationResult($bitrixOrder);
+            if (!$calculationResult || !$calculationResult->isSuccess()) {
+                throw new RuntimeException('Не удалось получить расчет доставки нового заказа');
+            }
+
+            $this->newOrderDeliveryCalculationResult = $calculationResult;
+        }
+
+        return $this->newOrderDeliveryCalculationResult;
+    }
+
+    /**
      * Определение даты, когда должен быть создан заказ, чтобы его доставили к заданному сроку.
-     * Расчетная дата может быть меньше текущей
+     * Дата определяется в контексте нового заказа.
+     * Расчетная дата может быть меньше текущей.
      *
      * @return \DateTime
      * @throws BitrixOrderNotFoundException
@@ -244,7 +389,7 @@ $this->copyOrderId = 0;
     public function getDateForOrderCreate(): \DateTime
     {
         if (!$this->dateForOrderCreate) {
-            $calculationResult = $this->getCopyOrderDeliveryCalculationResult();
+            $calculationResult = $this->getNewOrderDeliveryCalculationResult();
             $orderSubscribeService = $this->getOrderSubscribeService();
             $this->dateForOrderCreate = $orderSubscribeService->getDateForOrderCreate(
                 $calculationResult,

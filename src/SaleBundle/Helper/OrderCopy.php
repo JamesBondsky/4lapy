@@ -49,7 +49,7 @@ class OrderCopy
         'basketItemCopyProps' => [],
         /** Исключаемые свойства корзины (по умолчанию) */
         'basketItemExcludeProps' => [
-            'CATALOG.XML_ID', 'PRODUCT.XML_ID',
+            //'CATALOG.XML_ID', 'PRODUCT.XML_ID',
         ],
         /** Копируемые свойства заказа (по умолчанию) */
         'orderCopyProps' => [],
@@ -64,6 +64,8 @@ class OrderCopy
     ];
     /** @var array */
     private $filterFieldsFlipped = [];
+    /** @var array */
+    private $flags = [];
 
     /** @var DeliveryService $deliveryService */
     private $deliveryService;
@@ -154,6 +156,136 @@ class OrderCopy
     }
 
     /**
+     * @param string $flagName
+     * @return bool
+     */
+    protected function getFlagByName(string $flagName): bool
+    {
+        return isset($this->flags[$flagName]) && $this->flags[$flagName];
+    }
+
+    /**
+     * @param string $flagName
+     * @param bool $state
+     */
+    protected function setFlagByName(string $flagName, bool $state = true)
+    {
+        $this->flags[$flagName] = $state;
+    }
+
+    /**
+     * @param bool $state
+     */
+    public function setFieldsCopied(bool $state = true)
+    {
+        $this->setFlagByName('fieldsCopied', $state);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFieldsCopied(): bool
+    {
+        return $this->getFlagByName('fieldsCopied');
+    }
+
+    /**
+     * @param bool $state
+     */
+    public function setBasketCopied(bool $state = true)
+    {
+        $this->setFlagByName('basketCopied', $state);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBasketCopied(): bool
+    {
+        return $this->getFlagByName('basketCopied');
+    }
+
+    /**
+     * @param bool $state
+     */
+    public function setPropsCopied(bool $state = true)
+    {
+        $this->setFlagByName('propsCopied', $state);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPropsCopied(): bool
+    {
+        return $this->getFlagByName('propsCopied');
+    }
+
+    /**
+     * @param bool $state
+     */
+    public function setShipmentsCopied(bool $state = true)
+    {
+        $this->setFlagByName('shipmentsCopied', $state);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isShipmentsCopied(): bool
+    {
+        return $this->getFlagByName('shipmentsCopied');
+    }
+
+    /**
+     * @param bool $state
+     */
+    public function setPaymentsCopied(bool $state = true)
+    {
+        $this->setFlagByName('paymentsCopied', $state);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPaymentsCopied(): bool
+    {
+        return $this->getFlagByName('paymentsCopied');
+    }
+
+    /**
+     * @param bool $state
+     */
+    public function setTaxCopied(bool $state = true)
+    {
+        $this->setFlagByName('taxCopied', $state);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTaxCopied(): bool
+    {
+        return $this->getFlagByName('taxCopied');
+    }
+
+    /**
+     * @param bool $state
+     */
+    public function setOrderSaved(bool $state = true)
+    {
+        $this->setFlagByName('orderSaved', $state);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOrderSaved(): bool
+    {
+        return $this->getFlagByName('orderSaved');
+    }
+
+    /**
      * @return Order
      */
     public function getOldOrder(): Order
@@ -183,6 +315,7 @@ class OrderCopy
                 $this->oldOrder->getField($fieldName)
             );
         }
+        $this->setFieldsCopied();
     }
 
     /**
@@ -266,6 +399,8 @@ class OrderCopy
         if (!$tmpResult->isSuccess()) {
             throw new OrderCopyBasketException(implode("\n", $tmpResult->getErrorMessages()), 500);
         }
+
+        $this->setBasketCopied();
     }
 
     /**
@@ -295,6 +430,8 @@ class OrderCopy
         foreach ($oldOrderPropsById as $propId => $value) {
             $this->setPropValueById($propId, $value);
         }
+
+        $this->setPropsCopied();
     }
 
     /**
@@ -409,6 +546,8 @@ class OrderCopy
         if (!$tmpResult->isSuccess()) {
             throw new OrderCopyShipmentsException(implode("\n", $tmpResult->getErrorMessages()), 700);
         }
+
+        $this->setShipmentsCopied();
     }
 
     /**
@@ -435,6 +574,8 @@ class OrderCopy
             $newPayment->setField('PAY_SYSTEM_NAME', $oldPayment->getPaymentSystemName());
             $newPayment->setField('SUM', $this->newOrder->getPrice());
         }
+
+        $this->setPaymentsCopied();
     }
 
     /**
@@ -469,7 +610,7 @@ class OrderCopy
 
     public function copyTax()
     {
-        /** @todo */
+        /** @todo copyTax */
     }
 
     /**
@@ -507,6 +648,7 @@ class OrderCopy
         if (!$tmpResult->isSuccess()) {
             throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 900);
         }
+        $this->setOrderSaved();
 
         return $tmpResult;
     }

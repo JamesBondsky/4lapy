@@ -7,8 +7,8 @@ use FourPaws\SaleBundle\Helper\OrderCopy;
 
 class OrderSubscribeCopyResult extends Result
 {
-    /** @var OrderCopy $orderCopyHelper */
-    private $orderCopyHelper;
+    /** @var OrderSubscribeCopyParams $orderSubscribeCopyParams */
+    private $orderSubscribeCopyParams;
     /** @var \Bitrix\Sale\Result $orderSaveResult */
     private $orderSaveResult;
 
@@ -27,22 +27,22 @@ class OrderSubscribeCopyResult extends Result
     }
 
     /**
-     * @param OrderCopy $orderCopyHelper
+     * @param OrderSubscribeCopyParams $params
      * @return OrderSubscribeCopyResult
      */
-    public function setOrderCopyHelper(OrderCopy $orderCopyHelper): self
+    public function setOrderSubscribeCopyParams(OrderSubscribeCopyParams $params): self
     {
-        $this->orderCopyHelper = $orderCopyHelper;
+        $this->orderSubscribeCopyParams = $params;
 
         return $this;
     }
 
     /**
-     * @return OrderCopy|null
+     * @return OrderSubscribeCopyParams|null
      */
-    public function getOrderCopyHelper()
+    public function getOrderSubscribeCopyParams()
     {
-        return $this->orderCopyHelper ?? null;
+        return $this->orderSubscribeCopyParams ?? null;
     }
 
     /**
