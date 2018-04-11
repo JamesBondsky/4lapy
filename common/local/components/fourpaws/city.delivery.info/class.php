@@ -97,7 +97,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     protected function prepareResult()
     {
         $defaultLocation = $this->locationService->getDefaultLocation();
-        $currentLocation = $this->locationService->findLocationByCode($this->arParams['LOCATION_CODE']);
+        if(!empty($this->arParams['LOCATION_CODE'])) {
+            $currentLocation = $this->locationService->findLocationByCode($this->arParams['LOCATION_CODE']);
+        }
 
         $allDeliveryCodes = array_merge(DeliveryService::DELIVERY_CODES, DeliveryService::PICKUP_CODES);
         if (!empty($this->arParams['DELIVERY_CODES'])) {
