@@ -225,7 +225,7 @@ class ProductService
     protected function fillProperties(Product $product, Material $material): void
     {
         $product
-            ->withSTM(
+            ->withStm(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::STM,
                     [1]
