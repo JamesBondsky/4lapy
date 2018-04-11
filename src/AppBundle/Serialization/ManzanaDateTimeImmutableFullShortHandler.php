@@ -6,7 +6,7 @@
 
 namespace FourPaws\AppBundle\Serialization;
 
-use FourPaws\AppBundle\SerializationVisitor\CsvDeserializationVisitor;
+use FourPaws\AppBundle\DeserializationVisitor\CsvDeserializationVisitor;
 use FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor;
 use FourPaws\MobileApiBundle\SerializationVisitor\BlankSerializationVisitor;
 use JMS\Serializer\Context;

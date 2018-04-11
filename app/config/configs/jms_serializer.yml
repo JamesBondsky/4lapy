@@ -4,7 +4,7 @@ parameters:
     jms_serializer.unserialize_object_constructor.class: FourPaws\AppBundle\Construction\UnserializeObjectConstructor
 
     jms_serializer.csv_serialization_visitor.class: FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor
-    jms_serializer.csv_deserialization_visitor.class: FourPaws\AppBundle\SerializationVisitor\CsvDeserializationVisitor
+    jms_serializer.csv_deserialization_visitor.class: FourPaws\AppBundle\DeserializationVisitor\CsvDeserializationVisitor
 services:
     JMS\Serializer\SerializerInterface: '@jms_serializer'
 

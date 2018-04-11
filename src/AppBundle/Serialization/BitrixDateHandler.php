@@ -8,7 +8,7 @@ namespace FourPaws\AppBundle\Serialization;
 
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
-use FourPaws\AppBundle\SerializationVisitor\CsvDeserializationVisitor;
+use FourPaws\AppBundle\DeserializationVisitor\CsvDeserializationVisitor;
 use FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;

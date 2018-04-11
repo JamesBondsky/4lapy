@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\AppBundle\SerializationVisitor;
+namespace FourPaws\AppBundle\DeserializationVisitor;
 
 use JMS\Serializer\AbstractVisitor;
 use JMS\Serializer\Context;
@@ -11,8 +11,8 @@ use JMS\Serializer\NullAwareVisitorInterface;
 use phpDocumentor\Reflection\Types\Scalar;
 
 /**
- * Class CsvSerializationVisitor
- * @package FourPaws\AppBundle\Serialization
+ * Class CsvDeserializationVisitor
+ * @package FourPaws\AppBundle\Deserialization
  */
 class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisitorInterface
 {
@@ -22,6 +22,14 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
     private $delimiter = ';';
     private $strDelimiter = "\r\n";
     private $data;
+
+    /**
+     * @return string
+     */
+    public static function getFormat(): string
+    {
+        return 'csv';
+    }
 
     /** @noinspection PhpMissingParentCallCommonInspection
      *

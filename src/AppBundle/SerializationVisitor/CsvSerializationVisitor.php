@@ -20,6 +20,14 @@ class CsvSerializationVisitor extends AbstractVisitor
     private $data;
     private $strDelimiter = "\r\n";
 
+    /**
+     * @return string
+     */
+    public static function getFormat(): string
+    {
+        return 'csv';
+    }
+
     /** @noinspection PhpMissingParentCallCommonInspection
      *
      * @param array   $data
