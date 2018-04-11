@@ -104,8 +104,9 @@ class Event implements ServiceHandlerInterface
             $userService = $container->get(CurrentUserProviderInterface::class);
             $userAccountService = $container->get(UserAccountService::class);
             $user = $userService->getCurrentUser();
-            list(, $bonus) = $userAccountService->refreshUserBalance($user);
+            [, $bonus] = $userAccountService->refreshUserBalance($user);
             $userService->refreshUserBonusPercent($user, $bonus);
+            $userService->refreshUserOpt($user);
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
         } catch (\Exception $e) {
