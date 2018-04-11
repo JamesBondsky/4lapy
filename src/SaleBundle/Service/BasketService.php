@@ -390,6 +390,9 @@ class BasketService implements LoggerAwareInterface
         $offerCollection = $this->getOfferCollection();
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
+            if ($isTemporary($basketItem)) {
+                continue;
+            }
             /** @var Offer $offer */
             foreach ($offerCollection as $offer) {
                 if ($offer->getId() !== (int)$basketItem->getProductId()) {
@@ -440,6 +443,18 @@ class BasketService implements LoggerAwareInterface
                                 false,
                                 $basket
                             );
+                        } else {
+                            try {
+                                $temporaryItem->setField('QUANTITY', $diff);
+                            } catch (\Exception $e) {
+                                $this->log()->error(
+                                    sprintf('failed to set tmp item quantity: %s', $e->getMessage()),
+                                    [
+                                        'offerId' => $offer->getId(),
+                                        'quantity' => $diff
+                                    ]
+                                );
+                            }
                         }
                     } else {
                         if ((int)$basketItem->getQuantity() !== $quantity) {

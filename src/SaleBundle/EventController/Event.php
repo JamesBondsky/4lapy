@@ -117,24 +117,6 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws InvalidArgumentException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws Exception
-     */
-    public static function updateItemAvailability(BitrixEvent $event): void
-    {
-        $basket = $event->getParameter('ENTITY');
-        Application::getInstance()
-                   ->getContainer()
-                   ->get(BasketService::class)
-                   ->refreshAvailability($basket);
-    }
-
-    /**
-     * @param BitrixEvent $event
-     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
