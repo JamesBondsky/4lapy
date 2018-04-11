@@ -111,11 +111,12 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 ],
             ]
         ];
+
         $this->basketService->addOfferToBasket(
             $offerId,
             $quantity,
             $fields,
-            true, /** @todo вопрос с сохранением в базу */
+            $this->canBasketSave(),
             $this->order->getBasket(),
             false
         );
@@ -223,13 +224,13 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         $existGift['basketId'],
                         $existGift['quantity'] - 1,
                         $this->order->getBasket(),
-                        true /** @todo вопрос с сохранением в базу */
+                        $this->canBasketSave()
                     );
                 } else {
                     $this->basketService->deleteOfferFromBasket(
                         $existGift['basketId'],
                         $this->order->getBasket(),
-                        true /** @todo вопрос с сохранением в базу */
+                        $this->canBasketSave()
                     );
                 }
                 break;

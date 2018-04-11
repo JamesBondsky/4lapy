@@ -58,7 +58,7 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                 $this->basketService->deleteOfferFromBasket(
                     $gift['basketId'],
                     $this->order->getBasket(),
-                    true /** @todo вопрос с сохранением в базу */
+                    $this->canBasketSave()
                 );
                 unset($existGifts[$k]);
             }
@@ -84,7 +84,7 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                             $gift['basketId'],
                             $availCount,
                             $this->order->getBasket(),
-                            true /** @todo вопрос с сохранением в базу */
+                            $this->canBasketSave()
                         );
                         $availCount = 0;
                     } else {
@@ -92,7 +92,7 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                             $this->basketService->deleteOfferFromBasket(
                                 $gift['basketId'],
                                 $this->order->getBasket(),
-                                true /** @todo вопрос с сохранением в базу */
+                                $this->canBasketSave()
                             );
                             unset($existGifts[$k]);
                         } /** @noinspection BadExceptionsProcessingInspection */ catch (NotFoundException $e) {

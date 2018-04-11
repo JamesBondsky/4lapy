@@ -42,4 +42,33 @@ abstract class BaseDiscountPostHandler
     }
 
     abstract public function processOrder(): void;
+
+    /**
+     * @return bool
+     */
+    protected function canBasketSave(): bool
+    {
+        $result = true;
+
+        /**
+         * Здесь есть вопросы с сохранением в базу.
+         * При работе из публички сохранять нужно, чтобы выбранный юзером подарок не сбрасывался.
+         * А, например, при копировании заказа сохранение сбросит текущую корзину, если процедура была запущена под
+         * авторизованным пользователем.
+         * Пока решил отдавать флаг необходимости сохранения, если в составе корзины нет позиций без ID
+         * (т.е. еще не сброшенных в базу)
+         */
+        $basket = $this->order->getBasket();
+        if ($basket) {
+            foreach ($basket->getBasketItems() as $item) {
+                /** @var $item \Bitrix\Sale\BasketItem */
+                if (!$item->getId()) {
+                    $result = false;
+                    break;
+                }
+            }
+        }
+
+        return $result;
+    }
 }
