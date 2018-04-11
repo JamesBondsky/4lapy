@@ -10,17 +10,6 @@ $APPLICATION->SetPageProperty('title', 'Зоомагазин Четыре лап
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
 $APPLICATION->SetTitle('Главная страница');
 
-$serializer = \FourPaws\Helpers\JmsSerializerHelper::getJmsSerializer();
-
-$userService = $container->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class);
-$curUser = $userService->getCurrentUser();
-$users = $userService->getUserRepository()->findBy(['ACTIVE'=>'Y'],[],3);
-
-$res = $serializer->serialize($users, 'csv', \JMS\Serializer\SerializationContext::create()->setGroups('read'));
-echo $res;
-$res = $serializer->deserialize($res, sprintf('array<%s>',\FourPaws\UserBundle\Entity\User::class),'csv',\JMS\Serializer\DeserializationContext::create()->setGroups('read'));
-var_dump($res);
-
 $APPLICATION->IncludeComponent('bitrix:news.list',
     'index.slider',
     [
