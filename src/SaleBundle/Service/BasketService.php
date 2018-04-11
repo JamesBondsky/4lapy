@@ -464,51 +464,6 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param Basket $basket
-     *
-     * @return Basket
-     * @throws ObjectNotFoundException
-     */
-    public function removeTemporaryItems(Basket $basket): Basket
-    {
-        $isTemporary = function (BasketItem $basketItem): bool {
-            $property = $basketItem->getPropertyCollection()->getPropertyValues()['IS_TEMPORARY'];
-            return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
-        };
-
-        $tmpItems = [];
-        /** @var BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
-            if (!$isTemporary($basketItem)) {
-                continue;
-            }
-
-            $tmpItems[$basketItem->getProductId()] = $basketItem->getQuantity();
-            $basketItem->delete();
-        }
-
-        foreach ($basket as $basketItem) {
-            if (!isset($tmpItems[$basketItem->getProductId()])) {
-                continue;
-            }
-
-            try {
-                $basketItem->setField(
-                    'QUANTITY',
-                    $basketItem->getQuantity() + $tmpItems[$basketItem->getProductId()]
-                );
-            } catch (\Exception $e) {
-                $this->log()->error(sprintf('failed to restore item quantity: %s', $e->getMessage()), [
-                    'basketId' => $basketItem->getId(),
-                    'offerId' => $basketItem->getProductId(),
-                ]);
-            }
-        }
-
-        return $basket;
-    }
-
-    /**
      * @todo Избавиться от этих двух методов, перенеся их непосредственно в обработчики акций, однако необходимо
      *     отделить общую часть от проектной
      */

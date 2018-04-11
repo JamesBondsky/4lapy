@@ -67,8 +67,6 @@ class Event implements ServiceHandlerInterface
 
         ###   Обработчики скидок EOF   ###
 
-        self::initHandler('OnSaleBasketBeforeSaved', [static::class, 'removeTemporaryBasketItems']);
-
         /** отправка email */
         self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
         self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);
@@ -228,17 +226,5 @@ class Event implements ServiceHandlerInterface
             'order:' . $order->getField('USER_ID'),
             'personal:order:' . $order->getField('USER_ID')
         ]);
-    }
-
-    public function removeTemporaryBasketItems(BitrixEvent $event): void
-    {
-        $basket = $event->getParameter('ENTITY');
-
-        /** @var BasketService $basketService */
-        $basketService = Application::getInstance()
-            ->getContainer()
-            ->get(BasketService::class);
-
-        $basketService->removeTemporaryItems($basket);
     }
 }
