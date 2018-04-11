@@ -95,6 +95,8 @@ class FourPawsShopListComponent extends CBitrixComponent
         $codeNearest = $request->get('codeNearest');
         if ($codeNearest !== null) {
             $this->arResult['codeNearest'] = $codeNearest;
+            $locationService = $container->get('location.service');
+            $city = $locationService->findLocationCityByCode($codeNearest);
         }
         if ($this->startResultCache(false, ['location' => $city['CODE'], 'codeNearest' => $codeNearest])) {
             if ($this->prepareResult($city)) {
