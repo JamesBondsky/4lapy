@@ -83,19 +83,19 @@ class BasketService implements LoggerAwareInterface
      * @param array $rewriteFields
      * @param bool $save
      * @param Basket|null $basket
-     *
-     * @throws InvalidArgumentException
-     * @throws BitrixProxyException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws ObjectNotFoundException
+     * @param bool $withPermissions
      * @return BasketItem
+     * @throws BitrixProxyException
+     * @throws ObjectNotFoundException
+     * @throws \Bitrix\Main\LoaderException
      */
     public function addOfferToBasket(
         int $offerId,
         int $quantity = null,
         array $rewriteFields = [],
         bool $save = true,
-        ?Basket $basket = null
+        ?Basket $basket = null,
+        bool $withPermissions = true
     ): BasketItem
     {
         if ($quantity < 0) {
@@ -118,12 +118,23 @@ class BasketService implements LoggerAwareInterface
             $fields = $rewriteFields + $fields;
         }
 
+        // Если корзина является аргументом, то берем контекст из нее, иначе от текущего юзера
+        $context = $basket ? $basket->getContext() : $this->getContext();
+
         $basket = $basket instanceof Basket ? $basket : $this->getBasket();
-        $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
-            $basket,
-            $fields,
-            $this->getContext()
-        );
+        if ($withPermissions) {
+            $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
+                $basket,
+                $fields,
+                $context
+            );
+        } else {
+            $result = \Bitrix\Catalog\Product\Basket::addProductToBasket(
+                $basket,
+                $fields,
+                $context
+            );
+        }
 
         if (!$result->isSuccess()) {
             throw new BitrixProxyException($result);
@@ -138,22 +149,22 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param int $basketId
-     *
-     * @throws ObjectNotFoundException
-     * @throws BitrixProxyException
-     * @throws NotFoundException
-     * @throws InvalidArgumentException
-     * @throws Exception
-     *
+     * @param Basket|null $basket
+     * @param bool $save
      * @return bool
+     * @throws BitrixProxyException
+     * @throws ObjectNotFoundException
      */
-    public function deleteOfferFromBasket(int $basketId): bool
+    public function deleteOfferFromBasket(int $basketId, ?Basket $basket = null, bool $save = true): bool
     {
         if ($basketId < 1) {
             throw new InvalidArgumentException('Wrong $basketId');
         }
+        if (!$basket) {
+            $basket = $this->getBasket();
+        }
 
-        $basketItem = $this->getBasket()->getItemById($basketId);
+        $basketItem = $basket->getItemById($basketId);
         if (null === $basketItem) {
             throw new NotFoundException('Не найден элемент корзины');
         }
@@ -163,7 +174,9 @@ class BasketService implements LoggerAwareInterface
             throw new BitrixProxyException($result);
         }
 
-        $this->getBasket()->save();
+        if ($save) {
+            $basket->save();
+        }
 
         return true;
     }
@@ -171,16 +184,14 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param int $basketId
      * @param int|null $quantity
-     *
-     * @throws Exception
-     * @throws BitrixProxyException
-     * @throws NotFoundException
-     * @throws InvalidArgumentException
-     * @throws ArgumentOutOfRangeException
-     *
+     * @param Basket|null $basket
+     * @param bool $save
      * @return bool
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws Exception
      */
-    public function updateBasketQuantity(int $basketId, ?int $quantity = null): bool
+    public function updateBasketQuantity(int $basketId, ?int $quantity = null, ?Basket $basket = null, bool $save = true): bool
     {
         if ($quantity < 1) {
             throw new InvalidArgumentException('Wrong $quantity');
@@ -190,7 +201,11 @@ class BasketService implements LoggerAwareInterface
             throw new InvalidArgumentException('Wrong $basketId');
         }
 
-        $basketItem = $this->getBasket()->getItemById($basketId);
+        if (!$basket) {
+            $basket = $this->getBasket();
+        }
+
+        $basketItem = $basket->getItemById($basketId);
         if (null === $basketItem) {
             throw new NotFoundException('BasketItem');
         }
@@ -200,7 +215,9 @@ class BasketService implements LoggerAwareInterface
             throw new BitrixProxyException($result);
         }
 
-        $this->getBasket()->save();
+        if ($save) {
+            $basket->save();
+        }
 
         return true;
     }
@@ -208,7 +225,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param int|null $discountId
-     *
+     * @param Order|null $order
      * @throws NotFoundException
      * @throws InvalidArgumentException
      * @throws RuntimeException
@@ -217,16 +234,18 @@ class BasketService implements LoggerAwareInterface
      *
      * @return array
      */
-    public function getGiftGroupOfferCollection(?int $discountId = null): array
+    public function getGiftGroupOfferCollection(?int $discountId = null, Order $order = null): array
     {
         if (!$discountId || $discountId < 0) {
             throw new InvalidArgumentException('Отсутствует идентификатор скидки');
         }
 
-        $basket = $this->getBasket();
-        if (null === $order = $basket->getOrder()) {
-            $order = Order::create(SITE_ID);
-            $order->setBasket($basket);
+        if (!$order) {
+            $basket = $this->getBasket();
+            if (null === $order = $basket->getOrder()) {
+                $order = Order::create(SITE_ID);
+                $order->setBasket($basket);
+            }
         }
 
         $giftGroups = Gift::getPossibleGiftGroups($order, $discountId);
@@ -245,6 +264,7 @@ class BasketService implements LoggerAwareInterface
             throw new NotFoundException('Товары по акции не найдены');
         }
         $giftGroup['list'] = (new OfferQuery())->withFilterParameter('ID', $giftIds)->exec();
+
         return $giftGroup;
     }
 
@@ -285,6 +305,7 @@ class BasketService implements LoggerAwareInterface
         catch (NotAuthorizedException $e) {
             $userId = 0;
         }
+
         return [
             'SITE_ID' => SITE_ID,
             'USER_ID' => $userId,
@@ -382,25 +403,29 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param string $type
      * @param bool $renew
-     *
-     * @throws InvalidArgumentException
+     * @param Order|null $order
+     * @return AdderInterface
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     *
-     * @return AdderInterface
      */
-    public function getAdder(string $type, bool $renew = false): AdderInterface
+    public function getAdder(string $type, bool $renew = false, Order $order = null): AdderInterface
     {
         static $storage;
+/** @todo Добавил обнуление, т.к. на одном хите может обрабатываться много заказов */
+$storage = null;
+
         if (null === $storage || $renew) {
             $storage = [
                 'gift' => null,
                 'detach' => null
             ];
         }
-        if (null === $order = $this->getBasket()->getOrder()) {
-            $order = Order::create(SITE_ID);
-            $order->setBasket($this->getBasket());
+        if (!$order) {
+            $order = $this->getBasket()->getOrder();
+            if (!$order) {
+                $order = Order::create(SITE_ID);
+                $order->setBasket($this->getBasket());
+            }
         }
 
         if ($type === 'gift') {
@@ -427,25 +452,29 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param string $type
      * @param bool $renew
-     *
-     * @throws InvalidArgumentException
+     * @param Order|null $order
+     * @return CleanerInterface
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     *
-     * @return CleanerInterface
      */
-    public function getCleaner(string $type, bool $renew = false): CleanerInterface
+    public function getCleaner(string $type, bool $renew = false, Order $order = null): CleanerInterface
     {
         static $storage;
+/** @todo Добавил обнуление, т.к. на одном хите может обрабатываться много заказов */
+$storage = null;
+
         if (null === $storage || $renew) {
             $storage = [
                 'gift' => null,
                 'detach' => null
             ];
         }
-        if (null === $order = $this->getBasket()->getOrder()) {
-            $order = Order::create(SITE_ID);
-            $order->setBasket($this->getBasket());
+        if (!$order) {
+            $order = $this->getBasket()->getOrder();
+            if (!$order) {
+                $order = Order::create(SITE_ID);
+                $order->setBasket($this->getBasket());
+            }
         }
         if ($type === 'gift') {
             if (null === $storage[$type]) {

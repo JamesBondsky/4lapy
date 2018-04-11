@@ -39,20 +39,19 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         if (!$discount = $this->order->getDiscount()) {
             return;
         }
-        // TODO Если подарок был а потом кончился необходимо здесь добавлять подарки которые есть
+        // TODO Если подарок был, а потом кончился, необходимо здесь добавлять подарки, которые есть
         $groups = Gift::getPossibleGiftGroups($this->order);
-
         foreach ($groups as $group) {
             if (\count($group) === 1) {
                 $group = current($group);
             } else {
                 throw new \RuntimeException('TODO');
             }
-
-            if (
-                ($group = $this->basketService->getGiftGroupOfferCollection($group['discountId']))
-                && $group['list'] && $group['list'] instanceof OfferCollection
-            ) {
+            $group = $this->basketService->getGiftGroupOfferCollection(
+                $group['discountId'],
+                $this->order
+            );
+            if ($group && $group['list'] && $group['list'] instanceof OfferCollection) {
                 $existGiftsQuantity = $this->getExistGiftsQuantity($group);
                 if ($group['count'] > $existGiftsQuantity) {
                     $group['count'] -= $existGiftsQuantity;
@@ -112,7 +111,14 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 ],
             ]
         ];
-        $this->basketService->addOfferToBasket($offerId, $quantity, $fields);
+        $this->basketService->addOfferToBasket(
+            $offerId,
+            $quantity,
+            $fields,
+            true, /** @todo вопрос с сохранением в базу */
+            $this->order->getBasket(),
+            false
+        );
     }
 
     /**
@@ -148,7 +154,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     public function getExistGiftsQuantity(array $group, bool $selected = null): int
     {
         $quantity = 0;
-
         $list = [];
         if ($group['list'] instanceof OfferCollection) {
             /** @var OfferCollection $offerCollection */
@@ -214,9 +219,18 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             // Находим первый невыбранный подарок и херим его
             if ($existGift['selected'] === 'N') {
                 if ($existGift['quantity'] > 1) {
-                    $this->basketService->updateBasketQuantity($existGift['basketId'], $existGift['quantity'] - 1);
+                    $this->basketService->updateBasketQuantity(
+                        $existGift['basketId'],
+                        $existGift['quantity'] - 1,
+                        $this->order->getBasket(),
+                        true /** @todo вопрос с сохранением в базу */
+                    );
                 } else {
-                    $this->basketService->deleteOfferFromBasket($existGift['basketId']);
+                    $this->basketService->deleteOfferFromBasket(
+                        $existGift['basketId'],
+                        $this->order->getBasket(),
+                        true /** @todo вопрос с сохранением в базу */
+                    );
                 }
                 break;
             }

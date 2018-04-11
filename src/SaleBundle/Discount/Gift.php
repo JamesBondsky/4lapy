@@ -156,7 +156,9 @@ class Gift extends \CSaleActionCtrlAction
 
         foreach ($applyBasket as $basketCode => $basketRow) {
             $rowActionDescription = $actionDescription;
-            $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
+            // не всегда у позиций корзины могут быть ID
+            //$rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
+            $rowActionDescription['BASKET_CODE'] = $basketCode;
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
         }
     }
@@ -170,7 +172,6 @@ class Gift extends \CSaleActionCtrlAction
     public static function GetConditionShow($arParams)
     {
         $result = false;
-
         if (isset($arParams['ID']) && $arParams['ID'] === static::GetControlID()) {
             $arControl = [
                 'ID' => $arParams['ID'],
@@ -262,6 +263,7 @@ class Gift extends \CSaleActionCtrlAction
         } else {
             throw new InvalidArgumentException('Не передан заказ');
         }
+
         return $result;
     }
 
@@ -321,6 +323,7 @@ class Gift extends \CSaleActionCtrlAction
                 }
             }
         }
+
         return $result;
     }
 }

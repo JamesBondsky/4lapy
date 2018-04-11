@@ -77,6 +77,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                         $basketItem->getProductId(),
                                         $applyCount,
                                         $fields,
+                                        false,
+                                        $this->order->getBasket(),
                                         false
                                     );
                                     /** @noinspection PhpInternalEntityUsedInspection */

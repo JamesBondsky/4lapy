@@ -41,9 +41,7 @@ class OrderCopy
             'PAY_CALLBACK_FUNC', 'DETAIL_PAGE_URL', 'CATALOG_XML_ID',
             'PRODUCT_XML_ID', 'VAT_RATE', 'MEASURE_NAME', 'MEASURE_CODE',
             'BASE_PRICE', 'VAT_INCLUDED',
-//'DELAY',
-//'CUSTOM_PRICE',
-//'SUBSCRIBE',
+            //'DELAY', 'CUSTOM_PRICE', 'SUBSCRIBE',
         ],
         /** Исключаемые поля корзины (по умолчанию) */
         'basketItemExcludeFields' => [],
@@ -201,14 +199,9 @@ class OrderCopy
         $oldBasket = $this->oldOrder->getBasket();
         /** @var Basket $newBasket */
         $newBasket = Basket::create($oldBasket->getSiteId());
-//foreach ($oldBasket->getBasketItems() as $item) {
-    /** @var \Bitrix\Sale\BasketItem $item */
-//_log_array($item->getFieldValues(), '$item0');
-//}
-$GLOBALS['AAAA'] = true;
+
         $oldBasketItems = $oldBasket->getBasketItems();
         foreach ($oldBasketItems as $oldBasketItem) {
-
             $isSuccess = true;
             /** @var BasketItem $oldBasketItem */
             $propValues = $oldBasketItem->getPropertyCollection()->getPropertyValues();
@@ -227,10 +220,7 @@ $GLOBALS['AAAA'] = true;
             $result = \Bitrix\Catalog\Product\Basket::addProductToBasket(
                 $newBasket,
                 $tmpFields,
-                [
-                    'USER_ID' => $this->oldOrder->getUserId(),
-                    'SITE_ID' => $this->oldOrder->getSiteId(),
-                ]
+                $newBasket->getContext()
             );
             $newBasketItem = $result->getData()['BASKET_ITEM'];
             */
@@ -240,7 +230,7 @@ $GLOBALS['AAAA'] = true;
                 $oldBasketItem->getField('PRODUCT_ID')
             );
             $oldBasketItemValues = $this->filterCopyBasketItemFields($oldBasketItem->getFieldValues());
-            $newBasketItem->setField('NAME', $oldBasketItemValues['NAME']);
+            //$newBasketItem->setField('NAME', $oldBasketItemValues['NAME']);
             $tmpResult = $newBasketItem->setFields($oldBasketItemValues);
             if (!$tmpResult->isSuccess()) {
                 $isSuccess = false;
@@ -273,11 +263,6 @@ $GLOBALS['AAAA'] = true;
 
         // привязка корзины к новому заказу
         $tmpResult = $this->newOrder->setBasket($newBasket);
-$GLOBALS['AAAA'] = false;
-//foreach ($this->newOrder->getBasket()->getBasketItems() as $item) {
-    /** @var \Bitrix\Sale\BasketItem $item */
-//_log_array($item->getFieldValues(), '$item');
-//}
         if (!$tmpResult->isSuccess()) {
             throw new OrderCopyBasketException(implode("\n", $tmpResult->getErrorMessages()), 500);
         }

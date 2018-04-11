@@ -69,7 +69,7 @@ class Manager
 
                     // Автоматически добавляем подарки
                     $basketService
-                        ->getAdder('gift')
+                        ->getAdder('gift', true, $order)
                         ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
@@ -77,11 +77,11 @@ class Manager
                      * @todo не сохранять подарки
                      */
                     $basketService
-                        ->getCleaner('gift')
+                        ->getCleaner('gift', true, $order)
                         ->processOrder();
 
                     $basketService
-                        ->getAdder('detach')
+                        ->getAdder('detach', true, $order)
                         ->processOrder();
 
                     $promoCode = $couponStorage->getApplicableCoupon();
@@ -147,6 +147,7 @@ class Manager
                 }
             }
         }
+
         return $result;
     }
 }

@@ -55,7 +55,11 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                 $notFound = true;
             }
             if ($notFound) {
-                $this->basketService->deleteOfferFromBasket($gift['basketId']);
+                $this->basketService->deleteOfferFromBasket(
+                    $gift['basketId'],
+                    $this->order->getBasket(),
+                    true /** @todo вопрос с сохранением в базу */
+                );
                 unset($existGifts[$k]);
             }
         }
@@ -76,11 +80,20 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                 $sumCount += $gift['quantity'];
                 if ($sumCount > $group['count']) {
                     if ($availCount > 0) {
-                        $this->basketService->updateBasketQuantity($gift['basketId'], $availCount);
+                        $this->basketService->updateBasketQuantity(
+                            $gift['basketId'],
+                            $availCount,
+                            $this->order->getBasket(),
+                            true /** @todo вопрос с сохранением в базу */
+                        );
                         $availCount = 0;
                     } else {
                         try {
-                            $this->basketService->deleteOfferFromBasket($gift['basketId']);
+                            $this->basketService->deleteOfferFromBasket(
+                                $gift['basketId'],
+                                $this->order->getBasket(),
+                                true /** @todo вопрос с сохранением в базу */
+                            );
                             unset($existGifts[$k]);
                         } /** @noinspection BadExceptionsProcessingInspection */ catch (NotFoundException $e) {
                             // пох
