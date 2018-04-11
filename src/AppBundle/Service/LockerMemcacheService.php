@@ -3,6 +3,7 @@
 namespace FourPaws\AppBundle\Service;
 
 use FourPaws\AppBundle\Bitrix\MemcacheConnection;
+use FourPaws\AppBundle\Exception\MemcacheException;
 use Memcache;
 
 /**
@@ -16,9 +17,9 @@ class LockerMemcacheService implements LockerInterface
     private const STATUS_UNLOCKED = 'u';
 
     /**
-     * @var Memcache
+     * @var MemcacheConnection
      */
-    private $connection;
+    private $memcacheConnection;
 
     /**
      * LockerMemcacheService constructor.
@@ -27,33 +28,39 @@ class LockerMemcacheService implements LockerInterface
      */
     public function __construct(MemcacheConnection $connection)
     {
-        $this->connection = $connection->getConnection();
+        $this->memcacheConnection = $connection;
     }
 
     /**
      * @param string $target
+     *
+     * @throws MemcacheException
      */
     public function lock(string $target): void
     {
-        $this->connection->set($this->buildKey($target), self::STATUS_LOCKED);
+        $this->getConnection()->set($this->buildKey($target), self::STATUS_LOCKED);
     }
 
     /**
      * @param string $target
+     *
+     * @throws MemcacheException
      */
     public function unlock(string $target): void
     {
-        $this->connection->set($this->buildKey($target), self::STATUS_UNLOCKED);
+        $this->getConnection()->set($this->buildKey($target), self::STATUS_UNLOCKED);
     }
 
     /**
      * @param string $target
      *
      * @return bool
+     *
+     * @throws MemcacheException
      */
     public function isLocked(string $target): bool
     {
-        return $this->connection->get($this->buildKey($target)) === self::STATUS_LOCKED;
+        return $this->getConnection()->get($this->buildKey($target)) === self::STATUS_LOCKED;
     }
 
     /**
@@ -67,5 +74,15 @@ class LockerMemcacheService implements LockerInterface
             '%s|%s',
             self::class, $target
         ));
+    }
+
+    /**
+     * @return Memcache
+     *
+     * @throws MemcacheException
+     */
+    public function getConnection(): Memcache
+    {
+        return $this->memcacheConnection->getConnection();
     }
 }
