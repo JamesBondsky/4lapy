@@ -1929,7 +1929,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         // @todo учитывать региональные ограничения
         $result = [self::AVAILABILITY_PICKUP];
-        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator())) {
+        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator() || $this->isDeliveryAreaRestrict())) {
             $result[] = self::AVAILABILITY_DELIVERY;
         }
         if ($this->isByRequest()) {
