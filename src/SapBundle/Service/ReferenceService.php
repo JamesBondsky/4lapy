@@ -100,7 +100,7 @@ class ReferenceService implements LoggerAwareInterface
 
         if ($addResult->isSuccess()) {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $this->log()->debug(
+            $this->log()->info(
                 sprintf('Создано значение справочника для свойства %s: %s', $propertyCode, $xmlId),
                 $item->toArray()
             );
