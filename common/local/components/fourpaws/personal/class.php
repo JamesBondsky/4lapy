@@ -75,15 +75,18 @@ class CPersonalCabinetComponent extends CBitrixComponent
             'VARIABLES'     => $arVariables,
             'ALIASES'       => $arVariableAliases,
         ];
-    
-        // В режиме аватара не должно быть доступа к ЛК юзера
-        /** @var \FourPaws\UserBundle\Service\UserService $userService */
-        $userService =
-            \FourPaws\App\Application::getInstance()
-                                     ->getContainer()
-                                     ->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class);
-        if ($userService->isAvatarAuthorized()) {
-            $componentPage = 'denied';
+
+        // В режиме аватара не должно быть доступа к ЛК юзера, кроме подписки на доставку
+        $avatarPages = ['subscribe'];
+        if (!in_array($componentPage, $avatarPages)) {
+            $appCont = \FourPaws\App\Application::getInstance()->getContainer();
+            /** @var \FourPaws\UserBundle\Service\UserService $userService */
+            $userService = $appCont->get(
+                \FourPaws\UserBundle\Service\CurrentUserProviderInterface::class
+            );
+            if ($userService->isAvatarAuthorized()) {
+                $componentPage = 'denied';
+            }
         }
 
         $this->includeComponentTemplate($componentPage);
