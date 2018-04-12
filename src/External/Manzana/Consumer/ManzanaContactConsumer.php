@@ -6,6 +6,7 @@
 
 namespace FourPaws\External\Manzana\Consumer;
 
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -47,6 +48,11 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
         } catch (ContactUpdateException $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',
+                $e->getMessage()
+            ));
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            $this->log()->error(sprintf(
+                'Too many user`s found: %s',
                 $e->getMessage()
             ));
         } catch (ManzanaServiceException $e) {
