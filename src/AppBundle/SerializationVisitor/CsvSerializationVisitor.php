@@ -3,12 +3,14 @@
 namespace FourPaws\AppBundle\SerializationVisitor;
 
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use JMS\Serializer\AbstractVisitor;
 use JMS\Serializer\Accessor\AccessorStrategyInterface;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\Metadata\PropertyMetadata;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
 /**
  * Class CsvSerializationVisitor
@@ -18,8 +20,9 @@ class CsvSerializationVisitor extends AbstractVisitor
 {
     private $navigator;
     private $result;
-    private $delimiter = ';';
     private $data;
+    private $delimiter = ';';
+    private $arrayDelimiter = '|';
     private $strDelimiter = "\r\n";
 
     /**
@@ -28,8 +31,8 @@ class CsvSerializationVisitor extends AbstractVisitor
      * @param                                $namingStrategy
      * @param AccessorStrategyInterface|null $accessorStrategy
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
      */
     public function __construct($namingStrategy, AccessorStrategyInterface $accessorStrategy = null)
     {
@@ -37,6 +40,10 @@ class CsvSerializationVisitor extends AbstractVisitor
         $paramDelimiter = Application::getInstance()->getContainer()->getParameter('jms_serializer.csv_delimiter');
         if(!empty($paramDelimiter)){
             $this->delimiter = $paramDelimiter;
+        }
+        $paramArrayDelimiter = Application::getInstance()->getContainer()->getParameter('jms_serializer.csv_array_delimiter');
+        if(!empty($paramArrayDelimiter)){
+            $this->arrayDelimiter = $paramArrayDelimiter;
         }
     }
 
@@ -71,7 +78,7 @@ class CsvSerializationVisitor extends AbstractVisitor
                 }
             }
             if (!$hasRes) {
-                $res = implode('|', $data);
+                $res = implode($this->arrayDelimiter, $data);
             } else {
                 $res = implode($this->strDelimiter, $resData);
             }
@@ -80,8 +87,10 @@ class CsvSerializationVisitor extends AbstractVisitor
     }
 
     /**
-     * @param mixed $data
-     * @param array $type
+     * @param mixed   $data
+     * @param array   $type
+     *
+     * @param Context $context
      *
      * @return mixed
      */
@@ -91,9 +100,10 @@ class CsvSerializationVisitor extends AbstractVisitor
     }
 
     /**
-     * @param mixed $data
-     * @param array $type
+     * @param mixed   $data
+     * @param array   $type
      *
+     * @param Context $context
      * @return mixed
      */
     public function visitString($data, array $type, Context $context)
@@ -102,9 +112,10 @@ class CsvSerializationVisitor extends AbstractVisitor
     }
 
     /**
-     * @param mixed $data
-     * @param array $type
+     * @param mixed   $data
+     * @param array   $type
      *
+     * @param Context $context
      * @return mixed
      */
     public function visitBoolean($data, array $type, Context $context)
@@ -113,9 +124,10 @@ class CsvSerializationVisitor extends AbstractVisitor
     }
 
     /**
-     * @param mixed $data
-     * @param array $type
+     * @param mixed   $data
+     * @param array   $type
      *
+     * @param Context $context
      * @return mixed
      */
     public function visitDouble($data, array $type, Context $context)
@@ -124,9 +136,10 @@ class CsvSerializationVisitor extends AbstractVisitor
     }
 
     /**
-     * @param mixed $data
-     * @param array $type
+     * @param mixed   $data
+     * @param array   $type
      *
+     * @param Context $context
      * @return mixed
      */
     public function visitInteger($data, array $type, Context $context)
@@ -141,6 +154,7 @@ class CsvSerializationVisitor extends AbstractVisitor
      * @param mixed         $data
      * @param array         $type
      *
+     * @param Context       $context
      * @return void
      */
     public function startVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context)
@@ -152,6 +166,7 @@ class CsvSerializationVisitor extends AbstractVisitor
      * @param PropertyMetadata $metadata
      * @param mixed            $data
      *
+     * @param Context          $context
      * @return void
      */
     public function visitProperty(PropertyMetadata $metadata, $data, Context $context)
@@ -183,6 +198,7 @@ class CsvSerializationVisitor extends AbstractVisitor
      * @param mixed         $data
      * @param array         $type
      *
+     * @param Context       $context
      * @return mixed
      */
     public function endVisitingObject(ClassMetadata $metadata, $data, array $type, Context $context)

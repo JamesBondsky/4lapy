@@ -12,6 +12,7 @@ use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\Metadata\PropertyMetadata;
 use JMS\Serializer\NullAwareVisitorInterface;
 use phpDocumentor\Reflection\Types\Scalar;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
 /**
  * Class CsvDeserializationVisitor
@@ -22,9 +23,10 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
 
     private $result;
     private $navigator;
-    private $delimiter = ';';
-    private $strDelimiter = "\r\n";
     private $data;
+    private $delimiter = ';';
+    private $arrayDelimiter = '|';
+    private $strDelimiter = "\r\n";
 
     /**
      * CsvDeserializationVisitor constructor.
@@ -32,7 +34,7 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
      * @param                                $namingStrategy
      * @param AccessorStrategyInterface|null $accessorStrategy
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @throws ApplicationCreateException
      */
     public function __construct($namingStrategy, AccessorStrategyInterface $accessorStrategy = null)
@@ -41,6 +43,10 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
         $paramDelimiter = Application::getInstance()->getContainer()->getParameter('jms_serializer.csv_delimiter');
         if(!empty($paramDelimiter)){
             $this->delimiter = $paramDelimiter;
+        }
+        $paramArrayDelimiter = Application::getInstance()->getContainer()->getParameter('jms_serializer.csv_array_delimiter');
+        if(!empty($paramArrayDelimiter)){
+            $this->arrayDelimiter = $paramArrayDelimiter;
         }
     }
 
@@ -75,7 +81,7 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
             }
 
             if(empty($newRes)) {
-                $res = explode('|', $data);
+                $res = explode($this->arrayDelimiter, $data);
             }
         }
         return $res;
