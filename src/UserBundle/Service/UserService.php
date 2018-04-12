@@ -654,7 +654,7 @@ class UserService implements
         }
         if ($contact->isOpt() && !$user->isOpt()) {
             /** установка оптовика */
-            $groupsList[] = GroupTable::query()->setFilter(['CODE' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            $groupsList[] = GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
             \CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
