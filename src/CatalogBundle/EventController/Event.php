@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\EventController;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
@@ -86,7 +90,7 @@ class Event implements ServiceHandlerInterface
             TaggedCacheHelper::clearManagedCache([
                 'catalog:offer:' . $id,
                 'catalog:stocks:' . $id,
-                'catalog:product:' . $id
+                'catalog:product:' . $id,
             ]);
         }
     }
