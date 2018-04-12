@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\EventController;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
@@ -15,6 +19,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Search\Helper\IndexHelper;
+use RuntimeException;
 
 /**
  * Class Event
@@ -25,6 +30,13 @@ use FourPaws\Search\Helper\IndexHelper;
  */
 class Event implements ServiceHandlerInterface
 {
+    /**
+     * Блокировка событий, для очистки кеша.
+     *
+     * @var bool
+     */
+    protected static $lockEvents = false;
+
     /**
      * @var EventManager
      */
@@ -74,11 +86,13 @@ class Event implements ServiceHandlerInterface
      */
     public static function clearProductCache($id): void
     {
-        TaggedCacheHelper::clearManagedCache([
-            'catalog:offer:' . $id,
-            'catalog:stocks:' . $id,
-            'catalog:product:' . $id
-        ]);
+        if (!self::isLockEvents()) {
+            TaggedCacheHelper::clearManagedCache([
+                'catalog:offer:' . $id,
+                'catalog:stocks:' . $id,
+                'catalog:product:' . $id,
+            ]);
+        }
     }
 
     /**
@@ -86,13 +100,17 @@ class Event implements ServiceHandlerInterface
      */
     public static function clearIblockItemCache($arFields): void
     {
-        TaggedCacheHelper::clearManagedCache([
-            'iblock:item:' . $arFields['ID'],
-        ]);
+        if (!self::isLockEvents()) {
+            TaggedCacheHelper::clearManagedCache([
+                'iblock:item:' . $arFields['ID'],
+            ]);
+        }
     }
 
     /**
      * @param $fields
+     *
+     * @throws RuntimeException
      * @throws IblockNotFoundException
      * @throws ApplicationCreateException
      */
@@ -110,6 +128,8 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param $fields
+     *
+     * @throws RuntimeException
      * @throws IblockNotFoundException
      * @throws ApplicationCreateException
      */
@@ -124,5 +144,29 @@ class Event implements ServiceHandlerInterface
                 $indexHelper->indexProduct($offer->getProduct());
             }
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public static function isLockEvents(): bool
+    {
+        return self::$lockEvents;
+    }
+
+    /**
+     * Lock all events with cache
+     */
+    public static function lockEvents(): void
+    {
+        self::$lockEvents = true;
+    }
+
+    /**
+     * Unlock all events with cache
+     */
+    public static function unlockEvents(): void
+    {
+        self::$lockEvents = false;
     }
 }

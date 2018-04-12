@@ -80,7 +80,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
             $setOffersResult = $this->setOfferPrices($offerElementData, $priceItem, $prices->getRegionCode());
             $result &= $setOffersResult->isSuccess();
             if ($setOffersResult->isSuccess()) {
-                $this->log()->debug(sprintf(
+                $this->log()->info(sprintf(
                     '[%s] Проимпортированы цены для региона %s. Оффер %s.',
                     $id + 1,
                     $prices->getRegionCode(),

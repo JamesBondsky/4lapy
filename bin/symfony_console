@@ -12,16 +12,16 @@ use Symfony\Component\Console\Input\ArgvInput;
 
 $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__) . '/web';
 require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/local.env.php';
 
 $input = new ArgvInput();
-$env = $input->getParameterOption(['--env', '-e'], $_SERVER['APP_ENV'] ?? 'dev', true);
+$env = $input->getParameterOption(['--env', '-e'], getenv('APP_ENV') ?? 'dev', true);
 if ($env) {
     $_SERVER['APP_ENV'] = $env;
     putenv('APP_ENV=' . $env);
 }
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/local.env.php';
 
 @set_time_limit(0);
 @umask(0000);

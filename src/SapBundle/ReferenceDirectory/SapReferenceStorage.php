@@ -66,7 +66,7 @@ class SapReferenceStorage implements LoggerAwareInterface
     public function findByCallable(string $propertyCode, callable $callable)
     {
         if (!$this->collection->offsetExists($propertyCode)) {
-            $this->log()->debug(sprintf('Loading %s property', $propertyCode));
+            $this->log()->info(sprintf('Loading %s property', $propertyCode));
             $this->collection->set($propertyCode, $this->referenceRepositoryRegistry->get($propertyCode)->findBy());
         }
 
@@ -85,7 +85,7 @@ class SapReferenceStorage implements LoggerAwareInterface
      */
     public function clear(string $propertyCode)
     {
-        $this->log()->debug(sprintf('Clear %s property', $propertyCode));
+        $this->log()->info(sprintf('Clear %s property', $propertyCode));
         $this->collection->remove($propertyCode);
         return $this;
     }
