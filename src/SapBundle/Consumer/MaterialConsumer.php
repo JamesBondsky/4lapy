@@ -101,15 +101,16 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             return false;
         }
 
+        /**
+         * Костыль! Уровень изоляции кривой.
+         */
+        Event::lockEvents();
+
         try {
             if ($material->isNotUploadToIm()) {
                 return $this->offerService->deactivate($material->getOfferXmlId());
             }
 
-            /**
-             * Костыль! Уровень изоляции кривой.
-             */
-            Event::lockEvents();
             $this->connection->startTransaction();
             $this->referenceService->fillFromMaterial($material);
             $this->connection->commitTransaction();
@@ -121,10 +122,8 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             $offer = $this->getOffer($material, $product);
             $this->getCatalogProduct($material, $offer);
             $this->connection->commitTransaction();
-            /**
-             * Костыль! Уровень изоляции кривой.
-             */
-            Event::unlockEvents();
+            Event::clearProductCache($offer->getId());
+            Event::clearProductCache($product->getId());
 
             return true;
         } catch (LoggedException $exception) {
@@ -137,6 +136,12 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             );
         }
         $this->connection->rollbackTransaction();
+
+        /**
+         * Костыль! Уровень изоляции кривой.
+         */
+        Event::unlockEvents();
+
         return false;
     }
 
