@@ -20,6 +20,7 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Manzana\Exception\ExecuteException;
@@ -339,6 +340,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if (null !== $pickup) {
+            /** @var PickupResultInterface $pickup */
             $storage = clone $storage;
             try {
                 $selectedShopCode = $storage->getDeliveryPlaceCode();
@@ -347,7 +349,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $pickup->setSelectedStore($shops[$selectedShopCode]);
                 }
 
-                $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedStore();
+                $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedShop();
             } catch (NotFoundException $e) {
                 $this->logger->error(sprintf(
                         'Order has pickup delivery with no shops available. Delivery location: %s',

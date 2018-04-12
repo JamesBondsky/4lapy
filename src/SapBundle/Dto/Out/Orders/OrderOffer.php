@@ -15,7 +15,7 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class OrderOffer
 {
-    const DEFAULT_PROVIDER_POINT = 'DC01';
+    public const DEFAULT_PROVIDER_POINT = 'DC01';
 
     /**
      * Содержит номер позиции торгового предложения в заказе
@@ -126,6 +126,7 @@ class OrderOffer
     public function setPosition(int $position): OrderOffer
     {
         $this->position = $position;
+
         return $this;
     }
     
@@ -145,6 +146,7 @@ class OrderOffer
     public function setOfferXmlId(string $offerXmlId): OrderOffer
     {
         $this->offerXmlId = $offerXmlId;
+
         return $this;
     }
     
@@ -164,6 +166,7 @@ class OrderOffer
     public function setQuantity(int $quantity): OrderOffer
     {
         $this->quantity = $quantity;
+
         return $this;
     }
     
@@ -183,6 +186,7 @@ class OrderOffer
     public function setUnitOfMeasureCode(string $unitOfMeasureCode): OrderOffer
     {
         $this->unitOfMeasureCode = $unitOfMeasureCode;
+
         return $this;
     }
     
@@ -202,6 +206,7 @@ class OrderOffer
     public function setDeliveryFromPoint(string $deliveryFromPoint): OrderOffer
     {
         $this->deliveryFromPoint = $deliveryFromPoint;
+
         return $this;
     }
     
@@ -221,6 +226,7 @@ class OrderOffer
     public function setDeliveryShipmentPoint(string $deliveryShipmentPoint): OrderOffer
     {
         $this->deliveryShipmentPoint = $deliveryShipmentPoint;
+
         return $this;
     }
     
@@ -240,6 +246,7 @@ class OrderOffer
     public function setUnitPrice(float $unitPrice): OrderOffer
     {
         $this->unitPrice = $unitPrice;
+
         return $this;
     }
     

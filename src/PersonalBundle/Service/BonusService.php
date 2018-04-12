@@ -139,7 +139,12 @@ class BonusService
         }
 
         /** @var Contact $contact */
-        $contact = $manzanaService->getContactByUser($user);
+        if(!empty($user->getPersonalPhone())) {
+            $contact = $manzanaService->getContactByUser($user);
+        }
+        else{
+            $contact = null;
+        }
 
         if ($contact instanceof Client && $contact->isLoyaltyProgramContact()) {
             /** @var CardByContractCards $card */

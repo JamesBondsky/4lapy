@@ -52,7 +52,7 @@ class OrderStorage
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("CAPTCHA_FILLED")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\IsTrue(groups={"auth","delivery","payment"})
+     * @Assert\IsTrue(groups={"auth","delivery","payment"}, message="Заполните капчу")
      */
     protected $captchaFilled = false;
 
@@ -94,7 +94,7 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_NAME")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"auth", "payment","delivery"})
+     * @Assert\NotBlank(groups={"auth", "payment","delivery"}, message="Укажите ваше имя")
      */
     protected $name = '';
 
@@ -105,7 +105,7 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_PHONE")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"auth", "payment","delivery"})
+     * @Assert\NotBlank(groups={"auth", "payment","delivery"}, message="Укажите ваш номер телефона")
      * @PhoneNumber(defaultRegion="RU",type="mobile")
      */
     protected $phone = '';

@@ -22,29 +22,6 @@ final class MemcacheConnection
     private static $memcache;
 
     /**
-     * MemcacheConnection constructor.
-     *
-     * @throws MemcacheException
-     */
-    public function __construct()
-    {
-        /** @noinspection PhpUndefinedConstantInspection */
-        $port = \defined('BX_MEMCACHE_PORT') && (int)\BX_MEMCACHE_PORT ? (int)\BX_MEMCACHE_PORT : self::DEFAULT_MEMCACHE_PORT;
-        /** @noinspection PhpUndefinedConstantInspection */
-        $host = \defined('BX_MEMCACHE_HOST') && (int)\BX_MEMCACHE_HOST ? (int)\BX_MEMCACHE_HOST : self::DEFAULT_MEMCACHE_HOST;
-
-        if (!self::$memcache) {
-            $memcache = new Memcache();
-            if (!$memcache->connect($host, $port)) {
-                throw new MemcacheException('Memcache is not configured or down');
-            }
-
-            self::$memcache = $memcache;
-            register_shutdown_function(self::class, 'closeConnection');
-        }
-    }
-
-    /**
      * Close
      */
     public function closeConnection(): void
@@ -56,9 +33,36 @@ final class MemcacheConnection
 
     /**
      * @return Memcache
+     *
+     * @throws MemcacheException
      */
     public function getConnection(): Memcache
     {
+        if (null === self::$memcache) {
+            $this->createConnection();
+        }
+
         return self::$memcache;
+    }
+
+    /**
+     * @throws MemcacheException
+     */
+    private function createConnection(): void
+    {
+        if (!self::$memcache) {
+            /** @noinspection PhpUndefinedConstantInspection */
+            $port = \defined('BX_MEMCACHE_PORT') && (int)\BX_MEMCACHE_PORT ? (int)\BX_MEMCACHE_PORT : self::DEFAULT_MEMCACHE_PORT;
+            /** @noinspection PhpUndefinedConstantInspection */
+            $host = \defined('BX_MEMCACHE_HOST') && \BX_MEMCACHE_HOST ? \BX_MEMCACHE_HOST : self::DEFAULT_MEMCACHE_HOST;
+
+            $memcache = new Memcache();
+            if (!$memcache->connect($host, $port)) {
+                throw new MemcacheException('Memcache is not configured or down');
+            }
+
+            self::$memcache = $memcache;
+            register_shutdown_function(self::class, 'closeConnection');
+        }
     }
 }

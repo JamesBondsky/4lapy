@@ -9,12 +9,7 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\NotImplementedException;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -191,14 +186,6 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ObjectNotFoundException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotImplementedException
-     * @throws ObjectException
-     * @throws SystemException
-     * @throws \Exception
      */
     public function sendOrderStatusMessage(Order $order): void
     {
@@ -243,7 +230,14 @@ class NotificationService implements LoggerAwareInterface
             try {
                 if ($transactionId = $this->emailService->sendOrderCompleteEmail($order)) {
                     $this->orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
-                    $order->save();
+                    try {
+                        $order->save();
+                    } catch (\Exception $e) {
+                        $this->log()->error(sprintf('failed to update order property: %s', $e->getMessage()), [
+                            'property' => 'COMPLETE_MESSAGE_SENT',
+                            'order' => $order->getId()
+                        ]);
+                    }
                 }
                 $this->logMessage($order, $transactionId);
             } catch (ExpertsenderServiceException $e) {

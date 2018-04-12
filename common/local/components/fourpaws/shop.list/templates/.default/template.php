@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 /**
  * @var \CBitrixComponentTemplate $this
@@ -16,35 +16,43 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $frame = $this->createFrame(); ?>
 <div class="b-stores__block">
     <h2 class="b-title b-title--stores">Ваш город</h2>
+    <?php $uri = new \Bitrix\Main\Web\Uri('/ajax/store/list/chooseCity/');
+    $params = [];
+    if (!empty($arResult['ACTIVE_STORE_ID'])) {
+        $params['active_store_id'] = $arResult['ACTIVE_STORE_ID'];
+    }
+    if (!empty($arResult['codeNearest'])) {
+        $params['codeNearest'] = $arResult['codeNearest'];
+        $params['findNearest'] = 'Y';
+    }
+    if (!empty($params)){
+        $uri->addParams($params);
+    } ?>
     <a class="b-link b-link--select js-open-popup js-stores"
        href="javascript:void(0);"
        title="<?= $arResult['CITY'] ?>"
-       data-url="/ajax/store/list/chooseCity/"
+       data-url="<?=$uri->getUri()?>"
        data-code="<?= $arResult['CITY_CODE'] ?>"
        data-popup-id="pick-city"><?= $arResult['CITY'] ?></a>
     <div class="b-stores-sort">
-        <?php if (\is_array($arResult['SERVICES']) && !empty($arResult['SERVICES'])) {
-    ?>
+        <?php if (\is_array($arResult['SERVICES']) && !empty($arResult['SERVICES'])) { ?>
             <div class="b-stores-sort__checkbox-block" data-url="/ajax/store/list/checkboxFilter/">
-                <?php foreach ($arResult['SERVICES'] as $key => $service) {
-        ?>
+                <?php foreach ($arResult['SERVICES'] as $key => $service) { ?>
                     <div class="b-checkbox b-checkbox--stores">
                         <input class="b-checkbox__input"
                                type="checkbox"
                                name="stores-sort[]"
                                id="stores-sort-<?= $key ?>"
                                data-url="/ajax/store/list/checkboxFilter/"
-                               value="<?= $service['ID'] ?>" />
+                               value="<?= $service['ID'] ?>"/>
                         <label class="b-checkbox__name b-checkbox__name--stores"
                                for="stores-sort-<?= $key ?>">
                             <span class="b-checkbox__text"><?= $service['UF_NAME'] ?></span>
                         </label>
                     </div>
-                    <?php
-    } ?>
+                    <?php } ?>
             </div>
-            <?php
-} ?>
+            <?php } ?>
         <div class="b-form-inline b-form-inline--stores-search">
             <form class="b-form-inline__form" data-url="/ajax/store/list/search/">
                 <div class="b-input b-input--stores-search js-stores-search">
@@ -53,7 +61,7 @@ $frame = $this->createFrame(); ?>
                            id="stores-search"
                            name="search"
                            placeholder="Поиск по адресу, метро и названию ТЦ"
-                           data-url="/ajax/store/list/search/" />
+                           data-url="/ajax/store/list/search/"/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
@@ -84,10 +92,10 @@ $frame = $this->createFrame(); ?>
                             <option value="" disabled="disabled">выберите</option>
                             <option value="address">по адресу</option>
                             <?php if (!empty($arResult['METRO'])) {
-                        ?>
+                                ?>
                                 <option value="metro">по метро</option>
-                            <?php
-                    } ?>
+                                <?php
+                            } ?>
                         </select>
                         <span class="b-select__arrow"></span>
                     </span>
@@ -118,7 +126,7 @@ $frame = $this->createFrame(); ?>
                    href="javascript:void(0);">Выберите магазин</a>
                 <div class="b-tab-delivery-map__map"
                      id="map"
-                     data-url="/ajax/store/list/chooseCity/<?=!empty($arResult['ACTIVE_STORE_ID']) ? '?active_store_id='.$arResult['ACTIVE_STORE_ID'] : ''?>"></div>
+                     data-url="<?= $uri->getUri() ?>"></div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
                    title="">

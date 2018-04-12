@@ -6,6 +6,11 @@
 
 namespace FourPaws\SapBundle\Enum;
 
+/**
+ * Class SapOrder
+ *
+ * @package FourPaws\SapBundle\Enum
+ */
 final class SapOrder
 {
     /**

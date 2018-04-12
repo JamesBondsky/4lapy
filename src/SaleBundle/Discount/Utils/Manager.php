@@ -63,6 +63,7 @@ class Manager
                 $order = $event->getParameter('ENTITY');
                 if ($order instanceof Order) {
                     $container = Application::getInstance()->getContainer();
+                    /** @var BasketService $basketService */
                     $basketService = $container->get(BasketService::class);
                     $manzana = $container->get(Manzana::class);
                     $couponStorage = $container->get(CouponStorageInterface::class);

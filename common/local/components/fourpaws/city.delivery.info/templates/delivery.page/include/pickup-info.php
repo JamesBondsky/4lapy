@@ -20,7 +20,7 @@ use FourPaws\Helpers\WordHelper;
         <p>Стоимость</p>
         <span><?= CurrencyHelper::formatPrice($pickup['PRICE']) ?></span>
         <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
-            <a href="#" data-url="<?= $arResult['SHOP_LIST_URL'] ?>" data-code="<?= $arParams['LOCATION_CODE'] ?>">
+            <a href="/company/shops/?codeNearest=<?=$arParams['LOCATION_CODE']?>&findNearest=Y" data-url="<?= $arResult['SHOP_LIST_URL'] ?>" data-code="<?= $arParams['LOCATION_CODE'] ?>">
                 Найти ближайший
             </a>
         <? } ?>
