@@ -23,6 +23,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -32,6 +33,7 @@ use FourPaws\SaleBundle\Discount\Utils\CleanerInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -57,6 +59,7 @@ class BasketService implements LoggerAwareInterface
     private $offerCollection;
     /** @var ManzanaPosService */
     private $manzanaPosService;
+
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $firstDiscount = 0.0;
@@ -88,9 +91,6 @@ class BasketService implements LoggerAwareInterface
      * @param Basket|null $basket
      *
      * @return BasketItem
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
      * @throws BitrixProxyException
      * @throws ObjectNotFoundException
      * @throws LoaderException
@@ -214,9 +214,6 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param int|null $discountId
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
      * @throws Exception
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -258,12 +255,6 @@ class BasketService implements LoggerAwareInterface
      * @param int $fUserId
      *
      * @return Basket
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
     public function getBasket(bool $reload = null, int $fUserId = 0): Basket
     {
@@ -277,7 +268,13 @@ class BasketService implements LoggerAwareInterface
             }
 
             $this->basket = Basket::loadItemsForFUser($fUserId, SITE_ID);
-            $this->refreshAvailability($this->basket);
+            try {
+                $this->refreshAvailability($this->basket);
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('failed to update basket availability: %s', $e->getMessage()), [
+                    'fuserId' => $fUserId,
+                ]);
+            }
         }
 
         return $this->basket;
@@ -303,12 +300,6 @@ class BasketService implements LoggerAwareInterface
     /**
      * Возвращает OfferCollection содержащих товары корзины и возможные подарки
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      * @return OfferCollection
      */
     public function getOfferCollection(): OfferCollection
@@ -318,12 +309,6 @@ class BasketService implements LoggerAwareInterface
 
     /**
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      * @return OfferCollection
      */
     private function loadOfferCollection(): OfferCollection
@@ -364,10 +349,12 @@ class BasketService implements LoggerAwareInterface
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
      * @throws BitrixProxyException
      * @throws LoaderException
+     * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws DeliveryNotFoundException
+     * @throws StoreNotFoundException
      * @return Basket
      */
     public function refreshAvailability(Basket $basket): Basket
@@ -422,7 +409,7 @@ class BasketService implements LoggerAwareInterface
                     }
                     $toUpdate['QUANTITY'] = $quantity;
                 } else {
-                    $maxAmount = $offer->getStocks()->getTotalAmount();
+                    $maxAmount = $offer->getQuantity();
                     $diff = $quantity - $maxAmount;
                     if ($diff > 0) {
                         $toUpdate['QUANTITY'] = $maxAmount;
@@ -486,11 +473,6 @@ class BasketService implements LoggerAwareInterface
      * @param string $type
      * @param bool $renew
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
-     * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @return AdderInterface
@@ -534,11 +516,6 @@ class BasketService implements LoggerAwareInterface
      * @param string $type
      * @param bool $renew
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
-     * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @return CleanerInterface
@@ -578,12 +555,6 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      * @return float
      */
     public function getBasketBonus(): float
@@ -651,12 +622,6 @@ class BasketService implements LoggerAwareInterface
      *
      * @param Basket|null $basket
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      * @return float
      */
     public function getMaxBonusesForPayment(?Basket $basket = null): float

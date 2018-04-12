@@ -49,10 +49,15 @@ class StoreCollection extends BaseCollection
      */
     public function excludeStores(StoreCollection $stores): StoreCollection
     {
+        $filter = function (
+            /** @noinspection PhpUnusedParameterInspection */
+            string $key, Store $store) use ($stores) {
+            return $stores->hasStore($store);
+        };
         $result = new static();
         /** @var Store $store */
         foreach ($this->getIterator() as $store) {
-            if ($stores->contains($store)) {
+            if ($this->exists($filter)) {
                 continue;
             }
 

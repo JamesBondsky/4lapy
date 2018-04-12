@@ -172,8 +172,8 @@ class InnerPickupHandler extends DeliveryHandlerBase
         ];
         $result->setData($data);
 
-        if ($shopCode && !$stockResult->getUnavailable()->isEmpty()) {
-            $result->addError(new Error('Присутствуют товары не в наличии'));
+        if ($shopCode && $stockResult->getOrderable()->isEmpty()) {
+            $result->addError(new Error('Отсутствуют товары в наличии'));
 
             return $result;
         }

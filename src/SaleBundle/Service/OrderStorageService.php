@@ -418,7 +418,7 @@ class OrderStorageService
     {
         if (null === $this->deliveries || $reload) {
             $this->deliveries = $this->deliveryService->getByBasket(
-                $this->basketService->getBasket()->getOrderableItems(),
+                $this->basketService->getBasket(),
                 '',
                 [],
                 $storage->getCurrentDate()

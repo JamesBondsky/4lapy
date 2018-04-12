@@ -34,6 +34,19 @@ class StockResultCollection extends ArrayCollection
         );
     }
 
+    public function getOrderable(): StockResultCollection
+    {
+        return $this->filter(
+            function (StockResult $stockResult) {
+                return \in_array(
+                    $stockResult->getType(),
+                    [StockResult::TYPE_DELAYED, StockResult::TYPE_AVAILABLE],
+                    true
+                );
+            }
+        );
+    }
+
     /**
      * @return StockResultCollection
      */
@@ -108,6 +121,7 @@ class StockResultCollection extends ArrayCollection
 
     /**
      * @param int $id
+     *
      * @return StockResultCollection
      */
     public function filterByOfferId(int $id): StockResultCollection

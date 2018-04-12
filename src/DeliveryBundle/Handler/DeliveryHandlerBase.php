@@ -22,6 +22,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\Migrator\Provider\Delivery;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -66,6 +67,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
     /**
      * DeliveryHandlerBase constructor.
+     *
      * @param $initParams
      *
      * @throws \Bitrix\Main\ArgumentNullException
@@ -174,52 +176,144 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             if (!$basketItem) {
                 continue;
             }
-            $neededAmount = $basketItem->getQuantity();
 
-            $stockResult = new StockResult();
-            $stockResult->setAmount($neededAmount)
-                ->setOffer($offer)
-                ->setStores($storesAvailable)
-                ->setPrice($basketItem->getPrice());
+            static::getStocksForItem(
+                $offer,
+                $basketItem->getQuantity(),
+                $basketItem->getPrice(),
+                $storesAvailable,
+                $stockResultCollection
+            );
+        }
 
-            $stocks = $offer->getAllStocks();
-            if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
-                if ($availableAmount < $neededAmount) {
-                    $stockResult->setAmount($availableAmount);
-                    $neededAmount -= $availableAmount;
-                } else {
-                    $neededAmount = 0;
-                }
-                $stockResultCollection->add($stockResult);
+        return $stockResultCollection;
+    }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
+     * @param Offer $offer
+     * @param int $neededAmount
+     * @param float $price
+     * @param StoreCollection $storesAvailable
+     * @param StockResultCollection|null $stockResultCollection
+     *
+     * @return StockResultCollection
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     */
+    public static function getStocksForItem(
+        Offer $offer,
+        int $neededAmount,
+        float $price,
+        StoreCollection $storesAvailable,
+        StockResultCollection $stockResultCollection = null
+    ) {
+        if (null === $stockResultCollection) {
+            $stockResultCollection = new StockResultCollection();
+        }
+
+        $stockResult = new StockResult();
+        $stockResult->setAmount($neededAmount)
+            ->setOffer($offer)
+            ->setStores($storesAvailable)
+            ->setPrice($price);
+
+        $stocks = $offer->getAllStocks();
+        if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
+            if ($availableAmount < $neededAmount) {
+                $stockResult->setAmount($availableAmount);
+                $neededAmount -= $availableAmount;
+            } else {
+                $neededAmount = 0;
+            }
+            $stockResultCollection->add($stockResult);
+        }
+        /**
+         * Товар в наличии не полностью. Часть будет отложена
+         */
+        if ($neededAmount) {
+            $storesDelay = $offer->getAllStocks()->getStores()->excludeStores($storesAvailable);
+            if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
+                $delayedStockResult = clone $stockResult;
+                $delayedStockResult->setType(StockResult::TYPE_DELAYED)
+                    ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount);
+                $stockResultCollection->add($delayedStockResult);
+
+                $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;
             }
 
             /**
-             * Товар в наличии не полностью. Часть будет отложена
+             * Часть товара (или все количество) не в наличии
              */
             if ($neededAmount) {
-                $storesDelay = $offer->getAllStocks()->getStores()->excludeStores($storesAvailable);
-                if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
-                    $delayedStockResult = clone $stockResult;
-                    $delayedStockResult->setType(StockResult::TYPE_DELAYED)
-                        ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount);
-                    $stockResultCollection->add($delayedStockResult);
-
-                    $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;
-                }
-
-                /**
-                 * Часть товара (или все количество) не в наличии
-                 */
-                if ($neededAmount) {
-                    $unavailableStockResult = clone $stockResult;
-                    $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                        ->setAmount($neededAmount);
-                    $stockResultCollection->add($unavailableStockResult);
-                }
+                $unavailableStockResult = clone $stockResult;
+                $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
+                    ->setAmount($neededAmount);
+                $stockResultCollection->add($unavailableStockResult);
             }
         }
 
         return $stockResultCollection;
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @param string $deliveryZone
+     * @param string $locationCode
+
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return StoreCollection
+     */
+    public static function getAvailableStores(
+        string $deliveryCode,
+        string $deliveryZone,
+        string $locationCode = ''
+    ): StoreCollection {
+        $serviceContainer = Application::getInstance()->getContainer();
+        /** @var StoreService $storeService */
+        $storeService = $serviceContainer->get('store.service');
+        /** @var LocationService $locationService */
+        $locationService = $serviceContainer->get('location.service');
+        if (!$locationCode) {
+            $locationCode = $locationService->getCurrentLocation();
+        }
+
+        $result = new StoreCollection();
+        switch ($deliveryCode) {
+            case DeliveryService::DPD_DELIVERY_CODE:
+            case DeliveryService::DPD_PICKUP_CODE:
+                $result = $storeService->getByLocation(
+                    $locationCode,
+                    StoreService::TYPE_STORE
+                );
+                break;
+            case DeliveryService::INNER_PICKUP_CODE:
+                $result = $storeService->getByLocation(
+                    $locationCode,
+                    StoreService::TYPE_SHOP,
+                    true
+                );
+                break;
+            case DeliveryService::INNER_DELIVERY_CODE:
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_1:
+                        /**
+                         * условие доставки в эту зону - наличие на складе
+                         */
+                        $result = $storeService->getByLocation($locationCode, StoreService::TYPE_STORE);
+                        break;
+                    case DeliveryService::ZONE_2:
+                        /**
+                         * условие доставки в эту зону - наличие в базовом магазине
+                         */
+                        $result = $storeService->getByLocation($locationCode, StoreService::TYPE_ALL)
+                            ->getBaseShops();
+                        break;
+                }
+                break;
+        }
+
+        return $result;
     }
 
     /**

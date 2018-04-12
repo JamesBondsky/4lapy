@@ -401,7 +401,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         if (null !== $this->stockResult) {
             $this->getSelectedStore();
-            $stockResult = $this->getStockResult()->filterByStore($this->selectedStore);
+            $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
 
             /**
              * Если есть отложенные товары, то добавляем к дате доставки
