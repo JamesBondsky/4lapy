@@ -31,7 +31,7 @@ $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
 
 /** @var ArrayCollection $notAllowedItems */
-$notAllowedItems = $arResult['NOT_ALOWED_ITEMS'];
+$notAllowedItems = $arResult['NOT_ALLOWED_ITEMS'];
 
 /** @var Order $order */
 $order = $basket->getOrder();

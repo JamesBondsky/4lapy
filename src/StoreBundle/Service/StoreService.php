@@ -158,8 +158,8 @@ class StoreService implements LoggerAwareInterface
      *
      * @param string $type
      *
-     * @throws \Exception
      * @throws ArgumentException
+     * @throws ApplicationCreateException
      * @return StoreCollection
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
@@ -240,15 +240,15 @@ class StoreService implements LoggerAwareInterface
         };
 
         try {
-            $result = (new BitrixCache())->withId(__METHOD__)->resultOf($getStores);
-            return $result['result'];
+            $result = (new BitrixCache())->withId(__METHOD__)->resultOf($getStores)['result'];
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf('failed to get supplier stores: %s', $e->getMessage())
             );
+            $result = new StoreCollection();
         }
 
-        return new StoreCollection();
+        return $result;
     }
 
     /**
@@ -258,18 +258,23 @@ class StoreService implements LoggerAwareInterface
      */
     public function getTypeFilter($type): array
     {
+        $filter = [];
         switch ($type) {
             case self::TYPE_SHOP:
-                return ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
+                $filter = ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
+                break;
             case self::TYPE_STORE:
-                return ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
+                $filter = ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
+                break;
             case self::TYPE_ALL:
-                return ['UF_IS_SUPPLIER' => 0];
+                $filter = ['UF_IS_SUPPLIER' => 0];
+                break;
             case self::TYPE_SUPPLIER:
-                return ['UF_IS_SUPPLIER' => 1];
+                $filter = ['UF_IS_SUPPLIER' => 1];
+                break;
         }
 
-        return [];
+        return $filter;
     }
 
     /**
@@ -443,7 +448,7 @@ class StoreService implements LoggerAwareInterface
                     . '>по адресу</option>';
             }
             $haveMetro = false;
-            foreach ($storeCollection as $store) {
+            foreach ($storeCollection as $key => $store) {
                 $metro = $store->getMetro();
 
                 if (!empty($metro) && !$haveMetro) {
@@ -487,7 +492,7 @@ class StoreService implements LoggerAwareInterface
                     'gps_n' => $gpsS, //revert $gpsN
                 ];
 
-                if ($store->getId() === (int)$params['activeStoreId']) {
+                if (($params['activeStoreId'] === 'first' && $key === 0) || ($params['activeStoreId'] !== 'first' && $store->getId() === (int)$params['activeStoreId'])) {
                     $item['active'] = true;
                 }
 
@@ -535,7 +540,10 @@ class StoreService implements LoggerAwareInterface
      * @param int $offerId
      *
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
      * @throws LoaderException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws UserMessageException
@@ -544,11 +552,13 @@ class StoreService implements LoggerAwareInterface
     public function getActiveStoresByProduct(int $offerId): StoreCollection
     {
         $this->getOfferById($offerId);
-        if (!$pickupDelivery = $this->getPickupDelivery()) {
-            return new StoreCollection();
+        if ($pickupDelivery = $this->getPickupDelivery()) {
+            $result = $pickupDelivery->getBestShops();
+        } else {
+            $result = new StoreCollection();
         }
 
-        return $pickupDelivery->getBestShops();
+        return $result;
     }
 
     /**
@@ -669,10 +679,13 @@ class StoreService implements LoggerAwareInterface
 
     /**
      * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @throws LoaderException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws UserMessageException
+     * @throws DeliveryNotFoundException
      * @return PickupResultInterface|null
      */
     protected function getPickupDelivery(): ?PickupResultInterface

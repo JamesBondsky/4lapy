@@ -4,10 +4,9 @@ namespace FourPaws\SaleBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
-use Bitrix\Main\SystemException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Exception;
@@ -23,15 +22,11 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
-use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\UserAccountService;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -72,9 +67,6 @@ class Event implements ServiceHandlerInterface
 
         ###   Обработчики скидок EOF   ###
 
-
-        self::initHandler('OnSaleBasketItemRefreshData', [static::class, 'updateItemAvailability']);
-
         /** отправка email */
         self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
         self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);
@@ -112,8 +104,9 @@ class Event implements ServiceHandlerInterface
             $userService = $container->get(CurrentUserProviderInterface::class);
             $userAccountService = $container->get(UserAccountService::class);
             $user = $userService->getCurrentUser();
-            list(, $bonus) = $userAccountService->refreshUserBalance($user);
+            [, $bonus] = $userAccountService->refreshUserBalance($user);
             $userService->refreshUserBonusPercent($user, $bonus);
+            $userService->refreshUserOpt($user);
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
         } catch (\Exception $e) {
@@ -125,29 +118,9 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws InvalidArgumentException
-     * @throws ArgumentOutOfRangeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws Exception
      * @throws ArgumentException
-     */
-    public static function updateItemAvailability(BitrixEvent $event): void
-    {
-        $basketItem = $event->getParameter('ENTITY');
-        Application::getInstance()
-                   ->getContainer()
-                   ->get(BasketService::class)
-                   ->refreshItemAvailability($basketItem);
-    }
-
-    /**
-     * @param BitrixEvent $event
-     *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
+     * @throws ObjectNotFoundException
      */
     public static function sendNewOrderMessage(BitrixEvent $event): void
     {
@@ -169,9 +142,9 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
      */
     public static function sendOrderPaymentMessage(BitrixEvent $event): void
     {
@@ -209,9 +182,6 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ArgumentOutOfRangeException
      * @throws ApplicationCreateException
      */
     public static function sendOrderStatusMessage(BitrixEvent $event): void

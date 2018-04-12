@@ -188,7 +188,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => false]
+                ['reload' => true]
             );
         }
 

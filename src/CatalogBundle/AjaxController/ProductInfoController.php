@@ -94,7 +94,7 @@ class ProductInfoController extends Controller
                         $currentOffer = $offer;
                     }
                     $response['products'][$product->getId()][$offer->getId()] = [
-                        'available' => !$offer->getStocks()->isEmpty(),
+                        'available' => $offer->isAvailable(),
                         'byRequest' => $offer->isByRequest(),
                         'pickup' => $product->isPickupAvailable(),
                         'delivery' => $product->isDeliveryAvailable(),
@@ -117,6 +117,7 @@ class ProductInfoController extends Controller
                 );
 
                 $response['deliveryHtml'] = ob_get_clean();
+                /** @todo учитывать региональные ограничения по доставкам в Product::getDeliveryAvailability() и убрать эту строку */
                 $response['products'][$product->getId()][$currentOffer->getId()]['available'] = !empty($deliveries);
             }
         }

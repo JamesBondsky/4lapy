@@ -64,7 +64,9 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         if ($defaultCity = $locationService->getDefaultCity()) {
             $defaultLocation = $locationService->getDefaultLocation();
-            $defaultCity->withName($defaultLocation['NAME']);
+            if(!empty($defaultLocation)) {
+                $defaultCity->withName($defaultLocation['NAME']);
+            }
         } else {
             $this->abortResultCache();
             throw new CityNotFoundException('Default city not found');

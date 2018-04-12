@@ -3,6 +3,7 @@
 namespace FourPaws\Adapter;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Sale\Location\LocationTable;
 use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
@@ -22,7 +23,7 @@ class DaDataLocationAdapter extends BaseAdapter
      *
      * @return BitrixLocation
      */
-    public function convert($entity):BitrixLocation
+    public function convert($entity): BitrixLocation
     {
         /** @var DadataLocation $entity */
         $bitrixLocation = new BitrixLocation();
@@ -32,13 +33,14 @@ class DaDataLocationAdapter extends BaseAdapter
             $locationService = Application::getInstance()->getContainer()->get('location.service');
             $country = !empty($entity->getCountry()) ? $entity->getCountry() : '';
             $city = !empty($entity->getCity()) ? $entity->getCity() : '';
-            $region = !empty($entity->getRegion()) && $city !== $entity->getRegion() ? ' '.str_replace('/','', $entity->getRegion()) : '';
+            $region = !empty($entity->getRegion()) && $city !== $entity->getRegion() ? ' ' . str_replace('/', '',
+                    $entity->getRegion()) : '';
             /** из-за того что битрикс не сортирует по релевантности получаем количество адресов больше чем надо
              * и щем в нем нужный нам адрес - количество для поиска надо подобрать, на 100 работает
              */
-            $cities = $locationService->findLocationCity($city, $country.$region, 100, true);
+            $cities = $locationService->findLocationCity($city, $country . $region, 100, true);
             $countCities = \count($cities);
-            if($countCities > 1){
+            if ($countCities > 1) {
                 foreach ($cities as $bitrixCity) {
                     if($bitrixCity['NAME'] === $city){
                         $selectedCity = $bitrixCity;
@@ -46,9 +48,16 @@ class DaDataLocationAdapter extends BaseAdapter
                     }
                 }
             }
-            if(!isset($selectedCity)){
+            if (!isset($selectedCity)) {
                 $selectedCity = reset($cities);
             }
+
+            /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
+            $selectedCity['REGION_ID'] = LocationTable::query()
+                ->setSelect(['REGION_ID'])
+                ->setFilter(['=CODE' => $selectedCity['CODE']])
+                ->setCacheTtl(360000)
+                ->exec()->fetch()['REGION_ID'];
 
             $selectedCity['REGION'] = $entity->getRegion();
             $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);

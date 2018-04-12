@@ -3,16 +3,20 @@ parameters:
     jms_serializer.datetime_handler.class: FourPaws\MobileApiBundle\Serialization\DateHandler
     jms_serializer.unserialize_object_constructor.class: FourPaws\AppBundle\Construction\UnserializeObjectConstructor
 
+    jms_serializer.csv_serialization_visitor.class: FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor
+    jms_serializer.csv_deserialization_visitor.class: FourPaws\AppBundle\DeserializationVisitor\CsvDeserializationVisitor
+    jms_serializer.csv_delimiter: ';'
+    jms_serializer.csv_array_delimiter: '|'
 services:
     JMS\Serializer\SerializerInterface: '@jms_serializer'
 
 jms_serializer:
-  property_naming:
-    id: jms_serialized_name_annotation_strategy
-    enable_cache: true
-  metadata:
-      cache: file
-      debug: "%kernel.debug%"
-      file_cache:
-          dir: "%kernel.cache_dir%/serializer"
-      auto_detection: true
+    property_naming:
+        id: jms_serialized_name_annotation_strategy
+        enable_cache: true
+    metadata:
+        cache: file
+        debug: "%kernel.debug%"
+        file_cache:
+            dir: "%kernel.cache_dir%/serializer"
+        auto_detection: true

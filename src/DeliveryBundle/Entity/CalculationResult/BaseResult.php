@@ -258,22 +258,20 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $result = new IntervalCollection();
         $date = clone $this->getDeliveryDate();
         $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
-        if ($dateIndex < 0 || $dateIndex >= $diff) {
-            return $result;
-        }
+        if (($dateIndex >= 0) && ($dateIndex <= $diff)) {
+            if ($dateIndex > 0) {
+                $date->modify(sprintf('+%s days', $dateIndex));
+            }
+            $date->setTime(0, 0, 0, 0);
 
-        if ($dateIndex > 0) {
-            $date->modify(sprintf('+%s days', $dateIndex));
-        }
-        $date->setTime(0, 0, 0, 0);
-
-        /** @var Interval $interval */
-        foreach ($this->getIntervals() as $interval) {
-            $tmpDelivery = clone $this;
-            $tmpDate = clone $tmpDelivery->setSelectedInterval($interval)->getDeliveryDate();
-            $tmpDate->setTime(0, 0, 0, 0);
-            if ($tmpDate <= $date) {
-                $result->add($interval);
+            /** @var Interval $interval */
+            foreach ($this->getIntervals() as $interval) {
+                $tmpDelivery = clone $this;
+                $tmpDate = clone $tmpDelivery->setSelectedInterval($interval)->getDeliveryDate();
+                $tmpDate->setTime(0, 0, 0, 0);
+                if ($tmpDate <= $date) {
+                    $result->add($interval);
+                }
             }
         }
 
@@ -382,6 +380,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     /**
      * @param Store $selectedStore
+     *
      * @return CalculationResultInterface
      */
     public function setSelectedStore(Store $selectedStore): CalculationResultInterface
@@ -432,6 +431,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     /**
      * @param Store $store
      * @param StockResultCollection $stockResult
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws StoreNotFoundException
@@ -512,7 +512,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 foreach ($schedules->getNextDeliveries($regularStores, $date) as $result) {
                     if (!$tmpResult = $this->getDCShipmentResult(
                         $store,
-                        $result->getSchedule()->getReceiver(),
+                        new StoreCollection([$result->getSchedule()->getReceiver()]),
                         $result->getDate())
                     ) {
                         continue;
@@ -531,7 +531,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                     foreach ($schedules->getNextDeliveries($schedules->getReceivers(), $date) as $result) {
                         if (!$tmpResult = $this->getDCShipmentResult(
                             $store,
-                            $result->getSchedule()->getReceiver(),
+                            new StoreCollection([$result->getSchedule()->getReceiver()]),
                             $result->getDate())
                         ) {
                             continue;
@@ -542,12 +542,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 }
             }
         } else {
-            /** @var Store $sender */
-            foreach ($regularStores as $sender) {
-                if (!$result = $this->getDCShipmentResult($store, $sender, $date)) {
-                    continue;
-                }
-
+            if ($result = $this->getDCShipmentResult($store, $regularStores, $date)) {
                 $resultCollection->add($result);
             }
         }
@@ -577,7 +572,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     /**
      * @param Store $receiver
-     * @param Store $sender
+     * @param StoreCollection $senders
      * @param \DateTime $date
      *
      * @throws ArgumentException
@@ -585,8 +580,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @throws ApplicationCreateException
      * @return DeliveryScheduleResult|null
      */
-    protected function getDCShipmentResult(Store $receiver, Store $sender, \DateTime $date): ?DeliveryScheduleResult
-    {
+    protected function getDCShipmentResult(
+        Store $receiver,
+        StoreCollection $senders,
+        \DateTime $date
+    ): ?DeliveryScheduleResult {
         $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
 
         $date = clone $date;
@@ -603,7 +601,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         /**
          * Ищем графики поставок с РЦ на нужный склад/магазин
          */
-        return $scheduleService->findBySender($sender)
+        return $scheduleService->findBySenders($senders)
             ->getNextDelivery(
                 $receiver,
                 $date
@@ -648,6 +646,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     /**
      * @param int $dateOffset
+     *
      * @return BaseResult
      */
     public function setDateOffset(int $dateOffset): CalculationResultInterface
@@ -667,6 +666,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     /**
      * @param DeliveryScheduleResult $shipmentResult
+     *
      * @return BaseResult
      */
     public function setShipmentResult(DeliveryScheduleResult $shipmentResult): CalculationResultInterface
@@ -677,6 +677,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     /**
      * @param bool $internalCall
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws StoreNotFoundException
@@ -719,36 +720,40 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * Получить пересечение коллекций
      *
      * @param array $storeCollections
+     *
      * @return StoreCollection
      */
     protected function getStoreIntersection(array $storeCollections = []): StoreCollection
     {
         if (empty($storeCollections)) {
-            return new StoreCollection();
-        }
-        if (\count($storeCollections) === 1) {
-            return current($storeCollections);
+            $result = new StoreCollection();
+        } elseif (\count($storeCollections) === 1) {
+            $result = current($storeCollections);
+        } else {
+            /**
+             * @var string $i
+             * @var StoreCollection $storeCollection
+             */
+            foreach ($storeCollections as $i => $storeCollection) {
+                $storeCollections[$i] = $storeCollection->toArray();
+            }
+
+            /**
+             * Функция сравнения складов
+             *
+             * @param Store $store1
+             * @param Store $store2
+             *
+             * @return int
+             */
+            $storeCollections[] = function (Store $store1, Store $store2) {
+                return $store1->getXmlId() <=> $store2->getXmlId();
+            };
+
+            $result = new StoreCollection(array_uintersect(...$storeCollections));
         }
 
-        /**
-         * @var string $i
-         * @var StoreCollection $storeCollection
-         */
-        foreach ($storeCollections as $i => $storeCollection) {
-            $storeCollections[$i] = $storeCollection->toArray();
-        }
-
-        /**
-         * Функция сравнения складов
-         * @param Store $store1
-         * @param Store $store2
-         * @return int
-         */
-        $storeCollections[] = function (Store $store1, Store $store2) {
-            return $store1->getXmlId() <=> $store2->getXmlId();
-        };
-
-        return new StoreCollection(array_uintersect(...$storeCollections));
+        return $result;
     }
 
     protected function resetResult(): void

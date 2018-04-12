@@ -1264,4 +1264,19 @@ class User implements UserInterface
     {
         $this->discount = $discount;
     }
+
+    /**
+     * @return bool
+     */
+    public function isOpt(): bool
+    {
+        $groups = $this->getGroups()->toArray();
+        /** @var Group $group */
+        foreach ($groups as $group) {
+            if($group->getCode() === 'opt'){
+                return true;
+            }
+        }
+        return false;
+    }
 }

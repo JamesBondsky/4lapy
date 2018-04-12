@@ -105,6 +105,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function sendPhone(string $phone): string
     {
+        if(empty($phone)){
+            return '';
+        }
         $bag = new ParameterBag(
             [
                 'maxresultsnumber' => '1',
@@ -257,6 +260,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
+        if(empty($user->getManzanaNormalizePersonalPhone())){
+            throw new ManzanaServiceContactSearchNullException('телефон не задан');
+        }
 
         return $this->getContactByPhone(
             $user->getManzanaNormalizePersonalPhone()
@@ -273,6 +279,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getContactByPhone(string $phone): Client
     {
+        if(empty($phone)){
+            throw new ManzanaServiceContactSearchNullException('телефон не задан');
+        }
         /** @var Clients $currentClient */
         /** @noinspection PhpUndefinedMethodInspection */
         $clients = $this->getUserDataByPhone($phone)->clients->toArray();
@@ -304,6 +313,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getUserDataByPhone(string $phone): Clients
     {
+        if(empty($phone)){
+            throw new ManzanaServiceContactSearchNullException('телефон не задан');
+        }
         $bag = new ParameterBag(
             [
                 'maxresultsnumber' => '5',
@@ -422,6 +434,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
 
+        if(empty($user->getManzanaNormalizePersonalPhone())){
+            throw new ManzanaServiceContactSearchNullException('Нет телефона');
+        }
         return $this->getContactIdByPhone(
             $user->getManzanaNormalizePersonalPhone()
         );
@@ -437,6 +452,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getContactIdByPhone(string $phone): string
     {
+        if(empty($phone)){
+            throw new ManzanaServiceContactSearchNullException('не указан телефон');
+        }
         return (string)$this->getContactByPhone($phone)->contactId;
     }
 

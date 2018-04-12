@@ -92,16 +92,21 @@ class FourPawsShopListComponent extends CBitrixComponent
         if (empty($city)) {
             $city = $this->userService->getSelectedCity();
         }
-        if ($this->startResultCache(false, ['location' => $city['CODE']])) {
+        $codeNearest = $request->get('codeNearest');
+        if ($codeNearest !== null) {
+            $this->arResult['codeNearest'] = $codeNearest;
+            $locationService = $container->get('location.service');
+            $city = $locationService->findLocationCityByCode($codeNearest);
+        }
+        if ($this->startResultCache(false, ['location' => $city['CODE'], 'codeNearest' => $codeNearest])) {
             if ($this->prepareResult($city)) {
                 TaggedCacheHelper::addManagedCacheTags([
-                    'shop:list:'. $city['CODE'],
-                    'shop:list'
+                    'shop:list:' . $city['CODE'],
+                    'shop:list',
                 ]);
 
                 $this->includeComponentTemplate();
-            }
-            else {
+            } else {
                 $this->abortResultCache();
             }
         }
@@ -111,6 +116,7 @@ class FourPawsShopListComponent extends CBitrixComponent
 
     /**
      * @param array $city
+     *
      * @return bool
      * @throws Exception
      */

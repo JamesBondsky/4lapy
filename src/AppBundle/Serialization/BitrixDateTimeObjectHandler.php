@@ -10,11 +10,15 @@
 namespace FourPaws\AppBundle\Serialization;
 
 use Bitrix\Main\Type\DateTime as BitrixDateTime;
+use FourPaws\AppBundle\DeserializationVisitor\CsvDeserializationVisitor;
+use FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
+use JMS\Serializer\XmlDeserializationVisitor;
+use JMS\Serializer\XmlSerializationVisitor;
 
 /**
  * Class BitrixDateTimeObjectHandler - конвертирует Bitrix\Main\Type\DateTime в \DateTime и обратно
@@ -35,10 +39,34 @@ class BitrixDateTimeObjectHandler implements SubscribingHandlerInterface
                 'method' => 'deserialize',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format' => 'xml',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'deserializeXml',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format' => 'csv',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'deserializeCsv',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'format' => 'json',
                 'type' => 'bitrix_date_time_object',
                 'method' => 'serialize',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format' => 'xml',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'serializeXml',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format' => 'csv',
+                'type' => 'bitrix_date_time_object',
+                'method' => 'serializeCsv',
             ],
         ];
     }
@@ -72,8 +100,60 @@ class BitrixDateTimeObjectHandler implements SubscribingHandlerInterface
         return $data;
     }
 
+    /**
+     * формат d.m.Y H:i:s
+     * @noinspection MoreThanThreeArgumentsInspection
+     *
+     * @param XmlSerializationVisitor $visitor
+     * @param                                          $data
+     * @param array $type
+     * @param Context $context
+     *
+     * @return mixed
+     */
+    public function serializeXml(
+        /** @noinspection PhpUnusedParameterInspection */
+        XmlSerializationVisitor $visitor,
+        $data,
+        array $type,
+        Context $context
+    ) {
+        if ($data instanceof \DateTime) {
+            $data = $data->format('d.m.Y H:i:s');
+        } else {
+            $data = '';
+        }
+        return $data;
+    }
 
     /**
+     * формат d.m.Y H:i:s
+     * @noinspection MoreThanThreeArgumentsInspection
+     *
+     * @param CsvSerializationVisitor $visitor
+     * @param                                          $data
+     * @param array $type
+     * @param Context $context
+     *
+     * @return mixed
+     */
+    public function serializeCsv(
+        /** @noinspection PhpUnusedParameterInspection */
+        CsvSerializationVisitor $visitor,
+        $data,
+        array $type,
+        Context $context
+    ) {
+        if ($data instanceof \DateTime) {
+            $data = $data->format('d.m.Y H:i:s');
+        } else {
+            $data = '';
+        }
+        return $data;
+    }
+
+    /**
+     * формат d.m.Y H:i:s
      * @noinspection MoreThanThreeArgumentsInspection
      *
      * @param JsonDeserializationVisitor $visitor
@@ -91,12 +171,83 @@ class BitrixDateTimeObjectHandler implements SubscribingHandlerInterface
         Context $context
     ) {
         if ($data instanceof BitrixDateTime) {
-            $data = new \DateTime();
-            $data->setTimestamp($data->getTimestamp());
+            $returnData = new \DateTime();
+            $returnData->setTimestamp($data->getTimestamp());
         } else {
-            $data = null;
+            if(\is_string($data) && !empty($data)){
+                $returnData = \DateTime::createFromFormat('d.m.Y H:i:s', $data);
+            }
+            else{
+                $returnData = null;
+            }
         }
 
-        return $data;
+        return $returnData;
+    }
+
+    /**
+     * формат d.m.Y H:i:s
+     * @noinspection MoreThanThreeArgumentsInspection
+     *
+     * @param XmlDeserializationVisitor $visitor
+     * @param                                            $data
+     * @param array $type
+     * @param Context $context
+     *
+     * @return mixed
+     */
+    public function deserializeXml(
+        /** @noinspection PhpUnusedParameterInspection */
+        XmlDeserializationVisitor $visitor,
+        $data,
+        array $type,
+        Context $context
+    ) {
+        if ($data instanceof BitrixDateTime) {
+            $returnData = new \DateTime();
+            $returnData->setTimestamp($data->getTimestamp());
+        } else {
+            if(\is_string($data) && !empty($data)){
+                $returnData = \DateTime::createFromFormat('d.m.Y H:i:s', $data);
+            }
+            else{
+                $returnData = null;
+            }
+        }
+
+        return $returnData;
+    }
+
+    /**
+     * формат d.m.Y H:i:s
+     * @noinspection MoreThanThreeArgumentsInspection
+     *
+     * @param CsvDeserializationVisitor $visitor
+     * @param                                            $data
+     * @param array $type
+     * @param Context $context
+     *
+     * @return mixed
+     */
+    public function deserializeCsv(
+        /** @noinspection PhpUnusedParameterInspection */
+        CsvDeserializationVisitor $visitor,
+        $data,
+        array $type,
+        Context $context
+    ) {
+        if ($data instanceof BitrixDateTime) {
+            $returnData = new \DateTime();
+            $returnData->setTimestamp($data->getTimestamp());
+        } else {
+            if(\is_string($data) && !empty($data)){
+                $returnData = \DateTime::createFromFormat('d.m.Y H:i:s', $data);
+            }
+            else{
+                $returnData = null;
+            }
+        }
+
+        return $returnData;
     }
 }

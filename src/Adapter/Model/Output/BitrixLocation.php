@@ -36,11 +36,21 @@ class BitrixLocation
      * @Serializer\SkipWhenEmpty()
      */
     protected $name = '';
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("REGION_ID")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $regionId = '';
+
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("REGION")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $region = '';
@@ -107,6 +117,22 @@ class BitrixLocation
     public function setRegion(string $region): void
     {
         $this->region = $region;
+    }
+
+    /**
+     * @return int
+     */
+    public function getRegionId(): int
+    {
+        return $this->regionId;
+    }
+
+    /**
+     * @param int $regionId
+     */
+    public function setRegionId(int $regionId): void
+    {
+        $this->regionId = $regionId;
     }
 
 }
