@@ -96,7 +96,7 @@ class OfferService implements LoggerAwareInterface
         if ($id = $this->offerRepository->findIdByXmlId($xmlId)) {
             $result = $this->offerRepository->setActive($id, false);
             if ($result) {
-                $this->log()->debug(sprintf('Деактивирован оффер %s [%s]', $id, $xmlId));
+                $this->log()->info(sprintf('Деактивирован оффер %s [%s]', $id, $xmlId));
             }
             return $result;
         }
