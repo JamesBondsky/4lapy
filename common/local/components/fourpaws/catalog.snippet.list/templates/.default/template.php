@@ -35,14 +35,12 @@ if (0 === $component->getProductCollection()->count()) {
         </div>
         <div class="b-common-section__content b-common-section__content--sale js-popular-product">
             <?php foreach ($component->getProductCollection() as $product) {
-                /**
-                 * @todo исключать по фильтру офферы, не относящиеся к распродаже
-                 */
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.element.snippet',
                     'vertical',
                     [
                         'PRODUCT' => $product,
+                        'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? []
                     ],
                     $component,
                     [

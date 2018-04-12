@@ -58,6 +58,8 @@ class CatalogElementSnippet extends CBitrixComponent
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
         $params['CACHE_TYPE'] = $params['CACHE_TIME'] === 0 ? 'N' : $params['CACHE_TYPE'];
 
+        $params['OFFER_FILTER'] = $params['OFFER_FILTER'] ?? [];
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -119,10 +121,7 @@ class CatalogElementSnippet extends CBitrixComponent
         if (!empty($this->arParams['CURRENT_OFFER']) && $this->arParams['CURRENT_OFFER'] instanceof Offer) {
             $currentOffer = $this->arParams['CURRENT_OFFER'];
         } else {
-            /**
-             * @todo Завязать текущий оффер на фильтр.
-             */
-            $offers = $product->getOffers();
+            $offers = $product->getOffers(true, false, $this->arParams['OFFER_FILTER']);
             $currentOffer = null;
             foreach ($offers as $offer) {
                 if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {

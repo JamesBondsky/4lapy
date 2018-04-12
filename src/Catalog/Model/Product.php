@@ -1834,22 +1834,23 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @param bool $skipZeroPrice
      * @param bool $reload
+     * @param array $additionalFilter
      * @return Collection
      * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      */
-    public function getOffers($skipZeroPrice = true, bool $reload = false): Collection
+    public function getOffers($skipZeroPrice = true, bool $reload = false, array $additionalFilter = []): Collection
     {
         if (null === $this->offers || $reload) {
-            $offers = new ArrayCollection(
-                array_values(
-                    (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                        ->withOrder(['CATALOG_WEIGHT' => 'ASC'])
-                        ->exec()
-                        ->toArray()
-                )
-            );
+            $offerQuery =  (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                ->withOrder(['CATALOG_WEIGHT' => 'ASC']);
+            if(!empty($additionalFilter)){
+                foreach ($additionalFilter as $key => $value) {
+                    $offerQuery->withFilterParameter($key, $value);
+                }
+            }
+            $offers = new ArrayCollection(array_values($offerQuery->exec()->toArray()));
 
             /**
              * @var Offer $offer
