@@ -517,4 +517,12 @@ class Client
         }
         return $date;
     }
+
+    /**
+     * @return bool
+     */
+    public function isOpt(): bool
+    {
+        return \in_array($this->employeeBreeder, [2, 3], true);
+    }
 }

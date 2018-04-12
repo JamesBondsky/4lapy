@@ -769,9 +769,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         /** @var ManzanaService $manzanaService */
         $manzanaItem = null;
         try {
-            $manzanaService = $container->get('manzana.service');
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            $manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($phone));
+            if(!empty($phone)) {
+                $manzanaService = $container->get('manzana.service');
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                $manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($phone));
+            }
         } catch (ManzanaServiceException $e) {
             try {
                 $logger = LoggerFactory::create('manzana');
