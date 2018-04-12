@@ -2,13 +2,17 @@
 
 namespace FourPaws\AppBundle\DeserializationVisitor;
 
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use JMS\Serializer\AbstractVisitor;
+use JMS\Serializer\Accessor\AccessorStrategyInterface;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\Metadata\PropertyMetadata;
 use JMS\Serializer\NullAwareVisitorInterface;
 use phpDocumentor\Reflection\Types\Scalar;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
 /**
  * Class CsvDeserializationVisitor
@@ -19,9 +23,32 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
 
     private $result;
     private $navigator;
-    private $delimiter = ';';
-    private $strDelimiter = "\r\n";
     private $data;
+    private $delimiter = ';';
+    private $arrayDelimiter = '|';
+    private $strDelimiter = "\r\n";
+
+    /**
+     * CsvDeserializationVisitor constructor.
+     *
+     * @param                                $namingStrategy
+     * @param AccessorStrategyInterface|null $accessorStrategy
+     *
+     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
+     */
+    public function __construct($namingStrategy, AccessorStrategyInterface $accessorStrategy = null)
+    {
+        parent::__construct($namingStrategy, $accessorStrategy);
+        $paramDelimiter = Application::getInstance()->getContainer()->getParameter('jms_serializer.csv_delimiter');
+        if(!empty($paramDelimiter)){
+            $this->delimiter = $paramDelimiter;
+        }
+        $paramArrayDelimiter = Application::getInstance()->getContainer()->getParameter('jms_serializer.csv_array_delimiter');
+        if(!empty($paramArrayDelimiter)){
+            $this->arrayDelimiter = $paramArrayDelimiter;
+        }
+    }
 
     /**
      * @return string
@@ -54,7 +81,7 @@ class CsvDeserializationVisitor extends AbstractVisitor implements NullAwareVisi
             }
 
             if(empty($newRes)) {
-                $res = explode('|', $data);
+                $res = explode($this->arrayDelimiter, $data);
             }
         }
         return $res;

@@ -5,6 +5,8 @@ parameters:
 
     jms_serializer.csv_serialization_visitor.class: FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor
     jms_serializer.csv_deserialization_visitor.class: FourPaws\AppBundle\DeserializationVisitor\CsvDeserializationVisitor
+    jms_serializer.csv_delimiter: ';'
+    jms_serializer.csv_array_delimiter: '|'
 services:
     JMS\Serializer\SerializerInterface: '@jms_serializer'
 
