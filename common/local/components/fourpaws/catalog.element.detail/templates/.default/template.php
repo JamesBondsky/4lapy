@@ -158,11 +158,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                             if ($offer->getVolumeReference()) {
                                 $value = $offer->getVolumeReference()->getName();
                             } else {
-                                $value = WordHelper::showWeight($offer->getCatalogProduct()->getWeight());
+                                $weight = $offer->getCatalogProduct()->getWeight();
+                                if($weight > 0) {
+                                    $value = WordHelper::showWeight();
+                                }
                             }
                         }
 
-                        if (!$value) {
+                        if (empty($value)) {
                             continue;
                         } ?>
                         <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
@@ -229,7 +232,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                 ->getName() ?></div>
                     </li>
                     <?php
-                } elseif ($currentOffer->getCatalogProduct()->getWeight()) {
+                } elseif ($currentOffer->getCatalogProduct()->getWeight() > 0) {
                     ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info js-info-product">Вес</div>
