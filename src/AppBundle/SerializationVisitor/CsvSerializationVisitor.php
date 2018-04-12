@@ -2,7 +2,9 @@
 
 namespace FourPaws\AppBundle\SerializationVisitor;
 
+use FourPaws\App\Application;
 use JMS\Serializer\AbstractVisitor;
+use JMS\Serializer\Accessor\AccessorStrategyInterface;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Metadata\ClassMetadata;
@@ -19,6 +21,24 @@ class CsvSerializationVisitor extends AbstractVisitor
     private $delimiter = ';';
     private $data;
     private $strDelimiter = "\r\n";
+
+    /**
+     * CsvSerializationVisitor constructor.
+     *
+     * @param                                $namingStrategy
+     * @param AccessorStrategyInterface|null $accessorStrategy
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function __construct($namingStrategy, AccessorStrategyInterface $accessorStrategy = null)
+    {
+        parent::__construct($namingStrategy, $accessorStrategy);
+        $paramDelimiter = Application::getInstance()->getContainer()->getParameter('jms_serializer.csv_delimiter');
+        if(!empty($paramDelimiter)){
+            $this->delimiter = $paramDelimiter;
+        }
+    }
 
     /**
      * @return string
