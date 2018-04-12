@@ -82,11 +82,13 @@ class Event implements ServiceHandlerInterface
      */
     public static function clearProductCache($id): void
     {
-        TaggedCacheHelper::clearManagedCache([
-            'catalog:offer:' . $id,
-            'catalog:stocks:' . $id,
-            'catalog:product:' . $id
-        ]);
+        if (!self::isLockEvents()) {
+            TaggedCacheHelper::clearManagedCache([
+                'catalog:offer:' . $id,
+                'catalog:stocks:' . $id,
+                'catalog:product:' . $id
+            ]);
+        }
     }
 
     /**
@@ -94,9 +96,11 @@ class Event implements ServiceHandlerInterface
      */
     public static function clearIblockItemCache($arFields): void
     {
-        TaggedCacheHelper::clearManagedCache([
-            'iblock:item:' . $arFields['ID'],
-        ]);
+        if (!self::isLockEvents()) {
+            TaggedCacheHelper::clearManagedCache([
+                'iblock:item:' . $arFields['ID'],
+            ]);
+        }
     }
 
     /**
