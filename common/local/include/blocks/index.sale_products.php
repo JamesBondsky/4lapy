@@ -9,7 +9,7 @@
 $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
     'COUNT'        => 12,
     'OFFER_FILTER' => [
-        'PROPERTY_IS_SALE' => '1',
+        '=PROPERTY_IS_SALE' => '1',
     ],
-    'TITLE' => 'Распродажа',
+    'TITLE'        => 'Распродажа',
 ], false, ['HIDE_ICONS' => 'Y']);

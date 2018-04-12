@@ -86,7 +86,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
             }
 
             if (!($id % 100)) {
-                $this->log()->debug(
+                $this->log()->info(
                     \sprintf(
                         'Проимпортировано остатков %d, ошибок: %d, успешно %d',
                         $id + 1,
@@ -97,7 +97,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
             }
         }
 
-        $this->log()->debug(
+        $this->log()->info(
             \sprintf(
                 'Импорт завершен. Проимпортировано остатков %d, ошибок: %d, успешно %d',
                 $id ?? 0 + 1,

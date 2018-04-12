@@ -120,11 +120,13 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                             if ($offer->getVolumeReference()) {
                                 $value = $offer->getVolumeReference()->getName();
                             } elseif ($weight = $offer->getCatalogProduct()->getWeight()) {
-                                $value = WordHelper::showWeight($weight);
+                                if($weight > 0) {
+                                    $value = WordHelper::showWeight($weight);
+                                }
                             }
                         }
 
-                        if (!$value) {
+                        if (empty($value)) {
                             continue;
                         } ?>
                         <li class="b-weight-container__item">

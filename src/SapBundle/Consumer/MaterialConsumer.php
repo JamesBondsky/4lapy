@@ -12,9 +12,16 @@ use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\CatalogBundle\EventController\Event;
 use FourPaws\Migrator\Entity\AddResult;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
+use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
 use FourPaws\SapBundle\Exception\LoggedException;
+use FourPaws\SapBundle\Exception\LogicException;
+use FourPaws\SapBundle\Exception\NotFoundBasicUomException;
+use FourPaws\SapBundle\Exception\NotFoundDataManagerException;
+use FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException;
+use FourPaws\SapBundle\Exception\RuntimeException;
 use FourPaws\SapBundle\Repository\BrandRepository;
 use FourPaws\SapBundle\Service\Materials\CatalogProductService;
 use FourPaws\SapBundle\Service\Materials\OfferService;
@@ -22,7 +29,13 @@ use FourPaws\SapBundle\Service\Materials\ProductService;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
+use RuntimeException as BaseRuntimeException;
 
+/**
+ * Class MaterialConsumer
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
 class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -52,13 +65,22 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private $brandRepository;
 
+    /**
+     * MaterialConsumer constructor..
+     * @param ReferenceService $referenceService
+     * @param OfferService $offerService
+     * @param ProductService $productService
+     * @param CatalogProductService $catalogProductService
+     * @param BrandRepository $brandRepository
+     */
     public function __construct(
         ReferenceService $referenceService,
         OfferService $offerService,
         ProductService $productService,
         CatalogProductService $catalogProductService,
         BrandRepository $brandRepository
-    ) {
+    )
+    {
         $this->connection = Application::getConnection();
         $this->referenceService = $referenceService;
         $this->offerService = $offerService;
@@ -79,6 +101,11 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             return false;
         }
 
+        /**
+         * Костыль! Уровень изоляции кривой.
+         */
+        Event::lockEvents();
+
         try {
             if ($material->isNotUploadToIm()) {
                 return $this->offerService->deactivate($material->getOfferXmlId());
@@ -95,6 +122,9 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             $offer = $this->getOffer($material, $product);
             $this->getCatalogProduct($material, $offer);
             $this->connection->commitTransaction();
+            Event::clearProductCache($offer->getId());
+            Event::clearProductCache($product->getId());
+
             return true;
         } catch (LoggedException $exception) {
         } catch (\Exception $exception) {
@@ -106,6 +136,12 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             );
         }
         $this->connection->rollbackTransaction();
+
+        /**
+         * Костыль! Уровень изоляции кривой.
+         */
+        Event::unlockEvents();
+
         return false;
     }
 
@@ -122,7 +158,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param Material $material
      *
-     * @throws \RuntimeException
+     * @throws BaseRuntimeException
      * @throws LoggedException
      * @return Brand
      */
@@ -156,14 +192,14 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param Material $material
      *
-     * @param Brand    $brand
+     * @param Brand $brand
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws NotFoundReferenceRepositoryException
+     * @throws NotFoundDataManagerException
+     * @throws LogicException
+     * @throws CantCreateReferenceItem
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \RuntimeException
+     * @throws BaseRuntimeException
      * @throws LoggedException
      * @return Product
      */
@@ -195,20 +231,23 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
         );
 
         $this->log()->log(LogLevel::CRITICAL, $message, $result->getErrorMessages());
+
         throw new LoggedException($message);
     }
 
     /**
      * @param Material $material
-     * @param Product  $product
+     * @param Product $product
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\RuntimeException
+     * @throws BaseRuntimeException
+     * @throws NotFoundDataManagerException
+     * @throws NotFoundBasicUomException
+     * @throws CantCreateReferenceItem
+     * @throws NotFoundReferenceRepositoryException
+     * @throws LogicException
+     * @throws RuntimeException
      * @throws LoggedException
+     *
      * @return Offer
      */
     protected function getOffer(Material $material, Product $product): Offer
@@ -244,10 +283,10 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param Material $material
-     * @param Offer    $offer
+     * @param Offer $offer
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
-     * @throws \RuntimeException
+     * @throws NotFoundBasicUomException
+     * @throws BaseRuntimeException
      * @throws LoggedException
      * @return CatalogProduct
      */
@@ -256,6 +295,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
         $catalogProduct = $this->catalogProductService->processMaterial($material);
         $catalogProduct->setId($offer->getId());
         $result = $this->catalogProductService->updateOrCreate($catalogProduct);
+
         if ($result) {
             $this->log()->log(LogLevel::DEBUG, sprintf(
                 'Продуктовое предложение %s создано или обновлено',
@@ -263,11 +303,14 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             ));
             return $catalogProduct;
         }
+
         $message = sprintf(
             'Ошибка создания или обновления продуктового предложения %s',
             $catalogProduct->getId()
         );
+
         $this->log()->log(LogLevel::CRITICAL, $message);
+
         throw new LoggedException($message);
     }
 }

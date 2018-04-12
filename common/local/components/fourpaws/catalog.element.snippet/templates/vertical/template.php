@@ -95,20 +95,22 @@ if (!$arParams['ITEM_ATTR_ID']) {
                                 case 'WEIGHT':
                                     $catalogProduct = $offer->getCatalogProduct();
                                     $weightGrams = $catalogProduct->getWeight();
-                                    if ($weightGrams > 1000) {
-                                        $value =
-                                            ($weightGrams / 1000) . '&nbsp;' . Loc::getMessage(
-                                                'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_KG'
-                                            );
-                                    } else {
-                                        $value =
-                                            $weightGrams . '&nbsp;' . Loc::getMessage(
-                                                'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_G'
-                                            );
+                                    if($weightGrams > 0) {
+                                        if ($weightGrams > 1000) {
+                                            $value =
+                                                ($weightGrams / 1000) . '&nbsp;' . Loc::getMessage(
+                                                    'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_KG'
+                                                );
+                                        } else {
+                                            $value =
+                                                $weightGrams . '&nbsp;' . Loc::getMessage(
+                                                    'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_G'
+                                                );
+                                        }
                                     }
                                     break;
                             }
-                            if (!strlen($value)) {
+                            if (empty($value)) {
                                 continue;
                             }
                             $isOffersPrinted = true;
