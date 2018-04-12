@@ -1104,7 +1104,9 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             $manzanaService = $this->getManzanaService();
             // поиск контакта в Манзане по телефону (в старой реализации поиск делалася по номеру карты)
             try {
-                $contactId = $manzanaService->getContactIdByPhone($phoneManzana);
+                if(!empty($phoneManzana)) {
+                    $contactId = $manzanaService->getContactIdByPhone($phoneManzana);
+                }
             } catch (ManzanaServiceContactSearchNullException $exception) {
                 // контакта с заданным номером телефона в Манзане нет - будет создан
                 $this->log()->debug(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));

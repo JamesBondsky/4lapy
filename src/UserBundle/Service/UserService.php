@@ -641,6 +641,9 @@ class UserService implements
      */
     public function refreshUserOpt(User $user): bool
     {
+        if(empty($user->getPersonalPhone())){
+            return false;
+        }
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $contact = $manzanaService->getContactByUser($user);
         $groupsList = [];
