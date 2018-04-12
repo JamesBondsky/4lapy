@@ -145,13 +145,13 @@ class OrderSubscribeHistoryService
     public function getSubsDataByOrderSubscribe(OrderSubscribe $orderSubscribe): string
     {
         $fields = $orderSubscribe->getAllFields();
-        if ($fields['UF_DATE_CREATE'] && $fields['UF_DATE_CREATE'] instanceof DateTime) {
+        if ($fields['UF_DATE_CREATE'] && $fields['UF_DATE_CREATE'] instanceof Date) {
             $fields['UF_DATE_CREATE'] = $fields['UF_DATE_CREATE']->toString();
         }
-        if ($fields['UF_DATE_EDIT'] && $fields['UF_DATE_EDIT'] instanceof DateTime) {
+        if ($fields['UF_DATE_EDIT'] && $fields['UF_DATE_EDIT'] instanceof Date) {
             $fields['UF_DATE_EDIT'] = $fields['UF_DATE_EDIT']->toString();
         }
-        if ($fields['UF_DATE_START'] && $fields['UF_DATE_START'] instanceof DateTime) {
+        if ($fields['UF_DATE_START'] && $fields['UF_DATE_START'] instanceof Date) {
             $fields['UF_DATE_START'] = $fields['UF_DATE_START']->toString();
         }
 

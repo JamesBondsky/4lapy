@@ -85,6 +85,7 @@ class Manager
                         ->getAdder('detach', true, $order)
                         ->processOrder();
 
+/** @todo Проверить. Обработчик может использоваться на одном хите для разных заказов разных пользователей */
                     $promoCode = $couponStorage->getApplicableCoupon();
                     if ($promoCode) {
                         $manzana->setPromocode($promoCode);

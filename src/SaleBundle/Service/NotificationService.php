@@ -9,6 +9,8 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
@@ -387,5 +389,4 @@ class NotificationService implements LoggerAwareInterface
             $fields
         );
     }
-
 }

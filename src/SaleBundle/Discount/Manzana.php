@@ -67,6 +67,7 @@ class Manzana implements LoggerAwareInterface
      */
     public function setPromocode(string $promocode): void
     {
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов */
         $this->promocode = $promocode;
     }
 
@@ -77,6 +78,7 @@ class Manzana implements LoggerAwareInterface
      */
     public function calculate()
     {
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов */
         $basket = $this->basketService->getBasket();
 
         if (!$basket->count()) {
@@ -181,6 +183,7 @@ class Manzana implements LoggerAwareInterface
      */
     private function saveCouponDiscount(SoftChequeResponse $response)
     {
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов */
         $this->basketService->setPromocodeDiscount($response->getSumm() - $response->getSummDiscounted());
     }
 }

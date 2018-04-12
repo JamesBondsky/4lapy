@@ -232,14 +232,15 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param int|null $discountId
-     *
+     * @param Order|null $order
+     * @return array
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
-     * @throws Exception
+     * @throws BitrixProxyException
+     * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @return array
      */
     public function getGiftGroupOfferCollection(?int $discountId = null, Order $order = null): array
     {
@@ -336,6 +337,8 @@ class BasketService implements LoggerAwareInterface
      */
     public function getOfferCollection(): OfferCollection
     {
+/** @todo Проверить. Сервис может использоваться на одном хите для разных заказов разных пользователей */
+
         return $this->offerCollection ?? $this->loadOfferCollection();
     }
 
@@ -351,6 +354,7 @@ class BasketService implements LoggerAwareInterface
      */
     private function loadOfferCollection(): OfferCollection
     {
+/** @todo Проверить. Сервис может использоваться на одном хите для разных заказов разных пользователей */
         /**
          * @var Basket $basket
          * @var BasketItem $basketItem
@@ -395,6 +399,7 @@ class BasketService implements LoggerAwareInterface
      */
     public function refreshAvailability(Basket $basket): Basket
     {
+/** @todo Проверить. Сервис может использоваться на одном хите для разных заказов разных пользователей */
         $isTemporary = function (BasketItem $basketItem): bool {
             $property = $basketItem->getPropertyCollection()->getPropertyValues()['IS_TEMPORARY'];
             return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
@@ -627,6 +632,7 @@ $storage = null;
          * @todo Remove multiple return statements usage
          * @see https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
          */
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов разных пользователей */
         try {
             try {
                 $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
@@ -655,10 +661,18 @@ $storage = null;
      * @todo КОСТЫЛЬ
      *
      * @return void
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      */
     public function setDiscountBeforeManzana(): void
     {
-        $this->firstDiscount = $this->basket->getBasePrice() - $this->basket->getPrice();
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов */
+        $basket = $this->getBasket();
+        $this->firstDiscount = $basket ? $basket->getBasePrice() - $basket->getPrice() : 0;
     }
 
     /**
@@ -668,6 +682,7 @@ $storage = null;
      */
     public function getPromocodeDiscount(): float
     {
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов */
         return $this->promocodeDiscount;
     }
 
@@ -678,6 +693,7 @@ $storage = null;
      */
     public function setPromocodeDiscount(float $promocodeDiscount): void
     {
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов */
         $this->promocodeDiscount = $promocodeDiscount - $this->firstDiscount;
     }
 
@@ -704,6 +720,7 @@ $storage = null;
 
         if (!$basket->isEmpty()) {
             try {
+/** @todo Переделать. Сервис может использоваться на одном хите для разных заказов разных пользователей */
                 $user = $this->currentUserProvider->getCurrentUser();
                 if ($user->getDiscountCardNumber()) {
                     $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(

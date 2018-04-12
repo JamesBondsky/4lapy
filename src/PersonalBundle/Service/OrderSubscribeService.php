@@ -67,9 +67,7 @@ class OrderSubscribeService
     private $miscData = [];
 
     /** @var array Исключаемые свойства корзины */
-    private $basketItemExcludeProps = [
-        /** @todo: Уточнить какие свойства позиции корзины следует исключать */
-    ];
+    private $basketItemExcludeProps = [];
     /** @var array Исключаемые свойства заказа */
     private $orderExcludeProps = [
         // заказ выгружен в SAP, всегда N
