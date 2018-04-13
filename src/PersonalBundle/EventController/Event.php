@@ -392,7 +392,6 @@ class Event implements ServiceHandlerInterface
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
      * @throws ContactUpdateException
      */
     public static function ReferralSendToManzana(BitrixEvent $event): void
@@ -407,8 +406,7 @@ class Event implements ServiceHandlerInterface
 
         $referralClient = $referralService->getClientReferral($entity);
         if (!empty($referralClient->contactId) && !empty($referralClient->cardNumber)) {
-            /** @todo отправка через очередь инфи - ормации */
-            $referralService->manzanaService->addReferralByBonusCard($referralClient);
+            $referralService->manzanaService->addReferralByBonusCardAsync($referralClient);
         }
     }
 

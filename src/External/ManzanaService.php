@@ -335,6 +335,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         return $clients;
     }
 
+    public function addReferralByBonusCardAsync(ReferralParams $referralParams): string
+    {
+        /** @noinspection MissingService */
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_referral_add_producer');
+        $producer->publish($this->serializer->serialize($referralParams, 'json'));
+    }
+
     /**
      * Передача номера бонусной карты реферала для получения Contact_ID реферала
      *
