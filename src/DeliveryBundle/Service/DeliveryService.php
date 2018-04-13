@@ -35,6 +35,7 @@ use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Discount\Utils\Manager as DiscountManager;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -245,10 +246,8 @@ class DeliveryService implements LoggerAwareInterface
             } else {
                 $name = $service->getName();
             }
-            /**
-             * todo раскомментировать строчки, выключающие постобработку кастомных акций, либо расчитывать как-то по-другому
-             */
-            //\FourPaws\SaleBundle\Discount\Utils\Manager::disableProcessingFinalAction();
+
+            DiscountManager::disableProcessingFinalAction();
             try {
                 $shipment->setFields(
                     [
@@ -263,7 +262,7 @@ class DeliveryService implements LoggerAwareInterface
                 ]);
                 continue;
             }
-            //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
+            DiscountManager::enableProcessingFinalAction();
             $calculationResult = $shipment->calculateDelivery();
             if (!$calculationResult->isSuccess()) {
                 continue;
