@@ -38,6 +38,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         'deliveryInterval' => 'Интервал',
     ];
 
+    /**
+     * FourPawsPersonalCabinetOrdersSubscribeFormComponent constructor.
+     *
+     * @param null|\CBitrixComponent $component
+     */
     public function __construct($component = null)
     {
         // LazyLoggerAwareTrait не умеет присваивать имя по классам без неймспейса
@@ -88,7 +93,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     '%s exception: %s',
                     __FUNCTION__,
                     $exception->getMessage()
-                )
+                ),
+                $this->arParams
             );
             throw $exception;
         }
@@ -182,6 +188,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $this->loadData();
     }
 
+    /**
+     * @throws ApplicationCreateException
+     * @throws Exception
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
     protected function subscribeAction()
     {
         $this->initPostFields();
@@ -247,6 +260,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $this->loadData();
     }
 
+    /**
+     * @throws ApplicationCreateException
+     * @throws Exception
+     */
     protected function unsubscribeAction()
     {
         if ($this->request->get('orderId')) {
@@ -287,6 +304,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $this->loadData();
     }
 
+    /**
+     * @throws ApplicationCreateException
+     * @throws Exception
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     */
     protected function loadData()
     {
         if ($this->getAction() === 'initialLoad') {
@@ -303,6 +329,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
     }
 
+    /**
+     * @throws ApplicationCreateException
+     * @throws Exception
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     */
     protected function processSubscribeFormFields()
     {
         $fieldName = 'dateStart';
@@ -435,15 +470,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     public function clearTaggedCache()
     {
+        $clearTags = [];
+        if ($this->arParams['ORDER_ID']) {
+            $clearTags[] = 'order:item:'.$this->arParams['ORDER_ID'];
+        }
         if ($this->arParams['USER_ID']) {
-            $userId = $this->arParams['USER_ID'];
-            TaggedCacheHelper::clearManagedCache(
-                [
-                    //'personal:orders',
-                    'personal:orders:'.$userId,
-                    //'order:'.$userId
-                ]
-            );
+            $clearTags[] = 'order:'.$this->arParams['USER_ID'];
+        }
+        if ($clearTags) {
+            TaggedCacheHelper::clearManagedCache($clearTags);
         }
     }
 
@@ -590,6 +625,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
     }
 
+    /**
+     * @param $value
+     * @return array|mixed|string
+     */
     protected function walkRequestValues($value)
     {
         if (is_scalar($value)) {
@@ -602,5 +641,31 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         return $value;
+    }
+
+    /**
+     * @param Order $order
+     * @return DateTime
+     * @throws ApplicationCreateException
+     * @throws Exception
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getOrderPossibleDeliveryDate(Order $order): \DateTime
+    {
+        $bitrixOrder = $order->getBitrixOrder();
+        $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
+            $bitrixOrder
+        );
+        $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
+            $deliveryCalcResult
+        );
+
+        return $deliveryDate;
     }
 }

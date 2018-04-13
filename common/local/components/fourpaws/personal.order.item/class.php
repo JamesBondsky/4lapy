@@ -2,6 +2,7 @@
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\App\Application;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 
@@ -16,6 +17,11 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService = null;
 
+    /**
+     * FourPawsPersonalCabinetOrderItemComponent constructor.
+     *
+     * @param null|\CBitrixComponent $component
+     */
     public function __construct($component = null)
     {
         // LazyLoggerAwareTrait не умеет присваивать имя по классам без неймспейса
@@ -32,18 +38,41 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
             $params['ORDER'] = null;
         };
 
-        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
-        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
+
+        // подстраховка для идентификатора кеша
+        $params['ORDER_ID'] = $params['ORDER']->getId();
 
         $params = parent::onPrepareComponentParams($params);
 
         return $params;
     }
 
+    /**
+     * @return array
+     * @throws \Bitrix\Main\SystemException
+     */
     public function executeComponent()
     {
-        if ($this->startResultCache()) {
-            $this->arResult['ORDER'] = $this->arParams['ORDER'];
+        /** @var Order $personalOrder */
+        $personalOrder = $this->arParams['ORDER'];
+
+        $cachePath = \Bitrix\Main\Application::getInstance()->getManagedCache()->getCompCachePath(
+            $this->getRelativePath()
+        );
+        // к пути кеша добавляем идентификатор заказа
+        $cachePath = $cachePath.'/'.$personalOrder->getId();
+
+        if ($this->startResultCache(false, false, $cachePath)) {
+            $this->arResult['ORDER'] = $personalOrder;
+
+            TaggedCacheHelper::addManagedCacheTags(
+                [
+                    'order:item:'.$personalOrder->getId(),
+                ]
+            );
+
             $this->includeComponentTemplate();
         }
 

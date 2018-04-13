@@ -25,6 +25,7 @@ use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
@@ -1123,6 +1124,11 @@ class OrderSubscribeService
         );
         if ($updateResult->isSuccess()) {
             $orderSubscribe->setActive(false);
+            TaggedCacheHelper::clearManagedCache(
+                [
+                    'order:item:'.$orderSubscribe->getOrderId()
+                ]
+            );
             if ($sendNotifications) {
                 /** @var NotificationService $notificationService */
                 $notificationService = Application::getInstance()->getContainer()->get(

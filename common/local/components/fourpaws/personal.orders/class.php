@@ -121,7 +121,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
         $instance = Application::getInstance();
 
-        $request = Application::getInstance()->getContext()->getRequest();
+        $request = $instance->getContext()->getRequest();
         if($request->get('reply_order') === 'Y'){
             $orderId = (int)$request->get('id');
             if($orderId > 0){
@@ -140,7 +140,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         }
 
         $cache = $instance->getCache();
-        $cachePath = $this->getCachePath() ?: $this->getPath();
+        // здесь всегда будет работать $this->getPath(), который вернет не тот путь
+        //$cachePath = $this->getCachePath() ?: $this->getPath();
+        $cachePath = $instance->getManagedCache()->getCompCachePath(
+            $this->getRelativePath()
+        );
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $userId]),
             $cachePath)
@@ -174,8 +178,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** имитация постранички */
         $nav = new PageNavigation('nav-orders');
         $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+        /*
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
-        /** @noinspection PhpUndefinedVariableInspection */
         $startResultCacheRes = $this->startResultCache(
             $this->arParams['CACHE_TIME'],
             [
@@ -186,9 +190,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $cachePath
         );
         if ($startResultCacheRes) {
+        */
             $activeOrders = $closedOrders = new ArrayCollection();
             try {
                 $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
+                /** @noinspection PhpUndefinedVariableInspection */
                 $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                     $manzanaOrders->toArray());
                 /** Сортировка по дате и статусу общих заказов */
@@ -201,12 +207,16 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                     $nav->getOffset(), $nav->getPageSize(), true));
                 $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
+                /*
                 $this->abortResultCache();
+                */
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
             } catch (\Exception $e) {
+                /*
                 $this->abortResultCache();
+                */
                 $logger = LoggerFactory::create('my_orders');
                 $logger->error('error - '.$e->getMessage());
                 /** Показываем пустую страницу с заказами */
@@ -217,16 +227,16 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
             }
 
-
+        /*
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:orders',
                 'personal:orders:'. $userId,
                 'order:'. $userId
             ]);
-
             //$this->setResultCacheKeys(['ACTIVE_ORDERS', 'CLOSED_ORDERS']);
             $this->endResultCache();
         }
+        */
 
         $this->includeComponentTemplate();
 

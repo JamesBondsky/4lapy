@@ -217,7 +217,8 @@ class Event implements ServiceHandlerInterface
 
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
-            'personal:order:' . $order->getField('USER_ID')
+            'personal:order:' . $order->getField('USER_ID'),
+            'order:item:' . $order->getId(),
         ]);
     }
 }

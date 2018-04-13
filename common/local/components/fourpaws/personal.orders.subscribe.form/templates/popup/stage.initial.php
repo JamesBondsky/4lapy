@@ -19,6 +19,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+if (!$arResult['isCorrect']) {
+    return;
+}
+
 $arParams['OUTPUT_VIA_BUFFER_CONTENT'] = $arParams['OUTPUT_VIA_BUFFER_CONTENT'] ?? 'N';
 $arParams['BUFFER_CONTENT_VIEW_NAME'] = $arParams['BUFFER_CONTENT_VIEW_NAME'] ?? 'footer_popup_cont';
 $arParams['SHOW_SUBSCRIBE_ACTION'] = $arParams['SHOW_SUBSCRIBE_ACTION'] ?? 'N';
@@ -28,36 +32,22 @@ $arParams['ORDER_SUBSCRIBE_LIST_URL'] = $arParams['ORDER_SUBSCRIBE_LIST_URL'] ??
 $attrSuffix = '-'.$arParams['ORDER_ID'].'-'.randString(3);
 $attrPopupId = $arParams['ATTR_POPUP_ID'] ?? 'subscribe-delivery'.$attrSuffix;
 
-if (!$arResult['ORDER']) {
-    return;
-}
-
 /** @var Order $order */
 $order = $arResult['ORDER'];
 /** @var OrderSubscribe $orderSubscribe */
 $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
 
-// следует иметь в виду, что заказ может быть подписан,
-// но подписка на него по новым условиям уже может быть недоступна
-if ($orderSubscribe && !$orderSubscribe->isActive()) {
-    return;
-}
-$canBeSubscribed = $component->getOrderSubscribeService()->canBeSubscribed($order);
-if (!$canBeSubscribed && !$orderSubscribe) {
-    return;
-}
-
 /**
  * Элементы управления, выводимые на странице списка заказов
  */
 ob_start();
-if ($orderSubscribe && $orderSubscribe->isActive()) {
+if ($arResult['isActualSubscription']) {
     ?>
     <a href="<?=$arParams['ORDER_SUBSCRIBE_LIST_URL']?>" class="b-accordion-order-item__subscribe">
         Оформлена подписка на&nbsp;доставку
     </a>
     <?php
-} elseif ($canBeSubscribed) {
+} elseif ($arResult['canBeSubscribed']) {
     ?>
     <a href="javascript:void(0)" class="b-accordion-order-item__subscribe js-open-popup" data-popup-id="<?=$attrPopupId?>">
         Подписаться на&nbsp;доставку
@@ -74,11 +64,11 @@ if ($arParams['SHOW_SUBSCRIBE_ACTION'] === 'Y') {
  * Элементы управления, выводимые на странице списка подписанных заказов
  */
 ob_start();
-if ($orderSubscribe && $orderSubscribe->isActive()) {
+if ($arResult['isActualSubscription']) {
     ?>
     <div class="b-accordion-order-item__subscribe-link">
         <?php
-        if ($canBeSubscribed) {
+        if ($arResult['canBeSubscribed']) {
             ?>
             <a class="b-accordion-order-item__edit js-open-popup js-subscribe-delivery-edit"
                href="javascript:void(0);"
@@ -144,6 +134,14 @@ if ($order) {
         $subscribeStartDateText .= ', '.$orderSubscribe->getDateStartFormatted();
         $subscribeStartDateText .= $formattedTime === '' ? '.' : ', '.$formattedTime.'.';
     }
+
+    // даты, на которые можно оформить первую доставку
+    $possibleDeliveryDateMin = $component->getOrderPossibleDeliveryDate($order);
+    $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
+    $possibleDeliveryDateMax->add((new \DateInterval('P2M')));
+    // выбранная дата при подписке, либо дата по умолчанию
+    $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : $possibleDeliveryDateMin->format('d.m.Y');
+
     ?>
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section"
              data-popup="<?= $attrPopupId ?>">
@@ -169,11 +167,13 @@ if ($order) {
                     </div>
                     <div class="b-input b-input--registration-form b-input--datepicker">
                         <input name="dateStart"
-                               value="<?=($orderSubscribe ? $orderSubscribe->getDateStart() : '')?>"
+                               value="<?=$curDeliveryDateValue?>"
                                class="b-input__input-field b-input__input-field--registration-form js-date-subscribe"
                                id="<?= 'first-delivery' . $attrSuffix ?>"
                                type="text"
                                readonly="readonly"
+                               data-minDate="<?=$possibleDeliveryDateMin->format('d.m.Y')?>"
+                               data-maxDate="<?=$possibleDeliveryDateMax->format('d.m.Y')?>"
                                onfocus="blur();">
                         <?= $errorBlock ?>
                     </div>
@@ -187,7 +187,7 @@ if ($order) {
                     </label>
                     <div class="b-select b-select--subscribe-delivery js-delivery-interval">
                         <select name="deliveryInterval"
-                                class="b-select__block b-select__block--subscribe-delivery js-delivery-interval"
+                                class="b-select__block b-select__block--subscribe-delivery js-delivery-interval js-change-date"
                                 title="">
                             <option value=""<?=(!$curValue ? ' selected="selected"' : '')?> disabled="disabled">
                                 выберите
@@ -216,7 +216,7 @@ if ($order) {
                     </label>
                     <div class="b-select b-select--subscribe-delivery js-frequency-delivery">
                         <select name="deliveryFrequency"
-                                class="b-select__block b-select__block--subscribe-delivery js-frequency-delivery"
+                                class="b-select__block b-select__block--subscribe-delivery js-frequency-delivery js-change-date"
                                 title="">
                             <option value=""<?=(!$curValue ? ' selected="selected"' : '')?> disabled="disabled">
                                 выберите
