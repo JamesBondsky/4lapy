@@ -38,7 +38,6 @@ class BasketViewService
      */
     public function getMiniBasketHtml(bool $isAjax = false): string
     {
-        return ''; //debug
         global $APPLICATION;
 
         \ob_start();

@@ -349,7 +349,6 @@ class BasketService implements LoggerAwareInterface
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws BitrixProxyException
      * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -364,21 +363,28 @@ class BasketService implements LoggerAwareInterface
             return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
         };
 
+        $normalItems = [];
         $temporaryItems = [];
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
-            if (!$isTemporary($basketItem)) {
-                continue;
+            if ($isTemporary($basketItem)) {
+                $temporaryItems[$basketItem->getProductId()] = $basketItem;
+            } else {
+                $normalItems[$basketItem->getProductId()] = $basketItem;
             }
-
-            $temporaryItems[$basketItem->getProductId()] = $basketItem;
         }
 
         $offerCollection = $this->getOfferCollection();
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
-            if ($isTemporary($basketItem)) {
-                continue;
+            $isTemporaryItem = $isTemporary($basketItem);
+            if ($isTemporaryItem) {
+                if (isset($normalItems[$basketItem->getProductId()])) {
+                    $basketItem->delete();
+                    continue;
+                }
+
+                $this->setBasketItemPropertyValue($basketItem, 'IS_TEMPORARY', BitrixUtils::BX_BOOL_FALSE);
             }
             /** @var Offer $offer */
             foreach ($offerCollection as $offer) {
@@ -388,69 +394,16 @@ class BasketService implements LoggerAwareInterface
 
                 $temporaryItem = null;
                 $quantity = (int)$basketItem->getQuantity();
-                if (isset($temporaryItems[$basketItem->getProductId()])) {
-                    /** @var BasketItem $temporaryItem */
-                    $temporaryItem = $temporaryItems[$basketItem->getProductId()];
-                    $quantity += (int)$temporaryItem->getQuantity();
-                }
 
-                $delay = false;
                 if (!$offer->isAvailable()) {
-                    $delay = true;
-                }
-
-                if ($delay) {
-                    if (null !== $temporaryItem) {
-                        $temporaryItem->delete();
-                    }
-
                     if (!$basketItem->isDelay()) {
                         $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
                     }
-                    $toUpdate['QUANTITY'] = $quantity;
                 } else {
+                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_FALSE;
                     $maxAmount = $offer->getQuantity();
-                    $diff = $quantity - $maxAmount;
-                    if ($diff > 0) {
+                    if (($quantity - $maxAmount) > 0) {
                         $toUpdate['QUANTITY'] = $maxAmount;
-                        if (null === $temporaryItem) {
-                            $this->addOfferToBasket(
-                                (int)$basketItem->getProductId(),
-                                $diff,
-                                [
-                                    'DELAY' => 'Y',
-                                    'PROPS' => [
-                                        [
-                                            'NAME' => 'IS_TEMPORARY',
-                                            'CODE' => 'IS_TEMPORARY',
-                                            'VALUE' => 'Y'
-                                        ]
-                                    ]
-                                ],
-                                false,
-                                $basket
-                            );
-                        } else {
-                            try {
-                                $temporaryItem->setField('QUANTITY', $diff);
-                            } catch (\Exception $e) {
-                                $this->log()->error(
-                                    sprintf('failed to set tmp item quantity: %s', $e->getMessage()),
-                                    [
-                                        'offerId' => $offer->getId(),
-                                        'quantity' => $diff
-                                    ]
-                                );
-                            }
-                        }
-                    } else {
-                        if ((int)$basketItem->getQuantity() !== $quantity) {
-                            $toUpdate['QUANTITY'] = $quantity;
-                        }
-
-                        if (null !== $temporaryItem) {
-                            $temporaryItem->delete();
-                        }
                     }
                 }
 
@@ -676,32 +629,36 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param BasketItem $basketItem
-     * @param string $name
      * @param string $code
      * @param string $value
-     *
-     * @throws ArgumentOutOfRangeException
-     * @throws Exception
-     * @throws NotSupportedException
-     * @throws NotImplementedException
+     * @param string $name
      */
-    public function setBasketItemPropertyValue(BasketItem $basketItem, string $name, string $code, string $value): void
+    public function setBasketItemPropertyValue(BasketItem $basketItem, string $code, string $value, string $name = ''): void
     {
-        $found = false;
-        /** @var BasketPropertyItem $property */
-        foreach ($basketItem->getPropertyCollection() as $property) {
-            if ($property->getField('CODE') === $code) {
-                $property->setField('VALUE', $value);
-                $found = true;
+        try {
+            $found = false;
+            /** @var BasketPropertyItem $property */
+            foreach ($basketItem->getPropertyCollection() as $property) {
+                if ($property->getField('CODE') === $code) {
+                    $property->setField('VALUE', $value);
+                    $found = true;
+                }
             }
-        }
 
-        if (!$found) {
-            $property = $basketItem->getPropertyCollection()->createItem();
-            $property->setFields([
-                'NAME' => $name,
-                'CODE' => $code,
-                'VALUE' => $value
+            if (!$found) {
+                $property = $basketItem->getPropertyCollection()->createItem();
+                $property->setFields([
+                    'NAME' => $name ?? $code,
+                    'CODE' => $code,
+                    'VALUE' => $value
+                ]);
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to update basket item property: %s', $e->getMessage()), [
+                'itemId' => $basketItem->getId(),
+                'offerId' => $basketItem->getProductId(),
+                'code' => $code,
+                'value' => $value
             ]);
         }
     }
