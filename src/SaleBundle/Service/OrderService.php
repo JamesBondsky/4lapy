@@ -239,16 +239,6 @@ class OrderService implements LoggerAwareInterface
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
-        /**
-         * Привязываем корзину
-         */
-        /** @noinspection PhpParamsInspection */
-        $basket = $basket ?? $this->basketService->getBasket();
-        $order->setBasket($basket);
-        if ($order->getBasket()->getOrderableItems()->isEmpty()) {
-            throw new OrderCreateException('Корзина пуста');
-        }
-
         if (null === $selectedDelivery) {
             try {
                 $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
@@ -257,6 +247,50 @@ class OrderService implements LoggerAwareInterface
             }
         }
         $selectedDelivery = clone $selectedDelivery;
+        /**
+         * Привязываем корзину
+         */
+        /** @noinspection PhpParamsInspection */
+        if (null === $basket) {
+            $basket = $this->basketService->getBasket();
+            $orderable = $selectedDelivery->getStockResult()->getOrderable();
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $toUpdate = [];
+                $resultByOffer = $orderable->filterByOfferId($basketItem->getProductId());
+                $diff = $basketItem->getQuantity() - $resultByOffer->getAmount();
+                if ($resultByOffer->isEmpty()) {
+                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                } elseif ($diff > 0) {
+                    $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
+                    $this->basketService->addOfferToBasket(
+                        $basketItem->getProductId(),
+                        $diff,
+                        [
+                            'DELAY' => BitrixUtils::BX_BOOL_TRUE,
+                            'PROPS' => [
+                                [
+                                    'NAME' => 'IS_TEMPORARY',
+                                    'CODE' => 'IS_TEMPORARY',
+                                    'VALUE' => 'Y',
+                                ]
+                            ]
+                        ],
+                        false,
+                        $basket
+                    );
+                }
+
+                if (!empty($toUpdate)) {
+                    $basketItem->setFieldsNoDemand($toUpdate);
+                }
+            }
+        }
+
+        $order->setBasket($basket);
+        if ($order->getBasket()->getOrderableItems()->isEmpty()) {
+            throw new OrderCreateException('Корзина пуста');
+        }
 
         /**
          * Задание способов доставки
@@ -286,7 +320,7 @@ class OrderService implements LoggerAwareInterface
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
         try {
             /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
+            foreach ($order->getBasket()->getOrderableItems() as $item) {
                 $shipmentItem = $shipmentItemCollection->createItem($item);
                 $shipmentItem->setQuantity($item->getQuantity());
             }
