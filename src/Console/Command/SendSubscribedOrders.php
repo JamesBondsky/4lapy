@@ -30,7 +30,7 @@ class SendSubscribedOrders extends Command
     
     protected function configure()
     {
-        $this->setName('subscribedorders:send');
+        $this->setName('fourpaws:subscribedorders:send');
         $this->setDescription('Обход подписок и генерация заказов');
 
         $this->addArgument(
