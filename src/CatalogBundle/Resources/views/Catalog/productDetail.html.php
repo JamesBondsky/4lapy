@@ -248,7 +248,25 @@ if(!$hasOffer){
                                                         <div class="b-characteristics-tab__dots"></div>
                                                     </div>
                                                     <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--stock">
-                                                        <?= DateHelper::replaceRuMonth($share->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE)?> — <?= DateHelper::replaceRuMonth($share->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE)?>
+                                                        <?php
+                                                        $activeFrom = $share->getDateActiveFrom();
+                                                        $activeTo = $share->getDateActiveTo();
+
+                                                        if ($activeFrom && $activeTo) {
+                                                            ?>
+                                                            <?= DateHelper::replaceRuMonth($activeFrom->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                            —
+                                                            <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                            <?php
+                                                        } elseif ($activeFrom) {
+                                                            ?>
+                                                            С <?= DateHelper::replaceRuMonth($activeFrom->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                            <?php
+                                                        } elseif ($activeTo) {
+                                                            ?>
+                                                            По <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                            <?php
+                                                        } ?>
                                                     </div>
                                                 </li>
                                                 <?php if(!empty($share->getPreviewText()->getText())){ ?>
