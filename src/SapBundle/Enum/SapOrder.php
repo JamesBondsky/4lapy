@@ -24,6 +24,7 @@ final class SapOrder
      */
     public const DELIVERY_TYPE_COURIER_RC = '01';
     public const DELIVERY_TYPE_PICKUP = '02';
+    public const DELIVERY_TYPE_PICKUP_POSTPONE = '04';
     public const DELIVERY_TYPE_COURIER_SHOP = '06';
     public const DELIVERY_TYPE_CONTRACTOR = '07';
     public const DELIVERY_TYPE_ROUTE = '08';
