@@ -232,34 +232,7 @@ class ReferralService
         }
         /** @var Referral $entity */
         $entity = $this->referralRepository->dataToEntity($data, Referral::class);
-        $res = $this->referralRepository->setEntity($entity)->create();
-        if ($res && $updateManzana) {
-            $referralClient = $this->getClientReferral($entity);
-            if (!empty($referralClient->contactId) && !empty($referralClient->cardNumber)) {
-                /** @todo отправка через очередь информации */
-                $this->manzanaService->addReferralByBonusCard($referralClient);
-            }
-            /** @var User $user */
-            $user = $this->referralRepository->curUserService->getUserRepository()->find($entity->getUserId());
-            if ($user instanceof User) {
-                Event::send(
-                    [
-                        'EVENT_NAME' => 'ReferralAdd',
-                        'LID'        => SITE_ID,
-                        'C_FIELDS'   => [
-                            'CARD'       => $entity->getCard(),
-                            'MAIN_PHONE' => tplvar('phone_main'),
-                        ],
-                    ]
-                );
-            }
-        }
-
-        TaggedCacheHelper::clearManagedCache([
-            'personal:referral:' . $entity->getUserId(),
-        ]);
-
-        return $res;
+        return $this->referralRepository->setEntity($entity)->create();
     }
 
     /**
