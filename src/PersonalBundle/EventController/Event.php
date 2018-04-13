@@ -13,7 +13,6 @@ use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
-use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
@@ -60,10 +59,10 @@ class Event implements ServiceHandlerInterface
         self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix . 'ClearCacheDelete']);
 
         /** обновление данных в манзане по питомцам */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, 'updateManzanaPets']);
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, 'updateManzanaPets']);
-        self::initHandler($prefix . 'OnBeforeDelete', [static::class, 'prepareDelUpdateManzanaPets']);
-        self::initHandler($prefix . 'OnAfterDelete', [static::class, 'updateManzanaPets']);
+        self::initHandler($prefix . 'OnAfterAdd', [static::class, $prefix.'UpdateManzana']);
+        self::initHandler($prefix . 'OnAfterUpdate', [static::class, $prefix.'UpdateManzana']);
+        self::initHandler($prefix . 'OnBeforeDelete', [static::class, $prefix.'PrepareDelUpdateManzana']);
+        self::initHandler($prefix . 'OnAfterDelete', [static::class, $prefix.'UpdateManzana']);
 
 
         $prefix = 'Referral';
@@ -313,7 +312,7 @@ class Event implements ServiceHandlerInterface
      * @throws ArgumentException
      * @throws \RuntimeException
      */
-    public static function updateManzanaPets(BitrixEvent $event): void
+    public static function PetUpdateManzana(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
         if (\is_array($id)) {
@@ -455,7 +454,7 @@ class Event implements ServiceHandlerInterface
      * @throws ObjectPropertyException
      * @throws ArgumentException
      */
-    public function prepareDelUpdateManzanaPets(BitrixEvent $event): void
+    public function PetPrepareDelUpdateManzana(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
         if (\is_array($id)) {
