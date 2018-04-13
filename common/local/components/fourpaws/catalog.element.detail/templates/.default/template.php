@@ -338,13 +338,24 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             <hr class="b-counter-basket__hr"/>
             <?php if ($currentOffer->isShare()) {
                 /** @var IblockElement $share */
-                foreach ($currentOffer->getShare() as $share) { ?>
+                foreach ($currentOffer->getShare() as $share) {
+                    $activeFrom = $share->getDateActiveFrom();
+                    $activeTo = $share->getDateActiveTo(); ?>
                     <p class="b-counter-basket__text b-counter-basket__text--red"><?= $share->getName() ?></p>
                     <?php if (!empty($share->getPreviewText()->getText())) { ?>
                         <p class="b-counter-basket__text"><?= $share->getPreviewText()->getText() ?></p>
                     <?php } ?>
-                    <p class="b-counter-basket__text"><?= DateHelper::replaceRuMonth($share->getDateActiveFrom()->format('d #n#')) ?>
-                        — <?= DateHelper::replaceRuMonth($share->getDateActiveTo()->format('d #n# Y')) ?></p>
+                    <p class="b-counter-basket__text">
+                        <?php if ($activeFrom && $activeTo) { ?>
+                        <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
+                        —
+                        <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
+                        <?php } elseif ($activeFrom) { ?>
+                            С <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
+                        <?php } elseif ($activeTo) { ?>
+                            По <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
+                        <?php } ?>
+                    </p>
                 <?php }
             } ?>
         </div>
