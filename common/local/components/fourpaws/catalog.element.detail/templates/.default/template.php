@@ -160,7 +160,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                             } else {
                                 $weight = $offer->getCatalogProduct()->getWeight();
                                 if($weight > 0) {
-                                    $value = WordHelper::showWeight();
+                                    $value = WordHelper::showWeight($weight);
                                 }
                             }
                         }
