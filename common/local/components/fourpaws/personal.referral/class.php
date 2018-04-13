@@ -204,6 +204,10 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 }
             }
 
+            $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
+            $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
+            $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
+
             if ($tagCache !== null) {
                 TaggedCacheHelper::addManagedCacheTags([
                     'personal:referral',
@@ -212,10 +216,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 ], $tagCache);
                 $tagCache->endTagCache();
             }
-
-            $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
-            $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
-            $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
 
             $cache->endDataCache([
                 'NAV'        => $nav,
