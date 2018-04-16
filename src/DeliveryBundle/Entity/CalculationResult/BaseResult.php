@@ -94,9 +94,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $dateOffset = 0;
 
     /**
-     * @var DeliveryScheduleResult
+     * @var DeliveryScheduleResultCollection
      */
-    protected $shipmentResult;
+    protected $shipmentResults;
+
+    /**
+     * @var Store
+     */
+    protected $shipmentStore;
 
     /**
      * @return \DateTime
@@ -462,12 +467,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         /** @var Offer $offer */
         foreach ($stockResult->getOffers() as $offer) {
             $stockResultForOffer = $delayed->filterByOffer($offer);
-            $neededAmount = $stockResultForOffer->getAmount();
-            if ($neededAmount === 0) {
-                continue;
-            }
 
-            $storesForOffer = $offer->getStocks()->getStores($neededAmount);
+            $stocksForOffer = $offer->getStocks();
+            $storesForOffer = $stocksForOffer->getStores();
 
             $tmpDate = clone $date;
 
@@ -491,8 +493,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
                 /** @var DeliveryScheduleResult $result */
                 foreach ($schedules->getNextDeliveries($schedules->getReceivers(), $date) as $result) {
+                    $amount = $stocksForOffer->filterByStore($result->getSchedule()->getSender())->getTotalAmount();
                     if ($result->getSchedule()->getReceiver()->getXmlId() === $store->getXmlId()) {
-                        $result->setOffer($offer);
+                        $result->setOffer($offer)->setAmount($amount);
                         $resultCollection->add($result);
                         continue;
                     }
@@ -505,12 +508,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                         continue;
                     }
 
-                    $tmpResult->setOffer($offer);
+                    $tmpResult->setOffer($offer)->setAmount($amount);
+
                     $resultCollection->add($tmpResult);
                 }
             } else {
                 if ($result = $this->getDCShipmentResult($store, $storesForOffer, $date)) {
-                    $result->setOffer($offer);
+                    $result->setOffer($offer)
+                        ->setAmount(
+                            $stocksForOffer->filterByStore($result->getSchedule()->getSender())->getTotalAmount()
+                        );
                     $resultCollection->add($result);
                 } else {
                     /**
@@ -524,14 +531,42 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         if ($resultCollection->isEmpty()) {
             if ($stockResult->getAvailable()->isEmpty()) {
-                $this->addError(new Error('Нет доступных товаров и найдено графиков поставок для недоступных'));
+                $this->addError(new Error('Нет доступных товаров и не найдено графиков поставок для недоступных'));
             } else {
                 $delayed->setType(StockResult::TYPE_UNAVAILABLE);
             }
         } else {
-            /** @todo исправить поиск лучшего результата */
-            $this->shipmentResult = $resultCollection->getFastest();
-            $date = $this->shipmentResult->getDate();
+            $this->shipmentResults = $resultCollection->getFastest();
+            $date = $this->shipmentResults->getDate();
+
+            $delayed = $stockResult->getDelayed();
+            foreach ($delayed->getOffers() as $offer) {
+                /** @var DeliveryScheduleResult $shipmentResultForOffer */
+                $shipmentResultForOffer = $this->shipmentResults->filterByOffer($offer)->first();
+                /** @var StockResult $stockResultForOffer */
+                $stockResultForOffer = $delayed->filterByOffer($offer)->first();
+                if (!$shipmentResultForOffer) {
+                    $this->shipmentStore = $shipmentResultForOffer->getSchedule()->getSender();
+
+                    /**
+                     * Если для этого оффера нет графиков
+                     */
+                    $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
+
+                    $diff = $stockResultForOffer->getAmount() - $shipmentResultForOffer->getAmount();
+                    if ($diff > 0) {
+                    } else {
+                        /**
+                         * Если может быть поставлено меньшее, чем нужно, количество
+                         */
+                        $stockResultForOffer->setAmount($shipmentResultForOffer->getAmount());
+                        $this->stockResult->add(
+                            (clone $stockResultForOffer)->setAmount($diff)
+                                ->setType(StockResult::TYPE_UNAVAILABLE)
+                        );
+                    }
+                }
+            }
 
             if ($store->isShop()) {
                 /**
@@ -636,21 +671,40 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @return DeliveryScheduleResult
+     * @return DeliveryScheduleResultCollection|null
      */
-    public function getShipmentResult(): ?DeliveryScheduleResult
+    public function getShipmentResults(): ?DeliveryScheduleResultCollection
     {
-        return $this->shipmentResult;
+        return $this->shipmentResults;
     }
 
     /**
-     * @param DeliveryScheduleResult $shipmentResult
+     * @param DeliveryScheduleResult $shipmentResults
      *
      * @return BaseResult
      */
-    public function setShipmentResult(DeliveryScheduleResult $shipmentResult): CalculationResultInterface
+    public function setShipmentResults(DeliveryScheduleResult $shipmentResults): CalculationResultInterface
     {
-        $this->shipmentResult = $shipmentResult;
+        $this->shipmentResults = $shipmentResults;
+        return $this;
+    }
+
+    /**
+     * @return Store
+     */
+    public function getShipmentStore(): ?Store
+    {
+        return $this->shipmentStore;
+    }
+
+    /**
+     * @param Store $shipmentStore
+     *
+     * @return BaseResult
+     */
+    public function setShipmentStore(Store $shipmentStore): CalculationResultInterface
+    {
+        $this->shipmentStore = $shipmentStore;
         return $this;
     }
 

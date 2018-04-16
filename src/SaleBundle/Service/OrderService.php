@@ -47,7 +47,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -353,9 +353,8 @@ class OrderService implements LoggerAwareInterface
             $code = $propertyValue->getProperty()['CODE'];
             switch ($code) {
                 case 'SHIPMENT_PLACE_CODE':
-                    $shipmentResult = $selectedDelivery->getShipmentResult();
-                    if ($shipmentResult instanceof DeliveryScheduleResult) {
-                        $value = $shipmentResult->getSchedule()->getSenderCode();
+                    if ($selectedDelivery->getShipmentStore() instanceof Store) {
+                        $value = $selectedDelivery->getShipmentStore()->getXmlId();
                     } else {
                         continue 2;
                     }

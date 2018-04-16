@@ -22,6 +22,9 @@ class DeliveryScheduleResult
     /** @var Offer */
     protected $offer;
 
+    /** @var int */
+    protected $amount;
+
     /**
      * @return \DateTime
      */
@@ -74,6 +77,25 @@ class DeliveryScheduleResult
     public function setOffer(Offer $offer): DeliveryScheduleResult
     {
         $this->offer = $offer;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAmount(): int
+    {
+        return $this->amount;
+    }
+
+    /**
+     * @param int $amount
+     *
+     * @return DeliveryScheduleResult
+     */
+    public function setAmount(int $amount): DeliveryScheduleResult
+    {
+        $this->amount = $amount;
         return $this;
     }
 }
