@@ -16,6 +16,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleResultCollection;
@@ -51,6 +52,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @var string
      */
     protected $deliveryZone;
+
+    /**
+     * @var StockResultCollection
+     */
+    protected $fullstockResult;
 
     /**
      * @var StockResultCollection
@@ -179,11 +185,23 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     public function getStockResult(): StockResultCollection
     {
-        if (!$this->stockResult) {
-            $this->stockResult = new StockResultCollection();
+        if (null === $this->stockResult) {
+            $this->stockResult = clone $this->getFullStockResult()->filterByStore($this->getSelectedStore());
         }
 
         return $this->stockResult;
+    }
+
+    /**
+     * @return StockResultCollection
+     */
+    public function getFullStockResult(): StockResultCollection
+    {
+        if (!$this->fullstockResult) {
+            $this->fullstockResult = new StockResultCollection();
+        }
+
+        return $this->fullstockResult;
     }
 
     /**
@@ -194,7 +212,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function setStockResult(StockResultCollection $stockResult): CalculationResultInterface
     {
         $this->resetResult();
-        $this->stockResult = $stockResult;
+        $this->fullstockResult = $stockResult;
 
         return $this;
     }
@@ -367,12 +385,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function getSelectedStore(): Store
     {
         if (!$this->selectedStore instanceof Store) {
-            $stores = $this->getStockResult()->getStores();
-            if ($stores->isEmpty()) {
-                $this->addError(new Error('Нет складов с доступными товарами'));
-            } else {
-                $this->selectedStore = $stores->first();
-            }
+            $this->selectedStore = $this->doGetBestStores()->first();
         }
 
         return $this->selectedStore;
@@ -399,7 +412,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $date = clone $this->getCurrentDate();
 
-        if (null !== $this->stockResult) {
+        if (null !== $this->fullstockResult) {
             $this->getSelectedStore();
             $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
 
@@ -408,7 +421,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
              * срок поставки на склад по графику
              */
             if (!$stockResult->getDelayed()->isEmpty()) {
-                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult->getDelayed());
+                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
             }
 
             /**
@@ -441,75 +454,49 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $date = clone $this->getCurrentDate();
 
-        $regularStoresByOffer = [];
-        $byRequestStoresByOffer = [];
-        $hasRegular = false;
-        $hasByRequest = false;
+
+        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+        $delayed = $stockResult->getDelayed();
+        $resultCollection = new DeliveryScheduleResultCollection();
 
         /** @var Offer $offer */
         foreach ($stockResult->getOffers() as $offer) {
-            $neededAmount = $stockResult->filterByOffer($offer)->getAmount();
+            $stockResultForOffer = $delayed->filterByOffer($offer);
+            $neededAmount = $stockResultForOffer->getAmount();
             if ($neededAmount === 0) {
                 continue;
             }
 
-            $stores = $offer->getStocks()->getStores($neededAmount);
+            $storesForOffer = $offer->getStocks()->getStores($neededAmount);
 
-            if (!$offer->isByRequest()) {
-                $hasRegular = true;
-                $regularStoresByOffer[$offer->getId()] = $stores;
-            } else {
-                $hasByRequest = true;
-                $byRequestStoresByOffer[$offer->getId()] = $stores;
-            }
-        }
-        $byRequestStores = empty($byRequestStoresByOffer)
-            ? new StoreCollection()
-            : $this->getStoreIntersection($byRequestStoresByOffer);
+            $tmpDate = clone $date;
 
-        $regularStores = empty($regularStoresByOffer)
-            ? new StoreCollection()
-            : $this->getStoreIntersection($regularStoresByOffer);
-
-        if ($hasByRequest && $byRequestStores->isEmpty()) {
-            $this->addError(new Error('Не найдено складов для товаров под заказ'));
-            return $date;
-        }
-
-        if ($hasRegular && $regularStores->isEmpty()) {
-            $this->addError(new Error('Не найдено складов для товаров из регулярного ассортимента'));
-            return $date;
-        }
-
-        $resultCollection = new DeliveryScheduleResultCollection();
-
-        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
-        /**
-         * Если есть товары под заказ
-         */
-        if (!$byRequestStores->isEmpty()) {
-            /**
-             * Для товаров под заказ добавляем +2 ко дню доставки
-             */
-            $date->modify(sprintf('+%s days', 2));
-
-            /**
-             * Находим маршрут от складов поставщика до РЦ
-             */
-            $schedules = $scheduleService->findBySenders($byRequestStores);
-            if ($schedules->isEmpty()) {
-                $this->addError(new Error('Не найдено графиков поставок со складов поставщика'));
-                return $date;
-            }
-
-            if (!$regularStores->isEmpty()) {
+            if ($offer->isByRequest()) {
                 /**
-                 * Если есть товары из регулярного ассортимента, то оставляем только те склады,
-                 * куда есть поставки со складов поставщика
+                 * Для товаров под заказ добавляем +2 ко дню доставки
                  */
-                $regularStores = $this->getStoreIntersection([$schedules->getReceivers(), $regularStores]);
+                $tmpDate->modify(sprintf('+%s days', 2));
+
+                /**
+                 * Находим маршрут от складов поставщика до РЦ
+                 */
+                $schedules = $scheduleService->findBySenders($storesForOffer);
+                if ($schedules->isEmpty()) {
+                    /**
+                     * Товар под заказ недоступен для доставки
+                     */
+                    $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
+                    continue;
+                }
+
                 /** @var DeliveryScheduleResult $result */
-                foreach ($schedules->getNextDeliveries($regularStores, $date) as $result) {
+                foreach ($schedules->getNextDeliveries($schedules->getReceivers(), $date) as $result) {
+                    if ($result->getSchedule()->getReceiver()->getXmlId() === $store->getXmlId()) {
+                        $result->setOffer($offer);
+                        $resultCollection->add($result);
+                        continue;
+                    }
+
                     if (!$tmpResult = $this->getDCShipmentResult(
                         $store,
                         new StoreCollection([$result->getSchedule()->getReceiver()]),
@@ -518,53 +505,45 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                         continue;
                     }
 
+                    $tmpResult->setOffer($offer);
                     $resultCollection->add($tmpResult);
                 }
             } else {
-                $receivers = $schedules->getReceivers();
-                if ($receivers->hasStore($store)) {
-                    /**
-                     * Можно доставить со склада поставщика напрямую на нужный склад
-                     */
-                    $resultCollection = $schedules->getNextDeliveries($schedules->getReceivers(), $date);
+                if ($result = $this->getDCShipmentResult($store, $storesForOffer, $date)) {
+                    $result->setOffer($offer);
+                    $resultCollection->add($result);
                 } else {
-                    foreach ($schedules->getNextDeliveries($schedules->getReceivers(), $date) as $result) {
-                        if (!$tmpResult = $this->getDCShipmentResult(
-                            $store,
-                            new StoreCollection([$result->getSchedule()->getReceiver()]),
-                            $result->getDate())
-                        ) {
-                            continue;
-                        }
-
-                        $resultCollection->add($tmpResult);
-                    }
+                    /**
+                     * Товар из регулярного ассортимента недоступен для доставки
+                     */
+                    $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
+                    continue;
                 }
-            }
-        } else {
-            if ($result = $this->getDCShipmentResult($store, $regularStores, $date)) {
-                $resultCollection->add($result);
             }
         }
 
         if ($resultCollection->isEmpty()) {
-            $this->addError(new Error('Не найдено графиков поставок с РЦ'));
-            return $date;
-        }
-
-        $this->shipmentResult = $resultCollection->getFastest();
-        $date = $this->shipmentResult->getDate();
-
-        if ($store->isShop()) {
-            /**
-             * Добавляем "срок поставки" к дате доставки
-             * (он должен быть не менее 1 дня)
-             */
-            $modifier = $store->getDeliveryTime();
-            if ($store->getDeliveryTime() < 1) {
-                $modifier = 1;
+            if ($stockResult->getAvailable()->isEmpty()) {
+                $this->addError(new Error('Нет доступных товаров и найдено графиков поставок для недоступных'));
+            } else {
+                $delayed->setType(StockResult::TYPE_UNAVAILABLE);
             }
-            $date->modify(sprintf('+%s days', $modifier));
+        } else {
+            /** @todo исправить поиск лучшего результата */
+            $this->shipmentResult = $resultCollection->getFastest();
+            $date = $this->shipmentResult->getDate();
+
+            if ($store->isShop()) {
+                /**
+                 * Добавляем "срок поставки" к дате доставки
+                 * (он должен быть не менее 1 дня)
+                 */
+                $modifier = $store->getDeliveryTime();
+                if ($store->getDeliveryTime() < 1) {
+                    $modifier = 1;
+                }
+                $date->modify(sprintf('+%s days', $modifier));
+            }
         }
 
         return $date;
@@ -716,6 +695,73 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         }
     }
 
+
+    /**
+     * @return StoreCollection
+     */
+    protected function doGetBestStores(): StoreCollection
+    {
+        $stores = $this->fullstockResult->getStores();
+        $storeData = [];
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            $calculationResult = (clone $this)->setSelectedStore($store);
+            $storeData[$store->getXmlId()] = [
+                'RESULT' => $calculationResult,
+                'AVAILABLE_PRICE' => $calculationResult->getStockResult()->getAvailable()->getPrice()
+            ];
+        }
+
+        /**
+         * 1) По убыванию % от суммы товаров заказа в наличии в магазине
+         * 2) По возрастанию даты готовности заказа к выдаче
+         * 3) По адресу магазина в алфавитном порядке
+         */
+        /**
+         * @param Store $store1
+         * @param Store $store2
+         *
+         * @return int
+         * @throws ArgumentException
+         * @throws ApplicationCreateException
+         * @throws StoreNotFoundException
+         */
+        $sortFunc = function (Store $store1, Store $store2) use ($storeData) {
+            /** @var array $shopData1 */
+            $shopData1 = $storeData[$store1->getXmlId()];
+            /** @var array $shopData2 */
+            $shopData2 = $storeData[$store2->getXmlId()];
+
+            /** @var PickupResult $result1 */
+            $result1 = $shopData1['RESULT'];
+            /** @var PickupResult $result2 */
+            $result2 = $shopData2['RESULT'];
+
+            /** в начало переносим магазины с доступным самовывозом */
+            if ($result1->isSuccess() !== $result2->isSuccess()) {
+                return $result2->isSuccess() <=> $result1->isSuccess();
+            }
+
+            if ($shopData1['AVAILABLE_PRICE'] !== $shopData2['AVAILABLE_PRICE']) {
+                return $shopData2['AVAILABLE_PRICE'] <=> $shopData1['AVAILABLE_PRICE'];
+            }
+
+            $deliveryDate1 = $result1->getDeliveryDate();
+            $deliveryDate2 = $result2->getDeliveryDate();
+
+            if ($deliveryDate1 !== $deliveryDate2) {
+                return $deliveryDate1 <=> $deliveryDate2;
+            }
+
+            return $store1->getAddress() <=> $store2->getAddress();
+        };
+
+        $iterator = $stores->getIterator();
+        $iterator->uasort($sortFunc);
+
+        return new StoreCollection(iterator_to_array($iterator));
+    }
+
     /**
      * Получить пересечение коллекций
      *
@@ -762,6 +808,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->errors = new ErrorCollection();
         $this->isSuccess = true;
         $this->warnings = new ErrorCollection();
+        $this->stockResult = null;
     }
 
     public function __clone()

@@ -77,6 +77,11 @@ interface CalculationResultInterface
     public function getStockResult(): StockResultCollection;
 
     /**
+     * @return StockResultCollection
+     */
+    public function getFullStockResult(): StockResultCollection;
+
+    /**
      * @param StockResultCollection $stockResult
      *
      * @return CalculationResultInterface

@@ -22,8 +22,8 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\Migrator\Provider\Delivery;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
@@ -146,9 +146,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param BasketBase $basket
      * @param OfferCollection $offers
      * @param StoreCollection $storesAvailable
-     * @param StockResultCollection|null $stockResultCollection
      *
-     * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws NotFoundException
      * @return StockResultCollection
@@ -156,12 +154,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     public static function getStocks(
         BasketBase $basket,
         OfferCollection $offers,
-        StoreCollection $storesAvailable,
-        StockResultCollection $stockResultCollection = null
+        StoreCollection $storesAvailable
     ): StockResultCollection {
-        if (!$stockResultCollection) {
-            $stockResultCollection = new StockResultCollection();
-        }
+        $stockResultCollection = new StockResultCollection();
 
         /** @var Offer $offer */
         foreach ($offers as $offer) {
@@ -193,7 +188,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param Offer $offer
      * @param int $neededAmount
      * @param float $price
-     * @param StoreCollection $storesAvailable
+     * @param StoreCollection $stores
      * @param StockResultCollection|null $stockResultCollection
      *
      * @return StockResultCollection
@@ -204,51 +199,56 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         Offer $offer,
         int $neededAmount,
         float $price,
-        StoreCollection $storesAvailable,
+        StoreCollection $stores,
         StockResultCollection $stockResultCollection = null
-    ) {
+    ): StockResultCollection {
         if (null === $stockResultCollection) {
             $stockResultCollection = new StockResultCollection();
         }
 
-        $stockResult = new StockResult();
-        $stockResult->setAmount($neededAmount)
-            ->setOffer($offer)
-            ->setStores($storesAvailable)
-            ->setPrice($price);
+        /** @var Store $store */
+        foreach ($stores->getIterator() as $store) {
+            $amount = $neededAmount;
+            $stockResult = new StockResult();
+            $stockResult->setAmount($amount)
+                ->setOffer($offer)
+                ->setStore($store)
+                ->setPrice($price);
 
-        $stocks = $offer->getAllStocks();
-        if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
-            if ($availableAmount < $neededAmount) {
-                $stockResult->setAmount($availableAmount);
-                $neededAmount -= $availableAmount;
-            } else {
-                $neededAmount = 0;
-            }
-            $stockResultCollection->add($stockResult);
-        }
-        /**
-         * Товар в наличии не полностью. Часть будет отложена
-         */
-        if ($neededAmount) {
-            $storesDelay = $offer->getAllStocks()->getStores()->excludeStores($storesAvailable);
-            if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
-                $delayedStockResult = clone $stockResult;
-                $delayedStockResult->setType(StockResult::TYPE_DELAYED)
-                    ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount);
-                $stockResultCollection->add($delayedStockResult);
-
-                $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;
+            $stocks = $offer->getAllStocks();
+            if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
+                if ($availableAmount < $amount) {
+                    $stockResult->setAmount($availableAmount);
+                    $amount -= $availableAmount;
+                } else {
+                    $amount = 0;
+                }
+                $stockResultCollection->add($stockResult);
             }
 
             /**
-             * Часть товара (или все количество) не в наличии
+             * Товар в наличии не полностью. Часть будет отложена
              */
-            if ($neededAmount) {
-                $unavailableStockResult = clone $stockResult;
-                $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                    ->setAmount($neededAmount);
-                $stockResultCollection->add($unavailableStockResult);
+            if ($amount) {
+                $storesDelay = $offer->getAllStocks()->getStores()->excludeStore($store);
+                if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
+                    $delayedStockResult = clone $stockResult;
+                    $delayedStockResult->setType(StockResult::TYPE_DELAYED)
+                        ->setAmount($delayedAmount >= $amount ? $amount : $delayedAmount);
+                    $stockResultCollection->add($delayedStockResult);
+
+                    $amount = ($delayedAmount >= $amount) ? 0 : $amount - $delayedAmount;
+                }
+
+                /**
+                 * Часть товара (или все количество) не в наличии
+                 */
+                if ($amount) {
+                    $unavailableStockResult = clone $stockResult;
+                    $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
+                        ->setAmount($amount);
+                    $stockResultCollection->add($unavailableStockResult);
+                }
             }
         }
 
@@ -259,7 +259,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param string $deliveryCode
      * @param string $deliveryZone
      * @param string $locationCode
-
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @return StoreCollection

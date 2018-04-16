@@ -18,7 +18,6 @@ use Bitrix\Sale\Shipment;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -153,13 +152,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $stockResult = new StockResultCollection();
-        /** @var Store $shop */
-        foreach ($shops as $shop) {
-            $availableStores = new StoreCollection([$shop]);
-            $stockResult = static::getStocks($basket, $offers, $availableStores, $stockResult);
-        }
-
+        $stockResult = static::getStocks($basket, $offers, $shops);
         if ($stockResult->getAvailable()->isEmpty() && $stockResult->getDelayed()->isEmpty()) {
             $result->addError(new Error('Товары не в наличии'));
 

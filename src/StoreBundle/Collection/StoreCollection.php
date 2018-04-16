@@ -2,7 +2,6 @@
 
 namespace FourPaws\StoreBundle\Collection;
 
-use FourPaws\StoreBundle\Entity\Schedule;
 use FourPaws\StoreBundle\Entity\Store;
 
 class StoreCollection extends BaseCollection
@@ -65,6 +64,18 @@ class StoreCollection extends BaseCollection
         }
 
         return $result;
+    }
+
+    /**
+     * @param Store $store
+     *
+     * @return StoreCollection
+     */
+    public function excludeStore(Store $store): StoreCollection
+    {
+       return $this->filter(function (Store $existingStore) use ($store) {
+           return $existingStore->getXmlId() !== $store->getXmlId();
+       });
     }
 
     /**
