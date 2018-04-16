@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d1b1041abc42991e3c3ed380e1d064f",
+    "content-hash": "3f6749f33e73828887e45e66edeab48a",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -3224,16 +3224,16 @@
         },
         {
             "name": "somework/expert-sender-api",
-            "version": "0.4.5",
+            "version": "0.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/somework/expert-sender-api.git",
-                "reference": "f341cb245801f388eb0a559f15943bf1430fac5f"
+                "reference": "97197e403ce36a92c3c5392563cb8c7b919ff3e4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/somework/expert-sender-api/zipball/f341cb245801f388eb0a559f15943bf1430fac5f",
-                "reference": "f341cb245801f388eb0a559f15943bf1430fac5f",
+                "url": "https://api.github.com/repos/somework/expert-sender-api/zipball/97197e403ce36a92c3c5392563cb8c7b919ff3e4",
+                "reference": "97197e403ce36a92c3c5392563cb8c7b919ff3e4",
                 "shasum": ""
             },
             "require": {
@@ -3262,7 +3262,7 @@
                 }
             ],
             "description": "Simple API for expert sender service",
-            "time": "2017-08-18T13:58:11+00:00"
+            "time": "2018-04-16T14:34:06+00:00"
         },
         {
             "name": "symfony/polyfill-apcu",
