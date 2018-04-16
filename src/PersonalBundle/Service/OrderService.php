@@ -360,16 +360,17 @@ class OrderService
     {
         /** @var OrderProp $prop */
         //CITY_CODE
-        /** @todo может что сделать с dpd */
         $props = $order->getProps();
         if (!$props->isEmpty()) {
-            $prop = $props->get('DELIVERY_PLACE_CODE');
-            if ($prop instanceof OrderProp) {
-                $storeXmlId = $prop->getValue();
-                if (!empty($storeXmlId)) {
-                    $storeService = App::getInstance()->getContainer()->get('store.service');
-                    return $storeService->getByXmlId($storeXmlId);
-                }
+            $dpdTerminal = $props->get('DPD_TERMINAL_CODE');
+            $deliveryPlace = $props->get('DELIVERY_PLACE_CODE');
+            if ($dpdTerminal instanceof OrderProp && $dpdTerminal->getValue()) {
+                $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+                return $deliveryService->getDpdTerminalByCode($dpdTerminal->getValue());
+            }
+            if ($deliveryPlace instanceof OrderProp && $deliveryPlace->getValue()) {
+                $storeService = App::getInstance()->getContainer()->get('store.service');
+                return $storeService->getByXmlId($deliveryPlace->getValue());
             }
         }
 
