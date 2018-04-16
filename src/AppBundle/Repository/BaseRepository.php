@@ -309,7 +309,7 @@ class BaseRepository
      */
     public function getCount(array $filter = []): int
     {
-        $query = $this->dataManager::query()->setCacheTtl(360000);
+        $query = $this->dataManager::query();
         $query->countTotal(true);
         if (!empty($filter)) {
             $query->setFilter($filter);
