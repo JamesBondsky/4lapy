@@ -16,9 +16,10 @@
 ## Запуск консьюмеров для rabbit'а
 
 ```
-- ./bin/symfony_console r:c manzana_update # Manzana
-- ./bin/symfony_console r:c catalog_sync   # Синхронизация каталога 
-- ./bin/symfony_console r:c callback_set   # Колбэк
+- ./bin/symfony_console r:c manzana_update # обработка очереди передачи контактов в ML
+- ./bin/symfony_console r:c catalog_sync   # обработка очереди изменения элементов каталога для изменения индекса elastic 
+- ./bin/symfony_console r:c callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
+- ./bin/symfony_console r:c manzana_referral_add   # обработка очереди передачи рефералов в ML
 ```
 
 ## Запуск импорта из SAP 
