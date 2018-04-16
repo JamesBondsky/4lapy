@@ -186,6 +186,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
      * @return StockResultCollection
      */
     public function getStockResult(): StockResultCollection
@@ -385,6 +388,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
      * @return Store
      */
     public function getSelectedStore(): Store
@@ -545,17 +551,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 $shipmentResultForOffer = $this->shipmentResults->filterByOffer($offer)->first();
                 /** @var StockResult $stockResultForOffer */
                 $stockResultForOffer = $delayed->filterByOffer($offer)->first();
-                if (!$shipmentResultForOffer) {
+                if ($shipmentResultForOffer) {
                     $this->shipmentStore = $shipmentResultForOffer->getSchedule()->getSender();
-
-                    /**
-                     * Если для этого оффера нет графиков
-                     */
-                    $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
 
                     $diff = $stockResultForOffer->getAmount() - $shipmentResultForOffer->getAmount();
                     if ($diff > 0) {
-                    } else {
                         /**
                          * Если может быть поставлено меньшее, чем нужно, количество
                          */
@@ -565,6 +565,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                                 ->setType(StockResult::TYPE_UNAVAILABLE)
                         );
                     }
+                } else {
+                    /**
+                     * Если для этого оффера нет графиков
+                     */
+                    $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
                 }
             }
 
@@ -749,8 +754,10 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         }
     }
 
-
     /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
      * @return StoreCollection
      */
     protected function doGetBestStores(): StoreCollection
@@ -760,9 +767,15 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         /** @var Store $store */
         foreach ($stores as $store) {
             $calculationResult = (clone $this)->setSelectedStore($store);
+            try {
+                $calculationResult->isSuccess();
+            } catch (NotFoundException $e) {
+                // не нужно
+            }
             $storeData[$store->getXmlId()] = [
                 'RESULT' => $calculationResult,
-                'AVAILABLE_PRICE' => $calculationResult->getStockResult()->getAvailable()->getPrice()
+                'AVAILABLE_PRICE' => $calculationResult->getStockResult()->getAvailable()->getPrice(),
+                'ORDERABLE_PRICE' => $calculationResult->getStockResult()->getOrderable()->getPrice()
             ];
         }
 
@@ -800,6 +813,10 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 return $shopData2['AVAILABLE_PRICE'] <=> $shopData1['AVAILABLE_PRICE'];
             }
 
+            if ($shopData1['ORDERABLE_PRICE'] !== $shopData2['ORDERABLE_PRICE']) {
+                return $shopData2['ORDERABLE_PRICE'] <=> $shopData1['ORDERABLE_PRICE'];
+            }
+
             $deliveryDate1 = $result1->getDeliveryDate();
             $deliveryDate2 = $result2->getDeliveryDate();
 
@@ -814,46 +831,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $iterator->uasort($sortFunc);
 
         return new StoreCollection(iterator_to_array($iterator));
-    }
-
-    /**
-     * Получить пересечение коллекций
-     *
-     * @param array $storeCollections
-     *
-     * @return StoreCollection
-     */
-    protected function getStoreIntersection(array $storeCollections = []): StoreCollection
-    {
-        if (empty($storeCollections)) {
-            $result = new StoreCollection();
-        } elseif (\count($storeCollections) === 1) {
-            $result = current($storeCollections);
-        } else {
-            /**
-             * @var string $i
-             * @var StoreCollection $storeCollection
-             */
-            foreach ($storeCollections as $i => $storeCollection) {
-                $storeCollections[$i] = $storeCollection->toArray();
-            }
-
-            /**
-             * Функция сравнения складов
-             *
-             * @param Store $store1
-             * @param Store $store2
-             *
-             * @return int
-             */
-            $storeCollections[] = function (Store $store1, Store $store2) {
-                return $store1->getXmlId() <=> $store2->getXmlId();
-            };
-
-            $result = new StoreCollection(array_uintersect(...$storeCollections));
-        }
-
-        return $result;
     }
 
     protected function resetResult(): void
