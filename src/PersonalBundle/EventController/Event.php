@@ -454,7 +454,7 @@ class Event implements ServiceHandlerInterface
      * @throws ObjectPropertyException
      * @throws ArgumentException
      */
-    public function petPrepareDelUpdateManzana(BitrixEvent $event): void
+    public static function petPrepareDelUpdateManzana(BitrixEvent $event): void
     {
         $id = $event->getParameter('id');
         if (\is_array($id)) {
