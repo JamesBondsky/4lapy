@@ -418,7 +418,7 @@ class OrderStorageService
     {
         if (null === $this->deliveries || $reload) {
             $this->deliveries = $this->deliveryService->getByBasket(
-                $this->basketService->getBasket()->getOrderableItems(),
+                $this->basketService->getBasket(),
                 '',
                 [],
                 $storage->getCurrentDate()
@@ -474,6 +474,7 @@ class OrderStorageService
 
     /**
      * Можно ли разделить заказ
+     *
      * @param CalculationResultInterface $delivery
      *
      * @return bool
@@ -485,9 +486,11 @@ class OrderStorageService
          * Для самовывоза DPD разделения заказов нет
          */
         if (!$delivery instanceof DpdPickupResult) {
-            [$available, $delayed] = $this->splitStockResult($delivery);
+            if (!($this->deliveryService->isDelivery($delivery) && $delivery->getStockResult()->getOrderable()->getByRequest()->isEmpty())) {
+                [$available, $delayed] = $this->splitStockResult($delivery);
 
-            $result = !$available->isEmpty() && !$delayed->isEmpty();
+                $result = !$available->isEmpty() && !$delayed->isEmpty();
+            }
         }
         return $result;
     }

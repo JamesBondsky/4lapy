@@ -34,6 +34,19 @@ class StockResultCollection extends ArrayCollection
         );
     }
 
+    public function getOrderable(): StockResultCollection
+    {
+        return $this->filter(
+            function (StockResult $stockResult) {
+                return \in_array(
+                    $stockResult->getType(),
+                    [StockResult::TYPE_DELAYED, StockResult::TYPE_AVAILABLE],
+                    true
+                );
+            }
+        );
+    }
+
     /**
      * @return StockResultCollection
      */
@@ -79,15 +92,7 @@ class StockResultCollection extends ArrayCollection
     {
         return $this->filter(
             function (StockResult $stockResult) use ($store) {
-                return $stockResult->getStores()->exists(
-                    function (
-                        /** @noinspection PhpUnusedParameterInspection */
-                        $i,
-                        Store $stockResultStore
-                    ) use ($store) {
-                        return $stockResultStore->getXmlId() === $store->getXmlId();
-                    }
-                );
+                return $stockResult->getStore()->getXmlId() === $store->getXmlId();
             }
         );
     }
@@ -99,15 +104,12 @@ class StockResultCollection extends ArrayCollection
      */
     public function filterByOffer(Offer $offer): StockResultCollection
     {
-        return $this->filter(
-            function (StockResult $stockResult) use ($offer) {
-                return $stockResult->getOffer()->getId() === $offer->getId();
-            }
-        );
+        return $this->filterByOfferId($offer->getId());
     }
 
     /**
      * @param int $id
+     *
      * @return StockResultCollection
      */
     public function filterByOfferId(int $id): StockResultCollection
@@ -147,13 +149,8 @@ class StockResultCollection extends ArrayCollection
                 continue;
             }
 
-            $stores = $item->getStores();
-            /** @var Store $store */
-            foreach ($stores as $store) {
-                if (!isset($result[$store->getXmlId()])) {
-                    $result[$store->getXmlId()] = $store;
-                }
-            }
+            $store = $item->getStore();
+            $result[$store->getXmlId()] = $store;
         }
 
         return $result;
@@ -200,5 +197,27 @@ class StockResultCollection extends ArrayCollection
         }
 
         return $price;
+    }
+
+    /**
+     * @param $type
+     *
+     * @return StockResultCollection
+     */
+    public function setType($type): StockResultCollection
+    {
+        /** @var StockResult $item */
+        foreach ($this->getIterator() as $item) {
+            $item->setType($type);
+        }
+
+        return $this;
+    }
+
+    public function __clone()
+    {
+        foreach ($this->getIterator() as $i => $item) {
+            $this[$i] = clone $item;
+        }
     }
 }

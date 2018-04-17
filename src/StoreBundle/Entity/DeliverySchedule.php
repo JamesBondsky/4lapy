@@ -437,6 +437,7 @@ class DeliverySchedule extends Base
     public function setReceiver(Store $receiver): DeliverySchedule
     {
         $this->receiver = $receiver;
+        $this->receiverCode = $receiver->getXmlId();
         return $this;
     }
 
@@ -460,6 +461,8 @@ class DeliverySchedule extends Base
     public function setSender(Store $sender): DeliverySchedule
     {
         $this->sender = $sender;
+        $this->senderCode = $sender->getXmlId();
+
         return $this;
     }
 

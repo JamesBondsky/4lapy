@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
@@ -66,6 +67,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
     /**
      * DeliveryHandlerBase constructor.
+     *
      * @param $initParams
      *
      * @throws \Bitrix\Main\ArgumentNullException
@@ -144,9 +146,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param BasketBase $basket
      * @param OfferCollection $offers
      * @param StoreCollection $storesAvailable
-     * @param StockResultCollection|null $stockResultCollection
      *
-     * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws NotFoundException
      * @return StockResultCollection
@@ -154,12 +154,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     public static function getStocks(
         BasketBase $basket,
         OfferCollection $offers,
-        StoreCollection $storesAvailable,
-        StockResultCollection $stockResultCollection = null
+        StoreCollection $storesAvailable
     ): StockResultCollection {
-        if (!$stockResultCollection) {
-            $stockResultCollection = new StockResultCollection();
-        }
+        $stockResultCollection = new StockResultCollection();
 
         /** @var Offer $offer */
         foreach ($offers as $offer) {
@@ -174,21 +171,57 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             if (!$basketItem) {
                 continue;
             }
-            $neededAmount = $basketItem->getQuantity();
 
+            static::getStocksForItem(
+                $offer,
+                $basketItem->getQuantity(),
+                $basketItem->getPrice(),
+                $storesAvailable,
+                $stockResultCollection
+            );
+        }
+
+        return $stockResultCollection;
+    }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
+     * @param Offer $offer
+     * @param int $neededAmount
+     * @param float $price
+     * @param StoreCollection $stores
+     * @param StockResultCollection|null $stockResultCollection
+     *
+     * @return StockResultCollection
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     */
+    public static function getStocksForItem(
+        Offer $offer,
+        int $neededAmount,
+        float $price,
+        StoreCollection $stores,
+        StockResultCollection $stockResultCollection = null
+    ): StockResultCollection {
+        if (null === $stockResultCollection) {
+            $stockResultCollection = new StockResultCollection();
+        }
+
+        /** @var Store $store */
+        foreach ($stores->getIterator() as $store) {
+            $amount = $neededAmount;
             $stockResult = new StockResult();
-            $stockResult->setAmount($neededAmount)
+            $stockResult->setAmount($amount)
                 ->setOffer($offer)
-                ->setStores($storesAvailable)
-                ->setPrice($basketItem->getPrice());
+                ->setStore($store)
+                ->setPrice($price);
 
             $stocks = $offer->getAllStocks();
-            if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
-                if ($availableAmount < $neededAmount) {
+            if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
+                if ($availableAmount < $amount) {
                     $stockResult->setAmount($availableAmount);
-                    $neededAmount -= $availableAmount;
+                    $amount -= $availableAmount;
                 } else {
-                    $neededAmount = 0;
+                    $amount = 0;
                 }
                 $stockResultCollection->add($stockResult);
             }
@@ -196,30 +229,91 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             /**
              * Товар в наличии не полностью. Часть будет отложена
              */
-            if ($neededAmount) {
-                $storesDelay = $offer->getAllStocks()->getStores()->excludeStores($storesAvailable);
+            if ($amount) {
+                $storesDelay = $offer->getAllStocks()->getStores()->excludeStore($store);
                 if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
                     $delayedStockResult = clone $stockResult;
                     $delayedStockResult->setType(StockResult::TYPE_DELAYED)
-                        ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount);
+                        ->setAmount($delayedAmount >= $amount ? $amount : $delayedAmount);
                     $stockResultCollection->add($delayedStockResult);
 
-                    $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;
+                    $amount = ($delayedAmount >= $amount) ? 0 : $amount - $delayedAmount;
                 }
 
                 /**
                  * Часть товара (или все количество) не в наличии
                  */
-                if ($neededAmount) {
+                if ($amount) {
                     $unavailableStockResult = clone $stockResult;
                     $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                        ->setAmount($neededAmount);
+                        ->setAmount($amount);
                     $stockResultCollection->add($unavailableStockResult);
                 }
             }
         }
 
         return $stockResultCollection;
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @param string $deliveryZone
+     * @param string $locationCode
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return StoreCollection
+     */
+    public static function getAvailableStores(
+        string $deliveryCode,
+        string $deliveryZone,
+        string $locationCode = ''
+    ): StoreCollection {
+        $serviceContainer = Application::getInstance()->getContainer();
+        /** @var StoreService $storeService */
+        $storeService = $serviceContainer->get('store.service');
+        /** @var LocationService $locationService */
+        $locationService = $serviceContainer->get('location.service');
+        if (!$locationCode) {
+            $locationCode = $locationService->getCurrentLocation();
+        }
+
+        $result = new StoreCollection();
+        switch ($deliveryCode) {
+            case DeliveryService::DPD_DELIVERY_CODE:
+            case DeliveryService::DPD_PICKUP_CODE:
+                $result = $storeService->getByLocation(
+                    $locationCode,
+                    StoreService::TYPE_STORE
+                );
+                break;
+            case DeliveryService::INNER_PICKUP_CODE:
+                $result = $storeService->getByLocation(
+                    $locationCode,
+                    StoreService::TYPE_SHOP,
+                    true
+                );
+                break;
+            case DeliveryService::INNER_DELIVERY_CODE:
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_1:
+                        /**
+                         * условие доставки в эту зону - наличие на складе
+                         */
+                        $result = $storeService->getByLocation($locationCode, StoreService::TYPE_STORE);
+                        break;
+                    case DeliveryService::ZONE_2:
+                        /**
+                         * условие доставки в эту зону - наличие в базовом магазине
+                         */
+                        $result = $storeService->getByLocation($locationCode, StoreService::TYPE_ALL)
+                            ->getBaseShops();
+                        break;
+                }
+                break;
+        }
+
+        return $result;
     }
 
     /**

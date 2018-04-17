@@ -55,7 +55,7 @@ if (!$selectedPayment) {
     $selectedPayment = current($payments);
 }
 
-$basketPrice = $basket->getPrice();
+$basketPrice = $selectedDelivery->getStockResult()->getPrice();
 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
     $basketPrice = $arResult['PARTIAL_PICKUP']->getStockResult()->getPrice();
 }

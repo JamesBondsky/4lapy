@@ -180,25 +180,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
-            case DeliveryService::ZONE_1:
-                /**
-                 * условие доставки в эту зону - наличие на складе
-                 */
-                $availableStores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_STORE);
-                break;
-            case DeliveryService::ZONE_2:
-                /**
-                 * условие доставки в эту зону - наличие в базовом магазине
-                 */
-                $availableStores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL)
-                    ->getBaseShops();
-                break;
-            default:
-                $result->addError(new Error('Доставка не работает для этой зоны'));
-
-                return $result;
-        }
+        $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
         if ($availableStores->isEmpty()) {
             $result->addError(new Error('Не найдено доступных складов'));
             return $result;
@@ -208,8 +190,8 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
         $data['STOCK_RESULT'] = $stockResult;
         $result->setData($data);
-        if (!$stockResult->getUnavailable()->isEmpty()) {
-            $result->addError(new Error('Присутствуют товары не в наличии'));
+        if ($stockResult->getOrderable()->isEmpty()) {
+            $result->addError(new Error('Отсутствуют товары в наличии'));
         }
 
         return $result;

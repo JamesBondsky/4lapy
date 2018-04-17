@@ -2,7 +2,6 @@
 
 namespace FourPaws\StoreBundle\Collection;
 
-use FourPaws\StoreBundle\Entity\Schedule;
 use FourPaws\StoreBundle\Entity\Store;
 
 class StoreCollection extends BaseCollection
@@ -49,10 +48,15 @@ class StoreCollection extends BaseCollection
      */
     public function excludeStores(StoreCollection $stores): StoreCollection
     {
+        $filter = function (
+            /** @noinspection PhpUnusedParameterInspection */
+            string $key, Store $store) use ($stores) {
+            return $stores->hasStore($store);
+        };
         $result = new static();
         /** @var Store $store */
         foreach ($this->getIterator() as $store) {
-            if ($stores->contains($store)) {
+            if ($this->exists($filter)) {
                 continue;
             }
 
@@ -64,6 +68,18 @@ class StoreCollection extends BaseCollection
 
     /**
      * @param Store $store
+     *
+     * @return StoreCollection
+     */
+    public function excludeStore(Store $store): StoreCollection
+    {
+       return $this->filter(function (Store $existingStore) use ($store) {
+           return $existingStore->getXmlId() !== $store->getXmlId();
+       });
+    }
+
+    /**
+     * @param Store $store
      * @return bool
      */
     public function hasStore(Store $store): bool
@@ -71,5 +87,21 @@ class StoreCollection extends BaseCollection
         return !$this->filter(function (Store $currentStore) use ($store) {
             return $currentStore->getXmlId() === $store->getXmlId();
         })->isEmpty();
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getXmlIds(): array
+    {
+        $result = [];
+        /** @var Store $item */
+        foreach ($this->getIterator() as $item) {
+            $xmlId = $item->getXmlId();
+            $result[$xmlId] = $xmlId;
+        }
+
+        sort($result);
+        return $result;
     }
 }
