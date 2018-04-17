@@ -28,6 +28,9 @@ use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 
 abstract class BaseResult extends CalculationResult implements CalculationResultInterface
 {
+    /** @var DeliveryScheduleResult[] */
+    protected static $scheduleResults = [];
+
     /**
      * @var \DateTime
      */
@@ -463,8 +466,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function getStoreShipmentDate(Store $store, StockResultCollection $stockResult): \DateTime
     {
-        $date = clone $this->getCurrentDate();
+        if (!static::$scheduleResults) {
+            static::$scheduleResults = new DeliveryScheduleResultCollection();
+        }
 
+        $date = clone $this->getCurrentDate();
 
         $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
         $delayed = $stockResult->getDelayed();
@@ -497,8 +503,13 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                     continue;
                 }
 
-                /** @var DeliveryScheduleResult $result */
-                foreach ($schedules->getNextDeliveries($schedules->getReceivers(), $date) as $result) {
+                /** @var Store $receiver */
+                $senders = $schedules->getSenders();
+                foreach ($schedules->getReceivers() as $receiver) {
+                    if (!$result = $this->getScheduleResult($receiver, $senders, $date)) {
+                        continue;
+                    }
+
                     $amount = $stocksForOffer->filterByStore($result->getSchedule()->getSender())->getTotalAmount();
                     if ($result->getSchedule()->getReceiver()->getXmlId() === $store->getXmlId()) {
                         $result->setOffer($offer)->setAmount($amount);
@@ -604,7 +615,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         StoreCollection $senders,
         \DateTime $date
     ): ?DeliveryScheduleResult {
-        $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+        $result = null;
 
         $date = clone $date;
         /**
@@ -617,14 +628,43 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
          */
         $date->modify('+1 day');
 
-        /**
-         * Ищем графики поставок с РЦ на нужный склад/магазин
-         */
-        return $scheduleService->findBySenders($senders)
-            ->getNextDelivery(
-                $receiver,
-                $date
-            );
+        return $this->getScheduleResult($receiver, $senders, $date);
+    }
+
+    /**
+     * @param Store $receiver
+     * @param StoreCollection $senders
+     * @param \DateTime $date
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @return DeliveryScheduleResult|null
+     */
+    protected function getScheduleResult(
+        Store $receiver,
+        StoreCollection $senders,
+        \DateTime $date
+    ): ?DeliveryScheduleResult {
+        $cacheKey = json_encode([
+            'receiver' => $receiver->getXmlId(),
+            'senders' => $senders->getXmlIds(),
+            'from' => $date->getTimestamp()
+        ]);
+
+        if (array_key_exists($cacheKey, static::$scheduleResults)) {
+            $result = static::$scheduleResults[$cacheKey];
+        } else {
+            $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+            $result = $scheduleService->findBySenders($senders)
+                ->getNextDelivery(
+                    $receiver,
+                    $date
+                );
+            static::$scheduleResults[$cacheKey] = $result;
+        }
+
+        return $result;
     }
 
     /**

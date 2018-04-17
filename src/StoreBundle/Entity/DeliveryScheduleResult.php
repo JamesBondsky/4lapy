@@ -14,6 +14,9 @@ use FourPaws\Catalog\Model\Offer;
 class DeliveryScheduleResult
 {
     /** @var \DateTime */
+    protected $from;
+
+    /** @var \DateTime */
     protected $date;
 
     /** @var DeliverySchedule */
@@ -40,6 +43,25 @@ class DeliveryScheduleResult
     public function setDate(\DateTime $date): DeliveryScheduleResult
     {
         $this->date = $date;
+        return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getFrom(): \DateTime
+    {
+        return $this->from;
+    }
+
+    /**
+     * @param \DateTime $from
+     *
+     * @return DeliveryScheduleResult
+     */
+    public function setFrom(\DateTime $from): DeliveryScheduleResult
+    {
+        $this->from = $from;
         return $this;
     }
 

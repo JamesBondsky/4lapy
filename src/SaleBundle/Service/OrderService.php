@@ -247,6 +247,10 @@ class OrderService implements LoggerAwareInterface
             }
         }
         $selectedDelivery = clone $selectedDelivery;
+        if (!$selectedDelivery->isSuccess()) {
+            throw new DeliveryNotAvailableException('Нет доступных доставок');
+        }
+
         /**
          * Привязываем корзину
          */
@@ -353,8 +357,9 @@ class OrderService implements LoggerAwareInterface
             $code = $propertyValue->getProperty()['CODE'];
             switch ($code) {
                 case 'SHIPMENT_PLACE_CODE':
-                    if ($selectedDelivery->getShipmentStore() instanceof Store) {
-                        $value = $selectedDelivery->getShipmentStore()->getXmlId();
+                    $shipmentStore = $selectedDelivery->getShipmentStore();
+                    if ($shipmentStore instanceof Store) {
+                        $value = $shipmentStore->getXmlId();
                     } else {
                         continue 2;
                     }
@@ -541,7 +546,6 @@ class OrderService implements LoggerAwareInterface
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
-
 
         /**
          * Три ситуации:

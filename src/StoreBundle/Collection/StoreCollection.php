@@ -88,4 +88,20 @@ class StoreCollection extends BaseCollection
             return $currentStore->getXmlId() === $store->getXmlId();
         })->isEmpty();
     }
+
+    /**
+     * @return string[]
+     */
+    public function getXmlIds(): array
+    {
+        $result = [];
+        /** @var Store $item */
+        foreach ($this->getIterator() as $item) {
+            $xmlId = $item->getXmlId();
+            $result[$xmlId] = $xmlId;
+        }
+
+        sort($result);
+        return $result;
+    }
 }
