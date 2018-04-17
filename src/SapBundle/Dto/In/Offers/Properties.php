@@ -54,7 +54,7 @@ class Properties
      * @throws LogicException
      * @return null|Property
      */
-    public function getProperty(string $code)
+    public function getProperty(string $code): ?Property
     {
         $properties = $this->getProperties()->filter(function (Property $property) use ($code) {
             return $property->getCode() === $code;
@@ -64,7 +64,7 @@ class Properties
             throw new LogicException(sprintf('Found more than one property with code %s', $code));
         }
 
-        return $properties->current();
+        return $properties->current() ?: null;
     }
 
     /**
@@ -78,12 +78,14 @@ class Properties
     {
         $values = $default;
         $property = $this->getProperty($code);
+
         if ($property instanceof Property) {
             $propertyValues = $property->getValues()->map(function (PropertyValue $propertyValue) {
                 return $propertyValue->getCode();
             });
             $values = $propertyValues->count() ? $propertyValues->getValues() : $values;
         }
+
         return new ArrayCollection($values);
     }
 }
