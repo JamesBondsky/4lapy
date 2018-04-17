@@ -3,6 +3,7 @@
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Error;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -12,6 +13,19 @@ class PickupResult extends BaseResult implements PickupResultInterface
 {
     /** @var StoreCollection */
     protected $bestShops;
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     */
+    protected function doCalculateDeliveryDate(): void
+    {
+        parent::doCalculateDeliveryDate();
+        if (!$this->stockResult->getUnavailable()->isEmpty()) {
+            $this->addError(new Error('Присутствуют товары не в наличии'));
+        }
+    }
 
     protected function doCalculatePeriod(): void
     {
