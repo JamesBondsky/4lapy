@@ -12,6 +12,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
@@ -174,7 +175,7 @@ class StoreService implements LoggerAwareInterface
      *
      * @param string $locationCode
      * @param string $type
-     * @param bool $strict
+     * @param bool   $strict
      *
      * @throws ArgumentException
      * @return StoreCollection
@@ -365,7 +366,40 @@ class StoreService implements LoggerAwareInterface
      */
     public function getStores(array $params = []): array
     {
-        $storeCollection = $this->getStoreCollection($params);
+        if (!isset($params['storesAlways'])) {
+            $params['storesAlways'] = false;
+        }
+        if ($params['storesAlways'] && isset($params['filter']['UF_LOCATION']) && \count($params['filter']) === 1) {
+            /** city */
+            $storeCollection = $this->getStoreCollection($params);
+            /** region */
+            if(!empty($params['filter']['UF_LOCATION']) && $storeCollection->isEmpty()) {
+                unset($params['activeStoreId'], $params['order']);
+                $code = $params['filter']['UF_LOCATION'];
+                $codeList = json_decode($code, true);
+                if (\is_array($codeList)) {
+                    $dadataLocationAdapter = new DaDataLocationAdapter();
+                    /** @var BitrixLocation $bitrixLocation */
+                    $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
+                    $regionId = $bitrixLocation->getRegionId();
+                } else {
+                    $regionId = LocationTable::query()->setFilter(['=CODE' => $code])->setSelect(['REGION_ID'])->setLimit(1)->exec()->fetch()['REGION_ID'];
+                }
+                /** сбрасываем поиск и местоположение */
+                unset($params['filter']['UF_LOCATION'], $params['filter'][0]);
+                $params['filter']['REGION_ID'] = $regionId;
+                $storeCollection = $this->getStoreCollection($params);
+                /** moscow */
+                if ($storeCollection->isEmpty()) {
+                    /** сбрасываем регион */
+                    unset($params['filter']['REGION_ID']);
+                    $params['filter']['UF_LOCATION'] = LocationService::LOCATION_CODE_MOSCOW;
+                    $storeCollection = $this->getStoreCollection($params);
+                }
+            }
+        } else {
+            $storeCollection = $this->getStoreCollection($params);
+        }
         if (!isset($params['returnActiveServices']) || !\is_bool($params['returnActiveServices'])) {
             $params['returnActiveServices'] = false;
         }
@@ -381,11 +415,11 @@ class StoreService implements LoggerAwareInterface
 
         return $this->getFormatedStoreByCollection(
             [
-                'storeCollection' => $storeCollection,
+                'storeCollection'      => $storeCollection,
                 'returnActiveServices' => $params['returnActiveServices'],
-                'returnSort' => $params['returnSort'],
-                'sortVal' => $params['sortVal'],
-                'activeStoreId' => $params['activeStoreId'],
+                'returnSort'           => $params['returnSort'],
+                'sortVal'              => $params['sortVal'],
+                'activeStoreId'        => $params['activeStoreId'],
             ]
         );
     }
@@ -479,17 +513,17 @@ class StoreService implements LoggerAwareInterface
                 }
 
                 $item = [
-                    'id' => $store->getXmlId(),
-                    'addr' => $store->getAddress(),
-                    'adress' => WordHelper::clear($store->getDescription()),
-                    'phone' => $store->getPhone(),
-                    'schedule' => $store->getScheduleString(),
-                    'photo' => $imageSrc,
-                    'metro' => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
+                    'id'         => $store->getXmlId(),
+                    'addr'       => $store->getAddress(),
+                    'adress'     => WordHelper::clear($store->getDescription()),
+                    'phone'      => $store->getPhone(),
+                    'schedule'   => $store->getScheduleString(),
+                    'photo'      => $imageSrc,
+                    'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
-                    'services' => $services,
-                    'gps_s' => $gpsN, //revert $gpsS
-                    'gps_n' => $gpsS, //revert $gpsN
+                    'services'   => $services,
+                    'gps_s'      => $gpsN, //revert $gpsS
+                    'gps_n'      => $gpsS, //revert $gpsN
                 ];
 
                 if (($params['activeStoreId'] === 'first' && $key === 0) || ($params['activeStoreId'] !== 'first' && $store->getId() === (int)$params['activeStoreId'])) {
@@ -513,7 +547,7 @@ class StoreService implements LoggerAwareInterface
                         $this->pickupDelivery,
                         [
                             'SHOW_TIME' => true,
-                            'SHORT' => true,
+                            'SHORT'     => true,
                         ]
                     );
                 }
@@ -625,8 +659,8 @@ class StoreService implements LoggerAwareInterface
         $search = $request->get('search');
         if (!empty($search)) {
             $result[] = [
-                'LOGIC' => 'OR',
-                '%ADDRESS' => $search,
+                'LOGIC'          => 'OR',
+                '%ADDRESS'       => $search,
                 '%METRO.UF_NAME' => $search,
             ];
         }
@@ -662,6 +696,7 @@ class StoreService implements LoggerAwareInterface
 
     /**
      * @todo Баг при getPickupDelivery
+     *
      * @param int $offerId
      *
      * @return Offer
