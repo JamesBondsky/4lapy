@@ -141,35 +141,7 @@ class DeliveryScheduleCollection extends BaseCollection
         }
 
         return $result;
-    }
-
-    /**
-     * @param StoreCollection $receivers
-     * @param \DateTime|null $from
-     * @return DeliveryScheduleResultCollection
-     * @throws NotFoundException
-     * @throws ArgumentException
-     */
-    public function getNextDeliveries(
-        StoreCollection $receivers,
-        \DateTime $from = null
-    ): DeliveryScheduleResultCollection {
-        if (!$from) {
-            $from = new \DateTime();
-        }
-
-        $result = new DeliveryScheduleResultCollection();
-
-        /** @var Store $receiver */
-        foreach ($receivers as $receiver) {
-            if ($res = $this->getNextDelivery($receiver, $from)) {
-                $result->add($res);
-            }
-        }
-
-        return $result;
-    }
-    /** @noinspection MoreThanThreeArgumentsInspection */
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param DeliverySchedule $senderSchedule

@@ -42,6 +42,7 @@ if ($storage->getUserId()) {
     $showNewAddressFormHeader = true;
 }
 
+$orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
 
 function showDeliveryDateSelector(CalculationResultInterface $delivery, OrderStorage $storage, string $name)
 {
@@ -248,7 +249,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 
 <div class="delivery-block__type <?= $storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
      data-delivery="<?= $delivery->getPrice() ?>"
-     data-full="<?= $basket->getPrice() ?>" data-type="oneDelivery">
+     data-full="<?= $orderPrice ?>" data-type="oneDelivery">
 
     <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
         <div class="b-input-line__label-wrapper">
@@ -296,7 +297,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     ?>
     <div class="delivery-block__type <?= !$storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
          data-delivery="<?= $delivery1->getPrice() ?>"
-         data-full="<?= $basket->getPrice() ?>"
+         data-full="<?= $orderPrice ?>"
          data-type="twoDeliveries">
         <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
             <div class="b-input-line__label-wrapper"><span

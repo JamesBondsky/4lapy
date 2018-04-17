@@ -3,7 +3,7 @@
 namespace FourPaws\DeliveryBundle\Entity;
 
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 
 class StockResult
 {
@@ -19,18 +19,6 @@ class StockResult
     protected $amount;
 
     /**
-     * @var Offer
-     */
-    protected $offer;
-
-    /**
-     * Склады, откуда будет осуществляться доставка/самовывоз
-     *
-     * @var StoreCollection
-     */
-    protected $stores;
-
-    /**
      * @var float
      */
     protected $price = 0;
@@ -39,6 +27,18 @@ class StockResult
      * @var string
      */
     protected $type = self::TYPE_AVAILABLE;
+
+    /**
+     * @var Offer
+     */
+    protected $offer;
+
+    /**
+     * Склады, откуда будет осуществляться доставка/самовывоз
+     *
+     * @var Store
+     */
+    protected $store;
 
     /**
      * @return int
@@ -81,25 +81,21 @@ class StockResult
     }
 
     /**
-     * @return StoreCollection
+     * @return Store
      */
-    public function getStores(): StoreCollection
+    public function getStore(): Store
     {
-        if (!$this->stores) {
-            $this->stores = new StoreCollection();
-        }
-
-        return $this->stores;
+        return $this->store;
     }
 
     /**
-     * @param StoreCollection $stores
+     * @param Store $stores
      *
      * @return StockResult
      */
-    public function setStores(StoreCollection $stores): StockResult
+    public function setStore(Store $stores): StockResult
     {
-        $this->stores = $stores;
+        $this->store = $stores;
 
         return $this;
     }

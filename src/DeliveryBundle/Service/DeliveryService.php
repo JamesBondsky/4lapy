@@ -27,12 +27,15 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
+use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Discount\Utils\Manager as DiscountManager;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -149,7 +152,7 @@ class DeliveryService implements LoggerAwareInterface
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return array
+     * @return CalculationResultInterface[]
      */
     public function getByBasket(
         BasketBase $basket,
@@ -171,10 +174,16 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @param string $locationCode
      * @param array $codes
+     *
      * @return CalculationResultInterface[]
+     * @throws ApplicationCreateException
      */
-    public function getByLocation(string $locationCode, array $codes = []): array
+    public function getByLocation(string $locationCode = '', array $codes = []): array
     {
+        if (!$locationCode) {
+            $locationCode = $this->locationService->getCurrentLocation();
+        }
+
         $deliveries = [];
         $getDeliveries = function () use ($locationCode) {
             $shipment = $this->generateShipment($locationCode);
@@ -237,10 +246,8 @@ class DeliveryService implements LoggerAwareInterface
             } else {
                 $name = $service->getName();
             }
-            /**
-             * todo раскомментировать строчки, выключающие постобработку кастомных акций, либо расчитывать как-то по-другому
-             */
-            //\FourPaws\SaleBundle\Discount\Utils\Manager::disableProcessingFinalAction();
+
+            DiscountManager::disableProcessingFinalAction();
             try {
                 $shipment->setFields(
                     [
@@ -255,7 +262,7 @@ class DeliveryService implements LoggerAwareInterface
                 ]);
                 continue;
             }
-            //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
+            DiscountManager::enableProcessingFinalAction();
             $calculationResult = $shipment->calculateDelivery();
             if (!$calculationResult->isSuccess()) {
                 continue;
@@ -659,6 +666,28 @@ class DeliveryService implements LoggerAwareInterface
         }
 
         return $this->dpdTerminalToStore($terminal, $terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE']);
+    }
+
+    /**
+     * @param Offer $offer
+     * @param CalculationResultInterface $delivery
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @return StockResultCollection
+     */
+    public function getStockResultForOffer(Offer $offer, CalculationResultInterface $delivery): StockResultCollection
+    {
+        return DeliveryHandlerBase::getStocksForItem(
+            $offer,
+            $offer->getStocks()->getTotalAmount(),
+            $offer->getPrice(),
+            DeliveryHandlerBase::getAvailableStores($delivery->getDeliveryCode(), $delivery->getDeliveryZone())
+        );
     }
 
     /**

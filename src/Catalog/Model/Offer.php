@@ -32,8 +32,11 @@ use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
@@ -351,6 +354,16 @@ class Offer extends IblockElement
      * @var bool
      */
     protected $isCounted = false;
+
+    /**
+     * @var int
+     */
+    protected $quantity;
+
+    /**
+     * @var int
+     */
+    protected $deliverableQuantity;
 
     protected $bonus = 0;
 
@@ -1080,7 +1093,7 @@ class Offer extends IblockElement
         return $this->bonus;
     }
 
-    
+
     /**
      * @param int $percent
      * @param int $quantity
@@ -1173,15 +1186,43 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ArgumentException
+     *
+     *
+     * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
      * @return int
      */
     public function getQuantity(): int
     {
-        return $this->getStocks()->getTotalAmount();
+        if (null === $this->quantity) {
+            $this->quantity = $this->getStocks()->getTotalAmount();
+        }
+
+        return $this->quantity;
+    }
+
+    /**
+     * Максимальное доступное для доставки количество товара в текущем местоположении
+     * @todo заменить getQuantity() на этот метод после оптимизации расчета доставок
+     *
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getDeliverableQuantity(): int
+    {
+        if (null === $this->deliverableQuantity) {
+            $this->deliverableQuantity = $this->getAvailableAmount();
+        }
+
+        return $this->deliverableQuantity;
     }
 
     /**
@@ -1327,17 +1368,17 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return bool
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ArgumentException
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return bool
      */
     public function isAvailable(): bool
     {
         return $this->isActive() &&
-            $this->getQuantity() > 0 &&
-            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable());
+            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable()) &&
+            ($this->getQuantity() > 0);
     }
 
     /**
@@ -1391,5 +1432,32 @@ class Offer extends IblockElement
         }
 
         $this->isCounted = true;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @return int
+     */
+    protected function getAvailableAmount(): int
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveries = $deliveryService->getByLocation();
+        $max = 0;
+        foreach ($deliveries as $delivery) {
+            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
+            if ($delivery->isSuccess()) {
+                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
+                $max = $max > $availableAmount ? $max : $availableAmount;
+            }
+        }
+
+        return $max;
     }
 }

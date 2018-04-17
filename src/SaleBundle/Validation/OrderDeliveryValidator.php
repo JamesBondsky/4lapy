@@ -159,7 +159,7 @@ class OrderDeliveryValidator extends ConstraintValidator
                     return;
                 }
 
-                if (!$delivery->setSelectedStore($selectedStore)->isSuccess()) {
+                if (!$delivery->setSelectedShop($selectedStore)->isSuccess()) {
                     $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
                     return;
                 }
