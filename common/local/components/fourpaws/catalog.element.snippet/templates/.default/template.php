@@ -195,6 +195,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                         <span class="b-ruble">₽</span>
                     </span>
                 </span>
+                <span class="b-common-item__incart">+1</span>
             </a>
         <?php } else { ?>
             <a class="b-common-item__add-to-cart" href="javascript:void(0);" title="">
@@ -207,6 +208,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                         <span class="b-ruble">₽</span>
                     </span>
                 </span>
+                <span class="b-common-item__incart">+1</span>
             </a>
         <?php }
         //
