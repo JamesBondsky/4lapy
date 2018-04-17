@@ -91,7 +91,7 @@
     "ruflin/elastica": "^5.3",
     "sensio/framework-extra-bundle": "^5.0",
     "somework/composer-symlinks": "^1.1",
-    "somework/expert-sender-api": "^0.4.5",
+    "somework/expert-sender-api": "^0.6.0",
     "symfony/symfony": "3.3.*",
     "twig/twig": "^1.0",
     "webarchitect609/bitrix-cache": "^1.0",

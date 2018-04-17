@@ -56,6 +56,12 @@ use FourPaws\Helpers\FormHelper;
                         Обратная связь
                     </a>
                 </li>
+                <?php
+                /**
+                 * Временно скрыто
+                 *
+                 * @see task LP03-344
+                 *
                 <li class="b-link-block__item">
                     <a class="b-link-block__link js-link-phone-call"
                        href="javascript:void(0);"
@@ -65,7 +71,7 @@ use FourPaws\Helpers\FormHelper;
                         </span>
                         Чат с консультантом
                     </a>
-                </li>
+                </li> */?>
             </ul>
         </div>
         <?php $APPLICATION->IncludeComponent(

@@ -40,6 +40,12 @@ $APPLICATION->IncludeComponent(
             Обратная связь
         </a>
     </span>
+    <?php
+    /**
+     * Временно скрыто
+     *
+     * @see task LP03-344
+     *
     <span class="b-footer-communication__item">
         <a class="b-footer-communication__link"
            href="javascript:void(0);" title="Чат с консультантом">
@@ -48,5 +54,5 @@ $APPLICATION->IncludeComponent(
             </span>
             Чат с консультантом
         </a>
-    </span>
+    </span> */ ?>
 </span>

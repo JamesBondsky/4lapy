@@ -10,6 +10,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
@@ -40,6 +41,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ExpertsenderService
+ *
+ * @todo переписать нахер
  *
  * @package FourPaws\External
  */
@@ -73,7 +76,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User  $user
+     * @param User $user
      * @param array $params
      *
      * @return bool
@@ -124,7 +127,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     return true;
                 }
                 throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-            } catch (SystemException|GuzzleException|\Exception $e) {
+            } catch (SystemException|GuzzleException|Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -145,7 +148,7 @@ class ExpertsenderService implements LoggerAwareInterface
         }
         try {
             $receiver = new Receiver($user->getEmail());
-            $apiResult = $this->client->sendTransactional(7073, $receiver);
+            $apiResult = $this->client->sendSystemTransactional(7073, $receiver);
             if ($apiResult->isOk()) {
                 return true;
             }
@@ -156,7 +159,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User   $user
+     * @param User $user
      * @param string $backUrl
      *
      * @return bool
@@ -182,12 +185,12 @@ class ExpertsenderService implements LoggerAwareInterface
                         (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
                         true),
                 ];
-                $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
+                $apiResult = $this->client->sendSystemTransactional(7072, $receiver, $snippets);
                 if ($apiResult->isOk()) {
                     return true;
                 }
                 throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-            } catch (ExpertSenderException|GuzzleException|ApplicationCreateException|\Exception $e) {
+            } catch (ExpertSenderException|GuzzleException|ApplicationCreateException|Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -219,7 +222,7 @@ class ExpertsenderService implements LoggerAwareInterface
             /** отправка почты на старый email */
             try {
                 $receiver = new Receiver($oldUser->getEmail());
-                $apiResult = $this->client->sendTransactional(7070, $receiver);
+                $apiResult = $this->client->sendSystemTransactional(7070, $receiver);
                 if ($apiResult->isOk()) {
                     $continue = true;
                 }
@@ -229,7 +232,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 if ($userIdResult->isOk()) {
                     $expertSenderId = $userIdResult->getId();
                 }
-            } catch (GuzzleException|\Exception $e) {
+            } catch (GuzzleException | Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -254,7 +257,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     }
                 } else {
                     /** если нет старой почты или не нашли на сайте регистрируем в сендере */
-                    if($this->sendEmailAfterRegister($curUser, ['isReg' => 0, 'type' => 'email_change_email'])) {
+                    if ($this->sendEmailAfterRegister($curUser, ['isReg' => 0, 'type' => 'email_change_email'])) {
                         $continue = false;
                     }
                 }
@@ -262,14 +265,14 @@ class ExpertsenderService implements LoggerAwareInterface
                 if ($continue) {
                     /** отправка почты на новый email, отправляем именно при смене, при регистрации еще подтвердить надо */
                     $receiver = new Receiver($curUser->getEmail());
-                    $apiResult = $this->client->sendTransactional(7071, $receiver);
+                    $apiResult = $this->client->sendSystemTransactional(7071, $receiver);
                     if ($apiResult->isOk()) {
                         return true;
                     }
                     throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
                         $apiResult->getErrorCode());
                 }
-            } catch (GuzzleException|\Exception $e) {
+            } catch (GuzzleException|Exception $e) {
                 $a = $e->getMessage();
                 echo $a;
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
@@ -317,8 +320,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 /** если не нашли id по почте регистрируем в сендере */
-                return $this->sendEmailAfterRegister($user, ['isReg' => 0, 'type' => 'email_subscribe', 'subscribe'=>true]);
-            } catch (GuzzleException|\Exception $e) {
+                return $this->sendEmailAfterRegister($user, ['isReg' => 0, 'type' => 'email_subscribe', 'subscribe' => true]);
+            } catch (GuzzleException|Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -363,7 +366,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
                 }
                 return true;
-            } catch (GuzzleException|\Exception $e) {
+            } catch (GuzzleException|Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -495,12 +498,12 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('alt_products', $items, true);
 
         try {
-            $apiResult = $this->client->sendTransactional($transactionId, new Receiver($email), $snippets);
+            $apiResult = $this->client->sendSystemTransactional($transactionId, new Receiver($email), $snippets);
             if (!$apiResult->isOk()) {
                 throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             }
             return $transactionId;
-        } catch (GuzzleException|\Exception $e) {
+        } catch (GuzzleException|Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -514,7 +517,6 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendOrderCompleteEmail(Order $order): int
     {
-        /** @todo нужно юзануть проверку доступности отправки писем в ES(если письмо недоступно без конфирма мыла) - метод юзера - allowedEASend */
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
 
@@ -540,13 +542,13 @@ class ExpertsenderService implements LoggerAwareInterface
         $transactionId = 7122;
 
         try {
-            $apiResult = $this->client->sendTransactional($transactionId, new Receiver($email), $snippets);
+            $apiResult = $this->client->sendSystemTransactional($transactionId, new Receiver($email), $snippets);
             if (!$apiResult->isOk()) {
                 throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             }
 
             return $transactionId;
-        } catch (GuzzleException|\Exception $e) {
+        } catch (GuzzleException|Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
     }

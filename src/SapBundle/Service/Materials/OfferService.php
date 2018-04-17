@@ -25,6 +25,11 @@ use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
+/**
+ * Class OfferService
+ *
+ * @package FourPaws\SapBundle\Service\Materials
+ */
 class OfferService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -39,6 +44,12 @@ class OfferService implements LoggerAwareInterface
      */
     private $offerRepository;
 
+    /**
+     * OfferService constructor.
+     *
+     * @param ReferenceService $referenceService
+     * @param OfferRepository $offerRepository
+     */
     public function __construct(ReferenceService $referenceService, OfferRepository $offerRepository)
     {
         $this->referenceService = $referenceService;
@@ -93,13 +104,17 @@ class OfferService implements LoggerAwareInterface
      */
     public function deactivate(string $xmlId): bool
     {
-        if ($id = $this->offerRepository->findIdByXmlId($xmlId)) {
+        $id = $this->offerRepository->findIdByXmlId($xmlId);
+
+        if ($id) {
             $result = $this->offerRepository->setActive($id, false);
             if ($result) {
                 $this->log()->info(sprintf('Деактивирован оффер %s [%s]', $id, $xmlId));
             }
+
             return $result;
         }
+
         return true;
     }
 
@@ -125,7 +140,7 @@ class OfferService implements LoggerAwareInterface
      * @throws NotFoundBasicUomException
      * @return void
      */
-    protected function fillFromMaterial(Offer $offer, Material $material)
+    protected function fillFromMaterial(Offer $offer, Material $material): void
     {
         $this->fillFields($offer, $material);
         $this->fillProperties($offer, $material);
@@ -135,7 +150,7 @@ class OfferService implements LoggerAwareInterface
      * @param Offer    $offer
      * @param Material $material
      */
-    protected function fillFields(Offer $offer, Material $material)
+    protected function fillFields(Offer $offer, Material $material): void
     {
         $offer
             ->withActive(!$material->isNotUploadToIm())
@@ -154,7 +169,7 @@ class OfferService implements LoggerAwareInterface
      * @throws CantCreateReferenceItem
      * @throws NotFoundBasicUomException
      */
-    protected function fillProperties(Offer $offer, Material $material)
+    protected function fillProperties(Offer $offer, Material $material): void
     {
         /**
          * @todo пока нет объединения по цвету
@@ -183,7 +198,7 @@ class OfferService implements LoggerAwareInterface
      *
      * @throws NotFoundBasicUomException
      */
-    protected function fillVolume(Offer $offer, Material $material)
+    protected function fillVolume(Offer $offer, Material $material): void
     {
         $offer->withVolume($material->getBasicUnitOfMeasure()->getVolume());
     }
@@ -199,7 +214,7 @@ class OfferService implements LoggerAwareInterface
      * @throws LogicException
      * @throws CantCreateReferenceItem
      */
-    protected function fillReferenceProperties(Offer $offer, Material $material)
+    protected function fillReferenceProperties(Offer $offer, Material $material): void
     {
         $offer
             ->withColourXmlId($this->referenceService->getPropertyBitrixValue(SapOfferProperty::COLOUR, $material))
@@ -225,11 +240,12 @@ class OfferService implements LoggerAwareInterface
      * @param Offer    $offer
      * @param Material $material
      */
-    protected function fillBarCodes(Offer $offer, Material $material)
+    protected function fillBarCodes(Offer $offer, Material $material): void
     {
         $barcodes = $material->getAllBarcodes()->map(function (BarCode $barCode) {
             return $barCode->getValue();
         })->toArray();
+
         $offer->withBarcodes($barcodes);
     }
 }
