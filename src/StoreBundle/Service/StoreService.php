@@ -484,7 +484,7 @@ class StoreService implements LoggerAwareInterface
             foreach ($storeCollection as $key => $store) {
                 $metro = $store->getMetro();
 
-                if (!empty($metro) && !$haveMetro) {
+                if ($metro > 0 && !$haveMetro) {
                     $haveMetro = true;
                 }
 
@@ -498,7 +498,9 @@ class StoreService implements LoggerAwareInterface
                 $services = [];
                 if (\is_array($servicesList) && !empty($servicesList)) {
                     foreach ($servicesList as $service) {
-                        $services[] = $service['UF_NAME'];
+                        if(\in_array($service['ID'], $store->getServices(), true)){
+                            $services[] = $service['UF_NAME'];
+                        }
                     }
                 }
 
