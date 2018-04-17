@@ -53,7 +53,7 @@ class UnlockCommand extends Command implements LoggerAwareInterface
     public function configure(): void
     {
         $this->setName('fourpaws:sap:unlock')
-            ->setDescription('Sap exchange. Start exchange by type.')
+            ->setDescription('Unlock command.')
             ->addArgument(
                 self::ARGUMENT_PIPELINE,
                 InputArgument::REQUIRED,
