@@ -173,6 +173,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
                 ->withXmlId($material->getBrandCode())
                 ->withName($material->getBrandName());
             $result = $this->brandRepository->create($brand);
+
             if (!$result->isSuccess()) {
                 $this->log()->log(
                     LogLevel::ERROR,
@@ -181,6 +182,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
                 );
                 throw new LoggedException('Ошибка создания бренда');
             }
+
             $this->log()->log(
                 LogLevel::DEBUG,
                 sprintf('Бренд %s [%s] создан', $brand->getName(), $brand->getId())

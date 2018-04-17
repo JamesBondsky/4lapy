@@ -122,10 +122,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
     /**
      * @param string $contract
-     * @param array $parameters
+     * @param array  $parameters
      *
      * @return string
      *
+     * @throws \Exception
      * @throws ExecuteException
      */
     protected function execute(string $contract, array $parameters = []): string
@@ -173,6 +174,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     /**
      * @return string
      *
+     * @throws \Exception
      * @throws AuthenticationException
      */
     protected function authenticate(): string
@@ -216,6 +218,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Client
      *
+     * @throws \Exception
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      */
@@ -245,6 +248,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param User|null $user
      *
      * @return Client
+     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
@@ -273,6 +277,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $phone
      *
      * @return Client
+     * @throws \Exception
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
@@ -309,6 +314,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Clients
      *
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getUserDataByPhone(string $phone): Clients
@@ -336,6 +342,20 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
 
     /**
+     * @param ReferralParams $referralParams
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     */
+    public function addReferralByBonusCardAsync(ReferralParams $referralParams): void
+    {
+        /** @noinspection MissingService */
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_referral_add_producer');
+        $producer->publish($this->serializer->serialize($referralParams, 'json'));
+    }
+
+    /**
      * Передача номера бонусной карты реферала для получения Contact_ID реферала
      *
      * - первый шаг заполнения формы добавления реферала
@@ -343,6 +363,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param ReferralParams $referralParams
      *
      * @return string
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function addReferralByBonusCard(ReferralParams $referralParams): string
@@ -379,6 +400,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param User $user
      *
      * @return array
+     * @throws \Exception
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ServiceNotFoundException
@@ -418,6 +440,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param User|null $user
      *
      * @return string
+     * @throws \Exception
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws InvalidIdentifierException
@@ -446,6 +469,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $phone
      *
      * @return string
+     * @throws \Exception
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceException
@@ -488,6 +512,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $cardNumber
      *
      * @return CardValidateResult
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function validateCardByNumberRaw(string $cardNumber): CardValidateResult
@@ -515,6 +541,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Card
      *
+     * @throws \Exception
      * @throws ManzanaServiceException
      * @throws CardNotFoundException
      */
@@ -544,6 +571,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Contact
      *
+     * @throws \Exception
      * @throws ManzanaServiceException
      * @throws ContactNotFoundException
      */
@@ -594,6 +622,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param $contactId
      *
      * @return array|CardByContractCards[]
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getCardsByContactId($contactId): array
@@ -619,6 +648,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $contactId
      *
      * @return Cheque[]
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getCheques(string $contactId): array
@@ -643,6 +673,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $cardId
      *
      * @return ChequeByContractCheques[]|array
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getChequesByCardId(string $cardId): array
@@ -674,6 +705,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $chequeId
      *
      * @return ChequeItem[]
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getItemsByCheque(string $chequeId): array
@@ -735,7 +767,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
     /**
      * @param string $contactId
+     *
      * @return CardByContractCards
+     * @throws \Exception
      * @throws TooManyActiveCardFound
      * @throws ManzanaServiceException
      *
@@ -764,6 +798,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $card_to
      *
      * @return bool
+     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function changeCard(string $card_from, string $card_to): bool

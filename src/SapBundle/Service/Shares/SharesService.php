@@ -250,7 +250,9 @@ class SharesService implements LoggerAwareInterface
                         'DATA' => [
                             'Filtration_operator' => $filtrationOperator,
                             'Count_operator' => $countOperator,
+                            'All' => 'AND',
                             'Value' => $discountPercent,
+                            'Additional_JSON' => false,
                         ],
                         'CHILDREN' => [
                             [
