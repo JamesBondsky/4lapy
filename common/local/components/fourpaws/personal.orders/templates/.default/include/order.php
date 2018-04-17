@@ -62,7 +62,14 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
         </div>
         <div class="b-accordion-order-item__pay">
             <div class="b-accordion-order-item__not-pay">
-                <?= $order->getPayPrefixText() . ' ' . $order->getPayment()->getName() ?>
+                <?php $payment = $order->getPayment();
+                $paymentName = $payment->getName();
+                if ($order->isPayed()) {
+                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'онлайн';
+                } else {
+                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'банковской картой';
+                }
+                echo $order->getPayPrefixText() . ' ' . $paymentName ?>
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
@@ -155,7 +162,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                     × <?= $item->getQuantity() ?> шт
                                 </div>
                             <?php } ?>
-                            <div class="b-list-order__bonus js-order-item-bonus-<?=$order->isManzana() ? 'manzana-' : ''?><?=$item->getId()?>"></div>
+                            <div class="b-list-order__bonus js-order-item-bonus-<?= $order->isManzana() ? 'manzana-' : '' ?><?= $item->getId() ?>"></div>
                         </div>
                     </div>
                 </li>
