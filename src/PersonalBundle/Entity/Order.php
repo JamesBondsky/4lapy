@@ -3,6 +3,9 @@
 namespace FourPaws\PersonalBundle\Entity;
 
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
@@ -358,6 +361,12 @@ class Order extends BaseEntity
         return $this;
     }
 
+    /**
+     * @return string
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
     public function getStatus(): string
     {
         if (empty($this->getStatusLang())) {
@@ -516,12 +525,12 @@ class Order extends BaseEntity
 
     public function getFormatedDateInsert(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateInsert()->format('j #n# Y'), DateHelper::GENITIVE);
+        return DateHelper::replaceRuMonth($this->getDateInsert()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'),DateHelper::GENITIVE);
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'),DateHelper::GENITIVE, true);
     }
 
     public function getFormatedPrice()
@@ -619,9 +628,9 @@ class Order extends BaseEntity
      */
     public function getDateDelivery(): string
     {
-        $formatedDate = '';
+        $formattedDate = '';
         if ($this->getDelivery()->isDeducted()) {
-            $formatedDate = $this->getDelivery()->getFormatedDateDeducted();
+            $formattedDate = $this->getDelivery()->getFormatedDateDeducted();
         } else {
             /** @todo рассчитанная дата доставки */
             /** @var OrderProp $prop */
@@ -630,12 +639,12 @@ class Order extends BaseEntity
                 /** @var Date|null $date */
                 $date = new Date($prop->getValue());
                 if ($date instanceof Date) {
-                    $formatedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
+                    $formattedDate = DateHelper::replaceRuMonth($date->format('j #n# Y'), DateHelper::GENITIVE, true);
                 }
             }
         }
 
-        return $formatedDate;
+        return $formattedDate;
     }
 
     /**
@@ -702,6 +711,12 @@ class Order extends BaseEntity
         $this->statusMain = $statusMain;
     }
 
+    /**
+     * @return mixed
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
     public function getStatusSort()
     {
         if (empty($this->getStatusMain())) {
