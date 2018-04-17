@@ -90,7 +90,7 @@ class ReferenceService implements LoggerAwareInterface
      */
     public function get(string $propertyCode, string $xmlId): ?HlbReferenceItem
     {
-        return $this->referenceStorage->findByXmlId($propertyCode, $xmlId);
+        return $this->referenceStorage->findByXmlId($propertyCode, $xmlId) ?: null;
     }
 
     /**
