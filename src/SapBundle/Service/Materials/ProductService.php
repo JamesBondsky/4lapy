@@ -228,25 +228,25 @@ class ProductService
             ->withStm(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::STM,
-                    [1]
+                    [0]
                 )->first() === 1
             )
             ->withLicenseRequired(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::LICENSE,
-                    [1]
+                    [0]
                 )->first() === 1
             )
             ->withLowTemperatureRequired(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::LOW_TEMPERATURE,
-                    [1]
+                    [0]
                 )->first() === 1
             )
             ->withIsFood(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::FOOD,
-                    [1]
+                    [0]
                 )->first() === 1
             )
             ->withPackingCombination(

@@ -11,6 +11,7 @@ use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
+use Bitrix\Main\SystemException;
 use Cocur\Slugify\SlugifyInterface;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\AppBundle\Service\ToBitrixDataArrayConverter;
@@ -86,7 +87,7 @@ abstract class IblockElementRepository
     /**
      * @param array $criteria
      * @param array $orderBy
-     * @param int   $limit
+     * @param int $limit
      *
      * @return Collection|IblockElement[]
      */
@@ -117,7 +118,7 @@ abstract class IblockElementRepository
     }
 
     /**
-     * @param int  $id
+     * @param int $id
      * @param bool $active
      *
      * @return bool
@@ -138,9 +139,10 @@ abstract class IblockElementRepository
             ->withId(0)
             ->withIblockId($this->getIblockId())
             ->withCode($this->generateUniqueCode($iblockElement->getName(), $iblockElement->getCode()));
-        $data = $this->toArray($iblockElement);
-        unset($data['ID']);
 
+        $data = $this->toArray($iblockElement);
+
+        unset($data['ID']);
         $result = new AddResult();
         $id = $this->iblockElement->Add($data);
 
@@ -190,7 +192,8 @@ abstract class IblockElementRepository
      *
      * @return DeleteResult
      */
-    public function delete(IblockElement $iblockElement): DeleteResult {
+    public function delete(IblockElement $iblockElement): DeleteResult
+    {
         global $APPLICATION;
         $result = new DeleteResult();
 
@@ -217,7 +220,7 @@ abstract class IblockElementRepository
     abstract public function getIblockId(): int;
 
     /**
-     * @param int   $elementId
+     * @param int $elementId
      * @param array $properties
      *
      */
@@ -235,16 +238,20 @@ abstract class IblockElementRepository
      */
     protected function toArray(ToArrayInterface $object): array
     {
-        $data = $this->converter->convert(
-            $object->toArray(),
-            ElementTable::getEntity(),
-            ['PROPERTY_VALUES']
-        );
+        try {
+            $data = $this->converter->convert(
+                $object->toArray(),
+                ElementTable::getEntity(),
+                ['PROPERTY_VALUES']
+            );
+        } catch (SystemException $e) {
+            $data = [];
+        }
 
         /**
          * @todo check property type
          */
-        $data['PROPERTY_VALUES'] =\ array_map(function ($value) {
+        $data['PROPERTY_VALUES'] = \array_map(function ($value) {
             if (\is_bool($value)) {
                 return (int)$value;
             }
