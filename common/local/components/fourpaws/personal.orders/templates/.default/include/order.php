@@ -76,7 +76,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                     </a>
                 </div>
             <?php } ?>
-            <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') { ?>
+            <?php /*if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') { ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--pay-account b-link--pay-account"
                        href="/sale/payment/?ORDER_ID=<?= $order->getId() ?>"
@@ -84,7 +84,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>
                 </div>
-            <?php } ?>
+            <?php }*/ ?>
             <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full"><?= $order->getFormatedPrice() ?>
                 <span
                         class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
