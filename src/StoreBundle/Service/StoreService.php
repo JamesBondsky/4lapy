@@ -498,7 +498,7 @@ class StoreService implements LoggerAwareInterface
                 $services = [];
                 if (\is_array($servicesList) && !empty($servicesList)) {
                     foreach ($servicesList as $service) {
-                        if(\in_array($service['ID'], $store->getServices(), true)){
+                        if(\in_array((int)$service['ID'], $store->getServices(), true)){
                             $services[] = $service['UF_NAME'];
                         }
                     }
