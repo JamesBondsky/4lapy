@@ -1084,10 +1084,11 @@ class Offer extends IblockElement
     /**
      * @param int $percent
      * @param int $quantity
+     * @param int $precision
      *
      * @return string
      */
-    public function getBonusFormattedText(int $percent = 3, int $quantity = 1): string
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1, int $precision = 2): string
     {
         $bonusText = '';
 
@@ -1097,7 +1098,8 @@ class Offer extends IblockElement
             return $bonusText;
         }
 
-        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
+        $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
+
         $floorBonus = \floor($bonus);
         $div = ($bonus - $floorBonus) * 100;
 
