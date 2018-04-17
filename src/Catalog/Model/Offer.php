@@ -355,7 +355,15 @@ class Offer extends IblockElement
      */
     protected $isCounted = false;
 
-    protected $quantity = null;
+    /**
+     * @var int
+     */
+    protected $quantity;
+
+    /**
+     * @var int
+     */
+    protected $deliverableQuantity;
 
     protected $bonus = 0;
 
@@ -1085,7 +1093,7 @@ class Offer extends IblockElement
         return $this->bonus;
     }
 
-    
+
     /**
      * @param int $percent
      * @param int $quantity
@@ -1171,10 +1179,28 @@ class Offer extends IblockElement
     }
 
     /**
-     * Максимальное доступное для доставки количество товара в текущем местоположении
+     *
      *
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return int
+     */
+    public function getQuantity(): int
+    {
+        if (null === $this->quantity) {
+            $this->quantity = $this->getStocks()->getTotalAmount();
+        }
+
+        return $this->quantity;
+    }
+
+    /**
+     * Максимальное доступное для доставки количество товара в текущем местоположении
+     * @todo заменить getQuantity() на этот метод после оптимизации расчета доставок
+     *
+     * @return int
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws LoaderException
@@ -1182,15 +1208,14 @@ class Offer extends IblockElement
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
-     * @return int
      */
-    public function getQuantity(): int
+    public function getDeliverableQuantity(): int
     {
-        if (null === $this->quantity) {
-            $this->quantity = $this->getAvailableAmount();
+        if (null === $this->deliverableQuantity) {
+            $this->deliverableQuantity = $this->getAvailableAmount();
         }
 
-        return $this->quantity;
+        return $this->deliverableQuantity;
     }
 
     /**
@@ -1340,11 +1365,6 @@ class Offer extends IblockElement
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws LoaderException
-     * @throws NotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws StoreNotFoundException
      * @return bool
      */
     public function isAvailable(): bool
