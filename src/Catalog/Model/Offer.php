@@ -1098,9 +1098,14 @@ class Offer extends IblockElement
             return $bonusText;
         }
 
-        $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
+        if($precision > 0 ){
+            $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
+            $floorBonus = \floor($bonus);
+        }
+        else{
+            $floorBonus = $bonus = \floor($bonus);
+        }
 
-        $floorBonus = \floor($bonus);
         $div = ($bonus - $floorBonus) * 100;
 
         return \sprintf(
