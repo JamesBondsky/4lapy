@@ -79,8 +79,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
         ProductService $productService,
         CatalogProductService $catalogProductService,
         BrandRepository $brandRepository
-    )
-    {
+    ) {
         $this->connection = Application::getConnection();
         $this->referenceService = $referenceService;
         $this->offerService = $offerService;

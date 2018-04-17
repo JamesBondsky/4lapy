@@ -133,8 +133,8 @@ class ImportCommand extends Command implements LoggerAwareInterface
         try {
             $this->sapService->execute($pipeline);
             $this->log()->info(\sprintf('%s`s exchange is done.', $pipeline));
-        } catch (\Exception $e) {
-            $this->log()->error(\sprintf('Unknown error: %s', $e->getMessage()));
+        } catch (\Throwable $e) {
+            $this->log()->critical(\sprintf('Unknown error: %s, trace: %s', $e->getMessage(), $e->getTraceAsString()));
         }
 
         $this->lockerService->unlock($pipeline);
