@@ -383,15 +383,20 @@ class StoreService implements LoggerAwareInterface
                     $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
                     $regionId = $bitrixLocation->getRegionId();
                 } else {
-                    $regionId = LocationTable::query()->setFilter(['=CODE' => $code])->setSelect(['REGION_ID'])->setLimit(1)->exec()->fetch()['REGION_ID'];
+                    $loc = LocationTable::query()->setFilter(['=CODE' => $code])->setSelect(['REGION_ID','PARENT_ID'])->setLimit(1)->exec()->fetch();
+                    $regionId = $loc['REGION_ID'] ?: $loc['PARENT_ID'];
+                    $regionId = (int)$regionId;
                 }
-                /** сбрасываем поиск */
-                unset($params['filter'][0]);
-                $params['filter']['UF_LOCATION'] = $regionId;
-                $storeCollection = $this->getStoreCollection($params);
+                if($regionId > 0) {
+                    /** сбрасываем поиск */
+                    unset($params['filter'][0], $params['filter']['UF_LOCATION']);
+                    $params['filter'][] = ['LOGIC' => 'OR', 'LOCATION.PARENT_ID' => $regionId, 'LOCATION.REGION_ID' => $regionId];
+                    $storeCollection = $this->getStoreCollection($params);
+                }
                 /** moscow */
                 if ($storeCollection->isEmpty()) {
                     /** сбрасываем регион */
+                    unset($params['filter'][0]);
                     $params['filter']['UF_LOCATION'] = LocationService::LOCATION_CODE_MOSCOW;
                     $storeCollection = $this->getStoreCollection($params);
                 }
