@@ -62,7 +62,14 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
         </div>
         <div class="b-accordion-order-item__pay">
             <div class="b-accordion-order-item__not-pay">
-                <?= $order->getPayPrefixText() . ' ' . $order->getPayment()->getName() ?>
+                <?php $payment = $order->getPayment();
+                $paymentName = $payment->getName();
+                if ($order->isPayed()) {
+                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'онлайн';
+                } else {
+                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'банковской картой';
+                }
+                echo $order->getPayPrefixText() . ' ' . $paymentName ?>
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
@@ -76,7 +83,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                     </a>
                 </div>
             <?php } ?>
-            <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') { ?>
+            <?php /*if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') { ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--pay-account b-link--pay-account"
                        href="/sale/payment/?ORDER_ID=<?= $order->getId() ?>"
@@ -84,7 +91,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>
                 </div>
-            <?php } ?>
+            <?php }*/ ?>
             <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full"><?= $order->getFormatedPrice() ?>
                 <span
                         class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
@@ -155,7 +162,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                     × <?= $item->getQuantity() ?> шт
                                 </div>
                             <?php } ?>
-                            <div class="b-list-order__bonus js-order-item-bonus-<?=$order->isManzana() ? 'manzana-' : ''?><?=$item->getId()?>"></div>
+                            <div class="b-list-order__bonus js-order-item-bonus-<?= $order->isManzana() ? 'manzana-' : '' ?><?= $item->getId() ?>"></div>
                         </div>
                     </div>
                 </li>
