@@ -385,14 +385,13 @@ class StoreService implements LoggerAwareInterface
                 } else {
                     $regionId = LocationTable::query()->setFilter(['=CODE' => $code])->setSelect(['REGION_ID'])->setLimit(1)->exec()->fetch()['REGION_ID'];
                 }
-                /** сбрасываем поиск и местоположение */
-                unset($params['filter']['UF_LOCATION'], $params['filter'][0]);
-                $params['filter']['REGION_ID'] = $regionId;
+                /** сбрасываем поиск */
+                unset($params['filter'][0]);
+                $params['filter']['UF_LOCATION'] = $regionId;
                 $storeCollection = $this->getStoreCollection($params);
                 /** moscow */
                 if ($storeCollection->isEmpty()) {
                     /** сбрасываем регион */
-                    unset($params['filter']['REGION_ID']);
                     $params['filter']['UF_LOCATION'] = LocationService::LOCATION_CODE_MOSCOW;
                     $storeCollection = $this->getStoreCollection($params);
                 }
