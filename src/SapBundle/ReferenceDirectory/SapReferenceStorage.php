@@ -45,14 +45,14 @@ class SapReferenceStorage implements LoggerAwareInterface
     {
         return $this->findByCallable($propertyCode, function (HlbReferenceItem $hlbReferenceItem) use ($xmlId) {
             return $hlbReferenceItem->getXmlId() === $xmlId;
-        })->current();
+        })->current() ?: null;
     }
 
     public function findByCode(string $propertyCode, string $code)
     {
         return $this->findByCallable($propertyCode, function (HlbReferenceItem $hlbReferenceItem) use ($code) {
             return $hlbReferenceItem->getCode() === $code;
-        })->current();
+        })->current() ?: null;
     }
 
     /**

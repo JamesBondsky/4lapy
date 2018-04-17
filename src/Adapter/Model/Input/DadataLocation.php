@@ -634,7 +634,7 @@ class DadataLocation
      */
     public function getAreaFiasId(): string
     {
-        return $this->areaFiasId;
+        return $this->areaFiasId ?? '';
     }
 
     /**
@@ -650,7 +650,7 @@ class DadataLocation
      */
     public function getAreaKladrId(): string
     {
-        return $this->areaKladrId;
+        return $this->areaKladrId ?? '';
     }
 
     /**
@@ -666,7 +666,7 @@ class DadataLocation
      */
     public function getAreaTypeFull(): string
     {
-        return $this->areaTypeFull;
+        return $this->areaTypeFull ?? '';
     }
 
     /**
@@ -682,7 +682,7 @@ class DadataLocation
      */
     public function getAreaType(): string
     {
-        return $this->areaType;
+        return $this->areaType ?? '';
     }
 
     /**
@@ -698,7 +698,7 @@ class DadataLocation
      */
     public function getAreaWithType(): string
     {
-        return $this->areaWithType;
+        return $this->areaWithType ?? '';
     }
 
     /**
@@ -714,7 +714,7 @@ class DadataLocation
      */
     public function getArea(): string
     {
-        return $this->area;
+        return $this->area ?? '';
     }
 
     /**
@@ -730,7 +730,7 @@ class DadataLocation
      */
     public function getBeltwayDistance(): string
     {
-        return $this->beltwayDistance;
+        return $this->beltwayDistance ?? '';
     }
 
     /**
@@ -746,7 +746,7 @@ class DadataLocation
      */
     public function getBeltwayHit(): string
     {
-        return $this->beltwayHit;
+        return $this->beltwayHit ?? '';
     }
 
     /**
@@ -762,7 +762,7 @@ class DadataLocation
      */
     public function getBlockTypeFull(): string
     {
-        return $this->blockTypeFull;
+        return $this->blockTypeFull ?? '';
     }
 
     /**
@@ -778,7 +778,7 @@ class DadataLocation
      */
     public function getBlockType(): string
     {
-        return $this->blockType;
+        return $this->blockType ?? '';
     }
 
     /**
@@ -794,7 +794,7 @@ class DadataLocation
      */
     public function getBlock(): string
     {
-        return $this->block;
+        return $this->block ?? '';
     }
 
     /**
@@ -810,7 +810,7 @@ class DadataLocation
      */
     public function getCapitalMarker(): string
     {
-        return $this->capitalMarker;
+        return $this->capitalMarker ?? '';
     }
 
     /**
@@ -826,7 +826,7 @@ class DadataLocation
      */
     public function getCityArea(): string
     {
-        return $this->cityArea;
+        return $this->cityArea ?? '';
     }
 
     /**
@@ -842,7 +842,7 @@ class DadataLocation
      */
     public function getCityDistrictFiasId(): string
     {
-        return $this->cityDistrictFiasId;
+        return $this->cityDistrictFiasId ?? '';
     }
 
     /**
@@ -858,7 +858,7 @@ class DadataLocation
      */
     public function getCityDistrictKladrId(): string
     {
-        return $this->cityDistrictKladrId;
+        return $this->cityDistrictKladrId ?? '';
     }
 
     /**
@@ -874,7 +874,7 @@ class DadataLocation
      */
     public function getCityDistrictTypeFull(): string
     {
-        return $this->cityDistrictTypeFull;
+        return $this->cityDistrictTypeFull ?? '';
     }
 
     /**
@@ -890,7 +890,7 @@ class DadataLocation
      */
     public function getCityDistrictType(): string
     {
-        return $this->cityDistrictType;
+        return $this->cityDistrictType ?? '';
     }
 
     /**
@@ -906,7 +906,7 @@ class DadataLocation
      */
     public function getCityDistrictWithType(): string
     {
-        return $this->cityDistrictWithType;
+        return $this->cityDistrictWithType ?? '';
     }
 
     /**
@@ -922,7 +922,7 @@ class DadataLocation
      */
     public function getCityDistrict(): string
     {
-        return $this->cityDistrict;
+        return $this->cityDistrict ?? '';
     }
 
     /**
@@ -938,7 +938,7 @@ class DadataLocation
      */
     public function getCityFiasId(): string
     {
-        return $this->cityFiasId;
+        return $this->cityFiasId ?? '';
     }
 
     /**
@@ -954,7 +954,7 @@ class DadataLocation
      */
     public function getCityKladrId(): string
     {
-        return $this->cityKladrId;
+        return $this->cityKladrId ?? '';
     }
 
     /**
@@ -970,7 +970,7 @@ class DadataLocation
      */
     public function getCityTypeFull(): string
     {
-        return $this->cityTypeFull;
+        return $this->cityTypeFull ?? '';
     }
 
     /**
@@ -986,7 +986,7 @@ class DadataLocation
      */
     public function getCityType(): string
     {
-        return $this->cityType;
+        return $this->cityType ?? '';
     }
 
     /**
@@ -1002,7 +1002,7 @@ class DadataLocation
      */
     public function getCityWithType(): string
     {
-        return $this->cityWithType;
+        return $this->cityWithType ?? '';
     }
 
     /**
@@ -1018,7 +1018,7 @@ class DadataLocation
      */
     public function getCity(): string
     {
-        return $this->city;
+        return $this->city ?? '';
     }
 
     /**
@@ -1034,7 +1034,7 @@ class DadataLocation
      */
     public function getCountry(): string
     {
-        return $this->country;
+        return $this->country ?? '';
     }
 
     /**
@@ -1050,7 +1050,7 @@ class DadataLocation
      */
     public function getFiasActualityState(): int
     {
-        return $this->fiasActualityState;
+        return $this->fiasActualityState ?? 0;
     }
 
     /**
@@ -1066,7 +1066,7 @@ class DadataLocation
      */
     public function getFiasCode(): string
     {
-        return $this->fiasCode;
+        return $this->fiasCode ?? '';
     }
 
     /**
@@ -1082,7 +1082,7 @@ class DadataLocation
      */
     public function getFiasId(): string
     {
-        return $this->fiasId;
+        return $this->fiasId ?? '';
     }
 
     /**
@@ -1098,7 +1098,7 @@ class DadataLocation
      */
     public function getFiasLevel(): string
     {
-        return $this->fiasLevel;
+        return $this->fiasLevel ?? '';
     }
 
     /**
@@ -1114,7 +1114,7 @@ class DadataLocation
      */
     public function getFlatArea(): string
     {
-        return $this->flatArea;
+        return $this->flatArea ?? '';
     }
 
     /**
@@ -1130,7 +1130,7 @@ class DadataLocation
      */
     public function getFlatPrice(): string
     {
-        return $this->flatPrice;
+        return $this->flatPrice ?? '';
     }
 
     /**
@@ -1146,7 +1146,7 @@ class DadataLocation
      */
     public function getFlatTypeFull(): string
     {
-        return $this->flatTypeFull;
+        return $this->flatTypeFull ?? '';
     }
 
     /**
@@ -1162,7 +1162,7 @@ class DadataLocation
      */
     public function getFlatType(): string
     {
-        return $this->flatType;
+        return $this->flatType ?? '';
     }
 
     /**
@@ -1178,7 +1178,7 @@ class DadataLocation
      */
     public function getFlat(): string
     {
-        return $this->flat;
+        return $this->flat ?? '';
     }
 
     /**
@@ -1194,7 +1194,7 @@ class DadataLocation
      */
     public function getGeoLat(): string
     {
-        return $this->geoLat;
+        return $this->geoLat ?? '';
     }
 
     /**
@@ -1210,7 +1210,7 @@ class DadataLocation
      */
     public function getGeoLon(): string
     {
-        return $this->geoLon;
+        return $this->geoLon ?? '';
     }
 
     /**
@@ -1226,7 +1226,7 @@ class DadataLocation
      */
     public function getHistoryValues(): string
     {
-        return $this->historyValues;
+        return $this->historyValues ?? '';
     }
 
     /**
@@ -1242,7 +1242,7 @@ class DadataLocation
      */
     public function getHouseFiasId(): string
     {
-        return $this->houseFiasId;
+        return $this->houseFiasId ?? '';
     }
 
     /**
@@ -1258,7 +1258,7 @@ class DadataLocation
      */
     public function getHouseKladrId(): string
     {
-        return $this->houseKladrId;
+        return $this->houseKladrId ?? '';
     }
 
     /**
@@ -1274,7 +1274,7 @@ class DadataLocation
      */
     public function getHouseTypeFull(): string
     {
-        return $this->houseTypeFull;
+        return $this->houseTypeFull ?? '';
     }
 
     /**
@@ -1290,7 +1290,7 @@ class DadataLocation
      */
     public function getHouseType(): string
     {
-        return $this->houseType;
+        return $this->houseType ?? '';
     }
 
     /**
@@ -1306,7 +1306,7 @@ class DadataLocation
      */
     public function getHouse(): string
     {
-        return $this->house;
+        return $this->house ?? '';
     }
 
     /**
@@ -1322,7 +1322,7 @@ class DadataLocation
      */
     public function getKladrId(): string
     {
-        return $this->kladrId;
+        return $this->kladrId ?? '';
     }
 
     /**
@@ -1338,7 +1338,7 @@ class DadataLocation
      */
     public function getMetro(): string
     {
-        return $this->metro;
+        return $this->metro ?? '';
     }
 
     /**
@@ -1354,7 +1354,7 @@ class DadataLocation
      */
     public function getOkato(): string
     {
-        return $this->okato;
+        return $this->okato ?? '';
     }
 
     /**
@@ -1370,7 +1370,7 @@ class DadataLocation
      */
     public function getOktmo(): string
     {
-        return $this->oktmo;
+        return $this->oktmo ?? '';
     }
 
     /**
@@ -1386,7 +1386,7 @@ class DadataLocation
      */
     public function getPostalBox(): string
     {
-        return $this->postalBox;
+        return $this->postalBox ?? '';
     }
 
     /**
@@ -1402,7 +1402,7 @@ class DadataLocation
      */
     public function getPostalCode(): int
     {
-        return $this->postalCode;
+        return $this->postalCode ?? '';
     }
 
     /**
@@ -1418,7 +1418,7 @@ class DadataLocation
      */
     public function getQcComplete(): string
     {
-        return $this->qcComplete;
+        return $this->qcComplete ?? '';
     }
 
     /**
@@ -1434,7 +1434,7 @@ class DadataLocation
      */
     public function getQcGeo(): string
     {
-        return $this->qcGeo;
+        return $this->qcGeo ?? '';
     }
 
     /**
@@ -1450,7 +1450,7 @@ class DadataLocation
      */
     public function getQcHouse(): string
     {
-        return $this->qcHouse;
+        return $this->qcHouse ?? '';
     }
 
     /**
@@ -1466,7 +1466,7 @@ class DadataLocation
      */
     public function getQc(): string
     {
-        return $this->qc;
+        return $this->qc ?? '';
     }
 
     /**
@@ -1482,7 +1482,7 @@ class DadataLocation
      */
     public function getRegionFiasId(): string
     {
-        return $this->regionFiasId;
+        return $this->regionFiasId ?? '';
     }
 
     /**
@@ -1498,7 +1498,7 @@ class DadataLocation
      */
     public function getRegionKladrId(): string
     {
-        return $this->regionKladrId;
+        return $this->regionKladrId ?? '';
     }
 
     /**
@@ -1514,7 +1514,7 @@ class DadataLocation
      */
     public function getRegionTypeFull(): string
     {
-        return $this->regionTypeFull;
+        return $this->regionTypeFull ?? '';
     }
 
     /**
@@ -1530,7 +1530,7 @@ class DadataLocation
      */
     public function getRegionType(): string
     {
-        return $this->regionType;
+        return $this->regionType ?? '';
     }
 
     /**
@@ -1546,7 +1546,7 @@ class DadataLocation
      */
     public function getRegionWithType(): string
     {
-        return $this->regionWithType;
+        return $this->regionWithType ?? '';
     }
 
     /**
@@ -1562,7 +1562,7 @@ class DadataLocation
      */
     public function getRegion(): string
     {
-        return $this->region;
+        return $this->region ?? '';
     }
 
     /**
@@ -1578,7 +1578,7 @@ class DadataLocation
      */
     public function getSettlementFiasId(): string
     {
-        return $this->settlementFiasId;
+        return $this->settlementFiasId ?? '';
     }
 
     /**
@@ -1594,7 +1594,7 @@ class DadataLocation
      */
     public function getSettlementKladrId(): string
     {
-        return $this->settlementKladrId;
+        return $this->settlementKladrId ?? '';
     }
 
     /**
@@ -1610,7 +1610,7 @@ class DadataLocation
      */
     public function getSettlementTypeFull(): string
     {
-        return $this->settlementTypeFull;
+        return $this->settlementTypeFull ?? '';
     }
 
     /**
@@ -1626,7 +1626,7 @@ class DadataLocation
      */
     public function getSettlementType(): string
     {
-        return $this->settlementType;
+        return $this->settlementType ?? '';
     }
 
     /**
@@ -1642,7 +1642,7 @@ class DadataLocation
      */
     public function getSettlementWithType(): string
     {
-        return $this->settlementWithType;
+        return $this->settlementWithType ?? '';
     }
 
     /**
@@ -1658,7 +1658,7 @@ class DadataLocation
      */
     public function getSettlement(): string
     {
-        return $this->settlement;
+        return $this->settlement ?? '';
     }
 
     /**
@@ -1674,7 +1674,7 @@ class DadataLocation
      */
     public function getSource(): string
     {
-        return $this->source;
+        return $this->source ?? '';
     }
 
     /**
@@ -1690,7 +1690,7 @@ class DadataLocation
      */
     public function getSquareMeterPrice(): string
     {
-        return $this->squareMeterPrice;
+        return $this->squareMeterPrice ?? '';
     }
 
     /**
@@ -1706,7 +1706,7 @@ class DadataLocation
      */
     public function getStreetFiasId(): string
     {
-        return $this->streetFiasId;
+        return $this->streetFiasId ?? '';
     }
 
     /**
@@ -1722,7 +1722,7 @@ class DadataLocation
      */
     public function getStreetKladrId(): string
     {
-        return $this->streetKladrId;
+        return $this->streetKladrId ?? '';
     }
 
     /**
@@ -1738,7 +1738,7 @@ class DadataLocation
      */
     public function getStreetTypeFull(): string
     {
-        return $this->streetTypeFull;
+        return $this->streetTypeFull ?? '';
     }
 
     /**
@@ -1754,7 +1754,7 @@ class DadataLocation
      */
     public function getStreetType(): string
     {
-        return $this->streetType;
+        return $this->streetType ?? '';
     }
 
     /**
@@ -1770,7 +1770,7 @@ class DadataLocation
      */
     public function getStreetWithType(): string
     {
-        return $this->streetWithType;
+        return $this->streetWithType ?? '';
     }
 
     /**
@@ -1786,7 +1786,7 @@ class DadataLocation
      */
     public function getStreet(): string
     {
-        return $this->street;
+        return $this->street ?? '';
     }
 
     /**
@@ -1802,7 +1802,7 @@ class DadataLocation
      */
     public function getTaxOfficeLegal(): int
     {
-        return $this->taxOfficeLegal;
+        return $this->taxOfficeLegal ?? 0;
     }
 
     /**
@@ -1818,7 +1818,7 @@ class DadataLocation
      */
     public function getTaxOffice(): int
     {
-        return $this->taxOffice;
+        return $this->taxOffice ?? 0;
     }
 
     /**
@@ -1834,7 +1834,7 @@ class DadataLocation
      */
     public function getTimezone(): string
     {
-        return $this->timezone;
+        return $this->timezone ?? '';
     }
 
     /**
@@ -1850,7 +1850,7 @@ class DadataLocation
      */
     public function getUnparsedParts(): string
     {
-        return $this->unparsedParts;
+        return $this->unparsedParts ?? '';
     }
 
     /**

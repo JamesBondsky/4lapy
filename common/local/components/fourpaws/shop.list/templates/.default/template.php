@@ -6,6 +6,7 @@
  * @var array                     $arResult
  */
 
+use Bitrix\Main\Web\Uri;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
@@ -16,7 +17,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $frame = $this->createFrame(); ?>
 <div class="b-stores__block">
     <h2 class="b-title b-title--stores">Ваш город</h2>
-    <?php $uri = new \Bitrix\Main\Web\Uri('/ajax/store/list/chooseCity/');
+    <?php $uri = new Uri('/ajax/store/list/chooseCity/');
     $params = [];
     if (!empty($arResult['ACTIVE_STORE_ID'])) {
         $params['active_store_id'] = $arResult['ACTIVE_STORE_ID'];
@@ -25,13 +26,13 @@ $frame = $this->createFrame(); ?>
         $params['codeNearest'] = $arResult['codeNearest'];
         $params['findNearest'] = 'Y';
     }
-    if (!empty($params)){
+    if (!empty($params)) {
         $uri->addParams($params);
     } ?>
     <a class="b-link b-link--select js-open-popup js-stores"
        href="javascript:void(0);"
        title="<?= $arResult['CITY'] ?>"
-       data-url="<?=$uri->getUri()?>"
+       data-url="<?= $uri->getUri() ?>"
        data-code="<?= $arResult['CITY_CODE'] ?>"
        data-popup-id="pick-city"><?= $arResult['CITY'] ?></a>
     <div class="b-stores-sort">
@@ -50,9 +51,9 @@ $frame = $this->createFrame(); ?>
                             <span class="b-checkbox__text"><?= $service['UF_NAME'] ?></span>
                         </label>
                     </div>
-                    <?php } ?>
+                <?php } ?>
             </div>
-            <?php } ?>
+        <?php } ?>
         <div class="b-form-inline b-form-inline--stores-search">
             <form class="b-form-inline__form" data-url="/ajax/store/list/search/">
                 <div class="b-input b-input--stores-search js-stores-search">
@@ -85,8 +86,8 @@ $frame = $this->createFrame(); ?>
                     ) ?></span>
                 <span class="b-catalog-filter__sort">
                     <span class="b-catalog-filter__label b-catalog-filter__label--sort b-catalog-filter__label--stores">Сортировать</span>
-                    <span class="b-select b-select--stores">
-                        <select class="b-select__block b-select__block--stores"
+                    <span class="b-select b-select--stores js-stores-filter">
+                        <select class="b-select__block b-select__block--stores js-stores-filter js-change-date"
                                 name="sort"
                                 data-url="/ajax/store/list/order/" title="Сортировать">
                             <option value="" disabled="disabled">выберите</option>
