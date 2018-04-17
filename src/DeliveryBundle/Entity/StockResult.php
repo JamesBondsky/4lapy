@@ -19,6 +19,16 @@ class StockResult
     protected $amount;
 
     /**
+     * @var float
+     */
+    protected $price = 0;
+
+    /**
+     * @var string
+     */
+    protected $type = self::TYPE_AVAILABLE;
+
+    /**
      * @var Offer
      */
     protected $offer;
@@ -29,16 +39,6 @@ class StockResult
      * @var Store
      */
     protected $store;
-
-    /**
-     * @var float
-     */
-    protected $price = 0;
-
-    /**
-     * @var string
-     */
-    protected $type = self::TYPE_AVAILABLE;
 
     /**
      * @return int
