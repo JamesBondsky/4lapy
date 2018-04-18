@@ -25,7 +25,7 @@ $discount = $component->getCurrentUserService()->getDiscount();
 if ($discount > 0) {
     foreach ($activeOrders as $order) {
         foreach ($order->getItems() as $item) {
-            $bonus = $bonus = $component->getItemBonus($item, $discount);
+            $bonus = $bonus = $component->getItemBonus($item, $discount, 0);
             if (!empty($bonus)) { ?>
                 <script type="text/javascript">
                     $(function () {
@@ -40,7 +40,7 @@ if ($discount > 0) {
     }
     foreach ($closedOrders as $order) {
         foreach ($order->getItems() as $item) {
-            $bonus = $bonus = $component->getItemBonus($item, $discount);
+            $bonus = $bonus = $component->getItemBonus($item, $discount, 0);
             if (!empty($bonus)) { ?>
                 <script type="text/javascript">
                     $(function () {
