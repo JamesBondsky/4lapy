@@ -63,12 +63,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
         <div class="b-accordion-order-item__pay">
             <div class="b-accordion-order-item__not-pay">
                 <?php $payment = $order->getPayment();
-                $paymentName = $payment->getName();
-                if ($order->isPayed()) {
-                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'онлайн';
-                } else {
-                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'банковской картой';
-                }
+                $paymentName = $payment->getCode() === 'cash' ? 'наличными' :  $payment->getCode() === 'card-online' ? 'онлайн' : 'банковской картой';
                 echo $order->getPayPrefixText() . ' ' . $paymentName ?>
             </div>
         </div>
