@@ -45,6 +45,8 @@ if (!Loader::includeModule('ipol.dpd')) {
 
 class Calculator extends DPD
 {
+    public const LOCATION_RU = '0000028023';
+
     public static function callback($method)
     {
         return [__CLASS__, $method];
@@ -209,8 +211,7 @@ class Calculator extends DPD
         }
         $shipment = self::makeShipment($arOrder);
 
-        $profiles = [];
-        if ($shipment->isPossibileSelfDelivery()) {
+        if (($arOrder['LOCATION_TO'] === static::LOCATION_RU) || $shipment->isPossibileSelfDelivery()) {
             $profiles = ['COURIER', 'PICKUP'];
         } elseif ($shipment->isPossibileDelivery()) {
             $profiles = ['COURIER'];

@@ -232,19 +232,15 @@ class DeliveryService implements LoggerAwareInterface
 
         $getServiceCodes = function () use ($zone) {
             $zoneData = $this->getAllZones(true)[$zone];
-            $location = '';
-            if ($zone === static::ZONE_4) {
-                /** @todo убрать хардкод - требуется город с терминалами DPD */
-                $location = '0000949228'; // новосибирск
-            } elseif (!empty($zoneData['LOCATIONS'])) {
-                $location = current($zoneData['LOCATIONS']);
-            }
-            $shipment = $this->generateShipment($location);
-            $availableServices = Manager::getRestrictedObjectsList($shipment);
-
             $result = [];
-            foreach ($availableServices as $service) {
-                $result[] = $service->getCode();
+            if (!empty($zoneData['LOCATIONS'])) {
+                $location = current($zoneData['LOCATIONS']);
+                $shipment = $this->generateShipment($location);
+                $availableServices = Manager::getRestrictedObjectsList($shipment);
+
+                foreach ($availableServices as $service) {
+                    $result[] = $service->getCode();
+                }
             }
 
             return ['result' => $result];

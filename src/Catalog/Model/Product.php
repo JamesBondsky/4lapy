@@ -564,7 +564,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @var array
      * @Type("array<string>")
-     * @Accessor(getter="getDeliveryAvailability")
+     * @Accessor(getter="getFullDeliveryAvailabilityForFilter")
      * @Groups({"elastic"})
      */
     protected $deliveryAvailability;
@@ -595,7 +595,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
 
-    /** @var array */
+    /**
+     * @var array
+     */
     protected $fullDeliveryAvailability;
 
     /**
@@ -1823,7 +1825,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function isByRequest(): bool
     {
-        $result = true;
+        $result = false;
         /** @var Offer $offer */
         foreach ($this->getOffers() as $offer) {
             $result |= $offer->isByRequest();
@@ -1973,6 +1975,29 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ObjectNotFoundException
      * @return array
      */
+    public function getFullDeliveryAvailabilityForFilter(): array
+    {
+        $result = [];
+        /**
+         * @var string $zone
+         * @var array $deliveries
+         */
+        foreach ($this->getFullDeliveryAvailability() as $zone => $deliveries) {
+            foreach ($deliveries as $delivery) {
+                $result[] = $zone . '_' . $delivery;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @return array
+     */
     public function getDeliveryAvailability(): array
     {
         /** @var DeliveryService $deliveryService */
@@ -1981,6 +2006,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return bool
      */
     public function isDeliveryAvailable(): bool
@@ -1993,6 +2022,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return bool
      */
     public function isPickupAvailable(): bool
