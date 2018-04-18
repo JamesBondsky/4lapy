@@ -126,16 +126,23 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                             }
                         }
 
-                        if (empty($value)) {
-                            continue;
-                        } ?>
-                        <li class="b-weight-container__item">
-                            <a href="javascript:void(0)"
-                               class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
-                               data-price="<?= ceil($offer->getPrice()) ?>" data-offerid="<?= $offer->getId() ?>"
-                               data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                               data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
-                        </li>
+                        if (!empty($value)) { ?>
+                            <li class="b-weight-container__item">
+                                <a href="javascript:void(0)"
+                                   class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
+                                   data-price="<?= ceil($offer->getPrice()) ?>" data-offerid="<?= $offer->getId() ?>"
+                                   data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                   data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
+                            </li>
+                        <?php } else { ?>
+                            <li class="b-weight-container__item" style="display: none">
+                                <a href="javascript:void(0)"
+                                   class="b-weight-container__link js-price active-link"
+                                   data-price="<?= ceil($offer->getPrice()) ?>" data-offerid="<?= $offer->getId() ?>"
+                                   data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                   data-link="<?= $offer->getLink() ?>"></a>
+                            </li>
+                        <?php } ?>
                     <?php } ?>
                 </ul>
                 <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > 3 ? ' _active' : '' ?>">
