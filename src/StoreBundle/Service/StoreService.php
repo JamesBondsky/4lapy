@@ -12,6 +12,8 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\Adapter\DaDataLocationAdapter;
@@ -381,11 +383,9 @@ class StoreService implements LoggerAwareInterface
                     $dadataLocationAdapter = new DaDataLocationAdapter();
                     /** @var BitrixLocation $bitrixLocation */
                     $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
-                    $regionId = $bitrixLocation->getRegionId();
+                    $regionId = (int)$this->getRegion($bitrixLocation->getRegionId());
                 } else {
-                    $loc = LocationTable::query()->setFilter(['=CODE' => $code])->setSelect(['REGION_ID','PARENT_ID'])->setLimit(1)->exec()->fetch();
-                    $regionId = $loc['REGION_ID'] ?: $loc['PARENT_ID'];
-                    $regionId = (int)$regionId;
+                    $regionId = (int)$this->getRegion($code);
                 }
                 if($regionId > 0) {
                     /** сбрасываем поиск */
@@ -426,6 +426,28 @@ class StoreService implements LoggerAwareInterface
                 'activeStoreId'        => $params['activeStoreId'],
             ]
         );
+    }
+
+    /**
+     * @param $cityCode
+     *
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getRegion($cityCode): int
+    {
+        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect(['ID', 'REGION_ID','PARENT_ID', 'TYPE_CODE' => 'TYPE.CODE', 'PARENTS_PARENT_ID' => 'PARENTS.ID', 'PARENTS_PARENT_TYPE_CODE' =>  'PARENTS.TYPE.CODE'])->exec()->fetchAll();
+        foreach ($locList as $locItem) {
+            if($locItem['TYPE_CODE'] === 'REGION'){
+                return $locItem['ID'];
+            }
+            if($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION'){
+                return $locItem['PARENTS_PARENT_ID'];
+            }
+        }
+        return 0;
     }
 
     /**

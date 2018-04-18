@@ -11,27 +11,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\Decorators\SvgDecorator;
-
+$uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID'];
 ?>
 <div class="b-container">
     <div class="b-comment-block">
         <p class="b-comment-block__title">Комментарии</p>
         <?php /** @noinspection PhpUnhandledExceptionInspection */
         $frame = $this->createFrame()->begin(); ?>
-        <?php if ($arResult['COUNT_COMMENTS'] === 0) {
-            ?>
+        <?php if ($arResult['COUNT_COMMENTS'] === 0) {?>
             <div class="b-comment-block__info--block">
                 <p class="b-comment-block__info">Пока никто не оставил комментарии.</p>
             </div>
-            <?php
-        } ?>
-        <?php if (!$arResult['AUTH']) {
-            ?>
-            <div class="b-comment-block__auth--block">
-                <p class="b-comment-block__auth"><a href="#">Авторизуйтесь</a> , чтобы написать комментарий.</p>
-            </div>
-            <?php
-        } ?>
+        <?php } ?>
+        <div class="b-comment-block__auth--block js-comments-auth-block-<?=$uniqueCommentString ?>" style="display: none">
+            <p class="b-comment-block__auth">
+                <a href="#">Авторизуйтесь</a> , чтобы написать комментарий.
+            </p>
+        </div>
         <?php /** @noinspection PhpUnhandledExceptionInspection */
         $frame->beginStub(); ?>
         <div class="b-comment-block__info--block">
@@ -88,9 +84,7 @@ use FourPaws\Decorators\SvgDecorator;
                 <input type="hidden" name="action" value="add">
                 <?php /** @noinspection PhpUnhandledExceptionInspection */
                 $frame = $this->createFrame()->begin(''); ?>
-                <?php if (!$arResult['AUTH']) {
-                    ?>
-                    <div class="b-form-review__wrapper-blocks">
+                    <div class="b-form-review__wrapper-blocks js-comments-auth-form-<?=$uniqueCommentString ?>" style="display: none">
                         <p class="b-form-review__text-block b-form-review__text-block--account">Укажите телефон или
                                                                                                 почту, а
                                                                                                 также пароль, если у
@@ -131,8 +125,6 @@ use FourPaws\Decorators\SvgDecorator;
                             </div>
                         </div>
                     </div>
-                    <?php
-                } ?>
                 <?php /** @noinspection PhpUnhandledExceptionInspection */
                 $frame->end(); ?>
                 <div class="b-form-review__wrapper-blocks">
@@ -162,9 +154,10 @@ use FourPaws\Decorators\SvgDecorator;
                     <textarea class="b-form-review__textarea"
                               name="UF_TEXT"
                               required="required"
-                              placeholder="Оставьте ваш отзыв"></textarea>
+                              placeholder="Оставьте ваш отзыв" minlength="8" maxlength="1000"></textarea>
                         <div class="b-error"><span class="js-message"></span></div>
                     </div>
+                    <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
                     <button class="b-button b-button--form-review" type="submit">Отправить</button>
                 </div>
                 <div class="b-form-review__wrapper-blocks js-success-review">
