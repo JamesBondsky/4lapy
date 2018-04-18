@@ -113,7 +113,7 @@ class Manzana implements LoggerAwareInterface
         } catch (ExecuteException $e) {
             $this->log()->error(
                 \sprintf(
-                    'Manzana error: %s',
+                    'Manzana recalculate error: %s',
                     $e->getMessage()
                 )
             );

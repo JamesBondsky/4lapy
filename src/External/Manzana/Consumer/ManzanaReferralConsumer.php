@@ -6,6 +6,7 @@
 
 namespace FourPaws\External\Manzana\Consumer;
 
+use Exception;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ReferralAddException;
 use FourPaws\External\Manzana\Model\Client;
@@ -29,24 +30,23 @@ class ManzanaReferralConsumer extends ManzanaConsumerBase
             $referralParams = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
 
             if (null === $referralParams || (!$referralParams->phone && !$referralParams->cardNumber)) {
-                /** @noinspection ExceptionsAnnotatingAndHandlingInspection
-                 имхо  -исключение ловится ниже в catch - шторм - открой глаза*/
                 throw new ReferralAddException('Неожиданное сообщение');
             }
 
             $this->manzanaService->addReferralByBonusCard($referralParams);
-        } catch (ReferralAddException $e) {
+        } catch (ManzanaServiceException $e) {
+            $this->log()->error(sprintf(
+                'Manzana referral add error: %s, message: %s',
+                $e->getMessage(),
+                $message->getBody()
+            ));
+
+            return false;
+        } catch (ReferralAddException | Exception $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',
                 $e->getMessage()
             ));
-        } catch (ManzanaServiceException $e) {
-            $this->log()->error(sprintf(
-                'Manzana error: %s',
-                $e->getMessage()
-            ));
-
-            return false;
         }
 
         return true;

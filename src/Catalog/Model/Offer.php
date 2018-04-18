@@ -1123,7 +1123,7 @@ class Offer extends IblockElement
 
         return \sprintf(
             '+ %s %s',
-            WordHelper::numberFormat($bonus),
+            WordHelper::numberFormat($bonus, $precision),
             WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
         );
     }
