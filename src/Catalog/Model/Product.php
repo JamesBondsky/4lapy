@@ -40,9 +40,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
     use HitMetaInfoAwareTrait;
 
-    public const AVAILABILITY_DELIVERY = 'delivery';
-    public const AVAILABILITY_PICKUP = 'pickup';
-    public const AVAILABILITY_BY_REQUEST = 'byRequest';
+    public const AVAILABILITY_DELIVERY = 'd';
+    public const AVAILABILITY_PICKUP = 'p';
+    public const AVAILABILITY_BY_REQUEST = 'r';
 
     /**
      * @var bool
