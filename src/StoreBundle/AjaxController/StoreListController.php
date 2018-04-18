@@ -61,6 +61,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
                     [
                         'filter' => $this->storeService->getFilterByRequest($request),
                         'order'  => $this->storeService->getOrderByRequest($request),
+                        'storesAlways' => true, // отвечает за логику показа магазинов если нет в городе
                     ]
                 )
             );
@@ -87,6 +88,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
                     [
                         'filter' => $this->storeService->getFilterByRequest($request),
                         'order'  => $this->storeService->getOrderByRequest($request),
+                        'storesAlways' => true, // отвечает за логику показа магазинов если нет в городе
                     ]
                 )
             );
