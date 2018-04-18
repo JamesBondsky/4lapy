@@ -20,7 +20,9 @@ $order = $arResult['ORDER'];
 /** @var Order $relatedOrder */
 $relatedOrder = $arResult['RELATED_ORDER'];
 $bonusCount = $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] + $arResult['RELATED_ORDER_PROPERTIES']['BONUS_COUNT'];
-
+if($bonusCount > 0) {
+    $bonusCount = floor($bonusCount);//округляем до целого
+}
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
