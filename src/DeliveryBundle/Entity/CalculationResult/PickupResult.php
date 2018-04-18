@@ -22,7 +22,7 @@ class PickupResult extends BaseResult implements PickupResultInterface
     protected function doCalculateDeliveryDate(): void
     {
         parent::doCalculateDeliveryDate();
-        if (!$this->stockResult->getUnavailable()->isEmpty()) {
+        if ((null !== $this->fullstockResult) && !$this->stockResult->getUnavailable()->isEmpty()) {
             $this->addError(new Error('Присутствуют товары не в наличии'));
         }
     }
