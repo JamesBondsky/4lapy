@@ -595,7 +595,7 @@ class Order extends BaseEntity
      */
     public function getPayment(): OrderPayment
     {
-        return $this->payment;
+        return $this->payment ?? new OrderPayment;
     }
 
     /**
@@ -611,7 +611,7 @@ class Order extends BaseEntity
      */
     public function getDelivery(): OrderDelivery
     {
-        return $this->delivery;
+        return $this->delivery ?? new OrderDelivery();
     }
 
     /**
@@ -668,7 +668,7 @@ class Order extends BaseEntity
      */
     public function getStore(): Store
     {
-        return $this->store;
+        return $this->store ?? new Store();
     }
 
     /**

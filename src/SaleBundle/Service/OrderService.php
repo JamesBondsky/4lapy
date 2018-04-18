@@ -579,9 +579,18 @@ class OrderService implements LoggerAwareInterface
                 $needCreateAddress = true;
             }
         } else {
-            $users = $this->currentUserProvider->getUserRepository()->findBy(
-                ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
-            );
+            /** проверять надо на пустоту иначе  */
+            if(!empty($storage->getEmail()) && !empty($storage->getPhone())){
+                $users = $this->currentUserProvider->getUserRepository()->findBy(
+                    ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
+                );
+            } elseif(!empty($storage->getEmail())){
+                $users = $this->currentUserProvider->getUserRepository()->findBy(['=EMAIL' => $storage->getEmail()]);
+            }
+            elseif(!empty($storage->getPhone())){
+                $users = $this->currentUserProvider->getUserRepository()->findBy(['=PERSONAL_PHONE' => $storage->getPhone()]);
+            }
+
 
             $foundUser = null;
             /** @var User $user */
@@ -643,7 +652,7 @@ class OrderService implements LoggerAwareInterface
             break;
         }
 
-        $this->updateCommWayProperty($order, $selectedDelivery);
+        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
 
         /**
          * Сохраняем адрес, если:
@@ -1209,22 +1218,24 @@ class OrderService implements LoggerAwareInterface
         $value = $commWay->getValue();
         $changed = false;
 
-        $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
-        $stockResult = $delivery->getStockResult();
+        if(!$isFastOrder) {
+            $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
+            $stockResult = $delivery->getStockResult();
 
-        /**
-         * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
-         * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
-         * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
-         */
-        if (($this->deliveryService->isInnerPickup($delivery) || $deliveryFromShop) &&
-            !$stockResult->getDelayed()->isEmpty()
-        ) {
-            $totalPrice = $order->getBasket()->getPrice();
-            $availablePrice = $stockResult->getAvailable()->getPrice();
-            if ($availablePrice > $totalPrice * 0.9) {
-                $value = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
-                $changed = true;
+            /**
+             * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
+             * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
+             * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
+             */
+            if (($this->deliveryService->isInnerPickup($delivery) || $deliveryFromShop) &&
+                !$stockResult->getDelayed()->isEmpty()
+            ) {
+                $totalPrice = $order->getBasket()->getPrice();
+                $availablePrice = $stockResult->getAvailable()->getPrice();
+                if ($availablePrice > $totalPrice * 0.9) {
+                    $value = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
+                    $changed = true;
+                }
             }
         }
 

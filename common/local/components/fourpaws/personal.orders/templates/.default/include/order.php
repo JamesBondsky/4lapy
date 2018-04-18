@@ -24,7 +24,14 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                 <span class="b-accordion-order-item__number-order">№ <?= $order->getId() ?>
                     от <?= $order->getFormatedDateInsert() ?></span>
             </a>
-            <?php $countItems = $order->getItems()->count(); ?>
+            <?php $orderItems = $order->getItems();
+            if($orderItems !== null){
+                $countItems = $order->getItems()->count();
+            }
+            else{
+                $countItems = 0;
+            }
+            if($countItems > 0){ ?>
             <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
                     [
                         'товар',
@@ -32,6 +39,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                         'товаров',
                     ]) ?> <?= $order->getAllWeight() > 0 ? '(' . $order->getFormatedAllWeight() . ' кг)' : ''; ?>
             </div>
+            <?php } ?>
         </div>
         <div class="b-accordion-order-item__adress">
             <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
@@ -50,7 +58,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                 <span><?= $order->getDateDelivery() ?></span>
             </div>
             <div class="b-adress-info b-adress-info--order">
-                <?php if (!empty($order->getStore()->getMetro())) { ?>
+                <?php if ($order->getStore()->getMetro() > 0) { ?>
                     <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
                     м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
                 <?php } ?>
@@ -63,12 +71,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
         <div class="b-accordion-order-item__pay">
             <div class="b-accordion-order-item__not-pay">
                 <?php $payment = $order->getPayment();
-                $paymentName = $payment->getName();
-                if ($order->isPayed()) {
-                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'онлайн';
-                } else {
-                    $paymentName = $payment->getCode() === 'cash' ? 'наличными' : 'банковской картой';
-                }
+                $paymentName = $payment->getCode() === 'cash' ? 'наличными' :  $payment->getCode() === 'card-online' ? 'онлайн' : 'банковской картой';
                 echo $order->getPayPrefixText() . ' ' . $paymentName ?>
             </div>
         </div>
