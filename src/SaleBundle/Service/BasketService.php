@@ -351,6 +351,7 @@ class BasketService implements LoggerAwareInterface
      */
     public function refreshAvailability(Basket $basket): Basket
     {
+        Utils\Manager::disableProcessingFinalAction();
         $isTemporary = function (BasketItem $basketItem): bool {
             $property = $basketItem->getPropertyCollection()->getPropertyValues()['IS_TEMPORARY'];
             return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
@@ -407,7 +408,7 @@ class BasketService implements LoggerAwareInterface
                 break;
             }
         }
-
+        Utils\Manager::enableProcessingFinalAction();
         return $basket;
     }
 
