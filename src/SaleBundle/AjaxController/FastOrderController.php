@@ -22,6 +22,8 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
@@ -157,7 +159,11 @@ class FastOrderController extends Controller
     public function createAction(Request $request): JsonResponse
     {
         $orderStorage = new OrderStorage();
-        $phone = $request->get('phone', '');
+        try {
+            $phone = PhoneHelper::normalizePhone($request->get('phone', ''));
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        }
         $name = $request->get('name', '');
 
         $orderStorage->setPhone($phone)
