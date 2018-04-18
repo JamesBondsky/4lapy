@@ -145,9 +145,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             /** @var Store $store */
             $shopCount = 0;
             foreach ($bestShops as $store) {
-                $fullResult = (clone $pickupDelivery)->setSelectedStore($store);
+                $fullResult = (clone $pickupDelivery)->setSelectedShop($store);
+                [$available, $delayed] = $this->orderStorageService->splitStockResult($fullResult);
 
-                [$available, $delayed] = $this->orderStorageService->splitStockResult($pickupDelivery);
                 if (!$fullResult->isSuccess()) {
                     continue;
                 }
