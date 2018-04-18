@@ -57,8 +57,9 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             ));
         } catch (ManzanaServiceException $e) {
             $this->log()->error(sprintf(
-                'Manzana error: %s',
-                $e->getMessage()
+                'Manzana contact consumer error: %s, message: %s',
+                $e->getMessage(),
+                $message->getBody()
             ));
 
             return false;
