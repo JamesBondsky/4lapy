@@ -611,7 +611,7 @@ class Order extends BaseEntity
      */
     public function getDelivery(): OrderDelivery
     {
-        return $this->delivery;
+        return $this->delivery ?? new OrderDelivery();
     }
 
     /**
