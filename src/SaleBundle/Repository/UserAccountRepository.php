@@ -136,7 +136,7 @@ class UserAccountRepository
         }
 
         return $this->saleUserAccount->UpdateAccount(
-            $userAccount->getId(),
+            $userAccount->getUserId(),
             $userAccount->getCurrentBudget() - $userAccount->getInitialBudget(),
             $userAccount->getCurrency()
         );
