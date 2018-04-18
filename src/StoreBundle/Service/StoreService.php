@@ -400,7 +400,8 @@ class StoreService implements LoggerAwareInterface
         if (!isset($params['storesAlways'])) {
             $params['storesAlways'] = false;
         }
-        if ($params['storesAlways'] && isset($params['filter']['UF_LOCATION']) && \count($params['filter']) === 1) {
+        $loc = $params['filter']['UF_LOCATION'];
+        if ($params['storesAlways'] && isset($params['filter']['UF_LOCATION'])) {
             /** city */
             $storeCollection = $this->getStoreCollection($params);
             /** region */
@@ -417,6 +418,7 @@ class StoreService implements LoggerAwareInterface
                     $regionId = static::getRegion($code);
                 }
                 if ($regionId > 0) {
+                    $locRegion = $regionId;
                     /** сбрасываем поиск */
                     unset($params['filter'][0], $params['filter']['UF_LOCATION']);
                     $params['filter'][] = [
@@ -429,8 +431,8 @@ class StoreService implements LoggerAwareInterface
                 /** moscow */
                 if ($storeCollection->isEmpty()) {
                     /** сбрасываем регион */
-                    unset($params['filter'][0]);
-                    $params['filter']['UF_LOCATION'] = LocationService::LOCATION_CODE_MOSCOW;
+                    unset($params['filter'][0], $locRegion);
+                    $loc = $params['filter']['UF_LOCATION'] = LocationService::LOCATION_CODE_MOSCOW;
                     $storeCollection = $this->getStoreCollection($params);
                 }
             }
@@ -457,6 +459,8 @@ class StoreService implements LoggerAwareInterface
                 'returnSort'           => $params['returnSort'],
                 'sortVal'              => $params['sortVal'],
                 'activeStoreId'        => $params['activeStoreId'],
+                'region_id'            => (string)$locRegion,
+                'city_code'            => $loc,
             ]
         );
     }
@@ -601,6 +605,15 @@ class StoreService implements LoggerAwareInterface
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             $result['sortHtml'] = $sortHtml;
+            /** имя местоположения для страницы магазинов */
+            if (!empty($params['region_id']) || !empty($params['city_code'])) {
+                if (!empty($params['region_id'])) {
+                    $loc = LocationTable::query()->setFilter(['ID' => $params['region_id']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
+                } else {
+                    $loc = LocationTable::query()->setFilter(['=CODE' => $params['city_code']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
+                }
+                $result['location_name'] = $loc['LOC_NAME'];
+            }
             if ($params['returnActiveServices']) {
                 $result['services'] = $servicesList;
             }
