@@ -14,7 +14,7 @@ use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
-?>
+$uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID']; ?>
 <?php /** top catalog review block */
 $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW) ?>
 <li class="b-tab-title__item js-tab-item">
@@ -24,18 +24,18 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW) ?>
        data-tab="reviews">
         <span class="b-tab-title__text">
             Отзывы
-            <span class="b-tab-title__number">(<?=$arResult['COUNT_COMMENTS']?>)</span>
+            <span class="b-tab-title__number">(<?= $arResult['COUNT_COMMENTS'] ?>)</span>
         </span>
     </a>
 </li>
 <?php $this->EndViewTarget() ?>
 <?php /** top catalog review block */
-$this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
+$this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
 <div class="b-rating b-rating--card">
     <?php for ($i = 1; $i <= 5; $i++) {
         ?>
         <div class="b-rating__star-block<?= $arResult['RATING']
-                                            > $i ? ' b-rating__star-block--active' : '' ?>">
+        > $i ? ' b-rating__star-block--active' : '' ?>">
             <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
         </div>
         <?php
@@ -62,13 +62,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
             </div>
             <?php
         } ?>
-        <?php if (!$arResult['AUTH']) {
-            ?>
-            <div class="b-comment-block__auth--block">
-                <p class="b-comment-block__auth"><a href="#">Авторизуйтесь</a> , чтобы написать комментарий.</p>
-            </div>
-            <?php
-        } ?>
+        <div class="b-comment-block__auth--block js-comments-auth-block-<?= $uniqueCommentString ?>"
+             style="display: none">
+            <p class="b-comment-block__auth"><a href="#">Авторизуйтесь</a> , чтобы написать комментарий.</p>
+        </div>
         <?php /** @noinspection PhpUnhandledExceptionInspection */
         $frame->beginStub(); ?>
         <div class="b-comment-block__info--block">
@@ -98,7 +95,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
                             <?php for ($i = 1; $i <= 5; $i++) {
                                 ?>
                                 <div class="b-rating__star-block<?= $arResult['RATING']
-                                                                    > $i ? ' b-rating__star-block--active' : '' ?>">
+                                > $i ? ' b-rating__star-block--active' : '' ?>">
                                     <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
                                 </div>
                                 <?php
@@ -131,51 +128,48 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
             <input type="hidden" name="action" value="add">
             <?php /** @noinspection PhpUnhandledExceptionInspection */
             $frame = $this->createFrame()->begin(''); ?>
-            <?php if (!$arResult['AUTH']) {
-                ?>
-                <div class="b-form-review__wrapper-blocks">
-                    <p class="b-form-review__text-block b-form-review__text-block--account">Укажите телефон или
-                                                                                            почту, а
-                                                                                            также пароль, если у
-                                                                                            вас
-                                                                                            есть аккаунт на
-                                                                                            нашем
-                                                                                            сайте</p>
-                    <div class="b-form-review__group">
-                        <label class="b-form-review__label" for="id-review-tel">Мобильный телефон</label>
-                        <input class="b-form-review__input js-phone-mask"
-                               id="id-review-tel"
-                               type="tel"
-                               name="PHONE"
-                               value="" />
-                        <div class="b-error"><span class="js-message"></span>
-                        </div>
-                    </div>
-                    <div class="b-form-review__group">
-                        <label class="b-form-review__label" for="id-review-mail">Эл. почта</label>
-                        <input class="b-form-review__input"
-                               id="id-review-mail"
-                               type="email"
-                               name="EMAIL"
-                               value="" />
-                        <div class="b-error"><span class="js-message"></span>
-                        </div>
-                    </div>
-                    <div class="b-form-review__group">
-                        <label class="b-form-review__label" for="id-review-pass">Пароль</label>
-                        <input class="b-form-review__input"
-                               id="id-review-pass"
-                               type="password"
-                               name="PASSWORD"
-                               value=""
-                               autocomplete="off"
-                               required="required" />
-                        <div class="b-error"><span class="js-message"></span>
-                        </div>
+            <div class="b-form-review__wrapper-blocks js-comments-auth-form-<?= $uniqueCommentString ?>"
+                 style="display: none">
+                <p class="b-form-review__text-block b-form-review__text-block--account">Укажите телефон или
+                    почту, а
+                    также пароль, если у
+                    вас
+                    есть аккаунт на
+                    нашем
+                    сайте</p>
+                <div class="b-form-review__group">
+                    <label class="b-form-review__label" for="id-review-tel">Мобильный телефон</label>
+                    <input class="b-form-review__input js-phone-mask"
+                           id="id-review-tel"
+                           type="tel"
+                           name="PHONE"
+                           value=""/>
+                    <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
-                <?php
-            } ?>
+                <div class="b-form-review__group">
+                    <label class="b-form-review__label" for="id-review-mail">Эл. почта</label>
+                    <input class="b-form-review__input"
+                           id="id-review-mail"
+                           type="email"
+                           name="EMAIL"
+                           value=""/>
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
+                <div class="b-form-review__group">
+                    <label class="b-form-review__label" for="id-review-pass">Пароль</label>
+                    <input class="b-form-review__input"
+                           id="id-review-pass"
+                           type="password"
+                           name="PASSWORD"
+                           value=""
+                           required="required"
+                           autocomplete="off"/>
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
+            </div>
             <?php /** @noinspection PhpUnhandledExceptionInspection */
             $frame->end(); ?>
             <div class="b-form-review__wrapper-blocks">
@@ -189,7 +183,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
                                        type="radio"
                                        id="radio<?= $i ?>"
                                        name="UF_MARK"
-                                       value="<?= $i ?>" />
+                                       value="<?= $i ?>"/>
                                 <label class="b-rating__star" for="radio<?= $i ?>">
                                     <span class="b-icon">
                                         <?= new SvgDecorator('icon-star-stroke', 13, 12) ?>
@@ -205,9 +199,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
                     <textarea class="b-form-review__textarea"
                               name="UF_TEXT"
                               required="required"
-                              placeholder="Оставьте ваш отзыв"></textarea>
+                              placeholder="Оставьте ваш отзыв" minlength="8" maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
+                <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
                 <button class="b-button b-button--form-review" type="submit">Отправить</button>
             </div>
             <div class="b-form-review__wrapper-blocks js-success-review">
@@ -233,7 +228,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW)  ?>
                                     <?php for ($i = 1; $i <= 5; $i++) {
                                         ?>
                                         <div class="b-rating__star-block<?= $comment['UF_MARK']
-                                                                            >= $i ? ' b-rating__star-block--active' : '' ?>">
+                                        >= $i ? ' b-rating__star-block--active' : '' ?>">
                                                     <span class="b-icon"><?= new SvgDecorator(
                                                             'icon-star', 12, 12
                                                         ) ?></span>

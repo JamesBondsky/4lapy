@@ -42,7 +42,7 @@ class CCommentsComponent extends \CBitrixComponent
     /**
      * @var UserAuthorizationInterface $userService
      */
-    private $userAuthService;
+    public $userAuthService;
 
     /**
      * @var CurrentUserProviderInterface $userService
@@ -196,6 +196,20 @@ class CCommentsComponent extends \CBitrixComponent
             return false;
         }
 
+        $this->arResult['AUTH'] = false;
+        try {
+            $this->setUserBundle();
+            $this->arResult['AUTH'] = $this->userAuthService->isAuthorized();
+        } catch (ApplicationCreateException $e) {
+            ShowError($e->getMessage());
+
+            return false;
+        } catch (ServiceCircularReferenceException $e) {
+            ShowError($e->getMessage());
+
+            return false;
+        }
+
         /** @todo кеширование комментариев */
         if ($this->startResultCache()) {
 
@@ -210,18 +224,6 @@ class CCommentsComponent extends \CBitrixComponent
 
                 return false;
             }
-            try {
-                $this->setUserBundle();
-            } catch (ApplicationCreateException $e) {
-                ShowError($e->getMessage());
-
-                return false;
-            } catch (ServiceCircularReferenceException $e) {
-                ShowError($e->getMessage());
-
-                return false;
-            }
-            $this->arResult['AUTH'] = $this->userAuthService->isAuthorized();
 
             try {
                 $comments = $this->getComments();
@@ -233,6 +235,8 @@ class CCommentsComponent extends \CBitrixComponent
                 return false;
             }
             $this->arResult['RATING'] = $this->getRating();
+
+            $this->setResultCacheKeys(['AUTH']);
 
             TaggedCacheHelper::addManagedCacheTags([
                 'comments:objectId:' . $this->arParams['OBJECT_ID'],
