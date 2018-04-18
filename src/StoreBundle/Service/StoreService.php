@@ -100,6 +100,35 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
+     * @param $cityCode
+     *
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public static function getRegion($cityCode): int
+    {
+        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect([
+            'ID',
+            'REGION_ID',
+            'PARENT_ID',
+            'TYPE_CODE'                => 'TYPE.CODE',
+            'PARENTS_PARENT_ID'        => 'PARENTS.ID',
+            'PARENTS_PARENT_TYPE_CODE' => 'PARENTS.TYPE.CODE',
+        ])->setCacheTtl(360000)->exec()->fetchAll();
+        foreach ($locList as $locItem) {
+            if ($locItem['TYPE_CODE'] === 'REGION') {
+                return $locItem['ID'];
+            }
+            if ($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION') {
+                return $locItem['PARENTS_PARENT_ID'];
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Получить склад по ID
      *
      * @param int $id
@@ -375,7 +404,7 @@ class StoreService implements LoggerAwareInterface
             /** city */
             $storeCollection = $this->getStoreCollection($params);
             /** region */
-            if(!empty($params['filter']['UF_LOCATION']) && $storeCollection->isEmpty()) {
+            if (!empty($params['filter']['UF_LOCATION']) && $storeCollection->isEmpty()) {
                 unset($params['activeStoreId'], $params['order']);
                 $code = $params['filter']['UF_LOCATION'];
                 $codeList = json_decode($code, true);
@@ -383,14 +412,18 @@ class StoreService implements LoggerAwareInterface
                     $dadataLocationAdapter = new DaDataLocationAdapter();
                     /** @var BitrixLocation $bitrixLocation */
                     $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
-                    $regionId = (int)$this->getRegion($bitrixLocation->getRegionId());
+                    $regionId = static::getRegion($bitrixLocation->getRegionId());
                 } else {
-                    $regionId = (int)$this->getRegion($code);
+                    $regionId = static::getRegion($code);
                 }
-                if($regionId > 0) {
+                if ($regionId > 0) {
                     /** сбрасываем поиск */
                     unset($params['filter'][0], $params['filter']['UF_LOCATION']);
-                    $params['filter'][] = ['LOGIC' => 'OR', 'LOCATION.PARENT_ID' => $regionId, 'LOCATION.REGION_ID' => $regionId];
+                    $params['filter'][] = [
+                        'LOGIC'              => 'OR',
+                        'LOCATION.PARENT_ID' => $regionId,
+                        'LOCATION.REGION_ID' => $regionId,
+                    ];
                     $storeCollection = $this->getStoreCollection($params);
                 }
                 /** moscow */
@@ -426,28 +459,6 @@ class StoreService implements LoggerAwareInterface
                 'activeStoreId'        => $params['activeStoreId'],
             ]
         );
-    }
-
-    /**
-     * @param $cityCode
-     *
-     * @return int
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
-    public function getRegion($cityCode): int
-    {
-        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect(['ID', 'REGION_ID','PARENT_ID', 'TYPE_CODE' => 'TYPE.CODE', 'PARENTS_PARENT_ID' => 'PARENTS.ID', 'PARENTS_PARENT_TYPE_CODE' =>  'PARENTS.TYPE.CODE'])->exec()->fetchAll();
-        foreach ($locList as $locItem) {
-            if($locItem['TYPE_CODE'] === 'REGION'){
-                return $locItem['ID'];
-            }
-            if($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION'){
-                return $locItem['PARENTS_PARENT_ID'];
-            }
-        }
-        return 0;
     }
 
     /**
@@ -525,7 +536,7 @@ class StoreService implements LoggerAwareInterface
                 $services = [];
                 if (\is_array($servicesList) && !empty($servicesList)) {
                     foreach ($servicesList as $service) {
-                        if(\in_array((int)$service['ID'], $store->getServices(), true)){
+                        if (\in_array((int)$service['ID'], $store->getServices(), true)) {
                             $services[] = $service['UF_NAME'];
                         }
                     }
