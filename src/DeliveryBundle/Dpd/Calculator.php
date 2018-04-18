@@ -88,7 +88,7 @@ class Calculator extends DPD
         }
 
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
-        $deliveryZone = $deliveryService->getDeliveryZoneCodeByLocation(
+        $deliveryZone = $deliveryService->getDeliveryZoneByDelivery(
             $arOrder['LOCATION_TO'],
             $deliveryId
         );
