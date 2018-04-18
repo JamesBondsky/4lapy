@@ -9,23 +9,34 @@
  * @var CMain $APPLICATION
  */
 
+//use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
-
-?>
-<?php if ($category->getChild()->count()) { ?>
+/** @var Category $child */
+//if(!$sectionIds->isEmpty()){
+if($isBrand){
+    $childs = null;
+//    $childs = (new \FourPaws\Catalog\Query\CategoryQuery())->withFilter(['ID'=>array_unique($sectionIds->toArray())])->exec();
+//    foreach ($childs as $key => $child){
+//        if($child->getDepthLevel() > 1){
+//            $childs->remove($key);
+//        }
+//    }
+} else {
+    $childs = $category->getChild();
+}
+if ($childs !== null && $childs->count()) { ?>
     <div class="b-filter__block b-filter__block--select">
         <h3 class="b-title b-title--filter-header">
             Категория
         </h3>
         <div class="b-select b-select--filter">
             <ul class="b-filter-link-list b-filter-link-list--filter b-filter-link-list--select-filter js-accordion-filter-select js-filter-checkbox">
-                <?php /** @var Category $child */ ?>
-                <?php foreach ($category->getChild() as $child) { ?>
+                <?php foreach ($childs as $child) { ?>
                     <li class="b-filter-link-list__item">
                         <a class="b-filter-link-list__link"
                            href="<?= $child->getSectionPageUrl() ?>"

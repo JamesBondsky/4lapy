@@ -1,10 +1,10 @@
 <?php
 /**
- * @var Request $request
+ * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var PhpEngine                             $view
+ * @var CMain                                 $APPLICATION
  */
 
 use Bitrix\Main\Grid\Declension;
@@ -45,7 +45,9 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
                 [
-                    'category' => $category,
+                    'category'   => $category,
+//                    'sectionIds' => $sectionIds,
+                    'isBrand'=>true
                 ]
             ) ?>
             <?= $view->render(
@@ -76,7 +78,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <div class="b-line b-line--sort-desktop"></div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар',
+                            ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
@@ -94,7 +97,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
-                            ?>
+                                    ?>
                                     <li class="b-filter-link-list__item">
                                         <label class="b-filter-link-list__label">
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -110,11 +113,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                             </a>
                                         </label>
                                     </li>
-                                <?php
-                        } ?>
+                                    <?php
+                                } ?>
                             </ul>
                         </span>
-                    <?php
+                        <?php
                     } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
@@ -156,11 +159,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE' => '',
-            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS' => false,
+            'NAV_TITLE'      => '',
+            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE' => 'Y',
+            'AJAX_MODE'      => 'Y',
         ],
         null,
         [
