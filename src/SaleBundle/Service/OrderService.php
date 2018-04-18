@@ -579,9 +579,18 @@ class OrderService implements LoggerAwareInterface
                 $needCreateAddress = true;
             }
         } else {
-            $users = $this->currentUserProvider->getUserRepository()->findBy(
-                ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
-            );
+            /** проверять надо на пустоту иначе  */
+            if(!empty($storage->getEmail()) && !empty($storage->getPhone())){
+                $users = $this->currentUserProvider->getUserRepository()->findBy(
+                    ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
+                );
+            } elseif(!empty($storage->getEmail())){
+                $users = $this->currentUserProvider->getUserRepository()->findBy(['=EMAIL' => $storage->getEmail()]);
+            }
+            elseif(!empty($storage->getPhone())){
+                $users = $this->currentUserProvider->getUserRepository()->findBy(['=PERSONAL_PHONE' => $storage->getPhone()]);
+            }
+
 
             $foundUser = null;
             /** @var User $user */
