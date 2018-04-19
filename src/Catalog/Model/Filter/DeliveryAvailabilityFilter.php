@@ -2,6 +2,8 @@
 
 namespace FourPaws\Catalog\Model\Filter;
 
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Product;
@@ -33,20 +35,27 @@ class DeliveryAvailabilityFilter extends FilterBase
         return 'deliveryAvailability';
     }
 
+    /**
+     * @return VariantCollection
+     * @throws ApplicationCreateException
+     */
     public function doGetAllVariants(): VariantCollection
     {
-        $delivery = (new Variant())
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $code = $deliveryService->getCurrentDeliveryZone();
+        $result = new VariantCollection();
+        $result->add((new Variant())
             ->withName('Доставка')
             ->withAvailable(true)
-            ->withValue(Product::AVAILABILITY_DELIVERY);
-        $pickup = (new Variant())
+            ->withValue($code . '_' . Product::AVAILABILITY_DELIVERY));
+        $result->add((new Variant())
             ->withName('Самовывоз')
             ->withAvailable(true)
-            ->withValue(Product::AVAILABILITY_PICKUP);
-        $byRequest = (new Variant())
+            ->withValue($code . '_' . Product::AVAILABILITY_PICKUP));
+        $result->add((new Variant())
             ->withName('Под заказ')
             ->withAvailable(true)
-            ->withValue(Product::AVAILABILITY_BY_REQUEST);
-        return new VariantCollection([$delivery, $pickup, $byRequest]);
+            ->withValue($code . '_' . Product::AVAILABILITY_BY_REQUEST));
+        return $result;
     }
 }
