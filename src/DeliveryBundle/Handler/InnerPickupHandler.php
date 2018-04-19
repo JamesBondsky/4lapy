@@ -57,7 +57,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
     /**
      * @param Shipment $shipment
      *
-     * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @return bool
      */
@@ -69,11 +68,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         if (!$deliveryLocation) {
-            return false;
-        }
-
-        $shops = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_SHOP);
-        if ($shops->isEmpty()) {
             return false;
         }
 
@@ -99,6 +93,12 @@ class InnerPickupHandler extends DeliveryHandlerBase
         $result = new CalculationResult();
 
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        $shops = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_SHOP);
+        if ($shops->isEmpty()) {
+            $result->addError(new Error('Нет доступных магазинов'));
+            return $result;
+        }
+
         /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 

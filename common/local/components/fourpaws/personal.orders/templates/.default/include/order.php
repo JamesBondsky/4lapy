@@ -21,24 +21,23 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                         <?= new SvgDecorator('icon-arrow-account', 25, 25) ?>
                     </span>
                 </span>
-                <span class="b-accordion-order-item__number-order">№ <?= $order->getId() ?>
+                <span class="b-accordion-order-item__number-order">№ <?= $order->isManzana() ? $order->getManzanaId() : $order->getId() ?>
                     от <?= $order->getFormatedDateInsert() ?></span>
             </a>
             <?php $orderItems = $order->getItems();
-            if($orderItems !== null){
+            if ($orderItems !== null) {
                 $countItems = $order->getItems()->count();
-            }
-            else{
+            } else {
                 $countItems = 0;
             }
-            if($countItems > 0){ ?>
-            <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
-                    [
-                        'товар',
-                        'товара',
-                        'товаров',
-                    ]) ?> <?= $order->getAllWeight() > 0 ? '(' . $order->getFormatedAllWeight() . ' кг)' : ''; ?>
-            </div>
+            if ($countItems > 0) { ?>
+                <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
+                        [
+                            'товар',
+                            'товара',
+                            'товаров',
+                        ]) ?> <?= $order->getAllWeight() > 0 ? '(' . $order->getFormatedAllWeight() . ' кг)' : ''; ?>
+                </div>
             <?php } ?>
         </div>
         <div class="b-accordion-order-item__adress">
@@ -57,21 +56,24 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                 <?= $order->getDelivery()->getDeliveryName() ?>
                 <span><?= $order->getDateDelivery() ?></span>
             </div>
-            <div class="b-adress-info b-adress-info--order">
-                <?php if ($order->getStore()->getMetro() > 0) { ?>
-                    <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
-                    м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
-                <?php } ?>
-                <?= $order->getStore()->getAddress() ?>
-                <?php if (!empty($order->getStore()->getScheduleString())) { ?>
-                    <p class="b-adress-info__mode-operation"><?= $order->getStore()->getScheduleString() ?></p>
-                <?php } ?>
-            </div>
+            <?php $store = $order->getStore();
+            if ($store->getId() > 0) { ?>
+                <div class="b-adress-info b-adress-info--order">
+                    <?php if ($store->getMetro() > 0) { ?>
+                        <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
+                        м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
+                    <?php } ?>
+                    <?= $order->getStore()->getAddress() ?>
+                    <?php if (!empty($order->getStore()->getScheduleString())) { ?>
+                        <p class="b-adress-info__mode-operation"><?= $order->getStore()->getScheduleString() ?></p>
+                    <?php } ?>
+                </div>
+            <?php } ?>
         </div>
         <div class="b-accordion-order-item__pay">
             <div class="b-accordion-order-item__not-pay">
                 <?php $payment = $order->getPayment();
-                $paymentName = $payment->getCode() === 'cash' ? 'наличными' :  $payment->getCode() === 'card-online' ? 'онлайн' : 'банковской картой';
+                $paymentName = $payment->getCode() === 'cash' ? 'наличными' : $payment->getCode() === 'card-online' ? 'онлайн' : 'банковской картой';
                 echo $order->getPayPrefixText() . ' ' . $paymentName ?>
             </div>
         </div>
@@ -99,10 +101,12 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                 <span
                         class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
-            <?php /** @todo подписаться на доставку */ ?>
-            <a class="b-accordion-order-item__subscribe js-open-popup" href="javascript:void(0);"
-               title="Подписаться на доставку" data-popup-id="subscribe-delivery">Подписаться
-                на&nbsp;доставку</a>
+            <?php /** @todo подписаться на доставку */
+            if (!$order->isManzana()) { ?>
+                <a class="b-accordion-order-item__subscribe js-open-popup" href="javascript:void(0);"
+                   title="Подписаться на доставку" data-popup-id="subscribe-delivery">Подписаться
+                    на&nbsp;доставку</a>
+            <?php } ?>
         </div>
     </div>
     <div class="b-accordion-order-item__hidden js-hidden-order">

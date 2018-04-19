@@ -118,8 +118,7 @@ class ProductInfoController extends Controller
                     $response['products'][$product->getId()][$offer->getId()] = [
                         'available' => $offer->isAvailable(),
                         'byRequest' => $offer->isByRequest(),
-                        'pickup' => $product->isPickupAvailable(),
-                        'delivery' => $product->isDeliveryAvailable(),
+                        'pickup' => $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
                         'price' => $offer->getPrice(),
                         'oldPrice' => $offer->getOldPrice() ?: $offer->getPrice(),
                         'inCart' => $cartItems[$offer->getId()] ?? 0
@@ -129,7 +128,7 @@ class ProductInfoController extends Controller
 
             if ($currentOffer) {
                 ob_start();
-                $deliveries = $APPLICATION->IncludeComponent(
+                $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.product.delivery.info',
                     'detail',
                     [
@@ -140,8 +139,6 @@ class ProductInfoController extends Controller
                 );
 
                 $response['deliveryHtml'] = ob_get_clean();
-                /** @todo учитывать региональные ограничения по доставкам в Product::getDeliveryAvailability() и убрать эту строку */
-                $response['products'][$product->getId()][$currentOffer->getId()]['available'] = !empty($deliveries);
             }
         }
         return JsonSuccessResponse::createWithData('', $response);
