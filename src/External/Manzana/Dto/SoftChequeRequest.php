@@ -17,7 +17,7 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class SoftChequeRequest
 {
-    protected const ROOT_NAME = 'ChequeRequest';
+    public const ROOT_NAME = 'ChequeRequest';
 
     /**
      * УИД торгового предложения
