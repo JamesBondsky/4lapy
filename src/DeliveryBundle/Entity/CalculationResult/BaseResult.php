@@ -435,7 +435,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
              * срок поставки на склад по графику
              */
             if (!$stockResult->getDelayed()->isEmpty()) {
-                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
+//                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
             }
 
             /**
