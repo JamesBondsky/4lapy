@@ -29,7 +29,6 @@ if (!$isAjax) {
 }
 
 global $APPLICATION;
-$sectionIds = new ArrayCollection();
 if (!$isAjax) { ?>
     <div class="b-container">
         <?php /** информация о бренде */ ?>
@@ -105,12 +104,6 @@ if (!$isAjax) { ?>
         $ids = new ArrayCollection();
         /** @var Product $product */
         foreach ($productSearchResult->getProductCollection() as $product) {
-            $sectionList = $product->getSectionsIdList();
-            if(!empty($sectionList)){
-                foreach ($sectionList as $sectId) {
-                    $sectionIds->add($sectId);
-                }
-            }
             foreach ($product->getOffers() as $offer) {
                 $ids->add($offer->getXmlId());
             }
@@ -184,13 +177,7 @@ if (!$isAjax) { ?>
         } ?>
     </div>
     <?php
-}
-if($sectionIds->isEmpty()) {
-    /** @var Product $product */
-    foreach ($productSearchResult->getProductCollection() as $product) {
-        $sectionIds->add($product->getIblockSectionId());
-    }
-}?>
+} ?>
     <div class="b-catalog">
     <div class="b-container b-container--catalog-filter">
         <?php /** товары бренда */ ?>
@@ -199,7 +186,7 @@ if($sectionIds->isEmpty()) {
             [
                 'catalogRequest'      => $catalogRequest,
                 'productSearchResult' => $productSearchResult,
-                'sectionIds' => $sectionIds,
+                'brand' => $catalogRequest->getBrand()->getCode(),
             ]
         ) ?>
     </div>
