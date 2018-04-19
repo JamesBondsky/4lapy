@@ -46,7 +46,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
                 [
                     'category'   => $category,
-//                    'sectionIds' => $sectionIds,
+                    'sectionIds' => $sectionIds,
                     'isBrand'=>true
                 ]
             ) ?>
