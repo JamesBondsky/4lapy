@@ -28,9 +28,9 @@ class BonusBuyTo implements BonusBuyGroupInterface
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("FG_QUAN")
-     * @Serializer\Type("string")
+     * @Serializer\Type("int")
      *
-     * @var string
+     * @var int
      */
     protected $quantity = '';
 
@@ -68,18 +68,19 @@ class BonusBuyTo implements BonusBuyGroupInterface
     protected $bonusBuyTotems;
 
     /**
-     * @return string
+     * @return int
      */
-    public function getQuantity(): string
+    public function getQuantity(): int
     {
         return $this->quantity;
     }
 
     /**
-     * @param string $quantity
+     * @param int $quantity
+     *
      * @return BonusBuyTo
      */
-    public function setQuantity(string $quantity): BonusBuyTo
+    public function setQuantity(int $quantity): BonusBuyTo
     {
         $this->quantity = $quantity;
         return $this;
@@ -95,12 +96,13 @@ class BonusBuyTo implements BonusBuyGroupInterface
 
     /**
      * @param string $sign
+     *
      * @return BonusBuyTo
      */
     public function setSign(string $sign): BonusBuyTo
     {
         $this->sign = $sign;
-        
+
         return $this;
     }
 
@@ -114,6 +116,7 @@ class BonusBuyTo implements BonusBuyGroupInterface
 
     /**
      * @param float $percent
+     *
      * @return BonusBuyTo
      */
     public function setPercent(float $percent): BonusBuyTo
@@ -185,7 +188,7 @@ class BonusBuyTo implements BonusBuyGroupInterface
             ]);
             $result = [];
             while ($elem = $res->fetch()) {
-                $result[] = $elem['ID'];
+                $result[] = (int)$elem['ID'];
             }
             $result = array_filter($result);
             $result = new ArrayCollection($result);
