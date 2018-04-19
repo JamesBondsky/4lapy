@@ -35,6 +35,7 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
@@ -1393,7 +1394,7 @@ class Offer extends IblockElement
         if ($this->isCounted) {
             return;
         }
-
+        Manager::disableProcessingFinalAction();
         global $USER;
 
         static $order;
@@ -1430,7 +1431,7 @@ class Offer extends IblockElement
                     ->withPrice($basketItem->getPrice());
             }
         }
-
+        Manager::enableProcessingFinalAction();
         $this->isCounted = true;
     }
 
