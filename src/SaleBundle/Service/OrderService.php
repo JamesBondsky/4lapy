@@ -239,6 +239,16 @@ class OrderService implements LoggerAwareInterface
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
+        $needRecalculateBasket = false;
+        if (null === $basket) {
+            $needRecalculateBasket = true;
+            $basket = $this->basketService->getBasket();
+        }
+
+        if ($basket->getOrderableItems()->isEmpty()) {
+            throw new OrderCreateException('Корзина пуста');
+        }
+
         if (null === $selectedDelivery) {
             try {
                 $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
@@ -254,9 +264,7 @@ class OrderService implements LoggerAwareInterface
         /**
          * Привязываем корзину
          */
-        /** @noinspection PhpParamsInspection */
-        if (null === $basket) {
-            $basket = $this->basketService->getBasket();
+        if ($needRecalculateBasket) {
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
