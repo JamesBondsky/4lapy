@@ -27,7 +27,7 @@ class ManzanaReferralConsumer extends ManzanaConsumerBase
     {
         try {
             /** @var ReferralParams $referralParams */
-            $referralParams = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
+            $referralParams = $this->serializer->deserialize($message->getBody(), ReferralParams::class, 'json');
 
             if (null === $referralParams || (!$referralParams->phone && !$referralParams->cardNumber)) {
                 throw new ReferralAddException('Неожиданное сообщение');
