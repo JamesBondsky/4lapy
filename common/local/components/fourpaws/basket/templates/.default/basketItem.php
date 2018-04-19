@@ -65,10 +65,12 @@ if($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offe
                     <?= $basketItem->getField('NAME') ?>
                 </span>
             </span>
+            <?php if($basketItem->getWeight() > 0){ ?>
                 <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                 <span class="b-common-item__name-value">Вес: </span>
-                 <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
-            </span>
+                     <span class="b-common-item__name-value">Вес: </span>
+                     <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
+                </span>
+            <?php } ?>
                 <?php if ($useOffer) {
                     $color = $offer->getColor();
                     if ($color !== null) { ?>
