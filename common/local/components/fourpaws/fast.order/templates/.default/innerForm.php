@@ -154,7 +154,7 @@ if ($request->offsetExists('phone')) {
                     </div>
                 </div>
                 <div class="b-item-shopping__operation b-item-shopping__operation--one-click">
-                    <?php $maxQuantity = 1000;
+                    <?php $maxQuantity = 0;
                     if ($useOffer) {
                         $maxQuantity = $offer->getQuantity();
                     } ?>
@@ -244,7 +244,7 @@ if ($request->offsetExists('phone')) {
                 Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                     ['товар', 'товара', 'товаров']) ?> (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
             </dt>
-            <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($basket->getPrice()) ?> ₽</dd>
+            <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']) ?> ₽</dd>
         </dl>
     <?php } ?>
     <div class="b-checkbox b-checkbox--one-click">
