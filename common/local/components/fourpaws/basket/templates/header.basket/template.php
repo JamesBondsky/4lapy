@@ -82,7 +82,9 @@ if (true !== $arParams['IS_AJAX']) {
                                     <?= $basketItem->getField('NAME') ?>
                                 </a>
                             </div>
-                            <span class="b-cart-item__weight"><?= WordHelper::showWeight($basketItem->getWeight() * $basketItem->getQuantity(), true) ?></span>
+                            <?php if($basketItem->getQuantity() > 0 && $basketItem->getWeight() > 0) {?>
+                                <span class="b-cart-item__weight"><?= WordHelper::showWeight($basketItem->getWeight() * $basketItem->getQuantity(), true) ?></span>
+                            <?php } ?>
                             <span class="b-cart-item__amount">(<?= $basketItem->getQuantity() ?> шт.)</span>
                         </div>
                     </div>

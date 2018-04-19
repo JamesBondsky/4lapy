@@ -200,7 +200,7 @@ if ($arParams['IS_AJAX']) {
                         <div class="b-information-order__order-price"><?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
                                 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                                 ['товар', 'товара', 'товаров']) ?>
-                            (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
+                            <?php if($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)<?php } ?>
                         </div>
                         <div class="b-price b-price--information-order">
                             <span class="b-price__current">
