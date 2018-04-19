@@ -36,7 +36,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                             'товар',
                             'товара',
                             'товаров',
-                        ]) ?> <?= $order->getAllWeight() > 0 ? '(' . $order->getFormatedAllWeight() . ' кг)' : ''; ?>
+                        ]) ?> <?= $order->getAllWeight() > 0 ? '(' . WordHelper::showWeight($order->getAllWeight(), true) . ')' : ''; ?>
                 </div>
             <?php } ?>
         </div>
@@ -149,7 +149,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                 <?php } ?>
                                 <?php if ($item->getWeight() > 0) { ?>
                                     <div class="b-list-order__option-text">Вес:
-                                        <span><?= round($item->getWeight() / 1000, 2) ?> кг</span>
+                                        <span><?= WordHelper::showWeight($item->getWeight(), true)?></span>
                                     </div>
                                 <?php } ?>
                                 <?php if (!empty($item->getArticle())) { ?>
