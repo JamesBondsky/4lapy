@@ -441,7 +441,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $offer = (new OrderOffer())
                 ->setPosition($position)
                 ->setOfferXmlId($xmlId)
-                ->setUnitPrice($basketItem->getBasePrice())
+                ->setUnitPrice($basketItem->getPrice())
                 ->setQuantity($basketItem->getQuantity())
                 /**
                  * Только штуки
