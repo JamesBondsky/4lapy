@@ -20,6 +20,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -125,8 +126,14 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                         /** никогда не сработает */
                     }
                 }
+                $basket = $this->basketService->getBasket();
                 $this->offerCollection = $this->basketService->getOfferCollection();
-                $this->arResult['BASKET'] = $this->basketService->getBasket();
+                // привязывать к заказу нужно для расчета скидок
+                if (null === $order = $basket->getOrder()) {
+                    $order = Order::create(SITE_ID);
+                    $order->setBasket($basket);
+                }
+                $this->arResult['BASKET'] = $basket;
                 $this->loadImages();
                 $this->calcTemplateFields();
             }
@@ -252,12 +259,16 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
-        foreach ($basket->getOrderableItems() as $basketItem) {
+        $orderableBasket = $basket->getOrderableItems();
+        foreach ($orderableBasket as $basketItem) {
             $weight += (float)$basketItem->getWeight();
             $quantity += (int)$basketItem->getQuantity();
         }
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
+        $this->arResult['TOTAL_DISCOUNT'] = $orderableBasket->getBasePrice() - $orderableBasket->getPrice();
+        $this->arResult['TOTAL_PRICE'] = $orderableBasket->getPrice();
+        $this->arResult['TOTAL_BASE_PRICE'] = $orderableBasket->getBasePrice();
     }
 
     /**
