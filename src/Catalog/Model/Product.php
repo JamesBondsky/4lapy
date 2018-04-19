@@ -21,6 +21,7 @@ use FourPaws\BitrixOrm\Type\TextContent;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
 use JMS\Serializer\Annotation\Accessor;
@@ -39,9 +40,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
     use HitMetaInfoAwareTrait;
 
-    public const AVAILABILITY_DELIVERY = 'delivery';
-    public const AVAILABILITY_PICKUP = 'pickup';
-    public const AVAILABILITY_BY_REQUEST = 'byRequest';
+    public const AVAILABILITY_DELIVERY = 'd';
+    public const AVAILABILITY_PICKUP = 'p';
+    public const AVAILABILITY_BY_REQUEST = 'r';
 
     /**
      * @var bool
@@ -563,7 +564,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @var array
      * @Type("array<string>")
-     * @Accessor(getter="getDeliveryAvailability")
+     * @Accessor(getter="getFullDeliveryAvailabilityForFilter")
      * @Groups({"elastic"})
      */
     protected $deliveryAvailability;
@@ -593,6 +594,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
+
+    /**
+     * @var array
+     */
+    protected $fullDeliveryAvailability;
 
     /**
      * BitrixArrayItemBase constructor.
@@ -1819,10 +1825,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function isByRequest(): bool
     {
-        $result = true;
+        $result = false;
         /** @var Offer $offer */
         foreach ($this->getOffers() as $offer) {
-            $result &= $offer->isByRequest();
+            $result |= $offer->isByRequest();
         }
 
         return $result;
@@ -1924,23 +1930,86 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return array
      */
-    public function getDeliveryAvailability(): array
+    public function getFullDeliveryAvailability(): array
     {
-        // @todo учитывать региональные ограничения
-        $result = [self::AVAILABILITY_PICKUP];
-        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator() || $this->isDeliveryAreaRestrict())) {
-            $result[] = self::AVAILABILITY_DELIVERY;
+        if (null === $this->fullDeliveryAvailability) {
+            $isByRequest = $this->isByRequest();
+            $canDeliver = $this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator()
+                || $this->isDeliveryAreaRestrict();
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $zones = array_keys($deliveryService->getAllZones());
+            foreach ($zones as $zone) {
+                $result = [];
+                foreach ($deliveryService->getByZone($zone) as $deliveryCode) {
+                    switch (true) {
+                        case $canDeliver && \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
+                            $result[] = static::AVAILABILITY_DELIVERY;
+                            break;
+                        case $deliveryCode === DeliveryService::INNER_PICKUP_CODE:
+                        case $canDeliver && $deliveryCode === DeliveryService::DPD_PICKUP_CODE:
+                            $result[] = static::AVAILABILITY_PICKUP;
+                            break;
+                    }
+                }
+                if ($isByRequest && !empty($result)) {
+                    $result[] = static::AVAILABILITY_BY_REQUEST;
+                }
+                $this->fullDeliveryAvailability[$zone] = $result;
+            }
         }
-        if ($this->isByRequest()) {
-            $result[] = self::AVAILABILITY_BY_REQUEST;
+
+        return $this->fullDeliveryAvailability;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @return array
+     */
+    public function getFullDeliveryAvailabilityForFilter(): array
+    {
+        $result = [];
+        /**
+         * @var string $zone
+         * @var array $deliveries
+         */
+        foreach ($this->getFullDeliveryAvailability() as $zone => $deliveries) {
+            foreach ($deliveries as $delivery) {
+                $result[] = $zone . '_' . $delivery;
+            }
         }
 
         return $result;
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @return array
+     */
+    public function getDeliveryAvailability(): array
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        return $this->getFullDeliveryAvailability()[$deliveryService->getCurrentDeliveryZone()] ?? [];
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return bool
      */
     public function isDeliveryAvailable(): bool
@@ -1953,6 +2022,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return bool
      */
     public function isPickupAvailable(): bool

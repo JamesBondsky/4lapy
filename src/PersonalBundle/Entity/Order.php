@@ -171,6 +171,9 @@ class Order extends BaseEntity
     /** @var array */
     protected $statusMain = [];
 
+    /** @var string */
+    protected $manzanaId = [];
+
     /**
      * @return string
      */
@@ -595,7 +598,7 @@ class Order extends BaseEntity
      */
     public function getPayment(): OrderPayment
     {
-        return $this->payment;
+        return $this->payment ?? new OrderPayment;
     }
 
     /**
@@ -611,7 +614,7 @@ class Order extends BaseEntity
      */
     public function getDelivery(): OrderDelivery
     {
-        return $this->delivery;
+        return $this->delivery ?? new OrderDelivery();
     }
 
     /**
@@ -668,7 +671,7 @@ class Order extends BaseEntity
      */
     public function getStore(): Store
     {
-        return $this->store;
+        return $this->store ?? new Store();
     }
 
     /**
@@ -736,5 +739,21 @@ class Order extends BaseEntity
     public function isClosed(): bool
     {
         return \in_array($this->getStatusId(), OrderService::$finalStatuses, true);
+    }
+
+    /**
+     * @return string
+     */
+    public function getManzanaId(): string
+    {
+        return $this->manzanaId;
+    }
+
+    /**
+     * @param string $manzanaId
+     */
+    public function setManzanaId(string $manzanaId): void
+    {
+        $this->manzanaId = $manzanaId;
     }
 }

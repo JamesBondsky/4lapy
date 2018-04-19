@@ -13,7 +13,7 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests,Callback,Repository/EntityManager.php,SerializationVisitor,DeserializationVisitor,Serialization,Bitrix,Command,Construction,Enum,Exception.Session,Validator}'
+        exclude: '../../{Entity,Tests,Callback,Repository/EntityManager.php,SerializationVisitor,DeserializationVisitor,Serialization,Bitrix,Construction,Enum,Exception.Session,Validator}'
 
     callback.guzzle:
         class: GuzzleHttp\Client

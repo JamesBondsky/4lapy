@@ -53,7 +53,9 @@ $rbs = new RBS(
 );
 
 $response = $rbs->get_order_status_by_orderId($sberbankOrderId);
+$isSuccess = false;
 if ((int)$response['errorCode'] === 0) {
+    $isSuccess = in_array((int)$response['orderStatus'], [1, 2], true);
     /** @var \Bitrix\Sale\Payment $payment */
     $onlinePayment = null;
     foreach ($order->getPaymentCollection() as $payment) {
@@ -70,19 +72,30 @@ if ((int)$response['errorCode'] === 0) {
         throw new PaymentException('Неверный тип оплаты у заказа');
     }
 
-    $onlinePayment->setPaid('Y');
-    $onlinePayment->setField('PS_SUM', $response['amount'] / 100);
-    $onlinePayment->setField('PS_CURRENCY', $response['currency']);
-    $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\DateTime());
-    $onlinePayment->setField('PS_INVOICE_ID', $sberbankOrderId);
-    $onlinePayment->setField('PS_STATUS', 'Y');
-    $onlinePayment->setField('PS_STATUS_DESCRIPTION',
-        $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName']);
-    $onlinePayment->setField('PS_STATUS_MESSAGE', response['paymentAmountInfo']['paymentState']);
-    $onlinePayment->setField('PS_STATUS_CODE', 'Y');
-    $onlinePayment->save();
-
-    $order->save();
+    if ($isSuccess) {
+        $onlinePayment->setPaid('Y');
+        $onlinePayment->setField('PS_SUM', $response['amount'] / 100);
+        $onlinePayment->setField('PS_CURRENCY', $response['currency']);
+        $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\DateTime());
+        $onlinePayment->setField('PS_INVOICE_ID', $sberbankOrderId);
+        $onlinePayment->setField('PS_STATUS', 'Y');
+        $onlinePayment->setField(
+            'PS_STATUS_DESCRIPTION',
+            $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName']
+        );
+        $onlinePayment->setField('PS_STATUS_CODE', 'Y');
+        $onlinePayment->setField('PS_STATUS_MESSAGE', $response['paymentAmountInfo']['paymentState']);
+        $onlinePayment->save();
+        $order->save();
+    } else {
+        $errorMessage = $response['actionCodeDescription'];
+        $errorCode = $response['orderStatus'];
+    }
 } else {
-    throw new PaymentException($response['errorMessage'], $response['errorCode']);
+    $errorMessage = $response['errorMessage'];
+    $errorCode = $response['errorCode'];
 }
+if (!$isSuccess) {
+    throw new PaymentException($errorMessage, $errorCode);
+}
+

@@ -146,7 +146,7 @@ if ($request->offsetExists('phone')) {
                             } ?>
                         </a>
                         <?php if ($useOffer) {
-                            $bonus = $offer->getBonusFormattedText($userDiscount, $basketItem->getQuantity());
+                            $bonus = $offer->getBonusFormattedText($userDiscount, $basketItem->getQuantity(), 0);
                             if (!empty($bonus)) {?>
                                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping"><?=$bonus?></span>
                             <?php }
@@ -154,7 +154,7 @@ if ($request->offsetExists('phone')) {
                     </div>
                 </div>
                 <div class="b-item-shopping__operation b-item-shopping__operation--one-click">
-                    <?php $maxQuantity = 1000;
+                    <?php $maxQuantity = 0;
                     if ($useOffer) {
                         $maxQuantity = $offer->getQuantity();
                     } ?>
@@ -204,9 +204,9 @@ if ($request->offsetExists('phone')) {
                     <div class="b-item-shopping__sale-info">
                         <?php if ($basketItem->getDiscountPrice() > 0) { ?>
                             <span class="b-old-price b-old-price--inline b-old-price--crossed-out">
-                            <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?>  </span>
-                            <span class="b-ruble b-ruble--old-weight-price">₽</span>
-                        </span>
+                                <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?>  </span>
+                                <span class="b-ruble b-ruble--old-weight-price">₽</span>
+                            </span>
                         <?php } ?>
                         <span class="b-old-price b-old-price--inline">
                         <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getPrice()) ?> </span>
@@ -244,7 +244,7 @@ if ($request->offsetExists('phone')) {
                 Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                     ['товар', 'товара', 'товаров']) ?> (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
             </dt>
-            <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($basket->getPrice()) ?> ₽</dd>
+            <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']) ?> ₽</dd>
         </dl>
     <?php } ?>
     <div class="b-checkbox b-checkbox--one-click">
