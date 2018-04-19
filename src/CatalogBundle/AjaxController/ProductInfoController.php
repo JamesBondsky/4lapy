@@ -118,8 +118,7 @@ class ProductInfoController extends Controller
                     $response['products'][$product->getId()][$offer->getId()] = [
                         'available' => $offer->isAvailable(),
                         'byRequest' => $offer->isByRequest(),
-                        'pickup' => $product->isPickupAvailable(),
-                        'delivery' => $product->isDeliveryAvailable(),
+                        'pickup' => $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
                         'price' => $offer->getPrice(),
                         'oldPrice' => $offer->getOldPrice() ?: $offer->getPrice(),
                         'inCart' => $cartItems[$offer->getId()] ?? 0

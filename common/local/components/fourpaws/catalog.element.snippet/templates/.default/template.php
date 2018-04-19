@@ -167,23 +167,6 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 <div class="b-common-item__country">
                     Страна производства <strong><?= $product->getCountry()->getName() ?></strong>
                 </div>
-            <?php }
-
-            if ($currentOffer->isByRequest()) { ?>
-                <div class="b-common-item__order">
-                    Только под заказ
-                </div>
-                <?php
-            } ?>
-            <?php if ($currentOffer->getProduct()->isDeliveryAvailable()) { ?>
-                <div class="b-common-item__pickup">
-                    Доставка
-                </div>
-            <?php } ?>
-            <?php if ($currentOffer->getProduct()->isPickupAvailable()) { ?>
-                <div class="b-common-item__pickup">
-                    Самовывоз
-                </div>
             <?php } ?>
         </div>
         <?php $offerId = $currentOffer->getId();
@@ -223,25 +206,16 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         //
         ?>
         <div class="b-common-item__additional-information">
-            <div class="b-common-item__benefin js-sale-block" style="display: none">
+            <div class="b-common-item__benefin js-sale-block">
                 <span class="b-common-item__prev-price js-sale-origin">
-                    <?= $currentOffer->getOldPrice() ?>
-                    <span class="b-ruble b-ruble--prev-price">₽</span>
+                    <span class="b-ruble b-ruble--prev-price"></span>
                 </span>
                 <span class="b-common-item__discount">
-                    <span class="b-common-item__disc">Скидка</span>
-                    <span class="b-common-item__discount-price js-sale-sale">
-                        <?= $currentOffer->getOldPrice() - $currentOffer->getPrice() ?>
-                    </span>
-                    <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span>
+                    <span class="b-common-item__disc"></span>
+                    <span class="b-common-item__discount-price js-sale-sale"></span>
+                    <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
                     </span>
                 </span>
-            </div>
-            <div class="b-common-item__info-wrap" style="display: none">
-                <span class="b-common-item__text">Только под заказ</span>
-            </div>
-            <div class="b-common-item__info-wrap" style="display: none">
-                <span class="b-common-item__text">Самовывоз/span>
             </div>
         </div>
     </div>
