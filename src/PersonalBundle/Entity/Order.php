@@ -171,6 +171,9 @@ class Order extends BaseEntity
     /** @var array */
     protected $statusMain = [];
 
+    /** @var string */
+    protected $manzanaId = [];
+
     /**
      * @return string
      */
@@ -736,5 +739,21 @@ class Order extends BaseEntity
     public function isClosed(): bool
     {
         return \in_array($this->getStatusId(), OrderService::$finalStatuses, true);
+    }
+
+    /**
+     * @return string
+     */
+    public function getManzanaId(): string
+    {
+        return $this->manzanaId;
+    }
+
+    /**
+     * @param string $manzanaId
+     */
+    public function setManzanaId(string $manzanaId): void
+    {
+        $this->manzanaId = $manzanaId;
     }
 }
