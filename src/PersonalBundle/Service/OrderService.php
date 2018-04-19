@@ -170,7 +170,7 @@ class OrderService
                 $order->setStatusId(static::$manzanaFinalStatus);
                 $order->setPrice($cheque->sum);
                 $order->setItemsSum($cheque->sum);
-                $order->setId((int)$cheque->chequeNumber);
+                $order->setManzanaId($cheque->chequeNumber);
                 $items = [];
                 if ($cheque->hasItemsBool()) {
                     $chequeItems = new ArrayCollection($this->manzanaService->getItemsByCheque($cheque->chequeId));
@@ -196,6 +196,9 @@ class OrderService
                             }
                         }
                     }
+                } else {
+                    // пропускаем чеки без товаров
+                    continue;
                 }
                 $order->setItems(new ArrayCollection($items));
                 $orders[$order->getId()] = $order;
