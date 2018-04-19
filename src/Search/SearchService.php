@@ -236,7 +236,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['product.NAME'])
+                ->setFields(['NAME'])
                 ->setType('phrase')
                 ->setAnalyzer('full-text-search')
                 ->setParam('boost', 80.0)
@@ -247,7 +247,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['product.NAME'])
+                ->setFields(['NAME'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
                 ->setAnalyzer('full-text-search')
@@ -260,7 +260,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['product.NAME'])
+                ->setFields(['NAME'])
                 ->setType('best_fields')
                 ->setFuzziness('AUTO')
                 ->setAnalyzer('full-text-search')
@@ -305,18 +305,22 @@ class SearchService implements LoggerAwareInterface
                 ->setParam('_name', 'desc-exact-word')
         );
 
+        /**
+         * Отключено для большей релевантности поиска
+         */
+        /*
         //Нечёткое совпадение с учётом опечаток
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields($textFields)
                 ->setType('best_fields')
-                ->setFuzziness('AUTO')
+                ->setFuzziness(1)
                 ->setAnalyzer('full-text-search')
                 ->setParam('boost', 0.5)
                 ->setParam('_name', 'desc-fuzzy-word')
         );
-
+        */
         return $boolQuery;
     }
 
