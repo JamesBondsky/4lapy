@@ -320,8 +320,8 @@ class Event implements ServiceHandlerInterface
         }
         if (!empty($id) && !empty($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id])) {
             /** для удаления */
-            $fields = $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS'];
-            unset($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS']);
+            $fields = $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id];
+            unset($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id]);
         } else {
             $fields = $event->getParameter('fields');
             /** для обновления, если эти данные не пришли */

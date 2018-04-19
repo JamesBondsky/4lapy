@@ -130,7 +130,7 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 ?>
     <div class="b-product-card__option-product js-weight-default">
-        <?php if ($mainCombinationType && ($offers->count() > 1)) {
+        <?php if ($mainCombinationType && $offers->count() > 0 && $product->isFood()) {
             ?>
             <?php if ($mainCombinationType === 'SIZE') {
                 ?>

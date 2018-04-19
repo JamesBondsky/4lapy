@@ -124,10 +124,12 @@ if ($request->offsetExists('phone')) {
                                 <?= $basketItem->getField('NAME') ?>
                             </span>
                         </span>
+                        <?php if($basketItem->getWeight() > 0){ ?>
                             <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                             <span class="b-common-item__name-value">Вес: </span>
-                             <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
-                        </span>
+                                 <span class="b-common-item__name-value">Вес: </span>
+                                 <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
+                            </span>
+                        <?php } ?>
                             <?php if ($useOffer) {
                                 $color = $offer->getColor();
                                 if ($color !== null) { ?>
@@ -242,7 +244,7 @@ if ($request->offsetExists('phone')) {
         <dl class="b-popup-one-click__result">
             <dt class="b-popup-one-click__result-dt">
                 Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
-                    ['товар', 'товара', 'товаров']) ?> (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
+                    ['товар', 'товара', 'товаров']) ?> <?php if($arResult['BASKET_WEIGHT'] > 0){ ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)<?php } ?>
             </dt>
             <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']) ?> ₽</dd>
         </dl>

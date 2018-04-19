@@ -87,7 +87,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red"><?= $share->getName() ?></span>
             <?php } ?>
         </div>
-        <?php if ($offers->count() > 0) {
+        <?php if ($offers->count() > 0 && $product->isFood()) {
 
             $mainCombinationType = '';
             if ($currentOffer->getClothingSize()) {
