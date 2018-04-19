@@ -128,6 +128,7 @@ class ProductInfoController extends Controller
             }
 
             if ($currentOffer) {
+                ob_start();
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.product.delivery.info',
                     'detail',
