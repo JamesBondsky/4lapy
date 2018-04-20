@@ -9,10 +9,11 @@ final class ParameterBag
      */
     private $parameters;
     
-    public function __construct(array $parameters)
+    public function __construct(array $parameters, array $skipKeys = [])
     {
         foreach ($parameters as $k => $v) {
-            if (!$v) {
+            /** @todo скипы сделать красиво */
+            if (!$v && !\in_array($k, $skipKeys, true)) {
                 continue;
             }
             

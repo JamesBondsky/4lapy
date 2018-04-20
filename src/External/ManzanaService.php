@@ -225,15 +225,19 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function updateContact(Client $contact): Client
     {
         /** @noinspection PhpUndefinedMethodInspection */
-        $bag = new ParameterBag($this->serializer->toArray($contact));
+        $bag = new ParameterBag($this->serializer->toArray($contact), ['ff_bird', 'ff_cat', 'ff_dog', 'ff_fish', 'ff_rodent', 'ff_others']);
 
         try {
+            $this->logger->debug(var_export($bag, true));
+            $this->logger->debug(var_export($bag->getParameters(), true));
             $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
+            $this->logger->debug(var_export($rawResult, true));
             $result = ResultXmlFactory::getContactResultFromXml($this->serializer, $rawResult);
-
+//            $this->logger->debug(var_export($result, true));
             if ($result->isError()) {
                 throw new ContactUpdateException($result->getResult());
             }
+            $this->logger->debug('yes');
             $contact->contactId = $result->getContactId();
         } catch (ContactUpdateException $e) {
             throw new ContactUpdateException($e->getMessage());

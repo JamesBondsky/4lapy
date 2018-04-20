@@ -9,9 +9,15 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Detach;
 
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
+use Exception;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\RuntimeException;
 
 /**
@@ -21,15 +27,13 @@ use FourPaws\SaleBundle\Exception\RuntimeException;
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     /**
-     *
-     *
-     * @throws \FourPaws\SaleBundle\Exception\RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Exception
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     * @throws BitrixProxyException
+     * @throws ObjectNotFoundException
+     * @throws LoaderException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
      */
     public function processOrder(): void
     {
@@ -42,6 +46,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             return;
         }
         $applyResult = $discount->getApplyResult(true);
+
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketId => $discounts) {
                 if (is_iterable($discounts)) {
@@ -52,7 +57,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             && isset($params['discountType'])
                             && $params['discountType'] === 'DETACH'
                         ) {
-
                             $applyCount = (int)$params['params']['apply_count'];
                             $percent = (int)$params['params']['discount_value'];
                             /** @var BasketItem $basketItem */
@@ -82,7 +86,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                     /** @noinspection PhpInternalEntityUsedInspection */
                                     $newBasketItem->setFieldsNoDemand([
                                         'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
-                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price
                                     ]);
                                 } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
                                     //Просто проставляем поля

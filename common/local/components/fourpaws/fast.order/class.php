@@ -177,19 +177,6 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
 
     /**
      * @param Offer $offer
-     * @param int   $quantity
-     *
-     * @return float
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     */
-    public function getItemBonus(Offer $offer, int $quantity = 1): float
-    {
-        return $this->basketService->getItemBonus($offer, $quantity);
-    }
-
-    /**
-     * @param Offer $offer
      *
      * @param bool  $showToday
      *
@@ -223,6 +210,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $dates[0] = $showToday ? 'Сегодня' : '';
             }
         }
+
         if (!empty($dates)) {
             /** @var Date $minDate */
             $minDate = $dates[min(array_keys($dates))];
@@ -232,6 +220,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $deliveryDate = $minDate;
             }
         }
+
         return $deliveryDate;
     }
 
