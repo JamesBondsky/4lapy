@@ -105,7 +105,7 @@ class NotificationService implements LoggerAwareInterface
         if (static::$isSending) {
             return;
         }
-        static::$isSending = true;
+
         /**
          * Заказ не должен быть с оплатой "онлайн"
          */
@@ -116,6 +116,8 @@ class NotificationService implements LoggerAwareInterface
         if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
             return;
         }
+
+        static::$isSending = true;
 
         try {
             if ($transactionId = $this->emailService->sendOrderNewEmail($order)) {
@@ -166,11 +168,11 @@ class NotificationService implements LoggerAwareInterface
         if (static::$isSending) {
             return;
         }
-        static::$isSending = true;
+
         /**
          * Заказ должен быть с оплатой "онлайн"
          */
-        if ($this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
+        if (!$this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
             return;
         }
 
@@ -181,6 +183,8 @@ class NotificationService implements LoggerAwareInterface
         if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
             return;
         }
+
+        static::$isSending = true;
 
         try {
             if ($transactionId = $this->emailService->sendOrderNewEmail($order)) {
@@ -204,11 +208,12 @@ class NotificationService implements LoggerAwareInterface
         if (static::$isSending) {
             return;
         }
-        static::$isSending = true;
 
         if (!$order->isCanceled()) {
             return;
         }
+
+        static::$isSending = true;
 
         $parameters = $this->getOrderData($order);
 
@@ -228,11 +233,12 @@ class NotificationService implements LoggerAwareInterface
         if (static::$isSending) {
             return;
         }
-        static::$isSending = true;
 
         if ($order->isCanceled()) {
             return;
         }
+
+        static::$isSending = true;
 
         $status = $order->getField('STATUS_ID');
         $parameters = $this->getOrderData($order);
