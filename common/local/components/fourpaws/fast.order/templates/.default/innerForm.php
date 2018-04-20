@@ -11,6 +11,8 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\UserBundle\Entity\User;
 
+Manager::disableProcessingFinalAction();
+
 /** @global \FourPaws\Components\FourPawsFastOrderComponent $component */
 
 $isAuth = $arResult['IS_AUTH'];
