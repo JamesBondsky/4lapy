@@ -297,14 +297,21 @@ class BasketService implements LoggerAwareInterface
     /**
      * Возвращает OfferCollection содержащих товары корзины и возможные подарки
      *
+     * @param bool $renew
+     *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     *
      * @return OfferCollection
+     *
      */
-    public function getOfferCollection(): OfferCollection
+    public function getOfferCollection(bool $renew = false): OfferCollection
     {
-        return $this->offerCollection ?? $this->loadOfferCollection();
+        return null === $this->offerCollection || $renew ? $this->loadOfferCollection() : $this->offerCollection;
     }
 
     /**
+     *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
      * @return OfferCollection
      */
