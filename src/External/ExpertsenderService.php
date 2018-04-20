@@ -407,6 +407,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws ExpertsenderServiceException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      * @return int
      */
     public function sendOrderNewEmail(Order $order): int
@@ -421,9 +422,10 @@ class ExpertsenderService implements LoggerAwareInterface
             'NAME',
             'DELIVERY_DATE',
             'PHONE',
-            'BONUS_COUNT',
             'USER_REGISTERED',
         ]);
+
+        $properties['BONUS_COUNT'] = $orderService->getOrderBonusSum($order);
 
         $address = $orderService->getOrderDeliveryAddress($order);
         if ($orderService->getOrderDeliveryCode($order) === DeliveryService::INNER_PICKUP_CODE) {

@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -51,6 +52,13 @@ class NotificationService implements LoggerAwareInterface
     protected $emailService;
 
     /**
+     * Для предотвращения зацикливания отправки писем
+     *
+     * @var bool
+     */
+    protected static $isSending = false;
+
+    /**
      * NotificationService constructor.
      * @param OrderService $orderService
      * @param SmsService $smsService
@@ -90,9 +98,14 @@ class NotificationService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      */
     public function sendNewOrderMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+        static::$isSending = true;
         /**
          * Заказ не должен быть с оплатой "онлайн"
          */
@@ -132,12 +145,12 @@ class NotificationService implements LoggerAwareInterface
                 break;
         }
 
-
         if ($smsTemplate) {
             $this->sendSms($smsTemplate, $parameters, true);
         }
 
         $this->sendNewUserSms($parameters);
+        static::$isSending = false;
     }
 
     /**
@@ -146,9 +159,14 @@ class NotificationService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws ApplicationCreateException
+     * @throws SystemException
      */
     public function sendOrderPaymentMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+        static::$isSending = true;
         /**
          * Заказ должен быть с оплатой "онлайн"
          */
@@ -175,6 +193,7 @@ class NotificationService implements LoggerAwareInterface
         $parameters = $this->getOrderData($order);
         $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
         $this->sendNewUserSms($parameters);
+        static::$isSending = false;
     }
 
     /**
@@ -182,6 +201,11 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendOrderCancelMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+        static::$isSending = true;
+
         if (!$order->isCanceled()) {
             return;
         }
@@ -192,6 +216,7 @@ class NotificationService implements LoggerAwareInterface
             'FourPawsSaleBundle:Sms:order.canceled.html.php',
             $parameters
         );
+        static::$isSending = false;
     }
 
     /**
@@ -200,6 +225,11 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendOrderStatusMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+        static::$isSending = true;
+
         if ($order->isCanceled()) {
             return;
         }
@@ -254,6 +284,8 @@ class NotificationService implements LoggerAwareInterface
                 $parameters
             );
         }
+
+        static::$isSending = false;
     }
 
     /**
@@ -318,7 +350,7 @@ class NotificationService implements LoggerAwareInterface
             }
         } catch (\Exception $e) {
             $this->log()->error($e->getMessage());
-            return [];
+            $result = [];
         }
 
         return $result;
