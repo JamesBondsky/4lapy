@@ -7,6 +7,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
@@ -20,6 +21,7 @@ use FourPaws\External\Exception\ExpertsenderNotAllowedException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
@@ -423,7 +425,15 @@ class ExpertsenderService implements LoggerAwareInterface
             'DELIVERY_DATE',
             'PHONE',
             'USER_REGISTERED',
+            'COM_WAY'
         ]);
+
+        /**
+         * Не отправляем письма для заказов в 1 клик
+         */
+        if ($properties['COM_WAY'] === OrderPropertyService::COMMUNICATION_ONE_CLICK) {
+            return 0;
+        }
 
         $properties['BONUS_COUNT'] = $orderService->getOrderBonusSum($order);
 
@@ -515,12 +525,22 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @return int
      * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @throws ExpertsenderServiceException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      */
     public function sendOrderCompleteEmail(Order $order): int
     {
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+
+        /**
+         * Не отправляем письма для заказов в 1 клик
+         */
+        if ($orderService->getOrderPropertyByCode($order, 'COM_WAY')->getValue() === OrderPropertyService::COMMUNICATION_ONE_CLICK) {
+            return 0;
+        }
 
         if (!$email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue()) {
             throw new ExpertsenderServiceException('order email is empty');

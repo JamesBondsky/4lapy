@@ -7,10 +7,10 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
-use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
@@ -22,8 +22,6 @@ use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
-use FourPaws\SaleBundle\Exception\InvalidArgumentException;
-use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -128,6 +126,7 @@ class Event implements ServiceHandlerInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      */
     public static function sendNewOrderMessage(BitrixEvent $event): void
     {
@@ -161,6 +160,7 @@ class Event implements ServiceHandlerInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      */
     public static function sendOrderPaymentMessage(BitrixEvent $event): void
     {

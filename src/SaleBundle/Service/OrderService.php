@@ -31,6 +31,8 @@ use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -382,7 +384,8 @@ class OrderService implements LoggerAwareInterface
                     break;
                 case 'DELIVERY_PLACE_CODE':
                     if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
-                        $value = $storage->getDeliveryPlaceCode();
+                        /** @var PickupResult $selectedDelivery */
+                        $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
                     } else {
                         $value = $selectedDelivery->getSelectedStore()->getXmlId();
                     }
@@ -391,7 +394,8 @@ class OrderService implements LoggerAwareInterface
                     if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
                         continue 2;
                     }
-                    $value = $storage->getDeliveryPlaceCode();
+                    /** @var DpdPickupResult $selectedDelivery */
+                    $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
                     break;
                 case 'DELIVERY_DATE':
                     $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');

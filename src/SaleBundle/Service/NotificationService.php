@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
@@ -120,10 +121,11 @@ class NotificationService implements LoggerAwareInterface
         static::$isSending = true;
 
         try {
-            if ($transactionId = $this->emailService->sendOrderNewEmail($order)) {
-                $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            $transactionId = $this->emailService->sendOrderNewEmail($order);
+            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            if ($transactionId) {
+                $this->logMessage($order, $transactionId);
             }
-            $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
             $this->log()->error($e->getMessage());
         }
@@ -187,10 +189,11 @@ class NotificationService implements LoggerAwareInterface
         static::$isSending = true;
 
         try {
-            if ($transactionId = $this->emailService->sendOrderNewEmail($order)) {
-                $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            $transactionId = $this->emailService->sendOrderNewEmail($order);
+            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            if ($transactionId) {
+                $this->logMessage($order, $transactionId);
             }
-            $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
             $this->log()->error($e->getMessage());
         }
@@ -226,7 +229,11 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     *
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      */
     public function sendOrderStatusMessage(Order $order): void
     {
@@ -269,16 +276,15 @@ class NotificationService implements LoggerAwareInterface
                 break;
         }
 
-        if ($sendCompleteEmail && $this->orderService->getOrderPropertyByCode(
-                $order,
-                'COMPLETE_MESSAGE_SENT'
-            )->getValue() !== BitrixUtils::BX_BOOL_TRUE
+        if ($sendCompleteEmail &&
+            $this->getOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT') !== BitrixUtils::BX_BOOL_TRUE
         ) {
             try {
-                if ($transactionId = $this->emailService->sendOrderCompleteEmail($order)) {
-                    $this->setOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT');
+                $transactionId = $this->emailService->sendOrderCompleteEmail($order);
+                $this->setOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT');
+                if ($transactionId) {
+                    $this->logMessage($order, $transactionId);
                 }
-                $this->logMessage($order, $transactionId);
             } catch (ExpertsenderServiceException $e) {
                 $this->log()->error($e->getMessage());
             }
