@@ -41,12 +41,14 @@ class ManzanaReferralConsumer extends ManzanaConsumerBase
                 $message->getBody()
             ));
 
-            return false;
+            sleep(30);
+            $this->manzanaService->addReferralByBonusCardAsync($referralParams);
         } catch (ReferralAddException | Exception $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',
                 $e->getMessage()
             ));
+            /** здесь не перезапускаем потому что невалидные данные или ошибка апдейта - надо вникать в логи */
         }
 
         return true;

@@ -153,7 +153,19 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 </div>
             </div>
             <?php
-        } ?>
+        } else { ?>
+            <div class="b-weight-container b-weight-container--list">
+                <ul class="b-weight-container__list">
+                    <li class="b-weight-container__item" style="display: none">
+                        <a href="javascript:void(0)"
+                           class="b-weight-container__link js-price active-link"
+                           data-price="<?= ceil($currentOffer->getPrice()) ?>" data-offerid="<?= $currentOffer->getId() ?>"
+                           data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                           data-link="<?= $currentOffer->getLink() ?>"></a>
+                    </li>
+                </ul>
+            </div>
+        <?php } ?>
         <div class="b-common-item__moreinfo">
             <?php if ($currentOffer->getMultiplicity() > 1) { ?>
                 <div class="b-common-item__packing">
