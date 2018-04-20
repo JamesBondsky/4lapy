@@ -345,6 +345,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedShop();
 
+            if ($pickup->getSelectedShop()->getMetro()) {
+                $this->arResult['METRO'] = $this->storeService->getMetroInfo(
+                    ['ID' => $pickup->getSelectedShop()->getMetro()]
+                );
+            }
             $storage->setSplit(true);
             $storage->setDeliveryId($pickup->getDeliveryId());
 
