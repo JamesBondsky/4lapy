@@ -100,8 +100,14 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
+        if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
+            return;
+        }
+
         try {
-            $transactionId = $this->emailService->sendOrderNewEmail($order);
+            if ($transactionId = $this->emailService->sendOrderNewEmail($order)) {
+                $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            }
             $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
             $this->log()->error($e->getMessage());
@@ -154,8 +160,14 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
+        if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
+            return;
+        }
+
         try {
-            $transactionId = $this->emailService->sendOrderNewEmail($order);
+            if ($transactionId = $this->emailService->sendOrderNewEmail($order)) {
+                $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            }
             $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
             $this->log()->error($e->getMessage());
@@ -228,15 +240,7 @@ class NotificationService implements LoggerAwareInterface
         ) {
             try {
                 if ($transactionId = $this->emailService->sendOrderCompleteEmail($order)) {
-                    $this->orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
-                    try {
-                        $order->save();
-                    } catch (\Exception $e) {
-                        $this->log()->error(sprintf('failed to update order property: %s', $e->getMessage()), [
-                            'property' => 'COMPLETE_MESSAGE_SENT',
-                            'order' => $order->getId()
-                        ]);
-                    }
+                    $this->setOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT');
                 }
                 $this->logMessage($order, $transactionId);
             } catch (ExpertsenderServiceException $e) {
@@ -351,5 +355,38 @@ class NotificationService implements LoggerAwareInterface
                 $email
             )
         );
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @return string
+     */
+    protected function getOrderMessageFlag(Order $order, string $code): string
+    {
+        $propValue = $this->orderService->getOrderPropertyByCode(
+            $order,
+                $code
+        )->getValue();
+
+        return ($propValue === BitrixUtils::BX_BOOL_TRUE) ? $propValue : BitrixUtils::BX_BOOL_FALSE;
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     */
+    protected function setOrderMessageFlag(Order $order, string $code): void
+    {
+        $this->orderService->setOrderPropertyByCode($order, $code, 'Y');
+        try {
+            $order->save();
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to update order property: %s', $e->getMessage()), [
+                'property' => $code,
+                'order' => $order->getId()
+            ]);
+        }
     }
 }

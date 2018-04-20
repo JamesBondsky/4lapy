@@ -9,6 +9,7 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\PaymentCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -68,9 +69,15 @@ class Event implements ServiceHandlerInterface
         ###   Обработчики скидок EOF   ###
 
         /** отправка email */
+        // новый заказ
         self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
+        // смена платежной системы у заказа
+        self::initHandler('OnSalePaymentEntitySaved', [static::class, 'sendNewOrderMessage']);
+        // оплата заказа
         self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);
+        // отмена заказа
         self::initHandler('OnSaleOrderCanceled', [static::class, 'sendOrderCancelMessage']);
+        // смена статуса заказа
         self::initHandler('OnSaleStatusOrderChange', [static::class, 'sendOrderStatusMessage']);
 
         /** обновление бонусного счета пользователя и бонусного процента пользователя */
@@ -124,10 +131,19 @@ class Event implements ServiceHandlerInterface
      */
     public static function sendNewOrderMessage(BitrixEvent $event): void
     {
-        /** @var Order $order */
-        $order = $event->getParameter('ENTITY');
-        $isNew = $event->getParameter('IS_NEW');
-        if (!$isNew) {
+        $entity = $event->getParameter('ENTITY');
+
+        if ($entity instanceof Order) {
+            $isNew = $event->getParameter('IS_NEW');
+            if (!$isNew) {
+                return;
+            }
+            $order = $entity;
+        } elseif ($entity instanceof Payment) {
+            /** @var PaymentCollection $collection */
+            $collection = $entity->getCollection();
+            $order = $collection->getOrder();
+        } else {
             return;
         }
 
