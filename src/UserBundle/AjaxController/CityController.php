@@ -58,7 +58,7 @@ class CityController extends Controller
         try {
             $city = $this->userService->setSelectedCity($code, $name, $regionName);
             $response = JsonSuccessResponse::createWithData(
-                'Город успешно выбран.',
+                'Условия приобретения товаров будут пересчитаны после изменения выбранного региона',
                 $city,
                 200,
                 ['reload' => true]
