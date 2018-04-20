@@ -637,8 +637,8 @@ class StoreService implements LoggerAwareInterface
      */
     public function getActiveStoresByProduct(int $offerId): StoreCollection
     {
-        $this->getOfferById($offerId);
-        if ($pickupDelivery = $this->getPickupDelivery()) {
+        $offer = $this->getOfferById($offerId);
+        if ($offer->isAvailable() && $pickupDelivery = $this->getPickupDelivery($offer)) {
             $result = $pickupDelivery->getBestShops();
         } else {
             $result = new StoreCollection();
@@ -765,26 +765,41 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
+     * @param Offer|null $offer
+     *
+     * @return PickupResultInterface|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws DeliveryNotFoundException
      * @throws LoaderException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws UserMessageException
-     * @throws DeliveryNotFoundException
-     * @return PickupResultInterface|null
      */
-    protected function getPickupDelivery(): ?PickupResultInterface
+    protected function getPickupDelivery(Offer $offer = null): ?PickupResultInterface
     {
         if (!$this->pickupDelivery) {
-            $deliveries = $this->deliveryService->getByProduct(reset($this->offers));
-
-            foreach ($deliveries as $delivery) {
-                if ($this->deliveryService->isInnerPickup($delivery)) {
-                    $this->pickupDelivery = $delivery;
-                    break;
+            $selectedOffer = null;
+            if($offer !== null){
+                $selectedOffer = $offer;
+            }
+            else{
+                if(!empty($this->offers)) {
+                    $selectedOffer = reset($this->offers);
                 }
+            }
+            if($selectedOffer !== null) {
+                $deliveries = $this->deliveryService->getByProduct($selectedOffer);
+
+                foreach ($deliveries as $delivery) {
+                    if ($this->deliveryService->isInnerPickup($delivery)) {
+                        $this->pickupDelivery = $delivery;
+                        break;
+                    }
+                }
+            } else {
+                $this->pickupDelivery = null;
             }
         }
 
