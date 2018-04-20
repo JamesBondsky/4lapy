@@ -8,6 +8,7 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 
 ?>
 <li class="b-accordion-order-item js-permutation-li js-item-content">
@@ -73,8 +74,27 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
         <div class="b-accordion-order-item__pay">
             <div class="b-accordion-order-item__not-pay">
                 <?php $payment = $order->getPayment();
-                $paymentName = $payment->getCode() === 'cash' ? 'наличными' : $payment->getCode() === 'card-online' ? 'онлайн' : 'банковской картой';
-                echo $order->getPayPrefixText() . ' ' . $paymentName ?>
+                $paymentCode = $payment->getCode();
+                $paymentName = '';
+                if($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
+                    /** т.к. неоплаченных заказов будет не очень мног оу пользователя - оставим расчет здесь */
+                    /** @var \FourPaws\SaleBundle\Service\OrderService $orderService */
+                    $orderService = \FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\SaleBundle\Service\OrderService::class);
+                    $bitrixOrder = \Bitrix\Sale\Order::load($order->getId());
+                    if($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
+                        $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
+                        if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                            $paymentName = 'Постоплата';
+                        }
+                    }
+                }
+                if(!empty($paymentName)) {
+                    echo $paymentName;
+                }
+                else{
+                    $paymentName = $paymentCode === 'cash' ? 'наличными' : $paymentCode === 'card-online' ? 'онлайн' : 'банковской картой';
+                    echo $order->getPayPrefixText() . ' ' . $paymentName;
+                } ?>
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
@@ -97,9 +117,9 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                     </a>
                 </div>
             <?php }*/ ?>
-            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full"><?= $order->getFormatedPrice() ?>
-                <span
-                        class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
+            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
+                <?= $order->getFormatedPrice() ?>
+                <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
             <?php /** @todo подписаться на доставку */
             if (!$order->isManzana()) { ?>
