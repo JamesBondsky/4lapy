@@ -116,13 +116,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
-            $metroList = $this->getMetroInfo($stores);
 
             $avgGpsN = 0;
             $avgGpsS = 0;
 
             $showTime = $this->deliveryService->isInnerPickup($pickupDelivery);
             $bestShops = $pickupDelivery->getBestShops();
+            $metroList = $this->getMetroInfo($bestShops);
 
             if (!empty($params['filter'])) {
                 /**
@@ -252,15 +252,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $metroIds = [];
         /** @var Store $store */
         foreach ($stores as $store) {
-            /** @noinspection SlowArrayOperationsInLoopInspection */
-            $metro = $store->getMetro();
-            if ($metro > 0) {
-                $metroIds[] = $metro;
-            }
+            $metroIds[] = $store->getMetro();
         }
+
         $metro = [];
+        $metroIds = \array_filter($metroIds);
         if (!empty($metroIds)) {
-            $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
+            $metro = $this->storeService->getMetroInfo(['ID' => \array_unique($metroIds)]);
         }
 
         return $metro;
