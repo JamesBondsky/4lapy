@@ -43,7 +43,7 @@ class CityController extends Controller
         $code = $request->get('code');
         $codeList = json_decode($code, true);
         if (\is_array($codeList) || \is_array($code)) {
-            if(\is_array($codeList)){
+            if(\is_array($codeList) && !empty($codeList)){
                 $code = $codeList;
             }
             $dadataLocationAdapter = new DaDataLocationAdapter();
