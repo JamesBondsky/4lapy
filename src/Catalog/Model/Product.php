@@ -1940,8 +1940,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (null === $this->fullDeliveryAvailability) {
             $isByRequest = $this->isByRequest();
-            $canDeliver = $this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator()
-                || $this->isDeliveryAreaRestrict();
+
+            $canDeliver = !($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator()
+                || $this->isDeliveryAreaRestrict());
             /** @var DeliveryService $deliveryService */
             $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
             $zones = array_keys($deliveryService->getAllZones());
