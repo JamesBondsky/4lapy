@@ -80,7 +80,6 @@ class ProductInfoController extends Controller
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ApplicationCreateException
-     * @throws BitrixProxyException
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
@@ -112,15 +111,18 @@ class ProductInfoController extends Controller
             foreach ($searchResult->getProductCollection() as $product) {
                 /** @var Offer $offer */
                 foreach ($product->getOffers() as $offer) {
+                    $offer->setProduct($product); /* @todo костыль - в elastic не проставляется ссылка на товар у оффера */
                     if ($offerId && $offer->getId() === $offerId) {
                         $currentOffer = $offer;
                     }
+                    $price = ceil($offer->getPrice());
+                    $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
                     $response['products'][$product->getId()][$offer->getId()] = [
                         'available' => $offer->isAvailable(),
                         'byRequest' => $offer->isByRequest(),
                         'pickup' => $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
-                        'price' => $offer->getPrice(),
-                        'oldPrice' => $offer->getOldPrice() ?: $offer->getPrice(),
+                        'price' => $price,
+                        'oldPrice' => $oldPrice,
                         'inCart' => $cartItems[$offer->getId()] ?? 0
                     ];
                 }
