@@ -41,7 +41,11 @@ class CityController extends Controller
     public function setAction(Request $request): JsonResponse
     {
         $code = $request->get('code');
-        if (\is_array($code)) {
+        $codeList = json_decode($code, true);
+        if (\is_array($codeList) || \is_array($code)) {
+            if(\is_array($codeList) && !empty($codeList)){
+                $code = $codeList;
+            }
             $dadataLocationAdapter = new DaDataLocationAdapter();
             /** @var BitrixLocation $bitrixLocation */
             $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
