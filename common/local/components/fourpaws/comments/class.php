@@ -40,15 +40,13 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class CCommentsComponent extends \CBitrixComponent
 {
     /**
-     * @var DataManager $hlEntity
-     */
-    private $hlEntity;
-
-    /**
      * @var UserAuthorizationInterface $userService
      */
     public $userAuthService;
-
+    /**
+     * @var DataManager $hlEntity
+     */
+    private $hlEntity;
     /**
      * @var CurrentUserProviderInterface $userService
      */
@@ -82,9 +80,9 @@ class CCommentsComponent extends \CBitrixComponent
         $class = new static();
         $class->setUserBundle();
         $class->arResult['AUTH'] = $class->userAuthService->isAuthorized();
-        if(!$class->arResult['AUTH']){
+        if (!$class->arResult['AUTH']) {
             $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-            if(!$recaptchaService->checkCaptcha()){
+            if (!$recaptchaService->checkCaptcha()) {
                 throw new CaptchaErrorException('Капча не валидна');
             }
         }
@@ -306,50 +304,49 @@ class CCommentsComponent extends \CBitrixComponent
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
-            $userRepository = $this->userCurrentUserService->getUserRepository();
-            $filter = [
-                'LOGIC' => 'OR',
-            ];
-            if (!empty($data['EMAIL'])) {
-                if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
-                    throw new WrongEmailException(
-                        'Введен некорректный email'
-                    );
-                }
-                $filter[] = [
-                    '=EMAIL' => $data['EMAIL'],
+            if (!$addNotAuth) {
+                $userRepository = $this->userCurrentUserService->getUserRepository();
+                $filter = [
+                    'LOGIC' => 'OR',
                 ];
-            }
-            if (!empty($data['PHONE']) && PhoneHelper::isPhone($data['PHONE'])) {
-                $filter[] = [
-                    '=PERSONAL_PHONE' => PhoneHelper::normalizePhone($data['PHONE']),
-                ];
-            }
-            if (count($filter) > 1) {
-                $users = $userRepository->findBy($filter);
-                if (\is_array($users) && !empty($users)) {
-                    foreach ($users as $user) {
-                        if ($user->equalPassword($data['PASSWORD'])) {
-                            $data['UF_USER_ID'] = $user->getId();
-                            break;
-                        }
+                if (!empty($data['EMAIL'])) {
+                    if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
+                        throw new WrongEmailException(
+                            'Введен некорректный email'
+                        );
                     }
+                    $filter[] = [
+                        '=EMAIL' => $data['EMAIL'],
+                    ];
                 }
-                else{
-                    throw new UserNotFoundAddCommentException(
-                        'Пользователь не найден, либо данные введены неверно'
-                    );
+                if (!empty($data['PHONE']) && PhoneHelper::isPhone($data['PHONE'])) {
+                    $filter[] = [
+                        '=PERSONAL_PHONE' => PhoneHelper::normalizePhone($data['PHONE']),
+                    ];
                 }
-                if (empty($data['UF_USER_ID'])) {
-                    /** разрешено добавлять анонимно - включается флагов в параметрах метода */
-                    if(!$addNotAuth) {
+                if (count($filter) > 1) {
+                    $users = $userRepository->findBy($filter);
+                    if (\is_array($users) && !empty($users)) {
+                        foreach ($users as $user) {
+                            if ($user->equalPassword($data['PASSWORD'])) {
+                                $data['UF_USER_ID'] = $user->getId();
+                                break;
+                            }
+                        }
+                    } else {
+                        throw new UserNotFoundAddCommentException(
+                            'Пользователь не найден, либо данные введены неверно'
+                        );
+                    }
+                    if (empty($data['UF_USER_ID'])) {
+                        /** разрешено добавлять анонимно - включается флагов в параметрах метода */
                         throw new WrongPasswordException(
                             'Неверный пароль'
                         );
                     }
+                } else {
+                    throw new EmptyUserDataComments('Телефон или email обязательны');
                 }
-            } else {
-                throw new EmptyUserDataComments('Телефон или email обязательны');
             }
         }
         unset($data['PHONE'], $data['EMAIL'], $data['PASSWORD']);
