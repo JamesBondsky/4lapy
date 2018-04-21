@@ -1,7 +1,6 @@
 <?php
 
 use Bitrix\Main\Application;
-use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as SymfoniApplication;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -9,14 +8,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $request = Application::getInstance()->getContext()->getRequest();
-
-$uri = new Uri($request->getRequestUri());
-$fragment = $uri->getFragment();
-if ($fragment === 'new-review') { ?>
+if ($request->get('new-review') === 'y') { ?>
     <script>
         $(function () {
-            $('div.b-tab-title__list a[data-tab=reviews]').click();
-            $('div.b-tab-content div[data-tab-content=reviews] button.js-add-review').click();
+            if($('ul.b-tab-title__list a[data-tab=reviews]').length > 0) {
+                <?php /** без задержки не работает */?>
+                setTimeout(function () {
+                    $('ul.b-tab-title__list a[data-tab=reviews]').trigger('click');
+                    if($('div.b-tab-content div[data-tab-content=reviews] button.js-add-review').length > 0) {
+                        $('div.b-tab-content div[data-tab-content=reviews] button.js-add-review').trigger('click');
+                    }
+                }, 50);
+            }
         });
     </script>
 <?php }
