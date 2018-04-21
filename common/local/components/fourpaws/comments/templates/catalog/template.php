@@ -58,10 +58,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 <p class="b-comment-block__info">Пока никто не оставил комментарии.</p>
             </div>
         <?php } ?>
-        <div class="b-comment-block__auth--block js-comments-auth-block-<?= $uniqueCommentString ?>"
-             style="display: none">
-            <p class="b-comment-block__auth"><a href="#">Авторизуйтесь</a> , чтобы написать комментарий.</p>
-        </div>
         <?php /** @noinspection PhpUnhandledExceptionInspection */
         $frame->beginStub(); ?>
         <div class="b-comment-block__info--block">
