@@ -13,6 +13,7 @@
  * @global \CMain $APPLICATION
  */
 
+use Bitrix\Main\Web\Uri;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
@@ -68,7 +69,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                     'ITEMS_COUNT' => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
                     'TYPE' => 'catalog',
-                    'ITEM_LINK' => $product->getDetailPageUrl() . '#new-review',
+                    'ITEM_LINK' => (new Uri($product->getDetailPageUrl()))->addParams(['new-review' => 'y'])->getUri(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
