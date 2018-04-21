@@ -29,6 +29,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\WrongEmailException;
+use FourPaws\UserBundle\Exception\WrongPasswordException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Psr\Cache\InvalidArgumentException;
@@ -55,7 +56,9 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * @param bool $addNotAuth
+     *
      * @return bool
+     * @throws WrongPasswordException
      * @throws ObjectPropertyException
      * @throws ArgumentException
      * @throws UserNotFoundAddCommentException
@@ -285,6 +288,7 @@ class CCommentsComponent extends \CBitrixComponent
     /**
      * @param bool $addNotAuth
      *
+     * @throws WrongPasswordException
      * @throws UserNotFoundAddCommentException
      * @throws NotAuthorizedException
      * @throws \Exception
@@ -331,11 +335,16 @@ class CCommentsComponent extends \CBitrixComponent
                         }
                     }
                 }
+                else{
+                    throw new UserNotFoundAddCommentException(
+                        'Пользователь не найден, либо данные введены неверно'
+                    );
+                }
                 if (empty($data['UF_USER_ID'])) {
                     /** разрешено добавлять анонимно - включается флагов в параметрах метода */
                     if(!$addNotAuth) {
-                        throw new UserNotFoundAddCommentException(
-                            'Пользователь не найден, либо данные введены неверно'
+                        throw new WrongPasswordException(
+                            'Неверный пароль'
                         );
                     }
                 }

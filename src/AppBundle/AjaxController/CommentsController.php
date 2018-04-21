@@ -19,9 +19,11 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Exception\CaptchaErrorException;
 use FourPaws\AppBundle\Exception\EmptyUserDataComments;
 use FourPaws\AppBundle\Exception\ErrorAddComment;
+use FourPaws\AppBundle\Exception\UserNotFoundAddCommentException;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Exception\WrongEmailException;
+use FourPaws\UserBundle\Exception\WrongPasswordException;
 use Psr\Cache\InvalidArgumentException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -68,8 +70,10 @@ class CommentsController extends Controller
             }
         } catch (CaptchaErrorException $e) {
             $json = $this->ajaxMess->getFailCaptchaCheckError();
-        }catch (WrongPhoneNumberException $e) {
+        } catch (WrongPhoneNumberException $e) {
             $json = $this->ajaxMess->getWrongPhoneNumberException();
+        } catch (WrongPasswordException $e) {
+            $json = $this->ajaxMess->getWrongPasswordError();
         } catch (UserNotFoundAddCommentException $e) {
             $json = $this->ajaxMess->getUsernameNotFoundException();
         } catch (WrongEmailException $e) {
@@ -78,7 +82,7 @@ class CommentsController extends Controller
             $json = $this->ajaxMess->getEmptyDataError();
         } catch (ErrorAddComment $e) {
             $json = $this->ajaxMess->getAddError();
-        } catch (LoaderException|SystemException|ApplicationCreateException|ServiceCircularReferenceException|\LogicException|\RuntimeException $e) {
+        } catch (LoaderException|SystemException|ApplicationCreateException|ServiceCircularReferenceException|\LogicException|\RuntimeException|\Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }
@@ -104,8 +108,10 @@ class CommentsController extends Controller
             }
         } catch (CaptchaErrorException $e) {
             $json = $this->ajaxMess->getFailCaptchaCheckError();
-        }catch (WrongPhoneNumberException $e) {
+        } catch (WrongPhoneNumberException $e) {
             $json = $this->ajaxMess->getWrongPhoneNumberException();
+        } catch (WrongPasswordException $e) {
+            $json = $this->ajaxMess->getWrongPasswordError();
         } catch (UserNotFoundAddCommentException $e) {
             $json = $this->ajaxMess->getUsernameNotFoundException();
         } catch (WrongEmailException $e) {
@@ -114,7 +120,7 @@ class CommentsController extends Controller
             $json = $this->ajaxMess->getEmptyDataError();
         } catch (ErrorAddComment $e) {
             $json = $this->ajaxMess->getAddError();
-        } catch (LoaderException|SystemException|ApplicationCreateException|ServiceCircularReferenceException|\LogicException|\RuntimeException $e) {
+        } catch (LoaderException|SystemException|ApplicationCreateException|ServiceCircularReferenceException|\LogicException|\RuntimeException|\Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }
