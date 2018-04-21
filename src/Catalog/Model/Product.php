@@ -1862,16 +1862,16 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
              * @var Offer $offer
              */
             foreach ($offers as $i => $offer) {
-                if ($skipZeroPrice && !$offer->getPrice()) {
-                    unset($offers[$i]);
-                    continue;
-                }
                 try {
                     $offer->setProduct($this);
                 } catch (\InvalidArgumentException $e) {
                     /**
                      * Никогда не должна возникнуть такая ситуация
                      */
+                }
+                if ($skipZeroPrice && !$offer->getPrice()) {
+                    unset($offers[$i]);
+                    continue;
                 }
             }
 
