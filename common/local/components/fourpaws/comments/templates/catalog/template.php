@@ -156,7 +156,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                            type="password"
                            name="PASSWORD"
                            value=""
-                           required="required"
                            autocomplete="off"/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -188,6 +187,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 <div class="b-form-review__group">
                     <textarea class="b-form-review__textarea"
                               name="UF_TEXT"
+                              required="required"
                               placeholder="Оставьте ваш отзыв:" minlength="8" maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>

@@ -144,7 +144,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                     <textarea class="b-form-review__textarea"
                               name="UF_TEXT"
                               required="required"
-                              placeholder="Оставьте ваш отзыв" minlength="8" maxlength="1000"></textarea>
+                              placeholder="Оставьте ваш отзыв:" minlength="8" maxlength="1000"></textarea>
                         <div class="b-error"><span class="js-message"></span></div>
                     </div>
                     <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
