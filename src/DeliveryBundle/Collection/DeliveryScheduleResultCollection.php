@@ -5,7 +5,6 @@
 
 namespace FourPaws\DeliveryBundle\Collection;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -20,17 +19,10 @@ class DeliveryScheduleResultCollection extends ArrayCollection
 {
     /**
      * @return DeliveryScheduleResult|null
-     * @throws ArgumentException
-     * @throws NotFoundException
      */
     public function getFastest(): ?DeliveryScheduleResultCollection
     {
-        $senders = $this->getSenders();
-        $collections = [];
-        /** @var Store $sender */
-        foreach ($senders as $sender) {
-            $collections[] = $this->filterBySender($sender);
-        }
+        $collections = $this->splitByLastSenders();
 
         usort(
             $collections,
@@ -41,8 +33,8 @@ class DeliveryScheduleResultCollection extends ArrayCollection
                     return $price2 <=> $price1;
                 }
 
-                $date1 = $collection1->getDate();
-                $date2 = $collection1->getDate();
+                $date1 = $collection1->getDays();
+                $date2 = $collection1->getDays();
                 return $date1 <=> $date2;
             }
         );
@@ -76,7 +68,6 @@ class DeliveryScheduleResultCollection extends ArrayCollection
 
     /**
      * @return StoreCollection
-     * @throws ArgumentException
      * @throws NotFoundException
      */
     public function getReceivers(): StoreCollection
@@ -91,7 +82,6 @@ class DeliveryScheduleResultCollection extends ArrayCollection
     }
 
     /**
-     * @throws ArgumentException
      * @throws NotFoundException
      * @return StoreCollection
      */
@@ -107,19 +97,18 @@ class DeliveryScheduleResultCollection extends ArrayCollection
     }
 
     /**
-     * @return \DateTime
+     * @return int
      */
-    public function getDate(): \DateTime
+    public function getDays(): int
     {
-        $date = new \DateTime();
-        $days = 0;
+        $days = [0];
 
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $days = $item->getScheduleResult()->getDays() > $days ? $item->getScheduleResult()->getDays() : $days;
+            $days[] = $item->getScheduleResult()->getDays();
         }
 
-        return $date->modify(sprintf('+%s days', $days));
+        return max($days);
     }
 
     /**
@@ -149,5 +138,30 @@ class DeliveryScheduleResultCollection extends ArrayCollection
         return $this->filter(function (DeliveryScheduleResult $result) use ($offer) {
             return $result->getOffer()->getId() === $offer->getId();
         });
+    }
+
+    protected function splitByLastSenders(): array
+    {
+        $getLastSender = function (DeliveryScheduleResult $item): ?Store {
+            $route = $item->getScheduleResult()->getRoute();
+            $keys = array_reverse($route->getKeys());
+            return $route->get($keys[1]);
+        };
+
+        $result = [];
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            $lastSender = $getLastSender($item);
+            if (!$lastSender) {
+                continue;
+            }
+            if (null === $result[$lastSender->getXmlId()]) {
+                $result[$lastSender->getXmlId()] = new DeliveryScheduleResultCollection();
+            }
+
+            $result[$lastSender->getXmlId()]->add($item);
+        }
+
+        return $result;
     }
 }

@@ -485,13 +485,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         /** @var Offer $offer */
         foreach ($stockResult->getOffers() as $offer) {
+            $stockResultForOffer = $delayed->filterByOffer($offer);
             /** @var Stock $stock */
             foreach ($offer->getStocks() as $stock) {
                 foreach ($this->getScheduleResults(
                     $stock->getStore(),
                     $store,
                     $offer,
-                    $stock->getAmount()
+                    $stockResultForOffer->getAmount()
                 ) as $result) {
                     $resultCollection->add($result);
                 }
@@ -506,7 +507,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             }
         } else {
             $this->shipmentResults = $resultCollection->getFastest();
-            $date = $this->shipmentResults->getDate();
+
+            $date->modify(sprintf('+%s days', $this->shipmentResults->getDays()));
 
             $delayed = $stockResult->getDelayed();
             foreach ($delayed->getOffers() as $offer) {
@@ -561,6 +563,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectPropertyException
+     * @throws SystemException
      * @return DeliveryScheduleResultCollection
      */
     protected function getScheduleResults(

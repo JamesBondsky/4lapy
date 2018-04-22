@@ -15,11 +15,6 @@ use FourPaws\StoreBundle\Entity\ScheduleResult;
 class DeliveryScheduleResult
 {
     /**
-     * @var Offer
-     */
-    protected $offer;
-
-    /**
      * @var int
      */
     protected $amount;
@@ -28,6 +23,11 @@ class DeliveryScheduleResult
      * @var ScheduleResult
      */
     protected $scheduleResult;
+
+    /**
+     * @var Offer
+     */
+    protected $offer;
 
     /**
      * @return Offer

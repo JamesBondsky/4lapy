@@ -112,7 +112,6 @@ class ScheduleResult extends Base
     }
 
     /**
-     * @throws ArgumentException
      * @throws NotFoundException
      * @return Store
      */
@@ -162,7 +161,6 @@ class ScheduleResult extends Base
     }
 
     /**
-     * @throws ArgumentException
      * @throws NotFoundException
      * @return Store
      */
@@ -233,16 +231,16 @@ class ScheduleResult extends Base
     }
 
     /**
-     * @throws ArgumentException
+     * @throws NotFoundException
      * @return StoreCollection
      */
     public function getRoute(): StoreCollection
     {
         if (null === $this->route) {
-            $this->route = $this->storeService->getStores(
-                StoreService::TYPE_ALL_WITH_SUPPLIERS,
-                ['XML_ID' => $this->routeCodes]
-            );
+            $this->route = new StoreCollection();
+            foreach ($this->routeCodes as $xmlId) {
+                $this->route[$xmlId] = $this->storeService->getStoreByXmlId($xmlId);
+            }
         }
 
         return $this->route;
