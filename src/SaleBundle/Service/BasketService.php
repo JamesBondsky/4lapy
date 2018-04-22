@@ -59,7 +59,6 @@ class BasketService implements LoggerAwareInterface
 
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
-    private $firstDiscount = 0.0;
 
     /** Оплата бонусами до 90% заказа */
     public const MAX_BONUS_PAYMENT = 0.9;
@@ -535,16 +534,6 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @todo КОСТЫЛЬ
-     *
-     * @return void
-     */
-    public function setDiscountBeforeManzana(): void
-    {
-        $this->firstDiscount = $this->basket->getBasePrice() - $this->basket->getPrice();
-    }
-
-    /**
      * @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ
      *
      * @return float
@@ -561,7 +550,7 @@ class BasketService implements LoggerAwareInterface
      */
     public function setPromocodeDiscount(float $promocodeDiscount): void
     {
-        $this->promocodeDiscount = $promocodeDiscount - $this->firstDiscount;
+        $this->promocodeDiscount = $promocodeDiscount;
     }
 
     /**
