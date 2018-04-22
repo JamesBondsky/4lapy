@@ -59,9 +59,10 @@ class BasketService implements LoggerAwareInterface
 
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
-
     /** Оплата бонусами до 90% заказа */
     public const MAX_BONUS_PAYMENT = 0.9;
+
+    public static $flag = false;
 
     /**
      * BasketService constructor.
@@ -357,7 +358,6 @@ class BasketService implements LoggerAwareInterface
      */
     public function refreshAvailability(Basket $basket): Basket
     {
-        Utils\Manager::disableProcessingFinalAction();
         $isTemporary = function (BasketItem $basketItem): bool {
             $property = $basketItem->getPropertyCollection()->getPropertyValues()['IS_TEMPORARY'];
             return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
@@ -414,7 +414,7 @@ class BasketService implements LoggerAwareInterface
                 break;
             }
         }
-        Utils\Manager::enableProcessingFinalAction();
+
         return $basket;
     }
 
@@ -615,9 +615,10 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $result;
-    }/** @noinspection MoreThanThreeArgumentsInspection */
+    }
 
-    /**
+    /** @noinspection MoreThanThreeArgumentsInspection
+     *
      * @param BasketItem $basketItem
      * @param string $code
      * @param string $value

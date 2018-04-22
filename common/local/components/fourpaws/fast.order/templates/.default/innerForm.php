@@ -9,10 +9,7 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\UserBundle\Entity\User;
-
-Manager::disableProcessingFinalAction();
 
 /** @global \FourPaws\Components\FourPawsFastOrderComponent $component */
 

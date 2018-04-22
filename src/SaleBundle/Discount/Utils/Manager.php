@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 08.02.2018
- * Time: 18:11
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
 
 namespace FourPaws\SaleBundle\Discount\Utils;
 
@@ -31,6 +24,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Manager
+ *
  * @package FourPaws\SaleBundle\Discount\Utils
  */
 class Manager
@@ -53,59 +47,57 @@ class Manager
      * @throws NotSupportedException
      * @throws ArgumentOutOfRangeException
      */
-    public static function OnAfterSaleOrderFinalAction(Event $event = null): void
+    public static function extendDiscount(Event $event): void
     {
-        static $execution;
-        if (!$execution && self::$finalActionEnabled) {
-            $execution = true;
-            if ($event instanceof Event) {
-                /** @var Order $order */
-                $order = $event->getParameter('ENTITY');
-                if ($order instanceof Order) {
-                    $container = Application::getInstance()->getContainer();
-                    $basketService = $container->get(BasketService::class);
-                    $manzana = $container->get(Manzana::class);
-                    $couponStorage = $container->get(CouponStorageInterface::class);
+        if ($event->getParameter('ORDER')['ID']) {
+            return;
+        }
 
-                    // Автоматически добавляем подарки
-                    $basketService
-                        ->getAdder('gift')
-                        ->processOrder();
+        if (self::$finalActionEnabled) {
+            $container = Application::getInstance()->getContainer();
+            $basketService = $container->get(BasketService::class);
 
-                    // Удаляем подарки, акции которых не выполнились
-                    /**
-                     * @todo не сохранять подарки
-                     */
-                    $basketService
-                        ->getCleaner('gift')
-                        ->processOrder();
-
-                    $basketService
-                        ->getAdder('detach')
-                        ->processOrder();
-
-                    $promoCode = $couponStorage->getApplicableCoupon();
-                    if ($promoCode) {
-                        $manzana->setPromocode($promoCode);
-                    }
-
-                    try {
-                        $manzana->calculate();
-                        $basketService->setPromocodeDiscount($manzana->getDiscount());
-                    } catch (ManzanaPromocodeUnavailableException $e) {
-                        $couponStorage->delete($promoCode);
-                    }
-                }
+            if ($basketService::$flag) {
+                return;
             }
 
-            $execution = false;
+            $manzana = $container->get(Manzana::class);
+            $couponStorage = $container->get(CouponStorageInterface::class);
+
+            // Автоматически добавляем подарки
+            $basketService
+                ->getAdder('gift')
+                ->processOrder();
+
+            // Удаляем подарки, акции которых не выполнились
+            $basketService
+                ->getCleaner('gift')
+                ->processOrder();
+
+            $basketService
+                ->getAdder('detach')
+                ->processOrder();
+
+            $promoCode = $couponStorage->getApplicableCoupon();
+            if ($promoCode) {
+                $manzana->setPromocode($promoCode);
+            }
+
+            try {
+                $manzana->calculate();
+                $basketService->setPromocodeDiscount($manzana->getDiscount());
+            } catch (ManzanaPromocodeUnavailableException $e) {
+                $couponStorage->delete($promoCode);
+            }
+
+            $basketService::$flag = true;
         }
     }
 
     /**
      * Отключаем расчет акций для предотвращения многократного применения
      */
-    public static function disableProcessingFinalAction(): void
+    public static function disableExtendsDiscount(): void
     {
         self::$finalActionEnabled = false;
     }
@@ -114,7 +106,7 @@ class Manager
     /**
      * Включаем расчет акций
      */
-    public static function enableProcessingFinalAction(): void
+    public static function enableExtendsDiscount(): void
     {
         self::$finalActionEnabled = true;
     }
