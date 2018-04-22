@@ -22,12 +22,14 @@ $storage = $arResult['STORAGE'];
 
 /** @var ArrayCollection $addresses */
 $addresses = $arResult['ADDRESSES'];
-$selectedAddressId = null;
+$selectedAddressId = 0;
 $showNewAddressForm = false;
 $showNewAddressFormHeader = false;
 
 if (!$addresses || $addresses->isEmpty()) {
     $showNewAddressForm = true;
+    $selectedAddressId = 0;
+    $storage->setAddressId(0);
 } else {
     if ($storage->getAddressId()) {
         $selectedAddressId = $storage->getAddressId();
@@ -38,7 +40,7 @@ if (!$addresses || $addresses->isEmpty()) {
     }
 }
 
-if ($storage->getUserId()) {
+if ($storage->getUserId() && !$addresses->isEmpty()) {
     $showNewAddressFormHeader = true;
 }
 
