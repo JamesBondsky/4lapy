@@ -6,6 +6,7 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
+use DateTimeImmutable;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
@@ -23,6 +24,19 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Share extends IblockElement
 {
+
+    /**
+     * @var string
+     * @JMS\Serializer\Annotation\Type("string")
+     */
+    protected $ACTIVE_FROM = '';
+
+    /**
+     * @var string
+     * @JMS\Serializer\Annotation\Type("string")
+     */
+    protected $ACTIVE_TO = '';
+
     /**
      * @var string
      * @Type("string")
@@ -278,6 +292,7 @@ class Share extends IblockElement
         if (null === $this->products) {
             $this->products = (new OfferQuery())->withFilter(['=XML_ID' => $this->getPropertyProducts()])->exec();
         }
+
         return $this->products;
     }
 
@@ -289,10 +304,6 @@ class Share extends IblockElement
         return $this->PROPERTY_BASKET_RULES;
     }
 
-    /*
-     * Как же у меня бомбит от вашего with вместо set
-     */
-
     /**
      * @param string[] $propertyBasketRules
      *
@@ -301,6 +312,33 @@ class Share extends IblockElement
     public function withPropertyBasketRules(array $propertyBasketRules): Share
     {
         $this->PROPERTY_BASKET_RULES = $propertyBasketRules;
+
+        return $this;
+    }
+
+    /**
+     * @param DateTimeImmutable $dateActiveFrom
+     *
+     * @return $this
+     */
+    public function withDateActiveFrom(DateTimeImmutable $dateActiveFrom)
+    {
+        parent::withDateActiveFrom($dateActiveFrom);
+        $this->ACTIVE_FROM = $this->DATE_ACTIVE_FROM;
+
+        return $this;
+    }
+
+    /**
+     * @param DateTimeImmutable $dateActiveTo
+     *
+     * @return $this
+     */
+    public function withDateActiveTo(DateTimeImmutable $dateActiveTo)
+    {
+        parent::withDateActiveTo($dateActiveTo);
+        $this->ACTIVE_TO = $this->DATE_ACTIVE_TO;
+
         return $this;
     }
 }
