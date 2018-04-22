@@ -271,6 +271,10 @@ class OrderStorageService
         }
 
         foreach ($data as $name => $value) {
+            if (null === $value) {
+                continue;
+            }
+
             if (!\in_array($name, $availableValues, true)) {
                 continue;
             }
