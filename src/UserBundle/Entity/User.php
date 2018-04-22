@@ -325,6 +325,14 @@ class User implements UserInterface
      */
     protected $discount = 3;
 
+    /** @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_ES_SUBSCRIBED")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $esSubscribed = false;
+
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -1278,5 +1286,21 @@ class User implements UserInterface
             }
         }
         return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEsSubscribed(): bool
+    {
+        return $this->esSubscribed ?? false;
+    }
+
+    /**
+     * @param bool $esSubscribed
+     */
+    public function setEsSubscribed(bool $esSubscribed): void
+    {
+        $this->esSubscribed = $esSubscribed;
     }
 }
