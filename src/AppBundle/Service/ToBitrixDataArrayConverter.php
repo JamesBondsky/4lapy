@@ -9,10 +9,22 @@ use Bitrix\Main\Entity\Field;
 use Bitrix\Main\Entity\Field\IStorable;
 use Bitrix\Main\Entity\ScalarField;
 
+/**
+ * Class ToBitrixDataArrayConverter
+ *
+ * @package FourPaws\AppBundle\Service
+ */
 class ToBitrixDataArrayConverter
 {
-    const YesNoEnum = ['N', 'Y'];
+    public const YES_NO_ENUM = ['N', 'Y'];
 
+    /**
+     * @param array $data
+     * @param Base  $entity
+     * @param array $allowExtraFields
+     *
+     * @return array
+     */
     public function convert(array $data, Base $entity, array $allowExtraFields = [])
     {
         $writableFields = array_filter($entity->getFields(), function (Field $field) {
@@ -33,6 +45,12 @@ class ToBitrixDataArrayConverter
         return $result;
     }
 
+    /**
+     * @param             $value
+     * @param ScalarField $field
+     *
+     * @return callable|mixed|null|string
+     */
     protected function map($value, ScalarField $field)
     {
         if ($value === null) {
@@ -44,7 +62,7 @@ class ToBitrixDataArrayConverter
                 $value = $field->normalizeValue($value);
             }
             if ($field instanceof EnumField) {
-                if (array_diff($field->getValues(), static::YesNoEnum) === []) {
+                if (array_diff($field->getValues(), static::YES_NO_ENUM) === []) {
                     $value = $value ? 'Y' : 'N';
                 }
             }

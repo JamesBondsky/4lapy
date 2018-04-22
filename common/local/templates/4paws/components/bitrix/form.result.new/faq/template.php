@@ -32,7 +32,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                         } ?>
                         <div class="fleas-protection-block__form--item b-input-line js-form-field-block-<?=$fieldSid?>">
                             <label class="b-input-line__label"><?= $question['CAPTION'] ?></label>
-                            <input value="<?=$arResult['CUR_USER'][$fieldSid]?>" class="b-input__input-field <?=$fieldSid === 'name' ? 'js-small-input-two' : ''?><?=$fieldSid === 'email' ? 'js-small-input-one' : ''?>" type="<?=$type?>" name="<?= $fieldName ?>" placeholder="<?=$type === 'email' ? 'Ваша ' : 'Ваш '?><?= ToLower($question['CAPTION']) ?>"/>
+                            <input value="<?=$arResult['CUR_USER'][$fieldSid]?>" class="b-input__input-field <?=$fieldSid === 'name' ? 'js-small-input-two' : ''?><?=$fieldSid === 'email' ? 'js-small-input-one' : ''?>" type="<?=$type?>" name="<?= $fieldName ?>" placeholder="<?=$type === 'email' ? 'Ваша ' : 'Ваше '?><?= ToLower($question['CAPTION']) ?>"/>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
                         <?php break;
