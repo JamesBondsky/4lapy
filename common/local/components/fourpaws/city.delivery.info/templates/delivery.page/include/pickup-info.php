@@ -38,10 +38,10 @@ use FourPaws\Helpers\WordHelper;
             </span>
         <?php } ?>
     </div>
-    <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
-        <div class="b-delivery__delivery-type-row__time">
+    <div class="b-delivery__delivery-type-row__time">
+        <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
             <p>Время</p>
             <span>В рабочие часы магазина</span>
-        </div>
-    <?php } ?>
+        <?php } ?>
+    </div>
 </div>

@@ -43,7 +43,7 @@ $this->setFrameMode(true);
                            data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>">
                     <?php $frame->end() ?>
                 </div>
-                <button class="b-button b-button--form-inline b-button--search b-button--delivery"></button>
+                <button class="b-button b-button--form-inline b-button--delivery"></button>
             </form>
             <div class="b-delivery__town-form--dropdown">
                 <ul></ul>
