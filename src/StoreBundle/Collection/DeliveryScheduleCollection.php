@@ -113,6 +113,7 @@ class DeliveryScheduleCollection extends BaseCollection
      *
      * @param Store $receiver
      * @param null|\DateTime $from
+     *
      * @throws ArgumentException
      * @throws StoreNotFoundException
      * @return null|DeliveryScheduleResult

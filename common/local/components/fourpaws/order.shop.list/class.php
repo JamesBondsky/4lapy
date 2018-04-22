@@ -10,7 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
@@ -21,6 +20,7 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -289,7 +289,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $defaultFilter['ID'] = $idFilter;
             }
 
-            $result = $this->storeService->getRepository()->findBy(array_merge($filter, $defaultFilter), $order);
+            $result = $this->storeService->getStores(
+                StoreService::TYPE_SHOP,
+                array_merge($filter, $defaultFilter),
+                $order
+            );
         }
 
         return $result;

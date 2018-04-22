@@ -1266,7 +1266,7 @@ class Offer extends IblockElement
             if ($this->isByRequest()) {
                 $stores = $storeService->getSupplierStores();
             } else {
-                $stores = $storeService->getByCurrentLocation();
+                $stores = $storeService->getStoresByCurrentLocation();
             }
             $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }

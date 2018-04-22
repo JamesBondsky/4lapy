@@ -9,7 +9,7 @@ namespace FourPaws\StoreBundle\Entity;
 use FourPaws\Catalog\Model\Offer;
 
 /**
- * Class DeliveryScheduleResult
+ * Class TmpDeliveryScheduleResult
  */
 class DeliveryScheduleResult
 {
@@ -38,6 +38,7 @@ class DeliveryScheduleResult
 
     /**
      * @param \DateTime $date
+     *
      * @return DeliveryScheduleResult
      */
     public function setDate(\DateTime $date): DeliveryScheduleResult
@@ -75,6 +76,7 @@ class DeliveryScheduleResult
 
     /**
      * @param DeliverySchedule $schedule
+     *
      * @return DeliveryScheduleResult
      */
     public function setSchedule(DeliverySchedule $schedule): DeliveryScheduleResult

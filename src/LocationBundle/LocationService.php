@@ -166,7 +166,7 @@ class LocationService
                 }
 
                 $storeCodes = [];
-                $stores = $storeService->getByLocation(
+                $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
                 );
@@ -192,7 +192,7 @@ class LocationService
                 }
 
                 $storeCodes = [];
-                $stores = $storeService->getByLocation(
+                $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
                 );
