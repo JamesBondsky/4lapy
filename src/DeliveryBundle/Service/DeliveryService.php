@@ -788,7 +788,7 @@ class DeliveryService implements LoggerAwareInterface
             /** @var BasketItem $item */
             foreach ($order->getBasket() as $item) {
                 $shipmentItem = $shipmentItemCollection->createItem($item);
-                $shipmentItem->setQuantity($item->getQuantity());
+                $shipmentItem->setFieldNoDemand('QUANTITY', $item->getQuantity());
             }
         } catch (\Exception $e) {
             $this->log()->error(sprintf('Failed to set shipmentItem quantity: %s', $e->getMessage()), [
