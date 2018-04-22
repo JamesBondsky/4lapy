@@ -9,11 +9,17 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Detach;
 
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemBase;
 use FourPaws\Catalog\Model\Offer;
+use Exception;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\RuntimeException;
 
 /**
@@ -23,15 +29,13 @@ use FourPaws\SaleBundle\Exception\RuntimeException;
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     /**
-     *
-     *
-     * @throws \FourPaws\SaleBundle\Exception\RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Exception
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     * @throws BitrixProxyException
+     * @throws ObjectNotFoundException
+     * @throws LoaderException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
      */
     public function processOrder(): void
     {

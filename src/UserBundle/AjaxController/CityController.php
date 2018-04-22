@@ -41,7 +41,11 @@ class CityController extends Controller
     public function setAction(Request $request): JsonResponse
     {
         $code = $request->get('code');
-        if (\is_array($code)) {
+        $codeList = json_decode($code, true);
+        if (\is_array($codeList) || \is_array($code)) {
+            if(\is_array($codeList) && !empty($codeList)){
+                $code = $codeList;
+            }
             $dadataLocationAdapter = new DaDataLocationAdapter();
             /** @var BitrixLocation $bitrixLocation */
             $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
@@ -58,7 +62,7 @@ class CityController extends Controller
         try {
             $city = $this->userService->setSelectedCity($code, $name, $regionName);
             $response = JsonSuccessResponse::createWithData(
-                'Город успешно выбран.',
+                'Условия приобретения товаров будут пересчитаны после изменения выбранного региона',
                 $city,
                 200,
                 ['reload' => true]

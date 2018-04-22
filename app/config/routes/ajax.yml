@@ -53,6 +53,11 @@ comments.add:
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::addAction' }
   methods: [POST]
 
+comments.catalog.add:
+  path: /comments/catalog/add/
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::addByCatalogAction' }
+  methods: [POST]
+
 comments.next:
   path: /comments/next/
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::nextAction' }

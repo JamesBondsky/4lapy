@@ -13,6 +13,7 @@
  * @global \CMain $APPLICATION
  */
 
+use Bitrix\Main\Web\Uri;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
@@ -68,7 +69,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                     'ITEMS_COUNT' => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
                     'TYPE' => 'catalog',
-                    'ITEM_LINK' => $product->getDetailPageUrl() . '#new-review',
+                    'ITEM_LINK' => (new Uri($product->getDetailPageUrl()))->addParams(['new-review' => 'y'])->getUri(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
@@ -87,7 +88,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red"><?= $share->getName() ?></span>
             <?php } ?>
         </div>
-        <?php if ($offers->count() > 0) {
+        <?php if ($offers->count() > 0 && $product->isFood()) {
 
             $mainCombinationType = '';
             if ($currentOffer->getClothingSize()) {
@@ -157,7 +158,19 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 </div>
             </div>
             <?php
-        } ?>
+        } else { ?>
+            <div class="b-weight-container b-weight-container--list">
+                <ul class="b-weight-container__list">
+                    <li class="b-weight-container__item" style="display: none">
+                        <a href="javascript:void(0)"
+                           class="b-weight-container__link js-price active-link"
+                           data-price="<?= ceil($currentOffer->getPrice()) ?>" data-offerid="<?= $currentOffer->getId() ?>"
+                           data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                           data-link="<?= $currentOffer->getLink() ?>"></a>
+                    </li>
+                </ul>
+            </div>
+        <?php } ?>
         <div class="b-common-item__moreinfo">
             <?php if ($currentOffer->getMultiplicity() > 1) { ?>
                 <div class="b-common-item__packing">
@@ -170,23 +183,6 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 ?>
                 <div class="b-common-item__country">
                     Страна производства <strong><?= $product->getCountry()->getName() ?></strong>
-                </div>
-            <?php }
-
-            if ($currentOffer->isByRequest()) { ?>
-                <div class="b-common-item__order">
-                    Только под заказ
-                </div>
-                <?php
-            } ?>
-            <?php if ($currentOffer->getProduct()->isDeliveryAvailable()) { ?>
-                <div class="b-common-item__pickup">
-                    Доставка
-                </div>
-            <?php } ?>
-            <?php if ($currentOffer->getProduct()->isPickupAvailable()) { ?>
-                <div class="b-common-item__pickup">
-                    Самовывоз
                 </div>
             <?php } ?>
         </div>
@@ -227,25 +223,16 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         //
         ?>
         <div class="b-common-item__additional-information">
-            <div class="b-common-item__benefin js-sale-block" style="display: none">
+            <div class="b-common-item__benefin js-sale-block">
                 <span class="b-common-item__prev-price js-sale-origin">
-                    <?= $currentOffer->getOldPrice() ?>
-                    <span class="b-ruble b-ruble--prev-price">₽</span>
+                    <span class="b-ruble b-ruble--prev-price"></span>
                 </span>
                 <span class="b-common-item__discount">
-                    <span class="b-common-item__disc">Скидка</span>
-                    <span class="b-common-item__discount-price js-sale-sale">
-                        <?= $currentOffer->getOldPrice() - $currentOffer->getPrice() ?>
-                    </span>
-                    <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span>
+                    <span class="b-common-item__disc"></span>
+                    <span class="b-common-item__discount-price js-sale-sale"></span>
+                    <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
                     </span>
                 </span>
-            </div>
-            <div class="b-common-item__info-wrap" style="display: none">
-                <span class="b-common-item__text">Только под заказ</span>
-            </div>
-            <div class="b-common-item__info-wrap" style="display: none">
-                <span class="b-common-item__text">Самовывоз/span>
             </div>
         </div>
     </div>

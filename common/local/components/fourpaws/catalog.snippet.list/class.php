@@ -14,7 +14,7 @@ use FourPaws\Enum\IblockType;
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogSaleListComponent extends CBitrixComponent
 {
-    const PROPERTY_SALE = 'PROPERTY_SALE';
+    public const PROPERTY_SALE = 'PROPERTY_SALE';
     
     protected $filter;
     
@@ -54,7 +54,7 @@ class CatalogSaleListComponent extends CBitrixComponent
      *
      * @throws IblockNotFoundException
      */
-    protected function prepareResult()
+    protected function prepareResult(): void
     {
         $this->prepareProductFilter();
         $this->arResult['products'] = $this->getProductList();
@@ -63,7 +63,7 @@ class CatalogSaleListComponent extends CBitrixComponent
     /**
      * @throws IblockNotFoundException
      */
-    protected function prepareProductFilter()
+    protected function prepareProductFilter(): void
     {
         $this->filter = [];
         

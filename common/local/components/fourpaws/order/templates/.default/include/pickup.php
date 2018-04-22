@@ -42,6 +42,7 @@ $canGetPartial = $arResult['PARTIAL_PICKUP_AVAILABLE'];
 $canSplit = $arResult['SPLIT_PICKUP_AVAILABLE'];
 $partialGet = $storage->isSplit() && ($canGetPartial || $canSplit);
 $partialPickup = $arResult['PARTIAL_PICKUP'] ?? $pickup;
+$metro = $arResult['METRO'][$selectedShop->getMetro()];
 ?>
 
 <li class="b-radio-tab__tab js-email-recovery">
@@ -52,8 +53,12 @@ $partialPickup = $arResult['PARTIAL_PICKUP'] ?? $pickup;
         <ul class="b-delivery-list">
             <li class="b-delivery-list__item b-delivery-list__item--myself">
                 <span class="b-delivery-list__link b-delivery-list__link--myself">
-                    <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--grey"></span>
-                    <?= $selectedShop->getAddress() ?>
+                    <?php if ($metro) { ?>
+                        <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--<?= $metro['BRANCH']['UF_COLOR'] ?>"></span>
+                        <?= 'м. ' . $metro['UF_NAME'] . ', ' . $selectedShop->getAddress() ?>
+                    <?php } else { ?>
+                        <?= $selectedShop->getAddress() ?>
+                    <?php } ?>
                 </span>
             </li>
         </ul>

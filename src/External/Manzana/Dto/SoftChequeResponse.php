@@ -200,7 +200,7 @@ class SoftChequeResponse
      */
     public function getReturnCode(): int
     {
-        return $this->returnCode;
+        return (int)$this->returnCode;
     }
 
     /**
@@ -208,7 +208,7 @@ class SoftChequeResponse
      */
     public function getMessage(): string
     {
-        return $this->message;
+        return (string)$this->message;
     }
 
     /**
@@ -216,7 +216,7 @@ class SoftChequeResponse
      */
     public function getCardBalance(): float
     {
-        return $this->cardBalance;
+        return (float)$this->cardBalance;
     }
 
     /**
@@ -224,7 +224,7 @@ class SoftChequeResponse
      */
     public function getCardActiveBalance(): float
     {
-        return $this->cardActiveBalance;
+        return (float)$this->cardActiveBalance;
     }
 
     /**
@@ -232,7 +232,7 @@ class SoftChequeResponse
      */
     public function getSumm(): float
     {
-        return $this->summ;
+        return (float)$this->summ;
     }
 
     /**
@@ -240,7 +240,7 @@ class SoftChequeResponse
      */
     public function getDiscount(): float
     {
-        return $this->discount;
+        return (float)$this->discount;
     }
 
     /**
@@ -248,7 +248,7 @@ class SoftChequeResponse
      */
     public function getSummDiscounted(): float
     {
-        return $this->summDiscounted;
+        return (float)$this->summDiscounted;
     }
 
     /**
@@ -256,7 +256,7 @@ class SoftChequeResponse
      */
     public function getCardSumm(): float
     {
-        return $this->cardSumm;
+        return (float)$this->cardSumm;
     }
 
     /**
@@ -264,7 +264,7 @@ class SoftChequeResponse
      */
     public function getCardDiscount(): float
     {
-        return $this->cardDiscount;
+        return (float)$this->cardDiscount;
     }
 
     /**
@@ -272,7 +272,7 @@ class SoftChequeResponse
      */
     public function getCardSummDiscounted(): float
     {
-        return $this->cardSummDiscounted;
+        return (float)$this->cardSummDiscounted;
     }
 
     /**
@@ -280,7 +280,7 @@ class SoftChequeResponse
      */
     public function getChargedBonus(): float
     {
-        return $this->chargedBonus;
+        return (float)$this->chargedBonus;
     }
 
     /**
@@ -288,7 +288,7 @@ class SoftChequeResponse
      */
     public function getAvailablePayment(): float
     {
-        return $this->availablePayment;
+        return (float)$this->availablePayment;
     }
 
     /**

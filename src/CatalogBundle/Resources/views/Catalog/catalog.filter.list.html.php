@@ -43,6 +43,9 @@ foreach ($filters as $filter) {
         continue;
     }
     if ($filter instanceof FilterBase) {
+        if($isBrand && \in_array($filter->getFilterCode(), ['Sections', 'Categories'])){
+            continue;
+        }
         ?>
         <div class="b-filter__block">
             <h3 class="b-title b-title--filter-header">

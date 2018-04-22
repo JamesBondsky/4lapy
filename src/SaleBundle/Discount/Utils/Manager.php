@@ -90,8 +90,8 @@ class Manager
                     }
 
                     try {
-                        $basketService->setDiscountBeforeManzana();
                         $manzana->calculate();
+                        $basketService->setPromocodeDiscount($manzana->getDiscount());
                     } catch (ManzanaPromocodeUnavailableException $e) {
                         $couponStorage->delete($promoCode);
                     }

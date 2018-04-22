@@ -11,14 +11,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\Decorators\SvgDecorator;
-$uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID'];
-?>
+$uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID']; ?>
 <div class="b-container">
     <div class="b-comment-block">
         <p class="b-comment-block__title">Комментарии</p>
         <?php /** @noinspection PhpUnhandledExceptionInspection */
         $frame = $this->createFrame()->begin(); ?>
-        <?php if ($arResult['COUNT_COMMENTS'] === 0) {?>
+        <?php if ($arResult['COUNT_COMMENTS'] === 0) { ?>
             <div class="b-comment-block__info--block">
                 <p class="b-comment-block__info">Пока никто не оставил комментарии.</p>
             </div>
@@ -38,38 +37,32 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
         <div class="tab-content-review">
             <div class="b-rate-block">
                 <?php /** @noinspection PhpUnhandledExceptionInspection */
-                $frame = $this->createFrame()->begin(); ?>
-                <?php if ($arResult['COUNT_COMMENTS'] > 0) {
-                    ?>
+                $frame = $this->createFrame()->begin();
+                if ($arResult['COUNT_COMMENTS'] > 0) { ?>
                     <div class="b-rate-block__left-side">
                         <p class="b-rate-block__name">Рейтинг</p>
                     </div>
-                    <?php
-                } ?>
-                <?php /** @noinspection PhpUnhandledExceptionInspection */
+                <?php }
+                /** @noinspection PhpUnhandledExceptionInspection */
                 $frame->end(); ?>
                 <div class="b-rate-block__right-side">
                     <?php /** @noinspection PhpUnhandledExceptionInspection */
-                    $frame = $this->createFrame()->begin(''); ?>
-                    <?php if ($arResult['COUNT_COMMENTS'] > 0) {
-                        ?>
+                    $frame = $this->createFrame()->begin('');
+                    if ($arResult['COUNT_COMMENTS'] > 0) { ?>
                         <div class="b-rate-block__rate-wrapper">
                             <div class="b-rating b-rating--big">
-                                <?php for ($i = 1; $i <= 5; $i++) {
-                            ?>
+                                <?php for ($i = 1; $i <= 5; $i++) { ?>
                                     <div class="b-rating__star-block<?= $arResult['RATING']
                                                                         > $i ? ' b-rating__star-block--active' : '' ?>">
                                         <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
                                     </div>
-                                    <?php
-                        } ?>
+                                <?php } ?>
                             </div>
                             <span class="b-rate-block__rate-description">на основе <?= $arResult['COUNT_COMMENTS'] ?>
                                                                          отзывов</span>
                         </div>
-                        <?php
-                    } ?>
-                    <?php /** @noinspection PhpUnhandledExceptionInspection */
+                    <?php }
+                    /** @noinspection PhpUnhandledExceptionInspection */
                     $frame->end(); ?>
                     <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
                 </div>
@@ -119,8 +112,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                                    type="password"
                                    name="PASSWORD"
                                    value=""
-                                   autocomplete="off"
-                                   required="required" />
+                                   autocomplete="off" />
                             <div class="b-error"><span class="js-message"></span>
                             </div>
                         </div>
@@ -132,8 +124,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                     <div class="b-rating b-rating--large b-rating--form-review">
                         <div class="b-rating__form">
                             <div class="b-rating__group">
-                                <?php for ($i = 5; $i >= 1; $i--) {
-                    ?>
+                                <?php for ($i = 5; $i >= 1; $i--) { ?>
                                     <input class="b-rating__input"
                                            type="radio"
                                            id="radio<?= $i ?>"
@@ -144,8 +135,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                                         <?= new SvgDecorator('icon-star-stroke', 13, 12) ?>
                                     </span>
                                     </label>
-                                    <?php
-                } ?>
+                                <?php } ?>
                             </div>
                         </div>
                     </div>
@@ -154,7 +144,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                     <textarea class="b-form-review__textarea"
                               name="UF_TEXT"
                               required="required"
-                              placeholder="Оставьте ваш отзыв" minlength="8" maxlength="1000"></textarea>
+                              placeholder="Оставьте ваш отзыв:" minlength="8" maxlength="1000"></textarea>
                         <div class="b-error"><span class="js-message"></span></div>
                     </div>
                     <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>

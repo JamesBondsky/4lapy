@@ -21,6 +21,8 @@ use JMS\Serializer\Annotation\XmlRoot;
  */
 class Cheque
 {
+    public const HAS_ITEMS_BY_CHEQUE = 2;
+
     /**
      * ID чека
      *
@@ -174,15 +176,16 @@ class Cheque
     /**
      * @return bool
      */
-    public function hasItemsBool()
+
+    public function hasItemsBool(): bool
     {
-        return (int)$this->hasItems === 2;
+        return (int)$this->hasItems === self::HAS_ITEMS_BY_CHEQUE;
     }
 
     /**
      * @return array
      */
-    public function getPaymentsArray()
+    public function getPaymentsArray(): array
     {
         return $this->payments->chequePayments ? $this->payments->chequePayments->toArray() : [];
     }

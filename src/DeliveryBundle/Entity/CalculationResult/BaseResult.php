@@ -435,7 +435,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
              * срок поставки на склад по графику
              */
             if (!$stockResult->getDelayed()->isEmpty()) {
-                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
+//                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
             }
 
             /**
@@ -834,27 +834,27 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
          * @throws StoreNotFoundException
          */
         $sortFunc = function (Store $store1, Store $store2) use ($storeData) {
-            /** @var array $shopData1 */
-            $shopData1 = $storeData[$store1->getXmlId()];
-            /** @var array $shopData2 */
-            $shopData2 = $storeData[$store2->getXmlId()];
+            /** @var array $storeData1 */
+            $storeData1 = $storeData[$store1->getXmlId()];
+            /** @var array $storeData2 */
+            $storeData2 = $storeData[$store2->getXmlId()];
 
             /** @var PickupResult $result1 */
-            $result1 = $shopData1['RESULT'];
+            $result1 = $storeData1['RESULT'];
             /** @var PickupResult $result2 */
-            $result2 = $shopData2['RESULT'];
+            $result2 = $storeData2['RESULT'];
 
-            /** в начало переносим магазины с доступным самовывозом */
+            /** в начало переносим склады с доступной доставкой/самовывозом */
             if ($result1->isSuccess() !== $result2->isSuccess()) {
                 return $result2->isSuccess() <=> $result1->isSuccess();
             }
 
-            if ($shopData1['AVAILABLE_PRICE'] !== $shopData2['AVAILABLE_PRICE']) {
-                return $shopData2['AVAILABLE_PRICE'] <=> $shopData1['AVAILABLE_PRICE'];
+            if ($storeData1['ORDERABLE_PRICE'] !== $storeData2['ORDERABLE_PRICE']) {
+                return $storeData2['ORDERABLE_PRICE'] <=> $storeData1['ORDERABLE_PRICE'];
             }
 
-            if ($shopData1['ORDERABLE_PRICE'] !== $shopData2['ORDERABLE_PRICE']) {
-                return $shopData2['ORDERABLE_PRICE'] <=> $shopData1['ORDERABLE_PRICE'];
+            if ($storeData1['AVAILABLE_PRICE'] !== $storeData2['AVAILABLE_PRICE']) {
+                return $storeData2['AVAILABLE_PRICE'] <=> $storeData1['AVAILABLE_PRICE'];
             }
 
             $deliveryDate1 = $result1->getDeliveryDate();
