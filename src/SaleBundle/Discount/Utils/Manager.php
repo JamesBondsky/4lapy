@@ -103,17 +103,16 @@ class Manager
     }
 
     /**
-     *
-     *
+     * Отключаем расчет акций для предотвращения многократного применения
      */
     public static function disableProcessingFinalAction(): void
     {
         self::$finalActionEnabled = false;
     }
 
+
     /**
-     *
-     *
+     * Включаем расчет акций
      */
     public static function enableProcessingFinalAction(): void
     {
@@ -121,8 +120,6 @@ class Manager
     }
 
     /**
-     *
-     *
      * @param Order $order
      *
      * @return array
@@ -130,7 +127,9 @@ class Manager
     public static function getExistGifts(Order $order): array
     {
         $result = [];
-        if ($basket = $order->getBasket()) {
+        $basket = $order->getBasket();
+
+        if ($basket) {
             /** @var BasketItem $basketItem */
             foreach ($basket->getBasketItems() as $basketItem) {
                 /** @var BasketPropertyItem $basketPropertyItem */
@@ -147,6 +146,7 @@ class Manager
                 }
             }
         }
+
         return $result;
     }
 }
