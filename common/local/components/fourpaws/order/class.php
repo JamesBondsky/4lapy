@@ -141,7 +141,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->includeComponentTemplate($componentPage);
         } catch (\Exception $e) {
             try {
-                $this->logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $this->logger->error(sprintf('Component execute error: %s: %s', \get_class($e), $e->getMessage()), [
+                    'trace' => $e->getTrace()
+                ]);
             } catch (\RuntimeException $e) {
             }
         }
