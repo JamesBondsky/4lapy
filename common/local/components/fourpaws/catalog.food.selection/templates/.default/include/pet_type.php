@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
-<div class="b-quest b-quest--step-1 js-quest js-quest--step-1" data-step="1">
+<div class="b-quest b-quest--step-1 js-quest js-quest--step-1 main-quest-block" data-step="1">
     <h3 class="b-quest__title">Питомец</h3>
     <h4 class="b-quest__subtitle">Тип</h4>
     <?php /** @var IblockSect $item */

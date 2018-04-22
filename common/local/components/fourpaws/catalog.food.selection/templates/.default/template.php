@@ -45,4 +45,4 @@ if (!\is_array($arResult['PET_TYPES']) || empty($arResult['PET_TYPES'])) {
         </div>
     </form>
 </aside>
-<main class="b-food__main b-food__main--q-food js-quest js-quest--step-final" role="main"></main>
+<main class="b-food__main b-food__main--q-food js-quest js-quest--step-final" data-url="/ajax/food_selection/show/step/not_required/" role="main"></main>
