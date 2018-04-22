@@ -171,9 +171,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         $date = new \DateTime();
-        if (abs(
+        if (($this->currentStep === OrderStorageService::DELIVERY_STEP) &&
+            (abs(
                 $storage->getCurrentDate()->getTimestamp() - $date->getTimestamp()
-            ) > OrderDeliveryValidator::MAX_DATE_DIFF
+            ) > OrderDeliveryValidator::MAX_DATE_DIFF)
         ) {
             $storage->setCurrentDate($date);
             $this->orderStorageService->updateStorage($storage, OrderStorageService::NOVALIDATE_STEP);
