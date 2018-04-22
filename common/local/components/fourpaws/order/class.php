@@ -141,7 +141,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->includeComponentTemplate($componentPage);
         } catch (\Exception $e) {
             try {
-                $this->logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $this->logger->error(sprintf('Component execute error: %s: %s', \get_class($e), $e->getMessage()), [
+                    'trace' => $e->getTrace()
+                ]);
             } catch (\RuntimeException $e) {
             }
         }
@@ -174,7 +176,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             ) > OrderDeliveryValidator::MAX_DATE_DIFF
         ) {
             $storage->setCurrentDate($date);
-            $this->orderStorageService->updateStorage($storage);
+            $this->orderStorageService->updateStorage($storage, OrderStorageService::NOVALIDATE_STEP);
         }
 
         try {
