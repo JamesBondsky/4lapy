@@ -3,6 +3,7 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
+use Bitrix\Main\Application;
 use Sprint\Migration\Helpers\HlblockHelper;
 use CUserFieldEnum;
 
@@ -168,6 +169,13 @@ class HLBlockDeliveryScheduleResultCreate20180422161941 extends SprintMigrationB
                 }
             }
         }
+
+        Application::getConnection()->query('
+                ALTER TABLE `b_hlbd_delivery_schedule_result`
+                    ADD INDEX `IX_SENDER` (`UF_SENDER`),
+                    ADD INDEX `IX_RECEIVER` (`UF_RECEIVER`),
+                    ADD INDEX `IX_SENDER_RECEIVER` (`UF_SENDER`, `UF_RECEIVER`)'
+        );
 
         return true;
     }
