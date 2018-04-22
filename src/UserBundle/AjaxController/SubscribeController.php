@@ -66,17 +66,8 @@ class SubscribeController extends Controller
 
         $success = false;
 
-        if (\in_array('sale', $type, true)) {
-            /** @todo реализовать подписку на подарки */
-            $success = true;
-        } else {
-            if (!\in_array('skipSaleDelete', $type, true)) {
-                /** @todo удаление подписки на подарки */
-            }
-        }
-
         /** В эксперт сендере только о новостях список есть */
-        if (\in_array('material', $type, true)) {
+        if ($type === 'all') {
             try {
                 try {
                     $userService = $container->get(CurrentUserProviderInterface::class);
@@ -109,7 +100,6 @@ class SubscribeController extends Controller
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             }
         } else {
-            /** @todo удаление из подписки */
             try {
                 $user = new User();
                 $user->setEmail($email);
