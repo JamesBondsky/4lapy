@@ -130,8 +130,8 @@ class ScheduleResultRepository extends BaseRepository
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this->findBy([
-            'UF_SENDER' => $sender,
-            'UF_RECEIVER' => $receiver
+            'UF_SENDER' => $sender->getXmlId(),
+            'UF_RECEIVER' => $receiver->getXmlId()
         ]);
     }
 }

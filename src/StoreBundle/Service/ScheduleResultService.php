@@ -175,7 +175,6 @@ class ScheduleResultService
      * @return ScheduleResultCollection
      * @throws ArgumentException
      * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findResultsBySenderAndReceiver(Store $sender, Store $receiver): ScheduleResultCollection
     {
