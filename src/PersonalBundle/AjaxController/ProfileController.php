@@ -301,11 +301,13 @@ class ProfileController extends Controller
                 return $this->ajaxMess->getUpdateError();
             }
 
+            $isSend = false;
             if (!$curUser->hasEmail() || $curUser->allowedEASend()) {
                 if ($user->getEmail() !== $curUser->getEmail()) {
                     try {
                         $expertSenderService = $container->get('expertsender.service');
                         $expertSenderService->sendChangeEmail($curUser, $user);
+                        $isSend = true;
                     } catch (ExpertsenderServiceException $e) {
                         $logger = LoggerFactory::create('expertsender');
                         $logger->error('expertsender error:' . $e->getMessage());
@@ -317,6 +319,16 @@ class ProfileController extends Controller
                     $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
                 } catch (\RuntimeException $e) {
                     /** оч. плохо - логи мы не получим */
+                }
+            }
+
+            if(!$isSend && ($curUser->getLastName() !== $user->getLastName() || $curUser->getName() !== $user->getName())){
+                try {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->changeUserData($user);
+                } catch (ExpertsenderServiceException $e) {
+                    $logger = LoggerFactory::create('expertsender');
+                    $logger->error('expertsender error:' . $e->getMessage());
                 }
             }
 
