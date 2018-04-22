@@ -11,8 +11,6 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
@@ -31,7 +29,6 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -143,7 +140,7 @@ class BasketComponent extends CBitrixComponent
                 $user = $this->currentUserService->getCurrentUser();
                 $this->arResult['USER'] = $user;
                 $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
-            }  /** @noinspection BadExceptionsProcessingInspection */
+            } /** @noinspection BadExceptionsProcessingInspection */
             catch (NotAuthorizedException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
@@ -310,26 +307,29 @@ class BasketComponent extends CBitrixComponent
 
     private function calcTemplateFields(): void
     {
-        $weight = 0;
-        $quantity = 0;
+        $weight = $quantity = $basePrice = $price = 0;
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
         $orderableBasket = $basket->getOrderableItems();
+
         foreach ($orderableBasket as $basketItem) {
+            $itemQuantity = (int)$basketItem->getQuantity();
+
             $weight += (float)$basketItem->getWeight();
-            $quantity += (int)$basketItem->getQuantity();
+            $quantity += $itemQuantity;
+            $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
+            $price += (float)$basketItem->getPrice() * $itemQuantity;
         }
+
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
-        $this->arResult['TOTAL_DISCOUNT'] = $orderableBasket->getBasePrice() - $orderableBasket->getPrice();
-        $this->arResult['TOTAL_PRICE'] = $orderableBasket->getPrice();
-        $this->arResult['TOTAL_BASE_PRICE'] = $orderableBasket->getBasePrice();
+        $this->arResult['TOTAL_DISCOUNT'] = $basePrice - $price;
+        $this->arResult['TOTAL_PRICE'] = $price;
+        $this->arResult['TOTAL_BASE_PRICE'] = $basePrice;
     }
 
     /**
-     *
-     *
      * @return string
      */
     private function getPage(): string
@@ -345,7 +345,6 @@ class BasketComponent extends CBitrixComponent
 
     /**
      * Подгружает названия и ссылки на описания акций по XML_ID
-     *
      */
     private function loadPromoDescriptions()
     {
@@ -360,8 +359,8 @@ class BasketComponent extends CBitrixComponent
                 ['ID' => 'ASC'],
                 [
                     'PROPERTY_BASKET_RULES' => array_values($discountMap),
-                    'IBLOCK_CODE' => IblockCode::SHARES,
-                    'IBLOCK_TYPE' => IblockType::PUBLICATION
+                    'IBLOCK_CODE'           => IblockCode::SHARES,
+                    'IBLOCK_TYPE'           => IblockType::PUBLICATION,
                 ],
                 false,
                 false,
@@ -371,8 +370,8 @@ class BasketComponent extends CBitrixComponent
                 if (\is_array($elem['PROPERTY_BASKET_RULES_VALUE'])) {
                     foreach ($elem['PROPERTY_BASKET_RULES_VALUE'] as $ruleId) {
                         $this->promoDescriptions[$ruleId] = [
-                            'url' => $elem['DETAIL_PAGE_URL'],
-                            'name' => $elem['NAME']
+                            'url'  => $elem['DETAIL_PAGE_URL'],
+                            'name' => $elem['NAME'],
                         ];
                     }
                 }
@@ -381,8 +380,6 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
-     *
      * @param BasketItem $basketItem
      *
      * @return array
@@ -392,7 +389,7 @@ class BasketComponent extends CBitrixComponent
         $result = [];
         /**
          * @var BasketItemCollection $basketItemCollection
-         * @var Order $order
+         * @var Order                $order
          */
         if (
             ($basketItemCollection = $basketItem->getCollection())
@@ -415,6 +412,7 @@ class BasketComponent extends CBitrixComponent
         }
         return $result;
     }
+
     /**
      * Set coupon and coupon discount
      *

@@ -215,6 +215,18 @@ if (null !== $delivery) {
                 <?php } ?>
             </ul>
         </div>
+        <div class="b-order__link-wrapper"
+            <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
+            <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
+               href="/cart"
+               title="Вернуться в корзину">
+            <span class="b-icon b-icon--order-busket">
+                <?= /** @noinspection PhpUnhandledExceptionInspection */
+                new SvgDecorator('icon-reason', 16, 16) ?>
+            </span>
+                <span class="b-link__text b-link__text--order-gotobusket">Вернуться в корзину</span>
+            </a>
+        </div>
     </aside>
 <?php } ?>
 <?php /* отображается на 2 шаге, когда выбран самовывоз */ ?>

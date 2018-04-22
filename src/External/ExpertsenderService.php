@@ -44,7 +44,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 /**
  * Class ExpertsenderService
  *
- * @todo переписать нахер
+ * @todo    переписать нахер
  *
  * @package FourPaws\External
  */
@@ -78,7 +78,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $user
+     * @param User  $user
      * @param array $params
      *
      * @return bool
@@ -161,7 +161,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $user
+     * @param User   $user
      * @param string $backUrl
      *
      * @return bool
@@ -246,9 +246,16 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode('AddAndUpdate');
+                    $addUserToList->setTrackingCode('change_email');
                     $addUserToList->setListId(178);
                     $addUserToList->setEmail($curUser->getEmail());
                     $addUserToList->setId($expertSenderId);
+
+                    $addUserToList->setName($curUser->getName());
+                    $addUserToList->setLastName($curUser->getLastName());
+                    /** ip юзверя */
+                    $addUserToList->addProperty(new Property(48, 'string',
+                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
 
                     $apiResult = $this->client->addUserToList($addUserToList);
                     if ($apiResult->isOk()) {
@@ -268,12 +275,76 @@ class ExpertsenderService implements LoggerAwareInterface
                     /** отправка почты на новый email, отправляем именно при смене, при регистрации еще подтвердить надо */
                     $receiver = new Receiver($curUser->getEmail());
                     $apiResult = $this->client->sendSystemTransactional(7071, $receiver);
+                    /** если выдаст ошибку переключить чтобы проверит */
+//                    $apiResult = $this->client->sendTransactional(7071, $receiver);
                     if ($apiResult->isOk()) {
                         return true;
                     }
                     throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
                         $apiResult->getErrorCode());
                 }
+            } catch (GuzzleException|Exception $e) {
+                $a = $e->getMessage();
+                echo $a;
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param User $curUser
+     *
+     * @return bool
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ExpertsenderNotAllowedException
+     * @throws \InvalidArgumentException
+     * @throws \BadMethodCallException
+     * @throws ExpertsenderServiceException
+     */
+    public function changeUserData(User $curUser): bool
+    {
+        $continue = true;
+        $expertSenderId = 0;
+        if (!empty($curUser->getEmail())) {
+            if (!$curUser->allowedEASend()) {
+                throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
+            }
+
+            try {
+                /** получение id подписчика */
+                $userIdResult = $this->client->getUserId($curUser->getEmail());
+                if ($userIdResult->isOk()) {
+                    $expertSenderId = $userIdResult->getId();
+                }
+            } catch (GuzzleException | Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        if ($continue && $expertSenderId > 0 && !empty($curUser->getEmail())) {
+            try {
+                $addUserToList = new AddUserToList();
+                $addUserToList->setForce(true);
+                $addUserToList->setMode('AddAndUpdate');
+                $addUserToList->setTrackingCode('change_user_data');
+                $addUserToList->setListId(178);
+                $addUserToList->setId($expertSenderId);
+
+                $addUserToList->setName($curUser->getName());
+                $addUserToList->setLastName($curUser->getLastName());
+                /** ip юзверя */
+                $addUserToList->addProperty(new Property(48, 'string',
+                    BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+
+                $apiResult = $this->client->addUserToList($addUserToList);
+                if ($apiResult->isOk()) {
+                    return true;
+                }
+
+                throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
+                    $apiResult->getErrorCode());
             } catch (GuzzleException|Exception $e) {
                 $a = $e->getMessage();
                 echo $a;
@@ -308,7 +379,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode('AddAndUpdate');
-                    $addUserToList->setTrackingCode('all_popup');
+                    $addUserToList->setTrackingCode('subscribe');
                     $addUserToList->setListId(178);
                     $addUserToList->setEmail($user->getEmail());
 
@@ -327,7 +398,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 /** если не нашли id по почте регистрируем в сендере */
-                return $this->sendEmailAfterRegister($user, ['isReg' => 0, 'type' => 'email_subscribe', 'subscribe' => true]);
+                return $this->sendEmailAfterRegister($user,
+                    ['isReg' => 0, 'type' => 'email_subscribe', 'subscribe' => true]);
             } catch (GuzzleException|Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
@@ -359,7 +431,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode('AddAndUpdate');
-                    $addUserToList->setTrackingCode('all_popup');
+                    $addUserToList->setTrackingCode('unsubscribe');
                     $addUserToList->setListId(178);
                     $addUserToList->setId($expertSenderId);
                     $addUserToList->setEmail($user->getEmail());
@@ -434,7 +506,7 @@ class ExpertsenderService implements LoggerAwareInterface
             'DELIVERY_DATE',
             'PHONE',
             'USER_REGISTERED',
-            'COM_WAY'
+            'COM_WAY',
         ]);
 
         /**
@@ -547,7 +619,8 @@ class ExpertsenderService implements LoggerAwareInterface
         /**
          * Не отправляем письма для заказов в 1 клик
          */
-        if ($orderService->getOrderPropertyByCode($order, 'COM_WAY')->getValue() === OrderPropertyService::COMMUNICATION_ONE_CLICK) {
+        if ($orderService->getOrderPropertyByCode($order,
+                'COM_WAY')->getValue() === OrderPropertyService::COMMUNICATION_ONE_CLICK) {
             return 0;
         }
 
