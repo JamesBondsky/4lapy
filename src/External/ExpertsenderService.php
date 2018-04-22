@@ -310,9 +310,14 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setMode('AddAndUpdate');
                     $addUserToList->setTrackingCode('all_popup');
                     $addUserToList->setListId(178);
-                    $addUserToList->setId($expertSenderId);
+                    $addUserToList->setEmail($user->getEmail());
+
                     /** флаг подписки на новости */
                     $addUserToList->addProperty(new Property(23, 'boolean', true));
+                    /** ip юзверя */
+                    $addUserToList->addProperty(new Property(48, 'string',
+                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+
 
                     $apiResult = $this->client->addUserToList($addUserToList);
                     if ($apiResult->isOk()) {
@@ -357,8 +362,12 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setTrackingCode('all_popup');
                     $addUserToList->setListId(178);
                     $addUserToList->setId($expertSenderId);
+                    $addUserToList->setEmail($user->getEmail());
                     /** флаг подписки на новости */
                     $addUserToList->addProperty(new Property(23, 'boolean', 0));
+                    /** ip юзверя */
+                    $addUserToList->addProperty(new Property(48, 'string',
+                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
 
                     $apiResult = $this->client->addUserToList($addUserToList);
                     if ($apiResult->isOk()) {
