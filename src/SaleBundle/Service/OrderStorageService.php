@@ -33,13 +33,15 @@ use Symfony\Component\HttpFoundation\Request;
 
 class OrderStorageService
 {
-    const AUTH_STEP = 'auth';
+    public const NOVALIDATE_STEP = 'novalidate';
 
-    const DELIVERY_STEP = 'delivery';
+    public const AUTH_STEP = 'auth';
 
-    const PAYMENT_STEP = 'payment';
+    public const DELIVERY_STEP = 'delivery';
 
-    const COMPLETE_STEP = 'complete';
+    public const PAYMENT_STEP = 'payment';
+
+    public const COMPLETE_STEP = 'complete';
 
     /**
      * Порядок оформления заказа
