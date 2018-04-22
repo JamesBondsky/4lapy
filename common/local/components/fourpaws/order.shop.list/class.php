@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
@@ -144,6 +145,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             /** @var Store $store */
             $shopCount = 0;
+            $isDpd = $this->deliveryService->isDpdPickup($pickupDelivery);
             foreach ($bestShops as $store) {
                 $fullResult = (clone $pickupDelivery)->setSelectedShop($store);
                 [$available, $delayed] = $this->orderStorageService->splitStockResult($fullResult);
@@ -152,12 +154,30 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     continue;
                 }
                 $shopCount++;
-                $partialResult = (clone $fullResult)->setStockResult($available);
+
+                $partialResult = $isDpd
+                    ? $fullResult
+                    : (clone $fullResult)->setStockResult($available);
 
                 $metro = $store->getMetro();
                 $address = !empty($metro)
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
+
+                if ($isDpd) {
+                    $orderType = !$delayed->isEmpty() ? 'delay' : 'full';
+                    if (!$delayed->isEmpty()) {
+                        $delayed = $fullResult->getStockResult()->getOrderable();
+                        $available = new StockResultCollection();
+                    }
+                } else {
+                    $orderType = 'parts';
+                    if ($delayed->isEmpty()) {
+                        $orderType = 'full';
+                    } elseif ($available->isEmpty()) {
+                        $orderType = 'delay';
+                    }
+                }
 
                 $partsDelayed = [];
                 /** @var StockResult $item */
@@ -181,12 +201,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ];
                 }
 
-                $orderType = 'parts';
-                if ($delayed->isEmpty()) {
-                    $orderType = 'full';
-                } elseif ($available->isEmpty()) {
-                    $orderType = 'delay';
-                }
+
 
                 if ($canGetPartial) {
                     $price = $available->isEmpty() ?
