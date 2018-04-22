@@ -21,6 +21,7 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -314,12 +315,17 @@ class BasketController extends Controller implements LoggerAwareInterface
                 /** @var Product $product */
                 $product = $offer->getProduct();
                 $name = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName()));
+                if(0 < $weight = $offer->getCatalogProduct()->getWeight()) {
+                    $weight = WordHelper::showWeight($weight);
+                } else {
+                    $weight = '';
+                }
                 $items[] = [
                     'id' => $offer->getId(),
                     'actionId' => $discountId,
                     'image' => $image,
                     'name' => $name,
-                    'additional' => '', // todo ###
+                    'additional' => $weight,
                 ];
 
             }

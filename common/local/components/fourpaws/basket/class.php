@@ -103,8 +103,6 @@ class BasketComponent extends CBitrixComponent
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws SystemException
-     * @throws ArgumentOutOfRangeException
-     * @throws ArgumentException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws \InvalidArgumentException
@@ -114,7 +112,6 @@ class BasketComponent extends CBitrixComponent
      * @throws ServiceCircularReferenceException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws ExecuteException
      */
     public function executeComponent(): void
     {
@@ -136,6 +133,8 @@ class BasketComponent extends CBitrixComponent
                 $order = Order::create(SITE_ID);
                 $order->setBasket($basket);
             }
+            // необходимо подгрузить подарки
+            $this->offerCollection = $this->basketService->getOfferCollection(true);
             $this->loadPromoDescriptions();
             $this->setCoupon();
             $this->arResult['USER'] = null;
