@@ -100,9 +100,13 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
             if ($mainCombinationType === 'SIZE') {
                 ?>
                 <div class="b-common-item__variant">Размеры</div>
-            <?php } else { ?>
+                <?php
+            } else {
+                ?>
                 <div class="b-common-item__variant">Варианты фасовки</div>
-            <?php } ?>
+                <?php
+            }
+            ?>
             <div class="b-weight-container b-weight-container--list">
                 <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
                    href="javascript:void(0);"

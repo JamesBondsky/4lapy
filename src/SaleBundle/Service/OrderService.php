@@ -611,11 +611,10 @@ class OrderService implements LoggerAwareInterface
                 $users = $this->currentUserProvider->getUserRepository()->findBy(['=PERSONAL_PHONE' => $storage->getPhone()]);
             }
 
-
             $foundUser = null;
             /** @var User $user */
             foreach ($users as $user) {
-                if ($user->getEmail() === $storage->getEmail()) {
+                if (mb_strtolower($user->getEmail()) === mb_strtolower($storage->getEmail())) {
                     $foundUser = $user;
                 } elseif ($user->getPersonalPhone() === $storage->getPhone()) {
                     $foundUser = $user;
