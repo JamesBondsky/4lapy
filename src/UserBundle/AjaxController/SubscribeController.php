@@ -67,11 +67,19 @@ class SubscribeController extends Controller
         $success = false;
 
         /** В эксперт сендере только о новостях список есть */
+        try {
+            $userService = $container->get(CurrentUserProviderInterface::class);
+        } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+
+            return $this->ajaxMess->getSystemError();
+        }
         if ($type === 'all') {
             try {
                 try {
-                    $userService = $container->get(CurrentUserProviderInterface::class);
                     $user = $userService->getCurrentUser();
+                    $oldEmail = $user->getEmail();
                 } catch (NotAuthorizedException $e) {
                     $user = new User();
                 }
@@ -79,6 +87,19 @@ class SubscribeController extends Controller
                 $expertSenderService = $container->get('expertsender.service');
                 if ($expertSenderService->sendEmailSubscribeNews($user)) {
                     $success = true;
+                    if($user->getId() <= 0){
+                        $users = $userService->getUserRepository()->findBy(['=EMAIL'=>$user->getEmail()]);
+                        if(\count($users) === 1){
+                            $user = current($users);
+                        }
+                    }
+                    if($user->getId() > 0) {
+                        if(isset($oldEmail)) {
+                            $user->setEmail($oldEmail);
+                        }
+                        $user->setEsSubscribed(true);
+                        $userService->getUserRepository()->update($user);
+                    }
                 } else {
                     $success = false;
                 }
@@ -101,11 +122,29 @@ class SubscribeController extends Controller
             }
         } else {
             try {
-                $user = new User();
+                try {
+                    $user = $userService->getCurrentUser();
+                    $oldEmail = $user->getEmail();
+                } catch (NotAuthorizedException $e) {
+                    $user = new User();
+                }
                 $user->setEmail($email);
                 $expertSenderService = $container->get('expertsender.service');
                 if ($expertSenderService->sendEmailUnSubscribeNews($user)) {
                     $success = true;
+                    if($user->getId() <= 0){
+                        $users = $userService->getUserRepository()->findBy(['=EMAIL'=>$user->getEmail()]);
+                        if(\count($users) === 1){
+                            $user = current($users);
+                        }
+                    }
+                    if($user->getId() > 0) {
+                        if(isset($oldEmail)) {
+                            $user->setEmail($oldEmail);
+                        }
+                        $user->setEsSubscribed(false);
+                        $userService->getUserRepository()->update($user);
+                    }
                 } else {
                     $success = false;
                 }

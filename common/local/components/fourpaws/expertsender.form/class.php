@@ -55,6 +55,7 @@ class FourPawsExpertsenderFormComponent extends \CBitrixComponent
                 $curUser = $this->getCurrentUserProvider()->getCurrentUser();
                 $this->arResult['EMAIL'] = $curUser !== null ? $curUser->getEmail() : '';
                 $this->arResult['CONFIRMED'] = $curUser !== null ?  $curUser->isEmailConfirmed() : false;
+                $this->arResult['IS_SUBSCRIBED'] = $curUser->isEsSubscribed();
             }
             $this->includeComponentTemplate();
         } catch (\Exception $e) {

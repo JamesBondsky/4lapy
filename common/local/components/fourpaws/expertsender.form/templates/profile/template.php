@@ -30,7 +30,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <input type="hidden" name="email" value="<?= $arResult['EMAIL'] ?>">
             <div class="b-account-profile__subscribe-setting">
                 <div class="b-checkbox b-checkbox--agree b-checkbox--account-subscribe">
-                    <input class="b-checkbox__input" name="type" id="subscribe-all" type="checkbox" value="all">
+                    <input class="b-checkbox__input" name="type" id="subscribe-all" type="checkbox" value="all" <?=$arResult['IS_SUBSCRIBED'] ? 'checked="checked"' : ''?>>
                     <label
                             class="b-checkbox__name b-checkbox__name--agree b-checkbox__name--account-subscribe"
                             for="subscribe-all"><span class="b-checkbox__text">Я хочу получать полезную информацию</span>
