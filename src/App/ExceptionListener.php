@@ -37,7 +37,10 @@ class ExceptionListener
             die (1);
         }
         if (!$exception instanceof HttpException) {
-            $this->log()->critical(sprintf('Unhandled exception: %s', $exception->getMessage()));
+            $this->log()->critical(
+                sprintf('Unhandled exception: %s: %s', \get_class($exception), $exception->getMessage()),
+                ['trace' => $exception->getTrace()]
+            );
         }
     }
 }
