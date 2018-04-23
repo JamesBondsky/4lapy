@@ -632,7 +632,6 @@ class OrderService implements LoggerAwareInterface
                     ->setLogin($storage->getPhone())
                     ->setPassword($password)
                     ->setPersonalPhone($storage->getPhone());
-                $_SESSION['MANZANA_UPDATE'] = true;
                 $_SESSION['SEND_REGISTER_EMAIL'] = true;
                 $user = $this->userRegistrationProvider->register($user);
 

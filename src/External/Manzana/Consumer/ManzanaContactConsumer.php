@@ -29,12 +29,15 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             /** @var Client $contact */
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
 
-            if (null === $contact || (!$contact->phone && !$contact->contactId)) {
+            if (null === $contact || (empty($contact->phone) && empty($contact->contactId))) {
                 throw new ContactUpdateException('Неожиданное сообщение');
             }
 
-            if (!$contact->contactId) {
+            if (empty($contact->contactId)) {
                 try {
+                    if(empty($contact->phone)){
+                        throw new ContactUpdateException('Неожиданное сообщение');
+                    }
                     $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
                 } catch (ManzanaServiceContactSearchNullException $e) {
                     /**
