@@ -786,7 +786,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $cards = $this->getCardsByContactId($contactId);
         $activeCards = array_filter($cards, function (CardByContractCards $card) {
-            return $card->status === CardByContractCards::CARD_STATUS_ACTIVE;
+            return $card->isActive();
         });
 
         if (\count($activeCards) === 1) {
