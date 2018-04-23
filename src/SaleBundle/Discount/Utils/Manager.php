@@ -29,11 +29,10 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Manager
 {
-    protected static $finalActionEnabled = true;
+    protected static $extendEnabled = true;
+    protected static $extendCalculated = false;
 
     /**
-     *
-     *
      * @param Event|null $event
      *
      * @throws ServiceNotFoundException
@@ -49,18 +48,9 @@ class Manager
      */
     public static function extendDiscount(Event $event): void
     {
-        if ($event->getParameter('ORDER')['ID']) {
-            return;
-        }
-
-        if (self::$finalActionEnabled) {
+        if (self::$extendEnabled && !self::$extendCalculated) {
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
-
-            if ($basketService::$flag) {
-                return;
-            }
-
             $manzana = $container->get(Manzana::class);
             $couponStorage = $container->get(CouponStorageInterface::class);
 
@@ -90,7 +80,7 @@ class Manager
                 $couponStorage->delete($promoCode);
             }
 
-            $basketService::$flag = true;
+            self::$extendCalculated = true;
         }
     }
 
@@ -99,7 +89,7 @@ class Manager
      */
     public static function disableExtendsDiscount(): void
     {
-        self::$finalActionEnabled = false;
+        self::$extendEnabled = false;
     }
 
 
@@ -108,7 +98,7 @@ class Manager
      */
     public static function enableExtendsDiscount(): void
     {
-        self::$finalActionEnabled = true;
+        self::$extendEnabled = true;
     }
 
     /**
@@ -132,6 +122,7 @@ class Manager
                         $result[$basketItem->getId()]['offerId'] = (int)$basketItem->getProductId();
                         $result[$basketItem->getId()]['basketId'] = (int)$basketItem->getId();
                     }
+
                     if ($basketPropertyItem->getField('CODE') === 'IS_GIFT_SELECTED') {
                         $result[$basketItem->getId()]['selected'] = $basketPropertyItem->getField('VALUE');
                     }

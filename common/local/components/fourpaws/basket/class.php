@@ -29,7 +29,6 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
@@ -60,10 +59,6 @@ class BasketComponent extends CBitrixComponent
      * @var UserService
      */
     private $currentUserService;
-    /**
-     * @var ManzanaPosService
-     */
-    private $manzanaPosService;
     /** @var array $images */
     private $images;
     /**
@@ -90,7 +85,6 @@ class BasketComponent extends CBitrixComponent
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
         $this->couponsStorage = $container->get(CouponStorageInterface::class);
-        $this->manzanaPosService = $container->get('manzana.pos.service');
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -315,7 +309,6 @@ class BasketComponent extends CBitrixComponent
 
         foreach ($orderableBasket as $basketItem) {
             $itemQuantity = (int)$basketItem->getQuantity();
-
             $weight += (float)$basketItem->getWeight();
             $quantity += $itemQuantity;
             $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
@@ -358,7 +351,7 @@ class BasketComponent extends CBitrixComponent
             $res = \CIBlockElement::GetList(
                 ['ID' => 'ASC'],
                 [
-                    'PROPERTY_BASKET_RULES' => array_values($discountMap),
+                    'PROPERTY_BASKET_RULES' => \array_values($discountMap),
                     'IBLOCK_CODE'           => IblockCode::SHARES,
                     'IBLOCK_TYPE'           => IblockType::PUBLICATION,
                 ],
@@ -404,7 +397,7 @@ class BasketComponent extends CBitrixComponent
             &&
             isset($applyResult['RESULT']['BASKET'][$basketItem->getId()])
         ) {
-            foreach (array_column($applyResult['RESULT']['BASKET'][$basketItem->getId()], 'DISCOUNT_ID') as $fakeId) {
+            foreach (\array_column($applyResult['RESULT']['BASKET'][$basketItem->getId()], 'DISCOUNT_ID') as $fakeId) {
                 if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
                     $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
                 }

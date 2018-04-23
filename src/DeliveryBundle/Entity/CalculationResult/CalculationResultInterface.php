@@ -14,10 +14,10 @@ use Bitrix\Main\ErrorCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Collection\DeliveryScheduleResultCollection;
-use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
+use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 

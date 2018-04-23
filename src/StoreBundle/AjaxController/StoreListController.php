@@ -57,7 +57,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
         try {
             return JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $this->storeService->getStores(
+                $this->storeService->getStoresInfo(
                     [
                         'filter' => $this->storeService->getFilterByRequest($request),
                         'order'  => $this->storeService->getOrderByRequest($request),
@@ -84,7 +84,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
         try {
             return JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $this->storeService->getStores(
+                $this->storeService->getStoresInfo(
                     [
                         'filter' => $this->storeService->getFilterByRequest($request),
                         'order'  => $this->storeService->getOrderByRequest($request),
@@ -111,7 +111,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
         try {
             return JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $this->storeService->getStores(
+                $this->storeService->getStoresInfo(
                     [
                         'filter' => $this->storeService->getFilterByRequest($request),
                         'order'  => $this->storeService->getOrderByRequest($request),
@@ -140,7 +140,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
                 /** @todo если передать координаты пользователя - то можно подсветить ближайший магазин, либо удаляем комменты */
                 return JsonSuccessResponse::createWithData(
                     'Подгрузка успешна',
-                    $this->storeService->getStores(
+                    $this->storeService->getStoresInfo(
                         [
                             'filter'       => $this->storeService->getFilterByRequest($request),
                             'storesAlways' => true, // отвечает за логику показа магазинов если нет в городе
@@ -153,7 +153,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
 
             return JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $this->storeService->getStores(
+                $this->storeService->getStoresInfo(
                     [
                         'filter'               => $this->storeService->getFilterByRequest($request),
                         'order'                => $this->storeService->getOrderByRequest($request),

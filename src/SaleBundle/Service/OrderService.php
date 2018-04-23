@@ -1092,7 +1092,7 @@ class OrderService implements LoggerAwareInterface
                     }
                 } elseif ($properties['DELIVERY_PLACE_CODE']) {
                     try {
-                        $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                        $store = $this->storeService->getStoreByXmlId($properties['DELIVERY_PLACE_CODE']);
                         $address = $store->getAddress();
 
                         if ($store->getMetro()) {

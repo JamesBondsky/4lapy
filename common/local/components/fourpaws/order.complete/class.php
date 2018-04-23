@@ -177,7 +177,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                     $this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']
                 );
             } elseif ($this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']) {
-                $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->storeService->getByXmlId(
+                $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->storeService->getStoreByXmlId(
                     $this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']
                 );
             }
@@ -225,7 +225,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
             }
         } elseif ($properties['DELIVERY_PLACE_CODE']) {
             try {
-                $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                $store = $this->storeService->getStoreByXmlId($properties['DELIVERY_PLACE_CODE']);
                 $result['SCHEDULE'] = $store->getScheduleString();
             } catch (StoreNotFoundException $e) {
             }

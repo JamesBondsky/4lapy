@@ -425,7 +425,7 @@ class DeliverySchedule extends Base
     public function getReceiver(): Store
     {
         if (null === $this->receiver) {
-            $this->setReceiver($this->storeService->getByXmlId($this->getReceiverCode()));
+            $this->setReceiver($this->storeService->getStoreByXmlId($this->getReceiverCode()));
         }
         return $this->receiver;
     }
@@ -449,7 +449,7 @@ class DeliverySchedule extends Base
     public function getSender(): Store
     {
         if (null === $this->sender) {
-            $this->setSender($this->storeService->getByXmlId($this->getSenderCode()));
+            $this->setSender($this->storeService->getStoreByXmlId($this->getSenderCode()));
         }
         return $this->sender;
     }

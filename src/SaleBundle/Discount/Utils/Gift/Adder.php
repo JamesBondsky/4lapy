@@ -54,6 +54,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 && $group['list'] && $group['list'] instanceof OfferCollection
             ) {
                 $existGiftsQuantity = $this->getExistGiftsQuantity($group);
+
                 if ($group['count'] > $existGiftsQuantity) {
                     $group['count'] -= $existGiftsQuantity;
                     // Находим оффер с минимальной ценой
@@ -91,6 +92,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         if (!$offerId || !$quantity || !$discountId || $offerId < 0 || $quantity < 0 || $discountId < 0) {
             return;
         }
+
         $fields = [
             'PRICE' => 0,
             'CUSTOM_PRICE' => 'Y',
@@ -110,6 +112,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 ],
             ]
         ];
+        
         $this->basketService->addOfferToBasket($offerId, $quantity, $fields);
     }
 
@@ -122,6 +125,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     public function getExistGifts(int $discountId = null, bool $selected = null): array
     {
         $result = Manager::getExistGifts($this->order);
+
         if (!empty($result) && null !== $discountId) {
             $result = array_filter($result, function ($elem) use ($discountId, $selected) {
                 return (
