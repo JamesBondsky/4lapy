@@ -17,16 +17,16 @@ use DateTime as NormalDateTime;
 class DateHelper
 {
     /** именительный падеж */
-    const NOMINATIVE = 'Nominative';
+    public const NOMINATIVE = 'Nominative';
     
     /** родительный падеж */
-    const GENITIVE = 'Genitive';
+    public const GENITIVE = 'Genitive';
     
     /** именительный падеж короткий*/
-    const SHORT_NOMINATIVE = 'ShortNominative';
+    public const SHORT_NOMINATIVE = 'ShortNominative';
     
     /** родительный падеж короткий */
-    const SHORT_GENITIVE = 'ShortGenitive';
+    public const SHORT_GENITIVE = 'ShortGenitive';
 
     /** дательный падеж множ. число */
     const DATIVE_PLURAL = 'DativePlural';
@@ -133,11 +133,13 @@ class DateHelper
      *
      * @param string $case
      *
+     * @param bool $lower
+     *
      * @return string
      */
-    public static function replaceRuMonth(string $date, string $case = 'Nominative') : string
+    public static function replaceRuMonth(string $date, string $case = 'Nominative', bool $lower = false) : string
     {
-        return static::replaceStringByArray(
+        $res = static::replaceStringByArray(
             [
                 'date'    => $date,
                 'case'    => $case,
@@ -145,6 +147,11 @@ class DateHelper
                 'pattern' => '|#\d{1,2}#|',
             ]
         );
+        if($lower){
+            $res = ToLower($res);
+        }
+
+        return $res;
     }
     
     private static function replaceStringByArray(array $params)

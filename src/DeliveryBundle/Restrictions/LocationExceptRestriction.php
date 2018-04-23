@@ -29,7 +29,7 @@ class LocationExceptRestriction extends Restrictions\Base
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
-        if (!$deliveryZone = $deliveryService->getDeliveryZoneCodeByLocation(
+        if (!$deliveryZone = $deliveryService->getDeliveryZoneByDelivery(
             $locationCode,
             $deliveryId
         )) {

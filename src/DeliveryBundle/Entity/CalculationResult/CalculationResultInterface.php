@@ -14,9 +14,10 @@ use Bitrix\Main\ErrorCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
+use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
@@ -75,6 +76,11 @@ interface CalculationResultInterface
      * @return StockResultCollection
      */
     public function getStockResult(): StockResultCollection;
+
+    /**
+     * @return StockResultCollection
+     */
+    public function getFullStockResult(): StockResultCollection;
 
     /**
      * @param StockResultCollection $stockResult
@@ -202,7 +208,12 @@ interface CalculationResultInterface
     /**
      * @return DeliveryScheduleResult|null
      */
-    public function getShipmentResult(): ?DeliveryScheduleResult;
+    public function getShipmentResults(): ?DeliveryScheduleResultCollection;
+
+    /**
+     * @return Store|null
+     */
+    public function getShipmentStore(): ?Store;
 
     /**
      * @return float

@@ -15,16 +15,21 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Exception\CaptchaErrorException;
 use FourPaws\AppBundle\Exception\EmptyUserDataComments;
 use FourPaws\AppBundle\Exception\ErrorAddComment;
+use FourPaws\AppBundle\Exception\UserNotFoundAddCommentException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\WrongEmailException;
+use FourPaws\UserBundle\Exception\WrongPasswordException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Psr\Cache\InvalidArgumentException;
@@ -35,41 +40,53 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class CCommentsComponent extends \CBitrixComponent
 {
     /**
+     * @var UserAuthorizationInterface $userService
+     */
+    public $userAuthService;
+    /**
      * @var DataManager $hlEntity
      */
     private $hlEntity;
-
-    /**
-     * @var UserAuthorizationInterface $userService
-     */
-    private $userAuthService;
-
     /**
      * @var CurrentUserProviderInterface $userService
      */
     private $userCurrentUserService;
 
     /**
+     * @param bool $addNotAuth
      *
-     * @throws WrongEmailException
-     * @throws \LogicException
-     * @throws ServiceNotFoundException
-     * @throws LoaderException
-     * @throws SystemException
-     * @throws ApplicationCreateException
-     * @throws EmptyUserDataComments
-     * @throws ErrorAddComment
-     * @throws WrongPhoneNumberException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
      * @return bool
+     * @throws WrongPasswordException
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
+     * @throws UserNotFoundAddCommentException
+     * @throws CaptchaErrorException
+     * @throws ApplicationCreateException
+     * @throws NotAuthorizedException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws WrongEmailException
+     * @throws WrongPhoneNumberException
+     * @throws EmptyUserDataComments
+     * @throws \RuntimeException
+     * @throws \LogicException
+     * @throws SystemException
+     * @throws LoaderException
+     * @throws \Exception
+     * @throws ErrorAddComment
      */
-    public static function addComment(): bool
+    public static function addComment(bool $addNotAuth = false): bool
     {
         $class = new static();
         $class->setUserBundle();
         $class->arResult['AUTH'] = $class->userAuthService->isAuthorized();
-        $data = $class->getData();
+        if (!$class->arResult['AUTH']) {
+            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            if (!$recaptchaService->checkCaptcha()) {
+                throw new CaptchaErrorException('Капча не валидна');
+            }
+        }
+        $data = $class->getData($addNotAuth);
         $class->arParams['HL_ID'] = $data['HL_ID'];
         $class->arParams['OBJECT_ID'] = $data['UF_OBJECT_ID'];
         unset($data['HL_ID']);
@@ -88,6 +105,9 @@ class CCommentsComponent extends \CBitrixComponent
     /**
      * @param int $hlID
      *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws \Exception
      * @throws \LogicException
      * @throws LoaderException
      * @throws SystemException
@@ -178,6 +198,7 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * {@inheritdoc}
+     * @throws \Bitrix\Main\SystemException
      * @throws ServiceNotFoundException
      * @throws \RuntimeException
      * @throws \LogicException
@@ -196,6 +217,20 @@ class CCommentsComponent extends \CBitrixComponent
             return false;
         }
 
+        $this->arResult['AUTH'] = false;
+        try {
+            $this->setUserBundle();
+            $this->arResult['AUTH'] = $this->userAuthService->isAuthorized();
+        } catch (ApplicationCreateException $e) {
+            ShowError($e->getMessage());
+
+            return false;
+        } catch (ServiceCircularReferenceException $e) {
+            ShowError($e->getMessage());
+
+            return false;
+        }
+
         /** @todo кеширование комментариев */
         if ($this->startResultCache()) {
 
@@ -210,18 +245,6 @@ class CCommentsComponent extends \CBitrixComponent
 
                 return false;
             }
-            try {
-                $this->setUserBundle();
-            } catch (ApplicationCreateException $e) {
-                ShowError($e->getMessage());
-
-                return false;
-            } catch (ServiceCircularReferenceException $e) {
-                ShowError($e->getMessage());
-
-                return false;
-            }
-            $this->arResult['AUTH'] = $this->userAuthService->isAuthorized();
 
             try {
                 $comments = $this->getComments();
@@ -233,6 +256,8 @@ class CCommentsComponent extends \CBitrixComponent
                 return false;
             }
             $this->arResult['RATING'] = $this->getRating();
+
+            $this->setResultCacheKeys(['AUTH']);
 
             TaggedCacheHelper::addManagedCacheTags([
                 'comments:objectId:' . $this->arParams['OBJECT_ID'],
@@ -259,6 +284,12 @@ class CCommentsComponent extends \CBitrixComponent
     }
 
     /**
+     * @param bool $addNotAuth
+     *
+     * @throws WrongPasswordException
+     * @throws UserNotFoundAddCommentException
+     * @throws NotAuthorizedException
+     * @throws \Exception
      * @throws SystemException
      * @throws EmptyUserDataComments
      * @throws ErrorAddComment
@@ -266,49 +297,56 @@ class CCommentsComponent extends \CBitrixComponent
      * @throws WrongEmailException
      * @return array
      */
-    protected function getData(): array
+    protected function getData(bool $addNotAuth = false): array
     {
         $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
         unset($data['action']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
-            $userRepository = $this->userCurrentUserService->getUserRepository();
-            $filter = [
-                'LOGIC' => 'OR',
-            ];
-            if (!empty($data['EMAIL'])) {
-                if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
-                    throw new WrongEmailException(
-                        'Введен некорректный email'
-                    );
-                }
-                $filter[] = [
-                    '=EMAIL' => $data['EMAIL'],
+            if (!$addNotAuth) {
+                $userRepository = $this->userCurrentUserService->getUserRepository();
+                $filter = [
+                    'LOGIC' => 'OR',
                 ];
-            }
-            if (!empty($data['PHONE']) && PhoneHelper::isPhone($data['PHONE'])) {
-                $filter[] = [
-                    '=PERSONAL_PHONE' => PhoneHelper::normalizePhone($data['PHONE']),
-                ];
-            }
-            if (count($filter) > 1) {
-                $users = $userRepository->findBy($filter);
-                if (\is_array($users) && !empty($users)) {
-                    foreach ($users as $user) {
-                        if ($user->equalPassword($data['PASSWORD'])) {
-                            $data['UF_USER_ID'] = $user->getId();
-                            break;
-                        }
+                if (!empty($data['EMAIL'])) {
+                    if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
+                        throw new WrongEmailException(
+                            'Введен некорректный email'
+                        );
                     }
+                    $filter[] = [
+                        '=EMAIL' => $data['EMAIL'],
+                    ];
                 }
-                if (empty($data['UF_USER_ID'])) {
-                    throw new ErrorAddComment(
-                        'Пользователь не найден, либо данные введены неверно'
-                    );
+                if (!empty($data['PHONE']) && PhoneHelper::isPhone($data['PHONE'])) {
+                    $filter[] = [
+                        '=PERSONAL_PHONE' => PhoneHelper::normalizePhone($data['PHONE']),
+                    ];
                 }
-            } else {
-                throw new EmptyUserDataComments('Не указаны параметры');
+                if (count($filter) > 1) {
+                    $users = $userRepository->findBy($filter);
+                    if (\is_array($users) && !empty($users)) {
+                        foreach ($users as $user) {
+                            if ($user->equalPassword($data['PASSWORD'])) {
+                                $data['UF_USER_ID'] = $user->getId();
+                                break;
+                            }
+                        }
+                    } else {
+                        throw new UserNotFoundAddCommentException(
+                            'Пользователь не найден, либо данные введены неверно'
+                        );
+                    }
+                    if (empty($data['UF_USER_ID'])) {
+                        /** разрешено добавлять анонимно - включается флагов в параметрах метода */
+                        throw new WrongPasswordException(
+                            'Неверный пароль'
+                        );
+                    }
+                } else {
+                    throw new EmptyUserDataComments('Телефон или email обязательны');
+                }
             }
         }
         unset($data['PHONE'], $data['EMAIL'], $data['PASSWORD']);
@@ -320,6 +358,9 @@ class CCommentsComponent extends \CBitrixComponent
     }
 
     /**
+     * @throws \Exception
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
      * @throws \LogicException
      * @throws LoaderException
      * @throws SystemException
@@ -331,6 +372,7 @@ class CCommentsComponent extends \CBitrixComponent
     }
 
     /**
+     * @throws SystemException
      * @throws ArgumentException
      * @return array
      */
@@ -395,6 +437,9 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * @return int
+     * @throws \Bitrix\Main\SystemException
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
      */
     protected function getRating(): int
     {
@@ -408,6 +453,9 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * @return int
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      */
     protected function getSumMarkComments(): int
     {

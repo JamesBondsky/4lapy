@@ -231,7 +231,7 @@ class SharesService implements LoggerAwareInterface
              * @var BonusBuyFrom $itemsFrom
              */
             $itemsFrom = $share->getBonusBuyFrom()->first();
-            $countCondition = $itemsFrom->getGroupQuantity() - 1;
+            $countCondition = $itemsFrom->getGroupQuantity();
             if (!ArrayHelper::arraysEquals($products, $itemsFrom->getProductIds()->toArray())) {
                 throw new InvalidArgumentException(
                     'У акций типа Z006 должны быть одинаковые товары в группах за и на которые дают скидки'
@@ -250,7 +250,9 @@ class SharesService implements LoggerAwareInterface
                         'DATA' => [
                             'Filtration_operator' => $filtrationOperator,
                             'Count_operator' => $countOperator,
+                            'All' => 'AND',
                             'Value' => $discountPercent,
+                            'Additional_JSON' => false,
                         ],
                         'CHILDREN' => [
                             [

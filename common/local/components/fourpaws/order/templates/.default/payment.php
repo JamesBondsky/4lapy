@@ -55,7 +55,7 @@ if (!$selectedPayment) {
     $selectedPayment = current($payments);
 }
 
-$basketPrice = $basket->getPrice();
+$basketPrice = $selectedDelivery->getStockResult()->getPrice();
 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
     $basketPrice = $arResult['PARTIAL_PICKUP']->getStockResult()->getPrice();
 }
@@ -189,7 +189,7 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3" data-cost="<?= $basketPrice ?>">
                                 <?= CurrencyHelper::formatPrice($basketPrice, false) ?>
                             </div>
                         </li>
@@ -201,7 +201,7 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3" data-cost="<?= $selectedDelivery->getPrice() ?>">
                                 <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
                             </div>
                         </li>

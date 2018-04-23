@@ -143,6 +143,8 @@ class IntervalService implements LoggerAwareInterface
      */
     public function getIntervalByCode(string $code): string
     {
+        $code = trim($code, '0');
+
         if (!isset(static::DELIVERY_INTERVALS[$code])) {
             throw new NotFoundException(
                 \sprintf('Interval with code %s not found', $code)

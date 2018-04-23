@@ -24,7 +24,6 @@ use FourPaws\PersonalBundle\Entity\OrderProp;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -139,16 +138,12 @@ class OrderService
     }
 
     /**
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ManzanaServiceContactSearchNullException
-     * @throws ManzanaServiceContactSearchMoreOneException
-     * @throws ManzanaServiceException
+     * @return ArrayCollection
      * @throws ApplicationCreateException
-     * @return ArrayCollection|Order[]
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     * @throws \Exception
      */
     public function getManzanaOrders(): ArrayCollection
     {
@@ -171,7 +166,7 @@ class OrderService
                 $order->setStatusId(static::$manzanaFinalStatus);
                 $order->setPrice($cheque->sum);
                 $order->setItemsSum($cheque->sum);
-                $order->setId((int)$cheque->chequeNumber);
+                $order->setManzanaId($cheque->chequeNumber);
                 $items = [];
                 if ($cheque->hasItemsBool()) {
                     $chequeItems = new ArrayCollection($this->manzanaService->getItemsByCheque($cheque->chequeId));
@@ -196,6 +191,9 @@ class OrderService
                                 $items[!empty($item->getArticle()) ? $item->getArticle() : $i] = $item;
                             }
                         }
+                    } else {
+                        // пропускаем чеки без товаров
+                        continue;
                     }
                 }
                 $order->setItems(new ArrayCollection($items));
@@ -344,14 +342,22 @@ class OrderService
      */
     public function getStore(Order $order): Store
     {
-        //
+        /** @var OrderProp $prop */
         //CITY_CODE
-        /** @todo может что сделать с dpd */
-        $storeXmlId = $order->getPropValue('DELIVERY_PLACE_CODE');
-        if (!empty($storeXmlId)) {
-            /** @var StoreService $storeService */
-            $storeService = App::getInstance()->getContainer()->get('store.service');
-            return $storeService->getByXmlId($storeXmlId);
+        $props = $order->getProps();
+        if (!$props->isEmpty()) {
+            $dpdTerminal = $props->get('DPD_TERMINAL_CODE');
+            $deliveryPlace = $props->get('DELIVERY_PLACE_CODE');
+            if ($dpdTerminal instanceof OrderProp && $dpdTerminal->getValue()) {
+                $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+
+                return $deliveryService->getDpdTerminalByCode($dpdTerminal->getValue());
+            }
+            if ($deliveryPlace instanceof OrderProp && $deliveryPlace->getValue()) {
+                $storeService = App::getInstance()->getContainer()->get('store.service');
+
+                return $storeService->getStoreByXmlId($deliveryPlace->getValue());
+            }
         }
 
         $store = new Store();

@@ -7,9 +7,10 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
-use Exception;
+use Bitrix\Sale\PaymentCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
@@ -21,8 +22,6 @@ use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
-use FourPaws\SaleBundle\Exception\InvalidArgumentException;
-use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
@@ -64,14 +63,20 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr']);
         /** Здесь дополнительная обработка акций */
-        self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
+        self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'extendDiscount']);
 
         ###   Обработчики скидок EOF   ###
 
         /** отправка email */
+        // новый заказ
         self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
+        // смена платежной системы у заказа
+        self::initHandler('OnSalePaymentEntitySaved', [static::class, 'sendNewOrderMessage']);
+        // оплата заказа
         self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);
+        // отмена заказа
         self::initHandler('OnSaleOrderCanceled', [static::class, 'sendOrderCancelMessage']);
+        // смена статуса заказа
         self::initHandler('OnSaleStatusOrderChange', [static::class, 'sendOrderStatusMessage']);
 
         /** обновление бонусного счета пользователя и бонусного процента пользователя */
@@ -122,13 +127,23 @@ class Event implements ServiceHandlerInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      */
     public static function sendNewOrderMessage(BitrixEvent $event): void
     {
-        /** @var Order $order */
-        $order = $event->getParameter('ENTITY');
-        $isNew = $event->getParameter('IS_NEW');
-        if (!$isNew) {
+        $entity = $event->getParameter('ENTITY');
+
+        if ($entity instanceof Order) {
+            $isNew = $event->getParameter('IS_NEW');
+            if (!$isNew) {
+                return;
+            }
+            $order = $entity;
+        } elseif ($entity instanceof Payment) {
+            /** @var PaymentCollection $collection */
+            $collection = $entity->getCollection();
+            $order = $collection->getOrder();
+        } else {
             return;
         }
 
@@ -155,6 +170,7 @@ class Event implements ServiceHandlerInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      */
     public static function sendOrderPaymentMessage(BitrixEvent $event): void
     {

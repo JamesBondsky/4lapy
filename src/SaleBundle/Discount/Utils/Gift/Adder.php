@@ -1,58 +1,63 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 08.02.2018
- * Time: 19:09
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
+/** @todo Класс работает в контексте текущего юзера, а должен уметь работать в контексте разных юзеров на одном хите */
+/** @todo N.B. При изменении состава корзины не всегда нужно делать basket->save(), например,
+ * при создании копии заказа вызов save() обнулит текущую корзину юзера (предполагаемое решение см. BaseDiscountPostHandler::canBasketSave()) */
 
 namespace FourPaws\SaleBundle\Discount\Utils\Gift;
 
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Exception;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use RuntimeException;
 
 /**
  * Class Adder
+ *
  * @package FourPaws\SaleBundle\Discount\Utils
  */
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     /**
-     *
-     *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws NotFoundException
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws BitrixProxyException
+     * @throws Exception
      */
     public function processOrder(): void
     {
         if (!$discount = $this->order->getDiscount()) {
             return;
         }
-        // TODO Если подарок был, а потом кончился, необходимо здесь добавлять подарки, которые есть
+        // TODO Если подарок был а потом кончился необходимо здесь добавлять подарки которые есть
         $groups = Gift::getPossibleGiftGroups($this->order);
+
         foreach ($groups as $group) {
             if (\count($group) === 1) {
                 $group = current($group);
             } else {
-                throw new \RuntimeException('TODO');
+                throw new RuntimeException('TODO');
             }
-            $group = $this->basketService->getGiftGroupOfferCollection(
-                $group['discountId'],
-                $this->order
-            );
-            if ($group && $group['list'] && $group['list'] instanceof OfferCollection) {
+
+            if (
+                ($group = $this->basketService->getGiftGroupOfferCollection($group['discountId']))
+                && $group['list'] && $group['list'] instanceof OfferCollection
+            ) {
                 $existGiftsQuantity = $this->getExistGiftsQuantity($group);
+
                 if ($group['count'] > $existGiftsQuantity) {
                     $group['count'] -= $existGiftsQuantity;
                     // Находим оффер с минимальной ценой
@@ -75,23 +80,22 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     }
 
     /**
-     *
-     *
      * @param int $offerId
      * @param int $quantity
      * @param int $discountId
      * @param bool $selected
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws InvalidArgumentException
+     * @throws BitrixProxyException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      */
     protected function addGift(int $offerId, int $quantity, int $discountId, bool $selected = false)
     {
         if (!$offerId || !$quantity || !$discountId || $offerId < 0 || $quantity < 0 || $discountId < 0) {
             return;
         }
+
         $fields = [
             'PRICE' => 0,
             'CUSTOM_PRICE' => 'Y',
@@ -111,20 +115,11 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 ],
             ]
         ];
-
-        $this->basketService->addOfferToBasket(
-            $offerId,
-            $quantity,
-            $fields,
-            $this->canBasketSave(),
-            $this->order->getBasket(),
-            false
-        );
+        
+        $this->basketService->addOfferToBasket($offerId, $quantity, $fields);
     }
 
     /**
-     *
-     *
      * @param int|null $discountId
      * @param bool|null $selected
      *
@@ -133,6 +128,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     public function getExistGifts(int $discountId = null, bool $selected = null): array
     {
         $result = Manager::getExistGifts($this->order);
+
         if (!empty($result) && null !== $discountId) {
             $result = array_filter($result, function ($elem) use ($discountId, $selected) {
                 return (
@@ -145,8 +141,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     }
 
     /**
-     *
-     *
      * @param array $group
      * @param bool|null $selected
      *
@@ -155,6 +149,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     public function getExistGiftsQuantity(array $group, bool $selected = null): int
     {
         $quantity = 0;
+
         $list = [];
         if ($group['list'] instanceof OfferCollection) {
             /** @var OfferCollection $offerCollection */
@@ -181,19 +176,17 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     }
 
     /**
-     *
-     *
      * @param int $offerId
      * @param int $discountId
      *
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
+     * @throws RuntimeException
+     * @throws NotFoundException
+     * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Exception
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws Exception
+     * @throws BitrixProxyException
      */
     public function selectGift(int $offerId, int $discountId): void
     {
@@ -201,42 +194,34 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         if (!isset($possibleGiftGroups[$discountId])) {
             throw new NotFoundException('Акция не найдена');
         }
+
         $group = $possibleGiftGroups[$discountId];
         if (\count($group) === 1) {
             $group = current($group);
         } else {
-            throw new \RuntimeException('TODO');
+            throw new RuntimeException('TODO');
         }
+
         if (!\in_array($offerId, $group['list'], true)) {
             throw new NotFoundException('Подарок не может быть предоставлен в рамках данной акции');
         }
+
         if ($this->getExistGiftsQuantity($group, false) < 1) {
             throw new NotFoundException('Все подарки уже выбраны, сначала необходимо удалить выбранный подарок');
         }
 
-        Manager::disableProcessingFinalAction(); // иначе нельзя будет уменьшить невыбранные подарки
         $existGifts = $this->getExistGifts($discountId);
         foreach ($existGifts as $existGift) {
             // Находим первый невыбранный подарок и херим его
             if ($existGift['selected'] === 'N') {
                 if ($existGift['quantity'] > 1) {
-                    $this->basketService->updateBasketQuantity(
-                        $existGift['basketId'],
-                        $existGift['quantity'] - 1,
-                        $this->order->getBasket(),
-                        $this->canBasketSave()
-                    );
+                    $this->basketService->updateBasketQuantity($existGift['basketId'], $existGift['quantity'] - 1);
                 } else {
-                    $this->basketService->deleteOfferFromBasket(
-                        $existGift['basketId'],
-                        $this->order->getBasket(),
-                        $this->canBasketSave()
-                    );
+                    $this->basketService->deleteOfferFromBasket($existGift['basketId']);
                 }
                 break;
             }
         }
         $this->addGift($offerId, 1, $discountId, true);
-        Manager::enableProcessingFinalAction();
     }
 }

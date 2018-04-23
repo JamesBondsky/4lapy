@@ -71,7 +71,6 @@ abstract class BaseRepository implements RepositoryInterface
      * @return bool
      * @throws BitrixRuntimeException
      * @throws ValidationException
-     * @throws \Exception
      */
     public function create(BaseEntity $entity): bool
     {
@@ -81,17 +80,22 @@ abstract class BaseRepository implements RepositoryInterface
         }
 
         $table = $this->table;
-        $result = $table::add(
-            $this->arrayTransformer->toArray($entity, SerializationContext::create()->setGroups(['create']))
-        );
+        try {
+            $result = $table::add(
+                $this->arrayTransformer->toArray($entity, SerializationContext::create()->setGroups(['create']))
+            );
 
-        if ($result->isSuccess()) {
-            $entity->setId((int)$result);
+            if ($result->isSuccess()) {
+                $entity->setId((int)$result);
 
-            return true;
+                return true;
+            }
+            $error = $result->getErrorMessages();
+        } catch (\Exception $e) {
+            $error = $e->getMessage();
         }
 
-        throw new BitrixRuntimeException($result->getErrorMessages());
+        throw new BitrixRuntimeException($error);
     }
 
     /**
@@ -104,7 +108,7 @@ abstract class BaseRepository implements RepositoryInterface
      * @throws SystemException
      * @return BaseEntity|null
      */
-    public function find(int $id): ?BaseEntity
+    public function find(int $id)
     {
         $this->checkIdentifier($id);
 
@@ -196,7 +200,6 @@ abstract class BaseRepository implements RepositoryInterface
     /**
      * @param int $id
      *
-     * @throws \Exception
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
@@ -205,12 +208,19 @@ abstract class BaseRepository implements RepositoryInterface
     public function delete(int $id): bool
     {
         $this->checkIdentifier($id);
-        $result = $this->table::delete($id);
-        if ($result->isSuccess()) {
-            return true;
+
+        try {
+            $result = $this->table::delete($id);
+            if ($result->isSuccess()) {
+                return true;
+            }
+
+            $error = $result->getErrorMessages();
+        } catch (\Exception $e) {
+            $error = $e->getMessage();
         }
 
-        throw new BitrixRuntimeException($result->getErrorMessages());
+        throw new BitrixRuntimeException($error);
     }
 
     /**

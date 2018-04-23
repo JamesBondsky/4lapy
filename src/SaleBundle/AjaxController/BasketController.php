@@ -21,6 +21,7 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -129,7 +130,7 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @return JsonResponse
      * @throws RuntimeException
      */
-    public function applyPromocodeAction(Request $request): JsonResponse
+    public function applyPromoCodeAction(Request $request): JsonResponse
     {
         $promoCode = $request->get('promoCode');
 
@@ -141,7 +142,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $this->couponStorage->clear();
             $this->couponStorage->save($promoCode);
 
-            return JsonSuccessResponse::createWithData(
+            $result =  JsonSuccessResponse::createWithData(
                 'Промокод применен',
                 [],
                 200,
@@ -154,18 +155,20 @@ class BasketController extends Controller implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->log()->error(
                 \sprintf(
-                    'Promocode apply exception: %s',
+                    'Promo code apply exception: %s', // в английском "промокод" пишется в два слова
                     $e->getMessage()
                 )
             );
         }
-
-        return JsonErrorResponse::create(
-            'Промокод не существует или не применим к вашей корзине',
-            200,
-            [],
-            ['reload' => false]
-        );
+        if(!isset($result)) {
+            $result = JsonErrorResponse::create(
+                'Промокод не существует или не применим к вашей корзине',
+                200,
+                [],
+                ['reload' => false]
+            );
+        }
+        return $result;
     }
 
     /**
@@ -261,7 +264,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                 $e->getMessage(),
                 200,
                 [],
-                ['reload' => false] // todo TRUE !!!
+                ['reload' => true]
             );
         }
         return $response;
@@ -277,6 +280,7 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @throws RuntimeException
      * @throws ObjectNotFoundException
      * @throws NotSupportedException
+     * @throws Exception
      *
      * @return JsonErrorResponse|JsonResponse
      */
@@ -311,12 +315,17 @@ class BasketController extends Controller implements LoggerAwareInterface
                 /** @var Product $product */
                 $product = $offer->getProduct();
                 $name = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName()));
+                if(0 < $weight = $offer->getCatalogProduct()->getWeight()) {
+                    $weight = WordHelper::showWeight($weight);
+                } else {
+                    $weight = '';
+                }
                 $items[] = [
                     'id' => $offer->getId(),
                     'actionId' => $discountId,
                     'image' => $image,
                     'name' => $name,
-                    'additional' => '', // todo ###
+                    'additional' => $weight,
                 ];
 
             }
@@ -325,7 +334,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
             $data = [
                 'count' => $unselectedCount,
-                'title' => 'Выберете ' . $unselectedCount . ' ' . $giftDeclension->get($unselectedCount),
+                'title' => 'Выберите ' . $unselectedCount . ' ' . $giftDeclension->get($unselectedCount),
                 'items' => $items
             ];
             $response = JsonSuccessResponse::createWithData(

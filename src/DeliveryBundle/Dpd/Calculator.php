@@ -17,6 +17,8 @@ use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
@@ -43,6 +45,8 @@ if (!Loader::includeModule('ipol.dpd')) {
 
 class Calculator extends DPD
 {
+    public const LOCATION_RU = '0000028023';
+
     public static function callback($method)
     {
         return [__CLASS__, $method];
@@ -57,8 +61,6 @@ class Calculator extends DPD
      *
      * @return array
      * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws ApplicationCreateException
@@ -88,13 +90,22 @@ class Calculator extends DPD
         }
 
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
+        $deliveryZone = $deliveryService->getDeliveryZoneByDelivery(
+            $arOrder['LOCATION_TO'],
+            $deliveryId
+        );
+
         /**
          * Если есть склады в данном городе, то доставка DPD выполняется с этих складов. Иначе - с Москвы
          */
-        $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
+        $storesAvailable = $storeService->getStoresByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
         if ($storesAvailable->isEmpty()) {
             $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
-            $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
+            $storesAvailable = DeliveryHandlerBase::getAvailableStores(
+                $profileCode,
+                $deliveryZone,
+                $arOrder['LOCATION_FROM']
+            );
         }
 
         $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
@@ -127,10 +138,10 @@ class Calculator extends DPD
                 }
 
                 $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable);
-                if (!$stockResult->getUnavailable()->isEmpty()) {
+                if ($stockResult->getOrderable()->isEmpty()) {
                     $result = [
                         'RESULT' => 'ERROR',
-                        'TEXT' => 'Присутствуют товары не в наличии',
+                        'TEXT' => 'Отсутствуют товары в наличии',
                     ];
 
                     return $result;
@@ -147,13 +158,10 @@ class Calculator extends DPD
         }
 
         CalculationResultFactory::$dpdData[$profileCode] = [
-            'TERMINALS'    => $terminals,
-            'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
+            'TERMINALS' => $terminals,
+            'DAYS_FROM' => $result['DPD_TARIFF']['DAYS'],
             'STOCK_RESULT' => $stockResult,
-            'DELIVERY_ZONE' => $deliveryService->getDeliveryZoneCodeByLocation(
-                $arOrder['LOCATION_TO'],
-                $deliveryId
-            )
+            'DELIVERY_ZONE' => $deliveryZone
         ];
 
         $result['VALUE'] = floor($result['VALUE']);
@@ -197,14 +205,13 @@ class Calculator extends DPD
          * иначе - со складов Мск
          */
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
-        $stores = $storeService->getByLocation($arOrder['LOCATION_TO'], StoreService::TYPE_STORE);
+        $stores = $storeService->getStoresByLocation($arOrder['LOCATION_TO'], StoreService::TYPE_STORE);
         if ($stores->isEmpty()) {
             $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
         }
         $shipment = self::makeShipment($arOrder);
 
-        $profiles = [];
-        if ($shipment->isPossibileSelfDelivery()) {
+        if (($arOrder['LOCATION_TO'] === static::LOCATION_RU) || $shipment->isPossibileSelfDelivery()) {
             $profiles = ['COURIER', 'PICKUP'];
         } elseif ($shipment->isPossibileDelivery()) {
             $profiles = ['COURIER'];

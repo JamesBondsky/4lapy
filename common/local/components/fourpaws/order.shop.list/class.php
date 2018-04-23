@@ -21,6 +21,7 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -116,13 +117,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
-            $metroList = $this->getMetroInfo($stores);
 
             $avgGpsN = 0;
             $avgGpsS = 0;
 
             $showTime = $this->deliveryService->isInnerPickup($pickupDelivery);
             $bestShops = $pickupDelivery->getBestShops();
+            $metroList = $this->getMetroInfo($bestShops);
 
             if (!empty($params['filter'])) {
                 /**
@@ -144,20 +145,39 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             /** @var Store $store */
             $shopCount = 0;
+            $isDpd = $this->deliveryService->isDpdPickup($pickupDelivery);
             foreach ($bestShops as $store) {
-                $fullResult = (clone $pickupDelivery)->setSelectedStore($store);
+                $fullResult = (clone $pickupDelivery)->setSelectedShop($store);
+                [$available, $delayed] = $this->orderStorageService->splitStockResult($fullResult);
 
-                [$available, $delayed] = $this->orderStorageService->splitStockResult($pickupDelivery);
                 if (!$fullResult->isSuccess()) {
                     continue;
                 }
                 $shopCount++;
-                $partialResult = (clone $fullResult)->setStockResult($available);
+
+                $partialResult = $isDpd
+                    ? $fullResult
+                    : (clone $fullResult)->setStockResult($available);
 
                 $metro = $store->getMetro();
                 $address = !empty($metro)
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
+
+                if ($isDpd) {
+                    $orderType = !$delayed->isEmpty() ? 'delay' : 'full';
+                    if (!$delayed->isEmpty()) {
+                        $delayed = $fullResult->getStockResult()->getOrderable();
+                        $available = new StockResultCollection();
+                    }
+                } else {
+                    $orderType = 'parts';
+                    if ($delayed->isEmpty()) {
+                        $orderType = 'full';
+                    } elseif ($available->isEmpty()) {
+                        $orderType = 'delay';
+                    }
+                }
 
                 $partsDelayed = [];
                 /** @var StockResult $item */
@@ -181,12 +201,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ];
                 }
 
-                $orderType = 'parts';
-                if ($delayed->isEmpty()) {
-                    $orderType = 'full';
-                } elseif ($available->isEmpty()) {
-                    $orderType = 'delay';
-                }
+
 
                 if ($canGetPartial) {
                     $price = $available->isEmpty() ?
@@ -252,15 +267,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $metroIds = [];
         /** @var Store $store */
         foreach ($stores as $store) {
-            /** @noinspection SlowArrayOperationsInLoopInspection */
-            $metro = $store->getMetro();
-            if ($metro > 0) {
-                $metroIds[] = $metro;
-            }
+            $metroIds[] = $store->getMetro();
         }
+
         $metro = [];
+        $metroIds = \array_filter($metroIds);
         if (!empty($metroIds)) {
-            $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
+            $metro = $this->storeService->getMetroInfo(['ID' => \array_unique($metroIds)]);
         }
 
         return $metro;
@@ -291,7 +304,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $defaultFilter['ID'] = $idFilter;
             }
 
-            $result = $this->storeService->getRepository()->findBy(array_merge($filter, $defaultFilter), $order);
+            $result = $this->storeService->getStores(
+                StoreService::TYPE_SHOP,
+                array_merge($filter, $defaultFilter),
+                $order
+            );
         }
 
         return $result;

@@ -1,11 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 08.02.2018
- * Time: 18:11
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
+/** @todo Класс работает в контексте текущего юзера, а должен уметь работать в контексте разных юзеров на одном хите */
 
 namespace FourPaws\SaleBundle\Discount\Utils;
 
@@ -31,15 +25,15 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Manager
+ *
  * @package FourPaws\SaleBundle\Discount\Utils
  */
 class Manager
 {
-    protected static $finalActionEnabled = true;
+    protected static $extendEnabled = true;
+    protected static $extendCalculated = false;
 
     /**
-     *
-     *
      * @param Event|null $event
      *
      * @throws ServiceNotFoundException
@@ -53,78 +47,62 @@ class Manager
      * @throws NotSupportedException
      * @throws ArgumentOutOfRangeException
      */
-    public static function OnAfterSaleOrderFinalAction(Event $event = null): void
+    public static function extendDiscount(Event $event): void
     {
-        static $execution;
-        if (!$execution && self::$finalActionEnabled) {
-            $execution = true;
-            if ($event instanceof Event) {
-                /** @var Order $order */
-                $order = $event->getParameter('ENTITY');
-                if ($order instanceof Order) {
-                    $container = Application::getInstance()->getContainer();
-                    /** @var BasketService $basketService */
-                    $basketService = $container->get(BasketService::class);
-                    $manzana = $container->get(Manzana::class);
-                    $couponStorage = $container->get(CouponStorageInterface::class);
+        if (self::$extendEnabled && !self::$extendCalculated) {
+            $container = Application::getInstance()->getContainer();
+            $basketService = $container->get(BasketService::class);
+            $manzana = $container->get(Manzana::class);
+            $couponStorage = $container->get(CouponStorageInterface::class);
 
-                    // Автоматически добавляем подарки
-                    $basketService
-                        ->getAdder('gift', true, $order)
-                        ->processOrder();
+            // Автоматически добавляем подарки
+            $basketService
+                ->getAdder('gift')
+                ->processOrder();
 
-                    // Удаляем подарки, акции которых не выполнились
-                    /**
-                     * @todo не сохранять подарки
-                     */
-                    $basketService
-                        ->getCleaner('gift', true, $order)
-                        ->processOrder();
+            // Удаляем подарки, акции которых не выполнились
+            $basketService
+                ->getCleaner('gift')
+                ->processOrder();
 
-                    $basketService
-                        ->getAdder('detach', true, $order)
-                        ->processOrder();
+            $basketService
+                ->getAdder('detach')
+                ->processOrder();
 
-/** @todo Проверить. Обработчик может использоваться на одном хите для разных заказов разных пользователей */
-                    $promoCode = $couponStorage->getApplicableCoupon();
-                    if ($promoCode) {
-                        $manzana->setPromocode($promoCode);
-                    }
-
-                    try {
-                        $basketService->setDiscountBeforeManzana();
-                        $manzana->calculate();
-                    } catch (ManzanaPromocodeUnavailableException $e) {
-                        $couponStorage->delete($promoCode);
-                    }
-                }
+            $promoCode = $couponStorage->getApplicableCoupon();
+            if ($promoCode) {
+                $manzana->setPromocode($promoCode);
             }
 
-            $execution = false;
+            try {
+                $manzana->calculate();
+                $basketService->setPromocodeDiscount($manzana->getDiscount());
+            } catch (ManzanaPromocodeUnavailableException $e) {
+                $couponStorage->delete($promoCode);
+            }
+
+            self::$extendCalculated = true;
         }
     }
 
     /**
-     *
-     *
+     * Отключаем расчет акций для предотвращения многократного применения
      */
-    public static function disableProcessingFinalAction(): void
+    public static function disableExtendsDiscount(): void
     {
-        self::$finalActionEnabled = false;
+        self::$extendEnabled = false;
+    }
+
+
+    /**
+     * Включаем расчет акций
+     */
+    public static function enableExtendsDiscount(): void
+    {
+        self::$extendEnabled = true;
     }
 
     /**
-     *
-     *
-     */
-    public static function enableProcessingFinalAction(): void
-    {
-        self::$finalActionEnabled = true;
-    }
-
-    /**
-     *
-     *
      * @param Order $order
      *
      * @return array
@@ -132,7 +110,9 @@ class Manager
     public static function getExistGifts(Order $order): array
     {
         $result = [];
-        if ($basket = $order->getBasket()) {
+        $basket = $order->getBasket();
+
+        if ($basket) {
             /** @var BasketItem $basketItem */
             foreach ($basket->getBasketItems() as $basketItem) {
                 /** @var BasketPropertyItem $basketPropertyItem */
@@ -143,6 +123,7 @@ class Manager
                         $result[$basketItem->getId()]['offerId'] = (int)$basketItem->getProductId();
                         $result[$basketItem->getId()]['basketId'] = (int)$basketItem->getId();
                     }
+
                     if ($basketPropertyItem->getField('CODE') === 'IS_GIFT_SELECTED') {
                         $result[$basketItem->getId()]['selected'] = $basketPropertyItem->getField('VALUE');
                     }

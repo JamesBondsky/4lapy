@@ -149,7 +149,7 @@ if(!$hasOffer){
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
                             
                             /** наличие меняется аяксом */?>
-                            <li class="b-tab-title__item js-tab-item disable">
+                            <li class="b-tab-title__item js-tab-item shops-tab disable">
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Наличие в магазинах"
                                    data-tab="availability">
@@ -162,7 +162,9 @@ if(!$hasOffer){
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
                                        href="javascript:void(0);" title="Акция"
-                                       data-tab="shares"><span class="b-tab-title__text">Акция</span></a>
+                                       data-tab="shares">
+                                        <span class="b-tab-title__text">Акция</span>
+                                    </a>
                                 </li>
                             <?php } ?>
                         </ul>
@@ -285,28 +287,35 @@ if(!$hasOffer){
                                         <?php
                                         /**
                                          * @todo подарок по акции
+                                        <div class="b-stock__gift">
+                                        <div class="b-advice b-advice--stock">
+                                        <a class="b-advice__item b-advice__item--stock"
+                                        href="javascript:void(0)" title="">
+                                        <span class="b-advice__image-wrapper b-advice__image-wrapper--stock"><img
+                                        class="b-advice__image"
+                                        src="/static/build/images/content/fresh-step.png"
+                                        alt="" title="" role="presentation" /></span>
+                                        <span class="b-advice__block b-advice__block--stock">
+                                        <span class="b-advice__text b-advice__text--red">Подарок по акции</span>
+                                        <span class="b-clipped-text b-clipped-text--advice">
+                                        <span><strong>Китекат</strong> корм для кошек рыба в соусе</span>
+                                        </span>
+                                        <span class="b-advice__info b-advice__info--stock">
+                                        <span class="b-advice__weight">85 г</span>
+                                        <span class="b-advice__cost">
+                                        13,40 <span class="b-ruble b-ruble--advice">₽</span>
+                                        </span>
+                                        </span>
+                                        </span>
+                                        </a>
+                                        </div>
+                                        <a class="b-button b-button--bordered-grey" href="javascript:void(0)" title="">
+                                        Выбрать подарок
+                                        </a>
+                                        </div>
 
-                                         <div class="b-stock__gift">
-                                            <div class="b-advice b-advice--stock"><a
-                                                        class="b-advice__item b-advice__item--stock"
-                                                        href="javascript:void(0)" title=""><span
-                                                            class="b-advice__image-wrapper b-advice__image-wrapper--stock"><img
-                                                                class="b-advice__image"
-                                                                src="/static/build/images/content/fresh-step.png"
-                                                                alt="" title="" role="presentation" /></span><span
-                                                            class="b-advice__block b-advice__block--stock"><span
-                                                                class="b-advice__text b-advice__text--red">Подарок по акции</span><span
-                                                                class="b-clipped-text b-clipped-text--advice"><span><strong>Китекат</strong> корм для кошек рыба в соусе</span></span><span
-                                                                class="b-advice__info b-advice__info--stock"><span
-                                                                    class="b-advice__weight">85 г</span><span
-                                                                    class="b-advice__cost">13,40 <span
-                                                                        class="b-ruble b-ruble--advice">₽</span></span></span></span></a>
-                                            </div>
-                                            <a class="b-button b-button--bordered-grey" href="javascript:void(0)" title="">Выбрать
-                                                подарок</a>
                                          **/
                                         ?>
-                                        </div>
                                     </div>
                                     <?php $APPLICATION->IncludeComponent(
                                         'fourpaws:products.by.prop',

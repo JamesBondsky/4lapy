@@ -32,8 +32,12 @@ use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
@@ -351,6 +355,16 @@ class Offer extends IblockElement
      * @var bool
      */
     protected $isCounted = false;
+
+    /**
+     * @var int
+     */
+    protected $quantity;
+
+    /**
+     * @var int
+     */
+    protected $deliverableQuantity;
 
     protected $bonus = 0;
 
@@ -1064,8 +1078,6 @@ class Offer extends IblockElement
     }
 
     /**
-     *
-     *
      * @param int $percent
      * @param int $quantity
      *
@@ -1080,14 +1092,15 @@ class Offer extends IblockElement
         return $this->bonus;
     }
 
-    
+
     /**
      * @param int $percent
      * @param int $quantity
+     * @param int $precision
      *
      * @return string
      */
-    public function getBonusFormattedText(int $percent = 3, int $quantity = 1): string
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1, int $precision = 2): string
     {
         $bonusText = '';
 
@@ -1097,13 +1110,19 @@ class Offer extends IblockElement
             return $bonusText;
         }
 
-        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
-        $floorBonus = \floor($bonus);
+        if($precision > 0 ){
+            $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
+            $floorBonus = \floor($bonus);
+        }
+        else{
+            $floorBonus = $bonus = \floor($bonus);
+        }
+
         $div = ($bonus - $floorBonus) * 100;
 
         return \sprintf(
             '+ %s %s',
-            WordHelper::numberFormat($bonus),
+            WordHelper::numberFormat($bonus, $precision),
             WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
         );
     }
@@ -1166,15 +1185,43 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ArgumentException
+     *
+     *
+     * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
      * @return int
      */
     public function getQuantity(): int
     {
-        return $this->getStocks()->getTotalAmount();
+        if (null === $this->quantity) {
+            $this->quantity = $this->getStocks()->getTotalAmount();
+        }
+
+        return $this->quantity;
+    }
+
+    /**
+     * Максимальное доступное для доставки количество товара в текущем местоположении
+     * @todo заменить getQuantity() на этот метод после оптимизации расчета доставок
+     *
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getDeliverableQuantity(): int
+    {
+        if (null === $this->deliverableQuantity) {
+            $this->deliverableQuantity = $this->getAvailableAmount();
+        }
+
+        return $this->deliverableQuantity;
     }
 
     /**
@@ -1217,7 +1264,7 @@ class Offer extends IblockElement
             if ($this->isByRequest()) {
                 $stores = $storeService->getSupplierStores();
             } else {
-                $stores = $storeService->getByCurrentLocation();
+                $stores = $storeService->getStoresByCurrentLocation();
             }
             $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
@@ -1320,17 +1367,17 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return bool
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ArgumentException
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return bool
      */
     public function isAvailable(): bool
     {
         return $this->isActive() &&
-            $this->getQuantity() > 0 &&
-            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable());
+            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable()) &&
+            ($this->getQuantity() > 0);
     }
 
     /**
@@ -1345,7 +1392,7 @@ class Offer extends IblockElement
         if ($this->isCounted) {
             return;
         }
-
+        Manager::disableExtendsDiscount();
         global $USER;
 
         static $order;
@@ -1382,7 +1429,34 @@ class Offer extends IblockElement
                     ->withPrice($basketItem->getPrice());
             }
         }
-
+        Manager::enableExtendsDiscount();
         $this->isCounted = true;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @return int
+     */
+    protected function getAvailableAmount(): int
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveries = $deliveryService->getByLocation();
+        $max = 0;
+        foreach ($deliveries as $delivery) {
+            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
+            if ($delivery->isSuccess()) {
+                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
+                $max = $max > $availableAmount ? $max : $availableAmount;
+            }
+        }
+
+        return $max;
     }
 }

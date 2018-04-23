@@ -105,7 +105,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                     <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
                                        value="<?= $delivery->getDeliveryId() ?>"
                                        data-delivery="<?= $delivery->getPrice() ?>"
-                                       data-full="<?= $basket->getPrice() ?>"
+                                       data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
                                        data-check="js-list-orders-static"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-delivery-address">
@@ -202,7 +202,6 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
             <?php include 'include/basket.php' ?>
         </div>
         <?php
-        $basketPrice = $basket->getPrice();
         if ($isPickup) {
             $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
             if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
@@ -210,6 +209,8 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
             } else {
                 $basketPrice = $pickup->getStockResult()->getPrice();
             }
+        } else {
+            $basketPrice = $delivery->getStockResult()->getOrderable()->getPrice();
         }
         ?>
         <div class="b-order-list b-order-list--cost b-order-list--order-step-two js-order-next">

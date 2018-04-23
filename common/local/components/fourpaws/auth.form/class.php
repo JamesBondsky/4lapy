@@ -326,14 +326,18 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ]
             );
 
-            return JsonSuccessResponse::createWithData('Объединение корзины', ['html' => $html]);
+            return JsonSuccessResponse::createWithData('Объединение корзины', ['html' => $html, 'backurl' => $backUrl]);
         }
         if ($needWritePhone) {
             $html = $this->getHtml('addPhone', 'Добавление телефона', ['backurl' => $backUrl]);
 
-            return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
+            return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html, 'backurl' => $backUrl]);
         }
-        return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], ['reload' => true]);
+        $options = ['reload' => true];
+        if(!empty($backUrl)){
+            $options = ['redirect' => $backUrl];
+        }
+        return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], $options);
     }
 
     /**
@@ -478,6 +482,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
         $data = [
             'UF_PHONE_CONFIRMED' => true,
+            'PERSONAL_PHONE' => $phone
         ];
 
         try {
@@ -535,7 +540,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
 
-        return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
+        $options = ['reload' => true];
+        if(!empty($backUrl)){
+            $options = ['redirect' => $backUrl];
+        }
+
+        return JsonSuccessResponse::create('Телефон сохранен', 200, [], $options);
     }
 
     /**
@@ -790,7 +800,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $data = [
-            'PERSONAL_PHONE'     => $phone,
             'UF_PHONE_CONFIRMED' => false,
         ];
 
@@ -817,6 +826,4 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         return $mess;
     }
-
-//    pubf
 }

@@ -18,7 +18,6 @@ use Bitrix\Sale\Shipment;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -58,7 +57,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
     /**
      * @param Shipment $shipment
      *
-     * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @return bool
      */
@@ -70,11 +68,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         if (!$deliveryLocation) {
-            return false;
-        }
-
-        $shops = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_SHOP);
-        if ($shops->isEmpty()) {
             return false;
         }
 
@@ -100,10 +93,16 @@ class InnerPickupHandler extends DeliveryHandlerBase
         $result = new CalculationResult();
 
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        $shops = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_SHOP);
+        if ($shops->isEmpty()) {
+            $result->addError(new Error('Нет доступных магазинов'));
+            return $result;
+        }
+
         /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $storesAll = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
+        $storesAll = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_ALL);
         $shops = $storesAll->getShops();
 
         $shopCode = null;
@@ -153,13 +152,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $stockResult = new StockResultCollection();
-        /** @var Store $shop */
-        foreach ($shops as $shop) {
-            $availableStores = new StoreCollection([$shop]);
-            $stockResult = static::getStocks($basket, $offers, $availableStores, $stockResult);
-        }
-
+        $stockResult = static::getStocks($basket, $offers, $shops);
         if ($stockResult->getAvailable()->isEmpty() && $stockResult->getDelayed()->isEmpty()) {
             $result->addError(new Error('Товары не в наличии'));
 
@@ -172,8 +165,8 @@ class InnerPickupHandler extends DeliveryHandlerBase
         ];
         $result->setData($data);
 
-        if ($shopCode && !$stockResult->getUnavailable()->isEmpty()) {
-            $result->addError(new Error('Присутствуют товары не в наличии'));
+        if ($shopCode && $stockResult->getOrderable()->isEmpty()) {
+            $result->addError(new Error('Отсутствуют товары в наличии'));
 
             return $result;
         }

@@ -44,7 +44,12 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             }
 
             $contact = $this->manzanaService->updateContact($contact);
-            $this->manzanaService->updateUserCardByClient($contact);
+            /** скипаем если нет телефона - ибо не найден пользователя для привзяки,
+             * так же скипаем если нет маназановского id
+             */
+            if(!empty($contact->phone) && !empty($contact->contactId)) {
+                $this->manzanaService->updateUserCardByClient($contact);
+            }
         } catch (ContactUpdateException $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',
@@ -55,13 +60,16 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
                 'Too many user`s found: %s',
                 $e->getMessage()
             ));
+            /** не перезапускаем очередь */
         } catch (ManzanaServiceException $e) {
             $this->log()->error(sprintf(
-                'Manzana error: %s',
-                $e->getMessage()
+                'Manzana contact consumer error: %s, message: %s',
+                $e->getMessage(),
+                $message->getBody()
             ));
 
-            return false;
+            sleep(30);
+            $this->manzanaService->updateContactAsync($contact);
         }
 
         return true;

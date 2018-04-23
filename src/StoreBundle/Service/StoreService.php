@@ -12,6 +12,9 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
@@ -82,6 +85,9 @@ class StoreService implements LoggerAwareInterface
     /** @var DeliveryService $deliveryService */
     protected $deliveryService;
 
+    /** @var array */
+    protected $stores = [];
+
     /** @var Offer[] $offers */
     private $offers;
 
@@ -97,6 +103,52 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
+     * @param $cityCode
+     *
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public static function getRegion($cityCode): int
+    {
+        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect([
+            'ID',
+            'REGION_ID',
+            'PARENT_ID',
+            'TYPE_CODE'                => 'TYPE.CODE',
+            'PARENTS_PARENT_ID'        => 'PARENTS.ID',
+            'PARENTS_PARENT_TYPE_CODE' => 'PARENTS.TYPE.CODE',
+        ])->setCacheTtl(360000)->exec()->fetchAll();
+        foreach ($locList as $locItem) {
+            if ($locItem['TYPE_CODE'] === 'REGION') {
+                return $locItem['ID'];
+            }
+            if ($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION') {
+                return $locItem['PARENTS_PARENT_ID'];
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * @param string $type
+     * @param array $filter
+     * @param array $order
+     *
+     * @return StoreCollection
+     * @throws ArgumentException
+     */
+    public function getStores(
+        string $type = self::TYPE_ALL,
+        array $filter = [],
+        array $order = []
+    ): StoreCollection {
+        $filter = \array_merge($this->getTypeFilter($type), $filter);
+        return $this->storeRepository->findBy($filter, $order);
+    }
+
+    /**
      * Получить склад по ID
      *
      * @param int $id
@@ -104,7 +156,7 @@ class StoreService implements LoggerAwareInterface
      * @throws NotFoundException
      * @return Store
      */
-    public function getById(int $id): Store
+    public function getStoreById(int $id): Store
     {
         $store = null;
 
@@ -133,24 +185,40 @@ class StoreService implements LoggerAwareInterface
      * @param $xmlId
      *
      * @throws NotFoundException
-     * @throws ArgumentException
      * @return Store
      */
-    public function getByXmlId($xmlId): Store
+    public function getStoreByXmlId($xmlId): Store
     {
-        $store = $this->storeRepository->findBy(
-            [
-                'XML_ID' => $xmlId,
-                [],
-                1,
-            ]
-        )->first();
+        if (!isset($this->stores[$xmlId])) {
+            $getStore = function () use ($xmlId) {
+                $store = $this->storeRepository->findBy(
+                    [
+                        'XML_ID' => $xmlId,
+                        [],
+                        1,
+                    ]
+                )->first();
 
-        if (!$store) {
-            throw new NotFoundException('Склад с XML_ID=' . $xmlId . ' не найден');
+                return ['result' => $store];
+            };
+
+            $store = null;
+            try {
+                $store = (new BitrixCache())->withId(__METHOD__ . $xmlId)->resultOf($getStore)['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf('failed to get store by xmlId: %s: %s', \get_class($e), $e->getMessage()),
+                    ['xmlId' => $xmlId]
+                );
+            }
+            if (!$store) {
+                throw new NotFoundException('Склад с XML_ID=' . $xmlId . ' не найден');
+            }
+
+            $this->stores[$xmlId] = $store;
         }
 
-        return $store;
+        return $this->stores[$xmlId];
     }
 
     /**
@@ -162,11 +230,11 @@ class StoreService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @return StoreCollection
      */
-    public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
+    public function getStoresByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
         $location = $this->locationService->getCurrentLocation();
 
-        return $this->getByLocation($location, $type);
+        return $this->getStoresByLocation($location, $type);
     }
 
     /**
@@ -174,12 +242,12 @@ class StoreService implements LoggerAwareInterface
      *
      * @param string $locationCode
      * @param string $type
-     * @param bool $strict
+     * @param bool   $strict
      *
      * @throws ArgumentException
      * @return StoreCollection
      */
-    public function getByLocation(
+    public function getStoresByLocation(
         string $locationCode,
         string $type = self::TYPE_ALL,
         bool $strict = false
@@ -219,7 +287,7 @@ class StoreService implements LoggerAwareInterface
             \in_array($type, [self::TYPE_STORE, self::TYPE_ALL], true) &&
             $stores->getStores()->isEmpty()
         ) {
-            $moscowStores = $this->getByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE);
+            $moscowStores = $this->getStoresByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE);
             $stores = new StoreCollection(array_merge($stores->toArray(), $moscowStores->toArray()));
         }
 
@@ -249,32 +317,6 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $result;
-    }
-
-    /**
-     * @param $type
-     *
-     * @return array
-     */
-    public function getTypeFilter($type): array
-    {
-        $filter = [];
-        switch ($type) {
-            case self::TYPE_SHOP:
-                $filter = ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
-                break;
-            case self::TYPE_STORE:
-                $filter = ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
-                break;
-            case self::TYPE_ALL:
-                $filter = ['UF_IS_SUPPLIER' => 0];
-                break;
-            case self::TYPE_SUPPLIER:
-                $filter = ['UF_IS_SUPPLIER' => 1];
-                break;
-        }
-
-        return $filter;
     }
 
     /**
@@ -345,14 +387,6 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
-     * @return StoreRepository
-     */
-    public function getRepository(): StoreRepository
-    {
-        return $this->storeRepository;
-    }
-
-    /**
      * @param array $params
      *
      * @throws ArgumentException
@@ -363,9 +397,50 @@ class StoreService implements LoggerAwareInterface
      * @throws \Exception
      * @return array
      */
-    public function getStores(array $params = []): array
+    public function getStoresInfo(array $params = []): array
     {
-        $storeCollection = $this->getStoreCollection($params);
+        if (!isset($params['storesAlways'])) {
+            $params['storesAlways'] = false;
+        }
+        $loc = $params['filter']['UF_LOCATION'];
+        if ($params['storesAlways'] && isset($params['filter']['UF_LOCATION'])) {
+            /** city */
+            $storeCollection = $this->getStoreCollection($params);
+            /** region */
+            if (!empty($params['filter']['UF_LOCATION']) && $storeCollection->isEmpty()) {
+                unset($params['activeStoreId'], $params['order']);
+                $code = $params['filter']['UF_LOCATION'];
+                $codeList = json_decode($code, true);
+                if (\is_array($codeList)) {
+                    $dadataLocationAdapter = new DaDataLocationAdapter();
+                    /** @var BitrixLocation $bitrixLocation */
+                    $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
+                    $regionId = static::getRegion($bitrixLocation->getRegionId());
+                } else {
+                    $regionId = static::getRegion($code);
+                }
+                if ($regionId > 0) {
+                    $locRegion = $regionId;
+                    /** сбрасываем поиск */
+                    unset($params['filter'][0], $params['filter']['UF_LOCATION']);
+                    $params['filter'][] = [
+                        'LOGIC'              => 'OR',
+                        'LOCATION.PARENT_ID' => $regionId,
+                        'LOCATION.REGION_ID' => $regionId,
+                    ];
+                    $storeCollection = $this->getStoreCollection($params);
+                }
+                /** moscow */
+                if ($storeCollection->isEmpty()) {
+                    /** сбрасываем регион */
+                    unset($params['filter'][0], $locRegion);
+                    $loc = $params['filter']['UF_LOCATION'] = LocationService::LOCATION_CODE_MOSCOW;
+                    $storeCollection = $this->getStoreCollection($params);
+                }
+            }
+        } else {
+            $storeCollection = $this->getStoreCollection($params);
+        }
         if (!isset($params['returnActiveServices']) || !\is_bool($params['returnActiveServices'])) {
             $params['returnActiveServices'] = false;
         }
@@ -381,11 +456,13 @@ class StoreService implements LoggerAwareInterface
 
         return $this->getFormatedStoreByCollection(
             [
-                'storeCollection' => $storeCollection,
+                'storeCollection'      => $storeCollection,
                 'returnActiveServices' => $params['returnActiveServices'],
-                'returnSort' => $params['returnSort'],
-                'sortVal' => $params['sortVal'],
-                'activeStoreId' => $params['activeStoreId'],
+                'returnSort'           => $params['returnSort'],
+                'sortVal'              => $params['sortVal'],
+                'activeStoreId'        => $params['activeStoreId'],
+                'region_id'            => (string)$locRegion,
+                'city_code'            => $loc,
             ]
         );
     }
@@ -398,12 +475,11 @@ class StoreService implements LoggerAwareInterface
      */
     public function getStoreCollection(array $params = []): StoreCollection
     {
-        $storeRepository = $this->getRepository();
         $params['filter'] =
             array_merge((array)$params['filter'], $this->getTypeFilter($this::TYPE_SHOP));
 
         /** @var StoreCollection $storeCollection */
-        return $storeRepository->findBy($params['filter'], (array)$params['order']);
+        return $this->storeRepository->findBy($params['filter'], (array)$params['order']);
     }
 
     /**
@@ -430,7 +506,7 @@ class StoreService implements LoggerAwareInterface
             if ($this->pickupDelivery) {
                 $storeAmount = reset($this->offers)->getStocks()
                     ->filterByStores(
-                        $this->getByCurrentLocation(
+                        $this->getStoresByCurrentLocation(
                             static::TYPE_STORE
                         )
                     )->getTotalAmount();
@@ -451,7 +527,7 @@ class StoreService implements LoggerAwareInterface
             foreach ($storeCollection as $key => $store) {
                 $metro = $store->getMetro();
 
-                if (!empty($metro) && !$haveMetro) {
+                if ($metro > 0 && !$haveMetro) {
                     $haveMetro = true;
                 }
 
@@ -465,7 +541,9 @@ class StoreService implements LoggerAwareInterface
                 $services = [];
                 if (\is_array($servicesList) && !empty($servicesList)) {
                     foreach ($servicesList as $service) {
-                        $services[] = $service['UF_NAME'];
+                        if (\in_array((int)$service['ID'], $store->getServices(), true)) {
+                            $services[] = $service['UF_NAME'];
+                        }
                     }
                 }
 
@@ -479,17 +557,17 @@ class StoreService implements LoggerAwareInterface
                 }
 
                 $item = [
-                    'id' => $store->getXmlId(),
-                    'addr' => $store->getAddress(),
-                    'adress' => WordHelper::clear($store->getDescription()),
-                    'phone' => $store->getPhone(),
-                    'schedule' => $store->getScheduleString(),
-                    'photo' => $imageSrc,
-                    'metro' => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
+                    'id'         => $store->getXmlId(),
+                    'addr'       => $store->getAddress(),
+                    'adress'     => WordHelper::clear($store->getDescription()),
+                    'phone'      => $store->getPhone(),
+                    'schedule'   => $store->getScheduleString(),
+                    'photo'      => $imageSrc,
+                    'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
-                    'services' => $services,
-                    'gps_s' => $gpsN, //revert $gpsS
-                    'gps_n' => $gpsS, //revert $gpsN
+                    'services'   => $services,
+                    'gps_s'      => $gpsN, //revert $gpsS
+                    'gps_n'      => $gpsS, //revert $gpsN
                 ];
 
                 if (($params['activeStoreId'] === 'first' && $key === 0) || ($params['activeStoreId'] !== 'first' && $store->getId() === (int)$params['activeStoreId'])) {
@@ -513,7 +591,7 @@ class StoreService implements LoggerAwareInterface
                         $this->pickupDelivery,
                         [
                             'SHOW_TIME' => true,
-                            'SHORT' => true,
+                            'SHORT'     => true,
                         ]
                     );
                 }
@@ -528,6 +606,15 @@ class StoreService implements LoggerAwareInterface
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             $result['sortHtml'] = $sortHtml;
+            /** имя местоположения для страницы магазинов */
+            if (!empty($params['region_id']) || !empty($params['city_code'])) {
+                if (!empty($params['region_id'])) {
+                    $loc = LocationTable::query()->setFilter(['ID' => $params['region_id']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
+                } else {
+                    $loc = LocationTable::query()->setFilter(['=CODE' => $params['city_code']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
+                }
+                $result['location_name'] = $loc['LOC_NAME'];
+            }
             if ($params['returnActiveServices']) {
                 $result['services'] = $servicesList;
             }
@@ -551,8 +638,8 @@ class StoreService implements LoggerAwareInterface
      */
     public function getActiveStoresByProduct(int $offerId): StoreCollection
     {
-        $this->getOfferById($offerId);
-        if ($pickupDelivery = $this->getPickupDelivery()) {
+        $offer = $this->getOfferById($offerId);
+        if ($offer->isAvailable() && $pickupDelivery = $this->getPickupDelivery($offer)) {
             $result = $pickupDelivery->getBestShops();
         } else {
             $result = new StoreCollection();
@@ -625,8 +712,8 @@ class StoreService implements LoggerAwareInterface
         $search = $request->get('search');
         if (!empty($search)) {
             $result[] = [
-                'LOGIC' => 'OR',
-                '%ADDRESS' => $search,
+                'LOGIC'          => 'OR',
+                '%ADDRESS'       => $search,
                 '%METRO.UF_NAME' => $search,
             ];
         }
@@ -662,6 +749,7 @@ class StoreService implements LoggerAwareInterface
 
     /**
      * @todo Баг при getPickupDelivery
+     *
      * @param int $offerId
      *
      * @return Offer
@@ -678,29 +766,70 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
+     * @param Offer|null $offer
+     *
+     * @return PickupResultInterface|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws DeliveryNotFoundException
      * @throws LoaderException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws UserMessageException
-     * @throws DeliveryNotFoundException
-     * @return PickupResultInterface|null
      */
-    protected function getPickupDelivery(): ?PickupResultInterface
+    protected function getPickupDelivery(Offer $offer = null): ?PickupResultInterface
     {
         if (!$this->pickupDelivery) {
-            $deliveries = $this->deliveryService->getByProduct(reset($this->offers));
-
-            foreach ($deliveries as $delivery) {
-                if ($this->deliveryService->isInnerPickup($delivery)) {
-                    $this->pickupDelivery = $delivery;
-                    break;
+            $selectedOffer = null;
+            if($offer !== null){
+                $selectedOffer = $offer;
+            }
+            else{
+                if(!empty($this->offers)) {
+                    $selectedOffer = reset($this->offers);
                 }
+            }
+            if($selectedOffer !== null) {
+                $deliveries = $this->deliveryService->getByProduct($selectedOffer);
+
+                foreach ($deliveries as $delivery) {
+                    if ($this->deliveryService->isInnerPickup($delivery)) {
+                        $this->pickupDelivery = $delivery;
+                        break;
+                    }
+                }
+            } else {
+                $this->pickupDelivery = null;
             }
         }
 
         return $this->pickupDelivery;
+    }
+
+    /**
+     * @param $type
+     *
+     * @return array
+     */
+    protected function getTypeFilter($type): array
+    {
+        $filter = [];
+        switch ($type) {
+            case self::TYPE_SHOP:
+                $filter = ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
+                break;
+            case self::TYPE_STORE:
+                $filter = ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
+                break;
+            case self::TYPE_ALL:
+                $filter = ['UF_IS_SUPPLIER' => 0];
+                break;
+            case self::TYPE_SUPPLIER:
+                $filter = ['UF_IS_SUPPLIER' => 1];
+                break;
+        }
+
+        return $filter;
     }
 }

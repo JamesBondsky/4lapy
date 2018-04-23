@@ -22,12 +22,14 @@ $storage = $arResult['STORAGE'];
 
 /** @var ArrayCollection $addresses */
 $addresses = $arResult['ADDRESSES'];
-$selectedAddressId = null;
+$selectedAddressId = 0;
 $showNewAddressForm = false;
 $showNewAddressFormHeader = false;
 
 if (!$addresses || $addresses->isEmpty()) {
     $showNewAddressForm = true;
+    $selectedAddressId = 0;
+    $storage->setAddressId(0);
 } else {
     if ($storage->getAddressId()) {
         $selectedAddressId = $storage->getAddressId();
@@ -38,10 +40,11 @@ if (!$addresses || $addresses->isEmpty()) {
     }
 }
 
-if ($storage->getUserId()) {
+if ($storage->getUserId() && !$addresses->isEmpty()) {
     $showNewAddressFormHeader = true;
 }
 
+$orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
 
 function showDeliveryDateSelector(CalculationResultInterface $delivery, OrderStorage $storage, string $name)
 {
@@ -248,7 +251,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 
 <div class="delivery-block__type <?= $storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
      data-delivery="<?= $delivery->getPrice() ?>"
-     data-full="<?= $basket->getPrice() ?>" data-type="oneDelivery">
+     data-full="<?= $orderPrice ?>" data-type="oneDelivery">
 
     <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
         <div class="b-input-line__label-wrapper">
@@ -296,7 +299,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     ?>
     <div class="delivery-block__type <?= !$storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
          data-delivery="<?= $delivery1->getPrice() ?>"
-         data-full="<?= $basket->getPrice() ?>"
+         data-full="<?= $orderPrice ?>"
          data-type="twoDeliveries">
         <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
             <div class="b-input-line__label-wrapper"><span

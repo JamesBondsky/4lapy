@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -151,13 +152,13 @@ class Order extends BaseEntity
     protected $manzana = false;
 
     /** @var float */
-    protected $allWeight;
+    protected $allWeight = 0;
 
     /** @var Store */
     protected $store;
 
     /** @var float */
-    protected $itemsSum;
+    protected $itemsSum = 0;
 
     /** @var OrderPayment */
     protected $payment;
@@ -173,6 +174,9 @@ class Order extends BaseEntity
 
     /** @var array */
     protected $statusMain = [];
+
+    /** @var string */
+    protected $manzanaId = [];
 
     /** @var array $orderItems */
     private $orderItems = [];
@@ -380,6 +384,12 @@ class Order extends BaseEntity
         return $this;
     }
 
+    /**
+     * @return string
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
     public function getStatus(): string
     {
         if (empty($this->getStatusLang())) {
@@ -550,12 +560,12 @@ class Order extends BaseEntity
 
     public function getFormatedDateInsert(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateInsert()->format('j #n# Y'), DateHelper::GENITIVE);
+        return DateHelper::replaceRuMonth($this->getDateInsert()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'), DateHelper::GENITIVE);
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
 
     public function getFormatedPrice()
@@ -712,7 +722,7 @@ class Order extends BaseEntity
                 /** @var Date|null $date */
                 $date = new Date($propVal);
                 if ($date instanceof Date) {
-                    $formattedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
+                    $formattedDate = DateHelper::replaceRuMonth($date->format('j #n# Y'), DateHelper::GENITIVE, true);
                 }
             }
         }
@@ -797,6 +807,12 @@ class Order extends BaseEntity
         $this->statusMain = $statusMain;
     }
 
+    /**
+     * @return mixed
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
     public function getStatusSort()
     {
         if (empty($this->getStatusMain())) {
@@ -817,6 +833,22 @@ class Order extends BaseEntity
     public function isClosed(): bool
     {
         return \in_array($this->getStatusId(), OrderService::$finalStatuses, true);
+    }
+
+    /**
+     * @return string
+     */
+    public function getManzanaId(): string
+    {
+        return $this->manzanaId;
+    }
+
+    /**
+     * @param string $manzanaId
+     */
+    public function setManzanaId(string $manzanaId): void
+    {
+        $this->manzanaId = $manzanaId;
     }
 
     /**

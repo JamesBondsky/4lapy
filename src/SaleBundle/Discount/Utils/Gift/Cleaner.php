@@ -1,4 +1,8 @@
 <?php
+/** @todo Класс работает в контексте текущего юзера, а должен уметь работать в контексте разных юзеров на одном хите */
+/** @todo N.B. При изменении состава корзины не всегда нужно делать basket->save(), например,
+ * при создании копии заказа вызов save() обнулит текущую корзину юзера (предполагаемое решение см. BaseDiscountPostHandler::canBasketSave()) */
+
 /**
  * Created by PhpStorm.
  * Date: 30.01.2018
@@ -56,9 +60,7 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
             }
             if ($notFound) {
                 $this->basketService->deleteOfferFromBasket(
-                    $gift['basketId'],
-                    $this->order->getBasket(),
-                    $this->canBasketSave()
+                    $gift['basketId']
                 );
                 unset($existGifts[$k]);
             }
@@ -82,17 +84,13 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                     if ($availCount > 0) {
                         $this->basketService->updateBasketQuantity(
                             $gift['basketId'],
-                            $availCount,
-                            $this->order->getBasket(),
-                            $this->canBasketSave()
+                            $availCount
                         );
                         $availCount = 0;
                     } else {
                         try {
                             $this->basketService->deleteOfferFromBasket(
-                                $gift['basketId'],
-                                $this->order->getBasket(),
-                                $this->canBasketSave()
+                                $gift['basketId']
                             );
                             unset($existGifts[$k]);
                         } /** @noinspection BadExceptionsProcessingInspection */ catch (NotFoundException $e) {

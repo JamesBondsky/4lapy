@@ -67,8 +67,6 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
             $order = $this->orderService->transformDtoToOrder($order);
             $result = $order->save();
 
-            $this->paymentService->tryPaymentRefund($order);
-
             if (!$result->isSuccess()) {
                 throw new CantUpdateOrderException(sprintf(
                     'Не удалось обновить заказ #%s: %s',

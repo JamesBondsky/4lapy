@@ -11,7 +11,13 @@ global $APPLICATION;
 /** @var Cmain $APPLICATION */
 ?>
 <?php if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
-    $backUrl = !empty($backUrl) ? $backUrl : Application::getInstance()->getContext()->getRequest()->getRequestUri();
+    $requestUri = Application::getInstance()->getContext()->getRequest()->getRequestUri();
+    if(strpos($requestUri, 'sale/order/complete') !== false){
+        $backUrl = '/personal';
+    }
+    else {
+        $backUrl = !empty($backUrl) ? $backUrl : $requestUri;
+    }
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
         <header class="b-registration__header">

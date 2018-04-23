@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\BasketItem;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -13,6 +14,8 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -42,14 +45,24 @@ class ProductInfoController extends Controller
     protected $searchService;
 
     /**
+     * @var BasketService
+     */
+    protected $basketService;
+
+    /**
      * ProductInfoController constructor.
      *
      * @param ValidatorInterface $validator
      * @param SearchService $searchService
+     * @param BasketService $basketService
      */
-    public function __construct(ValidatorInterface $validator, SearchService $searchService)
-    {
+    public function __construct(
+        ValidatorInterface $validator,
+        SearchService $searchService,
+        BasketService $basketService
+    ) {
         $this->validator = $validator;
+        $this->basketService = $basketService;
         $this->searchService = $searchService;
     }
 
@@ -57,6 +70,7 @@ class ProductInfoController extends Controller
      * @Route("/", methods={"GET"})
      *
      * @global \CMain $APPLICATION
+     *
      * @param Request $request
      * @param ProductListRequest $productListRequest
      *
@@ -78,6 +92,13 @@ class ProductInfoController extends Controller
         $offerId = (int)$request->query->get('offer', 0);
         $currentOffer = null;
 
+        $cartItems = [];
+        $basket = $this->basketService->getBasket();
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $cartItems[(int)$basketItem->getProductId()] = $basketItem->getQuantity();
+        }
+
         if (!$this->validator->validate($productListRequest)->count()) {
             /** @var ProductSearchResult $result */
             $searchResult = $this->searchService->searchProducts(
@@ -90,23 +111,26 @@ class ProductInfoController extends Controller
             foreach ($searchResult->getProductCollection() as $product) {
                 /** @var Offer $offer */
                 foreach ($product->getOffers() as $offer) {
+                    $offer->setProduct($product); /* @todo костыль - в elastic не проставляется ссылка на товар у оффера */
                     if ($offerId && $offer->getId() === $offerId) {
                         $currentOffer = $offer;
                     }
+                    $price = ceil($offer->getPrice());
+                    $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
                     $response['products'][$product->getId()][$offer->getId()] = [
                         'available' => $offer->isAvailable(),
                         'byRequest' => $offer->isByRequest(),
-                        'pickup' => $product->isPickupAvailable(),
-                        'delivery' => $product->isDeliveryAvailable(),
-                        'price' => $offer->getPrice(),
-                        'oldPrice' => $offer->getOldPrice() ?: $offer->getPrice()
+                        'pickup' => $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
+                        'price' => $price,
+                        'oldPrice' => $oldPrice,
+                        'inCart' => $cartItems[$offer->getId()] ?? 0
                     ];
                 }
             }
 
             if ($currentOffer) {
                 ob_start();
-                $deliveries = $APPLICATION->IncludeComponent(
+                $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.product.delivery.info',
                     'detail',
                     [
@@ -117,8 +141,6 @@ class ProductInfoController extends Controller
                 );
 
                 $response['deliveryHtml'] = ob_get_clean();
-                /** @todo учитывать региональные ограничения по доставкам в Product::getDeliveryAvailability() и убрать эту строку */
-                $response['products'][$product->getId()][$currentOffer->getId()]['available'] = !empty($deliveries);
             }
         }
         return JsonSuccessResponse::createWithData('', $response);

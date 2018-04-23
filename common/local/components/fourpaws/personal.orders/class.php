@@ -82,7 +82,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         $params['PAGE_COUNT'] = 10;
-        $params['PATH_TO_BASKET'] = '/personal/cart/';
+        $params['PATH_TO_BASKET'] = '/cart/';
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 24 * 60 * 60;
@@ -363,10 +363,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     /**
      * @param OrderItem $item
      * @param int       $percent
+     * @param int       $precision
      *
      * @return string
      */
-    public function getItemBonus(OrderItem $item, int $percent): string
+    public function getItemBonus(OrderItem $item, int $percent, int $precision = 2): string
     {
         $bonusText = '';
         $bonus = \round($item->getPrice() * $item->getQuantity() * $percent / 100, 2);
@@ -374,13 +375,19 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             return $bonusText;
         }
 
-        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
-        $floorBonus = \floor($bonus);
+        if($precision > 0){
+            $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
+            $floorBonus = \floor($bonus);
+        }
+        else{
+            $floorBonus = $bonus = floor($bonus);
+        }
+
         $div = ($bonus - $floorBonus) * 100;
 
         return \sprintf(
             '+ %s %s',
-            WordHelper::numberFormat($bonus),
+            WordHelper::numberFormat($bonus, $precision),
             WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
         );
     }

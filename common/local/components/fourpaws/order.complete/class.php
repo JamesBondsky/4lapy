@@ -11,10 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotImplementedException;
-use Bitrix\Main\ObjectException;
-use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
@@ -24,7 +21,6 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\ValidationException;
@@ -84,11 +80,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws Exception
      * @throws NotImplementedException
-     * @throws ObjectException
-     * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      * @throws SystemException
      * @throws ValidationException
@@ -185,7 +177,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                     $this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']
                 );
             } elseif ($this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']) {
-                $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->storeService->getByXmlId(
+                $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->storeService->getStoreByXmlId(
                     $this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']
                 );
             }
@@ -196,14 +188,6 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
      * @param Order $order
      * @param User $user
      *
-     * @throws ArgumentException
-     * @throws Exception
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotImplementedException
-     * @throws ObjectException
-     * @throws ObjectNotFoundException
-     * @throws SystemException
      * @return array
      */
     protected function getOrderProperties(Order $order, User $user): array
@@ -212,33 +196,10 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         /** @var PropertyValue $propertyValue */
         foreach ($order->getPropertyCollection() as $propertyValue) {
             $propertyCode = $propertyValue->getProperty()['CODE'];
-            /**
-             * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
-             */
-            if (($propertyCode === 'BONUS_COUNT') &&
-                $user->getDiscountCardNumber() &&
-                (null === $propertyValue->getValue())
-            ) {
-                try {
-
-                    $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                        $this->manzanaPosService->buildRequestFromBasket(
-                            $order->getBasket(),
-                            $user->getDiscountCardNumber()
-                        )
-                    );
-                    $propertyValue->setValue($cheque->getChargedBonus());
-
-                } catch (ExecuteException $e) {
-                    $this->log()->error('failed to get charged bonus', [
-                        'orderId' => $order->getId()
-                    ]);
-                    $propertyValue->setValue(0);
-                }
-                $order->save();
-            }
             $result[$propertyCode] = $propertyValue->getValue();
         }
+
+        $result['BONUS_COUNT'] = $this->orderService->getOrderBonusSum($order, $user);
 
         return $result;
     }
@@ -264,7 +225,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
             }
         } elseif ($properties['DELIVERY_PLACE_CODE']) {
             try {
-                $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                $store = $this->storeService->getStoreByXmlId($properties['DELIVERY_PLACE_CODE']);
                 $result['SCHEDULE'] = $store->getScheduleString();
             } catch (StoreNotFoundException $e) {
             }

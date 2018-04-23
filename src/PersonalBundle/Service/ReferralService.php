@@ -120,12 +120,12 @@ class ReferralService
                     /** Дата окончания активности должна быть больше текущей даты */
                     /** @todo фильтр по дате активности карты */
 //                    $filter['>=UF_CARD_CLOSED_DATE'] = new Date();
-                    $filter['UF_MODERATED'] = [0, null, ''];
-                    $filter['UF_CANCEL_MODERATE'] = [0, null, ''];
+                    $filter['!UF_MODERATED'] = 1;
+                    $filter['!UF_CANCEL_MODERATE'] = 1;
                     break;
                 case 'moderated':
                     $filter['UF_MODERATED'] = 1;
-                    $filter['UF_CANCEL_MODERATE'] = [0, null, ''];
+                    $filter['!UF_CANCEL_MODERATE'] = 1;
                     break;
             }
         }
@@ -325,8 +325,8 @@ class ReferralService
                     'UF_USER_ID'           => $this->referralRepository->curUserService->getCurrentUserId(),
                     /** @todo фильтр по дате активности карты */
 //                    '>UF_CARD_CLOSED_DATE' => new Date(),
-                    'UF_MODERATED'         => [0, null, ''],
-                    'UF_CANCEL_MODERATE'   => [0, null, ''],
+                    '!UF_MODERATED'         => 1,
+                    '!UF_CANCEL_MODERATE'   => 1,
                 ]
             );
         } catch (ObjectPropertyException $e) {
@@ -346,7 +346,7 @@ class ReferralService
                 [
                     'UF_USER_ID'         => $this->referralRepository->curUserService->getCurrentUserId(),
                     'UF_MODERATED'       => 1,
-                    'UF_CANCEL_MODERATE' => [0, null, ''],
+                    '!UF_CANCEL_MODERATE' => 1,
                 ]
             );
         } catch (ObjectPropertyException $e) {
@@ -367,7 +367,7 @@ class ReferralService
         return $this->referralRepository->findBy([
             'filter' => [
                 'UF_MODERATED'       => 1,
-                'UF_CANCEL_MODERATE' => [0, null, ''],
+                '!UF_CANCEL_MODERATE' => 1,
             ],
         ]);
     }

@@ -553,7 +553,8 @@ class Material
     }
 
     /**
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws NotFoundBasicUomException
+     *
      * @return UnitOfMeasurement
      */
     public function getBasicUnitOfMeasure(): UnitOfMeasurement
@@ -565,6 +566,7 @@ class Material
         if ($uom) {
             return $uom;
         }
+
         throw new NotFoundBasicUomException(sprintf(
             'No basic unit of measure "%s" for material "%s"',
             $this->getBasicUnitOfMeasurementCode(),
@@ -588,6 +590,7 @@ class Material
     public function setUnitsOfMeasure($unitsOfMeasure): Material
     {
         $this->unitsOfMeasure = $unitsOfMeasure;
+
         return $this;
     }
 
@@ -607,6 +610,7 @@ class Material
     public function setProperties(Properties $properties): Material
     {
         $this->properties = $properties;
+
         return $this;
     }
 }

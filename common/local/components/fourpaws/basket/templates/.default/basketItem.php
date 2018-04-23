@@ -1,6 +1,6 @@
 <?php
 /** @var BasketItem $basketItem */
-/** @var float $user_discount */
+/** @var float $userDiscount */
 /** @var Offer $offer */
 
 /** @global \FourPaws\Components\BasketComponent $component */
@@ -20,8 +20,10 @@ if (!$basketItemId = $basketItem->getId()) {
 }
 $promoLink = $component->getPromoLink($basketItem);
 $image = $component->getImage($basketItem->getProductId());
-$templateData['OFFERS'][$offer->getId().'_'.$basketItem->getQuantity()] = $offer;
-$useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
+$useOffer = $offer instanceof Offer && $offer->getId() > 0;
+if($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) {
+    $templateData['OFFERS'][$offer->getId() . '_' . $basketItem->getQuantity()] = $offer;
+}?>
 <div class="b-item-shopping js-remove-shopping">
     <?php
     if(\is_array($promoLink) && !empty($promoLink)) {
@@ -63,10 +65,12 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                     <?= $basketItem->getField('NAME') ?>
                 </span>
             </span>
+            <?php if($basketItem->getWeight() > 0){ ?>
                 <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                 <span class="b-common-item__name-value">Вес: </span>
-                 <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
-            </span>
+                     <span class="b-common-item__name-value">Вес: </span>
+                     <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
+                </span>
+            <?php } ?>
                 <?php if ($useOffer) {
                     $color = $offer->getColor();
                     if ($color !== null) { ?>
@@ -84,10 +88,10 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                     <?php }
                 } ?>
             </a>
-            <?php if ($useOffer && !$basketItem->isDelay() && $offer->getQuantity() > 0 && !$offer->isByRequest()) { ?>
+            <?php if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?=$offer->getId()?>">
                     <?php if ($arParams['IS_AJAX']) {
-                        echo $offer->getBonusFormattedText((int)$user_discount, $basketItem->getQuantity());
+                        echo $offer->getBonusFormattedText((int)$userDiscount, $basketItem->getQuantity(), 0);
                     } ?>
                 </span>
             <?php } ?>

@@ -33,13 +33,15 @@ use Symfony\Component\HttpFoundation\Request;
 
 class OrderStorageService
 {
-    const AUTH_STEP = 'auth';
+    public const NOVALIDATE_STEP = 'novalidate';
 
-    const DELIVERY_STEP = 'delivery';
+    public const AUTH_STEP = 'auth';
 
-    const PAYMENT_STEP = 'payment';
+    public const DELIVERY_STEP = 'delivery';
 
-    const COMPLETE_STEP = 'complete';
+    public const PAYMENT_STEP = 'payment';
+
+    public const COMPLETE_STEP = 'complete';
 
     /**
      * Порядок оформления заказа
@@ -271,6 +273,10 @@ class OrderStorageService
         }
 
         foreach ($data as $name => $value) {
+            if (null === $value) {
+                continue;
+            }
+
             if (!\in_array($name, $availableValues, true)) {
                 continue;
             }
@@ -418,7 +424,7 @@ class OrderStorageService
     {
         if (null === $this->deliveries || $reload) {
             $this->deliveries = $this->deliveryService->getByBasket(
-                $this->basketService->getBasket()->getOrderableItems(),
+                $this->basketService->getBasket(),
                 '',
                 [],
                 $storage->getCurrentDate()
@@ -474,6 +480,7 @@ class OrderStorageService
 
     /**
      * Можно ли разделить заказ
+     *
      * @param CalculationResultInterface $delivery
      *
      * @return bool
@@ -485,9 +492,11 @@ class OrderStorageService
          * Для самовывоза DPD разделения заказов нет
          */
         if (!$delivery instanceof DpdPickupResult) {
-            [$available, $delayed] = $this->splitStockResult($delivery);
+            if (!($this->deliveryService->isDelivery($delivery) && $delivery->getStockResult()->getOrderable()->getByRequest()->isEmpty())) {
+                [$available, $delayed] = $this->splitStockResult($delivery);
 
-            $result = !$available->isEmpty() && !$delayed->isEmpty();
+                $result = !$available->isEmpty() && !$delayed->isEmpty();
+            }
         }
         return $result;
     }

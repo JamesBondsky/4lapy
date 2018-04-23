@@ -8,10 +8,8 @@ namespace FourPaws\StoreBundle\Collection;
 
 use Bitrix\Main\ArgumentException;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
-use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 /**
  * Class DeliveryScheduleCollection
@@ -106,119 +104,5 @@ class DeliveryScheduleCollection extends BaseCollection
         return $this->filter(function (DeliverySchedule $schedule) use ($date) {
             return $schedule->isActiveForDate($date);
         });
-    }
-
-    /**
-     * Получение ближайшего графика поставок для указанной даты
-     *
-     * @param Store $receiver
-     * @param null|\DateTime $from
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
-     * @return null|DeliveryScheduleResult
-     */
-    public function getNextDelivery(
-        Store $receiver,
-        \DateTime $from = null
-    ): ?DeliveryScheduleResult {
-        if (!$from) {
-            $from = new \DateTime();
-        }
-
-        /** @var DeliveryScheduleResult $result */
-        $result = null;
-        $senderSchedules = $this->getActive($from);
-        /** @var DeliverySchedule $senderSchedule */
-
-        foreach ($senderSchedules as $senderSchedule) {
-            if (!$date = $this->doGetNextDelivery($senderSchedule, $receiver, $from)) {
-                continue;
-            }
-
-            if (null === $result || $result->getDate() > $date) {
-                $result = (new DeliveryScheduleResult())->setDate($date)->setSchedule($senderSchedule);
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param StoreCollection $receivers
-     * @param \DateTime|null $from
-     * @return DeliveryScheduleResultCollection
-     * @throws NotFoundException
-     * @throws ArgumentException
-     */
-    public function getNextDeliveries(
-        StoreCollection $receivers,
-        \DateTime $from = null
-    ): DeliveryScheduleResultCollection {
-        if (!$from) {
-            $from = new \DateTime();
-        }
-
-        $result = new DeliveryScheduleResultCollection();
-
-        /** @var Store $receiver */
-        foreach ($receivers as $receiver) {
-            if ($res = $this->getNextDelivery($receiver, $from)) {
-                $result->add($res);
-            }
-        }
-
-        return $result;
-    }
-    /** @noinspection MoreThanThreeArgumentsInspection */
-
-    /**
-     * @param DeliverySchedule $senderSchedule
-     * @param Store $receiver
-     * @param \DateTime $from
-     * @param int $transitionCount
-     * @throws ArgumentException
-     * @throws NotFoundException
-     * @return null|\DateTime
-     */
-    protected function doGetNextDelivery(
-        DeliverySchedule $senderSchedule,
-        Store $receiver,
-        \DateTime $from,
-        int $transitionCount = 0
-    ): ?\DateTime {
-        /** Пока не нужно */
-        if ($transitionCount > 0) {
-            return null;
-        }
-
-        if (!$nextDelivery = $senderSchedule->getNextDelivery($from)) {
-            return null;
-        }
-
-        if ($senderSchedule->getReceiverCode() === $receiver->getXmlId()) {
-            return $nextDelivery;
-        }
-
-        $children = $senderSchedule->getReceiverSchedules()->getActive($nextDelivery);
-        /** @var DeliverySchedule $child */
-        foreach ($children as $child) {
-            if ($child->getReceiverCode() === $receiver->getXmlId()) {
-                $childFrom = $child->getNextDelivery($nextDelivery);
-                if ($childFrom) {
-                    $results[] = $childFrom;
-                }
-            } else {
-                if ($childFrom = $child->getNextDelivery($nextDelivery)) {
-                    $results[] = $this->doGetNextDelivery(
-                        $child,
-                        $receiver,
-                        $childFrom,
-                        $transitionCount++
-                    );
-                }
-            }
-        }
-
-        return empty($results) ? null : min($results);
     }
 }

@@ -69,16 +69,6 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
     }
 
     /**
-     * @param Store $selectedStore
-     *
-     * @return CalculationResultInterface
-     */
-    public function setSelectedStore(Store $selectedStore): CalculationResultInterface
-    {
-        return $this->setSelectedShop($selectedStore);
-    }
-
-    /**
      * @return StoreCollection
      */
     public function getTerminals(): StoreCollection

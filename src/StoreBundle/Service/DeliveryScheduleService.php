@@ -6,19 +6,19 @@
 
 namespace FourPaws\StoreBundle\Service;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\DeliveryScheduleRepository;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryScheduleService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     protected const TYPE_FIELD_CODE = 'UF_TYPE';
 
@@ -30,12 +30,12 @@ class DeliveryScheduleService implements LoggerAwareInterface
     public function __construct(DeliveryScheduleRepository $repository)
     {
         $this->repository = $repository;
-        $this->setLogger(LoggerFactory::create('DeliveryScheduleService'));
     }
 
     /**
      * @param Store $receiver
      * @param StoreCollection $senders
+     *
      * @return DeliveryScheduleCollection
      */
     public function findByReceiver(Store $receiver, StoreCollection $senders = null): DeliveryScheduleCollection
@@ -61,7 +61,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->error(
+            $this->log()->error(
                 sprintf('failed to get delivery schedules: %s', $e->getMessage()),
                 ['receiver' => $receiver->getXmlId()]
             );
@@ -75,6 +75,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
     /**
      * @param Store $sender
      * @param null|StoreCollection $receivers
+     *
      * @return DeliveryScheduleCollection
      */
     public function findBySender(Store $sender, StoreCollection $receivers = null): DeliveryScheduleCollection
@@ -100,7 +101,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->error(
+            $this->log()->error(
                 sprintf('failed to get delivery schedules: %s', $e->getMessage()),
                 ['sender' => $sender->getXmlId()]
             );
@@ -113,6 +114,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     /**
      * @param StoreCollection $stores
+     *
      * @return DeliveryScheduleCollection
      */
     public function findByReceivers(StoreCollection $stores): DeliveryScheduleCollection
@@ -132,6 +134,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     /**
      * @param StoreCollection $stores
+     *
      * @return DeliveryScheduleCollection
      */
     public function findBySenders(StoreCollection $stores): DeliveryScheduleCollection
@@ -151,7 +154,8 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     /**
      * @param string $xmlId
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     *
+     * @throws NotFoundException
      * @return DeliverySchedule
      */
     public function findByXmlId(string $xmlId): DeliverySchedule
@@ -161,6 +165,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     /**
      * @param int $typeId
+     *
      * @return null|string
      */
     public function getTypeCodeById(int $typeId): ?string
@@ -170,6 +175,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     /**
      * @param string $code
+     *
      * @return int|null
      */
     public function getTypeIdByCode(string $code): ?int
@@ -193,14 +199,15 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
             return ['result' => $result];
         };
+
+        $result = [];
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__)
                 ->withTag('delivery_schedule')
                 ->resultOf($getTypes)['result'];
         } catch (\Exception $e) {
-            $this->logger->error(sprintf('failed to get enum list: %s', $e->getMessage()));
-            return [];
+            $this->log()->error(sprintf('failed to get enum list: %s', $e->getMessage()));
         }
 
         return $result;

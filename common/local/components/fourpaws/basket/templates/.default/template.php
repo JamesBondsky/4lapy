@@ -1,12 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 29.12.2017
- * Time: 16:26
- *
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
 
 /**
  * @global BasketComponent $component
@@ -29,9 +21,27 @@ $user = $arResult['USER'];
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
+$hasNormalItems = false;
+/** @var BasketItem $item */
+foreach ($orderableItems as $item) {
+    if (isset($item->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+        continue;
+    }
+    $hasNormalItems = true;
+    break;
+}
 
 /** @var ArrayCollection $notAllowedItems */
 $notAllowedItems = $arResult['NOT_ALLOWED_ITEMS'];
+$hasNotAllowedItems = false;
+/** @var BasketItem $item */
+foreach ($notAllowedItems as $item) {
+    if (isset($item->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+        continue;
+    }
+    $hasNotAllowedItems = true;
+    break;
+}
 
 /** @var Order $order */
 $order = $basket->getOrder();
@@ -57,15 +67,14 @@ if ($arParams['IS_AJAX']) {
                     <?php foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
                         $disableClass = '';
+
                         /** @noinspection PhpUndefinedMethodInspection */
                         if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
                         } ?>
                         <div class="b-gift-order">
                             <div class="b-gift-order__info">
-                                <span class="b-gift-order__text">
-                                    Мы решили подарить вам подарок на весь заказ за красивые глаза
-                                </span>
+                                <span class="b-gift-order__text"><?= $group['name'] ?></span>
                                 <a class="b-link-gift js-presents-order-open<?= $disableClass ?>"
                                    href="javascript:void(0);"
                                    data-url="/ajax/sale/basket/gift/get/"
@@ -126,7 +135,7 @@ if ($arParams['IS_AJAX']) {
                 </section>
             <?php }
 
-            if (!$orderableItems->isEmpty()) { ?>
+            if ($hasNormalItems) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                     <?php
@@ -145,7 +154,7 @@ if ($arParams['IS_AJAX']) {
                 </section>
             <?php }
 
-            if ($notAllowedItems instanceof ArrayCollection && !$notAllowedItems->isEmpty()) { ?>
+            if ($hasNotAllowedItems) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
                     <?php foreach ($notAllowedItems as $basketItem) {
@@ -200,7 +209,7 @@ if ($arParams['IS_AJAX']) {
                         <div class="b-information-order__order-price"><?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
                                 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                                 ['товар', 'товара', 'товаров']) ?>
-                            (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
+                            <?php if($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)<?php } ?>
                         </div>
                         <div class="b-price b-price--information-order">
                             <span class="b-price__current">

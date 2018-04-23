@@ -11,8 +11,6 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
@@ -31,8 +29,6 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\External\Manzana\Exception\ExecuteException;
-use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
@@ -63,10 +59,6 @@ class BasketComponent extends CBitrixComponent
      * @var UserService
      */
     private $currentUserService;
-    /**
-     * @var ManzanaPosService
-     */
-    private $manzanaPosService;
     /** @var array $images */
     private $images;
     /**
@@ -93,7 +85,6 @@ class BasketComponent extends CBitrixComponent
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
         $this->couponsStorage = $container->get(CouponStorageInterface::class);
-        $this->manzanaPosService = $container->get('manzana.pos.service');
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -103,8 +94,6 @@ class BasketComponent extends CBitrixComponent
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws SystemException
-     * @throws ArgumentOutOfRangeException
-     * @throws ArgumentException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws \InvalidArgumentException
@@ -114,7 +103,6 @@ class BasketComponent extends CBitrixComponent
      * @throws ServiceCircularReferenceException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws ExecuteException
      */
     public function executeComponent(): void
     {
@@ -136,6 +124,8 @@ class BasketComponent extends CBitrixComponent
                 $order = Order::create(SITE_ID);
                 $order->setBasket($basket);
             }
+            // необходимо подгрузить подарки
+            $this->offerCollection = $this->basketService->getOfferCollection(true);
             $this->loadPromoDescriptions();
             $this->setCoupon();
             $this->arResult['USER'] = null;
@@ -144,7 +134,7 @@ class BasketComponent extends CBitrixComponent
                 $user = $this->currentUserService->getCurrentUser();
                 $this->arResult['USER'] = $user;
                 $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
-            }  /** @noinspection BadExceptionsProcessingInspection */
+            } /** @noinspection BadExceptionsProcessingInspection */
             catch (NotAuthorizedException $e) {
                 /** в случае ошибки не показываем бюджет в большой корзине */
             }
@@ -311,26 +301,28 @@ class BasketComponent extends CBitrixComponent
 
     private function calcTemplateFields(): void
     {
-        $weight = 0;
-        $quantity = 0;
+        $weight = $quantity = $basePrice = $price = 0;
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
         $orderableBasket = $basket->getOrderableItems();
+
         foreach ($orderableBasket as $basketItem) {
+            $itemQuantity = (int)$basketItem->getQuantity();
             $weight += (float)$basketItem->getWeight();
-            $quantity += (int)$basketItem->getQuantity();
+            $quantity += $itemQuantity;
+            $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
+            $price += (float)$basketItem->getPrice() * $itemQuantity;
         }
+
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
-        $this->arResult['TOTAL_DISCOUNT'] = $orderableBasket->getBasePrice() - $orderableBasket->getPrice();
-        $this->arResult['TOTAL_PRICE'] = $orderableBasket->getPrice();
-        $this->arResult['TOTAL_BASE_PRICE'] = $orderableBasket->getBasePrice();
+        $this->arResult['TOTAL_DISCOUNT'] = $basePrice - $price;
+        $this->arResult['TOTAL_PRICE'] = $price;
+        $this->arResult['TOTAL_BASE_PRICE'] = $basePrice;
     }
 
     /**
-     *
-     *
      * @return string
      */
     private function getPage(): string
@@ -346,7 +338,6 @@ class BasketComponent extends CBitrixComponent
 
     /**
      * Подгружает названия и ссылки на описания акций по XML_ID
-     *
      */
     private function loadPromoDescriptions()
     {
@@ -360,9 +351,9 @@ class BasketComponent extends CBitrixComponent
             $res = \CIBlockElement::GetList(
                 ['ID' => 'ASC'],
                 [
-                    'PROPERTY_BASKET_RULES' => array_values($discountMap),
-                    'IBLOCK_CODE' => IblockCode::SHARES,
-                    'IBLOCK_TYPE' => IblockType::PUBLICATION
+                    'PROPERTY_BASKET_RULES' => \array_values($discountMap),
+                    'IBLOCK_CODE'           => IblockCode::SHARES,
+                    'IBLOCK_TYPE'           => IblockType::PUBLICATION,
                 ],
                 false,
                 false,
@@ -372,8 +363,8 @@ class BasketComponent extends CBitrixComponent
                 if (\is_array($elem['PROPERTY_BASKET_RULES_VALUE'])) {
                     foreach ($elem['PROPERTY_BASKET_RULES_VALUE'] as $ruleId) {
                         $this->promoDescriptions[$ruleId] = [
-                            'url' => $elem['DETAIL_PAGE_URL'],
-                            'name' => $elem['NAME']
+                            'url'  => $elem['DETAIL_PAGE_URL'],
+                            'name' => $elem['NAME'],
                         ];
                     }
                 }
@@ -382,8 +373,6 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
-     *
      * @param BasketItem $basketItem
      *
      * @return array
@@ -393,7 +382,7 @@ class BasketComponent extends CBitrixComponent
         $result = [];
         /**
          * @var BasketItemCollection $basketItemCollection
-         * @var Order $order
+         * @var Order                $order
          */
         if (
             ($basketItemCollection = $basketItem->getCollection())
@@ -408,7 +397,7 @@ class BasketComponent extends CBitrixComponent
             &&
             isset($applyResult['RESULT']['BASKET'][$basketItem->getId()])
         ) {
-            foreach (array_column($applyResult['RESULT']['BASKET'][$basketItem->getId()], 'DISCOUNT_ID') as $fakeId) {
+            foreach (\array_column($applyResult['RESULT']['BASKET'][$basketItem->getId()], 'DISCOUNT_ID') as $fakeId) {
                 if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
                     $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
                 }
@@ -416,6 +405,7 @@ class BasketComponent extends CBitrixComponent
         }
         return $result;
     }
+
     /**
      * Set coupon and coupon discount
      *
