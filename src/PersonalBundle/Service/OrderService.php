@@ -383,7 +383,8 @@ class OrderService
             $street = '';
             $prop = $props->get('STREET');
             if ($prop instanceof OrderProp) {
-                $street = $prop->getValue() . ' ул.';
+                /**убрана принудительная подстановка улицы */
+                $street = $prop->getValue();
             }
             $house='';
             $prop = $props->get('HOUSE');
