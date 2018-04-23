@@ -106,6 +106,11 @@ class Event implements ServiceHandlerInterface
     public static function updateUserAccountBalance(): void
     {
         try {
+            $scriptName = \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getScriptName();
+            /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal) */
+            if(($scriptName !== '/ajax/user/auth/login/index.php' && strpos($scriptName, '/personal/') === false)){
+                return;
+            }
             $container = Application::getInstance()->getContainer();
             $userService = $container->get(CurrentUserProviderInterface::class);
             $userAccountService = $container->get(UserAccountService::class);
