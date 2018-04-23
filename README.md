@@ -35,6 +35,13 @@
 -f|--force - для сброса блокировки
 ```
 
+## Запуск пересчета графиков доставок
+
+```
+- ./bin/symfony_console f:s:s # на сегодняший день
+- ./bin/symfony_console f:s:s --date="$(date --date="tomorrow" +%Y-%m-%d)" # на завтра
+```
+
 ## Сервисы вагранта
 
 * [MailHog](http://4lapy.vag:8025/)
