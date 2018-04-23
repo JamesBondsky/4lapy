@@ -82,6 +82,12 @@ class Share extends IblockElement
     protected $PROPERTY_BASKET_RULES = [];
 
     /**
+     * @var string
+     * @Type("string")
+     */
+    protected $PROPERTY_JSON_GROUP_SET = [];
+
+    /**
      * @var OfferCollection
      */
     protected $products;
@@ -301,6 +307,25 @@ class Share extends IblockElement
     public function withPropertyBasketRules(array $propertyBasketRules): Share
     {
         $this->PROPERTY_BASKET_RULES = $propertyBasketRules;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPropertyJsonGroupSet(): string
+    {
+        return $this->PROPERTY_JSON_GROUP_SET;
+    }
+
+    /**
+     * @param string $propertyJsonGroupSet
+     *
+     * @return Share
+     */
+    public function withPropertyJsonGroupSet(string $propertyJsonGroupSet): Share
+    {
+        $this->PROPERTY_JSON_GROUP_SET = $propertyJsonGroupSet;
         return $this;
     }
 }
