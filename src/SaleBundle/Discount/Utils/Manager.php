@@ -32,8 +32,6 @@ class Manager
     protected static $finalActionEnabled = true;
 
     /**
-     *
-     *
      * @param Event|null $event
      *
      * @throws ServiceNotFoundException
@@ -132,6 +130,7 @@ class Manager
                         $result[$basketItem->getId()]['offerId'] = (int)$basketItem->getProductId();
                         $result[$basketItem->getId()]['basketId'] = (int)$basketItem->getId();
                     }
+
                     if ($basketPropertyItem->getField('CODE') === 'IS_GIFT_SELECTED') {
                         $result[$basketItem->getId()]['selected'] = $basketPropertyItem->getField('VALUE');
                     }
