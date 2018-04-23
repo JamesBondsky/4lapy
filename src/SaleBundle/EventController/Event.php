@@ -89,9 +89,9 @@ class Event implements ServiceHandlerInterface
     }
 
     /**
-     * @param string $eventName
+     * @param string   $eventName
      * @param callable $callback
-     * @param string $module
+     * @param string   $module
      *
      */
     public static function initHandler(string $eventName, callable $callback, string $module = 'sale'): void
@@ -107,8 +107,11 @@ class Event implements ServiceHandlerInterface
     {
         try {
             $scriptName = \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getScriptName();
-            /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal) */
-            if(($scriptName !== '/ajax/user/auth/login/index.php' && strpos($scriptName, '/personal/') === false)){
+            /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal)
+             *  так же чекаем что это не страница заказа
+             */
+            if ((strpos($scriptName, '/ajax/user/auth/login') === false && strpos($scriptName,
+                        '/personal/') === false) && strpos($scriptName, '/sale/') === false) {
                 return;
             }
             $container = Application::getInstance()->getContainer();
@@ -154,8 +157,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendNewOrderMessage($order);
     }
@@ -175,8 +178,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendOrderPaymentMessage($order);
     }
@@ -195,8 +198,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendOrderCancelMessage($order);
     }
@@ -213,8 +216,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendOrderStatusMessage($order);
     }
@@ -229,7 +232,7 @@ class Event implements ServiceHandlerInterface
 
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
-            'personal:order:' . $order->getField('USER_ID')
+            'personal:order:' . $order->getField('USER_ID'),
         ]);
     }
 }
