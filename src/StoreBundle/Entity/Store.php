@@ -860,7 +860,7 @@ class Store extends Base
      */
     public function isSupplier(): bool
     {
-        return $this->isSupplier;
+        return $this->isSupplier ?? false;
     }
 
     /**

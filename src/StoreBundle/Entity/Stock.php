@@ -154,7 +154,7 @@ class Stock extends Base
     public function getStore(): Store
     {
         if (null === $this->store) {
-            $this->store = $this->storeService->getById($this->getStoreId());
+            $this->store = $this->storeService->getStoreById($this->getStoreId());
         }
 
         return $this->store;
