@@ -279,9 +279,12 @@ class ProfileController extends Controller
             } catch (ApplicationCreateException $e) {
                 return $this->ajaxMess->getSystemError();
             }
-            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
-                $data['UF_EMAIL_CONFIRMED'] = false;
-            }
+            /** отключаем снятие чека при смене email
+             * @todo сделать его после успешной отправки через сендер, а тут снимать
+             */
+//            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
+//                $data['UF_EMAIL_CONFIRMED'] = false;
+//            }
             try {
                 $_SESSION['MANZANA_UPDATE'] = true;
                 /** обновление данных манзаны сработает на событии @see Event::updateManzana() */

@@ -1,12 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 29.12.2017
- * Time: 16:26
- *
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
 
 /**
  * @global BasketComponent $component
@@ -75,15 +67,14 @@ if ($arParams['IS_AJAX']) {
                     <?php foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
                         $disableClass = '';
+
                         /** @noinspection PhpUndefinedMethodInspection */
                         if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
                         } ?>
                         <div class="b-gift-order">
                             <div class="b-gift-order__info">
-                                <span class="b-gift-order__text">
-                                    Мы решили подарить вам подарок на весь заказ за красивые глаза
-                                </span>
+                                <span class="b-gift-order__text"><?= $group['name'] ?></span>
                                 <a class="b-link-gift js-presents-order-open<?= $disableClass ?>"
                                    href="javascript:void(0);"
                                    data-url="/ajax/sale/basket/gift/get/"

@@ -482,6 +482,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
         $data = [
             'UF_PHONE_CONFIRMED' => true,
+            'PERSONAL_PHONE' => $phone
         ];
 
         try {
@@ -799,7 +800,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $data = [
-            'PERSONAL_PHONE'     => $phone,
             'UF_PHONE_CONFIRMED' => false,
         ];
 
@@ -826,6 +826,4 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         return $mess;
     }
-
-//    pubf
 }

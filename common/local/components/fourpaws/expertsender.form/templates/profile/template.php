@@ -24,16 +24,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <div class="b-account-profile__title b-account-profile__title--small">
         Рассылка
     </div>
-    <?php if(!empty($arResult['EMAIL']) && $arResult['CONFIRMED']){ ?>
-        <form class="b-account-profile__form" data-url="/ajax/user/subscribe/subscribe/" id="lk-substribe" method="post">
-            <input type="hidden" name="type" value="profile">
+    <?php if ($arResult['IS_SUBSCRIBED'] || (!empty($arResult['EMAIL']) && $arResult['CONFIRMED'])) { ?>
+        <form class="b-account-profile__form" data-url="/ajax/user/subscribe/subscribe/" id="lk-substribe"
+              method="post">
             <input type="hidden" name="email" value="<?= $arResult['EMAIL'] ?>">
             <div class="b-account-profile__subscribe-setting">
                 <div class="b-checkbox b-checkbox--agree b-checkbox--account-subscribe">
-                    <input class="b-checkbox__input" name="type" id="subscribe-all" type="checkbox" value="all" <?=$arResult['IS_SUBSCRIBED'] ? 'checked="checked"' : ''?>>
-                    <label
-                            class="b-checkbox__name b-checkbox__name--agree b-checkbox__name--account-subscribe"
-                            for="subscribe-all"><span class="b-checkbox__text">Я хочу получать полезную информацию</span>
+                    <input class="b-checkbox__input" name="type" id="subscribe-all" type="checkbox"
+                           value="all" <?= $arResult['IS_SUBSCRIBED'] ? 'checked="checked"' : '' ?>>
+                    <label class="b-checkbox__name b-checkbox__name--agree b-checkbox__name--account-subscribe"
+                           for="subscribe-all">
+                        <span class="b-checkbox__text">Я хочу получать полезную информацию</span>
                     </label>
                 </div>
                 <div class="b-error"><span class="js-message"></span></div>
@@ -41,7 +42,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
         </form>
     <?php } else { ?>
-        <form class="b-account-profile__form js-form-validation" data-url="/ajax/user/subscribe/subscribe/" id="lk-substribe" method="post">
+        <form class="b-account-profile__form js-form-validation" data-url="/ajax/user/subscribe/subscribe/"
+              id="lk-substribe" method="post">
             <input type="hidden" name="type" value="all">
             <div class="b-account-profile__no-subscribe">
                 <div class="b-input-line b-input-line--subscribe">
@@ -49,7 +51,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <label class="b-input-line__label" for="email-subscribe">Эл. почта</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form" type="email" id="email-subscribe" name="email" data-url="/ajax/user/subscribe/subscribe/"/>
+                        <input class="b-input__input-field b-input__input-field--registration-form" type="email"
+                               id="email-subscribe" name="email" data-url="/ajax/user/subscribe/subscribe/"
+                               value="<?= $arResult['EMAIL'] ?>"/>
                         <div class="b-error"><span class="js-message"></span></div>
                     </div>
                 </div>

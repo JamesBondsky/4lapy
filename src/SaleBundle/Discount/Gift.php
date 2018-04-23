@@ -1,14 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 18.01.2018
- * Time: 21:08
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
 
 namespace FourPaws\SaleBundle\Discount;
-
 
 use Bitrix\Sale\Discount;
 use Bitrix\Sale\Discount\Actions;
@@ -16,17 +8,14 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\OrderDiscountManager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 
-
 /**
  * Class Gift
  * @package FourPaws\SaleBundle\Discount
- * @todo переместить в соотвествующую папку и неймспейс
+ * @todo    переместить в соотвествующую папку и неймспейс
  */
 class Gift extends \CSaleActionCtrlAction
 {
     /**
-     *
-     *
      * @return array
      */
     public static function GetControlDescr(): array
@@ -34,15 +23,13 @@ class Gift extends \CSaleActionCtrlAction
         $controlDescr = parent::GetControlDescr();
         $controlDescr['FORCED_SHOW_LIST'] = [
             'GifterElement',
-            'ADV:BasketFilterBasePriceRatio'
+            'ADV:BasketFilterBasePriceRatio',
         ];
         $controlDescr['SORT'] = 300;
         return $controlDescr;
     }
 
     /**
-     *
-     *
      * @return array|string
      */
     public static function GetControlID(): string
@@ -51,8 +38,6 @@ class Gift extends \CSaleActionCtrlAction
     }
 
     /**
-     *
-     *
      * @param $arParams
      *
      * @return array
@@ -64,8 +49,8 @@ class Gift extends \CSaleActionCtrlAction
         $description['label'] = 'Предоставить выбор подарка';
         $description['containsOneAction'] = false;
         $description['mess'] = [
-            'ADD_CONTROL' => 'Добавить условие',
-            'SELECT_CONTROL' => 'Выбрать условие'
+            'ADD_CONTROL'    => 'Добавить условие',
+            'SELECT_CONTROL' => 'Выбрать условие',
         ];
         $description['control'] = [
             'предоставить подарок',
@@ -75,11 +60,9 @@ class Gift extends \CSaleActionCtrlAction
     }
 
     /**
-     *
-     *
-     * @param $arOneCondition
-     * @param $arParams
-     * @param $arControl
+     * @param            $arOneCondition
+     * @param            $arParams
+     * @param            $arControl
      * @param array|bool $arSubs
      *
      * @return array|bool|string
@@ -114,12 +97,10 @@ class Gift extends \CSaleActionCtrlAction
 
 
     /**
-     *
-     *
-     * @param $order
-     * @param $params
+     * @param               $order
+     * @param               $params
      * @param Discount|null $callerObject
-     * @param int $applyCount
+     * @param int           $applyCount
      *
      */
     public static function applyGift(
@@ -128,7 +109,8 @@ class Gift extends \CSaleActionCtrlAction
         /** @noinspection PhpUnusedParameterInspection */
         Discount $callerObject = null,
         int $applyCount
-    ) {
+    )
+    {
         $applyBasket = null;
         $actionDescription = null;
         if (!empty($order['BASKET_ITEMS']) && \is_array($order['BASKET_ITEMS']) && $applyCount) {
@@ -140,8 +122,8 @@ class Gift extends \CSaleActionCtrlAction
                 $params['discountType'] = 'GIFT';
             }
             $actionDescription = [
-                'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
-                'ACTION_DESCRIPTION' => json_encode($params),
+                'ACTION_TYPE'        => OrderDiscountManager::DESCR_TYPE_SIMPLE,
+                'ACTION_DESCRIPTION' => \json_encode($params),
             ];
             Actions::increaseApplyCounter();
             Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
@@ -162,7 +144,6 @@ class Gift extends \CSaleActionCtrlAction
     }
 
     /**
-     *
      * @param $arParams
      *
      * @return array|string
@@ -173,8 +154,8 @@ class Gift extends \CSaleActionCtrlAction
 
         if (isset($arParams['ID']) && $arParams['ID'] === static::GetControlID()) {
             $arControl = [
-                'ID' => $arParams['ID'],
-                'ATOMS' => static::GetAtomsEx(false, true)
+                'ID'    => $arParams['ID'],
+                'ATOMS' => static::GetAtomsEx(false, true),
             ];
             $result = static::CheckAtoms($arParams['DATA'], $arParams, $arControl, true);
         }
@@ -183,8 +164,6 @@ class Gift extends \CSaleActionCtrlAction
     }
 
     /**
-     *
-     *
      * @return array
      */
     public static function GetAtoms(): array
@@ -193,7 +172,6 @@ class Gift extends \CSaleActionCtrlAction
     }
 
     /**
-     *
      * @param bool $strControlID
      * @param bool $boolEx
      *
@@ -205,25 +183,25 @@ class Gift extends \CSaleActionCtrlAction
 
         $arAtomList = [
             'Count_operator' => [
-                'JS' => [
-                    'id' => 'Count_operator',
-                    'name' => 'Count_operator',
-                    'type' => 'select',
-                    'values' => [
+                'JS'   => [
+                    'id'           => 'Count_operator',
+                    'name'         => 'Count_operator',
+                    'type'         => 'select',
+                    'values'       => [
                         'condition_count' => 'столько, сколько выполняется условие',
-                        'once' => 'один раз',
+                        'once'            => 'один раз',
                     ],
-                    'defaultText' => 'столько, сколько выполняется условие',
+                    'defaultText'  => 'столько, сколько выполняется условие',
                     'defaultValue' => 'condition_count',
-                    'first_option' => '...'
+                    'first_option' => '...',
                 ],
                 'ATOM' => [
-                    'ID' => 'Count_operator',
-                    'FIELD_TYPE' => 'string',
+                    'ID'           => 'Count_operator',
+                    'FIELD_TYPE'   => 'string',
                     'FIELD_LENGTH' => 255,
-                    'MULTIPLE' => 'N',
-                    'VALIDATE' => 'list'
-                ]
+                    'MULTIPLE'     => 'N',
+                    'VALIDATE'     => 'list',
+                ],
             ],
         ];
 
@@ -239,10 +217,8 @@ class Gift extends \CSaleActionCtrlAction
 
 
     /**
-     *
-     *
      * @param Order|null $order
-     * @param int|null $discountId
+     * @param int|null   $discountId
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
@@ -251,9 +227,10 @@ class Gift extends \CSaleActionCtrlAction
     public static function getPossibleGiftGroups(Order $order = null, int $discountId = null): array
     {
         if ($order instanceof Order) {
-            /** @var \Bitrix\Sale\Discount $discount */
+            /** @var Discount $discount */
             $discount = $order->getDiscount();
             $result = self::parseApplyResult($discount->getApplyResult(true));
+
             if ($discountId && isset($result[$discountId])) {
                 $result = [$discountId => $result[$discountId]];
             } elseif ($discountId) {
@@ -262,14 +239,13 @@ class Gift extends \CSaleActionCtrlAction
         } else {
             throw new InvalidArgumentException('Не передан заказ');
         }
+
         return $result;
     }
 
     /**
-     *
-     *
      * @param Order|null $order
-     * @param int|null $discountId
+     * @param int|null   $discountId
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
@@ -288,15 +264,13 @@ class Gift extends \CSaleActionCtrlAction
                     }
                 }
             }
-            $ids = array_flip(array_flip(array_filter($ids)));
+            $ids = \array_flip(\array_flip(\array_filter($ids)));
         }
 
         return $ids;
     }
 
     /**
-     *
-     *
      * @param array|null $applyResult
      *
      * @return array
@@ -307,7 +281,7 @@ class Gift extends \CSaleActionCtrlAction
         if (\is_array($applyResult) && $applyResult && \is_array($applyResult['DISCOUNT_LIST'])) {
             foreach ($applyResult['DISCOUNT_LIST'] as $discount) {
                 if (
-                    ($data = json_decode($discount['ACTIONS_DESCR']['BASKET'], true))
+                    ($data = \json_decode($discount['ACTIONS_DESCR']['BASKET'], true))
                     && \is_array($data)
                     && isset($data['discountType'])
                     && $data['discountType'] === 'GIFT'
@@ -315,6 +289,7 @@ class Gift extends \CSaleActionCtrlAction
                     foreach ($data as $k => $elem) {
                         if (\is_int($k) && isset($elem['count']) && $elem['count'] > 0) {
                             $elem['discountId'] = (int)$discount['REAL_DISCOUNT_ID'];
+                            $elem['name'] = $discount['NAME'];
                             $result[$discount['REAL_DISCOUNT_ID']][] = $elem;
                         }
                     }
