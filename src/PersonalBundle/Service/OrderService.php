@@ -373,7 +373,7 @@ class OrderService
             }
             if ($deliveryPlace instanceof OrderProp && $deliveryPlace->getValue()) {
                 $storeService = App::getInstance()->getContainer()->get('store.service');
-                return $storeService->getByXmlId($deliveryPlace->getValue());
+                return $storeService->getStoreByXmlId($deliveryPlace->getValue());
             }
         }
 

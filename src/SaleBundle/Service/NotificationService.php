@@ -352,7 +352,7 @@ class NotificationService implements LoggerAwareInterface
             $result['deliveryCode'] = $this->orderService->getOrderDeliveryCode($order);
 
             if ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
-                $shop = $this->storeService->getByXmlId(
+                $shop = $this->storeService->getStoreByXmlId(
                     $properties['DELIVERY_PLACE_CODE']
                 );
                 $result['shop'] = [

@@ -23,6 +23,9 @@ services:
     FourPaws\StoreBundle\Service\DeliveryScheduleService:
         class: FourPaws\StoreBundle\Service\DeliveryScheduleService
         public: true
+    FourPaws\StoreBundle\Service\ScheduleResultService:
+        class: FourPaws\StoreBundle\Service\ScheduleResultService
+        public: true
     FourPaws\StoreBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true
