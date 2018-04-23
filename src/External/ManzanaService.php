@@ -762,7 +762,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
             $card = $this->getActiveCardByContactId($client->contactId);
 
-            $userRepository->updateDiscountCard($user->getId(), $card->cardNumber);
+            if($user->getDiscountCardNumber() !== $card->cardNumber) {
+                $userRepository->updateDiscountCard($user->getId(), $card->cardNumber);
+            }
         } catch (ManzanaCardIsNotFound $e) {
             $this->logger->error($e->getMessage());
         } catch (Exception $e) {

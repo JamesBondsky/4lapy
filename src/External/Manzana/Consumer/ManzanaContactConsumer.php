@@ -36,8 +36,9 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             if (empty($contact->contactId)) {
                 try {
                     if(!empty($contact->phone)) {
-                        throw new ContactUpdateException('Неожиданное сообщение');
                         $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+                    } else {
+                        throw new ContactUpdateException('Неожиданное сообщение');
                     }
                     /** иначе создание пользователя */
                 } catch (ManzanaServiceContactSearchNullException $e) {
