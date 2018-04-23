@@ -138,9 +138,9 @@ class Gift extends \CSaleActionCtrlAction
 
         foreach ($applyBasket as $basketCode => $basketRow) {
             $rowActionDescription = $actionDescription;
-            // не всегда у позиций корзины могут быть ID
-            //$rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
-            $rowActionDescription['BASKET_CODE'] = $basketCode;
+            /** @todo не всегда у позиций корзины могут быть ID, следует делать так: */
+            /* $rowActionDescription['BASKET_CODE'] = $basketCode;*/
+            $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
         }
     }
