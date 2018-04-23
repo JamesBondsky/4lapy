@@ -48,14 +48,8 @@ class DeliveryResult extends BaseResult
             break;
         }
 
-        /**
-         * кол-во дней, которое было добавлено при применении интервала
-         */
-        $addedDays = $this->deliveryDate->diff($date)->days;
-
-        $diff = $this->getDateOffset() - $addedDays;
-        if ($diff > 0) {
-            $this->deliveryDate->modify(sprintf('+%s days', $diff));
+        if ($this->getDateOffset() > 0) {
+            $this->deliveryDate->modify(sprintf('+%s days', $this->getDateOffset()));
         }
     }
 
