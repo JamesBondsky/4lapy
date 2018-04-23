@@ -1392,17 +1392,17 @@ class Offer extends IblockElement
         if ($this->isCounted) {
             return;
         }
-
         Manager::disableExtendsDiscount();
-
         global $USER;
-        $order = Order::create(SITE_ID);
 
+        static $order;
+        if (null === $order) {
+            $order = Order::create(SITE_ID);
+        }
         $shipmentCollection = $order->getShipmentCollection();
         foreach ($shipmentCollection as $i => $shipment) {
             unset($shipmentCollection[$i]);
         }
-
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
@@ -1420,7 +1420,8 @@ class Offer extends IblockElement
         foreach ($basket->getBasketItems() as $basketItem) {
             if (
                 (int)$basketItem->getProductId() === $this->getId()
-                && $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+                &&
+                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
             ) {
                 $this
                     ->withDiscount($discountPercent)
@@ -1428,7 +1429,6 @@ class Offer extends IblockElement
                     ->withPrice($basketItem->getPrice());
             }
         }
-
         Manager::enableExtendsDiscount();
         $this->isCounted = true;
     }
