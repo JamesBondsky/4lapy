@@ -84,7 +84,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
         <div class="fleas-protection-block__form--item">
             <button class="b-button js-add-question">Отправить</button>
         </div>
-        <div class="fleas-protection-block__form--info">Так же Вы можете задать вопрос, позвонив по бесплатному
+        <div class="fleas-protection-block__form--info">Также Вы можете задать вопрос, позвонив по бесплатному
             номеру Горячей линии:<span>8 (800) 770-00-22</span></div>
     </form>
     <div class="b-message-block b-hidden">
