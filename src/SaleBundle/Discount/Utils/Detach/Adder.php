@@ -17,8 +17,6 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\BasketItemBase;
-use FourPaws\Catalog\Model\Offer;
 use Exception;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
@@ -63,11 +61,13 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             && isset($params['discountType'])
                             && $params['discountType'] === 'DETACH'
                         ) {
-                            if(\in_array((int) $discount['DISCOUNT_ID'], $lowDiscounts, true)) {
+                            if (\in_array((int)$discount['DISCOUNT_ID'], $lowDiscounts, true)) {
                                 continue;
                             }
+
                             $applyCount = (int)$params['params']['apply_count'];
                             $percent = (int)$params['params']['discount_value'];
+
                             /** @var BasketItem $basketItem */
                             if ($applyCount && null !== $basketItem = $this->order->getBasket()->getItemById($basketId)) {
                                 if ((int)$basketItem->getQuantity() > $applyCount) {
@@ -135,15 +135,15 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         // Найдем конфликтующие скидки
         $conflicts = [];
         /**
-         * @var  $basketId
+         * @var $basketId
          * @var array $discounts
          */
         foreach ($basketApplyResult as $basketId => $discounts) {
-            if (is_iterable($discounts)) {
+            if (\is_iterable($discounts)) {
                 $currentStepIds = [];
                 foreach ($discounts as $discount) {
                     if (
-                        ($params = json_decode($discount['DESCR'], true))
+                        ($params = \json_decode($discount['DESCR'], true))
                         && \is_array($params)
                         && isset($params['discountType'])
                         && $params['discountType'] === 'DETACH'
@@ -157,22 +157,26 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         unset($t[$id]);
                         if (isset($conflicts[$id])) {
                             /** @noinspection SlowArrayOperationsInLoopInspection */
-                            $conflicts[$id] = \array_merge($conflicts[$id], array_keys($t)) ;
+                            $conflicts[$id] = \array_merge($conflicts[$id], \array_keys($t));
                         } else {
-                            $conflicts[$id] = array_keys($t);
+                            $conflicts[$id] = \array_keys($t);
                         }
                     }
                 }
             }
         }
-        if(!empty($conflicts)) {
-            $conflicts = array_map(function ($e) {return \array_flip(\array_flip($e));}, $conflicts);
+
+        if (!empty($conflicts)) {
+            $conflicts = \array_map(function ($e) {
+                return \array_flip(\array_flip($e));
+            }, $conflicts);
         }
+
         // теперь узнаем какую скидку в рублях дает каждая из конфликтных акций
         $promoDiscounts = [];
-        foreach($conflicts as $currentId => $refuseIds) {
+        foreach ($conflicts as $currentId => $refuseIds) {
             foreach ($basketApplyResult as $basketId => $discounts) {
-                if (is_iterable($discounts)) {
+                if (\is_iterable($discounts)) {
                     foreach ($discounts as $discount) {
                         if (
                             ($params = json_decode($discount['DESCR'], true))
@@ -180,7 +184,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             && isset($params['discountType'])
                             && $params['discountType'] === 'DETACH'
                         ) {
-                            if(\in_array((int) $discount['DISCOUNT_ID'], $refuseIds, true)) {
+                            if (\in_array((int)$discount['DISCOUNT_ID'], $refuseIds, true)) {
                                 continue;
                             }
                             $applyCount = (int)$params['params']['apply_count'];
@@ -193,10 +197,13 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 }
             }
         }
-        if(!empty($promoDiscounts)) {
-            $bestDiscount = \array_search(max($promoDiscounts), $promoDiscounts, true);
-            $result = $conflicts[$bestDiscount];
+
+        if (!empty($promoDiscounts)) {
+            $beastDiscount = \array_search(\max($promoDiscounts), $promoDiscounts, true);
+            /** @var $beastDiscount int */
+            $result = $conflicts[$beastDiscount];
         }
+
         return $result;
     }
 

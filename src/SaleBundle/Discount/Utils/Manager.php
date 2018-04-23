@@ -55,6 +55,7 @@ class Manager
             $manzana = $container->get(Manzana::class);
             $couponStorage = $container->get(CouponStorageInterface::class);
 
+            self::disableExtendsDiscount();
             // Автоматически добавляем подарки
             $basketService
                 ->getAdder('gift')
@@ -68,6 +69,7 @@ class Manager
             $basketService
                 ->getAdder('detach')
                 ->processOrder();
+            self::enableExtendsDiscount();
 
             $promoCode = $couponStorage->getApplicableCoupon();
             if ($promoCode) {

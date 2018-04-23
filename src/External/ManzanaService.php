@@ -37,10 +37,12 @@ use FourPaws\External\Manzana\Model\Referrals;
 use FourPaws\External\Manzana\Model\Result;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
 use FourPaws\External\Traits\ManzanaServiceTrait;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -228,16 +230,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag($this->serializer->toArray($contact), ['ff_bird', 'ff_cat', 'ff_dog', 'ff_fish', 'ff_rodent', 'ff_others']);
 
         try {
-            $this->logger->debug(var_export($bag, true));
-            $this->logger->debug(var_export($bag->getParameters(), true));
             $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
-            $this->logger->debug(var_export($rawResult, true));
             $result = ResultXmlFactory::getContactResultFromXml($this->serializer, $rawResult);
-//            $this->logger->debug(var_export($result, true));
             if ($result->isError()) {
                 throw new ContactUpdateException($result->getResult());
             }
-            $this->logger->debug('yes');
             $contact->contactId = $result->getContactId();
         } catch (ContactUpdateException $e) {
             throw new ContactUpdateException($e->getMessage());
@@ -753,15 +750,21 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         try {
             $userRepository = $this->userRepository;
 
-            $user = $userRepository->find($userRepository->findIdentifierByRawLogin($client->phone));
-
-            if (!$user instanceof User) {
+            /** обновим только у активного и делаем 1 запрос вместо 2-х */
+            $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            if (\count($users) > 1) {
+                throw new TooManyUserFoundException('Found more than one user with same raw login');
+            }
+            if(\count($users) === 0) {
                 throw new UsernameNotFoundException(sprintf('User with phone %s is not found', $client->phone));
             }
+            $user = \current($users);
 
             $card = $this->getActiveCardByContactId($client->contactId);
 
-            $userRepository->update($user->setDiscountCardNumber($card->cardNumber));
+            if($user->getDiscountCardNumber() !== $card->cardNumber) {
+                $userRepository->updateDiscountCard($user->getId(), $card->cardNumber);
+            }
         } catch (ManzanaCardIsNotFound $e) {
             $this->logger->error($e->getMessage());
         } catch (Exception $e) {

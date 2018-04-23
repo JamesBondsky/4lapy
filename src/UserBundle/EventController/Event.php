@@ -6,15 +6,12 @@
 
 namespace FourPaws\UserBundle\EventController;
 
-use Bitrix\Main\Application as BitrixApplication;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
-use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
-use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -196,14 +193,17 @@ class Event implements ServiceHandlerInterface
      */
     public static function updateManzana($fields): bool
     {
-        if ($_SESSION['MANZANA_UPDATE']) {
+        if(!isset($_SESSION['NOT_MANZANA_UPDATE'])){
+            $_SESSION['NOT_MANZANA_UPDATE'] = false;
+        }
+        if (!$_SESSION['NOT_MANZANA_UPDATE']) {
             try {
                 $container = App::getInstance()->getContainer();
             } catch (ApplicationCreateException $e) {
                 /** если вызывается эта ошибка вероятно умерло все */
                 return false;
             }
-            unset($_SESSION['MANZANA_UPDATE']);
+            unset($_SESSION['NOT_MANZANA_UPDATE']);
 
             $userService = $container->get(CurrentUserProviderInterface::class);
             $user = $userService->getUserRepository()->find((int)$fields['ID']);
@@ -213,16 +213,8 @@ class Event implements ServiceHandlerInterface
 
             $manzanaService = $container->get('manzana.service');
 
-            try {
-                $client = new Client();
-                if (!empty($user->getManzanaNormalizePersonalPhone())) {
-                    $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
-                    $client->contactId = $contactId;
-                }
-                unset($_SESSION['IS_REGISTER']);
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
-            }
+            /** contactId получим в очереди */
+            $client = new Client();
 
             /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
             $userService->setClientPersonalDataByCurUser($client, $user);

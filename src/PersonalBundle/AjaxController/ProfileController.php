@@ -286,7 +286,6 @@ class ProfileController extends Controller
 //                $data['UF_EMAIL_CONFIRMED'] = false;
 //            }
             try {
-                $_SESSION['MANZANA_UPDATE'] = true;
                 /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
                 $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
                 if (!$res) {
