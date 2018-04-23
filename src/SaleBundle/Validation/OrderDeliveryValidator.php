@@ -90,7 +90,7 @@ class OrderDeliveryValidator extends ConstraintValidator
                 return;
             }
 
-            $intervals = $delivery->getAvailableIntervals();
+            $intervals = $delivery->getAvailableIntervals($dateIndex);
             if (!$intervals->isEmpty()) {
                 if (($intervalIndex < 1) || $intervalIndex > $intervals->count()) {
                     $this->context->addViolation($constraint->deliveryIntervalMessage);

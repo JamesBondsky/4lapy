@@ -33,7 +33,6 @@ class DeliveryResult extends BaseResult
             return;
         }
 
-        $date = clone $this->deliveryDate;
         /** @var BaseRule $rule */
         foreach ($interval->getRules() as $rule) {
             if (!$rule instanceof TimeRuleInterface) {
