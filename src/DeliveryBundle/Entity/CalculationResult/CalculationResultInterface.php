@@ -114,11 +114,11 @@ interface CalculationResultInterface
     public function setIntervals(IntervalCollection $intervals): CalculationResultInterface;
 
     /**
-     * @param int $dateIndex
+     * @param int|null $dateIndex
      *
      * @return IntervalCollection
      */
-    public function getAvailableIntervals(int $dateIndex = 0): IntervalCollection;
+    public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection;
 
     /**
      * @return int

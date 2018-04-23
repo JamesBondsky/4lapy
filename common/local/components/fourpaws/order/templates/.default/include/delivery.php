@@ -67,7 +67,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 {
     $tmpDelivery = clone $delivery;
     $tmpDelivery->setDateOffset($storage->getDeliveryDate());
-    $availableIntervals = $tmpDelivery->getAvailableIntervals($tmpDelivery->getDateOffset());
+    $availableIntervals = $tmpDelivery->getAvailableIntervals();
     $result = '
         <div class="b-input-line b-input-line--interval">
             <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">

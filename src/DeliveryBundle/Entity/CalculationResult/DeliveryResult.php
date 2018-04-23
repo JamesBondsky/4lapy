@@ -3,10 +3,12 @@
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 
@@ -16,6 +18,8 @@ class DeliveryResult extends BaseResult
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws NotFoundException
      */
     public function doCalculateDeliveryDate(): void
     {
@@ -28,12 +32,18 @@ class DeliveryResult extends BaseResult
         /**
          * Расчет даты доставки с учетом правил интервалов
          */
-        $interval = $this->getSelectedInterval();
+        $firstInterval = $this->getFirstInterval();
+        if (null === $this->selectedInterval) {
+            $interval = $firstInterval;
+        } else {
+            $interval = $this->selectedInterval;
+        }
         if (!$interval instanceof Interval) {
             return;
         }
 
         /** @var BaseRule $rule */
+        $date = clone $this->deliveryDate;
         foreach ($interval->getRules() as $rule) {
             if (!$rule instanceof TimeRuleInterface) {
                 continue;
@@ -48,7 +58,15 @@ class DeliveryResult extends BaseResult
         }
 
         if ($this->getDateOffset() > 0) {
-            $this->deliveryDate->modify(sprintf('+%s days', $this->getDateOffset()));
+            $defaultOffset = 0;
+            if ((null !== $firstInterval) && (string)$interval !== (string)$firstInterval) {
+                $defaultOffset = $date->diff(
+                    (clone $this)->setSelectedInterval($firstInterval)->getDeliveryDate()
+                );
+            }
+            $newOffset = $date->diff($this->deliveryDate)->days;
+            $diff = $newOffset - $defaultOffset;
+            $this->deliveryDate->modify(sprintf('+%s days', $this->getDateOffset() - $diff));
         }
     }
 
