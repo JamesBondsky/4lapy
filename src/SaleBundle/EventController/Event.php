@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
@@ -13,6 +14,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\MainTemplate;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
@@ -88,9 +90,9 @@ class Event implements ServiceHandlerInterface
     }
 
     /**
-     * @param string $eventName
+     * @param string   $eventName
      * @param callable $callback
-     * @param string $module
+     * @param string   $module
      *
      */
     public static function initHandler(string $eventName, callable $callback, string $module = 'sale'): void
@@ -105,6 +107,14 @@ class Event implements ServiceHandlerInterface
     public static function updateUserAccountBalance(): void
     {
         try {
+            /** @var MainTemplate $template */
+            $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
+            /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal)
+             *  так же чекаем что это не страница заказа
+             */
+            if (!$template->hasUserAuth()) {
+                return;
+            }
             $container = Application::getInstance()->getContainer();
             $userService = $container->get(CurrentUserProviderInterface::class);
             $userAccountService = $container->get(UserAccountService::class);
@@ -148,8 +158,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendNewOrderMessage($order);
     }
@@ -169,8 +179,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendOrderPaymentMessage($order);
     }
@@ -189,8 +199,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendOrderCancelMessage($order);
     }
@@ -207,8 +217,8 @@ class Event implements ServiceHandlerInterface
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
-                                          ->getContainer()
-                                          ->get(NotificationService::class);
+            ->getContainer()
+            ->get(NotificationService::class);
 
         $notificationService->sendOrderStatusMessage($order);
     }
@@ -223,7 +233,7 @@ class Event implements ServiceHandlerInterface
 
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
-            'personal:order:' . $order->getField('USER_ID')
+            'personal:order:' . $order->getField('USER_ID'),
         ]);
     }
 }
