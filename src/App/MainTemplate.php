@@ -409,4 +409,9 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isCatalogDetail() || $this->isBasket();
     }
+
+    public function hasUserAuth(): bool
+    {
+        return $this->isPartitionDirByFilePath('/ajax/user/auth/login') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
+    }
 }

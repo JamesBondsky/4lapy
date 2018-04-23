@@ -150,4 +150,9 @@ abstract class TemplateAbstract
     {
         return $this->dir === $dir;
     }
+
+    public function isPartitionDirByFilePath(string $src): bool
+    {
+        return preg_match(sprintf('~^%s/[-/@\w]+~', $src), $this->getServer()->getScriptName()) > 0;
+    }
 }

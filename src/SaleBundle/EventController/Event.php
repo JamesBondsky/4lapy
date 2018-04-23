@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
@@ -13,6 +14,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\MainTemplate;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
@@ -105,12 +107,12 @@ class Event implements ServiceHandlerInterface
     public static function updateUserAccountBalance(): void
     {
         try {
-            $scriptName = \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getScriptName();
+            /** @var MainTemplate $template */
+            $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
             /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal)
              *  так же чекаем что это не страница заказа
              */
-            if ((strpos($scriptName, '/ajax/user/auth/login') === false && strpos($scriptName,
-                        '/personal/') === false) && strpos($scriptName, '/sale/') === false) {
+            if (!$template->hasUserAuth()) {
                 return;
             }
             $container = Application::getInstance()->getContainer();
