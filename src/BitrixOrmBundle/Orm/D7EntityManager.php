@@ -9,6 +9,7 @@ namespace FourPaws\BitrixOrmBundle\Orm;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrmBundle\Enum\Crud;
@@ -20,6 +21,11 @@ use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Class D7EntityManager
+ *
+ * @package FourPaws\BitrixOrmBundle\Orm
+ */
 class D7EntityManager implements D7EntityManagerInterface
 {
     /**
@@ -62,6 +68,16 @@ class D7EntityManager implements D7EntityManagerInterface
      */
     private $entityClass;
 
+    /**
+     * D7EntityManager constructor.
+     *
+     * @param string $entityClass
+     * @param ValidatorInterface $validator
+     * @param ArrayTransformerInterface $arrayTransformer
+     * @param DataManager $dataManager
+     *
+     * @throws SystemException
+     */
     public function __construct(
         string $entityClass,
         ValidatorInterface $validator,
