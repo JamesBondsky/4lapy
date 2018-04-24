@@ -1258,13 +1258,12 @@ class OrderService implements LoggerAwareInterface
         $value = $commWay->getValue();
         $changed = false;
 
+        $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
+        $stockResult = $delivery->getStockResult();
         if(!$isFastOrder) {
-            $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
-            $stockResult = $delivery->getStockResult();
-
             /**
              * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
-             * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
+             * и в наличии более 90% от суммы заказа, при этом имеются отложенные товары,
              * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
              */
             if (($this->deliveryService->isInnerPickup($delivery) || $deliveryFromShop) &&
@@ -1291,10 +1290,14 @@ class OrderService implements LoggerAwareInterface
                 case !$this->validateAddress($order):
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
+                // способ получения 07
                 case $this->deliveryService->isDpdPickup($delivery):
                 case $this->deliveryService->isDpdDelivery($delivery):
                     $value = OrderPropertyService::COMMUNICATION_PHONE;
                     break;
+                // способ получения 04
+                case $this->deliveryService->isInnerPickup($delivery) && !$stockResult->getDelayed()->isEmpty():
+                // способ получения 06
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
