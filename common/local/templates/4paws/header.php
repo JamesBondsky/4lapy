@@ -12,9 +12,7 @@ use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Applicat
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
-$markup = PawsApplication::markup();
-
-?><!DOCTYPE html>
+$markup = PawsApplication::markup(); ?><!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no">
@@ -26,7 +24,7 @@ $markup = PawsApplication::markup();
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <script data-skip-moving="true">
         window.js_static = '/static/build/';
-        window._global   = {};
+        window._global = {};
     </script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle() ?></title>
@@ -48,14 +46,14 @@ $markup = PawsApplication::markup();
                        title="">
                         <img src="/static/build/images/inhtml/logo.svg"
                              alt="Четыре лапы"
-                             title="Четыре лапы" />
+                             title="Четыре лапы"/>
                     </a>
                     <span class="b-header__phone-short-header">
                         <?php $APPLICATION->IncludeComponent('fourpaws:city.phone',
-                                                             'template.header.short',
-                                                             [],
-                                                             false,
-                                                             ['HIDE_ICONS' => 'Y']) ?>
+                            'template.header.short',
+                            [],
+                            false,
+                            ['HIDE_ICONS' => 'Y']) ?>
                     </span>
                     <div class="b-header-info b-header-info--short-header js-hide-open-menu">
                         <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
@@ -74,27 +72,27 @@ $markup = PawsApplication::markup();
                     </span>
                     </a>
                     <a class="b-logo" href="/" title="">
-                        <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы" />
+                        <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы"/>
                     </a>
                     <?php
                     $APPLICATION->IncludeComponent('fourpaws:catalog.search.form',
-                                                   '',
-                                                   [],
-                                                   false,
-                                                   ['HIDE_ICONS' => 'Y']);
+                        '',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']);
                     ?>
                     <div class="b-header-info">
                         <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
                         <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
-                                                             '',
-                                                             [],
-                                                             false,
-                                                             ['HIDE_ICONS' => 'Y']);
-                        
+                            '',
+                            [],
+                            false,
+                            ['HIDE_ICONS' => 'Y']);
+
                         echo PawsApplication::getInstance()
-                                            ->getContainer()
-                                            ->get(BasketViewService::class)
-                                            ->getMiniBasketHtml(); ?>
+                            ->getContainer()
+                            ->get(BasketViewService::class)
+                            ->getMiniBasketHtml(); ?>
                     </div>
                 </div>
                 <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
@@ -107,18 +105,18 @@ $markup = PawsApplication::markup();
                         'fourpaws:iblock.main.menu',
                         'fp.17.0.top',
                         [
-                            'MENU_IBLOCK_TYPE'          => IblockType::MENU,
-                            'MENU_IBLOCK_CODE'          => IblockCode::MAIN_MENU,
-                            'PRODUCTS_IBLOCK_TYPE'      => IblockType::CATALOG,
-                            'PRODUCTS_IBLOCK_CODE'      => IblockCode::PRODUCTS,
-                            'CACHE_TIME'                => 3600,
-                            'CACHE_TYPE'                => 'A',
-                            'MAX_DEPTH_LEVEL'           => '4',
+                            'MENU_IBLOCK_TYPE' => IblockType::MENU,
+                            'MENU_IBLOCK_CODE' => IblockCode::MAIN_MENU,
+                            'PRODUCTS_IBLOCK_TYPE' => IblockType::CATALOG,
+                            'PRODUCTS_IBLOCK_CODE' => IblockCode::PRODUCTS,
+                            'CACHE_TIME' => 3600,
+                            'CACHE_TYPE' => 'A',
+                            'MAX_DEPTH_LEVEL' => '4',
                             // N - шаблон кэшируется
-                            'CACHE_SELECTED_ITEMS'      => 'N',
-                            'TEMPLATE_NO_CACHE'         => 'N',
+                            'CACHE_SELECTED_ITEMS' => 'N',
+                            'TEMPLATE_NO_CACHE' => 'N',
                             // количество популярных брендов в пункте меню "Товары по питомцу"
-                            'BRANDS_POPULAR_LIMIT'      => '6',
+                            'BRANDS_POPULAR_LIMIT' => '6',
                             // количество популярных брендов в пункте меню "По бренду"
                             'BRANDS_MENU_POPULAR_LIMIT' => '8',
                         ],
@@ -129,15 +127,15 @@ $markup = PawsApplication::markup();
                     );
                     ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
-                                                         '',
-                                                         [],
-                                                         false,
-                                                         ['HIDE_ICONS' => 'Y']) ?>
+                        '',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']) ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                                                         'template.header',
-                                                         [],
-                                                         false,
-                                                         ['HIDE_ICONS' => 'Y']); ?>
+                        'template.header',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']); ?>
                 </div>
             <?php } ?>
         </div>
@@ -152,7 +150,7 @@ $markup = PawsApplication::markup();
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
         <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
-                                                     'b-container b-container--news') ?>">
+            'b-container b-container--news') ?>">
             <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
                 <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                 <?php
@@ -161,17 +159,17 @@ $markup = PawsApplication::markup();
                 if ($template->hasHeaderDetailPageContainer()) {
                     ?>
                     <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
-                                                                 'b-container b-container--news-detail') ?>">
+                        'b-container b-container--news-detail') ?>">
                         <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
-                                                                     'b-detail-page') ?>">
+                            'b-detail-page') ?>">
                             <?php
                             $APPLICATION->IncludeComponent('bitrix:breadcrumb',
-                                                           'breadcrumb',
-                                                           [
-                                                               'PATH'       => '',
-                                                               'SITE_ID'    => SITE_ID,
-                                                               'START_FROM' => '0',
-                                                           ]); ?>
+                                'breadcrumb',
+                                [
+                                    'PATH' => '',
+                                    'SITE_ID' => SITE_ID,
+                                    'START_FROM' => '0',
+                                ]); ?>
                             <h1 class="b-title b-title--h1">
                                 <?php $APPLICATION->ShowTitle(false) ?>
                             </h1>
@@ -188,23 +186,23 @@ $markup = PawsApplication::markup();
                             <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                         </div>
                         <?php $APPLICATION->IncludeComponent('bitrix:menu',
-                                                             'personal.menu',
-                                                             [
-                                                                 'COMPONENT_TEMPLATE'    => 'personal.menu',
-                                                                 'ROOT_MENU_TYPE'        => 'personal_cab',
-                                                                 'MENU_CACHE_TYPE'       => 'A',
-                                                                 'MENU_CACHE_TIME'       => '360000',
-                                                                 'MENU_CACHE_USE_GROUPS' => 'Y',
-                                                                 'CACHE_SELECTED_ITEMS'  => 'N',
-                                                                 'TEMPLATE_NO_CACHE'     => 'N',
-                                                                 'MENU_CACHE_GET_VARS'   => [],
-                                                                 'MAX_LEVEL'             => '1',
-                                                                 'CHILD_MENU_TYPE'       => 'personal_cab',
-                                                                 'USE_EXT'               => 'N',
-                                                                 'DELAY'                 => 'N',
-                                                                 'ALLOW_MULTI_SELECT'    => 'N',
-                                                             ],
-                                                             false); ?>
+                            'personal.menu',
+                            [
+                                'COMPONENT_TEMPLATE' => 'personal.menu',
+                                'ROOT_MENU_TYPE' => 'personal_cab',
+                                'MENU_CACHE_TYPE' => 'A',
+                                'MENU_CACHE_TIME' => '360000',
+                                'MENU_CACHE_USE_GROUPS' => 'Y',
+                                'CACHE_SELECTED_ITEMS' => 'N',
+                                'TEMPLATE_NO_CACHE' => 'N',
+                                'MENU_CACHE_GET_VARS' => [],
+                                'MAX_LEVEL' => '1',
+                                'CHILD_MENU_TYPE' => 'personal_cab',
+                                'USE_EXT' => 'N',
+                                'DELAY' => 'N',
+                                'ALLOW_MULTI_SELECT' => 'N',
+                            ],
+                            false); ?>
                         <main class="b-account__content" role="main">
                             <?php }
 
@@ -225,10 +223,10 @@ if ($template->hasContent()) {
     Asset::getInstance()->addJs('/include/static/scripts.js');
 
     $APPLICATION->IncludeComponent('bitrix:main.include',
-                                   '',
-                                   [
-                                       'AREA_FILE_SHOW' => 'file',
-                                       'PATH'           => sprintf('/include/%s.php', trim($template->getPath(), '/')),
-                                   ],
-                                   false);
+        '',
+        [
+            'AREA_FILE_SHOW' => 'file',
+            'PATH' => sprintf('/include/%s.php', trim($template->getPath(), '/')),
+        ],
+        false);
 }

@@ -24,6 +24,9 @@ $promoLink = $component->getPromoLink($basketItem);
 $image = $component->getImage($basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = $basketItem->getBasePrice() !== $basketItem->getPrice();
+/**
+@todo promo from property; after - promo from PromoLink;
+ */
 
 if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) {
     $templateData['OFFERS'][$offer->getId() . '_' . $basketItem->getQuantity()] = $offer;
@@ -157,24 +160,23 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
             </span>
         </a>
-        <?php if ($basketItem->getQuantity() > 1) { ?>
+        <?php if ($isDiscounted || $basketItem->getQuantity() > 1) { ?>
             <div class="b-item-shopping__sale-info">
                 <?php if ($isDiscounted) { ?>
                     <span class="b-old-price b-old-price--inline b-old-price--crossed-out">
-                        <span class="b-old-price__old"><?= $basketItem->getBasePrice() ?> </span>
+                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?> </span>
                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                     </span>
-                <? } ?>
+                <?php } ?>
                 <span class="b-old-price b-old-price--inline">
-                    <span class="b-old-price__old"><?= $basketItem->getBasePrice() ?> </span>
+                    <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getPrice()) ?> </span>
                     <span class="b-ruble b-ruble--old-weight-price">₽</span>
                 </span>
                 <span class="b-old-price b-old-price--inline b-old-price--on">
                     <span class="b-old-price__old"><?= $basketItem->getQuantity() ?> </span>
                     <span class="b-ruble b-ruble--old-weight-price">шт</span>
                 </span>
-                <?php if ($isDiscounted) { /** @todo implement it
-                    dump($basketItem); ?>
+                <?php if ($isDiscounted) { ?>
                     <a class="b-information-link js-popover-information-open js-popover-information-open"
                        href="javascript:void(0);" title="">
                         <span class="b-information-link__icon">i</span>
@@ -182,7 +184,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                             На Ваш телефон будет отправлено сообщение с информацией
                         </div>
                     </a>
-                <?php */ } ?>
+                <?php } ?>
             </div>
         <?php }
 

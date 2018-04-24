@@ -161,7 +161,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         } else { ?>
             <div class="b-weight-container b-weight-container--list">
                 <ul class="b-weight-container__list">
-                    <li class="b-weight-container__item" style="display: none">
+                    <li class="b-weight-container__item">
                         <a href="javascript:void(0)"
                            class="b-weight-container__link js-price active-link"
                            data-price="<?= ceil($currentOffer->getPrice()) ?>" data-offerid="<?= $currentOffer->getId() ?>"
