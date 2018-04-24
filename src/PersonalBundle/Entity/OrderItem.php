@@ -309,9 +309,6 @@ class OrderItem extends BaseEntity
                     $path = CropImageDecorator::createFromPrimary($image)
                         ->setCropWidth(80)
                         ->setCropHeight(145);
-//                    $path = ResizeImageDecorator::createFromPrimary($image)
-//                        ->setResizeWidth(80)
-//                        ->setResizeHeight(145);
                 } catch (FileNotFoundException $e) {
                 }
             }else{
@@ -323,9 +320,6 @@ class OrderItem extends BaseEntity
                         $path = CropImageDecorator::createFromPrimary($image)
                             ->setCropWidth(80)
                             ->setCropHeight(145);
-//                        $path = ResizeImageDecorator::createFromPrimary($image)
-//                            ->setResizeWidth(80)
-//                            ->setResizeHeight(145);
                     } catch (FileNotFoundException $e) {
                     }
                 }
