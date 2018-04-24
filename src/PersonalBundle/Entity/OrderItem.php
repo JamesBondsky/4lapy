@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use JMS\Serializer\Annotation as Serializer;
@@ -305,9 +306,12 @@ class OrderItem extends BaseEntity
         if (!empty($image)){
             if(is_numeric($image)) {
                 try {
-                    $path = ResizeImageDecorator::createFromPrimary($image)
-                        ->setResizeWidth(80)
-                        ->setResizeHeight(145);
+                    $path = CropImageDecorator::createFromPrimary($image)
+                        ->setCropWidth(80)
+                        ->setCropHeight(145);
+//                    $path = ResizeImageDecorator::createFromPrimary($image)
+//                        ->setResizeWidth(80)
+//                        ->setResizeHeight(145);
                 } catch (FileNotFoundException $e) {
                 }
             }else{
@@ -316,9 +320,12 @@ class OrderItem extends BaseEntity
                 if(\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])){
                     $image = current($unserializeImage['VALUE']);
                     try {
-                        $path = ResizeImageDecorator::createFromPrimary($image)
-                            ->setResizeWidth(80)
-                            ->setResizeHeight(145);
+                        $path = CropImageDecorator::createFromPrimary($image)
+                            ->setCropWidth(80)
+                            ->setCropHeight(145);
+//                        $path = ResizeImageDecorator::createFromPrimary($image)
+//                            ->setResizeWidth(80)
+//                            ->setResizeHeight(145);
                     } catch (FileNotFoundException $e) {
                     }
                 }
