@@ -306,8 +306,8 @@ class OrderItem extends BaseEntity
             if(is_numeric($image)) {
                 try {
                     $path = ResizeImageDecorator::createFromPrimary($image)
-                        ->setResizeHeight(80)
-                        ->setResizeWidth(80);
+                        ->setResizeWidth(80)
+                        ->setResizeHeight(145);
                 } catch (FileNotFoundException $e) {
                 }
             }else{
@@ -317,8 +317,8 @@ class OrderItem extends BaseEntity
                     $image = current($unserializeImage['VALUE']);
                     try {
                         $path = ResizeImageDecorator::createFromPrimary($image)
-                            ->setResizeHeight(80)
-                            ->setResizeWidth(80);
+                            ->setResizeWidth(80)
+                            ->setResizeHeight(145);
                     } catch (FileNotFoundException $e) {
                     }
                 }
