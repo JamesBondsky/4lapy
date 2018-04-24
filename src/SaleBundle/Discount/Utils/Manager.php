@@ -46,7 +46,7 @@ class Manager
      * @throws NotSupportedException
      * @throws ArgumentOutOfRangeException
      */
-    public static function extendDiscount(Event $event): void
+    public static function OnAfterSaleOrderFinalAction(Event $event): void
     {
         if (self::$extendEnabled && !self::$extendCalculated) {
             $container = Application::getInstance()->getContainer();
@@ -68,7 +68,6 @@ class Manager
             $basketService
                 ->getAdder('detach')
                 ->processOrder();
-            self::enableExtendsDiscount();
 
             $promoCode = $couponStorage->getApplicableCoupon();
             if ($promoCode) {
@@ -82,6 +81,7 @@ class Manager
                 $couponStorage->delete($promoCode);
             }
 
+            self::enableExtendsDiscount(); // че за кек? перенес ниже. Да и вообще все так банально
             self::$extendCalculated = true;
         }
     }
