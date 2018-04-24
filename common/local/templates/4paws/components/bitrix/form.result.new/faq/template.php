@@ -32,7 +32,19 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                         } ?>
                         <div class="fleas-protection-block__form--item b-input-line js-form-field-block-<?=$fieldSid?>">
                             <label class="b-input-line__label"><?= $question['CAPTION'] ?></label>
-                            <input value="<?=$arResult['CUR_USER'][$fieldSid]?>" class="b-input__input-field <?=$fieldSid === 'name' ? 'js-small-input-two' : ''?><?=$fieldSid === 'email' ? 'js-small-input-one' : ''?>" type="<?=$type?>" name="<?= $fieldName ?>" placeholder="<?=$type === 'email' ? 'Ваша ' : 'Ваше '?><?= ToLower($question['CAPTION']) ?>"/>
+                            <?php $prefixPlaceholder = '';
+                            switch ($fieldSid){
+                                case 'name':
+                                    $prefixPlaceholder='Ваше ';
+                                    break;
+                                case 'email':
+                                    $prefixPlaceholder='Ваша ';
+                                    break;
+                                case 'phone':
+                                    $prefixPlaceholder='Ваш ';
+                                    break;
+                            } ?>
+                            <input value="<?=$arResult['CUR_USER'][$fieldSid]?>" class="b-input__input-field <?=$fieldSid === 'name' ? 'js-small-input-two' : ''?><?=$fieldSid === 'email' ? 'js-small-input-one' : ''?>" type="<?=$type?>" name="<?= $fieldName ?>" placeholder="<?=$prefixPlaceholder . ToLower($question['CAPTION']) ?>"/>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
                         <?php break;
@@ -41,7 +53,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                             'form_' . $question['STRUCTURE'][0]['FIELD_TYPE'] . '_' . $question['STRUCTURE'][0]['ID']; ?>
                         <div class="fleas-protection-block__form--item b-input-line">
                             <label class="b-input-line__label"><?= $question['CAPTION'] ?></label>
-                            <textarea name="<?= $fieldName ?>" placeholder="Введите Ваш <?= ToLower($question['CAPTION']) ?>" maxlength="1000"></textarea>
+                            <textarea name="<?= $fieldName ?>" placeholder="Введите Ваше <?= ToLower($question['CAPTION']) ?>" maxlength="1000"></textarea>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
                         <?php break;
@@ -73,6 +85,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                        href="/company/confidenciality/" target='_blank'
                        title="обработку персональных данных">обработку персональных данных.</a>
                 </span>
+                <span class="b-error"><span class="js-message"></span></span>
             </label>
         </div>
         <div class="b-checkbox b-checkbox--agree">
