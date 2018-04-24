@@ -8,6 +8,11 @@ namespace FourPaws\BitrixOrmBundle\Orm;
 
 use Doctrine\Common\Collections\Collection;
 
+/**
+ * Interface RepositoryInterface
+ *
+ * @package FourPaws\BitrixOrmBundle\Orm
+ */
 interface RepositoryInterface
 {
     /**

@@ -6,6 +6,11 @@
 
 namespace FourPaws\BitrixOrmBundle\Orm;
 
+/**
+ * Class Navigation
+ *
+ * @package FourPaws\BitrixOrmBundle\Orm
+ */
 class Navigation
 {
     /**
@@ -113,6 +118,9 @@ class Navigation
         $this->topCount = $topCount;
     }
 
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         $result = [
