@@ -27,6 +27,7 @@ foreach ($orderableItems as $item) {
     if (isset($item->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
         continue;
     }
+
     $hasNormalItems = true;
     break;
 }
@@ -39,6 +40,7 @@ foreach ($notAllowedItems as $item) {
     if (isset($item->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
         continue;
     }
+
     $hasNotAllowedItems = true;
     break;
 }
@@ -46,8 +48,7 @@ foreach ($notAllowedItems as $item) {
 /** @var Order $order */
 $order = $basket->getOrder();
 
-if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
-    ?>
+if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) { ?>
     <div class="b-shopping-cart">
     <?php
     /** @noinspection UntrustedInclusionInspection */
@@ -74,7 +75,10 @@ if ($arParams['IS_AJAX']) {
                         } ?>
                         <div class="b-gift-order">
                             <div class="b-gift-order__info">
-                                <span class="b-gift-order__text"><?= $group['name'] ?></span>
+                                <span class="b-gift-order__text">
+                                    Подарок по акции —
+                                    <span class="b-gift-order__text-additional"><?= $group['name'] ?></span>
+                                </span>
                                 <a class="b-link-gift js-presents-order-open<?= $disableClass ?>"
                                    href="javascript:void(0);"
                                    data-url="/ajax/sale/basket/gift/get/"
@@ -111,10 +115,7 @@ if ($arParams['IS_AJAX']) {
                                                         <span class="b-clipped-text b-clipped-text--shopping-cart">
                                                             <span><?= $name ?></span>
                                                         </span>
-                                                        <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart">-->
-                                                        <span class="b-common-item__name-value">Цвет:</span>
-                                                        <span>прозрачные</span>
-                                                        </span>*/ ?>
+                                                        <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart"><span class="b-common-item__name-value">Цвет:</span><span>прозрачные</span></span>*/ ?>
                                                     </a>
                                                     <a class="b-common-item__delete js-present-delete-item"
                                                        href="javascript:void(0);" title=""
@@ -181,7 +182,8 @@ if ($arParams['IS_AJAX']) {
                     } else { ?>
                         <span class="b-information-order__pay-points b-information-order__pay-points--flex">
                             Уже покупали у нас?
-                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="#!" data-popup-id="authorization">
+                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="#!"
+                               data-popup-id="authorization">
                                 <span class="b-link-gift__text">Войти</span>
                             </a>
                         </span>
@@ -194,7 +196,8 @@ if ($arParams['IS_AJAX']) {
                         $component,
                         ['HIDE_ICONS' => 'Y']
                     ); ?>
-                    <p class="b-information-order__additional-info">От Вашего города зависит наличие товаров и параметры доставки.</p>
+                    <p class="b-information-order__additional-info">От Вашего города зависит наличие товаров и параметры
+                        доставки.</p>
                     <?php $APPLICATION->IncludeComponent(
                         'fourpaws:city.delivery.info',
                         'basket.summary',
@@ -209,7 +212,7 @@ if ($arParams['IS_AJAX']) {
                         <div class="b-information-order__order-price"><?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
                                 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                                 ['товар', 'товара', 'товаров']) ?>
-                            <?php if($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)<?php } ?>
+                            <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)<?php } ?>
                         </div>
                         <div class="b-price b-price--information-order">
                             <span class="b-price__current">
@@ -217,7 +220,7 @@ if ($arParams['IS_AJAX']) {
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <?php if ($arResult['TOTAL_DISCOUNT'] >= 0.01) {?>
+                    <?php if ($arResult['TOTAL_DISCOUNT'] >= 0.01) { ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Общая скидка</div>
                             <div class="b-price b-price--information-order">
@@ -229,7 +232,7 @@ if ($arParams['IS_AJAX']) {
                         </div>
                     <?php }
 
-                    if ($arResult['COUPON_DISCOUNT']) {  ?>
+                    if ($arResult['COUPON_DISCOUNT']) { ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Скидка по промокоду</div>
                             <div class="b-price b-price--information-order">
@@ -240,9 +243,12 @@ if ($arParams['IS_AJAX']) {
                             </div>
                         </div>
                     <?php } ?>
-                    <form class="b-information-order__form-promo js-form-validation js-promo-code-add" method="post" data-url="/ajax/sale/basket/promo/apply/">
+                    <form class="b-information-order__form-promo js-form-validation js-promo-code-add" method="post"
+                          data-url="/ajax/sale/basket/promo/apply/">
                         <div class="b-input b-input--form-promo">
-                            <input class="b-input__input-field b-input__input-field--form-promo" type="text" id="promocode-delivery" placeholder="Промо-код" name="text" value="<?= $arResult['COUPON'] ?>" />
+                            <input class="b-input__input-field b-input__input-field--form-promo" type="text"
+                                   id="promocode-delivery" placeholder="Промо-код" name="text"
+                                   value="<?= $arResult['COUPON'] ?>"/>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
                         <button class="b-button b-button--form-promo">Применить</button>

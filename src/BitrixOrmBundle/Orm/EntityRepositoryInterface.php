@@ -6,6 +6,11 @@
 
 namespace FourPaws\BitrixOrmBundle\Orm;
 
+/**
+ * Interface EntityRepositoryInterface
+ *
+ * @package FourPaws\BitrixOrmBundle\Orm
+ */
 interface EntityRepositoryInterface extends RepositoryInterface
 {
     /**
