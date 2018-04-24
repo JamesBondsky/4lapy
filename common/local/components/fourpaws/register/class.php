@@ -335,7 +335,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if ($isBasketBackUrl) {
                 $_SESSION['FROM_BASKET'] = true;
             }
-            $_SESSION['MANZANA_UPDATE'] = true;
             $regUser = $this->userRegistrationService->register($userEntity, true);
             if ($regUser instanceof User && $regUser->getId() > 0) {
                 $this->userAuthorizationService->authorize($regUser->getId());

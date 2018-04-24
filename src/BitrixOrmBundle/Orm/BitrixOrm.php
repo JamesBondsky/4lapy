@@ -10,6 +10,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrmBundle\Exception\NotFoundRepository;
 
+/**
+ * Class BitrixOrm
+ *
+ * @package FourPaws\BitrixOrmBundle\Orm
+ */
 class BitrixOrm
 {
     /**
@@ -17,6 +22,9 @@ class BitrixOrm
      */
     protected $d7Repositories;
 
+    /**
+     * BitrixOrm constructor.
+     */
     public function __construct()
     {
         $this->d7Repositories = new ArrayCollection();

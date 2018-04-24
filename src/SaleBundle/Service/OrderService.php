@@ -225,6 +225,7 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage $storage
      * @param Basket|null $basket
      * @param CalculationResultInterface|null $selectedDelivery
+     * @param bool $fastOrder
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -244,7 +245,8 @@ class OrderService implements LoggerAwareInterface
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
-        ?CalculationResultInterface $selectedDelivery = null
+        ?CalculationResultInterface $selectedDelivery = null,
+        bool $fastOrder = false
     ): Order {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
@@ -371,67 +373,87 @@ class OrderService implements LoggerAwareInterface
          * Задание свойств заказа, связанных с доставкой
          */
         /** @var PropertyValue $propertyValue */
-        foreach ($propertyValueCollection as $propertyValue) {
-            $code = $propertyValue->getProperty()['CODE'];
-            switch ($code) {
-                case 'SHIPMENT_PLACE_CODE':
-                    $shipmentStore = $selectedDelivery->getShipmentStore();
-                    if ($shipmentStore instanceof Store) {
-                        $value = $shipmentStore->getXmlId();
-                    } else {
-                        continue 2;
-                    }
-                    break;
-                case 'DELIVERY_PLACE_CODE':
-                    if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
-                        /** @var PickupResult $selectedDelivery */
-                        $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
-                    } else {
-                        $value = $selectedDelivery->getSelectedStore()->getXmlId();
-                    }
-                    break;
-                case 'DPD_TERMINAL_CODE':
-                    if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
-                        continue 2;
-                    }
-                    /** @var DpdPickupResult $selectedDelivery */
-                    $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
-                    break;
-                case 'DELIVERY_DATE':
-                    $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
-                    break;
-                case 'DELIVERY_INTERVAL':
-                    /**
-                     * У доставок есть выбор интервала доставки
-                     */
-                    if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                        if ($interval = $selectedDelivery->getSelectedInterval()) {
-                            $value = sprintf(
-                                '%s:00-%s:00',
-                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
-                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
-                            );
+        if(!$fastOrder) {
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                switch ($code) {
+                    case 'SHIPMENT_PLACE_CODE':
+                        $shipmentStore = $selectedDelivery->getShipmentStore();
+                        if ($shipmentStore instanceof Store) {
+                            $value = $shipmentStore->getXmlId();
                         } else {
                             continue 2;
                         }
-                    } else {
-                        $value = sprintf(
-                            '%s:00-23:59',
-                            $deliveryDate->format('H')
-                        );
-                    }
+                        break;
+                    case 'DELIVERY_PLACE_CODE':
+                        if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                            /** @var PickupResult $selectedDelivery */
+                            $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+                        } else {
+                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                        }
+                        break;
+                    case 'DPD_TERMINAL_CODE':
+                        if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
+                            continue 2;
+                        }
+                        /** @var DpdPickupResult $selectedDelivery */
+                        $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+                        break;
+                    case 'DELIVERY_DATE':
+                        $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
+                        break;
+                    case 'DELIVERY_INTERVAL':
+                        /**
+                         * У доставок есть выбор интервала доставки
+                         */
+                        if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                            if ($interval = $selectedDelivery->getSelectedInterval()) {
+                                $value = sprintf(
+                                    '%s:00-%s:00',
+                                    str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                    str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
+                                );
+                            } else {
+                                continue 2;
+                            }
+                        } else {
+                            $value = sprintf(
+                                '%s:00-23:59',
+                                $deliveryDate->format('H')
+                            );
+                        }
 
-                    break;
-                case 'REGION_COURIER_FROM_DC':
-                    $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
-                        ? BitrixUtils::BX_BOOL_FALSE
-                        : BitrixUtils::BX_BOOL_TRUE;
-                    break;
-                default:
-                    continue 2;
+                        break;
+                    case 'REGION_COURIER_FROM_DC':
+                        $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
+                            ? BitrixUtils::BX_BOOL_FALSE
+                            : BitrixUtils::BX_BOOL_TRUE;
+                        break;
+                    default:
+                        continue 2;
+                }
+
+                $propertyValue->setValue($value);
             }
-
-            $propertyValue->setValue($value);
+        } else {
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                $update = false;
+                switch ($code) {
+                    case 'SHIPMENT_PLACE_CODE':
+                        $value = 'DC01';
+                        $update = true;
+                        break;
+                    case 'DELIVERY_INTERVAL':
+                        $value = '';
+                        $update = true;
+                        break;
+                }
+                if($update){
+                    $propertyValue->setValue($value);
+                }
+            }
         }
 
         /**
@@ -632,7 +654,6 @@ class OrderService implements LoggerAwareInterface
                     ->setLogin($storage->getPhone())
                     ->setPassword($password)
                     ->setPersonalPhone($storage->getPhone());
-                $_SESSION['MANZANA_UPDATE'] = true;
                 $_SESSION['SEND_REGISTER_EMAIL'] = true;
                 $user = $this->userRegistrationProvider->register($user);
 
@@ -1093,7 +1114,7 @@ class OrderService implements LoggerAwareInterface
                     }
                 } elseif ($properties['DELIVERY_PLACE_CODE']) {
                     try {
-                        $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                        $store = $this->storeService->getStoreByXmlId($properties['DELIVERY_PLACE_CODE']);
                         $address = $store->getAddress();
 
                         if ($store->getMetro()) {
@@ -1237,13 +1258,12 @@ class OrderService implements LoggerAwareInterface
         $value = $commWay->getValue();
         $changed = false;
 
+        $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
+        $stockResult = $delivery->getStockResult();
         if(!$isFastOrder) {
-            $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
-            $stockResult = $delivery->getStockResult();
-
             /**
              * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
-             * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
+             * и в наличии более 90% от суммы заказа, при этом имеются отложенные товары,
              * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
              */
             if (($this->deliveryService->isInnerPickup($delivery) || $deliveryFromShop) &&
@@ -1270,10 +1290,14 @@ class OrderService implements LoggerAwareInterface
                 case !$this->validateAddress($order):
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
+                // способ получения 07
                 case $this->deliveryService->isDpdPickup($delivery):
                 case $this->deliveryService->isDpdDelivery($delivery):
                     $value = OrderPropertyService::COMMUNICATION_PHONE;
                     break;
+                // способ получения 04
+                case $this->deliveryService->isInnerPickup($delivery) && !$stockResult->getDelayed()->isEmpty():
+                // способ получения 06
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;

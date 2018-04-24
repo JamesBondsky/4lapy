@@ -8,6 +8,11 @@ namespace FourPaws\BitrixOrmBundle\Orm;
 
 use Doctrine\Common\Collections\Collection;
 
+/**
+ * Class D7Repository
+ *
+ * @package FourPaws\BitrixOrmBundle\Orm
+ */
 class D7Repository implements D7RepositoryInterface
 {
 
@@ -16,6 +21,11 @@ class D7Repository implements D7RepositoryInterface
      */
     private $entityManager;
 
+    /**
+     * D7Repository constructor.
+     *
+     * @param D7EntityManagerInterface $entityManager
+     */
     public function __construct(D7EntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;

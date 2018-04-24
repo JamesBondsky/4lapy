@@ -6,6 +6,11 @@
 
 namespace FourPaws\BitrixOrmBundle\Enum;
 
+/**
+ * Class Crud
+ *
+ * @package FourPaws\BitrixOrmBundle\Enum
+ */
 final class Crud
 {
     public const CREATE = 'create';

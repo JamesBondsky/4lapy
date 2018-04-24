@@ -121,7 +121,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         /** @noinspection PhpUnhandledExceptionInspection */
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
-        $stores = $storeService->getByLocation($locationCode);
+        $stores = $storeService->getStoresByLocation($locationCode);
         if ($stores->isEmpty()) {
             return null;
         }
@@ -282,13 +282,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         switch ($deliveryCode) {
             case DeliveryService::DPD_DELIVERY_CODE:
             case DeliveryService::DPD_PICKUP_CODE:
-                $result = $storeService->getByLocation(
+                $result = $storeService->getStoresByLocation(
                     $locationCode,
                     StoreService::TYPE_STORE
                 );
                 break;
             case DeliveryService::INNER_PICKUP_CODE:
-                $result = $storeService->getByLocation(
+                $result = $storeService->getStoresByLocation(
                     $locationCode,
                     StoreService::TYPE_SHOP,
                     true
@@ -300,13 +300,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         /**
                          * условие доставки в эту зону - наличие на складе
                          */
-                        $result = $storeService->getByLocation($locationCode, StoreService::TYPE_STORE);
+                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_STORE);
                         break;
                     case DeliveryService::ZONE_2:
                         /**
                          * условие доставки в эту зону - наличие в базовом магазине
                          */
-                        $result = $storeService->getByLocation($locationCode, StoreService::TYPE_ALL)
+                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_ALL)
                             ->getBaseShops();
                         break;
                 }

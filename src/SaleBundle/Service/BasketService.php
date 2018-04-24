@@ -62,8 +62,6 @@ class BasketService implements LoggerAwareInterface
     /** Оплата бонусами до 90% заказа */
     public const MAX_BONUS_PAYMENT = 0.9;
 
-    public static $flag = false;
-
     /**
      * BasketService constructor.
      *

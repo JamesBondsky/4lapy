@@ -275,8 +275,7 @@ class BonusService
             }
 
             if($isChange) {
-                $this->currentUserProvider->getUserRepository()->updateData($user->getId(),
-                    ['UF_DISCOUNT_CARD' => $bonusCard]);
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard($user->getId(), $bonusCard);
 
                 TaggedCacheHelper::clearManagedCache([
                     'personal:bonus:' . $user->getId(),

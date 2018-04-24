@@ -29,7 +29,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Manager
 {
-    protected static $finalActionEnabled = true;
+    protected static $extendEnabled = true;
+    protected static $extendCalculated = false;
 
     /**
      * @param Event|null $event
@@ -47,21 +48,13 @@ class Manager
      */
     public static function extendDiscount(Event $event): void
     {
-        if ($event->getParameter('ORDER')['ID']) {
-            return;
-        }
-
-        if (self::$finalActionEnabled) {
+        if (self::$extendEnabled && !self::$extendCalculated) {
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
-
-            if ($basketService::$flag) {
-                return;
-            }
-
             $manzana = $container->get(Manzana::class);
             $couponStorage = $container->get(CouponStorageInterface::class);
 
+            self::disableExtendsDiscount();
             // Автоматически добавляем подарки
             $basketService
                 ->getAdder('gift')
@@ -75,6 +68,7 @@ class Manager
             $basketService
                 ->getAdder('detach')
                 ->processOrder();
+            self::enableExtendsDiscount();
 
             $promoCode = $couponStorage->getApplicableCoupon();
             if ($promoCode) {
@@ -88,7 +82,7 @@ class Manager
                 $couponStorage->delete($promoCode);
             }
 
-            $basketService::$flag = true;
+            self::$extendCalculated = true;
         }
     }
 
@@ -97,7 +91,7 @@ class Manager
      */
     public static function disableExtendsDiscount(): void
     {
-        self::$finalActionEnabled = false;
+        self::$extendEnabled = false;
     }
 
 
@@ -106,7 +100,7 @@ class Manager
      */
     public static function enableExtendsDiscount(): void
     {
-        self::$finalActionEnabled = true;
+        self::$extendEnabled = true;
     }
 
     /**

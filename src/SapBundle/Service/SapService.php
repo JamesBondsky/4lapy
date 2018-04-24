@@ -33,10 +33,6 @@ class SapService
      * @var PipelineRegistry
      */
     private $pipelineRegistry;
-    /**
-     * @var LockerInterface
-     */
-    private $locker;
 
     /**
      * SapService constructor.
@@ -49,14 +45,12 @@ class SapService
     public function __construct(
         ConsumerRegistryInterface $consumerRegistry,
         SourceRegistryInterface $sourceRegistry,
-        PipelineRegistry $pipelineRegistry,
-        LockerInterface $locker
+        PipelineRegistry $pipelineRegistry
     )
     {
         $this->consumerRegistry = $consumerRegistry;
         $this->sourceRegistry = $sourceRegistry;
         $this->pipelineRegistry = $pipelineRegistry;
-        $this->locker = $locker;
     }
 
     /**

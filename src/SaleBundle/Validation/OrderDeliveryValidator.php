@@ -74,6 +74,8 @@ class OrderDeliveryValidator extends ConstraintValidator
         $checkDate = function (int $dateIndex, int $intervalIndex, CalculationResultInterface $delivery) use (
             $constraint
         ) {
+            $delivery = clone $delivery;
+
             /**
              * это число в общем случае должно быть от 0
              * до разницы между минимальной и максимальной датами доставки
