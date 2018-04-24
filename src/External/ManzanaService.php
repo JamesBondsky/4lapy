@@ -220,7 +220,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Client
      *
-     * @throws \Exception
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      */
@@ -249,7 +248,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param User|null $user
      *
      * @return Client
-     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
@@ -278,7 +276,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $phone
      *
      * @return Client
-     * @throws \Exception
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
@@ -315,7 +312,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Clients
      *
-     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getUserDataByPhone(string $phone): Clients

@@ -36,8 +36,11 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -147,6 +150,9 @@ class OrderService implements LoggerAwareInterface
     /** @var ManzanaPosService */
     protected $manzanaPosService;
 
+    /** @var ManzanaService */
+    protected $manzanaService;
+
     /**
      * OrderService constructor.
      *
@@ -154,12 +160,13 @@ class OrderService implements LoggerAwareInterface
      * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param DeliveryService $deliveryService
-     * @param StoreService $storeService
      * @param LocationService $locationService
+     * @param StoreService $storeService
      * @param OrderStorageService $orderStorageService
      * @param UserCitySelectInterface $userCityProvider
      * @param UserRegistrationProviderInterface $userRegistrationProvider
      * @param ManzanaPosService $manzanaPosService
+     * @param ManzanaService $manzanaService
      */
     public function __construct(
         AddressService $addressService,
@@ -171,7 +178,8 @@ class OrderService implements LoggerAwareInterface
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider,
-        ManzanaPosService $manzanaPosService
+        ManzanaPosService $manzanaPosService,
+        ManzanaService $manzanaService
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
@@ -183,6 +191,7 @@ class OrderService implements LoggerAwareInterface
         $this->userRegistrationProvider = $userRegistrationProvider;
         $this->locationService = $locationService;
         $this->manzanaPosService = $manzanaPosService;
+        $this->manzanaService = $manzanaService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -604,12 +613,6 @@ class OrderService implements LoggerAwareInterface
             /** @noinspection PhpInternalEntityUsedInspection */
             $order->setFieldNoDemand('USER_ID', $storage->getUserId());
             $user = $this->currentUserProvider->getCurrentUser();
-            if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
-                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
-                    $user->getId(),
-                    $storage->getDiscountCardNumber()
-                );
-            }
             if (!$user->getEmail() && $storage->getEmail()) {
                 $user->setEmail($storage->getEmail());
                 $this->currentUserProvider->getUserRepository()->updateEmail(
@@ -633,19 +636,19 @@ class OrderService implements LoggerAwareInterface
                 $users = $this->currentUserProvider->getUserRepository()->findBy(['=PERSONAL_PHONE' => $storage->getPhone()]);
             }
 
-            $foundUser = null;
+            $user = null;
             /** @var User $user */
-            foreach ($users as $user) {
-                if (mb_strtolower($user->getEmail()) === mb_strtolower($storage->getEmail())) {
-                    $foundUser = $user;
-                } elseif ($user->getPersonalPhone() === $storage->getPhone()) {
-                    $foundUser = $user;
+            foreach ($users as $foundUser) {
+                if (mb_strtolower($foundUser->getEmail()) === mb_strtolower($storage->getEmail())) {
+                    $user = $foundUser;
+                } elseif ($foundUser->getPersonalPhone() === $storage->getPhone()) {
+                    $user = $foundUser;
                 }
             }
 
-            if ($foundUser) {
+            if ($user) {
                 /** @noinspection PhpInternalEntityUsedInspection */
-                $order->setFieldNoDemand('USER_ID', $foundUser->getId());
+                $order->setFieldNoDemand('USER_ID', $user->getId());
             } else {
                 $password = randString(6);
                 $user = (new User())
@@ -664,7 +667,6 @@ class OrderService implements LoggerAwareInterface
 
                 /* @todo вынести из сессии? */
                 /* нужно для expertsender */
-                /** пароль еще нужен для смс быстрого заказа */
                 $_SESSION['NEW_USER'] = [
                     'LOGIN' => $storage->getPhone(),
                     'PASSWORD' => $password,
@@ -679,6 +681,26 @@ class OrderService implements LoggerAwareInterface
             'USER_REGISTERED',
             $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
         );
+
+        /**
+         * Привязываем бонусную карту
+         */
+        try {
+            if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
+                $contact = $this->manzanaService->getContactByUser($user);
+                $contact->cardnumber = $storage->getDiscountCardNumber();
+                $this->manzanaService->updateContact($contact);
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                    $user->getId(),
+                    $storage->getDiscountCardNumber()
+                );
+            }
+        } catch (ManzanaServiceException|ManzanaException $e) {
+            $this->log()->error(
+                sprintf('failed to add bonus card to user: %s: %s', \get_class($e), $e->getMessage()),
+                ['userId' => $user->getId(), 'card' => $storage->getDiscountCardNumber()]
+            );
+        }
 
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
 

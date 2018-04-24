@@ -41,6 +41,8 @@ class OrderStorageService
 
     public const PAYMENT_STEP = 'payment';
 
+    public const PAYMENT_STEP_CARD = 'payment-card';
+
     public const COMPLETE_STEP = 'complete';
 
     /**
@@ -214,7 +216,6 @@ class OrderStorageService
 
                 break;
             case self::DELIVERY_STEP:
-
                 try {
                     $deliveryCode = $this->deliveryService->getDeliveryCodeById(
                         (int)$data['deliveryId']
@@ -270,6 +271,12 @@ class OrderStorageService
                     'paymentId',
                     'bonus',
                 ];
+                break;
+            case self::PAYMENT_STEP_CARD:
+                $availableValues = [
+                    'cardNumber'
+                ];
+                break;
         }
 
         foreach ($data as $name => $value) {
