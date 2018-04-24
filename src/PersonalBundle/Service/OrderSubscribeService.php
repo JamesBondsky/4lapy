@@ -434,6 +434,7 @@ class OrderSubscribeService
      * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getOrderDeliveryDate(BaseResult $calculationResult, \DateTime $currentDate = null): \DateTime
@@ -461,6 +462,7 @@ class OrderSubscribeService
      * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getDateForOrderCreate(BaseResult $calculationResult, \DateTime $deliveryDate, \DateTime $currentDate = null): \DateTime
@@ -1016,7 +1018,9 @@ class OrderSubscribeService
      * @param string|\DateTime $currentDate
      * @param bool $extResult
      * @return Result
+     * @throws ArgumentException
      * @throws InvalidArgumentException
+     * @throws SystemException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
     public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, $currentDate = '', bool $extResult = false): Result
@@ -1072,6 +1076,7 @@ class OrderSubscribeService
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws NotImplementedException
+     * @throws SystemException
      * @throws \Bitrix\Main\ObjectNotFoundException
      */
     protected function doNewOrderIntegration(int $orderId)

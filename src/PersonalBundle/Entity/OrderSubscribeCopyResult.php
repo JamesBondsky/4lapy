@@ -3,7 +3,6 @@
 namespace FourPaws\PersonalBundle\Entity;
 
 use Bitrix\Main\Result;
-use FourPaws\SaleBundle\Helper\OrderCopy;
 
 class OrderSubscribeCopyResult extends Result
 {

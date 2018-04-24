@@ -79,6 +79,9 @@ class OrderSubscribeCopyParams
                 $this->getCopyOrderId()
             );
 
+            // принудительно отключаем применение скидок - на данный момент они работают только в контексте текущего юзера
+            $this->orderCopyHelper->setDisabledExtendedDiscounts(true);
+
             if (isset($this->copyOrderParams['orderExcludeProps'])) {
                 $this->orderCopyHelper->appendOrderExcludeProps(
                     $this->copyOrderParams['orderExcludeProps']

@@ -77,6 +77,8 @@ class OrderCopy
     private $oldBasket2NewMap = [];
     /** @var array */
     private $propCode2PropIdMap;
+    /** @var bool */
+    private $isDisabledExtDiscounts = false;
 
     /**
      * OrderCopy constructor.
@@ -155,6 +157,30 @@ class OrderCopy
         $this->doFinalAction();
     }
 
+    protected function extendedDiscountsDisable()
+    {
+        \FourPaws\SaleBundle\Discount\Utils\Manager::disableExtendsDiscount();
+    }
+
+    protected function extendedDiscountsEnable()
+    {
+        \FourPaws\SaleBundle\Discount\Utils\Manager::enableExtendsDiscount();
+    }
+
+    protected function extendedDiscountsBlockManagerStart()
+    {
+        if ($this->isDisabledExtendedDiscounts()) {
+            $this->extendedDiscountsDisable();
+        }
+    }
+
+    protected function extendedDiscountsBlockManagerEnd()
+    {
+        if ($this->isDisabledExtendedDiscounts()) {
+            $this->extendedDiscountsEnable();
+        }
+    }
+
     /**
      * @param string $flagName
      * @return bool
@@ -171,6 +197,22 @@ class OrderCopy
     protected function setFlagByName(string $flagName, bool $state = true)
     {
         $this->flags[$flagName] = $state;
+    }
+
+    /**
+     * @param bool $value
+     */
+    public function setDisabledExtendedDiscounts(bool $value = true)
+    {
+        $this->isDisabledExtDiscounts = $value;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDisabledExtendedDiscounts(): bool
+    {
+        return $this->isDisabledExtDiscounts;
     }
 
     /**
@@ -308,6 +350,8 @@ class OrderCopy
      */
     public function copyFields()
     {
+        $this->extendedDiscountsBlockManagerStart();
+
         $copyFieldsList = $this->getOrderCopyFields();
         foreach ($copyFieldsList as $fieldName) {
             $this->newOrder->setField(
@@ -316,6 +360,8 @@ class OrderCopy
             );
         }
         $this->setFieldsCopied();
+
+        $this->extendedDiscountsBlockManagerEnd();
     }
 
     /**
@@ -329,6 +375,8 @@ class OrderCopy
      */
     public function copyBasket()
     {
+        $this->extendedDiscountsBlockManagerStart();
+
         $oldBasket = $this->oldOrder->getBasket();
         /** @var Basket $newBasket */
         $newBasket = Basket::create($oldBasket->getSiteId());
@@ -401,6 +449,8 @@ class OrderCopy
         }
 
         $this->setBasketCopied();
+
+        $this->extendedDiscountsBlockManagerEnd();
     }
 
     /**
@@ -408,6 +458,8 @@ class OrderCopy
      */
     public function copyProps()
     {
+        $this->extendedDiscountsBlockManagerStart();
+
         $oldOrderPropsCollect = $this->oldOrder->getPropertyCollection();
         $oldOrderPropsByCode = [];
         $oldOrderPropsById = [];
@@ -432,6 +484,8 @@ class OrderCopy
         }
 
         $this->setPropsCopied();
+
+        $this->extendedDiscountsBlockManagerEnd();
     }
 
     /**
@@ -497,6 +551,8 @@ class OrderCopy
      */
     public function copyShipments()
     {
+        $this->extendedDiscountsBlockManagerStart();
+
         $this->newOrder->setField('DELIVERY_LOCATION', $this->oldOrder->getDeliveryLocation());
 
         // проверка заполненности свойства местоположения
@@ -521,9 +577,10 @@ class OrderCopy
             $newShipment->setField('DELIVERY_ID', $oldShipment->getDeliveryId());
             $newShipment->setField('DELIVERY_NAME', $oldShipment->getDeliveryName());
 
-/** @todo: Обсудить с разработчиками системы оформления заказов изменение подхода установки начальных статусов (в иделае должен быть всегда N) */
+            /** @todo: Обсудить с разработчиками системы оформления заказов изменение подхода установки начальных статусов (в иделае должен быть всегда N) */
             $deliveryCode = $newShipment->getDelivery()->getCode();
             if ($this->getDeliveryService()->isDeliveryCode($deliveryCode)) {
+                /** @noinspection PhpInternalEntityUsedInspection */
                 $this->newOrder->setFieldNoDemand('STATUS_ID', OrderService::STATUS_NEW_COURIER);
             }
 
@@ -548,6 +605,8 @@ class OrderCopy
         }
 
         $this->setShipmentsCopied();
+
+        $this->extendedDiscountsBlockManagerEnd();
     }
 
     /**
@@ -560,6 +619,8 @@ class OrderCopy
      */
     public function copyPayments()
     {
+        $this->extendedDiscountsBlockManagerStart();
+
         $oldPaymentCollect = $this->oldOrder->getPaymentCollection();
         $newPaymentCollect = $this->newOrder->getPaymentCollection();
         //$newPaymentCollect->clearCollection();
@@ -576,6 +637,8 @@ class OrderCopy
         }
 
         $this->setPaymentsCopied();
+
+        $this->extendedDiscountsBlockManagerEnd();
     }
 
     /**
@@ -583,6 +646,8 @@ class OrderCopy
      */
     public function clearPayments()
     {
+        $this->extendedDiscountsBlockManagerStart();
+
         $newPaymentCollect = $this->newOrder->getPaymentCollection();
         //$newPaymentCollect->clearCollection();
         foreach ($newPaymentCollect as $payment) {
@@ -592,6 +657,8 @@ class OrderCopy
             }
             $payment->delete();
         }
+
+        $this->extendedDiscountsBlockManagerEnd();
     }
 
     /**
@@ -603,9 +670,14 @@ class OrderCopy
     public function setPayment(\Bitrix\Sale\PaySystem\Service $paySystemService)
     {
         $this->clearPayments();
+
+        $this->extendedDiscountsBlockManagerStart();
+
         $newPaymentCollect = $this->newOrder->getPaymentCollection();
         $newPayment = $newPaymentCollect->createItem($paySystemService);
         $newPayment->setField('SUM', $this->newOrder->getPrice());
+
+        $this->extendedDiscountsBlockManagerEnd();
     }
 
     public function copyTax()
@@ -622,7 +694,9 @@ class OrderCopy
      */
     public function doFinalAction()
     {
+        $this->extendedDiscountsBlockManagerStart();
         $tmpResult = $this->newOrder->doFinalAction(true);
+        $this->extendedDiscountsBlockManagerEnd();
         if (!$tmpResult->isSuccess()) {
             throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 800);
         }
@@ -644,7 +718,9 @@ class OrderCopy
      */
     public function save()
     {
+        $this->extendedDiscountsBlockManagerStart();
         $tmpResult = $this->newOrder->save();
+        $this->extendedDiscountsBlockManagerEnd();
         if (!$tmpResult->isSuccess()) {
             throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 900);
         }
