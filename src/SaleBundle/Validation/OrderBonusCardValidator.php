@@ -33,9 +33,12 @@ class OrderBonusCardValidator extends ConstraintValidator
      * @param mixed $entity
      * @param Constraint $constraint
      */
-    public function validate($entity, Constraint $constraint)
+    public function validate($entity, Constraint $constraint): void
     {
-        if (!$entity instanceof OrderStorage || !$constraint instanceof OrderBonusCard) {
+        if (!$entity instanceof OrderStorage ||
+            !$constraint instanceof OrderBonusCard ||
+            !$entity->getDiscountCardNumber() // для того, чтобы можно было отменить привязку карты
+        ) {
             return;
         }
 

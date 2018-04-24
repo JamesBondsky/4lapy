@@ -171,7 +171,7 @@ $user = $arResult['USER'];
                         <?php } ?>
                     <?php } else { ?>
                         <div class="b-new-bonus-card_block">
-                            <div class="b-new-bonus-card--step1">
+                            <div class="b-new-bonus-card--step1<?= $storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
                                 <div class="b-new-bonus-card">
                                     <p class="js-new-bonus-card">Укажите бонусную карту</p><span>Для зачисления баллов</span>
                                 </div>
@@ -180,10 +180,11 @@ $user = $arResult['USER'];
                                 <span class="title">Номер бонусной карты</span>
                                 <span class="js-new-card-cancel"></span>
                                 <form class="b-account-bonus-card__form js-form-validation js-offers-query success-valid"
-                                      data-url="<?= $arResult['URL']['PAYMENT_VALIDATION'] ?>" method="post">
+                                      data-url="<?= $arResult['URL']['BONUS_CARD_VALIDATION'] ?>" method="post">
                                     <div class="b-order-contacts__link b-order-contacts__link--hidden js-number-input">
                                         <div class="b-input b-input--account-bonus js-offers">
                                             <input class="b-input__input-field b-input__input-field--account-bonus js-offers ok"
+                                                   value="<?= $storage->getDiscountCardNumber() ?>"
                                                    type="text" id="bonus" placeholder="" name="text" data-url="">
                                             <div class="b-error b-error--ok">
                                                 <span class="js-message">Поле верно заполнено</span>
@@ -193,9 +194,9 @@ $user = $arResult['USER'];
                                     </div>
                                 </form>
                             </div>
-                            <div class="b-new-bonus-card--step3 hidden">
+                            <div class="b-new-bonus-card--step3 <?= !$storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
                                 <div class="b-new-bonus-card--info">
-                                    <p>Бонусная карта для зачисления баллов: <span> </span></p>
+                                    <p>Бонусная карта для зачисления баллов: <span><?= $storage->getDiscountCardNumber() ?></span></p>
                                     <span class="js-another-bonus-card">Указать другую карту</span>
                                 </div>
                             </div>

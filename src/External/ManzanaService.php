@@ -516,7 +516,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function validateCardByNumberRaw(string $cardNumber): CardValidateResult
     {
         $cardValidateResult = null;
-        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        $bag = new ParameterBag(['cardnumber' => $this->prepareCardNumber($cardNumber)]);
         try {
             $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
             /** @var CardValidateResult $cardValidateResult */
@@ -820,5 +820,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
+    }
+
+    /**
+     * @param string $cardNumber
+     *
+     * @return string
+     */
+    public function prepareCardNumber(string $cardNumber): string
+    {
+        return preg_replace('~\D~', '', $cardNumber);
     }
 }
