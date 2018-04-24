@@ -10,9 +10,6 @@ use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 
-/** @var \Bitrix\Sale\PropertyValue $comWay */
-$comWay = $order->getProps()->get('COM_WAY');
-$isFastOrder = $comWay->getValue() === '04';
 ?>
 <li class="b-accordion-order-item js-permutation-li js-item-content">
     <div class="b-accordion-order-item__visible js-premutation-accordion-content">
@@ -56,7 +53,7 @@ $isFastOrder = $comWay->getValue() === '04';
                     ], true) ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?>
                 </span>
             </div>
-            <?php if(!$isFastOrder) { ?>
+            <?php if(!$order->isFastOrder()) { ?>
                 <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
                     <?= $order->getDelivery()->getDeliveryName() ?>
                     <span><?= $order->getDateDelivery() ?></span>
@@ -93,7 +90,7 @@ $isFastOrder = $comWay->getValue() === '04';
                         }
                     }
                 }
-                if($isFastOrder && \in_array($order->getStatusId(), ['N', 'Q'], true)){
+                if($order->isFastOrder() && \in_array($order->getStatusId(), ['N', 'Q'], true)){
                     $paymentName = 'Постоплата';
                 }
                 if(!empty($paymentName)) {
