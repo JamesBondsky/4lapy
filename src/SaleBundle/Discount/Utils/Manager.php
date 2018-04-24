@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Discount\Utils;
 
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -33,7 +37,7 @@ class Manager
     protected static $extendCalculated = false;
 
     /**
-     * @param Event|null $event
+     * @param null|Event $event
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -49,12 +53,12 @@ class Manager
     public static function extendDiscount(Event $event): void
     {
         if (self::$extendEnabled && !self::$extendCalculated) {
+            self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
             $manzana = $container->get(Manzana::class);
             $couponStorage = $container->get(CouponStorageInterface::class);
 
-            self::disableExtendsDiscount();
             // Автоматически добавляем подарки
             $basketService
                 ->getAdder('gift')
@@ -68,7 +72,6 @@ class Manager
             $basketService
                 ->getAdder('detach')
                 ->processOrder();
-            self::enableExtendsDiscount();
 
             $promoCode = $couponStorage->getApplicableCoupon();
             if ($promoCode) {
@@ -84,6 +87,14 @@ class Manager
 
             self::$extendCalculated = true;
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public static function isExtendDiscountEnabled(): bool
+    {
+        return self::$extendEnabled;
     }
 
     /**
