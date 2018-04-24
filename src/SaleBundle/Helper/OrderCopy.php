@@ -79,6 +79,8 @@ class OrderCopy
     private $propCode2PropIdMap;
     /** @var bool */
     private $isDisabledExtDiscounts = false;
+    /** @var bool */
+    private static $extDiscountsDisabledFlag = false;
 
     /**
      * OrderCopy constructor.
@@ -159,16 +161,21 @@ class OrderCopy
 
     protected function extendedDiscountsDisable()
     {
+        static::$extDiscountsDisabledFlag = true;
         \FourPaws\SaleBundle\Discount\Utils\Manager::disableExtendsDiscount();
     }
 
     protected function extendedDiscountsEnable()
     {
+        static::$extDiscountsDisabledFlag = false;
         \FourPaws\SaleBundle\Discount\Utils\Manager::enableExtendsDiscount();
     }
 
     protected function extendedDiscountsBlockManagerStart()
     {
+        if (static::$extDiscountsDisabledFlag && !$this->isDisabledExtendedDiscounts()) {
+            $this->extendedDiscountsEnable();
+        }
         if ($this->isDisabledExtendedDiscounts()) {
             $this->extendedDiscountsDisable();
         }
@@ -176,7 +183,7 @@ class OrderCopy
 
     protected function extendedDiscountsBlockManagerEnd()
     {
-        if ($this->isDisabledExtendedDiscounts()) {
+        if (static::$extDiscountsDisabledFlag) {
             $this->extendedDiscountsEnable();
         }
     }
