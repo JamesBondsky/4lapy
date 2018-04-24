@@ -358,7 +358,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setPayMerchantCode(SapOrder::ORDER_PAYMENT_ONLINE_MERCHANT_ID);
         } else {
             $dto->setPayType('')
-                ->setPayStatus(SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED);
+                /**
+                 * @see https://jira.adv.ru/browse/LP03-420
+                 */
+                ->setPayStatus('');
         }
     }
 

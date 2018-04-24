@@ -1392,7 +1392,14 @@ class Offer extends IblockElement
         if ($this->isCounted) {
             return;
         }
-        Manager::disableExtendsDiscount();
+
+        $needEnable = false;
+
+        if (Manager::isExtendDiscountEnabled()) {
+            $needEnable = true;
+            Manager::disableExtendsDiscount();
+        }
+
         global $USER;
 
         static $order;
@@ -1429,7 +1436,11 @@ class Offer extends IblockElement
                     ->withPrice($basketItem->getPrice());
             }
         }
-        Manager::enableExtendsDiscount();
+
+        if ($needEnable) {
+            Manager::enableExtendsDiscount();
+        }
+
         $this->isCounted = true;
     }
 
