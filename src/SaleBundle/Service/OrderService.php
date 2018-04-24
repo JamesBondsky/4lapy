@@ -680,18 +680,6 @@ class OrderService implements LoggerAwareInterface
             $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
         );
 
-        /** @var PropertyValue $propertyValue */
-        foreach ($order->getPropertyCollection() as $propertyValue) {
-            $code = $propertyValue->getProperty()['CODE'];
-            if ($code !== 'USER_REGISTERED') {
-                continue;
-            }
-            $propertyValue->setValue(
-                $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
-            );
-            break;
-        }
-
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
 
         /**
