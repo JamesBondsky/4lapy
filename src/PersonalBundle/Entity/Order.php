@@ -10,6 +10,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
+use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Helpers\DateHelper;
@@ -755,5 +756,24 @@ class Order extends BaseEntity
     public function setManzanaId(string $manzanaId): void
     {
         $this->manzanaId = $manzanaId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFastOrder(): bool
+    {
+        $comWay = $this->getProperty('COM_WAY');
+        return $comWay!== null && $comWay->getValue() === '04';
+    }
+
+    /**
+     * @param string $code
+     *
+     * @return PropertyValue|null
+     */
+    public function getProperty(string $code) : ?PropertyValue
+    {
+        return $this->getProps()->get($code);
     }
 }
