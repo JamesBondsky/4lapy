@@ -242,6 +242,6 @@ class CardByContractCards
      */
     public function isActive(): bool
     {
-        return $this->status === 2;
+        return $this->status === static::CARD_STATUS_ACTIVE;
     }
 }

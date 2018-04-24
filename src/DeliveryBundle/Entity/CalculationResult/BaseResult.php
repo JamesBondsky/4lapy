@@ -279,7 +279,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @param int $dateIndex
+     * @param int|null $dateIndex
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -288,9 +288,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @throws SystemException
      * @return IntervalCollection
      */
-    public function getAvailableIntervals(int $dateIndex = 0): IntervalCollection
+    public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection
     {
         $result = new IntervalCollection();
+
+        if (null === $dateIndex) {
+            $dateIndex = $this->getDateOffset();
+        }
+
         $date = clone $this->getDeliveryDate();
         $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
         if (($dateIndex >= 0) && ($dateIndex <= $diff)) {
@@ -362,25 +367,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     public function getSelectedInterval(): ?Interval
     {
-        /**
-         * Если интервал не выбран, подбираем наиболее подходящий (с минимальной датой доставки)
-         */
-        if (null === $this->selectedInterval) {
-            /** @var IntervalService $intervalService */
-            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
-            try {
-                $this->selectedInterval = $intervalService->getFirstInterval(
-                    $this,
-                    $this->getIntervals()
-                );
-            } catch (NotFoundException $e) {
-                if (!$this->getIntervals()->isEmpty()) {
-                    $this->selectedInterval = $this->getIntervals()->first();
-                }
-            }
+        $result = $this->selectedInterval;
+
+        if (null === $result) {
+            /**
+             * Если интервал не выбран, подбираем наиболее подходящий (с минимальной датой доставки)
+             */
+            $result = $this->getFirstInterval();
         }
 
-        return $this->selectedInterval;
+        return $result;
     }
 
     /**
@@ -806,6 +802,31 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         return new StoreCollection(iterator_to_array($iterator));
     }
 
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @return Interval|null
+     */
+    protected function getFirstInterval(): ?Interval
+    {
+        $result = null;
+        /** @var IntervalService $intervalService */
+        $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+        try {
+            $result = $intervalService->getFirstInterval(
+                $this,
+                $this->getIntervals()
+            );
+        } catch (NotFoundException $e) {
+            if (!$this->getIntervals()->isEmpty()) {
+                $result = $this->getIntervals()->first();
+            }
+        }
+
+        return $result;
+    }
+
     protected function resetResult(): void
     {
         $this->deliveryDate = null;
@@ -813,8 +834,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->isSuccess = true;
         $this->warnings = new ErrorCollection();
         $this->stockResult = null;
-
         $this->periodFrom = null;
+
         $this->selectedInterval = null;
     }
 
