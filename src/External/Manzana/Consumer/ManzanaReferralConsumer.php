@@ -27,7 +27,7 @@ class ManzanaReferralConsumer extends ManzanaConsumerBase
     {
         try {
             /** @var ReferralParams $referralParams */
-            $referralParams = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
+            $referralParams = $this->serializer->deserialize($message->getBody(), ReferralParams::class, 'json');
 
             if (null === $referralParams || (!$referralParams->phone && !$referralParams->cardNumber)) {
                 throw new ReferralAddException('Неожиданное сообщение');
@@ -41,12 +41,14 @@ class ManzanaReferralConsumer extends ManzanaConsumerBase
                 $message->getBody()
             ));
 
-            return false;
+            sleep(30);
+            $this->manzanaService->addReferralByBonusCardAsync($referralParams);
         } catch (ReferralAddException | Exception $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',
                 $e->getMessage()
             ));
+            /** здесь не перезапускаем потому что невалидные данные или ошибка апдейта - надо вникать в логи */
         }
 
         return true;

@@ -47,13 +47,17 @@ class Manzana implements LoggerAwareInterface
      * @var UserService
      */
     private $userService;
+    /**
+     * @var float
+     */
+    private $discount = 0.0;
 
     /**
      * Manzana constructor.
      *
-     * @param BasketService $basketService
+     * @param BasketService     $basketService
      * @param ManzanaPosService $manzanaPosService
-     * @param UserService $userService
+     * @param UserService       $userService
      */
     public function __construct(BasketService $basketService, ManzanaPosService $manzanaPosService, UserService $userService)
     {
@@ -67,7 +71,7 @@ class Manzana implements LoggerAwareInterface
      */
     public function setPromocode(string $promocode): void
     {
-        $this->promocode = $promocode;
+        $this->promocode = trim($promocode);
     }
 
     /**
@@ -85,7 +89,9 @@ class Manzana implements LoggerAwareInterface
              */
             return;
         }
-        
+
+        $price = $basket->getPrice();
+
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $user = $this->userService->getCurrentUser();
@@ -99,6 +105,7 @@ class Manzana implements LoggerAwareInterface
         try {
             if ($this->promocode) {
                 $response = $this->manzanaPosService->processChequeWithCoupons($request, $this->promocode);
+
                 $this->checkPromocodeByResponse($response, $this->promocode);
 
                 /**
@@ -110,6 +117,7 @@ class Manzana implements LoggerAwareInterface
             }
 
             $this->recalculateBasketFromResponse($basket, $response);
+            $this->discount = $price - $basket->getPrice();
         } catch (ExecuteException $e) {
             $this->log()->error(
                 \sprintf(
@@ -121,7 +129,7 @@ class Manzana implements LoggerAwareInterface
     }
 
     /**
-     * @param Basket $basket
+     * @param Basket             $basket
      * @param SoftChequeResponse $response
      *
      * @throws ArgumentOutOfRangeException
@@ -134,7 +142,7 @@ class Manzana implements LoggerAwareInterface
          * @var BasketItem $item
          */
         foreach ($basket as $item) {
-            $basketCode = (int) str_replace('n', '', $item->getBasketCode());
+            $basketCode = (int)str_replace('n', '', $item->getBasketCode());
 
             $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item) {
                 if ($position->getChequeItemNumber() === $basketCode) {
@@ -142,8 +150,10 @@ class Manzana implements LoggerAwareInterface
 
                     /** @noinspection PhpInternalEntityUsedInspection */
                     $item->setFieldsNoDemand([
+                        'BASE_PRICE' => $item->getBasePrice(),
                         'PRICE' => $price,
                         'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
+                        'CUSTOM_PRICE' => 'Y',
                     ]);
                 }
             });
@@ -152,7 +162,7 @@ class Manzana implements LoggerAwareInterface
 
     /**
      * @param SoftChequeResponse $response
-     * @param string $promocode
+     * @param string             $promocode
      *
      * @throws ManzanaPromocodeUnavailableException
      */
@@ -162,8 +172,8 @@ class Manzana implements LoggerAwareInterface
 
         if ($response->getCoupons()) {
             $applied = $response->getCoupons()->filter(function (Coupon $coupon) use ($promocode) {
-                return $coupon->isApplied() && $coupon->getNumber() === $promocode;
-            })->count() > 0;
+                    return $coupon->isApplied() && $coupon->getNumber() === $promocode;
+                })->count() > 0;
         }
 
         if (!$applied) {
@@ -182,5 +192,25 @@ class Manzana implements LoggerAwareInterface
     private function saveCouponDiscount(SoftChequeResponse $response)
     {
         $this->basketService->setPromocodeDiscount($response->getSumm() - $response->getSummDiscounted());
+    }
+
+    /**
+     * @return float
+     */
+    public function getDiscount(): float
+    {
+        return $this->discount;
+    }
+
+    /**
+     * @param int $discount
+     *
+     * @return Manzana
+     */
+    public function setDiscount(int $discount): Manzana
+    {
+        $this->discount = $discount;
+
+        return $this;
     }
 }

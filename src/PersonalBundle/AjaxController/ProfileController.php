@@ -279,11 +279,13 @@ class ProfileController extends Controller
             } catch (ApplicationCreateException $e) {
                 return $this->ajaxMess->getSystemError();
             }
-            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
-                $data['UF_EMAIL_CONFIRMED'] = false;
-            }
+            /** отключаем снятие чека при смене email
+             * @todo сделать его после успешной отправки через сендер, а тут снимать
+             */
+//            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
+//                $data['UF_EMAIL_CONFIRMED'] = false;
+//            }
             try {
-                $_SESSION['MANZANA_UPDATE'] = true;
                 /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
                 $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
                 if (!$res) {
@@ -301,11 +303,13 @@ class ProfileController extends Controller
                 return $this->ajaxMess->getUpdateError();
             }
 
+            $isSend = false;
             if (!$curUser->hasEmail() || $curUser->allowedEASend()) {
                 if ($user->getEmail() !== $curUser->getEmail()) {
                     try {
                         $expertSenderService = $container->get('expertsender.service');
                         $expertSenderService->sendChangeEmail($curUser, $user);
+                        $isSend = true;
                     } catch (ExpertsenderServiceException $e) {
                         $logger = LoggerFactory::create('expertsender');
                         $logger->error('expertsender error:' . $e->getMessage());
@@ -317,6 +321,16 @@ class ProfileController extends Controller
                     $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
                 } catch (\RuntimeException $e) {
                     /** оч. плохо - логи мы не получим */
+                }
+            }
+
+            if(!$isSend && ($curUser->getLastName() !== $user->getLastName() || $curUser->getName() !== $user->getName())){
+                try {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->changeUserData($user);
+                } catch (ExpertsenderServiceException $e) {
+                    $logger = LoggerFactory::create('expertsender');
+                    $logger->error('expertsender error:' . $e->getMessage());
                 }
             }
 

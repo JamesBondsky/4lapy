@@ -11,7 +11,9 @@ use Doctrine\Common\Collections\Collection;
 
 /**
  * Class EntityManager
+ *
  * @package FourPaws\BitrixOrmBundle\Repository
+ *
  * @todo    log
  */
 interface D7EntityManagerInterface extends EntityManagerInterface

@@ -78,7 +78,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
     {
         $result = new IntervalCollection();
 
-        $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment);
+        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment);
 
         $config = $this->getConfig();
         $intervalConfig = $config['MAIN']['ITEMS']['INTERVALS']['VALUE'];
@@ -142,7 +142,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
+        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, false);
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         $data = [];
         if ($this->config['PRICES'][$deliveryZone]) {

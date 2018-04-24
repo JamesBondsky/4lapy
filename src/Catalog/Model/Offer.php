@@ -1078,8 +1078,6 @@ class Offer extends IblockElement
     }
 
     /**
-     *
-     *
      * @param int $percent
      * @param int $quantity
      *
@@ -1266,7 +1264,7 @@ class Offer extends IblockElement
             if ($this->isByRequest()) {
                 $stores = $storeService->getSupplierStores();
             } else {
-                $stores = $storeService->getByCurrentLocation();
+                $stores = $storeService->getStoresByCurrentLocation();
             }
             $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
@@ -1394,7 +1392,7 @@ class Offer extends IblockElement
         if ($this->isCounted) {
             return;
         }
-        Manager::disableProcessingFinalAction();
+        Manager::disableExtendsDiscount();
         global $USER;
 
         static $order;
@@ -1431,7 +1429,7 @@ class Offer extends IblockElement
                     ->withPrice($basketItem->getPrice());
             }
         }
-        Manager::enableProcessingFinalAction();
+        Manager::enableExtendsDiscount();
         $this->isCounted = true;
     }
 

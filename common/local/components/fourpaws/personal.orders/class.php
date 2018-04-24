@@ -88,7 +88,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         $params['PAGE_COUNT'] = 10;
-        $params['PATH_TO_BASKET'] = '/personal/cart/';
+        $params['PATH_TO_BASKET'] = '/cart/';
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 24 * 60 * 60;

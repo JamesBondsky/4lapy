@@ -441,7 +441,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $offer = (new OrderOffer())
                 ->setPosition($position)
                 ->setOfferXmlId($xmlId)
-                ->setUnitPrice($basketItem->getBasePrice())
+                ->setUnitPrice($basketItem->getPrice())
                 ->setQuantity($basketItem->getQuantity())
                 /**
                  * Только штуки
@@ -521,7 +521,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
 
                 $deliveryId = $shipment->getDeliveryId();
-                $deliveryZone = $this->deliveryService->getDeliveryZoneCodeByLocation($location, $deliveryId);
+                $deliveryZone = $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId);
 
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:

@@ -10,6 +10,8 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -51,6 +53,13 @@ class NotificationService implements LoggerAwareInterface
     protected $emailService;
 
     /**
+     * Для предотвращения зацикливания отправки писем
+     *
+     * @var bool
+     */
+    protected static $isSending = false;
+
+    /**
      * NotificationService constructor.
      * @param OrderService $orderService
      * @param SmsService $smsService
@@ -90,9 +99,14 @@ class NotificationService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      */
     public function sendNewOrderMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+
         /**
          * Заказ не должен быть с оплатой "онлайн"
          */
@@ -100,9 +114,18 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
+        if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
+            return;
+        }
+
+        static::$isSending = true;
+
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->logMessage($order, $transactionId);
+            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            if ($transactionId) {
+                $this->logMessage($order, $transactionId);
+            }
         } catch (ExpertsenderServiceException $e) {
             $this->log()->error($e->getMessage());
         }
@@ -126,12 +149,12 @@ class NotificationService implements LoggerAwareInterface
                 break;
         }
 
-
         if ($smsTemplate) {
             $this->sendSms($smsTemplate, $parameters, true);
         }
 
         $this->sendNewUserSms($parameters);
+        static::$isSending = false;
     }
 
     /**
@@ -140,13 +163,18 @@ class NotificationService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws ApplicationCreateException
+     * @throws SystemException
      */
     public function sendOrderPaymentMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+
         /**
          * Заказ должен быть с оплатой "онлайн"
          */
-        if ($this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
+        if (!$this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
             return;
         }
 
@@ -154,15 +182,25 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
+        if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
+            return;
+        }
+
+        static::$isSending = true;
+
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->logMessage($order, $transactionId);
+            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
+            if ($transactionId) {
+                $this->logMessage($order, $transactionId);
+            }
         } catch (ExpertsenderServiceException $e) {
             $this->log()->error($e->getMessage());
         }
         $parameters = $this->getOrderData($order);
         $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
         $this->sendNewUserSms($parameters);
+        static::$isSending = false;
     }
 
     /**
@@ -170,9 +208,15 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendOrderCancelMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+
         if (!$order->isCanceled()) {
             return;
         }
+
+        static::$isSending = true;
 
         $parameters = $this->getOrderData($order);
 
@@ -180,17 +224,28 @@ class NotificationService implements LoggerAwareInterface
             'FourPawsSaleBundle:Sms:order.canceled.html.php',
             $parameters
         );
+        static::$isSending = false;
     }
 
     /**
      * @param Order $order
+     *
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      */
     public function sendOrderStatusMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+
         if ($order->isCanceled()) {
             return;
         }
+
+        static::$isSending = true;
 
         $status = $order->getField('STATUS_ID');
         $parameters = $this->getOrderData($order);
@@ -221,24 +276,15 @@ class NotificationService implements LoggerAwareInterface
                 break;
         }
 
-        if ($sendCompleteEmail && $this->orderService->getOrderPropertyByCode(
-                $order,
-                'COMPLETE_MESSAGE_SENT'
-            )->getValue() !== BitrixUtils::BX_BOOL_TRUE
+        if ($sendCompleteEmail &&
+            $this->getOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT') !== BitrixUtils::BX_BOOL_TRUE
         ) {
             try {
-                if ($transactionId = $this->emailService->sendOrderCompleteEmail($order)) {
-                    $this->orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
-                    try {
-                        $order->save();
-                    } catch (\Exception $e) {
-                        $this->log()->error(sprintf('failed to update order property: %s', $e->getMessage()), [
-                            'property' => 'COMPLETE_MESSAGE_SENT',
-                            'order' => $order->getId()
-                        ]);
-                    }
+                $transactionId = $this->emailService->sendOrderCompleteEmail($order);
+                $this->setOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT');
+                if ($transactionId) {
+                    $this->logMessage($order, $transactionId);
                 }
-                $this->logMessage($order, $transactionId);
             } catch (ExpertsenderServiceException $e) {
                 $this->log()->error($e->getMessage());
             }
@@ -250,6 +296,8 @@ class NotificationService implements LoggerAwareInterface
                 $parameters
             );
         }
+
+        static::$isSending = false;
     }
 
     /**
@@ -304,7 +352,7 @@ class NotificationService implements LoggerAwareInterface
             $result['deliveryCode'] = $this->orderService->getOrderDeliveryCode($order);
 
             if ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
-                $shop = $this->storeService->getByXmlId(
+                $shop = $this->storeService->getStoreByXmlId(
                     $properties['DELIVERY_PLACE_CODE']
                 );
                 $result['shop'] = [
@@ -314,7 +362,7 @@ class NotificationService implements LoggerAwareInterface
             }
         } catch (\Exception $e) {
             $this->log()->error($e->getMessage());
-            return [];
+            $result = [];
         }
 
         return $result;
@@ -351,5 +399,38 @@ class NotificationService implements LoggerAwareInterface
                 $email
             )
         );
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @return string
+     */
+    protected function getOrderMessageFlag(Order $order, string $code): string
+    {
+        $propValue = $this->orderService->getOrderPropertyByCode(
+            $order,
+                $code
+        )->getValue();
+
+        return ($propValue === BitrixUtils::BX_BOOL_TRUE) ? $propValue : BitrixUtils::BX_BOOL_FALSE;
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     */
+    protected function setOrderMessageFlag(Order $order, string $code): void
+    {
+        $this->orderService->setOrderPropertyByCode($order, $code, 'Y');
+        try {
+            $order->save();
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to update order property: %s', $e->getMessage()), [
+                'property' => $code,
+                'order' => $order->getId()
+            ]);
+        }
     }
 }

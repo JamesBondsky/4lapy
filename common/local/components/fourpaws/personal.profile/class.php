@@ -226,7 +226,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         ];
 
         try {
-            $_SESSION['MANZANA_UPDATE'] = true;
             /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
