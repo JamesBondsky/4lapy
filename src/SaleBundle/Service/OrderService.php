@@ -742,25 +742,6 @@ class OrderService implements LoggerAwareInterface
         }
 
         try {
-            /**
-             * @todo костыль
-             * При создании заказа корзина пересчитывается и скидка по промокоду сбрасывается
-             * Это фикс не допускает пересчет корзины
-             */
-            if ($this->basketService->getPromocodeDiscount()) {
-                /** @var BasketItem $basketItem */
-                foreach ($order->getBasket() as $basketItem) {
-                    $basketItem->setField('CUSTOM_PRICE', 'Y');
-                }
-            }
-        } catch (\Exception $e) {
-            $this->log()->error(sprintf('failed to set custom price for basket items: %s', $e->getMessage()), [
-                'fuserId' => $storage->getFuserId(),
-                'userId' => $storage->getUserId()
-            ]);
-        }
-
-        try {
             $result = $order->save();
             if (!$result->isSuccess()) {
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));

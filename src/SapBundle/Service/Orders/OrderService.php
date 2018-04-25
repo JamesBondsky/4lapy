@@ -26,6 +26,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PropertyValueCollection;
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Env;
@@ -67,6 +68,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Class OrderService
+ *
+ * @todo divide to base -> out
+ *                      -> in
  *
  * @package FourPaws\SapBundle\Service\Orders
  */
@@ -407,18 +411,23 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $interval = '';
         }
 
+        $deliveryDate = DateTime::createFromFormat(
+            'd.m.Y',
+            $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
+        );
+
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
-            ->setDeliveryDate(\DateTime::createFromFormat(
-                'd.m.Y',
-                $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
-            ))
             ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
             ->setDeliveryAddressOrPoint($deliveryPoint)
             ->setContractorCode($deliveryTypeCode === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
+
+        if ($deliveryDate) {
+            $orderDto->setDeliveryDate($deliveryDate);
+        }
     }
 
     /**
