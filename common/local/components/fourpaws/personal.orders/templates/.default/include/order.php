@@ -53,19 +53,21 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
                     ], true) ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?>
                 </span>
             </div>
-            <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
-                <?= $order->getDelivery()->getDeliveryName() ?>
-                <span><?= $order->getDateDelivery() ?></span>
-            </div>
-            <?php $store = $order->getStore();
+            <?php if(!$order->isFastOrder()) { ?>
+                <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
+                    <?= $order->getDelivery()->getDeliveryName() ?>
+                    <span><?= $order->getDateDelivery() ?></span>
+                </div>
+            <?php }
+            $store = $order->getStore();
             if ($store->getId() > 0) { ?>
                 <div class="b-adress-info b-adress-info--order">
                     <?php if ($store->getMetro() > 0) { ?>
                         <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
                         м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
-                    <?php } ?>
-                    <?= $order->getStore()->getAddress() ?>
-                    <?php if (!empty($order->getStore()->getScheduleString())) { ?>
+                    <?php }
+                    echo $order->getStore()->getAddress();
+                    if (!empty($order->getStore()->getScheduleString())) { ?>
                         <p class="b-adress-info__mode-operation"><?= $order->getStore()->getScheduleString() ?></p>
                     <?php } ?>
                 </div>
@@ -88,6 +90,9 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
                         }
                     }
                 }
+                if($order->isFastOrder() && \in_array($order->getStatusId(), ['N', 'Q'], true)){
+                    $paymentName = 'Постоплата';
+                }
                 if(!empty($paymentName)) {
                     echo $paymentName;
                 }
@@ -98,7 +103,7 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
-            <?php if ($order->isClosed() && !$order->isManzana()) {
+            <?php if (!$order->isManzana()) {
                 $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
                 $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]); ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
@@ -122,7 +127,7 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
                 <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
             <?php /** @todo подписаться на доставку */
-            if (!$order->isManzana()) { ?>
+            if (!$order->isManzana() && $order->isPayed()) { ?>
                 <a class="b-accordion-order-item__subscribe js-open-popup" href="javascript:void(0);"
                    title="Подписаться на доставку" data-popup-id="subscribe-delivery">Подписаться
                     на&nbsp;доставку</a>

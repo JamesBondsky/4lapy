@@ -533,7 +533,7 @@ class Order extends BaseEntity
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'),DateHelper::GENITIVE, true);
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
 
     public function getFormatedPrice()
@@ -565,8 +565,8 @@ class Order extends BaseEntity
      */
     public function getFormatedAllWeight(): float
     {
-        $allWeight =$this->getAllWeight();
-        return $allWeight > 0 ? number_format(round($allWeight / 1000, 2),2,'.',' ') : 0;
+        $allWeight = $this->getAllWeight();
+        return $allWeight > 0 ? number_format(round($allWeight / 1000, 2), 2, '.', ' ') : 0;
     }
 
     /**
@@ -638,7 +638,7 @@ class Order extends BaseEntity
             /** @todo рассчитанная дата доставки */
             /** @var OrderProp $prop */
             $prop = $this->getProps()->get('DELIVERY_DATE');
-            if($prop !== null) {
+            if ($prop !== null) {
                 /** @var Date|null $date */
                 $date = new Date($prop->getValue());
                 if ($date instanceof Date) {
@@ -755,5 +755,25 @@ class Order extends BaseEntity
     public function setManzanaId(string $manzanaId): void
     {
         $this->manzanaId = $manzanaId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFastOrder(): bool
+    {
+        $comWay = $this->getProperty('COM_WAY');
+        return $comWay !== null && $comWay->getValue() === '04';
+    }
+
+    /**
+     * @param string $code
+     *
+     *
+     * @return OrderProp|null
+     */
+    public function getProperty(string $code): ?OrderProp
+    {
+        return $this->getProps()->get($code);
     }
 }
