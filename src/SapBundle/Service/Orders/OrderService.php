@@ -539,7 +539,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_1:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
-                        return SapOrder::DELIVERY_TYPE_PICKUP;
+                        return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                 }
 
                 break;
