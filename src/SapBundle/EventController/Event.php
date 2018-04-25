@@ -76,15 +76,14 @@ class Event implements ServiceHandlerInterface
     {
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
-        $isConsumedValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED');
 
         /**
          * Если заказ уже выгружен в SAP новый или оплата онлайн, пропускаем
          */
         if (
-            $isConsumedValue
-            && $isConsumedValue->getValue() === 'Y'
-            && \in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
+            self::isOrderExported($order)
+            || \in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)
+        ) {
             return;
         }
 
@@ -94,6 +93,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws ArgumentNullException
      * @throws NotImplementedException
      * @throws ApplicationCreateException
@@ -118,14 +118,18 @@ class Event implements ServiceHandlerInterface
              * @var ConsumerRegistry $consumerRegistry
              */
             $order = Order::load($payment->getOrderId());
-            self::getConsumerRegistry()->consume($order);
+
+            /** @noinspection NullPointerExceptionInspection */
+            if (!self::isOrderExported($order)) {
+                self::getConsumerRegistry()->consume($order);
+            }
         }
     }
 
     /**
      * @throws ApplicationCreateException
-     * @return ConsumerRegistry
      *
+     * @return ConsumerRegistry
      */
     public static function getConsumerRegistry(): ConsumerRegistry
     {
@@ -135,5 +139,19 @@ class Event implements ServiceHandlerInterface
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             return new ConsumerRegistry();
         }
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     *
+     * @throws ObjectNotFoundException
+     */
+    private static function isOrderExported(Order $order): bool
+    {
+        $isConsumedValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED');
+
+        return null !== $isConsumedValue && $isConsumedValue->getValue() === 'Y';
     }
 }
