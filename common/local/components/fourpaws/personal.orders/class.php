@@ -358,7 +358,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     public function getItemBonus(OrderItem $item, int $percent, int $precision = 2): string
     {
         $bonusText = '';
-        $bonus = \round($item->getPrice() * $item->getQuantity() * $percent / 100, 2);
+        $bonus = \round($item->getPrice() * $item->getQuantity() * $percent / 100, $precision);
         if ($bonus <= 0) {
             return $bonusText;
         }
