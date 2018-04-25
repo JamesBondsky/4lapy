@@ -699,7 +699,7 @@ class OrderService implements LoggerAwareInterface
                     $contact->contactId = $existingContact->contactId;
                     $this->currentUserProvider->getUserRepository()->updateDiscountCard(
                         $user->getId(),
-                        $storage->getDiscountCardNumber()
+                        $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber())
                     );
                 }
             } catch (ManzanaServiceException $e) {
