@@ -882,13 +882,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
     public function getPrice(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->price;
     }
@@ -1045,13 +1042,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      */
     public function getOldPrice(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->oldPrice;
     }
@@ -1066,13 +1060,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      */
     public function getDiscount(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->discount;
     }
@@ -1381,6 +1372,32 @@ class Offer extends IblockElement
     }
 
     /**
+     * @todo не использовать этот метод для расчета скидочных цен
+     */
+    protected function checkOptimalPriceTmp(): void
+    {
+        if ($this->isCounted) {
+            return;
+        }
+
+        $price = $this->price;
+        $oldPrice = $this->price;
+
+        if ($this->isSimpleSaleAction()) {
+            $price = (int)$this->PROPERTY_PRICE_ACTION;
+        } elseif ($this->isSimpleDiscountAction()) {
+            $price *= (100 - $this->PROPERTY_COND_VALUE) / 100;
+        }
+
+        $this->withPrice($price)
+            ->withOldPrice($oldPrice)
+            ->withDiscount(round(100 * $oldPrice / $price));
+        $this->isCounted = true;
+    }
+
+    /**
+     * @todo использовать этот метод для расчета скидочных цен
+     *
      * Check and set optimal price, discount, old price with bitrix discount
      *
      * @throws LoaderException
