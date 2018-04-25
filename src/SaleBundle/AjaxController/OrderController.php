@@ -13,10 +13,12 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\ManzanaService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -61,6 +63,11 @@ class OrderController extends Controller
     private $deliveryService;
 
     /**
+     * @var ManzanaService
+     */
+    private $manzanaService;
+
+    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -81,6 +88,7 @@ class OrderController extends Controller
      * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ReCaptchaService $recaptcha
+     * @param ManzanaService $manzanaService
      */
     public function __construct(
         OrderService $orderService,
@@ -88,7 +96,8 @@ class OrderController extends Controller
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
-        ReCaptchaService $recaptcha
+        ReCaptchaService $recaptcha,
+        ManzanaService $manzanaService
     ) {
         $this->orderService = $orderService;
         $this->storeService = $storeService;
@@ -96,6 +105,7 @@ class OrderController extends Controller
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
+        $this->manzanaService = $manzanaService;
     }
 
     /**
@@ -165,6 +175,34 @@ class OrderController extends Controller
         return JsonSuccessResponse::createWithData(
             '',
             $result
+        );
+    }
+
+    /**
+     * @Route("/validate/bonus-card", methods={"POST"})
+     * @param Request $request
+     *
+     * @throws OrderStorageSaveException
+     * @return JsonResponse
+     */
+    public function validateBonusCardAction(Request $request): JsonResponse
+    {
+        $storage = $this->orderStorageService->getStorage();
+        $validationErrors = $this->fillStorage($storage, $request, OrderStorageService::PAYMENT_STEP_CARD);
+
+        if (!empty($validationErrors)) {
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => false]
+            );
+        }
+
+        return JsonSuccessResponse::create(
+            '',
+            200,
+            []
         );
     }
 

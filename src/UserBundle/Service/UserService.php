@@ -149,7 +149,6 @@ class UserService implements
     }
 
     /**
-     * @throws \Exception
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -169,7 +168,6 @@ class UserService implements
     }
 
     /**
-     * @throws \Exception
      * @throws NotAuthorizedException
      * @return int
      */
