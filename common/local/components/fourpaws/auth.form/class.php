@@ -220,6 +220,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $curBasket = $basketService->getBasket();
         $userBasket = null;
         $delBasketIds = [];
+        $delBasketKeys = [];
+        $addQuantityBasketIds = [];
+        $delItemsByUnionIds = [];
+        $delItemsByUnionKeys = [];
         $basketPrice = 0;
 
         if (!$curBasket->isEmpty()) {
@@ -243,10 +247,46 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
                         if (!$curBasket->isEmpty() && !$userBasket->isEmpty()) {
                             $needConfirmBasket = true;
-                            $delBasketIds = [];
                             /** @var BasketItem $item */
-                            foreach ($userBasket->getBasketItems() as $item) {
-                                $delBasketIds[] = $item->getId();
+                            foreach ($userBasket->getBasketItems() as $key => $item) {
+                                if ($item->getId() <= 0) {
+                                    $delBasketKeys[] = $item->getInternalIndex();
+                                } else {
+                                    $delBasketIds[] = $item->getId();
+                                }
+                                $props = $item->getPropertyCollection();
+                                $isGift = false;
+                                $isGiftSelected = false;
+                                $detachFrom = '';
+                                foreach ($props->getPropertyValues() as $propertyValue) {
+                                    switch ($propertyValue['CODE']) {
+                                        case 'IS_GIFT':
+                                            if (!empty($propertyValue['VALUE'])) {
+                                                $isGift = true;
+                                            }
+                                            break;
+                                        case 'IS_GIFT_SELECTED':
+                                            if (!empty($propertyValue['VALUE']) && $propertyValue['VALUE'] === 'Y') {
+                                                $isGiftSelected = true;
+                                            }
+                                            break;
+                                        case 'DETACH_FROM':
+                                            if (!empty($propertyValue['VALUE'])) {
+                                                $detachFrom = $propertyValue['VALUE'];
+                                            }
+                                            break;
+                                    }
+                                }
+                                if ($isGift || $isGiftSelected || !empty($detachFrom)) {
+                                    if ($item->getId() > 0) {
+                                        $delItemsByUnionIds[] = $item->getId();
+                                    } else {
+                                        $delItemsByUnionKeys[] = $item->getInternalIndex();
+                                    }
+                                    if (!empty($detachFrom)) {
+                                        $addQuantityBasketIds[$detachFrom] = $item->getQuantity();
+                                    }
+                                }
                             }
                             $basketPrice = $userBasket->getPrice();
                         }
@@ -256,7 +296,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 /** обработка ниже, поэтому скипаем */
             }
         }
-
         try {
             $this->userAuthorizationService->login($rawLogin, $password);
             if ($this->userAuthorizationService->isAuthorized() && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
@@ -319,10 +358,14 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 'unionBasket',
                 'Объединение корзины',
                 [
-                    'backurl'      => $backUrl,
-                    'needAddPhone' => $needWritePhone ? 'Y' : 'N',
-                    'delBasketIds' => $delBasketIds,
-                    'sum'          => $basketPrice,
+                    'backurl'             => $backUrl,
+                    'needAddPhone'        => $needWritePhone ? 'Y' : 'N',
+                    'delBasketIds'        => $delBasketIds,
+                    'delBasketKeys'       => $delBasketKeys,
+                    'delItemsByUnion'     => $delItemsByUnionIds,
+                    'delItemsByUnionKeys' => $delItemsByUnionKeys,
+                    'addQuantityByUnion'  => $addQuantityBasketIds,
+                    'sum'                 => $basketPrice,
                 ]
             );
 
@@ -331,10 +374,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if ($needWritePhone) {
             $html = $this->getHtml('addPhone', 'Добавление телефона', ['backurl' => $backUrl]);
 
-            return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html, 'backurl' => $backUrl]);
+            return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона',
+                ['html' => $html, 'backurl' => $backUrl]);
         }
         $options = ['reload' => true];
-        if(!empty($backUrl)){
+        if (!empty($backUrl)) {
             $options = ['redirect' => $backUrl];
         }
         return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], $options);
@@ -482,7 +526,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
         $data = [
             'UF_PHONE_CONFIRMED' => true,
-            'PERSONAL_PHONE' => $phone
+            'PERSONAL_PHONE'     => $phone,
         ];
 
         try {
@@ -494,7 +538,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $manzanaService = $container->get('manzana.service');
                 $client = null;
                 try {
-                    if(!empty($phone)) {
+                    if (!empty($phone)) {
                         $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($phone));
                         $client = new Client();
                         $client->contactId = $contactId;
@@ -541,7 +585,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $options = ['reload' => true];
-        if(!empty($backUrl)){
+        if (!empty($backUrl)) {
             $options = ['redirect' => $backUrl];
         }
 
@@ -591,8 +635,115 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         );
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
     public function ajaxUnionBasket(Request $request): JsonResponse
     {
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
+            return $this->ajaxMess->getSystemError();
+        }
+
+        $delItemsByUnion = $request->get('del_items_by_union', []);
+        if (!empty($delItemsByUnion)) {
+            $delItemsByUnion = explode(',', $delItemsByUnion);
+        }
+
+        $delItemsByUnionKeys = $request->get('del_items_by_union_keys', []);
+        if (!empty($delItemsByUnionKeys)) {
+            $delItemsByUnionKeys = explode(',', $delItemsByUnionKeys);
+        }
+
+        $addQuantityByUnion = $request->get('add_quantity_by_union', []);
+        if (!empty($addQuantityByUnion)) {
+            $addQuantityByUnion = json_decode($addQuantityByUnion, true);
+        }
+
+        if (!empty($delItemsByUnion) || !empty($addQuantityByUnion) || !empty($delItemsByUnionKeys)) {
+            try {
+                $basketService = $container->get(BasketService::class);
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
+                try {
+                    $logger = LoggerFactory::create('system');
+                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                } catch (\RuntimeException $e) {
+                    /** оч. плохо - логи мы не получим */
+                }
+                return $this->ajaxMess->getSystemError();
+            }
+
+            if (\is_array($delItemsByUnionKeys) && !empty($delItemsByUnionKeys)) {
+                foreach ($delItemsByUnionKeys as $key) {
+                    try {
+                        $basketItem = $basketService->getBasket()->getItemByIndex($key);
+                        if($basketItem !== null) {
+                            $id = $basketItem->getId();
+                            if ($id > 0) {
+                                $basketService->deleteOfferFromBasket($id);
+                            }
+                        }
+                    } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
+                        try {
+                            $logger = LoggerFactory::create('basket');
+                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
+                        } catch (\RuntimeException $e) {
+                            /** оч. плохо - логи мы не получим */
+                        }
+                        return $this->ajaxMess->getSystemError();
+                    }
+                }
+            }
+
+            if (\is_array($delItemsByUnion) && !empty($delItemsByUnion)) {
+                foreach ($delItemsByUnion as $id) {
+                    try {
+                        $basketService->deleteOfferFromBasket($id);
+                    } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
+                        try {
+                            $logger = LoggerFactory::create('basket');
+                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
+                        } catch (\RuntimeException $e) {
+                            /** оч. плохо - логи мы не получим */
+                        }
+                        return $this->ajaxMess->getSystemError();
+                    }
+                }
+            }
+
+            if (\is_array($addQuantityByUnion) && !empty($addQuantityByUnion)) {
+                foreach ($addQuantityByUnion as $id => $quantity) {
+                    try {
+                        $basketService->getBasket()->getBasketItems();
+                        $basketItem = $basketService->getBasket()->getItemById($id);
+                        if ($basketItem === null) {
+                            $oldQuantity = 0;
+                        } else {
+                            $oldQuantity = $basketItem->getQuantity();
+                        }
+                        $basketService->updateBasketQuantity($id, $oldQuantity + $quantity);
+                    } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
+                        try {
+                            $logger = LoggerFactory::create('basket');
+                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
+                        } catch (\RuntimeException $e) {
+                            /** оч. плохо - логи мы не получим */
+                        }
+                        return $this->ajaxMess->getSystemError();
+                    }
+                }
+            }
+        }
+
         $backUrl = $request->get('backurl', '');
         $needAddPhone = $request->get('need_add_phone', 'N');
 
@@ -612,6 +763,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         return JsonSuccessResponse::createWithData('Корзины объединены', $data, 200, $options);
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
     public function ajaxNotUnionBasket(Request $request): JsonResponse
     {
         try {
@@ -626,27 +782,17 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getSystemError();
         }
 
-        $backUrl = $request->get('backurl', '');
-        $needAddPhone = $request->get('need_add_phone', 'N');
         $delBasketItems = $request->get('del_basket_items', []);
         if (!empty($delBasketItems)) {
             $delBasketItems = explode(',', $delBasketItems);
         }
 
-        $data = [];
-        $options = [];
-
-        if ($needAddPhone === 'Y') {
-            $data = ['html' => $this->getHtml('addPhone', 'Добавление телефона'), ['backurl' => $backUrl]];
-        } else {
-            if (!empty($backUrl)) {
-                $options = ['redirect' => $backUrl];
-            } else {
-                $options = ['reload' => true];
-            }
+        $delItemsByKeys = $request->get('del_basket_items_by_keys', []);
+        if (!empty($delItemsByKeys)) {
+            $delItemsByKeys = explode(',', $delItemsByKeys);
         }
 
-        if (\is_array($delBasketItems) && !empty($delBasketItems)) {
+        if (!empty($delBasketItems) || !empty($delBasketItems)) {
             try {
                 $basketService = $container->get(BasketService::class);
             } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
@@ -658,18 +804,58 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
                 return $this->ajaxMess->getSystemError();
             }
-            foreach ($delBasketItems as $id) {
-                try {
-                    $basketService->deleteOfferFromBasket($id);
-                } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
+
+            if (\is_array($delItemsByKeys) && !empty($delItemsByKeys)) {
+                foreach ($delItemsByKeys as $key) {
                     try {
-                        $logger = LoggerFactory::create('basket');
-                        $logger->critical('Ошибка удаления - ' . $e->getMessage());
-                    } catch (\RuntimeException $e) {
-                        /** оч. плохо - логи мы не получим */
+                        $basketItem = $basketService->getBasket()->getItemByIndex($key);
+                        if($basketItem !== null) {
+                            $id = $basketItem->getId();
+                            if ($id > 0) {
+                                $basketService->deleteOfferFromBasket($id);
+                            }
+                        }
+                    } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
+                        try {
+                            $logger = LoggerFactory::create('basket');
+                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
+                        } catch (\RuntimeException $e) {
+                            /** оч. плохо - логи мы не получим */
+                        }
+                        return $this->ajaxMess->getSystemError();
                     }
-                    return $this->ajaxMess->getSystemError();
                 }
+            }
+
+            if(\is_array($delBasketItems) && !empty($delBasketItems)) {
+                foreach ($delBasketItems as $id) {
+                    try {
+                        $basketService->deleteOfferFromBasket($id);
+                    } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
+                        try {
+                            $logger = LoggerFactory::create('basket');
+                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
+                        } catch (\RuntimeException $e) {
+                            /** оч. плохо - логи мы не получим */
+                        }
+                        return $this->ajaxMess->getSystemError();
+                    }
+                }
+            }
+        }
+
+        $backUrl = $request->get('backurl', '');
+        $needAddPhone = $request->get('need_add_phone', 'N');
+        $data = [];
+        $options = [];
+
+        if ($needAddPhone === 'Y') {
+            $data = ['html' => $this->getHtml('addPhone', 'Добавление телефона'), ['backurl' => $backUrl]];
+        } else {
+            if (!empty($backUrl)) {
+                $options = ['redirect' => $backUrl];
+            } else {
+                $options = ['reload' => true];
             }
         }
 
