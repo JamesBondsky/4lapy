@@ -41,6 +41,8 @@ class OrderStorageService
 
     public const PAYMENT_STEP = 'payment';
 
+    public const PAYMENT_STEP_CARD = 'payment-card';
+
     public const COMPLETE_STEP = 'complete';
 
     /**
@@ -121,15 +123,14 @@ class OrderStorageService
     {
         $steps = array_reverse($this->stepOrder);
         $stepIndex = array_search($startStep, $steps, true);
-        if ($stepIndex === false) {
-            return $startStep;
-        }
 
         $realStep = $startStep;
-        $steps = \array_slice($steps, $stepIndex);
-        foreach ($steps as $step) {
-            if ($this->storageRepository->validate($storage, $step)->count()) {
-                $realStep = $step;
+        if ($stepIndex !== false) {
+            $steps = \array_slice($steps, $stepIndex);
+            foreach ($steps as $step) {
+                if ($this->storageRepository->validate($storage, $step)->count()) {
+                    $realStep = $step;
+                }
             }
         }
 
@@ -173,6 +174,7 @@ class OrderStorageService
             'order-pick-time' => 'split',
             'shopId' => 'deliveryPlaceCode',
             'pay-type' => 'paymentId',
+            'cardNumber' => 'discountCardNumber'
         ];
 
         foreach ($data as $name => $value) {
@@ -214,7 +216,6 @@ class OrderStorageService
 
                 break;
             case self::DELIVERY_STEP:
-
                 try {
                     $deliveryCode = $this->deliveryService->getDeliveryCodeById(
                         (int)$data['deliveryId']
@@ -270,6 +271,12 @@ class OrderStorageService
                     'paymentId',
                     'bonus',
                 ];
+                break;
+            case self::PAYMENT_STEP_CARD:
+                $availableValues = [
+                    'discountCardNumber'
+                ];
+                break;
         }
 
         foreach ($data as $name => $value) {
@@ -288,11 +295,6 @@ class OrderStorageService
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
                 $storage->$setter($value);
-            } elseif (isset($mapping[$name])) {
-                $setter = 'set' . ucfirst($mapping[$name]);
-                if (method_exists($storage, $setter)) {
-                    $storage->$setter($value);
-                }
             }
         }
 

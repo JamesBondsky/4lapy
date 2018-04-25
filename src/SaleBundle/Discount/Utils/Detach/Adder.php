@@ -43,11 +43,13 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
          * 2. PRICE и DISCOUNT_PRICE
          */
         //todo Вероятно стоит сначала целиком разобрать резалт, а потом действовать
-        if (!$discount = $this->order->getDiscount()) {
+        if (!$discountBase = $this->order->getDiscount()) {
             return;
         }
-        $applyResult = $discount->getApplyResult(true);
+
+        $applyResult = $discountBase->getApplyResult(true);
         $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
+
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketId => $discounts) {
                 if (is_iterable($discounts)) {
@@ -77,6 +79,12 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                                 'CODE' => 'DETACH_FROM',
                                                 'VALUE' => $basketId,
                                                 'SORT' => 100,
+                                            ],
+                                            [
+                                                'NAME' => 'Название скидки',
+                                                'CODE' => 'SHARE_NAME',
+                                                'VALUE' => $applyResult['DISCOUNT_LIST'][$discount['DISCOUNT_ID']]['NAME'],
+                                                'SORT' => 200,
                                             ],
                                         ]
                                     ];

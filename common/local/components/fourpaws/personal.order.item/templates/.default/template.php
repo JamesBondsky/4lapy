@@ -153,58 +153,58 @@ if ($orderSubscribe) {
                 echo '</span>';
                 ?>
             </div>
-            <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
-                <?= $order->getDelivery()->getDeliveryName() ?>
-                <span><?= $order->getDateDelivery() ?></span>
-            </div>
-            <?php
+            <?php if(!$order->isFastOrder()) { ?>
+                <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
+                    <?= $order->getDelivery()->getDeliveryName() ?>
+                    <span><?= $order->getDateDelivery() ?></span>
+                </div>
+            <?php }
             $store = $order->getStore();
-            if ($store->getId() > 0) {
-                ?>
+            if ($store->getId() > 0) { ?>
                 <div class="b-adress-info b-adress-info--order">
                     <?php if ($store->getMetro() > 0) { ?>
                         <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
                         м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
-                    <?php } ?>
-                    <?= $order->getStore()->getAddress() ?>
-                    <?php if (!empty($order->getStore()->getScheduleString())) { ?>
+                    <?php }
+                    echo $order->getStore()->getAddress();
+                    if (!empty($order->getStore()->getScheduleString())) { ?>
                         <p class="b-adress-info__mode-operation"><?= $order->getStore()->getScheduleString() ?></p>
                     <?php } ?>
                 </div>
-                <?php
-            }
-            ?>
+            <?php } ?>
         </div>
         <div class="b-accordion-order-item__pay">
             <div class="b-accordion-order-item__not-pay">
-                <?php
-                $payment = $order->getPayment();
+                <?php $payment = $order->getPayment();
                 $paymentCode = $payment->getCode();
                 $paymentName = '';
-                if ($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
+                if($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
                     /** т.к. неоплаченных заказов будет не очень мног оу пользователя - оставим расчет здесь */
                     /** @var \FourPaws\SaleBundle\Service\OrderService $orderService */
                     $orderService = \FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\SaleBundle\Service\OrderService::class);
                     $bitrixOrder = \Bitrix\Sale\Order::load($order->getId());
-                    if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
+                    if($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
                         $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
                         if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
                             $paymentName = 'Постоплата';
                         }
                     }
                 }
-                if (!empty($paymentName)) {
+                if($order->isFastOrder() && \in_array($order->getStatusId(), ['N', 'Q'], true)){
+                    $paymentName = 'Постоплата';
+                }
+                if(!empty($paymentName)) {
                     echo $paymentName;
-                } else {
+                }
+                else{
                     $paymentName = $paymentCode === 'cash' ? 'наличными' : $paymentCode === 'card-online' ? 'онлайн' : 'банковской картой';
                     echo $order->getPayPrefixText() . ' ' . $paymentName;
-                }
-                ?>
+                } ?>
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
             <?php
-            if (!$orderSubscribe && $order->isClosed() && !$order->isManzana()) {
+            if (!$orderSubscribe && !$order->isManzana()) {
                 $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
                 $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]);
                 ?>
@@ -216,7 +216,7 @@ if ($orderSubscribe) {
                 </div>
                 <?php
             }
-
+            /*
             if (!$orderSubscribe && !$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') {
                 ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
@@ -228,12 +228,14 @@ if ($orderSubscribe) {
                 </div>
                 <?php
             }
+            */
 
             // элементы управления подпиской
             echo $subscribeOrderEditControls;
 
             ?>
-            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full"><?= $order->getFormatedPrice() ?>
+            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
+                <?= $order->getFormatedPrice() ?>
                 <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
             <?php

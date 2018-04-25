@@ -867,6 +867,8 @@ class Order extends BaseEntity
     /**
      * @return OrderService
      * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
     private function getPersonalOrderService(): OrderService
     {
@@ -922,5 +924,26 @@ class Order extends BaseEntity
     public function isItemsEmpty(): bool
     {
         return $this->getItems()->isEmpty();
+    }
+
+    /**
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     */
+    public function isFastOrder(): bool
+    {
+        return $this->getPropValue('COM_WAY') === '04';
+    }
+
+    /**
+     * @param string $code
+     * @return OrderProp|null
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     */
+    public function getProperty(string $code): ?OrderProp
+    {
+        return $this->getProps()->get($code);
     }
 }

@@ -140,9 +140,14 @@ class OrderService
     /**
      * @return ArrayCollection
      * @throws ApplicationCreateException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
+     * @throws NotAuthorizedException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      * @throws \Exception
      */
     public function getManzanaOrders(): ArrayCollection
@@ -191,10 +196,10 @@ class OrderService
                                 $items[!empty($item->getArticle()) ? $item->getArticle() : $i] = $item;
                             }
                         }
-                    } else {
-                        // пропускаем чеки без товаров
-                        continue;
                     }
+                } else {
+                    // пропускаем чеки без товаров
+                    continue;
                 }
                 $order->setItems(new ArrayCollection($items));
                 $orders[$order->getId()] = $order;
@@ -361,7 +366,8 @@ class OrderService
         }
 
         $store = new Store();
-        $street = $order->getPropValue('STREET') . ' ул.';
+        //$street = $order->getPropValue('STREET') . ' ул.';
+        $street = $order->getPropValue('STREET');
         $house = ', д.' . $order->getPropValue('HOUSE');
         $building = !empty($order->getPropValue('BUILDING')) ? ', корпус/строение ' . $order->getPropValue('BUILDING') : '';
         $porch = !empty($order->getPropValue('PORCH')) ? ', подъезд. ' . $order->getPropValue('PORCH') : '';

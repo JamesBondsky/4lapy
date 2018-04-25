@@ -8,7 +8,9 @@
  * @var \DateTime $deliveryDate
  * @var string $deliveryCode
  */
+
+$deliveryDateFormatted = $deliveryDate ? $deliveryDate->format('d.m.Y') : ''
+
 ?>
-Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price ?> руб. оформлен! И будет доставлен <?= $deliveryDate->format(
-    'd.m.Y'
-) ?>
+    Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price ?> руб. оформлен!
+    И будет доставлен <?= $deliveryDateFormatted ?>

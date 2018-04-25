@@ -123,9 +123,9 @@ class NotificationService implements LoggerAwareInterface
 
         static::$isSending = true;
 
+        $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
             if ($transactionId) {
                 $this->logMessage($order, $transactionId);
             }
@@ -191,9 +191,9 @@ class NotificationService implements LoggerAwareInterface
 
         static::$isSending = true;
 
+        $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
             if ($transactionId) {
                 $this->logMessage($order, $transactionId);
             }
