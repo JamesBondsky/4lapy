@@ -244,11 +244,15 @@ class Offer extends IblockElement
      * Цена по акции - простая акция из SAP
      *
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PRICE_ACTION = 0;
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COND_FOR_ACTION = '';
 
@@ -256,6 +260,8 @@ class Offer extends IblockElement
      * Размер скидки на товар - простая акция из SAP
      *
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COND_VALUE = 0;
 
@@ -269,6 +275,9 @@ class Offer extends IblockElement
 
     /**
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getOldPrice", setter="withOldPrice")
      */
     protected $oldPrice = 0;
 
@@ -1380,11 +1389,19 @@ class Offer extends IblockElement
             return;
         }
 
+        /**
+         * В эластике price индексируется с уже посчитанной скидкой,
+         * поэтому проводить расчеты ни к чемуу
+         */
+        if ($this->oldPrice) {
+            return;
+        }
+
         $price = $this->price;
         $oldPrice = $this->price;
 
         if ($this->isSimpleSaleAction()) {
-            $price = (int)$this->PROPERTY_PRICE_ACTION;
+            $price = (float)$this->PROPERTY_PRICE_ACTION;
         } elseif ($this->isSimpleDiscountAction()) {
             $price *= (100 - $this->PROPERTY_COND_VALUE) / 100;
         }
