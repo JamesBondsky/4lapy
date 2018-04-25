@@ -1,13 +1,7 @@
 <?php
 
-use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Application;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Model\Product;
-use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
-use FourPaws\SaleBundle\Service\BasketService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();

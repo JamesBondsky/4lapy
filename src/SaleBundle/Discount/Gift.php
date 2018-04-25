@@ -151,7 +151,6 @@ class Gift extends \CSaleActionCtrlAction
     public static function GetConditionShow($arParams)
     {
         $result = false;
-
         if (isset($arParams['ID']) && $arParams['ID'] === static::GetControlID()) {
             $arControl = [
                 'ID'    => $arParams['ID'],
@@ -296,6 +295,7 @@ class Gift extends \CSaleActionCtrlAction
                 }
             }
         }
+
         return $result;
     }
 }

@@ -25,6 +25,7 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Service\NotificationService;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -156,6 +157,15 @@ class Event implements ServiceHandlerInterface
             return;
         }
 
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(
+            OrderService::class
+        );
+        if ($orderService->isSubscribe($order)) {
+            // пропускаются заказы, созданные по подписке
+            return;
+        }
+
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
             ->getContainer()
@@ -234,6 +244,7 @@ class Event implements ServiceHandlerInterface
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
             'personal:order:' . $order->getField('USER_ID'),
+            'order:item:' . $order->getId(),
         ]);
     }
 }

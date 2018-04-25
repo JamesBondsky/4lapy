@@ -62,6 +62,14 @@ services:
     arguments: ['Address']
     parent: bx.hlblock.base
 
+  bx.hlblock.ordersubscribe:
+    arguments: ['OrderSubscribe']
+    parent: bx.hlblock.base
+
+  bx.hlblock.ordersubscribehistory:
+    arguments: ['OrderSubscribeHistory']
+    parent: bx.hlblock.base
+
   # Свойства продукта
   bx.hlblock.forwho:
     arguments: ['ForWho']

@@ -17,6 +17,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Helpers\BxCollection;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\LogicException;
@@ -80,10 +81,26 @@ class Event implements ServiceHandlerInterface
         /**
          * Если заказ уже выгружен в SAP новый или оплата онлайн, пропускаем
          */
-        if (
-            self::isOrderExported($order)
-            || \in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)
-        ) {
+        if (self::isOrderExported($order)) {
+            return;
+        }
+
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(
+            OrderService::class
+        );
+
+        /**
+         * ...и оплата не онлайн, отправляем в SAP
+         */
+        //if (\in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
+        if ($orderService->isOnlinePayment($order)) {
+            return;
+        }
+        /**
+         * ...и пропускаются заказы, созданные по подписке
+         */
+        if ($orderService->isSubscribe($order)) {
             return;
         }
 

@@ -12,7 +12,6 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
@@ -27,7 +26,6 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
-use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -51,10 +49,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
     /** @var UserAuthorizationInterface */
     private $currentUserProvider;
-
-    public const STATUS_IN_POINT_ISSUE = 'F';
-    public const STATUS_IN_ASSEMBLY_1 = 'H';
-    public const STATUS_IN_ASSEMBLY_2 = 'W';
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -95,6 +89,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
         $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -125,7 +121,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
         $instance = Application::getInstance();
 
-        $request = Application::getInstance()->getContext()->getRequest();
+        $request = $instance->getContext()->getRequest();
         if($request->get('reply_order') === 'Y'){
             $orderId = (int)$request->get('id');
             if($orderId > 0){
@@ -144,10 +140,15 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         }
 
         $cache = $instance->getCache();
-        $cachePath = $this->getCachePath() ?: $this->getPath();
+        // здесь всегда будет работать $this->getPath(), который вернет не тот путь
+        //$cachePath = $this->getCachePath() ?: $this->getPath();
+        $cachePath = $instance->getManagedCache()->getCompCachePath(
+            $this->getRelativePath()
+        );
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $userId]),
-            $cachePath)) {
+            $cachePath)
+        ) {
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
         } elseif ($cache->startDataCache()) {
@@ -177,14 +178,23 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** имитация постранички */
         $nav = new PageNavigation('nav-orders');
         $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-
+        /*
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
-        /** @noinspection PhpUndefinedVariableInspection */
-        if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId, 'page'=>$nav->getCurrentPage()], $cachePath)) {
+        $startResultCacheRes = $this->startResultCache(
+            $this->arParams['CACHE_TIME'],
+            [
+                'manzanaOrders' => $manzanaOrders->getKeys(),
+                'USER_ID' => $userId,
+                'page' => $nav->getCurrentPage()
+            ],
+            $cachePath
+        );
+        if ($startResultCacheRes) {
+        */
             $activeOrders = $closedOrders = new ArrayCollection();
             try {
                 $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
+                /** @noinspection PhpUndefinedVariableInspection */
                 $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                     $manzanaOrders->toArray());
                 /** Сортировка по дате и статусу общих заказов */
@@ -197,38 +207,40 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                     $nav->getOffset(), $nav->getPageSize(), true));
                 $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
+                /*
                 $this->abortResultCache();
+                */
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
             } catch (\Exception $e) {
+                /*
                 $this->abortResultCache();
+                */
                 $logger = LoggerFactory::create('my_orders');
                 $logger->error('error - '.$e->getMessage());
                 /** Показываем пустую страницу с заказами */
             }
 
-            $page= '';
-            if($activeOrders->isEmpty() && $closedOrders->isEmpty()){
-                $page = 'notOrders';
-            }
-            else{
+            if(!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
                 $storeService = App::getInstance()->getContainer()->get('store.service');
                 $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
             }
 
+        /*
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:orders',
                 'personal:orders:'. $userId,
                 'order:'. $userId
             ]);
-
-            $this->setResultCacheKeys(['ACTIVE_ORDERS', 'CLOSED_ORDERS']);
-
-            $this->includeComponentTemplate($page);
+            //$this->setResultCacheKeys(['ACTIVE_ORDERS', 'CLOSED_ORDERS']);
+            $this->endResultCache();
         }
+        */
 
-        return true;
+        $this->includeComponentTemplate();
+
+        return $this;
     }
 
     /**

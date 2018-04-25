@@ -835,6 +835,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->warnings = new ErrorCollection();
         $this->stockResult = null;
         $this->periodFrom = null;
+
+        $this->selectedInterval = null;
     }
 
     public function __clone()
