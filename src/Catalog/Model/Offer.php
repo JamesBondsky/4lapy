@@ -244,11 +244,15 @@ class Offer extends IblockElement
      * Цена по акции - простая акция из SAP
      *
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PRICE_ACTION = 0;
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COND_FOR_ACTION = '';
 
@@ -256,6 +260,8 @@ class Offer extends IblockElement
      * Размер скидки на товар - простая акция из SAP
      *
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COND_VALUE = 0;
 
@@ -269,6 +275,9 @@ class Offer extends IblockElement
 
     /**
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getOldPrice", setter="withOldPrice")
      */
     protected $oldPrice = 0;
 
@@ -882,13 +891,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
     public function getPrice(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->price;
     }
@@ -1045,13 +1051,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      */
     public function getOldPrice(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->oldPrice;
     }
@@ -1066,13 +1069,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      */
     public function getDiscount(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->discount;
     }
@@ -1381,6 +1381,40 @@ class Offer extends IblockElement
     }
 
     /**
+     * @todo не использовать этот метод для расчета скидочных цен
+     */
+    protected function checkOptimalPriceTmp(): void
+    {
+        if ($this->isCounted) {
+            return;
+        }
+
+        /**
+         * В эластике price индексируется с уже посчитанной скидкой,
+         * поэтому проводить расчеты ни к чемуу
+         */
+        if ($this->oldPrice) {
+            return;
+        }
+
+        $price = $this->price;
+        $oldPrice = $this->price;
+
+        if ($this->isSimpleSaleAction()) {
+            $price = (float)$this->PROPERTY_PRICE_ACTION;
+        } elseif ($this->isSimpleDiscountAction()) {
+            $price *= (100 - $this->PROPERTY_COND_VALUE) / 100;
+        }
+
+        $this->withPrice($price)
+            ->withOldPrice($oldPrice)
+            ->withDiscount(round(100 * $oldPrice / $price));
+        $this->isCounted = true;
+    }
+
+    /**
+     * @todo использовать этот метод для расчета скидочных цен
+     *
      * Check and set optimal price, discount, old price with bitrix discount
      *
      * @throws LoaderException
