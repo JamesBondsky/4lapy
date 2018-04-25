@@ -16,6 +16,7 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\LogicException;
@@ -73,21 +74,21 @@ class Event implements ServiceHandlerInterface
      */
     public static function consumeOrderAfterSaveOrder(BitrixEvent $event): void
     {
-        /**
-         * Если заказ новый...
-         */
-        if ($event->getParameter('IS_NEW')) {
-            /** @var Order $order */
-            $order = $event->getParameter('ENTITY');
-            /**
-             * ...и оплата не онлайн, отправляем в SAP
-             */
-            if (\in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
-                return;
-            }
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+        $isConsumedValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED');
 
-            self::getConsumerRegistry()->consume($order);
+        /**
+         * Если заказ уже выгружен в SAP новый или оплата онлайн, пропускаем
+         */
+        if (
+            $isConsumedValue
+            && $isConsumedValue->getValue()
+            && \in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
+            return;
         }
+
+        self::getConsumerRegistry()->consume($order);
     }
 
     /**

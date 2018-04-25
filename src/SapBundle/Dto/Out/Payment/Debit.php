@@ -4,7 +4,9 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\SapBundle\Dto\In\ConfirmPayment;
+namespace FourPaws\SapBundle\Dto\Out\Payment;
+
+use DateTime;
 
 /**
  * Class Debit
@@ -20,7 +22,7 @@ class Debit
      * @Serializer\SerializedName("DeliveryDate")
      * @Serializer\Type("DateTime<'Ymd'>")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $deliveryDate;
 
@@ -138,7 +140,7 @@ class Debit
      * @Serializer\SerializedName("PaymentDate")
      * @Serializer\Type("DateTime<'Ymd'>")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $paymentDate;
 
@@ -167,18 +169,18 @@ class Debit
     protected $zReport = '';
 
     /**
-     * @return \DateTime
+     * @return DateTime
      */
-    public function getDeliveryDate(): \DateTime
+    public function getDeliveryDate(): DateTime
     {
         return $this->deliveryDate;
     }
 
     /**
-     * @param \DateTime $deliveryDate
+     * @param DateTime $deliveryDate
      * @return Debit
      */
-    public function setDeliveryDate(\DateTime $deliveryDate): Debit
+    public function setDeliveryDate(DateTime $deliveryDate): Debit
     {
         $this->deliveryDate = $deliveryDate;
 
@@ -357,18 +359,18 @@ class Debit
     }
 
     /**
-     * @return \DateTime
+     * @return DateTime
      */
-    public function getPaymentDate(): \DateTime
+    public function getPaymentDate(): DateTime
     {
         return $this->paymentDate;
     }
 
     /**
-     * @param \DateTime $paymentDate
+     * @param DateTime $paymentDate
      * @return Debit
      */
-    public function setPaymentDate(\DateTime $paymentDate): Debit
+    public function setPaymentDate(DateTime $paymentDate): Debit
     {
         $this->paymentDate = $paymentDate;
 
