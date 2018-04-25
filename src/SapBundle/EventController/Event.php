@@ -83,7 +83,7 @@ class Event implements ServiceHandlerInterface
          */
         if (
             $isConsumedValue
-            && $isConsumedValue->getValue()
+            && $isConsumedValue->getValue() === 'Y'
             && \in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
             return;
         }
