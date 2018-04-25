@@ -220,7 +220,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Client
      *
-     * @throws \Exception
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      */
@@ -249,7 +248,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param User|null $user
      *
      * @return Client
-     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
@@ -278,7 +276,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $phone
      *
      * @return Client
-     * @throws \Exception
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
@@ -315,7 +312,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Clients
      *
-     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getUserDataByPhone(string $phone): Clients
@@ -520,7 +516,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function validateCardByNumberRaw(string $cardNumber): CardValidateResult
     {
         $cardValidateResult = null;
-        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        $bag = new ParameterBag(['cardnumber' => $this->prepareCardNumber($cardNumber)]);
         try {
             $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
             /** @var CardValidateResult $cardValidateResult */
@@ -824,5 +820,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
+    }
+
+    /**
+     * @param string $cardNumber
+     *
+     * @return string
+     */
+    public function prepareCardNumber(string $cardNumber): string
+    {
+        return preg_replace('~\D~', '', $cardNumber);
     }
 }
