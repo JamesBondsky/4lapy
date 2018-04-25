@@ -286,7 +286,7 @@ class DeliveryService implements LoggerAwareInterface
         $availableServices = Manager::getRestrictedObjectsList($shipment);
 
         $result = [];
-
+        $errors = [];
         foreach ($availableServices as $service) {
             if ($codes && !\in_array($service->getCode(), $codes, true)) {
                 continue;
@@ -315,6 +315,7 @@ class DeliveryService implements LoggerAwareInterface
 
             $calculationResult = $shipment->calculateDelivery();
             if (!$calculationResult->isSuccess()) {
+                $errors[$service->getCode()] = $calculationResult->getErrorMessages();
                 continue;
             }
 
@@ -335,7 +336,17 @@ class DeliveryService implements LoggerAwareInterface
 
             if ($calculationResult->isSuccess()) {
                 $result[] = $calculationResult;
+            } else {
+                $errors[$calculationResult->getDeliveryCode()] = $calculationResult->getErrorMessages();
             }
+        }
+
+        if (empty($codes) && empty($result)) {
+
+            $this->log()->info('No available deliveries', [
+                'location' => $this->getDeliveryLocation($shipment),
+                'errors' => $errors
+            ]);
         }
 
         return $result;

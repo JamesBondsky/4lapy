@@ -7,7 +7,7 @@
 $aMenuLinks = [
     [
         'Профиль',
-        '/personal/',
+        '/personal/index.php',
     ],
     [
         'Адреса доставки',

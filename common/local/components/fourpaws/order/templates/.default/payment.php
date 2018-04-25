@@ -154,6 +154,7 @@ $user = $arResult['USER'];
                                        type="text"
                                        maxlength="5"
                                        size="5"
+                                       data-max-value="<?= $arResult['MAX_BONUS_SUM'] ?>"
                                        value="<?= $storage->getBonus() ?>">
                                 <div class="b-error">
                                     <span class="js-message"></span>
