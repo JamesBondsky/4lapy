@@ -102,11 +102,16 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $isSuccess = true;
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
         /** @var Store $sender */
+        $start = microtime(true);
+        $totalCreated = 0;
+        $totalDeleted = 0;
         foreach ($senders as $sender) {
             $results = $this->scheduleResultService->calculateForSender($sender, $date, $tc);
 
             try {
-                $this->scheduleResultService->updateResults($results);
+                [$created, $deleted] = $this->scheduleResultService->updateResults($results);
+                $totalCreated += $created;
+                $totalDeleted += $deleted;
             } catch (\Exception $e) {
                 $this->log()->error(
                     sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
@@ -123,5 +128,14 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         } else {
             BitrixApplication::getConnection()->rollbackTransaction();
         }
+
+        $this->log()->info(
+            sprintf(
+                'Task finished, time: %ss. Created: %s, deleted: %s',
+                round(microtime(true) - $start, 2),
+                $totalCreated,
+                $totalDeleted
+            )
+        );
     }
 }
