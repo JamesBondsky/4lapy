@@ -197,6 +197,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     protected function subscribeAction()
     {
+        /** @todo подписка для оффлайн заказов - заказы из манзаны */
         $this->initPostFields();
         if ($this->arResult['FIELD_VALUES']['orderId']) {
             $this->arParams['ORDER_ID'] = (int)$this->arResult['FIELD_VALUES']['orderId'];

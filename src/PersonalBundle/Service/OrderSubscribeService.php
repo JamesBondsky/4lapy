@@ -197,7 +197,7 @@ class OrderSubscribeService
      */
     public function canBeSubscribed(Order $order): bool
     {
-        return $order->isPayed() && !$order->isManzana();
+        return $order->isPayed() && (!$order->isManzana() || $order->isNewManzana());
     }
 
     /**
