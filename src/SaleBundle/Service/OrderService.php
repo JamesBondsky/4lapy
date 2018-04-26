@@ -33,6 +33,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
+use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -400,14 +401,6 @@ class OrderService implements LoggerAwareInterface
             foreach ($propertyValueCollection as $propertyValue) {
                 $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
-                    case 'SHIPMENT_PLACE_CODE':
-                        $shipmentStore = $selectedDelivery->getShipmentStore();
-                        if ($shipmentStore instanceof Store) {
-                            $value = $shipmentStore->getXmlId();
-                        } else {
-                            continue 2;
-                        }
-                        break;
                     case 'DELIVERY_PLACE_CODE':
                         if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
                             /** @var PickupResult $selectedDelivery */
@@ -464,10 +457,6 @@ class OrderService implements LoggerAwareInterface
                 $code = $propertyValue->getProperty()['CODE'];
                 $update = false;
                 switch ($code) {
-                    case 'SHIPMENT_PLACE_CODE':
-                        $value = 'DC01';
-                        $update = true;
-                        break;
                     case 'DELIVERY_INTERVAL':
                         $value = '';
                         $update = true;
@@ -749,6 +738,25 @@ class OrderService implements LoggerAwareInterface
                     'floor' => $address->getFloor(),
                     'flat' => $address->getFlat(),
                 ]);
+            }
+        }
+
+        /**
+         * Заполнение складов довоза товара для элементов корзины
+         */
+        if ($shipmentResults = $selectedDelivery->getShipmentResults()) {
+            /** @var BasketItem $item */
+            foreach ($order->getBasket()->getOrderableItems() as $item) {
+                /** @var DeliveryScheduleResult $deliveryResult */
+                if(!$deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first()) {
+                    continue;
+                }
+
+                $this->basketService->setBasketItemPropertyValue(
+                    $item,
+                    'SHIPMENT_PLACE_CODE',
+                    $deliveryResult->getScheduleResult()->getSenderCode()
+                );
             }
         }
 

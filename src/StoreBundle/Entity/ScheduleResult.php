@@ -5,7 +5,6 @@
 
 namespace FourPaws\StoreBundle\Entity;
 
-use Bitrix\Main\ArgumentException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -290,6 +289,16 @@ class ScheduleResult extends Base
             $this->routeCodes,
             $this->days
         ]);
+    }
+
+    /**
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getLastSender(): Store
+    {
+        $keys = array_reverse($this->getRoute()->getKeys());
+        return $this->getRoute()->get($keys[1]);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection

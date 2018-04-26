@@ -106,11 +106,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $shipmentResults;
 
     /**
-     * @var Store
-     */
-    protected $shipmentStore;
-
-    /**
      * @return \DateTime
      */
     public function getCurrentDate(): \DateTime
@@ -513,8 +508,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 /** @var StockResult $stockResultForOffer */
                 $stockResultForOffer = $delayed->filterByOffer($offer)->first();
                 if ($shipmentResultForOffer) {
-                    $this->shipmentStore = $shipmentResultForOffer->getScheduleResult()->getSender();
-
                     $diff = $stockResultForOffer->getAmount() - $shipmentResultForOffer->getAmount();
                     if ($diff > 0) {
                         /**
@@ -658,25 +651,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function setShipmentResults(DeliveryScheduleResult $shipmentResults): CalculationResultInterface
     {
         $this->shipmentResults = $shipmentResults;
-        return $this;
-    }
-
-    /**
-     * @return Store
-     */
-    public function getShipmentStore(): ?Store
-    {
-        return $this->shipmentStore;
-    }
-
-    /**
-     * @param Store $shipmentStore
-     *
-     * @return BaseResult
-     */
-    public function setShipmentStore(Store $shipmentStore): CalculationResultInterface
-    {
-        $this->shipmentStore = $shipmentStore;
         return $this;
     }
 
