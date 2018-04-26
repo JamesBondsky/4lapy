@@ -37,8 +37,8 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
@@ -104,6 +104,16 @@ class OrderService implements LoggerAwareInterface
     public const STATUS_DELIVERED = 'J';
 
     /**
+     * Заказ в сборке
+     */
+    public const STATUS_IN_ASSEMBLY_1 = 'H';
+
+    /**
+     * Заказ в сборке
+     */
+    public const STATUS_IN_ASSEMBLY_2 = 'W';
+
+    /**
      * @var AddressService
      */
     protected $addressService;
@@ -153,6 +163,9 @@ class OrderService implements LoggerAwareInterface
 
     /** @var ManzanaService */
     protected $manzanaService;
+
+    /** @var array $paySystemServiceCache */
+    private $paySystemServiceCache = [];
 
     /**
      * OrderService constructor.
@@ -689,20 +702,18 @@ class OrderService implements LoggerAwareInterface
         /**
          * Привязываем бонусную карту
          */
-        if ($canAttachCard) {
+        if ($canAttachCard && !$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
             try {
-                if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
-                    $existingContact = $this->manzanaService->getContactByUser($user);
-                    $existingContact->cardnumber = $storage->getDiscountCardNumber();
-                    $contact = new Client();
-                    $contact->cardnumber = $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber());
-                    $contact->contactId = $existingContact->contactId;
-                    $this->currentUserProvider->getUserRepository()->updateDiscountCard(
-                        $user->getId(),
-                        $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber())
-                    );
-                }
-            } catch (ManzanaServiceException $e) {
+                $existingContact = $this->manzanaService->getContactByUser($user);
+                $contact = new Client();
+                $contact->cardnumber = $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber());
+                $contact->contactId = $existingContact->contactId;
+                $this->manzanaService->updateContact($contact);
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                    $user->getId(),
+                    $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber())
+                );
+            } catch (ManzanaServiceException|ContactUpdateException $e) {
                 $this->log()->error(
                     sprintf('failed to add bonus card to user: %s: %s', \get_class($e), $e->getMessage()),
                     ['userId' => $user->getId(), 'card' => $storage->getDiscountCardNumber()]
@@ -759,6 +770,7 @@ class OrderService implements LoggerAwareInterface
 
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
+            'order:item:' . $order->getId(),
         ]);
     }
 
@@ -1282,10 +1294,9 @@ class OrderService implements LoggerAwareInterface
                 case $isFastOrder:
                     $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
                     break;
-                //@todo заказ по подписке
-//                case $isSubscribe:
-//                    $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
-//                    break;
+                case $this->isSubscribe($order):
+                    $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
+                    break;
                 case !$this->validateAddress($order):
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
@@ -1406,5 +1417,61 @@ class OrderService implements LoggerAwareInterface
         }
 
         return $propertyValue->getValue();
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     * @throws ObjectNotFoundException
+     */
+    public function isOnlinePayment(Order $order): bool
+    {
+        $result = false;
+        $paymentCode = $this->getOrderPaymentType($order);
+        if ($paymentCode === static::PAYMENT_ONLINE) {
+            $result = true;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function isSubscribe(Order $order): bool
+    {
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'IS_SUBSCRIBE');
+            $result = $propValue->getValue() === 'Y';
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return null|\Bitrix\Sale\PaySystem\Service
+     */
+    public function getCashPaySystemService()
+    {
+        $paySystemService = null;
+        if (!isset($this->paySystemServiceCache['cash'])) {
+            $this->paySystemServiceCache['cash'] = null;
+            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH);
+            if ($data) {
+                $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
+                    $data
+                );
+            }
+        }
+
+        if ($this->paySystemServiceCache['cash']) {
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystemService */
+            $paySystemService = clone $this->paySystemServiceCache['cash'];
+        }
+
+        return $paySystemService;
     }
 }

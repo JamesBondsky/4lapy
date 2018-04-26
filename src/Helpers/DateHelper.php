@@ -27,7 +27,10 @@ class DateHelper
     
     /** родительный падеж короткий */
     public const SHORT_GENITIVE = 'ShortGenitive';
-    
+
+    /** дательный падеж множ. число */
+    const DATIVE_PLURAL = 'DativePlural';
+
     /**Месяца в родительном падеже*/
     private static $monthGenitive = [
         '#1#'  => 'Января',
@@ -102,7 +105,18 @@ class DateHelper
         '#6#' => 'Суббота',
         '#7#' => 'Воскресенье',
     ];
-    
+
+    /** дни недели в множ. числе дат. падеже */
+    private static $dayOfWeekDativePlural = [
+        '#1#' => 'Понедельникам',
+        '#2#' => 'Вторникам',
+        '#3#' => 'Средам',
+        '#4#' => 'Четвергам',
+        '#5#' => 'Пятницам',
+        '#6#' => 'Субботам',
+        '#7#' => 'Воскресеньям',
+    ];
+
     /**краткие дни недели*/
     private static $dayOfWeekShortNominative = [
         '#1#' => 'пн',
