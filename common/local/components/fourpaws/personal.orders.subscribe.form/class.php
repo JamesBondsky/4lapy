@@ -656,16 +656,19 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderPossibleDeliveryDate(Order $order): \DateTime
+    public function getOrderPossibleDeliveryDate(Order $order): ?\DateTime
     {
         $bitrixOrder = $order->getBitrixOrder();
         $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
             $bitrixOrder
         );
-        $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
-            $deliveryCalcResult
-        );
+        if($deliveryCalcResult !== null) {
+            $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
+                $deliveryCalcResult
+            );
 
-        return $deliveryDate;
+            return $deliveryDate;
+        }
+        return null;
     }
 }
