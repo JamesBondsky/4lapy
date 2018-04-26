@@ -95,7 +95,7 @@ class Shipment extends \Ipolh\DPD\Shipment
     {
         $volume = $this->dimensions['WIDTH'] * $this->dimensions['HEIGHT'] * $this->dimensions['LENGTH'];
 
-        return round($volume / 1000000, 6);
+        return round($volume / 1000000, 3) ?: 0.001;
     }
 
     public function isPaymentOnDelivery()
