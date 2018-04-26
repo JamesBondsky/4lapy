@@ -8,8 +8,10 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
+use Bitrix\Sale\Payment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -18,6 +20,7 @@ use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -669,7 +672,12 @@ class Order extends BaseEntity
     public function getPayment(): OrderPayment
     {
         if (!$this->payment) {
-            $this->payment = $this->getPersonalOrderService()->getPayment($this->getPaySystemId());
+            $paymentId = $this->getPaymentIdByPayments();
+            if ($paymentId === null) {
+                $paymentId = $this->getPaySystemId();
+            }
+            /** @todo сделать конвертер или использовать сток */
+            $this->payment = $this->getPersonalOrderService()->getPayment($paymentId);
         }
 
         return $this->payment;
@@ -681,6 +689,38 @@ class Order extends BaseEntity
     public function setPayment(OrderPayment $payment): void
     {
         $this->payment = $payment;
+    }
+
+    /**
+     * @return int|null
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     */
+    public function getPaymentIdByPayments(): ?int
+    {
+        $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
+        $bitrixOrder = $orderService->getOrderById($this->getId());
+        $innerSystemId = (int)PaySystemActionTable::query()
+            ->where('CODE', 'inner')
+            ->setCacheTtl(360000)
+            ->setLimit(1)
+            ->setSelect([
+                'ID',
+            ])->exec()->fetch()['ID'];
+        /** @var Payment $payment */
+        foreach ($bitrixOrder->getPaymentCollection()->getIterator() as $payment) {
+            $paySystemId = (int)$payment->getPaymentSystemId();
+            if ($payment->isInner() || $paySystemId === $innerSystemId) {
+                continue;
+            }
+            return $paySystemId;
+        }
+        return null;
     }
 
     /**
@@ -853,6 +893,7 @@ class Order extends BaseEntity
 
     /**
      * @param string $propCode
+     *
      * @return mixed
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
@@ -862,41 +903,6 @@ class Order extends BaseEntity
         $orderProp = $this->getProps()->get($propCode);
 
         return $orderProp ? $orderProp->getValue() : '';
-    }
-
-    /**
-     * @return OrderService
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
-     */
-    private function getPersonalOrderService(): OrderService
-    {
-        $appCont = Application::getInstance()->getContainer();
-        /** @var OrderService $service */
-        $service = $appCont->get('order.service');
-
-        return $service;
-    }
-
-    /**
-     * @return array
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    protected function getOrderItems(): array
-    {
-        if (!$this->orderItems) {
-            $this->orderItems = $this->getPersonalOrderService()->getOrderItems(
-                $this->getId()
-            );
-        }
-
-        return $this->orderItems;
     }
 
     /**
@@ -938,6 +944,7 @@ class Order extends BaseEntity
 
     /**
      * @param string $code
+     *
      * @return OrderProp|null
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
@@ -945,5 +952,40 @@ class Order extends BaseEntity
     public function getProperty(string $code): ?OrderProp
     {
         return $this->getProps()->get($code);
+    }
+
+    /**
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getOrderItems(): array
+    {
+        if (!$this->orderItems) {
+            $this->orderItems = $this->getPersonalOrderService()->getOrderItems(
+                $this->getId()
+            );
+        }
+
+        return $this->orderItems;
+    }
+
+    /**
+     * @return OrderService
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     */
+    private function getPersonalOrderService(): OrderService
+    {
+        $appCont = Application::getInstance()->getContainer();
+        /** @var OrderService $service */
+        $service = $appCont->get('order.service');
+
+        return $service;
     }
 }
