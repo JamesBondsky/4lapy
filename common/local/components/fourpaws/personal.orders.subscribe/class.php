@@ -6,6 +6,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -19,13 +20,15 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     use LazyLoggerAwareTrait;
 
     /** @var string $action */
-    private $action = '';
+    protected $action = '';
     /** @var UserService $userCurrentUserService */
-    private $userCurrentUserService;
+    protected $userCurrentUserService;
     /** @var OrderSubscribeService $orderSubscribeService */
-    private $orderSubscribeService = null;
+    protected $orderSubscribeService = null;
     /** @var array $data */
     protected $data = [];
+    /** @var StoreService $storeService */
+    protected $storeService;
 
     public function __construct($component = null)
     {
@@ -75,7 +78,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
      * @return UserService
      * @throws ApplicationCreateException
      */
-    public function getUserService()
+    public function getUserService(): UserService
     {
         if (!$this->userCurrentUserService) {
             $this->userCurrentUserService = Application::getInstance()->getContainer()->get(
@@ -87,10 +90,25 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     }
 
     /**
+     * @return StoreService
+     * @throws ApplicationCreateException
+     */
+    public function getStoreService(): StoreService
+    {
+        if (!$this->storeService) {
+            $this->storeService = Application::getInstance()->getContainer()->get(
+                StoreService::class
+            );
+        }
+
+        return $this->storeService;
+    }
+
+    /**
      * @return UserRepository
      * @throws ApplicationCreateException
      */
-    public function getUserRepository()
+    public function getUserRepository(): UserRepository
     {
         return $this->getUserService()->getUserRepository();
     }
@@ -99,7 +117,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
      * @return OrderSubscribeService
      * @throws ApplicationCreateException
      */
-    public function getOrderSubscribeService()
+    public function getOrderSubscribeService(): OrderSubscribeService
     {
         if (!$this->orderSubscribeService) {
             $this->orderSubscribeService = Application::getInstance()->getContainer()->get(
@@ -114,7 +132,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
      * @param string $action
      * @return void
      */
-    protected function setAction($action)
+    protected function setAction($action): void
     {
         $this->action = $action;
     }
@@ -122,7 +140,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     /**
      * @return string
      */
-    protected function getAction()
+    protected function getAction(): string
     {
         return $this->action;
     }
@@ -130,14 +148,14 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     /**
      * @return string
      */
-    protected function prepareAction()
+    protected function prepareAction(): string
     {
         $action = 'initialLoad';
 
         return $action;
     }
 
-    protected function doAction()
+    protected function doAction(): void
     {
         $action = $this->getAction();
         if (is_callable(array($this, $action.'Action'))) {
@@ -149,7 +167,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    protected function initialLoadAction()
+    protected function initialLoadAction(): void
     {
         $this->loadData();
     }
@@ -158,7 +176,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    protected function loadData()
+    protected function loadData(): void
     {
         $orderSubscribeService = $this->getOrderSubscribeService();
         $filterActive = true;
@@ -183,6 +201,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
             }
         }
         $this->arResult['SUBSCRIPTIONS'] = $subscriptions;
+        $this->arResult['METRO'] = new ArrayCollection($this->getStoreService()->getMetroInfo());
 
         $this->includeComponentTemplate();
     }

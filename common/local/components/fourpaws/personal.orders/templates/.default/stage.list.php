@@ -30,6 +30,7 @@ if (!$activeOrders->isEmpty()) {
                     '',
                     [
                         'ORDER' => $order,
+                        'METRO' => $arResult['METRO']
                     ],
                     $component,
                     [
@@ -55,6 +56,7 @@ if (!$closedOrders->isEmpty()) {
                     '',
                     [
                         'ORDER' => $order,
+                        'METRO' => $arResult['METRO']
                     ],
                     $component,
                     [

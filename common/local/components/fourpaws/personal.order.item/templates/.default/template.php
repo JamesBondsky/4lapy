@@ -162,8 +162,8 @@ if ($orderSubscribe) {
             $store = $order->getStore();
             if ($store->getId() > 0) { ?>
                 <div class="b-adress-info b-adress-info--order">
-                    <?php if ($store->getMetro() > 0) { ?>
-                        <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
+                    <?php if ($store->getMetro() > 0 && $arResult['METRO'] !== null) { ?>
+                        <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($store->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
                         м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
                     <?php }
                     echo $order->getStore()->getAddress();

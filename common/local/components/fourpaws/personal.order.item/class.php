@@ -38,6 +38,8 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
             $params['ORDER'] = null;
         };
 
+        $params['METRO'] = $params['METRO'] ?? null;
+
         $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
 
@@ -66,6 +68,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
 
         if ($this->startResultCache(false, false, $cachePath)) {
             $this->arResult['ORDER'] = $personalOrder;
+            $this->arResult['METRO'] = $this->arParams['METRO'];
 
             TaggedCacheHelper::addManagedCacheTags(
                 [
