@@ -86,6 +86,18 @@ class Shipment extends \Ipolh\DPD\Shipment
         );
     }
 
+    /**
+     * Возвращает объем отправки, м3
+     *
+     * @return float
+     */
+    public function getVolume()
+    {
+        $volume = $this->dimensions['WIDTH'] * $this->dimensions['HEIGHT'] * $this->dimensions['LENGTH'];
+
+        return round($volume / 1000000, 6);
+    }
+
     public function isPaymentOnDelivery()
     {
         /**
