@@ -9,21 +9,16 @@ namespace FourPaws\DeliveryBundle\Dpd;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Collection\IntervalCollection;
-use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Dpd\Lib\User;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
@@ -169,6 +164,13 @@ class Calculator extends DPD
         return $result;
     }
 
+    /**
+     * @param bool $arOrder
+     *
+     * @return Shipment
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     */
     protected static function makeShipment($arOrder = false)
     {
         $defaultDimensions = [
@@ -178,7 +180,7 @@ class Calculator extends DPD
             'LENGTH' => 100, // 10cm
         ];
         if (!self::$shipment || $arOrder) {
-            self::$shipment = new Shipment();
+            self::$shipment = new Shipment(\FourPaws\DeliveryBundle\Dpd\Lib\User::getInstance());
             self::$shipment
                 ->setSender($arOrder['LOCATION_FROM'])
                 ->setReceiver($arOrder['LOCATION_TO'])

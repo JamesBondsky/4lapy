@@ -8,8 +8,10 @@ namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Loader;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Dpd\Lib\Calculator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use Ipolh\DPD\API\User;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Shipment
@@ -90,5 +92,10 @@ class Shipment extends \Ipolh\DPD\Shipment
          * У пунктов самовывоза DPD должна быть возможность оплаты на месте
          */
         return true;
+    }
+
+    public function calculator()
+    {
+        return new Calculator($this, $this->api);
     }
 }
