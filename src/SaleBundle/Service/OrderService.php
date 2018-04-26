@@ -37,6 +37,7 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
@@ -701,20 +702,18 @@ class OrderService implements LoggerAwareInterface
         /**
          * Привязываем бонусную карту
          */
-        if ($canAttachCard) {
+        if ($canAttachCard && !$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
             try {
-                if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
-                    $existingContact = $this->manzanaService->getContactByUser($user);
-                    $existingContact->cardnumber = $storage->getDiscountCardNumber();
-                    $contact = new Client();
-                    $contact->cardnumber = $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber());
-                    $contact->contactId = $existingContact->contactId;
-                    $this->currentUserProvider->getUserRepository()->updateDiscountCard(
-                        $user->getId(),
-                        $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber())
-                    );
-                }
-            } catch (ManzanaServiceException $e) {
+                $existingContact = $this->manzanaService->getContactByUser($user);
+                $contact = new Client();
+                $contact->cardnumber = $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber());
+                $contact->contactId = $existingContact->contactId;
+                $this->manzanaService->updateContact($contact);
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                    $user->getId(),
+                    $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber())
+                );
+            } catch (ManzanaServiceException|ContactUpdateException $e) {
                 $this->log()->error(
                     sprintf('failed to add bonus card to user: %s: %s', \get_class($e), $e->getMessage()),
                     ['userId' => $user->getId(), 'card' => $storage->getDiscountCardNumber()]
