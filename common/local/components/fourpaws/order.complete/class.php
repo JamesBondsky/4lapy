@@ -32,6 +32,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderCompleteComponent extends FourPawsComponent
@@ -53,6 +54,8 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
 
     /** @var UserAccountService */
     protected $userAccountService;
+    /** @var \FourPaws\UserBundle\Service\UserService  */
+    private $authUserService;
 
     /**
      * FourPawsOrderCompleteComponent constructor.
@@ -66,6 +69,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
         $this->currentUserProvider = $serviceContainer->get(CurrentUserProviderInterface::class);
+        $this->authUserService = $serviceContainer->get(UserAuthorizationInterface::class);
         $this->storeService = $serviceContainer->get('store.service');
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->manzanaPosService = $serviceContainer->get('manzana.pos.service');
@@ -91,6 +95,8 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         if ($this->arParams['SET_TITLE'] === 'Y') {
             $APPLICATION->SetTitle('Заказ оформлен');
         }
+
+        $this->arResult['IS_AUTH'] = $this->authUserService->isAuthorized();
 
         $user = null;
         $order = null;
