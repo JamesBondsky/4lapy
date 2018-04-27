@@ -199,7 +199,7 @@ if($bonusCount > 0) {
                         <?php
                     } ?>
                     <p>Перейти в
-                        <a class="b-link b-link--inherit b-link--orange js-open-popup" data-popup-id="authorization" href="javascript:void(0)" title="">личный
+                        <a class="b-link b-link--inherit b-link--orange <?=$arResult['IS_AUTH'] ? '' : ' js-open-popup'?>" <?=$arResult['IS_AUTH'] ? ' href="/personal/index.php' : ' data-popup-id="authorization" href="javascript:void(0)"'?> title="личный кабинет">личный
                             кабинет</a>.
                     </p>
                     <p>Перейти на
