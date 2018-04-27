@@ -114,7 +114,8 @@ class Order
      * 3    (08:00 – 12:00);
      * 4    (12:00 – 16:00);
      * 5    (16:00 – 20:00);
-     * 6    (20:00 – 24:00).
+     * 6    (20:00 – 24:00);
+     * 7    (15:00 – 21:00);
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("AgreedDeliveryDate")

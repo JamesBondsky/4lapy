@@ -9,9 +9,9 @@ namespace FourPaws\BitrixOrm\Type;
  */
 class TextContent
 {
-    const TYPE_HTML = 'html';
+    public const TYPE_HTML = 'html';
 
-    const TYPE_TEXT = 'text';
+    public const TYPE_TEXT = 'text';
 
     /**
      * @var string Тип содержимого
@@ -66,12 +66,22 @@ class TextContent
      */
     public function getText(): string
     {
-        if ($this->matchType(self::TYPE_HTML)) {
-            return \html_entity_decode($this->text);
-        }
-
-        return $this->text;
+        return
+            $this->matchType(self::TYPE_HTML)
+                ? \html_entity_decode($this->text)
+                : $this->text;
     }
+
+    /**
+     *
+     *
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->getText();
+    }
+
 
     /**
      * @param $type

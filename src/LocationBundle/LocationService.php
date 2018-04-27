@@ -51,6 +51,8 @@ class LocationService
 
     public const TYPE_VILLAGE = 'VILLAGE';
 
+    public const TYPE_REGION = 'REGION';
+
     public const LOCATION_CODE_MOSCOW = '0000073738';
 
     public const DEFAULT_REGION_CODE = 'IR77';
@@ -403,6 +405,32 @@ class LocationService
     }
 
     /**
+     * @param string $cityCode
+     *
+     * @return array
+     */
+    public function findLocationRegion(string $cityCode): array
+    {
+        $result = [];
+        try {
+            $data = $this->findLocationCityByCode($cityCode);
+            $path = $data['PATH'];
+
+            foreach ($path as $pathItem) {
+                if (($pathItem['CODE'] === static::LOCATION_CODE_MOSCOW) ||
+                    ($pathItem['TYPE'] === static::TYPE_REGION)
+                ) {
+                    $result = $pathItem;
+                    break;
+                }
+            }
+        } catch (CityNotFoundException $e) {
+        }
+
+        return $result;
+    }
+
+    /**
      * Возвращает дефолтное местоположение
      *
      * @return array
@@ -667,6 +695,7 @@ class LocationService
                 $path[] = [
                     'NAME' => $pathItem['DISPLAY'],
                     'CODE' => $pathItem['CODE'],
+                    'TYPE' => $types[$pathItem['TYPE_ID']]
                 ];
             }
             $result[] = [
