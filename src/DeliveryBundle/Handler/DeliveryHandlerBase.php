@@ -306,7 +306,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         /**
                          * условие доставки в эту зону - наличие в базовом магазине
                          */
-                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_ALL)
+                        $result = $storeService->getRegionalStores($locationCode, StoreService::TYPE_ALL)
                             ->getBaseShops();
                         break;
                 }

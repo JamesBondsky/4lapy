@@ -29,6 +29,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -286,6 +287,38 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $stores;
+    }
+
+    /**
+     * @param string $locationCode
+     * @param string $type
+     *
+     * @return StoreCollection
+     */
+    public function getRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
+    {
+        if ($regionCode = $this->locationService->findLocationRegion($locationCode)['CODE']) {
+            $getStores = function () use ($type, $regionCode) {
+                return ['result' => $this->getStores($type, ['UF_REGION' => $regionCode])];
+            };
+
+            try {
+                $result = (new BitrixCache())->withId(__METHOD__ . $regionCode . $type)->resultOf($getStores);
+
+                /** @var StoreCollection $stores */
+                $stores = $result['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf(
+                        'failed to get stores for location: %s',
+                        $e->getMessage()
+                    ),
+                    ['location' => $locationCode, 'type' => $type]
+                );
+            }
+        }
+
+        return $stores ?? new StoreCollection();
     }
 
     /**

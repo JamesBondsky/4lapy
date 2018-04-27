@@ -75,7 +75,6 @@ class StoreFieldRegion20180427181531 extends SprintMigrationBase
         /** @var LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         $stores = StoreTable::getList(['select' => ['ID', 'XML_ID', 'UF_LOCATION']]);
-        $locations = [];
         while ($store = $stores->fetch()) {
             $locationCode = $store['UF_LOCATION'];
 
@@ -84,25 +83,10 @@ class StoreFieldRegion20180427181531 extends SprintMigrationBase
                 continue;
             }
 
-            if (!array_key_exists($locationCode, $locations)) {
-                $location = $locationService->findLocationByCode($store['UF_LOCATION']);
-                $regionCode = '';
-                foreach ($location['PATH'] as $pathItem) {
-                    if ($pathItem['CODE'] === LocationService::LOCATION_CODE_MOSCOW) {
-                        $regionCode = $pathItem['CODE'];
-                        break;
-                    }
-                    if ($pathItem['TYPE'] === LocationService::TYPE_REGION) {
-                        $regionCode = $pathItem['CODE'];
-                        break;
-                    }
-                }
-
-                $locations[$locationCode] = $regionCode;
-            }
-
-            $regionCode = $locations[$locationCode];
-            $updateResult = StoreTable::update($store['ID'], ['UF_REGION' => $regionCode]);
+            $updateResult = StoreTable::update(
+                $store['ID'],
+                ['UF_REGION' => $locationService->findLocationRegion($locationCode)]
+            );
             if (!$updateResult->isSuccess()) {
                 $this->log()->warning(sprintf('Не удалось обновить склад %s', $store['XML_ID']));
             }

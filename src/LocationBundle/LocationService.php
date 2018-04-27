@@ -405,6 +405,32 @@ class LocationService
     }
 
     /**
+     * @param string $cityCode
+     *
+     * @return array
+     */
+    public function findLocationRegion(string $cityCode): array
+    {
+        $result = [];
+        try {
+            $data = $this->findLocationCityByCode($cityCode);
+            $path = $data['PATH'];
+
+            foreach ($path as $pathItem) {
+                if (($pathItem['CODE'] === static::LOCATION_CODE_MOSCOW) ||
+                    ($pathItem['TYPE'] === static::TYPE_REGION)
+                ) {
+                    $result = $pathItem;
+                    break;
+                }
+            }
+        } catch (CityNotFoundException $e) {
+        }
+
+        return $result;
+    }
+
+    /**
      * Возвращает дефолтное местоположение
      *
      * @return array
