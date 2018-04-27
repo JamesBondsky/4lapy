@@ -137,11 +137,15 @@ if ($order) {
 
     // даты, на которые можно оформить первую доставку
     $possibleDeliveryDateMin = $component->getOrderPossibleDeliveryDate($order);
-    $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
-    $possibleDeliveryDateMax->add((new \DateInterval('P2M')));
-    // выбранная дата при подписке, либо дата по умолчанию
-    $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : $possibleDeliveryDateMin->format('d.m.Y');
-
+    if($possibleDeliveryDateMin !== null) {
+        $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
+        $possibleDeliveryDateMax->add((new \DateInterval('P2M')));
+        // выбранная дата при подписке, либо дата по умолчанию
+        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : $possibleDeliveryDateMin->format('d.m.Y');
+    }
+    else{
+        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : '';
+    }
     ?>
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section"
              data-popup="<?= $attrPopupId ?>">
@@ -172,8 +176,8 @@ if ($order) {
                                id="<?= 'first-delivery' . $attrSuffix ?>"
                                type="text"
                                readonly="readonly"
-                               data-minDate="<?=$possibleDeliveryDateMin->format('d.m.Y')?>"
-                               data-maxDate="<?=$possibleDeliveryDateMax->format('d.m.Y')?>"
+                               data-minDate="<?=$possibleDeliveryDateMin !== null ? $possibleDeliveryDateMin->format('d.m.Y') : ''?>"
+                               data-maxDate="<?=$possibleDeliveryDateMax !== null ? $possibleDeliveryDateMax->format('d.m.Y') : ''?>"
                                onfocus="blur();">
                         <?= $errorBlock ?>
                     </div>
@@ -199,7 +203,7 @@ if ($order) {
                                 <option<?= $selected ?> value="<?= $variant['VALUE'] ?>">
                                     <?=$variant['TEXT']?>
                                 </option>
-                                <?
+                                <?php
                             }
                             ?>
                         </select>
@@ -228,7 +232,7 @@ if ($order) {
                                 <option<?= $selected ?> value="<?= $variant['VALUE'] ?>">
                                     <?= $variant['TEXT'] ?>
                                 </option>
-                                <?
+                                <?php
                             }
                             ?>
                         </select>

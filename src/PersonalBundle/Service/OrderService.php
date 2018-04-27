@@ -10,6 +10,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -173,6 +175,7 @@ class OrderService
                 $order->setItemsSum($cheque->sum);
                 $order->setManzanaId($cheque->chequeNumber);
                 $items = [];
+                $newManzana = true;
                 if ($cheque->hasItemsBool()) {
                     $chequeItems = new ArrayCollection($this->manzanaService->getItemsByCheque($cheque->chequeId));
                     if (!$chequeItems->isEmpty()) {
@@ -182,9 +185,22 @@ class OrderService
                             $i++;
                             if ((int)$chequeItem->number < 2000000) {
                                 $item = new OrderItem();
-                                $item->setId($chequeItem->number);
                                 if ((int)$chequeItem->number > 1000000) {
                                     $item->setArticle($chequeItem->number);
+                                    /** @todo лучше вынести вниз в групповой запрос */
+                                    /** @var Offer $offer */
+                                    $offer = (new OfferQuery())->withFilter(['=XML_ID'=>$item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount'=>1])->exec()->first();
+                                    if($offer !== null && $offer->getId()> 0){
+                                        $item->setId($offer->getId());
+                                    }
+                                    else{
+                                        $item->setId($chequeItem->number);
+                                        $newManzana = false;
+                                    }
+                                }
+                                else{
+                                    $item->setId($chequeItem->number);
+                                    $newManzana = false;
                                 }
                                 $item->setBonus($chequeItem->bonus);
                                 $item->setPrice($chequeItem->price);
@@ -194,6 +210,8 @@ class OrderService
                                 $item->setHaveStock(false);
                                 $item->setWeight(0);
                                 $items[!empty($item->getArticle()) ? $item->getArticle() : $i] = $item;
+                            } else {
+                                $newManzana = false;
                             }
                         }
                     }
@@ -201,6 +219,7 @@ class OrderService
                     // пропускаем чеки без товаров
                     continue;
                 }
+                $order->setNewManzana($newManzana);
                 $order->setItems(new ArrayCollection($items));
                 $orders[$order->getId()] = $order;
             }
