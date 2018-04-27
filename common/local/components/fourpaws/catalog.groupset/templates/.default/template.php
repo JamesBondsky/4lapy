@@ -1,49 +1,73 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * Date: 26.04.2018
+ * Time: 17:52
+ * @author      Makeev Ilya
+ * @copyright   ADV/web-engineering co.
+ */
 
 use FourPaws\Decorators\SvgDecorator;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 ?>
 
 
 <div class="b-advice">
-    <h2 class="b-title b-title--advice">Соберите набор и получите подарки
-    </h2>
-    <p class="b-advice__description">5 июня 2017 — 25 августа 2017. Купите сухой корм, миску и
-                                     получите скидку 20%, а если добавить еще и лоток — 30%
+    <h2 class="b-title b-title--advice">Соберите набор и получите подарки</h2>
+    <p class="b-advice__description">
+        5 июня 2017 — 25 августа 2017. Купите сухой корм, миску и
+        получите скидку 20%, а если добавить еще и лоток — 30%
     </p>
     <div class="b-advice__list">
-        <div class="b-advice__list-items js-advice-list"><a class="b-advice__item js-advice-item"
-                                                            href="javascript:void(0)"
-                                                            title=""
-                                                            data-price="3719 "
-                                                            data-offerid="738"
-                                                            data-advicecount="2"><span class="b-advice__image-wrapper"><img
+        <div class="b-advice__list-items js-advice-list">
+            <a class="b-advice__item js-advice-item"
+               href="javascript:void(0)"
+               title=""
+               data-price="3719"
+               data-offerid="738"
+               data-advicecount="2">
+                <span class="b-advice__image-wrapper">
+                    <img
                             class="b-advice__image"
                             src="/static/build/images/content/akana.png"
                             alt=""
                             title=""
-                            role="presentation" /></span><span class="b-advice__block">
-                    <div class="product-link"><span class="b-clipped-text b-clipped-text--advice"><span><strong>Акана   </strong>корм для собак всех пород ягненок/яблоки</span></span>
-                    </div><span class="b-advice__info"><span class="b-advice__weight">6 кг</span><span class="b-advice__cost">3719 <span
-                                    class="b-ruble b-ruble--advice">₽</span></span></span></span></a>
-            <div class="b-advice__sign b-advice__sign--plus">
-            </div>
+                            role="presentation"/>
+                </span>
+                <span class="b-advice__block">
+                    <div class="product-link">
+                        <span class="b-clipped-text b-clipped-text--advice">
+                            <span>
+                                <strong>Акана   </strong>корм для собак всех пород ягненок/яблоки
+                            </span>
+                        </span>
+                    </div>
+                    <span class="b-advice__info">
+                        <span class="b-advice__weight">6 кг</span>
+                        <span class="b-advice__cost">3719<span class="b-ruble b-ruble--advice">₽</span></span>
+                    </span>
+                </span>
+            </a>
+            <div class="b-advice__sign b-advice__sign--plus"></div>
             <div class="b-advice__item blank js-advice-item" data-advicecount="2">
                 <div class="b-advice__image-wrapper">
                 </div>
-                <span class="b-advice__block"><span class="b-advice__product-link"><span class="b-advice__blank-text">                                                                      <br />                                                       <br />                                           </span></span><span
+                <span class="b-advice__block"><span class="b-advice__product-link"><span class="b-advice__blank-text">                                                                      <br/>                                                       <br/>                                           </span></span><span
                             class="b-advice__info"><span class="b-advice__blank-text">                  </span></span><a
                             class="b-button b-button--advice-set js-open-popup"
                             href="javascript:void(0);"
                             title="Выбрать товар"
                             data-popup-id="popup-choose-gift">Выбрать товар</a></span>
             </div>
-            <div class="b-advice__sign b-advice__sign--plus">
-            </div>
+            <div class="b-advice__sign b-advice__sign--plus"></div>
             <div class="b-advice__item blank js-advice-item" data-advicecount="2">
                 <div class="b-advice__image-wrapper">
                 </div>
-                <span class="b-advice__block"><span class="b-advice__product-link"><span class="b-advice__blank-text">                                                                      <br />                                                       <br />                                           </span></span><span
+                <span class="b-advice__block"><span class="b-advice__product-link"><span class="b-advice__blank-text">                                                                      <br/>                                                       <br/>                                           </span></span><span
                             class="b-advice__info"><span class="b-advice__blank-text">                  </span></span><a
                             class="b-button b-button--advice-set js-open-popup"
                             href="javascript:void(0);"
@@ -60,13 +84,15 @@ use FourPaws\Decorators\SvgDecorator;
                                                                        src="{{image}}"
                                                                        alt=""
                                                                        title=""
-                                                                       role="presentation" />
+                                                                       role="presentation"/>
                 </div>
                 <span class="b-advice__block js-tempalate"><a class="b-advice__product-link js-tempalate"
                                                               href="javascript:void(0)"
-                                                              title=""><span class="b-clipped-text b-clipped-text--advice"><span><strong>{{title}}  </strong>{{description}}</span></span></a><span
+                                                              title=""><span
+                                class="b-clipped-text b-clipped-text--advice"><span><strong>{{title}}  </strong>{{description}}</span></span></a><span
                             class="b-advice__info js-tempalate"><span class="b-advice__weight">{{weight}}</span><span
-                                class="b-advice__cost">{{cost}}<span class="b-ruble b-ruble--advice">₽</span></span></span><a
+                                class="b-advice__cost">{{cost}}<span
+                                    class="b-ruble b-ruble--advice">₽</span></span></span><a
                             class="b-button b-button--advice-set js-open-popup"
                             href="javascript:void(0);"
                             title="Другой товар"
@@ -80,7 +106,7 @@ use FourPaws\Decorators\SvgDecorator;
                 <span class="b-advice__block">
                     <span class="b-advice__product-link">
                         <span class="b-advice__blank-text">
-                            <br /><br />
+                            <br/><br/>
                         </span>
                     </span>
                     <span class="b-advice__info"><span class="b-advice__blank-text"></span>

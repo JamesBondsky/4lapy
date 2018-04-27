@@ -8,7 +8,9 @@
  *
  * @var $component BasketComponent
  */
-
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 use FourPaws\Components\BasketComponent;
 
 $userService = $component->getCurrentUserService();

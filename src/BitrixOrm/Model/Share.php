@@ -99,7 +99,7 @@ class Share extends IblockElement
      * @var string
      * @Type("string")
      */
-    protected $PROPERTY_JSON_GROUP_SET = [];
+    protected $PROPERTY_JSON_GROUP_SET = '';
 
     /**
      * @var OfferCollection
