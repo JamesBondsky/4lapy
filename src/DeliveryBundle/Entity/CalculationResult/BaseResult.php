@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Stock;
@@ -104,11 +105,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @var DeliveryScheduleResultCollection
      */
     protected $shipmentResults;
-
-    /**
-     * @var Store
-     */
-    protected $shipmentStore;
 
     /**
      * @return \DateTime
@@ -513,8 +509,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 /** @var StockResult $stockResultForOffer */
                 $stockResultForOffer = $delayed->filterByOffer($offer)->first();
                 if ($shipmentResultForOffer) {
-                    $this->shipmentStore = $shipmentResultForOffer->getScheduleResult()->getSender();
-
                     $diff = $stockResultForOffer->getAmount() - $shipmentResultForOffer->getAmount();
                     if ($diff > 0) {
                         /**
@@ -575,7 +569,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         } else {
             $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
 
-            $scheduleResults = $scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver);
+            $scheduleResults = new ScheduleResultCollection();
+            /** @var ScheduleResult $scheduleResult */
+            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver) as $scheduleResult) {
+                $key = implode(',', $scheduleResult->getRouteCodes());
+                if (!isset($scheduleResults[$key]) ||
+                    $scheduleResults[$key]->getDays() > $scheduleResult->getDays()
+                ) {
+                    $scheduleResults[$key] = $scheduleResult;
+                }
+            }
+
             static::$scheduleResults[$cacheKey] = $scheduleResults;
         }
 
@@ -658,25 +662,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function setShipmentResults(DeliveryScheduleResult $shipmentResults): CalculationResultInterface
     {
         $this->shipmentResults = $shipmentResults;
-        return $this;
-    }
-
-    /**
-     * @return Store
-     */
-    public function getShipmentStore(): ?Store
-    {
-        return $this->shipmentStore;
-    }
-
-    /**
-     * @param Store $shipmentStore
-     *
-     * @return BaseResult
-     */
-    public function setShipmentStore(Store $shipmentStore): CalculationResultInterface
-    {
-        $this->shipmentStore = $shipmentStore;
         return $this;
     }
 

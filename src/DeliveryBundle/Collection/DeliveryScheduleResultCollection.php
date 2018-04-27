@@ -5,9 +5,6 @@
 
 namespace FourPaws\DeliveryBundle\Collection;
 
-use Bitrix\Main\LoaderException;
-use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\ObjectNotFoundException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\Catalog\Model\Offer;
@@ -18,6 +15,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 class DeliveryScheduleResultCollection extends ArrayCollection
 {
     /**
+     * @throws NotFoundException
      * @return DeliveryScheduleResult|null
      */
     public function getFastest(): ?DeliveryScheduleResultCollection
@@ -113,9 +111,6 @@ class DeliveryScheduleResultCollection extends ArrayCollection
 
     /**
      * @return float
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      */
     public function getPrice(): float
     {
@@ -135,28 +130,34 @@ class DeliveryScheduleResultCollection extends ArrayCollection
      */
     public function filterByOffer(Offer $offer): DeliveryScheduleResultCollection
     {
-        return $this->filter(function (DeliveryScheduleResult $result) use ($offer) {
-            return $result->getOffer()->getId() === $offer->getId();
+        return $this->filterByOfferId($offer->getId());
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return DeliveryScheduleResultCollection
+     */
+    public function filterByOfferId(int $offerId): DeliveryScheduleResultCollection
+    {
+        return $this->filter(function (DeliveryScheduleResult $result) use ($offerId) {
+            return $result->getOffer()->getId() === $offerId;
         });
     }
 
+    /**
+     * @return array
+     * @throws NotFoundException
+     */
     protected function splitByLastSenders(): array
     {
-        $getLastSender = function (DeliveryScheduleResult $item): ?Store {
-            $route = $item->getScheduleResult()->getRoute();
-            $keys = array_reverse($route->getKeys());
-            return $route->get($keys[1]);
-        };
-
         $result = [];
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $lastSender = $getLastSender($item);
-            if (!$lastSender) {
-                continue;
-            }
+            $lastSender = $item->getScheduleResult()->getLastSender();
+
             if (null === $result[$lastSender->getXmlId()]) {
-                $result[$lastSender->getXmlId()] = new DeliveryScheduleResultCollection();
+                $result[$lastSender->getXmlId()] = new static();
             }
 
             $result[$lastSender->getXmlId()]->add($item);
