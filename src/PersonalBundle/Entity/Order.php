@@ -182,10 +182,13 @@ class Order extends BaseEntity
     protected $manzanaId = [];
 
     /** @var array $orderItems */
-    private $orderItems = [];
+    protected $orderItems = [];
 
     /** @var \Bitrix\Sale\Order $bitrixOrder */
-    private $bitrixOrder;
+    protected $bitrixOrder;
+
+    /** @var bool */
+    protected $newManzana = false;
 
     /**
      * @return string
@@ -538,6 +541,21 @@ class Order extends BaseEntity
         $this->items = $items;
 
         return $this;
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getItemIdsQuantity(): array
+    {
+        $items = $this->getItems();
+        $itemIds = [];
+        /** @var OrderItem $item */
+        foreach ($items as $item) {
+            $itemIds[] = ['ID' => $item->getId(), 'QUANTITY' => $item->getQuantity()];
+        }
+        return $itemIds;
     }
 
     /**
@@ -952,6 +970,22 @@ class Order extends BaseEntity
     public function getProperty(string $code): ?OrderProp
     {
         return $this->getProps()->get($code);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNewManzana(): bool
+    {
+        return $this->newManzana;
+    }
+
+    /**
+     * @param bool $newManzana
+     */
+    public function setNewManzana(bool $newManzana): void
+    {
+        $this->newManzana = $newManzana;
     }
 
     /**
