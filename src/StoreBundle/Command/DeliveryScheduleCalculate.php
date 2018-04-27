@@ -106,12 +106,11 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $totalCreated = 0;
         $totalDeleted = 0;
         foreach ($senders as $sender) {
-            $results = $this->scheduleResultService->calculateForSender($sender, $date, $tc);
-
             try {
-                [$created, $deleted] = $this->scheduleResultService->updateResults($results);
+                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender);
+                $results = $this->scheduleResultService->calculateForSender($sender, $date, $tc);
+                [$created] = $this->scheduleResultService->updateResults($results);
                 $totalCreated += $created;
-                $totalDeleted += $deleted;
             } catch (\Exception $e) {
                 $this->log()->error(
                     sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
