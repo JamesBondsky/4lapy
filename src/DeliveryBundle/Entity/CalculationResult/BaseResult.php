@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Stock;
@@ -568,7 +569,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         } else {
             $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
 
-            $scheduleResults = $scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver);
+            $scheduleResults = new ScheduleResultCollection();
+            /** @var ScheduleResult $scheduleResult */
+            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver) as $scheduleResult) {
+                $key = implode(',', $scheduleResult->getRouteCodes());
+                if (!isset($scheduleResults[$key]) ||
+                    $scheduleResults[$key]->getDays() > $scheduleResult->getDays()
+                ) {
+                    $scheduleResults[$key] = $scheduleResult;
+                }
+            }
+
             static::$scheduleResults[$cacheKey] = $scheduleResults;
         }
 
