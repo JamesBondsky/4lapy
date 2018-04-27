@@ -27,6 +27,7 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -52,6 +53,13 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class BasketComponent extends CBitrixComponent
 {
+    /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
+    /**
+     * @var BasketService
+     */
     public $basketService;
     /** @var OfferCollection */
     public $offerCollection;
@@ -85,6 +93,7 @@ class BasketComponent extends CBitrixComponent
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
         $this->couponsStorage = $container->get(CouponStorageInterface::class);
+        $this->deliveryService = $container->get(DeliveryService::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -412,5 +421,13 @@ class BasketComponent extends CBitrixComponent
     {
         $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
         $this->arResult['COUPON_DISCOUNT'] = $this->basketService->getPromocodeDiscount();
+    }
+
+    /**
+     * @return DeliveryService
+     */
+    public function getDeliveryService(): DeliveryService
+    {
+        return $this->deliveryService;
     }
 }
