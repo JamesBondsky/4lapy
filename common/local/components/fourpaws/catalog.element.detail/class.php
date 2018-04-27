@@ -34,6 +34,8 @@ use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/** @noinspection EfferentObjectCouplingInspection */
+
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogElementDetailComponent extends \CBitrixComponent
 {
@@ -114,10 +116,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 Tools::process404([], true, true, true);
             }
 
-            $sectionId = (int)reset($product->getSectionsIdList());
+            $sectionId = (int)current($product->getSectionsIdList());
 
             $this->arResult = [
-                'PRODUCT'       => $product,
+                'PRODUCT' => $product,
                 'CURRENT_OFFER' => $currentOffer,
                 'SECTION_CHAIN' => $this->getSectionChain($sectionId),
                 /**
@@ -220,6 +222,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     protected function getSection(int $sectionId): ?Category
     {
         if ($sectionId <= 0) {
+            // не экзепшен?
             return null;
         }
 
@@ -286,11 +289,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         }
 
         $counterData = [
-            'product_id'    => $product->getId(),
-            'iblock_id'     => $product->getIblockId(),
+            'product_id' => $product->getId(),
+            'iblock_id' => $product->getIblockId(),
             'product_title' => $product->getName(),
-            'category_id'   => $categoryId,
-            'category'      => $categoryPath,
+            'category_id' => $categoryId,
+            'category' => $categoryPath,
         ];
 
         $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
@@ -306,8 +309,8 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         $this->arResult['counterDataSource'] = $counterData;
         $this->arResult['counterData'] = [
-            'item'           => base64_encode(json_encode($counterData)),
-            'user_id'        => new JsExpression(
+            'item' => base64_encode(json_encode($counterData)),
+            'user_id' => new JsExpression(
                 'function(){return BX.message("USER_ID") ? BX.message("USER_ID") : 0;}'
             ),
             'recommendation' => new JsExpression(
@@ -337,7 +340,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     return rcmId;
                 }'
             ),
-            'v'              => '2',
+            'v' => '2',
         ];
     }
 
@@ -367,11 +370,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     /**
      * @param Product $product
+     * @param int $offerId
+     *
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      *
      * @return Offer
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      */
     public function getCurrentOffer(Product $product, int $offerId = 0): Offer
     {
@@ -379,17 +384,17 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         if ($offerId > 0) {
             foreach ($offers as $offer) {
                 if ($offer->getId() === $offerId) {
-                    return $offer;
+                    break;
                 }
             }
         } else {
             foreach ($offers as $offer) {
                 if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
-                    return $offer;
+                    break;
                 }
             }
         }
 
-        return $offers->first();
+        return $offer ?? $offers->last();
     }
 }

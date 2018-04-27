@@ -48,7 +48,6 @@ if(!($product instanceof Product)){
     return;
 }
 
-$hasOffer = false;
 $offer = null;
 \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
 /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -56,7 +55,6 @@ try {
     $catalogElementDetailClass = new CatalogElementDetailComponent();
     try {
         $offer = $catalogElementDetailClass->getCurrentOffer($product, $offerId);
-        $hasOffer = true;
     } catch (LoaderException | NotSupportedException | ObjectNotFoundException $e) {
         $logger->error('ошибка при получении оффера');
         /** ошибки быть не должно */
@@ -66,7 +64,7 @@ try {
     /** ошибки быть не должно, так как компонент отрабатывает выше */
     return;
 }
-if(!$hasOffer){
+if(null === $offer){
     /** нет оффера что-то пошло не так */
     $logger->error('Нет оффера');
     return;
@@ -115,10 +113,15 @@ if(!$hasOffer){
                     </div>
                 </div>
                 <?php
-                /**
-                 * @todo implement and remove - это набор
-                 */
-                include  __DIR__ . 'tmp_action_set.html.php';
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:catalog.groupset',
+                    '',
+                    [
+                        'OFFER' => $offer,
+                    ],
+                    null,
+                    ['HIDE_ICONS' => 'Y']
+                );
                 ?>
             </div>
             <div class="b-product-card__tab">

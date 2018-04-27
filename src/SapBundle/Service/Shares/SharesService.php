@@ -225,7 +225,9 @@ class SharesService implements LoggerAwareInterface
              * @var BonusBuyTo $itemsTo
              */
             $itemsTo = $share->getBonusBuyTo()->first();
-            $discountPercent = $itemsTo->getPercent();
+            if(1 > $discountPercent = $itemsTo->getPercent()) {
+                throw new InvalidArgumentException('Не передан процент скидки');
+            }
             $products = $itemsTo->getProductIds()->toArray();
             /**
              * @var BonusBuyFrom $itemsFrom
@@ -341,7 +343,77 @@ class SharesService implements LoggerAwareInterface
                     ]
                 ]
             ];
+        } elseif (
+            $type === 'Z011'
+            &&
+            /** Набор. Вот так классно мы его определяем, ведь если ввести новый тип, то список уйдет в бесконечность */
+            $share->getBonusBuyFrom()->count() > 1
+        ) {
 
+            try {
+                $countOperator = $promo->isApplyOnce() ? 'single' : 'min';
+            } /** @noinspection PhpUndefinedClassInspection */
+            catch (\TypeError $e) {
+                throw new InvalidArgumentException($e->getMessage());
+            }
+
+            if ($share->getBonusBuyTo()->count() !== 1) {
+                throw new InvalidArgumentException(
+                    'У скидки за набор должна быть одна группа элементов на которые дается скидка'
+                );
+            }
+            /** @var BonusBuyTo $itemsTo */
+            $itemsTo = $share->getBonusBuyTo()->first();
+            if(1 > $discountPercent = $itemsTo->getPercent()) {
+                throw new InvalidArgumentException('Не передан процент скидки');
+            }
+
+            $actions = [
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => [
+                    'All' => 'AND',
+                ],
+                'CHILDREN' => [
+                    [
+                        'CLASS_ID' => 'ADV:DetachedRowDiscount',
+                        'DATA' => [
+                            'Filtration_operator' => 'separate',
+                            'Count_operator' => $countOperator,
+                            'All' => 'AND',
+                            'Additional_JSON' => false,
+                            'Value' => $discountPercent,
+                        ],
+                        'CHILDREN' => [],
+                    ],
+                ],
+            ];
+            foreach ($share->getBonusBuyFrom() as $bonusBuyFrom) {
+                if ($bonusBuyFrom->getGroupQuantity() !== 1) {
+                    throw new InvalidArgumentException(
+                        'У скидки за набор необходимо добавить один товар из каждой группы'
+                    );
+                }
+                $productsFrom = $bonusBuyFrom->getProductIds()->toArray();
+                if (empty($productsFrom)) {
+                    throw new InvalidArgumentException('У скидки за набор у каждой группы должны быть товары на сайте');
+                }
+                $actions['CHILDREN'][0]['CHILDREN'][] = [
+                    'CLASS_ID' => 'ADV:BasketFilterQuantityMore',
+                    'DATA' => [
+                        'All' => 'AND',
+                        'Value' => 0.0,
+                    ],
+                    'CHILDREN' => [
+                        [
+                            'CLASS_ID' => 'CondIBElement',
+                            'DATA' => [
+                                'logic' => 'Equal',
+                                'value' => $productsFrom,
+                            ],
+                        ],
+                    ],
+                ];
+            }
         } else {
             throw new \FourPaws\SapBundle\Exception\RuntimeException('TODO');
         }
@@ -360,6 +432,10 @@ class SharesService implements LoggerAwareInterface
      * @param BonusBuy $promo
      * @param BasketRule $basketRule
      *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
+     *
      * @return Share
      */
     private function transformDtoToEntity(BonusBuyShare $share, BonusBuy $promo, BasketRule $basketRule): Share
@@ -377,6 +453,29 @@ class SharesService implements LoggerAwareInterface
             return \array_merge($array ?? [], $current ?? []);
         });
 
+        //Проверяем не скидка ли это за набор и если да, то подгружаем айдишники и записываем в JSON
+        $jsonGroupSet = '';
+        try {
+            $type = $share->getType();
+        } /** @noinspection PhpUndefinedClassInspection */
+        catch (\TypeError $e) {
+            throw new InvalidArgumentException($e->getMessage());
+        }
+        if (
+            $type === 'Z011'
+            &&
+            $share->getBonusBuyFrom()->count() > 1
+        ) {
+            $groups = [];
+            foreach ($share->getBonusBuyFrom() as $bonusBuyFrom) {
+                $groups[] = $bonusBuyFrom->getProductIds()->toArray();
+            }
+            $groups = array_filter($groups);
+            if(!empty($groups)) {
+                $jsonGroupSet = json_encode($groups);
+            }
+        }
+
         $entity = new Share();
 
         $entity->withActive('N')
@@ -389,7 +488,8 @@ class SharesService implements LoggerAwareInterface
             ->withPropertyLabel($share->getMark())
             ->withPropertyOnlyMp('N')
             ->withPropertyProducts($products)
-            ->withPropertyBasketRules([$basketRule->getId()]);
+            ->withPropertyBasketRules([$basketRule->getId()])
+            ->withPropertyJsonGroupSet($jsonGroupSet);
 
         return $entity;
     }

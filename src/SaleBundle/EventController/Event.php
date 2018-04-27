@@ -65,7 +65,7 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr']);
         /** Здесь дополнительная обработка акций */
-        self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'extendDiscount']);
+        self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
 
         ###   Обработчики скидок EOF   ###
 
@@ -120,7 +120,7 @@ class Event implements ServiceHandlerInterface
             $userService = $container->get(CurrentUserProviderInterface::class);
             $userAccountService = $container->get(UserAccountService::class);
             $user = $userService->getCurrentUser();
-            [, $bonus] = $userAccountService->refreshUserBalance($user);
+            [, $bonus] = $userAccountService->refreshUserBalance($user); // @todo погасите ошибку!
             $userService->refreshUserBonusPercent($user, $bonus);
             $userService->refreshUserOpt($user);
         } catch (NotAuthorizedException $e) {
