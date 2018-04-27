@@ -60,7 +60,7 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
             echo '<div class="b-line b-line--pet b-line--shopping-bargain"></div>';
         }
 
-        ?><section class="b-common-section">
+        ?><section class="b-common-section" data-url="/ajax/catalog/product-info/">
             <div class="b-common-section__title-box b-common-section__title-box--sale b-common-section__title-box--shopping-bargain">
                 <h2 class="b-title b-title--sale b-title--shopping-bargain"><?=Loc::getMessage('FOLLOWUP_PRODUCTS.TITLE')?></h2><?php
             ?></div>

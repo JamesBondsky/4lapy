@@ -197,6 +197,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     protected function subscribeAction()
     {
+        /** @todo подписка для оффлайн заказов - заказы из манзаны */
         $this->initPostFields();
         if ($this->arResult['FIELD_VALUES']['orderId']) {
             $this->arParams['ORDER_ID'] = (int)$this->arResult['FIELD_VALUES']['orderId'];
@@ -656,16 +657,19 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderPossibleDeliveryDate(Order $order): \DateTime
+    public function getOrderPossibleDeliveryDate(Order $order): ?\DateTime
     {
         $bitrixOrder = $order->getBitrixOrder();
         $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
             $bitrixOrder
         );
-        $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
-            $deliveryCalcResult
-        );
+        if($deliveryCalcResult !== null) {
+            $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
+                $deliveryCalcResult
+            );
 
-        return $deliveryDate;
+            return $deliveryDate;
+        }
+        return null;
     }
 }
