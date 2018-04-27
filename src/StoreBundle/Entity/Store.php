@@ -218,6 +218,15 @@ class Store extends Base
     protected $location = '';
 
     /**
+     * @var string
+     * @Serializer\SerializedName("UF_REGION")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $region = '';
+
+    /**
      * @var int
      * @Serializer\SerializedName("UF_METRO")
      * @Serializer\SkipWhenEmpty()
@@ -776,6 +785,26 @@ class Store extends Base
     }
 
     /**
+     * @return string
+     */
+    public function getRegion(): string
+    {
+        return $this->region ?? '';
+    }
+
+    /**
+     * @param string $region
+     *
+     * @return Store
+     */
+    public function setRegion(string $region): Store
+    {
+        $this->region = $region;
+
+        return $this;
+    }
+
+    /**
      * @return int
      */
     public function getMetro(): int
@@ -1081,6 +1110,7 @@ class Store extends Base
             $this->code,
             $this->isShop,
             $this->location,
+            $this->region,
             $this->metro,
             $this->services,
             $this->yandexShopId,
@@ -1123,6 +1153,7 @@ class Store extends Base
             $this->code,
             $this->isShop,
             $this->location,
+            $this->region,
             $this->metro,
             $this->services,
             $this->yandexShopId,
