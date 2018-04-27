@@ -54,6 +54,8 @@ class ShareQuery extends IblockElementQuery
             'PROPERTY_OLD_URL',
             'PROPERTY_PRODUCTS',
             'PROPERTY_LABEL',
+            'PROPERTY_BASKET_RULES',
+            'PROPERTY_JSON_GROUP_SET',
         ];
     }
 
@@ -74,7 +76,7 @@ class ShareQuery extends IblockElementQuery
     /** @noinspection PhpMissingParentCallCommonInspection
      *
      * @inheritdoc
-     * @return ShareCollection|CollectionBase
+     * @return ShareCollection
      */
     public function exec(): CollectionBase
     {

@@ -18,7 +18,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\SapBundle\Dto\In\Shares
  */
-class BonusBuyFrom implements BonusBuyGroupInterface
+class BonusBuyFrom extends BonusBuyGroupBase
 {
     /**
      * Содержит вид предпосылки. Тип поля – единственный выбор из значений:
@@ -195,35 +195,6 @@ class BonusBuyFrom implements BonusBuyGroupInterface
                     return (bool)$e;
                 }
             );
-        }
-        return $result ?? new ArrayCollection();
-    }
-
-    /**
-     * Возвращает массив ID предложений, существующих на сайте
-     *
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Main\ArgumentException
-     *
-     * @return ArrayCollection
-     */
-    public function getProductIds(): ArrayCollection
-    {
-        if ($xmlIds = $this->getProductXmlIds()->toArray()) {
-            $res = ElementTable::getList([
-                'select' => ['ID'],
-                'filter' => [
-                    '=XML_ID' => $xmlIds,
-                    '=IBLOCK.CODE' => IblockCode::OFFERS,
-                    '=IBLOCK.TYPE.ID' => IblockType::CATALOG,
-                ],
-            ]);
-            $result = [];
-            while ($elem = $res->fetch()) {
-                $result[] = $elem['ID'];
-            }
-            $result = array_filter($result);
-            $result = new ArrayCollection($result);
         }
         return $result ?? new ArrayCollection();
     }

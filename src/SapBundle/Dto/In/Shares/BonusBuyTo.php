@@ -18,7 +18,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\SapBundle\Dto\In\Shares
  */
-class BonusBuyTo implements BonusBuyGroupInterface
+class BonusBuyTo extends BonusBuyGroupBase
 {
     /**
      * Содержит количество единиц подарка.
@@ -163,35 +163,6 @@ class BonusBuyTo implements BonusBuyGroupInterface
                     return (bool)$e;
                 }
             );
-        }
-        return $result ?? new ArrayCollection();
-    }
-
-    /**
-     * Возвращает массив ID предложений, существующих на сайте
-     *
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Main\ArgumentException
-     *
-     * @return ArrayCollection
-     */
-    public function getProductIds(): ArrayCollection
-    {
-        if ($xmlIds = $this->getProductXmlIds()->toArray()) {
-            $res = ElementTable::getList([
-                'select' => ['ID'],
-                'filter' => [
-                    '=XML_ID' => $xmlIds,
-                    '=IBLOCK.CODE' => IblockCode::OFFERS,
-                    '=IBLOCK.TYPE.ID' => IblockType::CATALOG,
-                ],
-            ]);
-            $result = [];
-            while ($elem = $res->fetch()) {
-                $result[] = (int)$elem['ID'];
-            }
-            $result = array_filter($result);
-            $result = new ArrayCollection($result);
         }
         return $result ?? new ArrayCollection();
     }
