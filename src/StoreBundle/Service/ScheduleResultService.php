@@ -94,6 +94,28 @@ class ScheduleResultService
     }
 
     /**
+     * @param Store $sender
+     *
+     * @throws ArgumentException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return int
+     */
+    public function deleteResultsForSender(Store $sender): int
+    {
+        $deleted = 0;
+        foreach ($this->findResultsBySender($sender) as $item) {
+            $this->deleteResult($item);
+            $deleted++;
+        }
+
+        return $deleted;
+    }
+
+    /**
      * @param ScheduleResult $result
      *
      * @return bool
