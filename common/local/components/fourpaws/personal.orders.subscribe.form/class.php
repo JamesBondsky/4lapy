@@ -646,7 +646,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     /**
      * @param Order $order
-     * @return DateTime
+     * @return \DateTime|null
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws \Bitrix\Main\ArgumentException
@@ -659,17 +659,17 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     public function getOrderPossibleDeliveryDate(Order $order): ?\DateTime
     {
+        $deliveryDate = null;
         $bitrixOrder = $order->getBitrixOrder();
         $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
             $bitrixOrder
         );
-        if($deliveryCalcResult !== null) {
+        if ($deliveryCalcResult !== null) {
             $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
                 $deliveryCalcResult
             );
-
-            return $deliveryDate;
         }
-        return null;
+
+        return $deliveryDate;
     }
 }
