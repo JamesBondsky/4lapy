@@ -26,7 +26,7 @@ if ($arParams['SHOW_TOP_LINE'] === 'Y') {
     echo '<div class="b-line b-line--pet"></div>';
 }
 if ($arParams['WRAP_SECTION_BLOCK'] === 'Y') {
-    echo '<section class="b-common-section">';
+    echo '<section class="b-common-section" data-url="/ajax/catalog/product-info/">';
 }
 
 ?><div class="b-common-section__title-box b-common-section__title-box--viewed">

@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Order as BitrixOrder;
+use FourPaws\App\Application as SymfoniApplication;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
@@ -179,10 +181,10 @@ if ($orderSubscribe) {
                 $paymentCode = $payment->getCode();
                 $paymentName = '';
                 if($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
-                    /** т.к. неоплаченных заказов будет не очень мног оу пользователя - оставим расчет здесь */
-                    /** @var \FourPaws\SaleBundle\Service\OrderService $orderService */
-                    $orderService = \FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\SaleBundle\Service\OrderService::class);
-                    $bitrixOrder = \Bitrix\Sale\Order::load($order->getId());
+                    /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
+                    /** @var OrderService $orderService */
+                    $orderService = SymfoniApplication::getInstance()->getContainer()->get(OrderService::class);
+                    $bitrixOrder = BitrixOrder::load($order->getId());
                     if($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
                         $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
                         if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
@@ -204,9 +206,13 @@ if ($orderSubscribe) {
         </div>
         <div class="b-accordion-order-item__button js-button-default">
             <?php
-            if (!$orderSubscribe && !$order->isManzana()) {
+            if (!$orderSubscribe && (!$order->isManzana() || $order->isNewManzana())) {
                 $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
                 $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]);
+                if($order->isNewManzana()){
+
+                    $uri->addParams(['is_manzana' => true, 'item_ids' => json_encode($order->getItemIdsQuantity())]);
+                }
                 ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?= $uri->getUri() ?>"
