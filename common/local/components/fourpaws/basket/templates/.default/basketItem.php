@@ -1,12 +1,17 @@
 <?php
-/** @var BasketItem $basketItem */
-/** @var float $userDiscount */
-/** @var Offer $offer */
 
-/** @global \FourPaws\Components\BasketComponent $component */
+/**
+ * @var BasketItem $basketItem
+ * @var float $userDiscount
+ * @var Offer $offer
+ * @var bool $isOnlyPickup
+ *
+ * @global BasketComponent $component
+ */
 
 use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
@@ -24,6 +29,9 @@ $promoLink = $component->getPromoLink($basketItem);
 $image = $component->getImage($basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = $basketItem->getBasePrice() !== $basketItem->getPrice();
+/**
+ * @todo promo from property; after - promo from PromoLink;
+ */
 
 if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) {
     $templateData['OFFERS'][$offer->getId() . '_' . $basketItem->getQuantity()] = $offer;
@@ -67,25 +75,25 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             </span>
                 <?php if ($basketItem->getWeight() > 0) { ?>
                     <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                     <span class="b-common-item__name-value">Вес: </span>
-                     <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
-                </span>
+                        <span class="b-common-item__name-value">Вес: </span>
+                        <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
+                    </span>
                 <?php }
 
                 if ($useOffer) {
                     $color = $offer->getColor();
                     if ($color !== null) { ?>
                         <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                        <span class="b-common-item__name-value">Цвет: </span>
-                        <span><?= $color->getName() ?></span>
-                    </span>
+                            <span class="b-common-item__name-value">Цвет: </span>
+                            <span><?= $color->getName() ?></span>
+                        </span>
                     <?php }
                     $article = $offer->getXmlId();
                     if (!empty($article)) { ?>
                         <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                        <span class="b-common-item__name-value">Артикул: </span>
-                        <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span><span><?= $article ?></span>
-                    </span>
+                            <span class="b-common-item__name-value">Артикул: </span>
+                            <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span><span><?= $article ?></span>
+                        </span>
                     <?php }
                 } ?>
             </a>
@@ -134,14 +142,11 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 </select>
             </div>
             <div class="b-price">
-                <span class="b-price__current"><?= WordHelper::numberFormat($basketItem->getPrice()
-                        * $basketItem->getQuantity()) ?>
-                </span>
+                <span class="b-price__current"><?= WordHelper::numberFormat($basketItem->getPrice() * $basketItem->getQuantity()) ?></span>
                 <span class="b-ruble">₽</span>
                 <?php if ($basketItem->getDiscountPrice() > 0) { ?>
                     <span class="b-old-price b-old-price--crossed-out">
-                    <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()
-                            * $basketItem->getQuantity()) ?>  </span>
+                    <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice() * $basketItem->getQuantity()) ?>  </span>
                     <span class="b-ruble b-ruble--old-weight-price">₽</span>
                 </span>
                 <?php } ?>
@@ -157,24 +162,23 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
             </span>
         </a>
-        <?php if ($basketItem->getQuantity() > 1) { ?>
+        <?php if ($isDiscounted || $basketItem->getQuantity() > 1) { ?>
             <div class="b-item-shopping__sale-info">
                 <?php if ($isDiscounted) { ?>
                     <span class="b-old-price b-old-price--inline b-old-price--crossed-out">
-                        <span class="b-old-price__old"><?= $basketItem->getBasePrice() ?> </span>
+                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?> </span>
                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                     </span>
-                <? } ?>
+                <?php } ?>
                 <span class="b-old-price b-old-price--inline">
-                    <span class="b-old-price__old"><?= $basketItem->getBasePrice() ?> </span>
+                    <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getPrice()) ?> </span>
                     <span class="b-ruble b-ruble--old-weight-price">₽</span>
                 </span>
                 <span class="b-old-price b-old-price--inline b-old-price--on">
                     <span class="b-old-price__old"><?= $basketItem->getQuantity() ?> </span>
                     <span class="b-ruble b-ruble--old-weight-price">шт</span>
                 </span>
-                <?php if ($isDiscounted) { /** @todo implement it
-                    dump($basketItem); ?>
+                <?php if ($isDiscounted) { ?>
                     <a class="b-information-link js-popover-information-open js-popover-information-open"
                        href="javascript:void(0);" title="">
                         <span class="b-information-link__icon">i</span>
@@ -182,7 +186,13 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                             На Ваш телефон будет отправлено сообщение с информацией
                         </div>
                     </a>
-                <?php */ } ?>
+                <?php } ?>
+            </div>
+        <?php }
+
+        if ($isOnlyPickup) { ?>
+            <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
+                Только самовывоз
             </div>
         <?php }
 

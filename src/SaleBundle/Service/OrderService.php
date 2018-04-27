@@ -33,11 +33,16 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
+use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -60,6 +65,11 @@ use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 
+/**
+ * Class OrderService
+ *
+ * @package FourPaws\SaleBundle\Service
+ */
 class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -98,6 +108,16 @@ class OrderService implements LoggerAwareInterface
      * Заказ доставлен
      */
     public const STATUS_DELIVERED = 'J';
+
+    /**
+     * Заказ в сборке
+     */
+    public const STATUS_IN_ASSEMBLY_1 = 'H';
+
+    /**
+     * Заказ в сборке
+     */
+    public const STATUS_IN_ASSEMBLY_2 = 'W';
 
     /**
      * @var AddressService
@@ -147,6 +167,12 @@ class OrderService implements LoggerAwareInterface
     /** @var ManzanaPosService */
     protected $manzanaPosService;
 
+    /** @var ManzanaService */
+    protected $manzanaService;
+
+    /** @var array $paySystemServiceCache */
+    private $paySystemServiceCache = [];
+
     /**
      * OrderService constructor.
      *
@@ -154,12 +180,13 @@ class OrderService implements LoggerAwareInterface
      * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param DeliveryService $deliveryService
-     * @param StoreService $storeService
      * @param LocationService $locationService
+     * @param StoreService $storeService
      * @param OrderStorageService $orderStorageService
      * @param UserCitySelectInterface $userCityProvider
      * @param UserRegistrationProviderInterface $userRegistrationProvider
      * @param ManzanaPosService $manzanaPosService
+     * @param ManzanaService $manzanaService
      */
     public function __construct(
         AddressService $addressService,
@@ -171,8 +198,10 @@ class OrderService implements LoggerAwareInterface
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider,
-        ManzanaPosService $manzanaPosService
-    ) {
+        ManzanaPosService $manzanaPosService,
+        ManzanaService $manzanaService
+    )
+    {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -183,6 +212,7 @@ class OrderService implements LoggerAwareInterface
         $this->userRegistrationProvider = $userRegistrationProvider;
         $this->locationService = $locationService;
         $this->manzanaPosService = $manzanaPosService;
+        $this->manzanaService = $manzanaService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -201,21 +231,28 @@ class OrderService implements LoggerAwareInterface
      */
     public function getOrderById(int $id, bool $check = false, int $userId = null, string $hash = null): Order
     {
-        if (!$order = Order::load($id)) {
-            throw new NotFoundException('Order not found');
-        }
-
-        if ($check) {
-            if (!$hash && !$userId) {
-                throw new NotFoundException('Order not found');
-            }
-            if ($hash && $order->getHash() !== $hash) {
-                throw new NotFoundException('Order not found');
+        try {
+            if (!$order = Order::load($id)) {
+                throw new NotFoundException('');
             }
 
-            if ($userId && (int)$order->getUserId() !== $userId) {
-                throw new NotFoundException('Order not found');
+            if ($check) {
+                if (!$hash && !$userId) {
+                    throw new NotFoundException('');
+                }
+                if ($hash && $order->getHash() !== $hash) {
+                    throw new NotFoundException('');
+                }
+
+                if ($userId && (int)$order->getUserId() !== $userId) {
+                    throw new NotFoundException('');
+                }
             }
+        } catch (NotFoundException $e) {
+            throw new NotFoundException(\sprintf(
+                'Order #%s is not found',
+                $id
+            ));
         }
 
         return $order;
@@ -247,7 +284,8 @@ class OrderService implements LoggerAwareInterface
         ?Basket $basket = null,
         ?CalculationResultInterface $selectedDelivery = null,
         bool $fastOrder = false
-    ): Order {
+    ): Order
+    {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
@@ -373,18 +411,10 @@ class OrderService implements LoggerAwareInterface
          * Задание свойств заказа, связанных с доставкой
          */
         /** @var PropertyValue $propertyValue */
-        if(!$fastOrder) {
+        if (!$fastOrder) {
             foreach ($propertyValueCollection as $propertyValue) {
                 $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
-                    case 'SHIPMENT_PLACE_CODE':
-                        $shipmentStore = $selectedDelivery->getShipmentStore();
-                        if ($shipmentStore instanceof Store) {
-                            $value = $shipmentStore->getXmlId();
-                        } else {
-                            continue 2;
-                        }
-                        break;
                     case 'DELIVERY_PLACE_CODE':
                         if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
                             /** @var PickupResult $selectedDelivery */
@@ -441,16 +471,12 @@ class OrderService implements LoggerAwareInterface
                 $code = $propertyValue->getProperty()['CODE'];
                 $update = false;
                 switch ($code) {
-                    case 'SHIPMENT_PLACE_CODE':
-                        $value = 'DC01';
-                        $update = true;
-                        break;
                     case 'DELIVERY_INTERVAL':
                         $value = '';
                         $update = true;
                         break;
                 }
-                if($update){
+                if ($update) {
                     $propertyValue->setValue($value);
                 }
             }
@@ -584,7 +610,8 @@ class OrderService implements LoggerAwareInterface
         OrderStorage $storage,
         ?CalculationResultInterface $selectedDelivery = null,
         bool $fastOrder = false
-    ): void {
+    ): void
+    {
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
@@ -600,16 +627,12 @@ class OrderService implements LoggerAwareInterface
         $needCreateAddress = false;
         $addressUserId = null;
         $newUser = false;
+        $canAttachCard = false;
         if ($storage->getUserId()) {
+            $canAttachCard = true;
             /** @noinspection PhpInternalEntityUsedInspection */
             $order->setFieldNoDemand('USER_ID', $storage->getUserId());
             $user = $this->currentUserProvider->getCurrentUser();
-            if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
-                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
-                    $user->getId(),
-                    $storage->getDiscountCardNumber()
-                );
-            }
             if (!$user->getEmail() && $storage->getEmail()) {
                 $user->setEmail($storage->getEmail());
                 $this->currentUserProvider->getUserRepository()->updateEmail(
@@ -622,30 +645,29 @@ class OrderService implements LoggerAwareInterface
             }
         } else {
             /** проверять надо на пустоту иначе  */
-            if(!empty($storage->getEmail()) && !empty($storage->getPhone())){
+            if (!empty($storage->getEmail()) && !empty($storage->getPhone())) {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(
                     ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
                 );
-            } elseif(!empty($storage->getEmail())){
+            } elseif (!empty($storage->getEmail())) {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(['=EMAIL' => $storage->getEmail()]);
-            }
-            elseif(!empty($storage->getPhone())){
+            } elseif (!empty($storage->getPhone())) {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(['=PERSONAL_PHONE' => $storage->getPhone()]);
             }
 
-            $foundUser = null;
+            $user = null;
             /** @var User $user */
-            foreach ($users as $user) {
-                if (mb_strtolower($user->getEmail()) === mb_strtolower($storage->getEmail())) {
-                    $foundUser = $user;
-                } elseif ($user->getPersonalPhone() === $storage->getPhone()) {
-                    $foundUser = $user;
+            foreach ($users as $foundUser) {
+                if (mb_strtolower($foundUser->getEmail()) === mb_strtolower($storage->getEmail())) {
+                    $user = $foundUser;
+                } elseif ($foundUser->getPersonalPhone() === $storage->getPhone()) {
+                    $user = $foundUser;
                 }
             }
 
-            if ($foundUser) {
+            if ($user) {
                 /** @noinspection PhpInternalEntityUsedInspection */
-                $order->setFieldNoDemand('USER_ID', $foundUser->getId());
+                $order->setFieldNoDemand('USER_ID', $user->getId());
             } else {
                 $password = randString(6);
                 $user = (new User())
@@ -664,13 +686,13 @@ class OrderService implements LoggerAwareInterface
 
                 /* @todo вынести из сессии? */
                 /* нужно для expertsender */
-                /** пароль еще нужен для смс быстрого заказа */
                 $_SESSION['NEW_USER'] = [
                     'LOGIN' => $storage->getPhone(),
                     'PASSWORD' => $password,
                 ];
 
                 $storage->setUserId($user->getId());
+                $canAttachCard = true;
             }
         }
 
@@ -680,16 +702,26 @@ class OrderService implements LoggerAwareInterface
             $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
         );
 
-        /** @var PropertyValue $propertyValue */
-        foreach ($order->getPropertyCollection() as $propertyValue) {
-            $code = $propertyValue->getProperty()['CODE'];
-            if ($code !== 'USER_REGISTERED') {
-                continue;
+        /**
+         * Привязываем бонусную карту
+         */
+        if ($canAttachCard && !$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
+            try {
+                $existingContact = $this->manzanaService->getContactByUser($user);
+                $contact = new Client();
+                $contact->cardnumber = $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber());
+                $contact->contactId = $existingContact->contactId;
+                $this->manzanaService->updateContact($contact);
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                    $user->getId(),
+                    $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber())
+                );
+            } catch (ManzanaServiceException|ContactUpdateException $e) {
+                $this->log()->error(
+                    sprintf('failed to add bonus card to user: %s: %s', \get_class($e), $e->getMessage()),
+                    ['userId' => $user->getId(), 'card' => $storage->getDiscountCardNumber()]
+                );
             }
-            $propertyValue->setValue(
-                $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
-            );
-            break;
         }
 
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
@@ -723,23 +755,23 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        try {
-            /**
-             * @todo костыль
-             * При создании заказа корзина пересчитывается и скидка по промокоду сбрасывается
-             * Это фикс не допускает пересчет корзины
-             */
-            if ($this->basketService->getPromocodeDiscount()) {
-                /** @var BasketItem $basketItem */
-                foreach ($order->getBasket() as $basketItem) {
-                    $basketItem->setField('CUSTOM_PRICE', 'Y');
+        /**
+         * Заполнение складов довоза товара для элементов корзины
+         */
+        if ($shipmentResults = $selectedDelivery->getShipmentResults()) {
+            /** @var BasketItem $item */
+            foreach ($order->getBasket()->getOrderableItems() as $item) {
+                /** @var DeliveryScheduleResult $deliveryResult */
+                if(!$deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first()) {
+                    continue;
                 }
+
+                $this->basketService->setBasketItemPropertyValue(
+                    $item,
+                    'SHIPMENT_PLACE_CODE',
+                    $deliveryResult->getScheduleResult()->getSenderCode()
+                );
             }
-        } catch (\Exception $e) {
-            $this->log()->error(sprintf('failed to set custom price for basket items: %s', $e->getMessage()), [
-                'fuserId' => $storage->getFuserId(),
-                'userId' => $storage->getUserId()
-            ]);
         }
 
         try {
@@ -760,6 +792,7 @@ class OrderService implements LoggerAwareInterface
 
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
+            'order:item:' . $order->getId(),
         ]);
     }
 
@@ -1253,14 +1286,15 @@ class OrderService implements LoggerAwareInterface
         Order $order,
         CalculationResultInterface $delivery,
         bool $isFastOrder = false
-    ): void {
+    ): void
+    {
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
         $changed = false;
 
         $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
         $stockResult = $delivery->getStockResult();
-        if(!$isFastOrder) {
+        if (!$isFastOrder) {
             /**
              * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
              * и в наличии более 90% от суммы заказа, при этом имеются отложенные товары,
@@ -1283,10 +1317,9 @@ class OrderService implements LoggerAwareInterface
                 case $isFastOrder:
                     $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
                     break;
-                //@todo заказ по подписке
-//                case $isSubscribe:
-//                    $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
-//                    break;
+                case $this->isSubscribe($order):
+                    $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
+                    break;
                 case !$this->validateAddress($order):
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
@@ -1296,8 +1329,8 @@ class OrderService implements LoggerAwareInterface
                     $value = OrderPropertyService::COMMUNICATION_PHONE;
                     break;
                 // способ получения 04
-                case $this->deliveryService->isInnerPickup($delivery) && !$stockResult->getDelayed()->isEmpty():
-                // способ получения 06
+                case $this->deliveryService->isInnerPickup($delivery) && $stockResult->getDelayed()->isEmpty():
+                    // способ получения 06
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
@@ -1407,5 +1440,61 @@ class OrderService implements LoggerAwareInterface
         }
 
         return $propertyValue->getValue();
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     * @throws ObjectNotFoundException
+     */
+    public function isOnlinePayment(Order $order): bool
+    {
+        $result = false;
+        $paymentCode = $this->getOrderPaymentType($order);
+        if ($paymentCode === static::PAYMENT_ONLINE) {
+            $result = true;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function isSubscribe(Order $order): bool
+    {
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'IS_SUBSCRIBE');
+            $result = $propValue->getValue() === 'Y';
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return null|\Bitrix\Sale\PaySystem\Service
+     */
+    public function getCashPaySystemService()
+    {
+        $paySystemService = null;
+        if (!isset($this->paySystemServiceCache['cash'])) {
+            $this->paySystemServiceCache['cash'] = null;
+            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH);
+            if ($data) {
+                $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
+                    $data
+                );
+            }
+        }
+
+        if ($this->paySystemServiceCache['cash']) {
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystemService */
+            $paySystemService = clone $this->paySystemServiceCache['cash'];
+        }
+
+        return $paySystemService;
     }
 }

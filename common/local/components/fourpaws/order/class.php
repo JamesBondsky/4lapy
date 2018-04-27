@@ -203,6 +203,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             'AUTH_VALIDATION' => 'fourpaws_sale_ajax_order_validateauth',
             'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
             'PAYMENT_VALIDATION' => 'fourpaws_sale_ajax_order_validatepayment',
+            'BONUS_CARD_VALIDATION' => 'fourpaws_sale_ajax_order_validatebonuscard',
             'DELIVERY_INTERVALS' => 'fourpaws_sale_ajax_order_deliveryintervals',
         ];
         foreach ($routes as $key => $name) {
@@ -229,6 +230,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         $deliveries = $this->orderStorageService->getDeliveries($storage);
+        $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
 
@@ -241,28 +243,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $delivery = null;
             $pickup = null;
-            $selectedDelivery = null;
-            $selectedDeliveryId = $storage->getDeliveryId();
             foreach ($deliveries as $calculationResult) {
-                $deliveryId = $calculationResult->getDeliveryId();
-                if (!$selectedDeliveryId) {
-                    $selectedDeliveryId = $deliveryId;
-                }
-
-                if ($selectedDeliveryId === $deliveryId) {
-                    $selectedDelivery = $calculationResult;
-                }
-
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
                 } elseif ($this->deliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
                 }
-            }
-
-            if (!$selectedDelivery) {
-                $selectedDelivery = reset($deliveries);
-                $selectedDeliveryId = (int)$selectedDelivery->getDeliveryId();
             }
 
             try {
@@ -277,19 +263,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['DELIVERY'] = $delivery;
             $this->arResult['ADDRESSES'] = $addresses;
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
-            $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
         } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
-            $selectedDelivery = null;
-            /** @var CalculationResultInterface $delivery */
-            foreach ($deliveries as $delivery) {
-                if ($delivery->getDeliveryId() !== $storage->getDeliveryId()) {
-                    continue;
-                }
-
-                $selectedDelivery = $delivery;
-            }
 
             try {
                 if ($storage->isSplit()) {

@@ -2,18 +2,25 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
-
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
+use Bitrix\Sale\Payment;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -174,6 +181,15 @@ class Order extends BaseEntity
     /** @var string */
     protected $manzanaId = [];
 
+    /** @var array $orderItems */
+    protected $orderItems = [];
+
+    /** @var \Bitrix\Sale\Order $bitrixOrder */
+    protected $bitrixOrder;
+
+    /** @var bool */
+    protected $newManzana = false;
+
     /**
      * @return string
      */
@@ -190,6 +206,7 @@ class Order extends BaseEntity
     public function setAccountNumber(string $accountNumber): Order
     {
         $this->accountNumber = $accountNumber;
+
         return $this;
     }
 
@@ -209,6 +226,7 @@ class Order extends BaseEntity
     public function setPaySystemId(int $paySystemId): Order
     {
         $this->paySystemId = $paySystemId;
+
         return $this;
     }
 
@@ -228,6 +246,7 @@ class Order extends BaseEntity
     public function setDeliveryId(int $deliveryId): Order
     {
         $this->deliveryId = $deliveryId;
+
         return $this;
     }
 
@@ -247,6 +266,7 @@ class Order extends BaseEntity
     public function setDateInsert(DateTime $dateInsert): Order
     {
         $this->dateInsert = $dateInsert;
+
         return $this;
     }
 
@@ -266,6 +286,7 @@ class Order extends BaseEntity
     public function setDateUpdate(DateTime $dateUpdate): Order
     {
         $this->dateUpdate = $dateUpdate;
+
         return $this;
     }
 
@@ -285,6 +306,7 @@ class Order extends BaseEntity
     public function setPersonTypeID(string $personTypeID): Order
     {
         $this->personTypeID = $personTypeID;
+
         return $this;
     }
 
@@ -304,6 +326,7 @@ class Order extends BaseEntity
     public function setUserId(int $userId): Order
     {
         $this->userId = $userId;
+
         return $this;
     }
 
@@ -323,6 +346,7 @@ class Order extends BaseEntity
     public function setPayed(bool $payed): Order
     {
         $this->payed = $payed;
+
         return $this;
     }
 
@@ -342,6 +366,7 @@ class Order extends BaseEntity
     public function setDatePayed(DateTime $datePayed): Order
     {
         $this->datePayed = $datePayed;
+
         return $this;
     }
 
@@ -361,6 +386,7 @@ class Order extends BaseEntity
     public function setStatusId(string $statusId): Order
     {
         $this->statusId = $statusId;
+
         return $this;
     }
 
@@ -384,6 +410,7 @@ class Order extends BaseEntity
                 $this->setStatusLang($res->fetch());
             }
         }
+
         return $this->getStatusLang()['NAME'] ?? '';
     }
 
@@ -403,6 +430,7 @@ class Order extends BaseEntity
     public function setDateStatus(DateTime $dateStatus): Order
     {
         $this->dateStatus = $dateStatus;
+
         return $this;
     }
 
@@ -422,6 +450,7 @@ class Order extends BaseEntity
     public function setPrice(float $price): Order
     {
         $this->price = $price;
+
         return $this;
     }
 
@@ -441,6 +470,7 @@ class Order extends BaseEntity
     public function setCurrency(string $currency): Order
     {
         $this->currency = $currency;
+
         return $this;
     }
 
@@ -460,6 +490,7 @@ class Order extends BaseEntity
     public function setSumPaid(float $sumPaid): Order
     {
         $this->sumPaid = $sumPaid;
+
         return $this;
     }
 
@@ -479,6 +510,7 @@ class Order extends BaseEntity
     public function setDateCanceled(DateTime $dateCanceled): Order
     {
         $this->dateCanceled = $dateCanceled;
+
         return $this;
     }
 
@@ -491,6 +523,11 @@ class Order extends BaseEntity
      */
     public function getItems(): ArrayCollection
     {
+        if (!$this->items && $this->getId()) {
+            $orderItems = $this->getOrderItems();
+            $this->items = $orderItems[0];
+        }
+
         return $this->items ?? new ArrayCollection();
     }
 
@@ -502,7 +539,23 @@ class Order extends BaseEntity
     public function setItems(ArrayCollection $items): Order
     {
         $this->items = $items;
+
         return $this;
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getItemIdsQuantity(): array
+    {
+        $items = $this->getItems();
+        $itemIds = [];
+        /** @var OrderItem $item */
+        foreach ($items as $item) {
+            $itemIds[] = ['ID' => $item->getId(), 'QUANTITY' => $item->getQuantity()];
+        }
+        return $itemIds;
     }
 
     /**
@@ -533,7 +586,7 @@ class Order extends BaseEntity
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'),DateHelper::GENITIVE, true);
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
 
     public function getFormatedPrice()
@@ -543,9 +596,20 @@ class Order extends BaseEntity
 
     /**
      * @return float
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getAllWeight(): float
     {
+        if (!isset($this->allWeight) && $this->getId()) {
+            $orderItems = $this->getOrderItems();
+            $this->allWeight = (float)$orderItems[1];
+        }
+
         return $this->allWeight ?? 0;
     }
 
@@ -557,23 +621,42 @@ class Order extends BaseEntity
     public function setAllWeight(float $allWeight): Order
     {
         $this->allWeight = $allWeight;
+
         return $this;
     }
 
     /**
      * @return float
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getFormatedAllWeight(): float
     {
-        $allWeight =$this->getAllWeight();
-        return $allWeight > 0 ? number_format(round($allWeight / 1000, 2),2,'.',' ') : 0;
+        $allWeight = $this->getAllWeight();
+
+        return $allWeight > 0 ? number_format(round($allWeight / 1000, 2), 2, '.', ' ') : 0;
     }
 
     /**
      * @return float
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getItemsSum(): float
     {
+        if (!isset($this->itemsSum) && $this->getId()) {
+            $orderItems = $this->getOrderItems();
+            $this->itemsSum = (float)$orderItems[2];
+        }
+
         return $this->itemsSum ?? 0;
     }
 
@@ -587,6 +670,12 @@ class Order extends BaseEntity
 
     /**
      * @return string
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getFormattedItemsSum(): string
     {
@@ -595,10 +684,21 @@ class Order extends BaseEntity
 
     /**
      * @return OrderPayment
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getPayment(): OrderPayment
     {
-        return $this->payment ?? new OrderPayment;
+        if (!$this->payment) {
+            $paymentId = $this->getPaymentIdByPayments();
+            if ($paymentId === null) {
+                $paymentId = $this->getPaySystemId();
+            }
+            /** @todo сделать конвертер или использовать сток */
+            $this->payment = $this->getPersonalOrderService()->getPayment($paymentId);
+        }
+
+        return $this->payment;
     }
 
     /**
@@ -610,11 +710,49 @@ class Order extends BaseEntity
     }
 
     /**
+     * @return int|null
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     */
+    public function getPaymentIdByPayments(): ?int
+    {
+        $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
+        $bitrixOrder = $orderService->getOrderById($this->getId());
+        $innerSystemId = (int)PaySystemActionTable::query()
+            ->where('CODE', 'inner')
+            ->setCacheTtl(360000)
+            ->setLimit(1)
+            ->setSelect([
+                'ID',
+            ])->exec()->fetch()['ID'];
+        /** @var Payment $payment */
+        foreach ($bitrixOrder->getPaymentCollection()->getIterator() as $payment) {
+            $paySystemId = (int)$payment->getPaymentSystemId();
+            if ($payment->isInner() || $paySystemId === $innerSystemId) {
+                continue;
+            }
+            return $paySystemId;
+        }
+        return null;
+    }
+
+    /**
      * @return OrderDelivery
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getDelivery(): OrderDelivery
     {
-        return $this->delivery ?? new OrderDelivery();
+        if (!$this->delivery) {
+            $this->delivery = $this->getPersonalOrderService()->getDelivery($this->getId());
+        }
+
+        return $this->delivery;
     }
 
     /**
@@ -627,7 +765,8 @@ class Order extends BaseEntity
 
     /**
      * @return string
-     * @throws \Bitrix\Main\ObjectException
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getDateDelivery(): string
     {
@@ -636,11 +775,10 @@ class Order extends BaseEntity
             $formattedDate = $this->getDelivery()->getFormatedDateDeducted();
         } else {
             /** @todo рассчитанная дата доставки */
-            /** @var OrderProp $prop */
-            $prop = $this->getProps()->get('DELIVERY_DATE');
-            if($prop !== null) {
+            $propVal = $this->getPropValue('DELIVERY_DATE');
+            if ($propVal) {
                 /** @var Date|null $date */
-                $date = new Date($prop->getValue());
+                $date = new Date($propVal);
                 if ($date instanceof Date) {
                     $formattedDate = DateHelper::replaceRuMonth($date->format('j #n# Y'), DateHelper::GENITIVE, true);
                 }
@@ -652,9 +790,15 @@ class Order extends BaseEntity
 
     /**
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getProps(): ArrayCollection
     {
+        if (!$this->props && $this->getId()) {
+            $this->props = $this->getPersonalOrderService()->getOrderProps($this->getId());
+        }
+
         return $this->props ?? new ArrayCollection();
     }
 
@@ -668,10 +812,17 @@ class Order extends BaseEntity
 
     /**
      * @return Store
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getStore(): Store
     {
-        return $this->store ?? new Store();
+        if (!$this->store && $this->getId()) {
+            $this->store = $this->getPersonalOrderService()->getStore($this);
+        }
+
+        return $this->store;
     }
 
     /**
@@ -730,6 +881,7 @@ class Order extends BaseEntity
                 ->exec()
                 ->fetch());
         }
+
         return $this->getStatusMain()['SORT'];
     }
 
@@ -755,5 +907,119 @@ class Order extends BaseEntity
     public function setManzanaId(string $manzanaId): void
     {
         $this->manzanaId = $manzanaId;
+    }
+
+    /**
+     * @param string $propCode
+     *
+     * @return mixed
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     */
+    public function getPropValue(string $propCode)
+    {
+        $orderProp = $this->getProps()->get($propCode);
+
+        return $orderProp ? $orderProp->getValue() : '';
+    }
+
+    /**
+     * @return \Bitrix\Sale\Order
+     * @throws BitrixOrderNotFoundException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     */
+    public function getBitrixOrder(): \Bitrix\Sale\Order
+    {
+        if (!isset($this->bitrixOrder)) {
+            $this->bitrixOrder = \Bitrix\Sale\Order::load($this->getId());
+        }
+        if (!$this->bitrixOrder) {
+            throw new BitrixOrderNotFoundException('Заказ не найден');
+        }
+
+        return $this->bitrixOrder;
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isItemsEmpty(): bool
+    {
+        return $this->getItems()->isEmpty();
+    }
+
+    /**
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     */
+    public function isFastOrder(): bool
+    {
+        return $this->getPropValue('COM_WAY') === '04';
+    }
+
+    /**
+     * @param string $code
+     *
+     * @return OrderProp|null
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     */
+    public function getProperty(string $code): ?OrderProp
+    {
+        return $this->getProps()->get($code);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNewManzana(): bool
+    {
+        return $this->newManzana;
+    }
+
+    /**
+     * @param bool $newManzana
+     */
+    public function setNewManzana(bool $newManzana): void
+    {
+        $this->newManzana = $newManzana;
+    }
+
+    /**
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getOrderItems(): array
+    {
+        if (!$this->orderItems) {
+            $this->orderItems = $this->getPersonalOrderService()->getOrderItems(
+                $this->getId()
+            );
+        }
+
+        return $this->orderItems;
+    }
+
+    /**
+     * @return OrderService
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     */
+    private function getPersonalOrderService(): OrderService
+    {
+        $appCont = Application::getInstance()->getContainer();
+        /** @var OrderService $service */
+        $service = $appCont->get('order.service');
+
+        return $service;
     }
 }

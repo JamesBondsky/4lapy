@@ -9,6 +9,8 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -19,6 +21,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
@@ -110,7 +113,7 @@ class NotificationService implements LoggerAwareInterface
         /**
          * Заказ не должен быть с оплатой "онлайн"
          */
-        if ($this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
+        if ($this->orderService->isOnlinePayment($order)) {
             return;
         }
 
@@ -120,9 +123,9 @@ class NotificationService implements LoggerAwareInterface
 
         static::$isSending = true;
 
+        $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
             if ($transactionId) {
                 $this->logMessage($order, $transactionId);
             }
@@ -174,7 +177,7 @@ class NotificationService implements LoggerAwareInterface
         /**
          * Заказ должен быть с оплатой "онлайн"
          */
-        if (!$this->orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE) {
+        if (!$this->orderService->isOnlinePayment($order)) {
             return;
         }
 
@@ -188,9 +191,9 @@ class NotificationService implements LoggerAwareInterface
 
         static::$isSending = true;
 
+        $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
             if ($transactionId) {
                 $this->logMessage($order, $transactionId);
             }
@@ -432,5 +435,39 @@ class NotificationService implements LoggerAwareInterface
                 'order' => $order->getId()
             ]);
         }
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws \Exception
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function sendUnsubscribeOrderMessage(OrderSubscribe $orderSubscribe): void
+    {
+        $order = $orderSubscribe->getOrder()->getBitrixOrder();
+        $subscribeDateCreate = $orderSubscribe->getDateCreate();
+        $user = $orderSubscribe->getUser();
+        // 30.03.2018: Канал уведомления (email или sms), триггер и текст ожидаем от 4 Лап.
+        // 06.04.2018: Просто отправка письма, без ES, средствами системы
+        $fields = [
+            'ORDER_ID' => $order->getId(),
+            'ACCOUNT_NUMBER' => $order->getField('ACCOUNT_NUMBER'),
+            'SUBSCRIBE_ID' => $orderSubscribe->getId(),
+            'SUBSCRIBE_DATE' => $subscribeDateCreate ? $subscribeDateCreate->format('d.m.Y') : '',
+            'USER_ID' => $order->getUserId(),
+            'USER_NAME' => $user->getName(),
+            'USER_FULL_NAME' => $user->getFullName(),
+            'USER_EMAIL' => $user->getEmail(),
+        ];
+
+        \CEvent::SendImmediate(
+            '4PAWS_ORDER_SUBSCRIBE_AUTO_UNSUBSCRIBE',
+            's1',
+            $fields
+        );
     }
 }

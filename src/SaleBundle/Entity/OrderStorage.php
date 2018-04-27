@@ -21,6 +21,7 @@ use \DateTime;
  * @SaleValidation\OrderAddress(groups={"delivery","payment"})
  * @SaleValidation\OrderPaymentSystem(groups={"payment"})
  * @SaleValidation\OrderBonusPayment(groups={"payment"})
+ * @SaleValidation\OrderBonusCard(groups={"payment-card"})
  */
 class OrderStorage
 {

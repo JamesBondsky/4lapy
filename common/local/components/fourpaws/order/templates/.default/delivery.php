@@ -26,7 +26,6 @@ $delivery = $arResult['DELIVERY'];
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
-$selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
 
 /** @noinspection PhpUnhandledExceptionInspection */
 /** @var DeliveryService $deliveryService */
@@ -182,7 +181,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                             <?php if ($delivery) {
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDeliveryId !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
@@ -190,7 +189,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                             <?php if ($pickup) {
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
-                                    <?= $selectedDeliveryId !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDelivery->getDeliveryId()  !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                                 <?php

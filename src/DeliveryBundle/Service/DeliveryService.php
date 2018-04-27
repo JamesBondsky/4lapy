@@ -286,7 +286,7 @@ class DeliveryService implements LoggerAwareInterface
         $availableServices = Manager::getRestrictedObjectsList($shipment);
 
         $result = [];
-
+        $errors = [];
         foreach ($availableServices as $service) {
             if ($codes && !\in_array($service->getCode(), $codes, true)) {
                 continue;
@@ -315,6 +315,7 @@ class DeliveryService implements LoggerAwareInterface
 
             $calculationResult = $shipment->calculateDelivery();
             if (!$calculationResult->isSuccess()) {
+                $errors[$service->getCode()] = $calculationResult->getErrorMessages();
                 continue;
             }
 
@@ -335,7 +336,17 @@ class DeliveryService implements LoggerAwareInterface
 
             if ($calculationResult->isSuccess()) {
                 $result[] = $calculationResult;
+            } else {
+                $errors[$calculationResult->getDeliveryCode()] = $calculationResult->getErrorMessages();
             }
+        }
+
+        if (empty($codes) && empty($result)) {
+
+            $this->log()->info('No available deliveries', [
+                'location' => $this->getDeliveryLocation($shipment),
+                'errors' => $errors
+            ]);
         }
 
         return $result;
@@ -512,13 +523,31 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isPickupCode($deliveryCode): bool
+    {
+        return $deliveryCode && \in_array($deliveryCode, static::PICKUP_CODES, true);
+    }
+
+    /**
      * @param CalculationResultInterface $calculationResult
      *
      * @return bool
      */
     public function isPickup(CalculationResultInterface $calculationResult): bool
     {
-        return \in_array($calculationResult->getDeliveryCode(), static::PICKUP_CODES, true);
+        return $this->isPickupCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode && \in_array($deliveryCode, static::DELIVERY_CODES, true);
     }
 
     /**
@@ -528,7 +557,16 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDelivery(CalculationResultInterface $calculationResult): bool
     {
-        return \in_array($calculationResult->getDeliveryCode(), static::DELIVERY_CODES, true);
+        return $this->isDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isInnerPickupCode($deliveryCode): bool
+    {
+        return $deliveryCode && $deliveryCode === static::INNER_PICKUP_CODE;
     }
 
     /**
@@ -538,7 +576,16 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isInnerPickup(CalculationResultInterface $calculationResult): bool
     {
-        return $calculationResult->getDeliveryCode() === static::INNER_PICKUP_CODE;
+        return $this->isInnerPickupCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isDpdPickupCode($deliveryCode): bool
+    {
+        return $deliveryCode && $deliveryCode === static::DPD_PICKUP_CODE;
     }
 
     /**
@@ -548,7 +595,16 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDpdPickup(CalculationResultInterface $calculationResult): bool
     {
-        return $calculationResult->getDeliveryCode() === static::DPD_PICKUP_CODE;
+        return $this->isDpdPickupCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isInnerDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode && $deliveryCode === static::INNER_DELIVERY_CODE;
     }
 
     /**
@@ -558,7 +614,16 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isInnerDelivery(CalculationResultInterface $calculationResult): bool
     {
-        return $calculationResult->getDeliveryCode() === static::INNER_DELIVERY_CODE;
+        return $this->isInnerDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isDpdDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode && $deliveryCode === static::DPD_DELIVERY_CODE;
     }
 
     /**
@@ -568,7 +633,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDpdDelivery(CalculationResultInterface $calculationResult): bool
     {
-        return $calculationResult->getDeliveryCode() === static::DPD_DELIVERY_CODE;
+        return $this->isDpdDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**

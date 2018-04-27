@@ -253,32 +253,46 @@ class ExpertsenderService implements LoggerAwareInterface
             try {
                 $continue = false;
 
-                if ($expertSenderId > 0) {
-                    $addUserToList = new AddUserToList();
-                    $addUserToList->setForce(true);
-                    $addUserToList->setMode(static::MAIN_LIST_MODE);
-                    $addUserToList->setTrackingCode('change_email');
-                    $addUserToList->setListId(static::MAIN_LIST_ID);
-                    $addUserToList->setEmail($curUser->getEmail());
-                    $addUserToList->setId($expertSenderId);
-
-                    $addUserToList->setName($curUser->getName());
-                    $addUserToList->setLastName($curUser->getLastName());
-                    /** ip юзверя */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
-                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
-
-                    $apiResult = $this->client->addUserToList($addUserToList);
-                    if ($apiResult->isOk()) {
+                /** проверяем наличие новой почты в сендере */
+                $hasNewEmailInSender = false;
+                try {
+                    $userIdResult = $this->client->getUserId($curUser->getEmail());
+                    if ($userIdResult->isOk()) {
+                        $hasNewEmailInSender = true;
                         $continue = true;
-                    } else {
-                        throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
-                            $apiResult->getErrorCode());
                     }
-                } else {
-                    /** если нет старой почты или не нашли на сайте регистрируем в сендере */
-                    if ($this->sendEmailAfterRegister($curUser, ['isReg' => 0, 'type' => 'email_change_email'])) {
-                        $continue = false;
+                } catch (GuzzleException | Exception $e) {
+                    throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+                }
+
+                if(!$hasNewEmailInSender) {
+                    if ($expertSenderId > 0) {
+                        $addUserToList = new AddUserToList();
+                        $addUserToList->setForce(true);
+                        $addUserToList->setMode(static::MAIN_LIST_MODE);
+                        $addUserToList->setTrackingCode('change_email');
+                        $addUserToList->setListId(static::MAIN_LIST_ID);
+                        $addUserToList->setEmail($curUser->getEmail());
+                        $addUserToList->setId($expertSenderId);
+
+                        $addUserToList->setName($curUser->getName());
+                        $addUserToList->setLastName($curUser->getLastName());
+                        /** ip юзверя */
+                        $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
+                            BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+
+                        $apiResult = $this->client->addUserToList($addUserToList);
+                        if ($apiResult->isOk()) {
+                            $continue = true;
+                        } else {
+                            throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
+                                $apiResult->getErrorCode());
+                        }
+                    } else {
+                        /** если нет старой почты или не нашли на сайте регистрируем в сендере */
+                        if ($this->sendEmailAfterRegister($curUser, ['isReg' => 0, 'type' => 'email_change_email'])) {
+                            $continue = false;
+                        }
                     }
                 }
 

@@ -68,22 +68,51 @@ class ScheduleResultService
      * @throws SystemException
      * @throws BitrixRuntimeException
      * @throws ValidationException
+     * @return int[]
      */
-    public function updateResults(ScheduleResultCollection $results): void
+    public function updateResults(ScheduleResultCollection $results): array
     {
+        $deleted = 0;
+        $created = 0;
         $senders = $results->getSenders();
         /** @var Store $sender */
         foreach ($senders as $sender) {
             /** @var ScheduleResult $item */
             foreach ($this->findResultsBySender($sender) as $item) {
                 $this->deleteResult($item);
+                $deleted++;
             }
 
             /** @var ScheduleResult $item */
             foreach ($results->filterBySender($sender) as $item) {
                 $this->createResult($item);
+                $created++;
             }
         }
+
+        return [$created, $deleted];
+    }
+
+    /**
+     * @param Store $sender
+     *
+     * @throws ArgumentException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return int
+     */
+    public function deleteResultsForSender(Store $sender): int
+    {
+        $deleted = 0;
+        foreach ($this->findResultsBySender($sender) as $item) {
+            $this->deleteResult($item);
+            $deleted++;
+        }
+
+        return $deleted;
     }
 
     /**
@@ -225,7 +254,7 @@ class ScheduleResultService
         Store $sender,
         \DateTime $date,
         ?int $transitionCount = null
-    ) {
+    ): ScheduleResultCollection {
         if (null === $transitionCount) {
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }

@@ -27,6 +27,7 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -52,6 +53,13 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class BasketComponent extends CBitrixComponent
 {
+    /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
+    /**
+     * @var BasketService
+     */
     public $basketService;
     /** @var OfferCollection */
     public $offerCollection;
@@ -85,6 +93,7 @@ class BasketComponent extends CBitrixComponent
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
         $this->couponsStorage = $container->get(CouponStorageInterface::class);
+        $this->deliveryService = $container->get(DeliveryService::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -181,6 +190,7 @@ class BasketComponent extends CBitrixComponent
                 break;
             }
         }
+
         return $result;
     }
 
@@ -339,31 +349,34 @@ class BasketComponent extends CBitrixComponent
     /**
      * Подгружает названия и ссылки на описания акций по XML_ID
      */
-    private function loadPromoDescriptions()
+    private function loadPromoDescriptions(): void
     {
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var Order $order */
         $order = $basket->getOrder();
         $applyResult = $order->getDiscount()->getApplyResult(true);
+        $this->arResult['DISCOUNT_RESULT'] = $applyResult;
+
         if (\is_array($applyResult['DISCOUNT_LIST'])) {
-            $discountMap = array_column($applyResult['DISCOUNT_LIST'], 'REAL_DISCOUNT_ID', 'ID');
+            $discountMap = \array_column($applyResult['DISCOUNT_LIST'], 'REAL_DISCOUNT_ID', 'ID');
             $res = \CIBlockElement::GetList(
                 ['ID' => 'ASC'],
                 [
                     'PROPERTY_BASKET_RULES' => \array_values($discountMap),
-                    'IBLOCK_CODE'           => IblockCode::SHARES,
-                    'IBLOCK_TYPE'           => IblockType::PUBLICATION,
+                    'IBLOCK_CODE' => IblockCode::SHARES,
+                    'IBLOCK_TYPE' => IblockType::PUBLICATION,
                 ],
                 false,
                 false,
                 ['NAME', 'DETAIL_PAGE_URL', 'PROPERTY_BASKET_RULES']
             );
+            /** @noinspection PhpAssignmentInConditionInspection */
             while ($elem = $res->GetNext()) {
                 if (\is_array($elem['PROPERTY_BASKET_RULES_VALUE'])) {
                     foreach ($elem['PROPERTY_BASKET_RULES_VALUE'] as $ruleId) {
                         $this->promoDescriptions[$ruleId] = [
-                            'url'  => $elem['DETAIL_PAGE_URL'],
+                            'url' => $elem['DETAIL_PAGE_URL'],
                             'name' => $elem['NAME'],
                         ];
                     }
@@ -382,27 +395,20 @@ class BasketComponent extends CBitrixComponent
         $result = [];
         /**
          * @var BasketItemCollection $basketItemCollection
-         * @var Order                $order
+         * @var Order $order
          */
-        if (
-            ($basketItemCollection = $basketItem->getCollection())
-            &&
-            ($order = $basketItemCollection->getOrder())
-            &&
-            ($discount = $order->getDiscount())
-            &&
-            ($applyResult = $discount->getApplyResult())
-            &&
-            \is_array($applyResult['RESULT']['BASKET'])
-            &&
-            isset($applyResult['RESULT']['BASKET'][$basketItem->getId()])
-        ) {
-            foreach (\array_column($applyResult['RESULT']['BASKET'][$basketItem->getId()], 'DISCOUNT_ID') as $fakeId) {
+        $applyResult = $this->arResult['DISCOUNT_RESULT'];
+        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getId()];
+
+        if ($basketDiscounts) {
+            /** @noinspection ForeachSourceInspection */
+            foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
                 if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
                     $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
                 }
             }
         }
+
         return $result;
     }
 
@@ -415,5 +421,13 @@ class BasketComponent extends CBitrixComponent
     {
         $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
         $this->arResult['COUPON_DISCOUNT'] = $this->basketService->getPromocodeDiscount();
+    }
+
+    /**
+     * @return DeliveryService
+     */
+    public function getDeliveryService(): DeliveryService
+    {
+        return $this->deliveryService;
     }
 }

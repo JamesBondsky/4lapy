@@ -163,6 +163,7 @@ class Application extends AppKernel
     {
         $dataManager = self::getInstance()->getContainer()->get($hlblockServiceName);
 
+        /** Если это метод для HL-сущностей, то правильней проверять все же \Bitrix\Highloadblock\DataManager */
         if (!($dataManager instanceof DataManager)) {
             throw new RuntimeException(sprintf('Сервис %s не является %s',
                 $hlblockServiceName,

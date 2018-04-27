@@ -39,13 +39,13 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
 $selectedPayment = null;
 /** @var array $payments */
 $payments = $arResult['PAYMENTS'];
-$selectedPayment = current(array_filter($payments, function($item) {
+$selectedPayment = current(array_filter($payments, function ($item) {
     return $item['CODE'] === OrderService::PAYMENT_CASH;
 }));
 
 foreach ($payments as $i => $payment) {
     if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
-       unset($payments[$i]);
+        unset($payments[$i]);
     }
     if ((int)$payment['ID'] === $storage->getPaymentId()) {
         $selectedPayment = $payment;
@@ -140,41 +140,69 @@ $user = $arResult['USER'];
                             } ?>
                         </div>
                     </form>
-                    <form class="b-order-contacts__form b-order-contacts__form--points js-form-validation success-valid"
-                          action="/">
-                        <?php if ($user && $user->getDiscountCardNumber()) {
-                            if ($arResult['MAX_BONUS_SUM']) {
-                                $active = $storage->getBonus() > 0;
-                                ?>
-                                <label class="b-order-contacts__label" for="point-pay">
-                                    <b>Оплатить часть заказа бонусными баллами </b>
-                                    (до <?= $arResult['MAX_BONUS_SUM'] ?>)
-                                </label>
-                                <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
-                                    <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
-                                           id="point-pay"
-                                           type="text"
-                                           maxlength="5"
-                                           size="5"
-                                           value="<?= $storage->getBonus() ?>">
-                                    <div class="b-error">
-                                        <span class="js-message"></span>
-                                    </div>
-                                    <a class="b-input__close-points js-pointspay-close<?= $active ? ' active' : '' ?>"
-                                       href="javascript:void(0)"
-                                       title=""
-                                        <?= $active ? 'style="display:inline"' : '' ?>>
-                                    </a>
+                    <?php if ($user && $user->getDiscountCardNumber()) {
+                        if ($arResult['MAX_BONUS_SUM']) {
+                            $active = $storage->getBonus() > 0;
+                            ?>
+                            <label class="b-order-contacts__label" for="point-pay">
+                                <b>Оплатить часть заказа бонусными баллами </b>
+                                (до <?= $arResult['MAX_BONUS_SUM'] ?>)
+                            </label>
+                            <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
+                                <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
+                                       id="point-pay"
+                                       type="text"
+                                       maxlength="5"
+                                       size="5"
+                                       data-max-value="<?= $arResult['MAX_BONUS_SUM'] ?>"
+                                       value="<?= $storage->getBonus() ?>">
+                                <div class="b-error">
+                                    <span class="js-message"></span>
                                 </div>
-                                <button class="b-button b-button--order-line js-pointspay-button<?= $active ? ' hide' : '' ?>"
-                                    <?= $active ? 'style="display:none"' : '' ?>>
-                                    Подтвердить
-                                </button>
-                            <?php } ?>
-                        <?php } else { ?>
-                            <?php /* @todo форма ввода номера бонусной карты - верстки нет */ ?>
+                                <a class="b-input__close-points js-pointspay-close<?= $active ? ' active' : '' ?>"
+                                   href="javascript:void(0)"
+                                   title=""
+                                    <?= $active ? 'style="display:inline"' : '' ?>>
+                                </a>
+                            </div>
+                            <button class="b-button b-button--order-line js-pointspay-button<?= $active ? ' hide' : '' ?>"
+                                <?= $active ? 'style="display:none"' : '' ?>>
+                                Подтвердить
+                            </button>
                         <?php } ?>
-                    </form>
+                    <?php } else { ?>
+                        <div class="b-new-bonus-card_block">
+                            <div class="b-new-bonus-card--step1<?= $storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
+                                <div class="b-new-bonus-card">
+                                    <p class="js-new-bonus-card">Укажите бонусную карту</p><span>Для зачисления баллов</span>
+                                </div>
+                            </div>
+                            <div class="b-new-bonus-card--step2 hidden">
+                                <span class="title">Номер бонусной карты</span>
+                                <span class="js-new-card-cancel"></span>
+                                <form class="b-account-bonus-card__form js-form-validation js-offers-query success-valid"
+                                      data-url="<?= $arResult['URL']['BONUS_CARD_VALIDATION'] ?>" method="post">
+                                    <div class="b-order-contacts__link b-order-contacts__link--hidden js-number-input">
+                                        <div class="b-input b-input--account-bonus js-offers">
+                                            <input class="b-input__input-field b-input__input-field--account-bonus js-offers ok"
+                                                   value="<?= $storage->getDiscountCardNumber() ?>"
+                                                   type="text" id="bonus" placeholder="" name="text" data-url="">
+                                            <div class="b-error b-error--ok">
+                                                <span class="js-message">Поле верно заполнено</span>
+                                            </div>
+                                        </div>
+                                        <button class="b-order-contacts__button">Привязать</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="b-new-bonus-card--step3 <?= !$storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
+                                <div class="b-new-bonus-card--info">
+                                    <p>Бонусная карта для зачисления баллов: <span><?= $storage->getDiscountCardNumber() ?></span></p>
+                                    <span class="js-another-bonus-card">Указать другую карту</span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
                 </article>
             </div>
             <hr class="b-hr b-hr--order-step-3">
@@ -189,7 +217,8 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3" data-cost="<?= $basketPrice ?>">
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3"
+                                 data-cost="<?= $basketPrice ?>">
                                 <?= CurrencyHelper::formatPrice($basketPrice, false) ?>
                             </div>
                         </li>
@@ -201,7 +230,8 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3" data-cost="<?= $selectedDelivery->getPrice() ?>">
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3"
+                                 data-cost="<?= $selectedDelivery->getPrice() ?>">
                                 <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
                             </div>
                         </li>

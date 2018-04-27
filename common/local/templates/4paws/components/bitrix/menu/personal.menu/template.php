@@ -24,7 +24,7 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
     $outString = '<aside class="b-account__navigation-panel"><ul class="b-account-link">';
     foreach ($menu as $index => $item) {
         $outString .= '<li class="b-account-link__item' . ($item['SELECTED'] ? ' active' : '') . '">';
-        $outString .= '<a href="' . $item['LINK'] . '"class="b-account-link__link js-tab-link-account" title="'
+        $outString .= '<a href="' . $item['LINK'] . '" class="b-account-link__link js-tab-link-account" title="'
                       . $item['TEXT'] . '">';
         $outString .= $item['TEXT'];
         $outString .= '</a>';

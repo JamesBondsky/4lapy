@@ -10,6 +10,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -138,16 +140,17 @@ class OrderService
     }
 
     /**
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ManzanaServiceContactSearchNullException
-     * @throws ManzanaServiceContactSearchMoreOneException
-     * @throws ManzanaServiceException
+     * @return ArrayCollection
      * @throws ApplicationCreateException
-     * @return ArrayCollection|Order[]
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     * @throws NotAuthorizedException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws \Exception
      */
     public function getManzanaOrders(): ArrayCollection
     {
@@ -172,6 +175,7 @@ class OrderService
                 $order->setItemsSum($cheque->sum);
                 $order->setManzanaId($cheque->chequeNumber);
                 $items = [];
+                $newManzana = true;
                 if ($cheque->hasItemsBool()) {
                     $chequeItems = new ArrayCollection($this->manzanaService->getItemsByCheque($cheque->chequeId));
                     if (!$chequeItems->isEmpty()) {
@@ -181,9 +185,22 @@ class OrderService
                             $i++;
                             if ((int)$chequeItem->number < 2000000) {
                                 $item = new OrderItem();
-                                $item->setId($chequeItem->number);
                                 if ((int)$chequeItem->number > 1000000) {
                                     $item->setArticle($chequeItem->number);
+                                    /** @todo лучше вынести вниз в групповой запрос */
+                                    /** @var Offer $offer */
+                                    $offer = (new OfferQuery())->withFilter(['=XML_ID'=>$item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount'=>1])->exec()->first();
+                                    if($offer !== null && $offer->getId()> 0){
+                                        $item->setId($offer->getId());
+                                    }
+                                    else{
+                                        $item->setId($chequeItem->number);
+                                        $newManzana = false;
+                                    }
+                                }
+                                else{
+                                    $item->setId($chequeItem->number);
+                                    $newManzana = false;
                                 }
                                 $item->setBonus($chequeItem->bonus);
                                 $item->setPrice($chequeItem->price);
@@ -193,6 +210,8 @@ class OrderService
                                 $item->setHaveStock(false);
                                 $item->setWeight(0);
                                 $items[!empty($item->getArticle()) ? $item->getArticle() : $i] = $item;
+                            } else {
+                                $newManzana = false;
                             }
                         }
                     }
@@ -200,6 +219,7 @@ class OrderService
                     // пропускаем чеки без товаров
                     continue;
                 }
+                $order->setNewManzana($newManzana);
                 $order->setItems(new ArrayCollection($items));
                 $orders[$order->getId()] = $order;
             }
@@ -252,32 +272,17 @@ class OrderService
         $orderCollection = $this->orderRepository->getUserOrders($params);
         if (!$orderCollection->isEmpty()) {
             /** @var Order $order */
-            foreach ($orderCollection as $key => &$order) {
-                /** @todo вынести все получения из цикла и сделать по феншую без запросов в цикле */
+            foreach ($orderCollection as $key => $order) {
                 if (!$order->isManzana() && $order->getId() > 0) {
-                    /** @var ArrayCollection $items */
-                    list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
                     /** удаляем к чертям заказы без товаров */
-                    if($items->isEmpty()){
+                    if ($order->isItemsEmpty()) {
                         unset($orderCollection[$key]);
                         continue;
                     }
-                    $order->setItems($items);
-                    $order->setAllWeight((float)$allWeight);
-                    $order->setItemsSum((float)$itemsSum);
-                    $order->setPayment($this->getPayment($order->getPaySystemId()));
-                    $order->setDelivery($this->getDelivery($order->getId()));
-                    $order->setProps($this->getOrderProps($order->getId()));
-                    $order->setStore($this->getStore($order));
                 }
-
-                $payment = $this->getPayment($order->getPaySystemId());
-                $order->setPayment($payment);
-                $delivery = $this->getDelivery($order->getId());
-                $order->setDelivery($delivery);
             }
-            unset($order);
         }
+
         return $orderCollection;
     }
 
@@ -353,10 +358,10 @@ class OrderService
      * @param Order $order
      *
      * @return Store
-     * @throws ArgumentException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws \Exception
      * @throws NotFoundException
      */
     public function getStore(Order $order): Store
@@ -369,56 +374,46 @@ class OrderService
             $deliveryPlace = $props->get('DELIVERY_PLACE_CODE');
             if ($dpdTerminal instanceof OrderProp && $dpdTerminal->getValue()) {
                 $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+
                 return $deliveryService->getDpdTerminalByCode($dpdTerminal->getValue());
             }
             if ($deliveryPlace instanceof OrderProp && $deliveryPlace->getValue()) {
                 $storeService = App::getInstance()->getContainer()->get('store.service');
+
                 return $storeService->getStoreByXmlId($deliveryPlace->getValue());
             }
         }
 
         $store = new Store();
+        //$street = $order->getPropValue('STREET') . ' ул.';
+        $street = $order->getPropValue('STREET');
+        $house = ', д.' . $order->getPropValue('HOUSE');
+        $building = !empty($order->getPropValue('BUILDING')) ? ', корпус/строение ' . $order->getPropValue('BUILDING') : '';
+        $porch = !empty($order->getPropValue('PORCH')) ? ', подъезд. ' . $order->getPropValue('PORCH') : '';
+        $apartment = !empty($order->getPropValue('APARTMENT')) ? ', кв. ' . $order->getPropValue('APARTMENT') : '';
+        $floor = !empty($order->getPropValue('FLOOR')) ? ', этаж ' . $order->getPropValue('FLOOR') : '';
+        $city = ', г. ' . $order->getPropValue('CITY');
+        $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
+        $store->setActive(true);
+        $store->setIsShop(false);
 
-        if (!$props->isEmpty()) {
-            $street = '';
-            $prop = $props->get('STREET');
-            if ($prop instanceof OrderProp) {
-                $street = $prop->getValue() . ' ул.';
-            }
-            $house='';
-            $prop = $props->get('HOUSE');
-            if ($prop instanceof OrderProp) {
-                $house = ', д.' . $prop->getValue();
-            }
-            $building='';
-            $prop = $props->get('BUILDING');
-            if ($prop instanceof OrderProp) {
-                $building = !empty($prop->getValue()) ? ', корпус/строение ' . $prop->getValue() : '';
-            }
-            $porch='';
-            $prop = $props->get('PORCH');
-            if ($prop instanceof OrderProp) {
-                $porch = !empty($prop->getValue()) ? ', подъезд. ' . $prop->getValue() : '';
-            }
-            $apartment='';
-            $prop = $props->get('APARTMENT');
-            if ($prop instanceof OrderProp) {
-                $apartment = !empty($prop->getValue()) ? ', кв. ' . $prop->getValue() : '';
-            }
-            $floor='';
-            $prop = $props->get('FLOOR');
-            if ($prop instanceof OrderProp) {
-                $floor = !empty($prop->getValue()) ? ', этаж ' . $prop->getValue() : '';
-            }
-            $city='';
-            $prop = $props->get('CITY');
-            if ($prop instanceof OrderProp) {
-                $city = ', г. ' . $prop->getValue();
-            }
-            $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
-            $store->setActive(true);
-            $store->setIsShop(false);
-        }
         return $store;
+    }
+
+    /**
+     * @param int $orderId
+     * @return Order|null
+     * @throws \Exception
+     */
+    public function getOrderById(int $orderId)
+    {
+        $params = [
+            'filter' => [
+                'ID' => $orderId
+            ]
+        ];
+        $collection = $this->orderRepository->findBy($params);
+
+        return $collection->count() ? $collection->first() : null;
     }
 }

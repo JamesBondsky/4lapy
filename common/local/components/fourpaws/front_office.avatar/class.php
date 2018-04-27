@@ -47,6 +47,11 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         'view_all_users', 'edit_all_users'
     ];
 
+    /**
+     * FourPawsFrontOfficeAvatarComponent constructor.
+     *
+     * @param null|\CBitrixComponent $component
+     */
     public function __construct($component = null)
     {
         // LazyLoggerAwareTrait не умеет присваивать имя по классам без неймспейса
@@ -56,6 +61,10 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         parent::__construct($component);
     }
 
+    /**
+     * @param $params
+     * @return mixed
+     */
     public function onPrepareComponentParams($params)
     {
         $params['CURRENT_PAGE'] = isset($params['CURRENT_PAGE']) ? trim($params['CURRENT_PAGE']) : '';
@@ -204,17 +213,20 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
 
     /**
      * @return UserService
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function getUserService()
     {
         if (!$this->userCurrentUserService) {
             $this->userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
         }
+
         return $this->userCurrentUserService;
     }
 
     /**
      * @return UserRepository
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function getUserRepository()
     {
@@ -325,6 +337,9 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         $this->loadData();
     }
 
+    /**
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     protected function loadData()
     {
         $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
@@ -625,6 +640,10 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         return !empty($this->arResult['ERROR']);
     }
 
+    /**
+     * @param $value
+     * @return array|mixed|string
+     */
     protected function walkRequestValues($value)
     {
         if (is_scalar($value)) {

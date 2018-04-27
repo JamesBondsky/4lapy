@@ -637,7 +637,7 @@ class BasketService implements LoggerAwareInterface
             if (!$found) {
                 $property = $basketItem->getPropertyCollection()->createItem();
                 $property->setFields([
-                    'NAME' => $name ?? $code,
+                    'NAME' => $name ?: $code,
                     'CODE' => $code,
                     'VALUE' => $value
                 ]);

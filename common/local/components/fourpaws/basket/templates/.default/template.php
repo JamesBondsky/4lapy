@@ -148,12 +148,19 @@ if ($arParams['IS_AJAX']) {
                         if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                             continue;
                         }
+
                         $offer = $component->getOffer((int)$basketItem->getProductId());
+
                         if ($offer->isByRequest()) {
                             continue;
                         }
+
+                        $isOnlyPickup = empty($component->getDeliveryService()->getByProduct($offer, '', $component->getDeliveryService()::DELIVERY_CODES));
+
                         require __DIR__ . '/basketItem.php';
                     }
+
+                    $isOnlyPickup = false;
                     ?>
                 </section>
             <?php }

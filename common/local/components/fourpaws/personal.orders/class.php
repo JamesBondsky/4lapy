@@ -10,13 +10,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Sale;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -27,7 +28,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
-use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -35,10 +36,9 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use \Bitrix\Main;
-use \Bitrix\Sale;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 {
     /**
@@ -51,10 +51,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
     /** @var UserAuthorizationInterface */
     private $currentUserProvider;
-
-    public const STATUS_IN_POINT_ISSUE = 'F';
-    public const STATUS_IN_ASSEMBLY_1 = 'H';
-    public const STATUS_IN_ASSEMBLY_2 = 'W';
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -95,6 +91,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
         $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -125,11 +123,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
         $instance = Application::getInstance();
 
-        $request = Application::getInstance()->getContext()->getRequest();
-        if($request->get('reply_order') === 'Y'){
+        $request = $instance->getContext()->getRequest();
+        if ($request->get('reply_order') === 'Y') {
             $orderId = (int)$request->get('id');
-            if($orderId > 0){
-                $this->copyOrder2CustomerBasket($orderId);
+            if ($orderId > 0) {
+                $this->copyOrder2CustomerBasket($orderId, $request);
             }
         }
 
@@ -144,10 +142,15 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         }
 
         $cache = $instance->getCache();
-        $cachePath = $this->getCachePath() ?: $this->getPath();
+        // здесь всегда будет работать $this->getPath(), который вернет не тот путь
+        //$cachePath = $this->getCachePath() ?: $this->getPath();
+        $cachePath = $instance->getManagedCache()->getCompCachePath(
+            $this->getRelativePath()
+        );
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $userId]),
-            $cachePath)) {
+            $cachePath)
+        ) {
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
         } elseif ($cache->startDataCache()) {
@@ -165,8 +168,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             if ($tagCache !== null) {
                 TaggedCacheHelper::addManagedCacheTags([
                     'personal:orders',
-                    'personal:orders:'. $userId,
-                    'order:'. $userId
+                    'personal:orders:' . $userId,
+                    'order:' . $userId,
                 ], $tagCache);
                 $tagCache->endTagCache();
             }
@@ -177,58 +180,69 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** имитация постранички */
         $nav = new PageNavigation('nav-orders');
         $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-
+        /*
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
-        /** @noinspection PhpUndefinedVariableInspection */
-        if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId, 'page'=>$nav->getCurrentPage()], $cachePath)) {
-            $activeOrders = $closedOrders = new ArrayCollection();
-            try {
-                $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
-                $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
-                    $manzanaOrders->toArray());
-                /** Сортировка по дате и статусу общих заказов */
-                $allClosedOrdersList = $allClosedOrders->toArray();
-                usort($allClosedOrdersList, ['FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate']);
+        $startResultCacheRes = $this->startResultCache(
+            $this->arParams['CACHE_TIME'],
+            [
+                'manzanaOrders' => $manzanaOrders->getKeys(),
+                'USER_ID' => $userId,
+                'page' => $nav->getCurrentPage()
+            ],
+            $cachePath
+        );
+        if ($startResultCacheRes) {
+        */
+        $activeOrders = $closedOrders = new ArrayCollection();
+        try {
+            $this->arResult['ACTIVE_ORDERS'] = $activeOrders = $this->orderService->getActiveSiteOrders();
+            /** @noinspection PhpUndefinedVariableInspection */
+            $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
+                $manzanaOrders->toArray());
+            /** Сортировка по дате и статусу общих заказов */
+            $allClosedOrdersList = $allClosedOrders->toArray();
+            usort($allClosedOrdersList, ['FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate']);
 
-                /** имитация постранички */
-                $nav->setRecordCount($allClosedOrders->count());
-                $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
-                    $nav->getOffset(), $nav->getPageSize(), true));
-                $this->arResult['NAV'] = $nav;
-            } catch (NotAuthorizedException $e) {
-                $this->abortResultCache();
-                /** запрашиваем авторизацию */
-                \define('NEED_AUTH', true);
-                return null;
-            } catch (\Exception $e) {
-                $this->abortResultCache();
-                $logger = LoggerFactory::create('my_orders');
-                $logger->error('error - '.$e->getMessage());
-                /** Показываем пустую страницу с заказами */
-            }
+            /** имитация постранички */
+            $nav->setRecordCount($allClosedOrders->count());
+            $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
+                $nav->getOffset(), $nav->getPageSize(), true));
+            $this->arResult['NAV'] = $nav;
+        } catch (NotAuthorizedException $e) {
+            /*
+            $this->abortResultCache();
+            */
+            /** запрашиваем авторизацию */
+            \define('NEED_AUTH', true);
+            return null;
+        } catch (\Exception $e) {
+            /*
+            $this->abortResultCache();
+            */
+            $logger = LoggerFactory::create('my_orders');
+            $logger->error('error - ' . $e->getMessage());
+            /** Показываем пустую страницу с заказами */
+        }
 
-            $page= '';
-            if($activeOrders->isEmpty() && $closedOrders->isEmpty()){
-                $page = 'notOrders';
-            }
-            else{
-                $storeService = App::getInstance()->getContainer()->get('store.service');
-                $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
-            }
+        if (!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
+            $storeService = App::getInstance()->getContainer()->get('store.service');
+            $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
+        }
 
+        /*
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:orders',
                 'personal:orders:'. $userId,
                 'order:'. $userId
             ]);
-
-            $this->setResultCacheKeys(['ACTIVE_ORDERS', 'CLOSED_ORDERS']);
-
-            $this->includeComponentTemplate($page);
+            //$this->setResultCacheKeys(['ACTIVE_ORDERS', 'CLOSED_ORDERS']);
+            $this->endResultCache();
         }
+        */
 
-        return true;
+        $this->includeComponentTemplate();
+
+        return $this;
     }
 
     /**
@@ -258,91 +272,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         return -1;
     }
 
-    /**
-     * Взято из компонента списка заказов Битиркса common/bitrix/components/bitrix/sale.personal.order.list/class.php
-     *
-     * @param int $id Order id
-     *
-     * @throws Main\SystemException
-     * @return void
-     * @throws Exception
-     */
-    protected function copyOrder2CustomerBasket(int $id): void
-    {
-        $result = new Main\Result();
-
-        if ($id)
-        {
-            $basket = Sale\Basket::loadItemsForFUser(Sale\Fuser::getId(), Main\Context::getCurrent()->getSite());
-
-            $filterFields = array(
-                'SET_PARENT_ID', 'TYPE',
-                'PRODUCT_ID', 'PRODUCT_PRICE_ID', 'PRICE', 'CURRENCY', 'WEIGHT', 'QUANTITY', 'LID',
-                'NAME', 'CALLBACK_FUNC', 'NOTES', 'PRODUCT_PROVIDER_CLASS', 'CANCEL_CALLBACK_FUNC',
-                'ORDER_CALLBACK_FUNC', 'PAY_CALLBACK_FUNC', 'DETAIL_PAGE_URL', 'CATALOG_XML_ID', 'PRODUCT_XML_ID',
-                'VAT_RATE', 'MEASURE_NAME', 'MEASURE_CODE', 'BASE_PRICE', 'VAT_INCLUDED'
-            );
-            $filterFields = array_flip($filterFields);
-
-            $oldOrder = Sale\Order::load($id);
-
-            if($oldOrder !== null) {
-                $oldBasket = $oldOrder->getBasket();
-                $oldBasketItems = $oldBasket->getBasketItems();
-
-                /** @var Sale\BasketItem $oldBasketItem*/
-                foreach ($oldBasketItems as $oldBasketItem)
-                {
-                    $propertyList = array();
-                    if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection())
-                    {
-                        $propertyList = $oldPropertyCollection->getPropertyValues();
-                    }
-
-                    $item = $basket->getExistsItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'), $propertyList);
-
-                    if ($item)
-                    {
-                        $resultItem = $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
-                    }
-                    else
-                    {
-                        $item = $basket->createItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'));
-                        $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
-                        $item->setField('NAME', $oldBasketValues['NAME']);
-                        $resultItem = $item->setFields($oldBasketValues);
-                        $newPropertyCollection = $item->getPropertyCollection();
-
-                        /** @var Sale\BasketPropertyItem $oldProperty*/
-                        foreach ($propertyList as $oldPropertyFields)
-                        {
-                            $propertyItem = $newPropertyCollection->createItem([]);
-                            unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
-
-                            /** @var Sale\BasketPropertyItem $propertyItem*/
-                            $propertyItem->setFields($oldPropertyFields);
-                        }
-                    }
-                    if (!$resultItem->isSuccess())
-                    {
-                        $result->addErrors($resultItem->getErrors());
-                    }
-                }
-            }
-
-            if ($result->isSuccess())
-            {
-                $basket->save();
-            }
-            else
-            {
-                throw new Main\SystemException('Невозможно копировать заказ');
-            }
-
-            LocalRedirect($this->arParams['PATH_TO_BASKET']);
-        }
-    }
-
     public function getCurrentUserService()
     {
         return $this->currentUserProvider;
@@ -358,16 +287,15 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     public function getItemBonus(OrderItem $item, int $percent, int $precision = 2): string
     {
         $bonusText = '';
-        $bonus = \round($item->getPrice() * $item->getQuantity() * $percent / 100, 2);
+        $bonus = \round($item->getPrice() * $item->getQuantity() * $percent / 100, $precision);
         if ($bonus <= 0) {
             return $bonusText;
         }
 
-        if($precision > 0){
+        if ($precision > 0) {
             $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
             $floorBonus = \floor($bonus);
-        }
-        else{
+        } else {
             $floorBonus = $bonus = floor($bonus);
         }
 
@@ -378,5 +306,122 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             WordHelper::numberFormat($bonus, $precision),
             WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
         );
+    }
+
+    /**
+     * Взято из компонента списка заказов Битиркса common/bitrix/components/bitrix/sale.personal.order.list/class.php
+     *
+     * @param int          $id Order id
+     *
+     * @param Main\Request $request
+     *
+     * @return void
+     * @throws Main\ArgumentNullException
+     * @throws Main\ArgumentOutOfRangeException
+     * @throws Main\NotImplementedException
+     * @throws Main\NotSupportedException
+     * @throws SystemException
+     */
+    protected function copyOrder2CustomerBasket(int $id, Main\Request $request): void
+    {
+        $result = new Main\Result();
+
+        $isManzana = $request->get('is_manzana') ?? false;
+        if ($id > 0 || $isManzana) {
+            $basket = Sale\Basket::loadItemsForFUser(Sale\Fuser::getId(), Main\Context::getCurrent()->getSite());
+
+            if ($isManzana) {
+                /** добавление товаров в корзину для манзановского заказа */
+                $items = json_decode($request->get('item_ids'), true);
+                if (!empty($items)) {
+                    /** @var BasketService $basketService */
+                    $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+                    foreach ($items as $item) {
+                        $basketService->addOfferToBasket($item['ID'], $item['QUANTITY'], [], true, $basket);
+                    }
+                } else {
+                    $result->addErrors([new Main\Error('нет итемов')]);
+                }
+            } else {
+                $filterFields = [
+                    'SET_PARENT_ID',
+                    'TYPE',
+                    'PRODUCT_ID',
+                    'PRODUCT_PRICE_ID',
+                    'PRICE',
+                    'CURRENCY',
+                    'WEIGHT',
+                    'QUANTITY',
+                    'LID',
+                    'NAME',
+                    'CALLBACK_FUNC',
+                    'NOTES',
+                    'PRODUCT_PROVIDER_CLASS',
+                    'CANCEL_CALLBACK_FUNC',
+                    'ORDER_CALLBACK_FUNC',
+                    'PAY_CALLBACK_FUNC',
+                    'DETAIL_PAGE_URL',
+                    'CATALOG_XML_ID',
+                    'PRODUCT_XML_ID',
+                    'VAT_RATE',
+                    'MEASURE_NAME',
+                    'MEASURE_CODE',
+                    'BASE_PRICE',
+                    'VAT_INCLUDED',
+                ];
+                $filterFields = array_flip($filterFields);
+
+                $oldOrder = Sale\Order::load($id);
+
+                if ($oldOrder !== null) {
+                    $oldBasket = $oldOrder->getBasket();
+                    $oldBasketItems = $oldBasket->getBasketItems();
+
+                    /** @var Sale\BasketItem $oldBasketItem */
+                    foreach ($oldBasketItems as $oldBasketItem) {
+                        $propertyList = [];
+                        if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
+                            $propertyList = $oldPropertyCollection->getPropertyValues();
+                        }
+
+                        $item = $basket->getExistsItem($oldBasketItem->getField('MODULE'),
+                            $oldBasketItem->getField('PRODUCT_ID'), $propertyList);
+
+                        if ($item) {
+                            $resultItem = $item->setField('QUANTITY',
+                                $item->getQuantity() + $oldBasketItem->getQuantity());
+                        } else {
+                            $item = $basket->createItem($oldBasketItem->getField('MODULE'),
+                                $oldBasketItem->getField('PRODUCT_ID'));
+                            $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
+                            $item->setField('NAME', $oldBasketValues['NAME']);
+                            $resultItem = $item->setFields($oldBasketValues);
+                            $newPropertyCollection = $item->getPropertyCollection();
+
+                            /** @var Sale\BasketPropertyItem $oldProperty */
+                            foreach ($propertyList as $oldPropertyFields) {
+                                $propertyItem = $newPropertyCollection->createItem([]);
+                                unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
+
+                                /** @var Sale\BasketPropertyItem $propertyItem */
+                                $propertyItem->setFields($oldPropertyFields);
+                            }
+                        }
+                        if (!$resultItem->isSuccess()) {
+                            $result->addErrors($resultItem->getErrors());
+                        }
+                    }
+                }
+            }
+
+
+            if ($result->isSuccess()) {
+                $basket->save();
+            } else {
+                throw new Main\SystemException('Невозможно копировать заказ');
+            }
+
+            LocalRedirect($this->arParams['PATH_TO_BASKET']);
+        }
     }
 }

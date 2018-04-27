@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Created by PhpStorm.
  * Date: 30.01.2018
@@ -55,7 +56,9 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                 $notFound = true;
             }
             if ($notFound) {
-                $this->basketService->deleteOfferFromBasket($gift['basketId']);
+                $this->basketService->deleteOfferFromBasket(
+                    $gift['basketId']
+                );
                 unset($existGifts[$k]);
             }
         }
@@ -76,11 +79,16 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
                 $sumCount += $gift['quantity'];
                 if ($sumCount > $group['count']) {
                     if ($availCount > 0) {
-                        $this->basketService->updateBasketQuantity($gift['basketId'], $availCount);
+                        $this->basketService->updateBasketQuantity(
+                            $gift['basketId'],
+                            $availCount
+                        );
                         $availCount = 0;
                     } else {
                         try {
-                            $this->basketService->deleteOfferFromBasket($gift['basketId']);
+                            $this->basketService->deleteOfferFromBasket(
+                                $gift['basketId']
+                            );
                             unset($existGifts[$k]);
                         } /** @noinspection BadExceptionsProcessingInspection */ catch (NotFoundException $e) {
                             // пох

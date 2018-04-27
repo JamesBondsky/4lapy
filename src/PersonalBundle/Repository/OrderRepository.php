@@ -137,7 +137,8 @@ class OrderRepository extends BaseRepository
                             ->whereIn('CODE', 'VOLUME_REFERENCE')
                             ->setCacheTtl($queryCacheTtl)
                             ->setSelect(['ID'])
-                            ->exec()->fetch()['ID'];
+                            ->exec()
+                            ->fetch()['ID'];
 
         $sizePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
             'CODE',
@@ -350,6 +351,7 @@ class OrderRepository extends BaseRepository
                 'PRICE_DELIVERY',
                 'DEDUCTED',
                 'DATE_DEDUCTED',
+                'ORDER_ID',
             ])->exec()->fetch();
         if (\is_array($shipment)) {
             return $this->dataToEntity(

@@ -974,10 +974,6 @@ class Store extends Base
             $this->scheduleString = (string)$this->schedule;
         }
 
-        /** костыль ну пустое значение - если это круглосуточное изменить */
-        if ($this->scheduleString === '0:00 - 0:00'){
-            $this->scheduleString = 'Круглосуточно';
-        }
         return $this->scheduleString;
     }
 

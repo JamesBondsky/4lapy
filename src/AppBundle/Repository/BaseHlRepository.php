@@ -32,7 +32,11 @@ class BaseHlRepository extends BaseRepository
         ArrayTransformerInterface $arrayTransformer
     ) {
         parent::__construct($validator, $arrayTransformer);
-        $baseHl = HLBlockFactory::createTableObject(static::HL_NAME);
-        $this->setDataManager($baseHl);
+
+        // даем возможность определить DataManager иным способом
+        if (!$this->getDataManager()) {
+            $baseHl = HLBlockFactory::createTableObject(static::HL_NAME);
+            $this->setDataManager($baseHl);
+        }
     }
 }

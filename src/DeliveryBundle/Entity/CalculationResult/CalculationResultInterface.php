@@ -213,11 +213,6 @@ interface CalculationResultInterface
     public function getShipmentResults(): ?DeliveryScheduleResultCollection;
 
     /**
-     * @return Store|null
-     */
-    public function getShipmentStore(): ?Store;
-
-    /**
      * @return float
      */
     public function getDeliveryPrice();
