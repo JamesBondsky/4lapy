@@ -51,6 +51,8 @@ class LocationService
 
     public const TYPE_VILLAGE = 'VILLAGE';
 
+    public const TYPE_REGION = 'REGION';
+
     public const LOCATION_CODE_MOSCOW = '0000073738';
 
     public const DEFAULT_REGION_CODE = 'IR77';
@@ -667,6 +669,7 @@ class LocationService
                 $path[] = [
                     'NAME' => $pathItem['DISPLAY'],
                     'CODE' => $pathItem['CODE'],
+                    'TYPE' => $types[$pathItem['TYPE_ID']]
                 ];
             }
             $result[] = [

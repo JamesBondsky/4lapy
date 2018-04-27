@@ -252,14 +252,8 @@ class StoreService implements LoggerAwareInterface
         string $type = self::TYPE_ALL,
         bool $strict = false
     ): StoreCollection {
-        $typeFilter = $this->getTypeFilter($type);
-        $getStores = function () use ($locationCode, $typeFilter) {
-            $filter = array_merge(
-                ['UF_LOCATION' => $locationCode],
-                $typeFilter
-            );
-
-            $storeCollection = $this->storeRepository->findBy($filter);
+        $getStores = function () use ($locationCode, $type) {
+            $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
 
             return ['result' => $storeCollection];
         };
