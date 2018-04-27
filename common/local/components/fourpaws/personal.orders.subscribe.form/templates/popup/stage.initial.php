@@ -137,15 +137,19 @@ if ($order) {
 
     // даты, на которые можно оформить первую доставку
     $possibleDeliveryDateMin = $component->getOrderPossibleDeliveryDate($order);
-    if($possibleDeliveryDateMin !== null) {
+    $possibleDeliveryDateMax = null;
+    if ($possibleDeliveryDateMin !== null) {
         $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
         $possibleDeliveryDateMax->add((new \DateInterval('P2M')));
         // выбранная дата при подписке, либо дата по умолчанию
         $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : $possibleDeliveryDateMin->format('d.m.Y');
-    }
-    else{
+    } else {
         $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : '';
     }
+
+    // LP03-465
+    //$paymentName = $order->getPayment()->getName();
+    $paymentName = 'наличными или картой при получении';
     ?>
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section"
              data-popup="<?= $attrPopupId ?>">
@@ -154,7 +158,7 @@ if ($order) {
         <div class="b-registration b-registration--subscribe-delivery">
             <header class="b-registration__header">
                 <h1 class="b-title b-title--h1 b-title--registration">
-                    Подписка на доставку
+                    <?=$orderSubscribe ? 'Изменение подписки' : 'Подписка на доставку'?>
                 </h1>
             </header>
             <form class="b-registration__form js-form-validation js-subscribe-query"
@@ -269,7 +273,7 @@ if ($order) {
                             <?= (new SvgDecorator('icon-delivery-dollar', 18, 14)) ?>
                         </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
-                            <p><?= 'Оплата: ' . $order->getPayment()->getName() . '.' ?></p>
+                            <p><?= 'Оплата: ' . $paymentName . '.' ?></p>
                         </div>
                     </li>
                 </ul>
