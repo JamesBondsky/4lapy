@@ -13,8 +13,10 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Sale\BasketItem;
 use CBitrixComponent;
 use FourPaws\App\Application;
+use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\CatalogBundle\AjaxController\ProductInfoController;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -57,19 +59,37 @@ class GroupSet extends CBitrixComponent
             $logger = LoggerFactory::create('productDetail');
             $logger->error($e->getMessage());
         }
-        if(empty($groupSets)) {
+        if (empty($groupSets)) {
             return;
         }
-
-        $basket = $this->basketService->getBasket();
-        $ids = [];
-        /** @var BasketItem $basketItem */
-        foreach ($basket->getBasketItems() as $basketItem) {
-            $ids[] = $basketItem->getProductId();
-        }
-        $ids = array_flip(array_flip($ids));
-        dump($groupSets, $ids);
-
+        $this->arResult['SHARE'] = $groupSets[0]['share'];
+        $this->arResult['EMPTY_SLOTS'] = \count($groupSets[0]['groupSet']) - 1;
+        $this->loadTemplateFields();
         $this->includeComponentTemplate();
+    }
+
+    protected function loadTemplateFields()
+    {
+        /** @var Offer $currentOffer */
+        $currentOffer = $this->arParams['OFFER'];
+        /** @var Share $share */
+        $share = $this->arResult['SHARE'];
+
+        $this->arResult['IMG'] = $currentOffer->getResizeImages(140, 140)->first();
+        $this->arResult['OFFER_ID'] = $currentOffer->getId();
+        $this->arResult['PRICE'] = $currentOffer->getPrice();
+
+        $product = $currentOffer->getProduct();
+        $this->arResult['NAME']
+            = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName()));
+
+        if (0 < $weight = $currentOffer->getCatalogProduct()->getWeight()) {
+            $weight = WordHelper::showWeight($weight);
+        } else {
+            $weight = '';
+        }
+        $this->arResult['WEIGHT'] = $weight;
+        $this->arResult['PROMO_DESCRIPTION'] = $share->getPreviewText();
+
     }
 }
