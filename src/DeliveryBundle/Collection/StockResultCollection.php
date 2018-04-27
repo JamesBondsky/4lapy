@@ -60,25 +60,32 @@ class StockResultCollection extends ArrayCollection
     }
 
     /**
+     * @param bool $strict
+     *
      * @return StockResultCollection
      */
-    public function getRegular(): StockResultCollection
+    public function getRegular(bool $strict = false): StockResultCollection
     {
         return $this->filter(
-            function (StockResult $stockResult) {
-                return !$stockResult->getOffer()->isByRequest();
+            function (StockResult $stockResult) use ($strict) {
+                $isByRequest = $stockResult->getOffer()->isByRequest();
+                return  !$isByRequest || (!$strict && $stockResult->getType() === StockResult::TYPE_AVAILABLE);
             }
         );
     }
 
     /**
+     * @param bool $strict
+     *
      * @return StockResultCollection
      */
-    public function getByRequest(): StockResultCollection
+    public function getByRequest(bool $strict = false): StockResultCollection
     {
         return $this->filter(
-            function (StockResult $stockResult) {
-                return $stockResult->getOffer()->isByRequest();
+            function (StockResult $stockResult) use ($strict) {
+                $isByRequest = $stockResult->getOffer()->isByRequest();
+
+                return $isByRequest && ($strict || ($stockResult->getType() === StockResult::TYPE_DELAYED));
             }
         );
     }

@@ -38,6 +38,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -379,7 +380,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function populateOrderDtoDelivery(OrderDtoOut $orderDto, Order $order): void
     {
-        $deliveryTypeCode = $this->getDeliveryTypeCode($order);
+        $deliveryTypeCode = '';
+
+        try {
+            $deliveryTypeCode = $this->getDeliveryTypeCode($order);
+        } catch (NotFoundOrderDeliveryException $e) {
+            /**
+             * Значит, это быстрый заказ. Или произошла ошибка, но тут нужно с конкретным кейсом разбираться.
+             */
+        }
+
         $contractorDeliveryTypeCode = '';
 
         if (\strpos($deliveryTypeCode, '_')) {
@@ -463,7 +473,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                  * @todo
                  */
                 ->setChargeBonus(true)
-                ->setDeliveryShipmentPoint($this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE'));
+                ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode('SHIPMENT_PLACE_CODE'));
 
             if ($orderDto->getDeliveryType() !== SapOrder::DELIVERY_TYPE_CONTRACTOR) {
                 $offer->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
@@ -554,9 +564,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             case DeliveryService::DPD_PICKUP_CODE:
                 return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_PICKUP;
                 break;
+            default:
+                return '';
+                break;
         }
 
-        throw new NotFoundOrderDeliveryException('Не найден тип доставки');
+        throw new NotFoundOrderDeliveryException(\sprintf(
+            'Не найден тип доставки для заказа #%s',
+            $order->getId()
+        ));
     }
 
     /**
@@ -699,6 +715,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function setBasketFromDto(Order $order, OrderDtoIn $orderDto): void
     {
+        Manager::disableExtendsDiscount();
         $externalItems = $orderDto->getProducts();
 
         /**
@@ -765,11 +782,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function addBasketItem(Basket $basket, OrderOfferIn $externalItem): void
     {
-        /**
-         * @todo
-         *
-         * Сделать это нормально
-         */
         $itemId = 0;
         $element = [];
 
@@ -868,5 +880,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         return $status;
+    }
+
+    /**
+     * @param BasketItem $item
+     * @param string $code
+     *
+     * @return array
+     */
+    private function getBasketPropertyValueByCode(BasketItem $item, string $code): array {
+        return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? [];
     }
 }
