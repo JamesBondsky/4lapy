@@ -55,6 +55,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                     <?php if ($arResult['DELIVERY_CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
                         <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
                             <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
+                                <?php /*
                                 <div class="b-checkbox b-checkbox--stores b-checkbox--order">
                                     <input class="b-checkbox__input"
                                            type="checkbox"
@@ -68,6 +69,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                                     </span>
                                     </label>
                                 </div>
+                                */ ?>
                                 <div class="b-checkbox b-checkbox--stores b-checkbox--order">
                                     <input class="b-checkbox__input"
                                            type="checkbox"
