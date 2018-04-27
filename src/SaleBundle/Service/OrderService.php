@@ -65,6 +65,11 @@ use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 
+/**
+ * Class OrderService
+ *
+ * @package FourPaws\SaleBundle\Service
+ */
 class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -195,7 +200,8 @@ class OrderService implements LoggerAwareInterface
         UserRegistrationProviderInterface $userRegistrationProvider,
         ManzanaPosService $manzanaPosService,
         ManzanaService $manzanaService
-    ) {
+    )
+    {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -225,21 +231,28 @@ class OrderService implements LoggerAwareInterface
      */
     public function getOrderById(int $id, bool $check = false, int $userId = null, string $hash = null): Order
     {
-        if (!$order = Order::load($id)) {
-            throw new NotFoundException('Order not found');
-        }
-
-        if ($check) {
-            if (!$hash && !$userId) {
-                throw new NotFoundException('Order not found');
-            }
-            if ($hash && $order->getHash() !== $hash) {
-                throw new NotFoundException('Order not found');
+        try {
+            if (!$order = Order::load($id)) {
+                throw new NotFoundException('');
             }
 
-            if ($userId && (int)$order->getUserId() !== $userId) {
-                throw new NotFoundException('Order not found');
+            if ($check) {
+                if (!$hash && !$userId) {
+                    throw new NotFoundException('');
+                }
+                if ($hash && $order->getHash() !== $hash) {
+                    throw new NotFoundException('');
+                }
+
+                if ($userId && (int)$order->getUserId() !== $userId) {
+                    throw new NotFoundException('');
+                }
             }
+        } catch (NotFoundException $e) {
+            throw new NotFoundException(\sprintf(
+                'Order #%s is not found',
+                $id
+            ));
         }
 
         return $order;
@@ -271,7 +284,8 @@ class OrderService implements LoggerAwareInterface
         ?Basket $basket = null,
         ?CalculationResultInterface $selectedDelivery = null,
         bool $fastOrder = false
-    ): Order {
+    ): Order
+    {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
@@ -397,7 +411,7 @@ class OrderService implements LoggerAwareInterface
          * Задание свойств заказа, связанных с доставкой
          */
         /** @var PropertyValue $propertyValue */
-        if(!$fastOrder) {
+        if (!$fastOrder) {
             foreach ($propertyValueCollection as $propertyValue) {
                 $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
@@ -462,7 +476,7 @@ class OrderService implements LoggerAwareInterface
                         $update = true;
                         break;
                 }
-                if($update){
+                if ($update) {
                     $propertyValue->setValue($value);
                 }
             }
@@ -596,7 +610,8 @@ class OrderService implements LoggerAwareInterface
         OrderStorage $storage,
         ?CalculationResultInterface $selectedDelivery = null,
         bool $fastOrder = false
-    ): void {
+    ): void
+    {
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
@@ -630,14 +645,13 @@ class OrderService implements LoggerAwareInterface
             }
         } else {
             /** проверять надо на пустоту иначе  */
-            if(!empty($storage->getEmail()) && !empty($storage->getPhone())){
+            if (!empty($storage->getEmail()) && !empty($storage->getPhone())) {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(
                     ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
                 );
-            } elseif(!empty($storage->getEmail())){
+            } elseif (!empty($storage->getEmail())) {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(['=EMAIL' => $storage->getEmail()]);
-            }
-            elseif(!empty($storage->getPhone())){
+            } elseif (!empty($storage->getPhone())) {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(['=PERSONAL_PHONE' => $storage->getPhone()]);
             }
 
@@ -1272,14 +1286,15 @@ class OrderService implements LoggerAwareInterface
         Order $order,
         CalculationResultInterface $delivery,
         bool $isFastOrder = false
-    ): void {
+    ): void
+    {
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
         $changed = false;
 
         $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
         $stockResult = $delivery->getStockResult();
-        if(!$isFastOrder) {
+        if (!$isFastOrder) {
             /**
              * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
              * и в наличии более 90% от суммы заказа, при этом имеются отложенные товары,
@@ -1315,7 +1330,7 @@ class OrderService implements LoggerAwareInterface
                     break;
                 // способ получения 04
                 case $this->deliveryService->isInnerPickup($delivery) && $stockResult->getDelayed()->isEmpty():
-                // способ получения 06
+                    // способ получения 06
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
