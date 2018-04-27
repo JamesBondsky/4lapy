@@ -124,15 +124,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
                     </span>
                     <span class="b-advice__new-price js-advice-newprice">
-                        <span class="js-value">3 719</span>
+                        <span class="js-value"><?= $arResult['PRICE']; ?></span>
                         <span class="b-ruble b-ruble--total">₽</span>
                     </span>
                 </span>
                 <a class="b-advice__basket-link js-advice2basket"
                    href="javascript:void(0)"
                    title=""
-                   data-actionid="3p1"
-                   data-discountPrice="0.9"
                    data-url="/common/static/build/json/ajax-sale-basket-add.json">
                     <span class="b-advice__basket-text">В корзину</span>
                     <span class="b-icon b-icon--advice">
