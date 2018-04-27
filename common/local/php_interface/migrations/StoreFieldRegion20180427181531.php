@@ -34,13 +34,13 @@ class StoreFieldRegion20180427181531 extends SprintMigrationBase
         if (!$helper->addUserTypeEntityIfNotExists('CAT_STORE', 'UF_REGION', array(
             'ENTITY_ID' => 'CAT_STORE',
             'FIELD_NAME' => 'UF_REGION',
-            'USER_TYPE_ID' => 'sale_location',
-            'XML_ID' => 'XML_LOCATION',
+            'USER_TYPE_ID' => 'string',
+            'XML_ID' => 'XML_REGION',
             'SORT' => '110',
             'MULTIPLE' => 'N',
             'MANDATORY' => 'N',
             'SHOW_FILTER' => 'N',
-            'SHOW_IN_LIST' => 'Y',
+            'SHOW_IN_LIST' => 'N',
             'EDIT_IN_LIST' => 'N',
             'IS_SEARCHABLE' => 'N',
             'SETTINGS' =>
@@ -85,7 +85,7 @@ class StoreFieldRegion20180427181531 extends SprintMigrationBase
 
             $updateResult = StoreTable::update(
                 $store['ID'],
-                ['UF_REGION' => $locationService->findLocationRegion($locationCode)]
+                ['UF_REGION' => $locationService->findLocationRegion($locationCode)['CODE'] ?? '']
             );
             if (!$updateResult->isSuccess()) {
                 $this->log()->warning(sprintf('Не удалось обновить склад %s', $store['XML_ID']));
