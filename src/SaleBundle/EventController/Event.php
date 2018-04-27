@@ -162,7 +162,7 @@ class Event implements ServiceHandlerInterface
             OrderService::class
         );
         if ($orderService->isSubscribe($order)) {
-            // пропускаются заказы, созданные по подписке
+            // пропускаются заказы, созданные по подписке (для них уведомления отправляются отдельно)
             return;
         }
 

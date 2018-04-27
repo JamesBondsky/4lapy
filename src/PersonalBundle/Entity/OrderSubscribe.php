@@ -182,6 +182,8 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * Дата первой доставки заказа
+     *
      * @return null|Date
      */
     public function getDateStart()

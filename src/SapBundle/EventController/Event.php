@@ -98,7 +98,7 @@ class Event implements ServiceHandlerInterface
             return;
         }
         /**
-         * ...и пропускаются заказы, созданные по подписке
+         * ...и пропускаются заказы, созданные по подписке (они отправляются отдельно)
          */
         if ($orderService->isSubscribe($order)) {
             return;

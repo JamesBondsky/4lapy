@@ -106,6 +106,12 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendNewOrderMessage(Order $order): void
     {
+        if ($this->orderService->isSubscribe($order)) {
+            // Для заказов, созданных по подписке, свои триггеры
+            $this->sendOrderSubscribeOrderNewMessage($order);
+            return;
+        }
+
         if (static::$isSending) {
             return;
         }
@@ -438,6 +444,8 @@ class NotificationService implements LoggerAwareInterface
     }
 
     /**
+     * Отправка уведомления об автоматической отмене подписки (админам)
+     *
      * @param OrderSubscribe $orderSubscribe
      * @throws ApplicationCreateException
      * @throws ArgumentNullException
@@ -446,7 +454,7 @@ class NotificationService implements LoggerAwareInterface
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
      */
-    public function sendUnsubscribeOrderMessage(OrderSubscribe $orderSubscribe): void
+    public function sendAutoUnsubscribeOrderMessage(OrderSubscribe $orderSubscribe): void
     {
         $order = $orderSubscribe->getOrder()->getBitrixOrder();
         $subscribeDateCreate = $orderSubscribe->getDateCreate();
@@ -469,5 +477,33 @@ class NotificationService implements LoggerAwareInterface
             's1',
             $fields
         );
+    }
+
+    /**
+     * Оформлена подписка на доставку
+     *
+     * @param OrderSubscribe $orderSubscribe
+     */
+    public function sendOrderSubscribedMessage(OrderSubscribe $orderSubscribe): void
+    {
+        try {
+            $this->emailService->sendOrderSubscribedEmail($orderSubscribe);
+        } catch (\Exception $exception) {
+            $this->log()->error($exception->getMessage());
+        }
+    }
+
+    /**
+     * Информация о предстоящем заказе по подписке (только что созданном)
+     *
+     * @param Order $order
+     */
+    public function sendOrderSubscribeOrderNewMessage(Order $order): void
+    {
+        try {
+            $this->emailService->sendOrderSubscribeOrderNewEmail($order);
+        } catch (\Exception $exception) {
+            $this->log()->error($exception->getMessage());
+        }
     }
 }

@@ -90,7 +90,6 @@ class OrderSubscribeService
      *
      * @param OrderSubscribeRepository $orderSubscribeRepository
      *
-     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
@@ -250,6 +249,23 @@ class OrderSubscribeService
     {
         $subscriptionsCollect = $this->getSubscriptionsByOrder($orderId, $filterActive);
         $orderSubscribe = $subscriptionsCollect->count() ? $subscriptionsCollect->first() : null;
+
+        return $orderSubscribe;
+    }
+
+    /**
+     * @param int $subscribeId
+     * @return OrderSubscribe|null
+     */
+    public function getSubscribeById(int $subscribeId): ?OrderSubscribe
+    {
+        $orderSubscribe = null;
+        try {
+            /** @var OrderSubscribe $orderSubscribe */
+            $orderSubscribe = $this->orderSubscribeRepository->findById($subscribeId);
+        } catch (\Exception $exception) {
+            // не нашлась запись и ладно
+        }
 
         return $orderSubscribe;
     }
@@ -1069,41 +1085,6 @@ class OrderSubscribeService
     }
 
     /**
-     * @param int $orderId
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws NotImplementedException
-     * @throws SystemException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     */
-    protected function doNewOrderIntegration(int $orderId)
-    {
-        $order = \Bitrix\Sale\Order::load($orderId);
-
-        $saleOrderService = $this->getOrderService();
-        if ($saleOrderService->isOnlinePayment($order)) {
-            // у заказа онлайн-оплата (чего, вообще-то, не должно быть у заказа по подписке),
-            // а значит, отправка во внешние системы будет после получения оплаты
-            return;
-        }
-
-        // отправка email, sms
-        /** @var NotificationService $notificationService */
-        $notificationService = Application::getInstance()->getContainer()->get(
-            NotificationService::class
-        );
-        $notificationService->sendNewOrderMessage($order);
-
-        // передача заказа в SAP
-        /** @var ConsumerRegistry $consumerRegistry */
-        $consumerRegistry = Application::getInstance()->getContainer()->get(
-            ConsumerRegistry::class
-        );
-        $consumerRegistry->consume($order);
-    }
-
-    /**
      * @param OrderSubscribe $orderSubscribe
      * @param bool $sendNotifications
      * @return UpdateResult
@@ -1133,14 +1114,82 @@ class OrderSubscribeService
                 ]
             );
             if ($sendNotifications) {
-                /** @var NotificationService $notificationService */
-                $notificationService = Application::getInstance()->getContainer()->get(
-                    NotificationService::class
-                );
-                $notificationService->sendUnsubscribeOrderMessage($orderSubscribe);
+                $this->sendAutoUnsubscribeOrderNotification($orderSubscribe);
             }
         }
 
         return $updateResult;
+    }
+
+    /**
+     * Отправка уведомлений во внешние системы о созданном заказе по подписке
+     *
+     * @param int $orderId
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     */
+    protected function doNewOrderIntegration(int $orderId)
+    {
+        $order = \Bitrix\Sale\Order::load($orderId);
+
+        $saleOrderService = $this->getOrderService();
+        if ($saleOrderService->isOnlinePayment($order)) {
+            // у заказа онлайн-оплата (чего, вообще-то, не должно быть у заказа по подписке),
+            // а значит, отправка во внешние системы будет после получения оплаты
+            return;
+        }
+
+        // передача заказа в SAP
+        /** @var ConsumerRegistry $consumerRegistry */
+        $consumerRegistry = Application::getInstance()->getContainer()->get(
+            ConsumerRegistry::class
+        );
+        $consumerRegistry->consume($order);
+
+        // отправка email
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()->getContainer()->get(
+            NotificationService::class
+        );
+        $notificationService->sendOrderSubscribeOrderNewMessage($order);
+    }
+
+    /**
+     * Отправка уведомлений об автоматической отмене подписки (админам)
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotFoundException
+     * @throws NotImplementedException
+     * @throws \Exception
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     */
+    public function sendAutoUnsubscribeOrderNotification(OrderSubscribe $orderSubscribe)
+    {
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()->getContainer()->get(
+            NotificationService::class
+        );
+        $notificationService->sendAutoUnsubscribeOrderMessage($orderSubscribe);
+    }
+
+    /**
+     * Отправка уведомлений о создании подписки
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @throws ApplicationCreateException
+     */
+    public function sendOrderSubscribedNotification(OrderSubscribe $orderSubscribe)
+    {
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()->getContainer()->get(
+            NotificationService::class
+        );
+        $notificationService->sendOrderSubscribedMessage($orderSubscribe);
     }
 }
