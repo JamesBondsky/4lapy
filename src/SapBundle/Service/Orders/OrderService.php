@@ -538,13 +538,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             );
         }
 
+        $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
+        $deliveryId = $shipment->getDeliveryId();
+        $deliveryZone = $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId);
+
         switch ($shipment->getDelivery()->getCode()) {
             case DeliveryService::INNER_DELIVERY_CODE:
-                $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
-
-                $deliveryId = $shipment->getDeliveryId();
-                $deliveryZone = $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId);
-
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
@@ -565,7 +564,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_PICKUP;
                 break;
             default:
-                return '';
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_1:
+                        return SapOrder::DELIVERY_TYPE_COURIER_RC;
+                    case DeliveryService::ZONE_2:
+                        return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
+                    case DeliveryService::ZONE_3:
+                        return SapOrder::DELIVERY_TYPE_PICKUP;
+                }
                 break;
         }
 
