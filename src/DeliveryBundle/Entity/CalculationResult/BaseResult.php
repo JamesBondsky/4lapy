@@ -712,7 +712,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $hour = (int)$date->format('G') + 1;
         if ($hour < $schedule->getFrom()) {
             $date->setTime($schedule->getFrom() + 1, 0);
-        } elseif ($hour > $schedule->getTo()) {
+        } elseif ($schedule->getTo() && $hour > $schedule->getTo()) {
             $date->modify('+1 day');
             $date->setTime($schedule->getFrom() + 1, 0);
         } elseif ($date->format('z') !== $this->getCurrentDate()->format('z')) {

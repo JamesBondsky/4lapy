@@ -67,6 +67,12 @@ class Schedule
      */
     public function __toString(): string
     {
-        return sprintf(static::STRING_PATTERN, $this->getFrom(), $this->getTo());
+        if (($this->getFrom() === 0) && ($this->getTo() === 0)) {
+            $result = 'Круглосуточно';
+        } else {
+            $result = sprintf(static::STRING_PATTERN, $this->getFrom(), $this->getTo());
+        }
+
+        return $result;
     }
 }
