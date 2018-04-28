@@ -888,7 +888,10 @@ class OrderService implements LoggerAwareInterface
             [$delivery->getDeliveryCode()],
             $storage1->getCurrentDate()
         );
-        $tmpDelivery = reset($tmpDeliveries);
+        if (!$tmpDelivery = reset($tmpDeliveries)) {
+            throw new OrderSplitException('Cannot split order');
+        }
+
         $order1 = $this->initOrder($storage1, $basket1, $tmpDelivery);
         $order2 = $this->initOrder($storage2, $basket2);
 

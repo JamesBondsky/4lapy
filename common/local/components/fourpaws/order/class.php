@@ -16,6 +16,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
@@ -180,6 +181,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->orderStorageService->updateStorage($storage, OrderStorageService::NOVALIDATE_STEP);
         }
 
+        /** @var Basket $defaultBasket */
+        $defaultBasket = $this->basketService->getBasket()->createClone();
         try {
             $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {
@@ -231,7 +234,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $deliveries = $this->orderStorageService->getDeliveries($storage);
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
-        if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
+        if ($this->currentStep === OrderStorageService::AUTH_STEP) {
+            $this->arResult['BASKET'] = $defaultBasket->getOrderableItems();
+        } elseif ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
 
             $addresses = null;
@@ -263,6 +268,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['DELIVERY'] = $delivery;
             $this->arResult['ADDRESSES'] = $addresses;
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
+            $this->arResult['BASKET'] = $basket;
         } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
@@ -288,6 +294,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
                 $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basketForRequest);
             }
+            $this->arResult['BASKET'] = $basket;
         }
 
         $this->arResult['USER'] = $user;
@@ -295,7 +302,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['SELECTED_CITY'] = $selectedCity;
 
         $this->arResult['METRO'] = $this->storeService->getMetroInfo();
-        $this->arResult['BASKET'] = $basket;
         $this->arResult['STORAGE'] = $storage;
         $this->arResult['STEP'] = $this->currentStep;
     }
