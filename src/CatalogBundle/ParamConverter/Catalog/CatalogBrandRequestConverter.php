@@ -15,9 +15,13 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class CatalogBrandRequestConverter
+ * @package FourPaws\CatalogBundle\ParamConverter\Catalog
+ */
 class CatalogBrandRequestConverter extends AbstractCatalogRequestConverter
 {
-    const BRAND_PARAM = 'brand';
+    public const BRAND_PARAM = 'brand';
 
     /**
      * @var BrandService

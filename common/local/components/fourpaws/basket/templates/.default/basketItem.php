@@ -190,7 +190,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             </div>
         <?php }
 
-        if ($isOnlyPickup) { ?>
+        if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
             <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
                 Только самовывоз
             </div>

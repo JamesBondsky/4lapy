@@ -155,8 +155,6 @@ if ($arParams['IS_AJAX']) {
                             continue;
                         }
 
-                        $isOnlyPickup = empty($component->getDeliveryService()->getByProduct($offer, '', $component->getDeliveryService()::DELIVERY_CODES));
-
                         require __DIR__ . '/basketItem.php';
                     }
 

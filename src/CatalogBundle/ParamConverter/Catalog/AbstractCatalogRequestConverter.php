@@ -12,11 +12,15 @@ use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInte
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Class AbstractCatalogRequestConverter
+ * @package FourPaws\CatalogBundle\ParamConverter\Catalog
+ */
 abstract class AbstractCatalogRequestConverter implements ParamConverterInterface
 {
-    const SORT_TYPE = 'sort';
-    const SORT_DEFAULT = 'popular';
-    const SEARCH_STRING = 'query';
+    public const SORT_TYPE = 'sort';
+    public const SORT_DEFAULT = 'popular';
+    public const SEARCH_STRING = 'query';
 
     /**
      * @var ArrayTransformerInterface
@@ -32,6 +36,13 @@ abstract class AbstractCatalogRequestConverter implements ParamConverterInterfac
      */
     private $sortService;
 
+    /**
+     * AbstractCatalogRequestConverter constructor.
+     *
+     * @param ArrayTransformerInterface $arrayTransformer
+     * @param ValidatorInterface $validator
+     * @param SortService $sortService
+     */
     public function __construct(
         ArrayTransformerInterface $arrayTransformer,
         ValidatorInterface $validator,
