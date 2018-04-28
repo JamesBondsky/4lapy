@@ -121,7 +121,7 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
                 'code' => $e->getCode()
             ]);
         } catch (\Exception $e) {
-            $this->log()->notice(sprintf('payment error: %s: %s', \get_class($e), $e->getMessage()), [
+            $this->log()->error(sprintf('payment error: %s: %s', \get_class($e), $e->getMessage()), [
                 'order' => $order->getId(),
                 'code' => $e->getCode()
             ]);
