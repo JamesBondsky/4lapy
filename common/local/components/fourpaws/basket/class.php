@@ -349,7 +349,7 @@ class BasketComponent extends CBitrixComponent
 
         foreach ($orderableBasket as $basketItem) {
             $itemQuantity = (int)$basketItem->getQuantity();
-            $weight += (float)$basketItem->getWeight();
+            $weight += (float)$basketItem->getWeight() * $itemQuantity;
             $quantity += $itemQuantity;
             $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
             $price += (float)$basketItem->getPrice() * $itemQuantity;

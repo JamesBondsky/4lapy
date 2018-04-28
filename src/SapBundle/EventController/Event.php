@@ -80,6 +80,7 @@ class Event implements ServiceHandlerInterface
          * @var OrderService $orderService
          */
         $order = $event->getParameter('ENTITY');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
         );
