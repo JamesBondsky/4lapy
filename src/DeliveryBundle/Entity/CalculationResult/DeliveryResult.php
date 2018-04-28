@@ -5,6 +5,7 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
@@ -79,5 +80,16 @@ class DeliveryResult extends BaseResult
     public function getPeriodTo(): int
     {
         return $this->getPeriodFrom() + 10;
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return bool
+     * @throws ApplicationCreateException
+     */
+    protected function checkIsDeliverable(Offer $offer): bool
+    {
+        return $offer->getProduct()->isDeliveryAvailable();
     }
 }
