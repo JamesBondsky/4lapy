@@ -250,8 +250,8 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         /** @var BasketItem $basketItem */
         $orderableBasket = $basket->getOrderableItems();
         foreach ($orderableBasket as $basketItem) {
-            $weight += (float)$basketItem->getWeight();
             $quantity += (int)$basketItem->getQuantity();
+            $weight += (float)$basketItem->getWeight() * $quantity;
         }
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;

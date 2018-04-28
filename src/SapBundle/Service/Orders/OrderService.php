@@ -523,10 +523,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function getDeliveryTypeCode(Order $order): string
     {
-        if ($this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y') {
-            return SapOrder::DELIVERY_TYPE_ROUTE;
-        }
-
         $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
 
         if (null === $shipment) {
@@ -541,6 +537,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
         $deliveryId = $shipment->getDeliveryId();
         $deliveryZone = $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId);
+
+        if (
+            $deliveryZone === DeliveryService::ZONE_2
+            && $this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y'
+        ) {
+            return SapOrder::DELIVERY_TYPE_ROUTE;
+        }
 
         switch ($shipment->getDelivery()->getCode()) {
             case DeliveryService::INNER_DELIVERY_CODE:

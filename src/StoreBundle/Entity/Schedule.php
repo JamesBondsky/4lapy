@@ -7,7 +7,7 @@ namespace FourPaws\StoreBundle\Entity;
 
 class Schedule
 {
-    public const PATTERN = '~(\d+):00 - (\d+):00~';
+    public const PATTERN = '~^(\d{1,2}):00\D+(\d{1,2}):00$~';
 
     public const STRING_PATTERN = '%s:00 - %s:00';
 

@@ -11,30 +11,39 @@ use Bitrix\Main\Loader;
 use Bitrix\Sender\MailingManager;
 use CEvent;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Class BitrixCronEvents
+ *
+ * @package FourPaws\AppBundle\Command
+ */
 class BitrixCronEvents extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public function configure()
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function configure(): void
     {
         $this->setName('bitrix:cronevents')->setDescription('Start bitrix events');
     }
 
-    /**
-     * @param InputInterface  $input
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
+     * @param InputInterface $input
      * @param OutputInterface $output
      *
-     * @throws \RuntimeException
-     * @return null
+     * @throws RuntimeException
      */
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): void
     {
-        \define('BX_CRONTAB', true);
-
+        \define('\BX_CRONTAB', true);
         /** @noinspection PhpUsageOfSilenceOperatorInspection */
         @ignore_user_abort(true);
 
@@ -48,11 +57,5 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->log()->error($e->getMessage());
         }
-
-        /** @noinspection PhpIncludeInspection */
-        require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/tools/backup.php';
-
-
-        return null;
     }
 }
