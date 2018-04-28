@@ -43,10 +43,7 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
-        $this->log()->info('Events start');
-
-        \define('BX_CRONTAB', true);
-
+        \define('\BX_CRONTAB', true);
         /** @noinspection PhpUsageOfSilenceOperatorInspection */
         @ignore_user_abort(true);
 
@@ -60,10 +57,5 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->log()->error($e->getMessage());
         }
-
-        /** @noinspection PhpIncludeInspection */
-        require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/tools/backup.php';
-
-        $this->log()->info('Events stop');
     }
 }
