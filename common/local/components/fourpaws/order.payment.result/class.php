@@ -107,19 +107,27 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
             $url->addParams(['ORDER_ID' => $order->getId()]);
         }
 
+        $isOk = false;
         try {
             $this->includeResultFile($actionFile);
             if ($relatedOrder && !$relatedOrder->isPaid()) {
                 $url->setPath('/sale/payment');
                 $url->addParams(['ORDER_ID' => $order->getId()]);
             }
+            $isOk = true;
         } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
             $this->log()->notice(sprintf('payment error: %s', $e->getMessage()), [
                 'order' => $order->getId(),
                 'code' => $e->getCode()
             ]);
+        } catch (\Exception $e) {
+            $this->log()->notice(sprintf('payment error: %s: %s', \get_class($e), $e->getMessage()), [
+                'order' => $order->getId(),
+                'code' => $e->getCode()
+            ]);
+        }
+        if (!$isOk) {
             $this->orderService->processPaymentError($order);
-            $this->arResult['ERRORS'][] = $e->getMessage();
         }
 
         LocalRedirect($url->getUri());
