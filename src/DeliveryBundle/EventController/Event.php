@@ -29,19 +29,19 @@ class Event implements ServiceHandlerInterface
         $eventManager->addEventHandler(
             'sale',
             'onSaleDeliveryHandlersClassNamesBuildList',
-            [self::class, 'addCustomDeliveryServices']
+            [static::class, 'addCustomDeliveryServices']
         );
 
         $eventManager->addEventHandler(
             'sale',
             'onSaleDeliveryRestrictionsClassNamesBuildList',
-            [self::class, 'addCustomRestrictions']
+            [static::class, 'addCustomRestrictions']
         );
 
         $eventManager->addEventHandler(
             'sale',
             'registerInputTypes',
-            [self::class, 'addCustomTypes']
+            [static::class, 'addCustomTypes']
         );
     }
 

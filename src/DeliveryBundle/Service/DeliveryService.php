@@ -10,7 +10,6 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
@@ -28,8 +27,10 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Dpd\Calculator;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
@@ -286,6 +287,7 @@ class DeliveryService implements LoggerAwareInterface
 
         $result = [];
         $errors = [];
+        $location = $this->getDeliveryLocation($shipment);
         foreach ($availableServices as $service) {
             if ($codes && !\in_array($service->getCode(), $codes, true)) {
                 continue;
@@ -306,10 +308,16 @@ class DeliveryService implements LoggerAwareInterface
                 );
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('Cannot set shipment fields: %s', $e->getMessage()), [
-                    'location' => $this->getDeliveryLocation($shipment),
+                    'location' => $location,
                     'service'  => $service->getCode(),
                 ]);
                 continue;
+            }
+
+            if ($this->isDpdDeliveryCode($service->getCode()) ||
+                $this->isDpdPickupCode($service->getCode())
+            ) {
+                Calculator::$bitrixShipment = $shipment;
             }
 
             $calculationResult = $shipment->calculateDelivery();
@@ -319,11 +327,12 @@ class DeliveryService implements LoggerAwareInterface
             }
 
             try {
-                $calculationResult = CalculationResultFactory::fromBitrixResult($calculationResult, $service);
-            } catch (UnknownDeliveryException $e) {
+                $calculationResult = CalculationResultFactory::fromBitrixResult($calculationResult, $service, $shipment);
+            } catch (UnknownDeliveryException|DeliveryInitializeException $e) {
                 $this->log()->critical($e->getMessage(), [
                     'service'  => $service->getCode(),
-                    'location' => $this->getDeliveryLocation($shipment),
+                    'location' => $location,
+                    'trace' => $e->getTrace()
                 ]);
                 continue;
             }
@@ -342,7 +351,7 @@ class DeliveryService implements LoggerAwareInterface
 
         if (empty($codes) && empty($result)) {
             $this->log()->info('No available deliveries', [
-                'location' => $this->getDeliveryLocation($shipment),
+                'location' => $location,
                 'errors' => $errors
             ]);
         }

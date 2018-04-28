@@ -36,6 +36,8 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
 
     /** @noinspection PhpMissingParentCallCommonInspection
      *
+     * @see hack in /bin/symfony_console.php
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      *
@@ -43,10 +45,6 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
-        \define('\BX_CRONTAB', true);
-        /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        @ignore_user_abort(true);
-
         CEvent::CheckEvents();
 
         try {

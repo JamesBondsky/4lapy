@@ -75,7 +75,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <script id="advice-item-template" type="text/template">
             <div class="b-advice__item js-tempalate js-advice-item"
                  data-price="{{cost}}"
-                 data-offerid="{{offerid}}"
+                 data-offer-id="{{offerid}}"
                  data-advicecount="2">
                 <div class="b-advice__image-wrapper js-tempalate"><img class="b-advice__image"
                                                                        src="{{image}}"
@@ -133,7 +133,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <a class="b-advice__basket-link js-advice2basket"
                    href="javascript:void(0)"
                    title=""
-                   data-url="/common/static/build/json/ajax-sale-basket-add.json">
+                   data-url="/ajax/sale/basket/bulkAdd/">
                     <span class="b-advice__basket-text">В корзину</span>
                     <span class="b-icon b-icon--advice">
                       <?= new SvgDecorator('icon-cart', 20, 20) ?>

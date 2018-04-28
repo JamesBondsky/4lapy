@@ -151,6 +151,11 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 </span>
                 <?php } ?>
             </div>
+            <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
+                <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
+                    Только самовывоз
+                </div>
+            <?php } ?>
         <?php } else { ?>
             <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
                 Нет в наличии
@@ -188,15 +193,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     </a>
                 <?php } ?>
             </div>
-        <?php }
-
-        if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
-            <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
-                Только самовывоз
-            </div>
-        <?php }
-
-        if ($offer->isByRequest() && !empty($arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()])) {
+        <?php } ?>
+        <?php if ($offer->isByRequest() && !empty($arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()])) {
             /** @todo пока берем ближайшую доставку из быстрого заказа */ ?>
             <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width">
                 Предварительная дата доставки:

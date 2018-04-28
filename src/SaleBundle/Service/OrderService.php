@@ -56,7 +56,6 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -335,8 +334,8 @@ class OrderService implements LoggerAwareInterface
                                     'NAME' => 'IS_TEMPORARY',
                                     'CODE' => 'IS_TEMPORARY',
                                     'VALUE' => 'Y',
-                                ]
-                            ]
+                                ],
+                            ],
                         ],
                         false,
                         $basket
@@ -466,20 +465,6 @@ class OrderService implements LoggerAwareInterface
 
                 $propertyValue->setValue($value);
             }
-        } else {
-            foreach ($propertyValueCollection as $propertyValue) {
-                $code = $propertyValue->getProperty()['CODE'];
-                $update = false;
-                switch ($code) {
-                    case 'DELIVERY_INTERVAL':
-                        $value = '';
-                        $update = true;
-                        break;
-                }
-                if ($update) {
-                    $propertyValue->setValue($value);
-                }
-            }
         }
 
         /**
@@ -568,6 +553,7 @@ class OrderService implements LoggerAwareInterface
         $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery);
 
         /** @var PropertyValue $propertyValue */
+        /** в быстром заказе здесь все сбрасывается нафиг */
         foreach ($propertyValueCollection as $propertyValue) {
             $code = $propertyValue->getProperty()['CODE'];
             if ($skipAddressProperties && \in_array($code, $addressProperties, true)) {
@@ -583,6 +569,12 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        /** установка свойств для быстрого заказа, здесь ибо сбрасывается выше */
+        if($fastOrder) {
+            $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
+            $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
+            $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
+        }
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
@@ -1236,7 +1228,7 @@ class OrderService implements LoggerAwareInterface
                 $sapConsumer->consume($order);
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [
-                    'order' => $order->getId()
+                    'order' => $order->getId(),
                 ]);
             }
         };
@@ -1378,7 +1370,7 @@ class OrderService implements LoggerAwareInterface
             'BUILDING',
             'PORCH',
             'FLOOR',
-            'APARTMENT'
+            'APARTMENT',
         ]);
 
         $address = (new Address())
@@ -1432,12 +1424,12 @@ class OrderService implements LoggerAwareInterface
                 $order->save();
             } catch (ExecuteException $e) {
                 $this->log()->error(sprintf('failed to get charged bonus: %s', $e->getMessage()), [
-                    'orderId' => $order->getId()
+                    'orderId' => $order->getId(),
                 ]);
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to set charged bonus for order: %s', $e->getMessage()), [
                     'orderId' => $order->getId(),
-                    'bonus' => $propertyValue->getValue()
+                    'bonus' => $propertyValue->getValue(),
                 ]);
             }
         }
