@@ -357,7 +357,7 @@ class OrderService implements LoggerAwareInterface
         /**
          * Задание способов доставки
          */
-        $propertyValueCollection =& $order->getPropertyCollection();
+        $propertyValueCollection = $order->getPropertyCollection();
         $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
         if (!$locationProp) {
             throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
