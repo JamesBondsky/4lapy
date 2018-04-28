@@ -56,7 +56,6 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -574,6 +573,7 @@ class OrderService implements LoggerAwareInterface
         if($fastOrder) {
             $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
+            $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
         }
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
