@@ -214,6 +214,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                 )
             );
         }
+
         if (!isset($result)) {
             $result = JsonErrorResponse::create(
                 'Промокод не существует или не применим к вашей корзине',
