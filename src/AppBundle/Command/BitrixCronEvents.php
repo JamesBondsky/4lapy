@@ -36,6 +36,8 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
 
     /** @noinspection PhpMissingParentCallCommonInspection
      *
+     * @see hack in /bin/symfony_console.php
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      *
@@ -43,13 +45,6 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
-        $this->log()->info('Events start');
-
-        \define('BX_CRONTAB', true);
-
-        /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        @ignore_user_abort(true);
-
         CEvent::CheckEvents();
 
         try {
@@ -60,10 +55,5 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->log()->error($e->getMessage());
         }
-
-        /** @noinspection PhpIncludeInspection */
-        require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/tools/backup.php';
-
-        $this->log()->info('Events stop');
     }
 }
