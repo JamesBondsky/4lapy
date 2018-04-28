@@ -237,8 +237,7 @@ class DateHelper
                 $dateFormat = str_replace('ll', $str, $dateFormat);
             }
         }
-        if (false !== mb_strpos($dateFormat, 'X')) {
-            $str = '';
+        if (false !== mb_strpos($dateFormat, 'XX')) {
             switch ($date->diff(new \DateTime())->days) {
                 case 0:
                     $str = 'Сегодня';
@@ -246,6 +245,8 @@ class DateHelper
                 case 1:
                     $str = 'Завтра';
                     break;
+                default:
+                    $str = $date->format('d.m.Y');
             }
             $dateFormat = str_replace('XX', $str, $dateFormat);
         }
