@@ -172,8 +172,8 @@ class Manzana implements LoggerAwareInterface
 
         if ($response->getCoupons()) {
             $applied = $response->getCoupons()->filter(function (Coupon $coupon) use ($promocode) {
-                    return $coupon->isApplied() && $coupon->getNumber() === $promocode;
-                })->count() > 0;
+                return $coupon->isApplied() && $coupon->getNumber() === $promocode;
+            })->count() > 0;
         }
 
         if (!$applied) {
@@ -183,7 +183,6 @@ class Manzana implements LoggerAwareInterface
                     $this->promocode
                 )
             );
-            dump($response);
         }
     }
 
