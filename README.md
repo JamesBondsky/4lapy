@@ -42,6 +42,12 @@
 - ./bin/symfony_console f:s:s --date="$(date --date="tomorrow" +%Y-%m-%d)" # на завтра
 ```
 
+## Смена типа оплаты для неоплаченных заказов с оплатой онлайн
+
+```
+- ./bin/symfony_console f:o:p:c
+```
+
 ## Сервисы вагранта
 
 * [MailHog](http://4lapy.vag:8025/)
