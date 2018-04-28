@@ -26,7 +26,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-advice__item js-advice-item js-item-tmp"
                  data-price="<?= $arResult['PRICE']; ?>"
                  data-offer-id="<?= $arResult['OFFER_ID']; ?>"
-                 data-url="/ajax/catalog/product-info/groupSet/">
+                 data-url="/ajax/catalog/product-info/groupSet/"
+                 data-index="0">
                 <span class="b-advice__image-wrapper">
                     <img
                             class="b-advice__image"
@@ -36,13 +37,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             role="presentation"/>
                 </span>
                 <span class="b-advice__block">
-                    <div class="product-link">
+                    <span class="product-link">
                         <span class="b-clipped-text b-clipped-text--advice">
                             <span>
                                 <?= $arResult['NAME']; ?>
                             </span>
                         </span>
-                    </div>
+                    </span>
                     <span class="b-advice__info">
                         <span class="b-advice__weight"><?= $arResult['WEIGHT']; ?></span>
                         <span class="b-advice__cost"><?= $arResult['PRICE']; ?><span
@@ -51,10 +52,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </span>
             </div>
             <?php
-            while ($arResult['EMPTY_SLOTS']--) {
+            $i = 0;
+            while (++$i <= $arResult['EMPTY_SLOTS']) {
                 ?>
                 <div class="b-advice__sign b-advice__sign--plus"></div>
-                <div class="b-advice__item blank js-advice-item">
+                <div class="b-advice__item blank js-advice-item" data-index="<?= $i; ?>">
                     <div class="b-advice__image-wrapper">
                     </div>
                     <span class="b-advice__block"><span class="b-advice__product-link"><span
@@ -124,15 +126,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
                     </span>
                     <span class="b-advice__new-price js-advice-newprice">
-                        <span class="js-value">3 719</span>
+                        <span class="js-value"><?= $arResult['PRICE']; ?></span>
                         <span class="b-ruble b-ruble--total">₽</span>
                     </span>
                 </span>
                 <a class="b-advice__basket-link js-advice2basket"
                    href="javascript:void(0)"
                    title=""
-                   data-actionid="3p1"
-                   data-discountPrice="0.9"
                    data-url="/common/static/build/json/ajax-sale-basket-add.json">
                     <span class="b-advice__basket-text">В корзину</span>
                     <span class="b-icon b-icon--advice">
