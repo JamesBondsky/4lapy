@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
@@ -27,9 +26,11 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
@@ -211,20 +212,17 @@ class BasketComponent extends CBitrixComponent
         $notAllowedItems = new ArrayCollection();
         $fastOrderClass = null;
         $this->arResult['OFFER_MIN_DELIVERY'] = [];
-
-        /** @todo пока берем ближайшую доставку из быстрого заказа */
-        CBitrixComponent::includeComponentClass('fourpaws:fast.order');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        try {
-            $fastOrderClass = new FourPawsFastOrderComponent();
-        } /** @noinspection PhpRedundantCatchClauseInspection */
-        catch (SystemException $e) {
-            $fastOrderClass = null;
-            $logger = LoggerFactory::create('system');
-            $logger->error('Ошибка загрузки компонента - ' . $e->getMessage());
-        }
-
+        $this->arResult['ONLY_PICKUP'] = [];
         $haveOrder = $basket->getOrder() instanceof Order;
+        $deliveries = $this->getDeliveryService()->getByLocation();
+
+        $delivery = null;
+        foreach ($deliveries as $calculationResult) {
+            if ($this->getDeliveryService()->isDelivery($calculationResult)) {
+                $delivery = $calculationResult;
+                break;
+            }
+        }
 
         /** @var BasketItem $basketItem */
         foreach ($basket->getBasketItems() as $basketItem) {
@@ -245,15 +243,47 @@ class BasketComponent extends CBitrixComponent
                 continue;
             }
 
+            if ((null === $delivery) ||
+                !(clone $delivery)->setStockResult(
+                    $this->getDeliveryService()->getStockResultForOffer(
+                        $offer,
+                        $delivery,
+                        (int)$basketItem->getQuantity(),
+                        $basketItem->getPrice()
+                    )
+                )->isSuccess()
+            ) {
+                $this->arResult['ONLY_PICKUP'][] = $offer->getId();
+            }
+
             if ($basketItem->isDelay()) {
                 $notAllowedItems->add($basketItem);
             }
 
             if ($offer->isByRequest()) {
-                /** @todo пока берем ближайшую доставку из быстрого заказа */
-                if ($fastOrderClass instanceof FourPawsFastOrderComponent) {
-                    $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer,
-                        true);
+                $dates = [];
+                foreach ($deliveries as $calculationResult) {
+                    $res = (clone $calculationResult)->setStockResult(
+                        $this->getDeliveryService()->getStockResultForOffer(
+                            $offer,
+                            $calculationResult,
+                            (int)$basketItem->getQuantity(),
+                            $basketItem->getPrice()
+                        )
+                    );
+                    if (!$res->isSuccess()) {
+                        continue;
+                    }
+                    $dates[] = $res->getDeliveryDate();
+                }
+
+                if (!empty($dates)) {
+                    /** @var \DateTime $date */
+                    $date = min($dates);
+                    $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = DateHelper::formatDate(
+                        'XX',
+                        $date->getTimestamp()
+                    );
                 }
 
                 if (!$notAllowedItems->contains($basketItem)) {
