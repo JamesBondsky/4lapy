@@ -117,7 +117,6 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws LoaderException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -342,7 +341,6 @@ class DeliveryService implements LoggerAwareInterface
         }
 
         if (empty($codes) && empty($result)) {
-
             $this->log()->info('No available deliveries', [
                 'location' => $this->getDeliveryLocation($shipment),
                 'errors' => $errors
@@ -791,26 +789,30 @@ class DeliveryService implements LoggerAwareInterface
         }
 
         return $this->dpdTerminalToStore($terminal, $terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE']);
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Offer                      $offer
+     * @param Offer $offer
      * @param CalculationResultInterface $delivery
+     * @param int $quantity
+     * @param float $price
      *
+     * @return StockResultCollection
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
-     * @return StockResultCollection
      */
-    public function getStockResultForOffer(Offer $offer, CalculationResultInterface $delivery): StockResultCollection
+    public function getStockResultForOffer(
+        Offer $offer,
+        CalculationResultInterface $delivery,
+        int $quantity = null,
+        float $price = null
+    ): StockResultCollection
     {
         return DeliveryHandlerBase::getStocksForItem(
             $offer,
-            $offer->getStocks()->getTotalAmount(),
-            $offer->getPrice(),
+            $quantity ?? $offer->getStocks()->getTotalAmount(),
+            $price ?? $offer->getPrice(),
             DeliveryHandlerBase::getAvailableStores($delivery->getDeliveryCode(), $delivery->getDeliveryZone())
         );
     }
