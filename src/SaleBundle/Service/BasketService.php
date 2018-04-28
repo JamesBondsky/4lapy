@@ -40,6 +40,8 @@ use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/** @noinspection EfferentObjectCouplingInspection */
+
 /**
  * Class BasketService
  * @package FourPaws\SaleBundle\Service
@@ -79,32 +81,34 @@ class BasketService implements LoggerAwareInterface
 
 
     /**
+     *
+     *
      * @param int $offerId
      * @param int|null $quantity
      * @param array $rewriteFields
      * @param bool $save
      * @param Basket|null $basket
      *
-     * @return BasketItem
+     * @throws InvalidArgumentException
      * @throws BitrixProxyException
      * @throws ObjectNotFoundException
      * @throws LoaderException
+     *
+     * @return BasketItem
+     *
      */
     public function addOfferToBasket(
         int $offerId,
-        int $quantity = null,
+        int $quantity = 1,
         array $rewriteFields = [],
         bool $save = true,
         ?Basket $basket = null
     ): BasketItem
     {
-        if ($quantity < 0) {
-            throw new InvalidArgumentException('Wrong $quantity');
-        }
         if ($offerId < 1) {
-            throw new InvalidArgumentException('Wrong $offerId');
+            throw new InvalidArgumentException('Неверный ID товара');
         }
-        if (!$quantity) {
+        if ($quantity < 1) {
             $quantity = 1;
         }
         $fields = [
@@ -510,10 +514,6 @@ class BasketService implements LoggerAwareInterface
      */
     public function getBasketBonus(): float
     {
-        /**
-         * @todo Remove multiple return statements usage
-         * @see https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
-         */
         try {
             try {
                 $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
@@ -532,10 +532,11 @@ class BasketService implements LoggerAwareInterface
                 )
             );
 
-            return $cheque->getChargedBonus();
+            $result = $cheque->getChargedBonus();
         } catch (ExecuteException $e) {
-            return 0.0;
+            $result = 0.0;
         }
+        return $result;
     }
 
     /**
@@ -576,7 +577,7 @@ class BasketService implements LoggerAwareInterface
         if (!$basket->isEmpty()) {
             try {
                 $user = $this->currentUserProvider->getCurrentUser();
-                if ($user->getDiscountCardNumber()) {
+                if ($user && $user->getDiscountCardNumber()) {
                     $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
                         $basket,
                         $user->getDiscountCardNumber()
