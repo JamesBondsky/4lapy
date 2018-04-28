@@ -3,9 +3,22 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\OrderPropsTable;
+use Bitrix\Sale\Internals\OrderTable;
+use Bitrix\Sale\Internals\PaySystemActionTable;
+use Bitrix\Sale\Order as BitrixOrderService;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -24,6 +37,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
+use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -52,6 +66,8 @@ class OrderService
     private $currentUser;
     /** @var ManzanaService */
     private $manzanaService;
+    private $siteManzanaOrders;
+    private $manzanaOrderOffers;
 
     /**
      * OrderService constructor.
@@ -141,6 +157,15 @@ class OrderService
 
     /**
      * @return ArrayCollection
+     * @throws ObjectPropertyException
+     * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
+     * @throws ObjectNotFoundException
+     * @throws ObjectException
+     * @throws NotImplementedException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      * @throws ApplicationCreateException
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
@@ -157,6 +182,7 @@ class OrderService
         $orders = new ArrayCollection();
         $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByUser()));
         if (!$cheques->isEmpty()) {
+            $hasAdd = false;
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {
                 $order = new Order();
@@ -174,6 +200,8 @@ class OrderService
                 $order->setPrice($cheque->sum);
                 $order->setItemsSum($cheque->sum);
                 $order->setManzanaId($cheque->chequeNumber);
+                $order->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID']);
+                $order->setDeliveryId();
                 $items = [];
                 $newManzana = true;
                 if ($cheque->hasItemsBool()) {
@@ -189,16 +217,15 @@ class OrderService
                                     $item->setArticle($chequeItem->number);
                                     /** @todo лучше вынести вниз в групповой запрос */
                                     /** @var Offer $offer */
-                                    $offer = (new OfferQuery())->withFilter(['=XML_ID'=>$item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount'=>1])->exec()->first();
-                                    if($offer !== null && $offer->getId()> 0){
+                                    $offer = (new OfferQuery())->withFilter(['=XML_ID' => $item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount' => 1])->exec()->first();
+                                    $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()] = $offer;
+                                    if ($offer !== null && $offer->getId() > 0) {
                                         $item->setId($offer->getId());
-                                    }
-                                    else{
+                                    } else {
                                         $item->setId($chequeItem->number);
                                         $newManzana = false;
                                     }
-                                }
-                                else{
+                                } else {
                                     $item->setId($chequeItem->number);
                                     $newManzana = false;
                                 }
@@ -221,7 +248,18 @@ class OrderService
                 }
                 $order->setNewManzana($newManzana);
                 $order->setItems(new ArrayCollection($items));
-                $orders[$order->getId()] = $order;
+                /** если все позиции на сайте ищутся то сохраняем на сайте и исключаем из массива - но будет принудительная перезагрузка
+                 */
+                if ($order->isNewManzana()) {
+                    if (!$this->hasOrderByManzana($order)) {
+                        $hasAdd = $this->addOrder($order);
+                    }
+                } else {
+                    $orders[$order->getId()] = $order;
+                }
+            }
+            if ($hasAdd) {
+                LocalRedirect(Application::getInstance()->getContext()->getRequest()->getRequestUri());
             }
         }
         return $orders;
@@ -358,6 +396,7 @@ class OrderService
      * @param Order $order
      *
      * @return Store
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -402,6 +441,7 @@ class OrderService
 
     /**
      * @param int $orderId
+     *
      * @return Order|null
      * @throws \Exception
      */
@@ -409,11 +449,161 @@ class OrderService
     {
         $params = [
             'filter' => [
-                'ID' => $orderId
-            ]
+                'ID' => $orderId,
+            ],
         ];
         $collection = $this->orderRepository->findBy($params);
 
         return $collection->count() ? $collection->first() : null;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     */
+    protected function hasOrderByManzana(Order $order): bool
+    {
+        return \in_array($order->getManzanaId(), $this->getSiteManzanaOrders(), true);
+    }
+
+    /**
+     * @return array
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     */
+    protected function getSiteManzanaOrders(): array
+    {
+        if ($this->siteManzanaOrders === null) {
+            $res = OrderTable::query()->setFilter([
+                'PROPERTY.CODE'   => 'MANZANA_NUMBER',
+                '!PROPERTY.VALUE' => [null, ''],
+            ])->setSelect(['ID', 'PROPERTY'])->exec();
+            while ($item = $res->fetch()) {
+                $this->siteManzanaOrders[$item['ID']] = $item['PROPERTY_MANZANA_NUMBER_VALUE'];
+            }
+        }
+        return $this->siteManzanaOrders;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ObjectPropertyException
+     * @throws \RuntimeException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws OrderCreateException
+     * @throws OrderCreateException
+     * @throws \Exception
+     * @throws \Exception
+     */
+    protected function addOrder(Order $order): bool
+    {
+        if (!$order->isManzana() || empty($order->getManzanaId()) || $order->isItemsEmpty()) {
+            return false;
+        }
+        $bitrixOrder = BitrixOrderService::create(SITE_ID, $order->getUserId(), $order->getCurrency());
+
+        /** ставим даты */
+        $bitrixOrder->setField('DATE_INSERT', $order->getDateInsert());
+        $bitrixOrder->setField('DATE_UPDATE', $order->getDateInsert());
+        $bitrixOrder->setField('DATE_PAYED', $order->getDateInsert());
+//        $bitrixOrder->setField('DATE_DEDUCTED', $order->getDateInsert());
+        $bitrixOrder->setField('DATE_STATUS', $order->getDateInsert());
+
+        /** корзина */
+        $orderBasket =& $bitrixOrder->getBasket();
+        /** @var OrderItem $item */
+        $hasClothes = 'N';
+        $allBonuses = 0;
+        foreach ($order->getItems() as $item) {
+            $basketItem = $orderBasket->createItem('catalog', $item->getId());
+            $basketItem->setField('QUANTITY', $item->getQuantity());
+            $basketItem->setPrice($item->getPrice(), true);
+            $basketItem->setField('XML_ID', $item->getArticle());
+            $allBonuses += $item->getBonus();
+            /** @var Offer $offer */
+//            $offer = $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()];
+//            $hasClothes = $offer->getProduct()->isFood()
+        }
+
+        /** свойства */
+        $orderProps =& $bitrixOrder->getPropertyCollection();
+        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'MANZANA_NUMBER'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $orderProp->setValue($order->getManzanaId());
+        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'USER_REGISTERED'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $orderProp->setValue('Y');
+        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'IS_EXPORTED'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $orderProp->setValue('Y');
+        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'BONUS_COUNT'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $orderProp->setValue($allBonuses);
+        // есть ли одежда в заказе
+//        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE'=>'HAS_CLOTHES'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+//        $orderProp->setValue('Y');
+
+        /** оплата */
+        $paymentCollection =& $bitrixOrder->getPaymentCollection();
+        $sum = $bitrixOrder->getBasket()->getOrderableItems()->getPrice() + $bitrixOrder->getDeliveryPrice();
+
+        try {
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $sum);
+            $extPayment->setField('PAY_SYSTEM_ID', $order->getPaySystemId());
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+        } catch (\Exception $e) {
+            LoggerFactory::create('manzanaOrder')->error(sprintf('order payment failed: %s', $e->getMessage()), [
+                'userId'    => $bitrixOrder->getUserId(),
+                'manzanaId' => $order->getManzanaId(),
+            ]);
+            throw new OrderCreateException('Order payment failed');
+        }
+
+        /** доставка */
+        $shipmentCollection =& $bitrixOrder->getShipmentCollection();
+        $shipment = $shipmentCollection->createItem();
+        $shipmentItemCollection = $shipment->getShipmentItemCollection();
+        $selectedDelivery = \Bitrix\Sale\Delivery\Table::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        try {
+            /** @var BasketItem $item */
+            foreach ($bitrixOrder->getBasket()->getOrderableItems() as $item) {
+                $shipmentItem = $shipmentItemCollection->createItem($item);
+                $shipmentItem->setQuantity($item->getQuantity());
+            }
+
+            $shipment->setFields(
+                [
+                    'DELIVERY_ID'           => $selectedDelivery['ID'],
+                    'DELIVERY_NAME'         => $selectedDelivery['NAME'],
+                    'CURRENCY'              => $bitrixOrder->getCurrency(),
+                    'PRICE_DELIVERY'        => 0,
+                    'CUSTOM_PRICE_DELIVERY' => 'N',
+                ]
+            );
+        } catch (\Exception $e) {
+            LoggerFactory::create('manzanaOrder')->error(sprintf('failed to set shipment fields: %s', $e->getMessage()),
+                [
+                    'deliveryId' => $selectedDelivery['ID'],
+                ]);
+            throw new OrderCreateException('Ошибка при создании отгрузки');
+        }
+        $shipmentCollection->calculateDelivery();
+
+        $result = $bitrixOrder->save();
+        return $result->isSuccess();
     }
 }
