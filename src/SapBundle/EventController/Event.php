@@ -75,32 +75,23 @@ class Event implements ServiceHandlerInterface
      */
     public static function consumeOrderAfterSaveOrder(BitrixEvent $event): void
     {
-        /** @var Order $order */
-        $order = $event->getParameter('ENTITY');
-
         /**
-         * Если заказ уже выгружен в SAP новый или оплата онлайн, пропускаем
+         * @var Order $order
+         * @var OrderService $orderService
          */
-        if (self::isOrderExported($order)) {
-            return;
-        }
-
-        /** @var OrderService $orderService */
+        $order = $event->getParameter('ENTITY');
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
         );
 
         /**
-         * ...и оплата не онлайн, отправляем в SAP
+         * Если заказ уже выгружен в SAP, оплата онлайн, или заказ создан по подписке, пропускаем
          */
-        //if (\in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
-        if ($orderService->isOnlinePayment($order)) {
-            return;
-        }
-        /**
-         * ...и пропускаются заказы, созданные по подписке
-         */
-        if ($orderService->isSubscribe($order)) {
+        if (
+            self::isOrderExported($order)
+            || $orderService->isOnlinePayment($order)
+            || $orderService->isSubscribe($order)
+        ) {
             return;
         }
 

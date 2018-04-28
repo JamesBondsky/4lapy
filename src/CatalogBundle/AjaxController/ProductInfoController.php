@@ -174,10 +174,7 @@ class ProductInfoController extends Controller
      * @param Request $request
      *
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\LoaderException
      * @throws \InvalidArgumentException
-     * @throws ObjectNotFoundException
      *
      * @throws \Bitrix\Main\SystemException
      * @return JsonResponse
@@ -185,9 +182,9 @@ class ProductInfoController extends Controller
     public function getGroupSetAction(Request $request): JsonResponse
     {
         $offerId = (int)$request->get('offerId', 0);
-        $groupIndex = (int)$request->get('index', -1);
+        $groupIndex = (int)$request->get('index');
         $requestedOffer = false;
-        if ($offerId && $groupIndex >= 0) {
+        if ($offerId && null !== $groupIndex) {
             $requestedOffer = (new OfferQuery())->withFilter(['=ID' => $offerId])->exec()->first();
         }
         if ($requestedOffer) {
