@@ -5,6 +5,7 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -90,5 +91,16 @@ class PickupResult extends BaseResult implements PickupResultInterface
     public function isSuccess($internalCall = false)
     {
         return parent::isSuccess($internalCall);
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return bool
+     * @throws ApplicationCreateException
+     */
+    protected function checkIsDeliverable(Offer $offer): bool
+    {
+        return $offer->getProduct()->isPickupAvailable();
     }
 }

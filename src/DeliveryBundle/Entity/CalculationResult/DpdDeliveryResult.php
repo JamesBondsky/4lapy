@@ -4,6 +4,7 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -78,5 +79,16 @@ class DpdDeliveryResult extends BaseResult
     {
         $this->selectedStore = $selectedStore;
         return $this;
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return bool
+     * @throws ApplicationCreateException
+     */
+    protected function checkIsDeliverable(Offer $offer): bool
+    {
+        return $offer->getProduct()->isDeliveryAvailable();
     }
 }

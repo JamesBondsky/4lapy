@@ -424,10 +424,22 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected function doCalculateDeliveryDate(): void
     {
         $date = clone $this->getCurrentDate();
+        $this->deliveryDate = $date;
 
         if (null !== $this->fullstockResult) {
             $this->getSelectedStore();
             $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
+            /** @var StockResult $item */
+            foreach ($stockResult as $item) {
+                if (!$item->getOffer()->getProduct()->isDeliveryAvailable()) {
+                    $item->setType(StockResult::TYPE_UNAVAILABLE);
+                }
+            }
+            $stockResult = $stockResult->getOrderable();
+            if ($stockResult->isEmpty()) {
+                $this->addError(new Error('Нет доступных для доставки товаров'));
+                return;
+            }
 
             /**
              * Если есть отложенные товары, то добавляем к дате доставки
@@ -822,6 +834,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->periodFrom = null;
 
         $this->selectedInterval = null;
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return bool
+     */
+    protected function checkIsDeliverable(Offer $offer): bool
+    {
+        return true;
     }
 
     public function __clone()
