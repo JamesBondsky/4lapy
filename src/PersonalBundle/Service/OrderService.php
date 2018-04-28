@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
@@ -14,18 +15,23 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\Table as SaleDeliveryTable;
+use Bitrix\Sale\Delivery\Services\Table as SaleDeliveryServiceTable;
 use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
+use Bitrix\Sale\Internals\StatusTable;
 use Bitrix\Sale\Order as BitrixOrderService;
+use Bitrix\Sale\PropertyValueCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -202,7 +208,7 @@ class OrderService
                 $order->setItemsSum($cheque->sum);
                 $order->setManzanaId($cheque->chequeNumber);
                 $order->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID']);
-                $order->setDeliveryId(SaleDeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+                $order->setDeliveryId(SaleDeliveryServiceTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID']);
                 $items = [];
                 $newManzana = true;
                 if ($cheque->hasItemsBool()) {
@@ -217,10 +223,13 @@ class OrderService
                                 if ((int)$chequeItem->number > 1000000) {
                                     $item->setArticle($chequeItem->number);
                                     /** @todo лучше вынести вниз в групповой запрос */
-                                    /** @var Offer $offer */
-                                    $offer = (new OfferQuery())->withFilter(['=XML_ID' => $item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount' => 1])->exec()->first();
-                                    $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()] = $offer;
-                                    if ($offer !== null && $offer->getId() > 0) {
+                                    $offer = null;
+                                    if(!empty($item->getArticle())) {
+                                        /** @var Offer $offer */
+                                        $offer = (new OfferQuery())->withFilter(['=XML_ID' => $item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount' => 1])->exec()->first();
+                                        $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()] = $offer;
+                                    }
+                                    if ($offer !== null && $offer instanceof Offer && $offer->getId() > 0) {
                                         $item->setId($offer->getId());
                                     } else {
                                         $item->setId($chequeItem->number);
@@ -468,7 +477,7 @@ class OrderService
      */
     protected function hasOrderByManzana(Order $order): bool
     {
-        return \in_array($order->getManzanaId(), $this->getSiteManzanaOrders(), true);
+        return \in_array($order->getManzanaId(), $this->getSiteManzanaOrders($order->getUserId()), true);
     }
 
     /**
@@ -477,18 +486,21 @@ class OrderService
      * @throws SystemException
      * @throws ObjectPropertyException
      */
-    protected function getSiteManzanaOrders(): array
+    protected function getSiteManzanaOrders($userId): array
     {
         if ($this->siteManzanaOrders === null) {
             $res = OrderTable::query()->setFilter([
+                'USER_ID' => $userId,
                 'PROPERTY.CODE'   => 'MANZANA_NUMBER',
                 '!PROPERTY.VALUE' => [null, ''],
-            ])->setSelect(['ID', 'PROPERTY'])->exec();
+            ])->setSelect(['ID', 'PROPERTY_CODE' => 'PROPERTY.CODE', 'PROPERTY_VALUE' => 'PROPERTY.VALUE'])->exec();
             while ($item = $res->fetch()) {
-                $this->siteManzanaOrders[$item['ID']] = $item['PROPERTY_MANZANA_NUMBER_VALUE'];
+                if($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
+                    $this->siteManzanaOrders[$item['ID']] = $item['PROPERTY_VALUE'];
+                }
             }
         }
-        return $this->siteManzanaOrders;
+        return $this->siteManzanaOrders ?? [];
     }
 
     /**
@@ -519,50 +531,74 @@ class OrderService
         $bitrixOrder = BitrixOrderService::create(SITE_ID, $order->getUserId(), $order->getCurrency());
 
         /** ставим даты */
-        $bitrixOrder->setField('DATE_INSERT', $order->getDateInsert());
-        $bitrixOrder->setField('DATE_UPDATE', $order->getDateInsert());
-        $bitrixOrder->setField('DATE_PAYED', $order->getDateInsert());
+        $bitrixOrder->setFieldNoDemand('STATUS_ID', 'G');
+        $bitrixOrder->setFieldNoDemand('DATE_INSERT', $order->getDateInsert());
+        $bitrixOrder->setFieldNoDemand('DATE_UPDATE', $order->getDateInsert());
+        $bitrixOrder->setFieldNoDemand('PAYED', 'Y');
+        $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
 //        $bitrixOrder->setField('DATE_DEDUCTED', $order->getDateInsert());
-        $bitrixOrder->setField('DATE_STATUS', $order->getDateInsert());
+        $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
         /** корзина */
-        $orderBasket =& $bitrixOrder->getBasket();
+        $orderBasket = Basket::create(SITE_ID);
         /** @var OrderItem $item */
-        $hasClothes = 'N';
+//        $hasClothes = 'N';
         $allBonuses = 0;
         foreach ($order->getItems() as $item) {
-            $basketItem = $orderBasket->createItem('catalog', $item->getId());
-            $basketItem->setField('QUANTITY', $item->getQuantity());
+            $productId = $item->getId();
+            /** @var Offer $offer */
+            $offer = $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()];
+            $basketItem = $orderBasket->createItem('catalog', $productId);
             $basketItem->setPrice($item->getPrice(), true);
-            $basketItem->setField('XML_ID', $item->getArticle());
+            $basketItem->setField('QUANTITY', $item->getQuantity());
+            $basketItem->setField('CAN_BUY', 'Y');
+            $basketItem->setField('DELAY', 'N');
+            $basketItem->setField('CURRENCY', 'RUB');
+            $basketItem->setFieldNoDemand('NAME', $offer->getName());
+//            $basketItem->setField('BASE_PRICE', $item->getPrice());
+            $basketItem->setField('WEIGHT', $offer->getCatalogProduct()->getWeight());
+            $basketItem->setFieldNoDemand('DETAIL_PAGE_URL', $offer->getProduct()->getDetailPageUrl().'?offer='.$offer->getId());
+            $basketItem->setField('PRODUCT_PROVIDER_CLASS', 'Bitrix\Catalog\Product\CatalogProvider');
+            $basketItem->setFieldNoDemand('CATALOG_XML_ID', IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
+            $basketItem->setFieldNoDemand('PRODUCT_XML_ID', $item->getArticle());
             $allBonuses += $item->getBonus();
             /** @var Offer $offer */
 //            $offer = $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()];
 //            $hasClothes = $offer->getProduct()->isFood()
         }
+        $bitrixOrder->setBasket($orderBasket);
 
         /** свойства */
-        $orderProps =& $bitrixOrder->getPropertyCollection();
-        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'MANZANA_NUMBER'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $orderProps = $bitrixOrder->getPropertyCollection();
+        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'MANZANA_NUMBER'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
         $orderProp->setValue($order->getManzanaId());
-        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'USER_REGISTERED'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'USER_REGISTERED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
         $orderProp->setValue('Y');
-        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'IS_EXPORTED'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'IS_EXPORTED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
         $orderProp->setValue('Y');
-        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE' => 'BONUS_COUNT'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'BONUS_COUNT'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
         $orderProp->setValue($allBonuses);
+        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'SHIPMENT_PLACE_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
+        $orderProp->setValue('DC01');
         // есть ли одежда в заказе
 //        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE'=>'HAS_CLOTHES'])->setCacheTtl(360000)->exec()->fetch()['ID']);
 //        $orderProp->setValue('Y');
 
         /** оплата */
-        $paymentCollection =& $bitrixOrder->getPaymentCollection();
-        $sum = $bitrixOrder->getBasket()->getOrderableItems()->getPrice() + $bitrixOrder->getDeliveryPrice();
+        $paymentCollection = $bitrixOrder->getPaymentCollection();
 
         try {
             $extPayment = $paymentCollection->createItem();
-            $extPayment->setField('SUM', $sum);
+            $extPayment->setField('SUM', $order->getPrice());
             $extPayment->setField('PAY_SYSTEM_ID', $order->getPaySystemId());
+            $extPayment->setPaid('Y');
+            $extPayment->setField('DATE_PAID', $order->getDateInsert());
+            $extPayment->setField('DATE_BILL', $order->getDateInsert());
             /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
             $paySystem = $extPayment->getPaySystem();
             $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
@@ -575,13 +611,13 @@ class OrderService
         }
 
         /** доставка */
-        $shipmentCollection =& $bitrixOrder->getShipmentCollection();
+        $shipmentCollection = $bitrixOrder->getShipmentCollection();
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
-        $selectedDelivery = SaleDeliveryTable::query()->setSelect(['ID', 'NAME'])->setFilter(['ID' => $order->getDeliveryId()])->setCacheTtl(360000)->exec()->fetch();
+        $selectedDelivery = SaleDeliveryServiceTable::query()->setSelect(['ID', 'NAME'])->setFilter(['ID' => $order->getDeliveryId()])->setCacheTtl(360000)->exec()->fetch();
         try {
             /** @var BasketItem $item */
-            foreach ($bitrixOrder->getBasket()->getOrderableItems() as $item) {
+            foreach ($orderBasket as $item) {
                 $shipmentItem = $shipmentItemCollection->createItem($item);
                 $shipmentItem->setQuantity($item->getQuantity());
             }
@@ -602,7 +638,7 @@ class OrderService
                 ]);
             throw new OrderCreateException('Ошибка при создании отгрузки');
         }
-        $shipmentCollection->calculateDelivery();
+//        $shipmentCollection->calculateDelivery();
 
         $result = $bitrixOrder->save();
         return $result->isSuccess();

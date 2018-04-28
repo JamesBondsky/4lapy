@@ -90,6 +90,7 @@ class Event implements ServiceHandlerInterface
          */
         if (
             self::isOrderExported($order)
+            || self::isManzanaOrder($order)
             || $orderService->isOnlinePayment($order)
             || $orderService->isSubscribe($order)
         ) {
@@ -129,7 +130,7 @@ class Event implements ServiceHandlerInterface
             $order = Order::load($payment->getOrderId());
 
             /** @noinspection NullPointerExceptionInspection */
-            if (!self::isOrderExported($order)) {
+            if (!self::isOrderExported($order) && !self::isManzanaOrder($order)) {
                 self::getConsumerRegistry()->consume($order);
             }
         }
@@ -162,5 +163,15 @@ class Event implements ServiceHandlerInterface
         $isConsumedValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED');
 
         return null !== $isConsumedValue && $isConsumedValue->getValue() === 'Y';
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     */
+    private static function isManzanaOrder(Order $order): bool
+    {
+        return !empty(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'MANZANA_NUMBER'));
     }
 }
