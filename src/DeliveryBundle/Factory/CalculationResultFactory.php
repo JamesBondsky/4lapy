@@ -5,7 +5,13 @@
 
 namespace FourPaws\DeliveryBundle\Factory;
 
+use Bitrix\Main\Error;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Shipment;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -13,6 +19,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
+use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use Bitrix\Sale\Delivery\Services\Base as BaseService;
@@ -27,13 +34,18 @@ class CalculationResultFactory
     /**
      * @param CalculationResult $bitrixResult
      * @param BaseService $service
+     * @param Shipment $shipment
      *
      * @return CalculationResultInterface
+     * @throws ApplicationCreateException
+     * @throws ObjectNotFoundException
      * @throws UnknownDeliveryException
+     * @throws DeliveryInitializeException
      */
     public static function fromBitrixResult(
         CalculationResult $bitrixResult,
-        BaseService $service
+        BaseService $service,
+        Shipment $shipment
     ): CalculationResultInterface {
         switch ($service->getCode()) {
             case DeliveryService::INNER_PICKUP_CODE:
@@ -44,11 +56,11 @@ class CalculationResultFactory
                 break;
             case DeliveryService::DPD_PICKUP_CODE:
                 $result = new DpdPickupResult();
-                static::fillDpdData($result, $service->getCode());
+                static::fillDpdData($result, $service->getCode(), $shipment);
                 break;
             case DeliveryService::DPD_DELIVERY_CODE:
                 $result = new DpdDeliveryResult();
-                static::fillDpdData($result, $service->getCode());
+                static::fillDpdData($result, $service->getCode(), $shipment);
                 break;
             default:
                 throw new UnknownDeliveryException(sprintf('Unknown delivery service %s', $service->getCode()));
@@ -60,28 +72,92 @@ class CalculationResultFactory
     }
 
     /**
+     * @param array $order
+     *
+     * @return string
+     */
+    public static function getDpdCacheKey(array $order): string
+    {
+        $result = ['LOCATION_TO' => $order['LOCATION_TO']];
+
+        $itemData = [];
+        /** @var array $items */
+        $items = $order['ITEMS'];
+        foreach ($items as $item) {
+            $key = $item['ID'] . '_' . $item['PRODUCT_ID'];
+            $itemData[$key] = (int)$item['QUANTITY'];
+        }
+        $result['ITEMS'] = $itemData;
+
+        return json_encode($result);
+    }
+
+    /**
+     * @param Shipment $shipment
+     *
+     * @return string
+     * @throws ObjectNotFoundException
+     * @throws ApplicationCreateException
+     */
+    public static function getDpdCacheKeyByShipment(Shipment $shipment): string
+    {
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
+
+        $order = [
+            'LOCATION_TO' => $deliveryService->getDeliveryLocation($shipment)
+        ];
+        /** @var BasketItem $item */
+        foreach ($basket as $item) {
+            $order['ITEMS'][] = [
+                'ID' => $item->getId(),
+                'PRODUCT_ID' => $item->getProductId(),
+                'QUANTITY' => $item->getQuantity()
+            ];
+        }
+
+        return static::getDpdCacheKey($order);
+    }
+
+    /**
      * @param CalculationResultInterface $result
      * @param string $serviceCode
+     * @param Shipment $shipment
+     *
+     * @throws ApplicationCreateException
+     * @throws ObjectNotFoundException
+     * @throws DeliveryInitializeException
      */
-    protected static function fillDpdData(CalculationResultInterface $result, string $serviceCode): void
+    protected static function fillDpdData(
+        CalculationResultInterface $result,
+        string $serviceCode,
+        Shipment $shipment
+    ): void
     {
+        $cacheKey = static::getDpdCacheKeyByShipment($shipment);
+        $dpdData = static::$dpdData[$cacheKey][$serviceCode];
+
+        if (null === $dpdData) {
+            $result->addError(new Error('Ошибка инициализации доставки'));
+            throw new DeliveryInitializeException(sprintf('failed to find dpd data, cacheKey: %s', $cacheKey));
+        }
+
         if ($result instanceof DpdPickupResult) {
-            $result->setTerminals(static::$dpdData[$serviceCode]['TERMINALS']);
+            $result->setTerminals($dpdData['TERMINALS']);
         }
 
         $result->setDeliveryCode($serviceCode);
-        $result->setInitialPeriod(static::$dpdData[$serviceCode]['DAYS_FROM']);
-        $result->setPeriodTo(static::$dpdData[$serviceCode]['DAYS_TO']);
-        if (static::$dpdData[$serviceCode]['STOCK_RESULT'] instanceof StockResultCollection) {
-            $result->setStockResult(static::$dpdData[$serviceCode]['STOCK_RESULT']);
+        $result->setInitialPeriod($dpdData['DAYS_FROM']);
+        $result->setPeriodTo($dpdData['DAYS_TO']);
+        if ($dpdData['STOCK_RESULT'] instanceof StockResultCollection) {
+            $result->setStockResult($dpdData['STOCK_RESULT']);
         }
 
-        if (static::$dpdData[$serviceCode]['INTERVALS'] instanceof IntervalCollection) {
-            $result->setIntervals(static::$dpdData[$serviceCode]['INTERVALS']);
+        if ($dpdData['INTERVALS'] instanceof IntervalCollection) {
+            $result->setIntervals($dpdData['INTERVALS']);
         }
 
-        $result->setDeliveryZone(static::$dpdData[$serviceCode]['DELIVERY_ZONE']);
-        unset(static::$dpdData[$serviceCode]);
+        $result->setDeliveryZone($dpdData['DELIVERY_ZONE']);
     }
 
     /**
