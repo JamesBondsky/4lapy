@@ -166,7 +166,7 @@ class Manzana implements LoggerAwareInterface
      *
      * @throws ManzanaPromocodeUnavailableException
      */
-    public function checkPromocodeByResponse(SoftChequeResponse $response, string $promocode)
+    public function checkPromocodeByResponse(SoftChequeResponse $response, string $promocode): void
     {
         $applied = false;
 
@@ -183,13 +183,14 @@ class Manzana implements LoggerAwareInterface
                     $this->promocode
                 )
             );
+            dump($response);
         }
     }
 
     /**
      * @param SoftChequeResponse $response
      */
-    private function saveCouponDiscount(SoftChequeResponse $response)
+    private function saveCouponDiscount(SoftChequeResponse $response): void
     {
         $this->basketService->setPromocodeDiscount($response->getSumm() - $response->getSummDiscounted());
     }
