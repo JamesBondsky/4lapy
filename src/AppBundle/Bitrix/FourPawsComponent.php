@@ -54,7 +54,9 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
 
                 $this->includeComponentTemplate();
             } catch (\Exception $e) {
-                $this->log()->error($e->getMessage());
+                $this->log()->error(sprintf('%s: %s', \get_class($e), $e->getMessage()), [
+                    'trace' => $e->getTrace()
+                ]);
                 $this->abortResultCache();
             }
 
