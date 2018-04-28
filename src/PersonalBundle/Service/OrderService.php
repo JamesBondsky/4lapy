@@ -15,6 +15,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Delivery\Table as SaleDeliveryTable;
 use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
@@ -201,7 +202,7 @@ class OrderService
                 $order->setItemsSum($cheque->sum);
                 $order->setManzanaId($cheque->chequeNumber);
                 $order->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID']);
-                $order->setDeliveryId();
+                $order->setDeliveryId(SaleDeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID']);
                 $items = [];
                 $newManzana = true;
                 if ($cheque->hasItemsBool()) {
@@ -577,7 +578,7 @@ class OrderService
         $shipmentCollection =& $bitrixOrder->getShipmentCollection();
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
-        $selectedDelivery = \Bitrix\Sale\Delivery\Table::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $selectedDelivery = SaleDeliveryTable::query()->setSelect(['ID', 'NAME'])->setFilter(['ID' => $order->getDeliveryId()])->setCacheTtl(360000)->exec()->fetch();
         try {
             /** @var BasketItem $item */
             foreach ($bitrixOrder->getBasket()->getOrderableItems() as $item) {
