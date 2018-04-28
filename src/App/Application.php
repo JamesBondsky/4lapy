@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\App;
 
 use Bitrix\Main\Entity\DataManager;
@@ -150,11 +154,11 @@ class Application extends AppKernel
      *
      * @param string $hlblockServiceName
      *
-     * @return DataManager
      * @throws ServiceNotFoundException
      * @throws RuntimeException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
+     * @return DataManager
      */
     public static function getHlBlockDataManager(string $hlblockServiceName): DataManager
     {
@@ -162,9 +166,11 @@ class Application extends AppKernel
 
         /** Если это метод для HL-сущностей, то правильней проверять все же \Bitrix\Highloadblock\DataManager */
         if (!($dataManager instanceof DataManager)) {
-            throw new RuntimeException(sprintf('Сервис %s не является %s',
+            throw new RuntimeException(sprintf(
+                'Сервис %s не является %s',
                 $hlblockServiceName,
-                DataManager::class));
+                DataManager::class
+            ));
         }
 
         return $dataManager;
