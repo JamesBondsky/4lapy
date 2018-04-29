@@ -68,8 +68,12 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @param Manzana $manzana
      * @param CouponStorageInterface $couponStorage
      */
-    public function __construct(BasketService $basketService, BasketViewService $basketViewService, Manzana $manzana, CouponStorageInterface $couponStorage)
-    {
+    public function __construct(
+        BasketService $basketService,
+        BasketViewService $basketViewService,
+        Manzana $manzana,
+        CouponStorageInterface $couponStorage
+    ) {
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
         $this->manzana = $manzana;
@@ -123,6 +127,56 @@ class BasketController extends Controller implements LoggerAwareInterface
     }
 
     /**
+     * @Route("/bulkAdd/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     */
+    public function bulkAddAction(Request $request): JsonResponse
+    {
+        $offers = (array)$request->get('offers', []);
+        $offers = array_filter(array_map('\intval', $offers));
+        if (empty($offers)) {
+            $response = JsonErrorResponse::createWithData(
+                'Не переданы товары',
+                [],
+                200,
+                ['reload' => true]
+            );
+        } else {
+            foreach ($offers as $offerId) {
+                try {
+                    $this->basketService->addOfferToBasket($offerId);
+                } catch (BaseExceptionInterface $e) {
+                    $response = JsonErrorResponse::createWithData(
+                        $e->getMessage(),
+                        [],
+                        200,
+                        ['reload' => false]
+                    );
+                }
+            }
+        }
+        /** @noinspection UnSafeIsSetOverArrayInspection */
+        if(!isset($response)) {
+            $data = [
+                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+            ];
+            $response = JsonSuccessResponse::createWithData(
+                'Набор добавлен в корзину',
+                $data,
+                200,
+                ['reload' => false]
+            );
+        }
+
+        return $response;
+    }
+
+    /**
      * @Route("/promo/apply/", methods={"GET", "POST"})
      *
      * @param Request $request
@@ -142,7 +196,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $this->couponStorage->clear();
             $this->couponStorage->save($promoCode);
 
-            $result =  JsonSuccessResponse::createWithData(
+            $result = JsonSuccessResponse::createWithData(
                 'Промокод применен',
                 [],
                 200,
@@ -160,7 +214,8 @@ class BasketController extends Controller implements LoggerAwareInterface
                 )
             );
         }
-        if(!isset($result)) {
+
+        if (!isset($result)) {
             $result = JsonErrorResponse::create(
                 'Промокод не существует или не применим к вашей корзине',
                 200,
@@ -315,7 +370,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                 /** @var Product $product */
                 $product = $offer->getProduct();
                 $name = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName()));
-                if(0 < $weight = $offer->getCatalogProduct()->getWeight()) {
+                if (0 < $weight = $offer->getCatalogProduct()->getWeight()) {
                     $weight = WordHelper::showWeight($weight);
                 } else {
                     $weight = '';

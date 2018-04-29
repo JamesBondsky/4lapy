@@ -6,9 +6,6 @@
 
 namespace FourPaws\Catalog\Model;
 
-use Bitrix\Main\LoaderException;
-use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\ObjectNotFoundException;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -1773,10 +1770,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * Возвращает информацию, на основе которой Elasticsearch будет строить механизм автодополнения
      *
      * @return string[]
-     *
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      */
     public function getSuggest(): array
     {
@@ -1818,9 +1811,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      *
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      * @throws ApplicationCreateException
      */
     public function isByRequest(): bool
@@ -1842,9 +1832,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @param bool $reload
      * @param array $additionalFilter
      * @return Collection
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      */
     public function getOffers($skipZeroPrice = true, bool $reload = false, array $additionalFilter = []): Collection
     {
@@ -1913,9 +1900,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @return bool
      */
     public function hasActions(): bool
@@ -1931,9 +1915,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @throws ApplicationCreateException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @return array
      */
     public function getFullDeliveryAvailability(): array
@@ -1971,9 +1952,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @throws ApplicationCreateException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @return array
      */
     public function getFullDeliveryAvailabilityForFilter(): array
@@ -1994,9 +1972,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @throws ApplicationCreateException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @return array
      */
     public function getDeliveryAvailability(): array
@@ -2008,9 +1983,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @throws ApplicationCreateException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @return bool
      */
     public function isDeliveryAvailable(): bool
@@ -2024,9 +1996,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @throws ApplicationCreateException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @return bool
      */
     public function isPickupAvailable(): bool
