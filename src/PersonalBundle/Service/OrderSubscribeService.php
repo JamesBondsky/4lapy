@@ -38,7 +38,6 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class OrderSubscribeService
@@ -444,18 +443,20 @@ class OrderSubscribeService
      * Возвращает дату, когда заказ может быть доставлен
      *
      * @param BaseResult $calculationResult
-     * @param \DateTime|null $currentDate
+     * @param \DateTimeInterface|null $currentDate
      * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws SystemException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderDeliveryDate(BaseResult $calculationResult, \DateTime $currentDate = null): \DateTime
+    public function getOrderDeliveryDate(BaseResult $calculationResult, \DateTimeInterface $currentDate = null): \DateTime
     {
         $tmpCalculationResult = clone $calculationResult;
         if ($currentDate) {
-            $tmpCalculationResult->setCurrentDate((clone $currentDate));
+            $tmpCalculationResult->setCurrentDate(
+                (new \DateTime($currentDate->format('d.m.Y H:i:s')))
+            );
         }
         $tmpDeliveryDate = $tmpCalculationResult->getDeliveryDate();
         $deliveryDate = clone $tmpDeliveryDate;
@@ -471,26 +472,53 @@ class OrderSubscribeService
      * Расчетная дата может быть меньше текущей
      *
      * @param BaseResult $calculationResult
-     * @param \DateTime $deliveryDate
-     * @param \DateTime $currentDate
+     * @param \DateTimeInterface $deliveryDate Дата, на которую должен быть готов заказ
+     * @param \DateTimeInterface|null $currentDate Текущая дата
      * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws SystemException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getDateForOrderCreate(BaseResult $calculationResult, \DateTime $deliveryDate, \DateTime $currentDate = null): \DateTime
+    public function getDateForOrderCreate(
+        BaseResult $calculationResult,
+        \DateTimeInterface $deliveryDate,
+        \DateTimeInterface $currentDate = null
+    ): \DateTime
     {
         $calculatedDeliveryDate = $this->getOrderDeliveryDate($calculationResult, $currentDate);
         // сколько дней займет доставка
-        $currentDate = $currentDate ?? new \DateTime();
-        $deliveryDays = $calculatedDeliveryDate->diff($currentDate)->days;
+        $currentDate = $currentDate ?? new \DateTimeImmutable();
+        $diff = $currentDate->diff($calculatedDeliveryDate);
+        $deliveryDays = (int)$diff->days;
+        // принимаем, что доставить заказ нужно к 00:00:00 указанного дня,
+        // поэтому, если на доставку нужно n дней и n часов, то увеличиваем время доставки еще на день
+        if ($diff->h || $diff->i || $diff->s) {
+            ++$deliveryDays;
+        }
 
         // принудительно отбрасываем время
         $resultDate = new \DateTime($deliveryDate->format('d.m.Y'));
         $resultDate->sub(new \DateInterval('P'.$deliveryDays.'D'));
 
         return $resultDate;
+    }
+
+    /**
+     * Возвращает кол-во дней, оставшихся до очередной доставки
+     *
+     * @param \DateTimeInterface $deliveryDate
+     * @param \DateTimeInterface|null $currentDate
+     * @return int
+     */
+    public function getDeliveryDateUpcomingDays(\DateTimeInterface $deliveryDate, \DateTimeInterface $currentDate = null): int
+    {
+        $currentDate = $currentDate ?? new \DateTimeImmutable();
+        // Чтобы правильно определялось кол-во дней, у даты доставки нужно обнулять время
+        $deliveryDate = new \DateTime($deliveryDate->format('d.m.Y'));
+        $interval = $currentDate->diff($deliveryDate);
+
+        return (int)$interval->format('%r%a');
     }
 
     /**
@@ -702,15 +730,24 @@ class OrderSubscribeService
                         foreach ($offersList as $offer) {
                             /** @var \FourPaws\Catalog\Model\Offer $offer */
                             $tmpDeliveryCalculationResult = clone $deliveryCalculationResult;
-                            $tmpDeliveryCalculationResult->setCurrentDate((clone $currentDate));
+                            $tmpDeliveryCalculationResult->setCurrentDate(
+                                (new \DateTime($currentDate->format('d.m.Y H:i:s')))
+                            );
                             $tmpDeliveryCalculationResult->setStockResult(
                                 $deliveryCalculationResult->getStockResult()->filterByOffer($offer)
                             );
-                            $tmpOrderCreate = $this->getDateForOrderCreate($tmpDeliveryCalculationResult, $deliveryDate, $currentDate);
+                            $tmpOrderCreate = $this->getDateForOrderCreate(
+                                $tmpDeliveryCalculationResult,
+                                $deliveryDate,
+                                $currentDate
+                            );
                             if ($tmpOrderCreate < $currentDate) {
                                 $products[] = '['.$offer->getXmlId().'] '.$offer->getName();
                                 // работаем через внутренний метод, т.к. в нем учитывается дополнительное время по подписке
-                                $tmpDeliveryDate = $this->getOrderDeliveryDate($tmpDeliveryCalculationResult, $currentDate);
+                                $tmpDeliveryDate = $this->getOrderDeliveryDate(
+                                    $tmpDeliveryCalculationResult,
+                                    $currentDate
+                                );
                                 if ($tmpDeliveryDate > $deliveryDate) {
                                     $resultDeliveryDate = $tmpDeliveryDate;
                                 }
@@ -899,11 +936,15 @@ class OrderSubscribeService
      *
      * @param OrderSubscribe $orderSubscribe
      * @param bool $deactivateIfEmpty
-     * @param string|\DateTime $currentDate
+     * @param string|\DateTimeInterface $currentDate
      * @return Result
      * @throws InvalidArgumentException
      */
-    public function processOrderSubscribe(OrderSubscribe $orderSubscribe, bool $deactivateIfEmpty = true, $currentDate = ''): Result
+    public function processOrderSubscribe(
+        OrderSubscribe $orderSubscribe,
+        bool $deactivateIfEmpty = true,
+        $currentDate = ''
+    ): Result
     {
         $result = new Result();
 
@@ -950,34 +991,16 @@ class OrderSubscribeService
         ];
 
         if ($result->isSuccess()) {
-            $deliveryDate = null;
             try {
-                // следующая ближайшая дата по подписке, на которую необходимо доставить заказ
-                $deliveryDate = $copyParams->getDeliveryDate();
+                // проверим, не создавался ли уже заказ для этой даты
+                $data['alreadyCreated'] = $copyParams->isCurrentDeliveryDateOrderAlreadyCreated();
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
-                        'getDeliveryDateException'
+                        'isCurrentDeliveryDateOrderAlreadyCreatedException'
                     )
                 );
-            }
-            if ($deliveryDate) {
-                try {
-                    // проверим, не создавался ли уже заказ для этой даты
-                    $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
-                    $data['alreadyCreated'] = $orderSubscribeHistoryService->wasOrderCreated(
-                        $copyParams->getOriginOrderId(),
-                        $deliveryDate
-                    );
-                } catch (\Exception $exception) {
-                    $result->addError(
-                        new Error(
-                            $exception->getMessage(),
-                            'wasOrderCreatedException'
-                        )
-                    );
-                }
             }
         }
 
@@ -1029,18 +1052,24 @@ class OrderSubscribeService
      *
      * @param int $limit Лимит подписок за шаг
      * @param int $checkIntervalHours Время, вычитаемое от текущей даты, для запроса подписок
-     * @param string|\DateTime $currentDate
+     * @param string|\DateTimeInterface $currentDate Дата, которая будет установлена в качестве сегодняшней
      * @param bool $extResult
      * @return Result
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws InvalidArgumentException
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Exception
+     * @throws \FourPaws\PersonalBundle\Exception\RuntimeException
      */
     public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, $currentDate = '', bool $extResult = false): Result
     {
         $result = new Result();
         $resultData = [];
+
+        // За сколько дней до предстоящей доставки должно отправляться напоминание
+        $checkUpcomingDays = 3;
 
         // запрашиваем подписки с последней датой проверки меньше $checkIntervalHours часов назад
         $lastCheckDateTime = (new \DateTime())->sub((new \DateInterval('PT'.$checkIntervalHours.'H')));
@@ -1068,6 +1097,20 @@ class OrderSubscribeService
             $curResult = $this->processOrderSubscribe($orderSubscribe, true, $currentDate);
             if ($extResult) {
                 $resultData[] = $curResult;
+            }
+            if ($curResult->isSuccess()) {
+                // Отправка sms: "Через 3 дня Вам будет доставлен заказ по подписке..."
+                /** @var OrderSubscribeCopyParams $copyParams */
+                $copyParams = $curResult->getData()['copyParams'];
+                if ($copyParams) {
+                    $upcomingDays = $this->getDeliveryDateUpcomingDays(
+                        $copyParams->getRealDeliveryDate(), // это дата с учетом даты доставки уже возможно созданного заказа
+                        $copyParams->getCurrentDate()
+                    );
+                    if ($upcomingDays <= $checkUpcomingDays) {
+                        $this->sendOrderSubscribeUpcomingDeliveryMessage($copyParams);
+                    }
+                }
             }
             if (!$curResult->isSuccess() && $result->isSuccess()) {
                 $result->addError(
@@ -1191,5 +1234,20 @@ class OrderSubscribeService
             NotificationService::class
         );
         $notificationService->sendOrderSubscribedMessage($orderSubscribe);
+    }
+
+    /**
+     * Информация о предстоящей доставке заказа по подписке (за N дней до доставки).
+     *
+     * @param OrderSubscribeCopyParams $copyParams
+     * @throws ApplicationCreateException
+     */
+    public function sendOrderSubscribeUpcomingDeliveryMessage(OrderSubscribeCopyParams $copyParams)
+    {
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()->getContainer()->get(
+            NotificationService::class
+        );
+        $notificationService->sendOrderSubscribeUpcomingDeliveryMessage($copyParams);
     }
 }

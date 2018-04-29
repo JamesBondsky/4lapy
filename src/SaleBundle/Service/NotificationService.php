@@ -22,6 +22,7 @@ use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
@@ -444,6 +445,23 @@ class NotificationService implements LoggerAwareInterface
     }
 
     /**
+     * @param Order $order
+     * @return string
+     */
+    protected function getOrderPhone(Order $order): string
+    {
+        $value = '';
+        try {
+            $propValue = $this->orderService->getOrderPropertyByCode($order, 'PHONE');
+            $value = trim($propValue->getValue());
+        } catch (\Exception $e) {
+            // просто вернем пустую строку
+        }
+
+        return $value;
+    }
+
+    /**
      * Отправка уведомления об автоматической отмене подписки (админам)
      *
      * @param OrderSubscribe $orderSubscribe
@@ -502,6 +520,48 @@ class NotificationService implements LoggerAwareInterface
     {
         try {
             $this->emailService->sendOrderSubscribeOrderNewEmail($order);
+        } catch (\Exception $exception) {
+            $this->log()->error($exception->getMessage());
+        }
+    }
+
+    /**
+     * Информация о предстоящей доставке заказа по подписке (за N дней до доставки)
+     *
+     * @param OrderSubscribeCopyParams $copyParams
+     */
+    public function sendOrderSubscribeUpcomingDeliveryMessage(OrderSubscribeCopyParams $copyParams): void
+    {
+        try {
+            $deliveryDate = $copyParams->getDeliveryDate();
+            // дата доставки заказа с учетом уже возможно созданного заказа
+            $realDeliveryDate = $copyParams->getRealDeliveryDate();
+
+            $smsEventName = 'orderSubscribeUpcomingDelivery';
+            $smsEventKey = $copyParams->getOriginOrderId();
+            $smsEventKey .= '~'.$deliveryDate->format('d.m.Y');
+            $smsEventKey .= '~'.$realDeliveryDate->format('d.m.Y');
+            if (!$this->smsService->isAlreadySent($smsEventName, $smsEventKey)) {
+                $parameters = [];
+                $parameters['phone'] = '';
+                $parameters['periodDays'] = $copyParams->getOrderSubscribeService()->getDeliveryDateUpcomingDays(
+                    $realDeliveryDate,
+                    $copyParams->getCurrentDate()
+                );
+                if ($parameters['periodDays'] >= 0) {
+                    $copyOrder = $copyParams->getCopyOrder();
+                    if ($copyOrder) {
+                        $parameters['phone'] = $this->getOrderPhone($copyOrder);
+                    }
+                    if ($parameters['phone'] === '') {
+                        $parameters['phone'] = $copyParams->getOrderSubscribe()->getUser()->getPersonalPhone();
+                    }
+
+                    $smsTemplate = 'FourPawsSaleBundle:Sms:order.subscribe.upcoming.delivery.html.php';
+                    $this->sendSms($smsTemplate, $parameters);
+                    $this->smsService->markAlreadySent($smsEventName, $smsEventKey);
+                }
+            }
         } catch (\Exception $exception) {
             $this->log()->error($exception->getMessage());
         }

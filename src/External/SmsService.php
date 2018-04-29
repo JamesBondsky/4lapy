@@ -138,4 +138,27 @@ class SmsService implements LoggerAwareInterface
     {
         return (new \DateTime($time))->format('Y-m-d H:i:s');
     }
+
+    /**
+     * @param string $smsEventName
+     * @param string $smsEventKey
+     * @return bool
+     */
+    public function markAlreadySent(string $smsEventName, string $smsEventKey)
+    {
+        /** @todo сделать сохранение метки */
+    }
+
+    /**
+     * @param string $smsEventName
+     * @param string $smsEventKey
+     * @return bool
+     */
+    public function isAlreadySent(string $smsEventName, string $smsEventKey): bool
+    {
+        $result = false;
+        /** @todo сделать проверку метки */
+
+        return $result;
+    }
 }

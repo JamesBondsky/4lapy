@@ -289,7 +289,11 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @param string|\DateTime $baseDate Базовая дата для расчета в формате d.m.Y
+     * Рассчитывает и возвращает очередную дату, на которую необходимо доставить заказ по подписке.
+     * Если текущий день ($baseDate) совпадает с расчетной очередной датой,
+     * то вплоть до 23:59:59 он будет считаться очередной датой.
+     *
+     * @param string|\DateTimeInterface $baseDate Базовая дата для расчета в формате d.m.Y
      * @return \DateTime
      * @throws ApplicationCreateException
      * @throws InvalidArgumentException
@@ -302,22 +306,24 @@ class OrderSubscribe extends BaseEntity
         if (!$dateStartRaw) {
             throw new RuntimeException('Дата первой поставки не задана', 100);
         }
-        // принудительное приведение к требуемому формату - время нам здесь не нужно
+        // Принудительное приведение к требуемому формату - время нам здесь не нужно
         $baseDate = $baseDate ?: '';
         if (is_string($baseDate)) {
             $baseDateValue = (new \DateTime($baseDate))->format('d.m.Y');
-        } elseif ($baseDate instanceof \DateTime) {
+        } elseif ($baseDate instanceof \DateTimeInterface) {
             $baseDateValue = $baseDate->format('d.m.Y');
         } else {
             throw new InvalidArgumentException('Дата задана некорректно');
         }
         $result = null;
 
+        // Дата первой доставки.
+        // Принимаем, что ровно в 00:00:00 указанного дня заказ уже должен быть готов к выдаче клиенту.
         $dateStart = new \DateTime($dateStartRaw->format('d.m.Y'));
         $baseDate = new \DateTime($baseDateValue);
         $intervalPassed = $dateStart->diff($baseDate);
         if ($intervalPassed->invert) {
-            // если заданная дата первой доставки еще не наступила, то она и будет ближайшей датой
+            // если дата первой доставки еще не наступила, то она и будет очередной датой доставки
             $result = $dateStart;
         } else {
             $periodIntervalSpec = '';

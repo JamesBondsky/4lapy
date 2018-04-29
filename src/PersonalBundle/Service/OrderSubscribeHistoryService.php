@@ -68,26 +68,61 @@ class OrderSubscribeHistoryService
 
     /**
      * @param int $originOrderId
-     * @param \DateTime $deliveryDate
-     * @return bool
+     * @param \DateTimeInterface $deliveryDate
+     * @return \Bitrix\Main\DB\Result
      * @throws ArgumentException
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    public function wasOrderCreated(int $originOrderId, \DateTime $deliveryDate): bool
+    public function getCreatedOrders(int $originOrderId, \DateTimeInterface $deliveryDate): \Bitrix\Main\DB\Result
     {
         $items = $this->findBy(
             [
                 'select' => [
-                    'ID'
+                    'ID',
+                    'UF_NEW_ORDER_ID'
                 ],
                 'filter' => [
                     '=UF_ORIGIN_ORDER_ID' => (int)$originOrderId,
                     '=UF_DELIVERY_DATE' => new Date($deliveryDate->format('d.m.Y')),
                 ],
-                'limit' => 1
+                //'limit' => 1
             ]
         );
+
+        return $items;
+    }
+
+    /**
+     * @param int $originOrderId
+     * @param \DateTimeInterface $deliveryDate
+     * @return int
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function getCreatedOrderId(int $originOrderId, \DateTimeInterface $deliveryDate): int
+    {
+        $orderId = 0;
+        $item = $this->getCreatedOrders($originOrderId, $deliveryDate)->fetch();
+        if ($item) {
+            $orderId = (int)$item['UF_NEW_ORDER_ID'];
+        }
+
+        return $orderId;
+    }
+
+    /**
+     * @param int $originOrderId
+     * @param \DateTimeInterface $deliveryDate
+     * @return bool
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function wasOrderCreated(int $originOrderId, \DateTimeInterface $deliveryDate): bool
+    {
+        $items = $this->getCreatedOrders($originOrderId, $deliveryDate);
 
         return $items->getSelectedRowsCount() > 0;
     }
@@ -166,9 +201,9 @@ class OrderSubscribeHistoryService
      * @throws ArgumentException
      * @throws SystemException
      */
-    public function getLastCopyOrderId(int $originOrderId): int
+    public function getLastCreatedOrderId(int $originOrderId): int
     {
-        $lastCopyOrderId = 0;
+        $lastCreatedOrderId = 0;
         $params = [
             'order' => [
                 'UF_NEW_ORDER_ID' => 'desc',
@@ -196,10 +231,10 @@ class OrderSubscribeHistoryService
         ];
         $item = $this->findBy($params)->fetch();
         if ($item) {
-            $lastCopyOrderId = $item['UF_NEW_ORDER_ID'];
+            $lastCreatedOrderId = $item['UF_NEW_ORDER_ID'];
         }
 
-        return $lastCopyOrderId;
+        return $lastCreatedOrderId;
     }
 
     /**
