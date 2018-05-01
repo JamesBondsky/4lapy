@@ -226,8 +226,6 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     protected function buildResponseFromRawResponse($rawResult): SoftChequeResponse
     {
-        $this->logger->critical(\sprintf('ML|TEST| %s', \serialize(\json_decode(\json_encode($rawResult), true))));
-
         $rawResult = $rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
 
         $rawResult = \json_decode(\json_encode($rawResult), true);
