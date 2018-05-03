@@ -26,9 +26,6 @@ $storage = $arResult['STORAGE'];
 
 /** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
-if (!empty($arResult['SPLIT_RESULT'])) {
-    $selectedDelivery = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
-}
 
 /** @var BasketBase $basket */
 $basket = $arResult['BASKET'];
@@ -56,9 +53,6 @@ if (!$selectedPayment) {
 }
 
 $basketPrice = $selectedDelivery->getStockResult()->getPrice();
-if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
-    $basketPrice = $arResult['PARTIAL_PICKUP']->getStockResult()->getPrice();
-}
 
 /** @var User $user */
 $user = $arResult['USER'];
