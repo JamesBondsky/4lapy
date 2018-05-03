@@ -282,12 +282,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
-            if ($this->deliveryService->isInnerDelivery($selectedDelivery)) {
-                if ($this->arResult['PARTIAL_PICKUP_AVAILABLE']) {
-                    $this->arResult['SELECTED_DELIVERY'] = $this->arResult['PARTIAL_PICKUP'];
-                }
-            } elseif (!empty($arResult['SPLIT_RESULT'])) {
-                $this->arResult['SELECTED_DELIVERY'] = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
+            if ($this->arResult['PARTIAL_PICKUP_AVAILABLE'] &&
+                $this->deliveryService->isInnerDelivery($selectedDelivery)
+            ) {
+                $this->arResult['SELECTED_DELIVERY'] = $this->arResult['PARTIAL_PICKUP'];
             }
 
             $this->arResult['MAX_BONUS_SUM'] = 0;
