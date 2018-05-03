@@ -209,23 +209,11 @@ if ($orderSubscribe) {
                         $paymentName = 'Постоплата';
                     }
                     if (!empty($paymentName)) {
-                        echo $paymentName;
-                    } else {
-                        switch ($paymentCode) {
-                            case 'cash':
-                                $paymentName = 'наличными';
-                                break;
-                            case 'card-online':
-                                $paymentName = 'онлайн';
-                                break;
-                            case 'card':
-                                $paymentName = 'картой';
-                                break;
-                            default:
-                                $paymentName = 'бонусами';
+                        if($paymentName !== 'Постоплата'){
+                            echo $order->getPayPrefixText() . ' ';
                         }
-                        echo $order->getPayPrefixText() . ' ' . $paymentName;
-                    } ?>
+                        echo $paymentName;
+                    }  ?>
                 </div>
             </div>
             <div class="b-accordion-order-item__button js-button-default">
