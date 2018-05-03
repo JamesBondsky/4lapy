@@ -71,7 +71,7 @@ class AjaxMess
     public function getSystemError(): JsonResponse
     {
         return $this->getJsonError('systemError',
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта');
+            'Извините! Произошла непредвиденная ошибка. Мы уже работаем над её решением.');
     }
 
     /**
