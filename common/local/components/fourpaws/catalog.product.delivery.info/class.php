@@ -78,14 +78,18 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         if (!$this->arParams['OFFER']) {
             throw new \InvalidArgumentException('Invalid component parameters');
         }
-        parent::prepareResult();
+        /** @var Offer $currentOffer */
+        $currentOffer = $this->arParams['OFFER'];
+        if($currentOffer->isAvailable()) {
+            parent::prepareResult();
 
-        if (isset($this->arResult['CURRENT']['PICKUP']) &&
-            $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
-        ) {
-            $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
-                $this->arResult['CURRENT']['PICKUP']['RESULT']
-            );
+            if (isset($this->arResult['CURRENT']['PICKUP']) &&
+                $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
+            ) {
+                $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
+                    $this->arResult['CURRENT']['PICKUP']['RESULT']
+                );
+            }
         }
     }
 
