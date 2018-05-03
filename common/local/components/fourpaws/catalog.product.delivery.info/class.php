@@ -62,11 +62,14 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
 
         $params['OFFER'] = $params['OFFER'] instanceof Offer ? $params['OFFER'] : null;
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
+
         return parent::onPrepareComponentParams($params);
     }
 
     /**
-     * @return $this|void
+     * @return $this|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
@@ -90,7 +93,15 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
                     $this->arResult['CURRENT']['PICKUP']['RESULT']
                 );
             }
+            $this->arParams['NOT_AVAILABLE'] = false;
+            $this->arParams['CACHE_TYPE'] = 'N';
+            return $this;
         }
+        $this->arParams['CACHE_TIME'] = 360000;
+        $this->arParams['CACHE_TYPE'] = 'A';
+        $this->arParams['NOT_AVAILABLE'] = true;
+        $this->arParams['BY_REQUEST'] = $currentOffer->isByRequest();
+        return null;
     }
 
     /**
