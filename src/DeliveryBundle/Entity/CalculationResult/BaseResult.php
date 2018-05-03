@@ -427,33 +427,37 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->deliveryDate = $date;
 
         if (null !== $this->fullstockResult) {
-            $this->getSelectedStore();
-            $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
-            /** @var StockResult $item */
-            foreach ($stockResult as $item) {
-                if (!$item->getOffer()->getProduct()->isDeliveryAvailable()) {
-                    $item->setType(StockResult::TYPE_UNAVAILABLE);
+            if ($this->fullstockResult->getOrderable()->isEmpty()) {
+                $this->addError(new Error('Нет остатков на складах по данному набору товаров'));
+            } else {
+                $this->getSelectedStore();
+                $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
+                /** @var StockResult $item */
+                foreach ($stockResult as $item) {
+                    if (!$item->getOffer()->getProduct()->isDeliveryAvailable()) {
+                        $item->setType(StockResult::TYPE_UNAVAILABLE);
+                    }
                 }
-            }
-            $stockResult = $stockResult->getOrderable();
-            if ($stockResult->isEmpty()) {
-                $this->addError(new Error('Нет доступных для доставки товаров'));
-                return;
-            }
+                $stockResult = $stockResult->getOrderable();
+                if ($stockResult->isEmpty()) {
+                    $this->addError(new Error('Нет доступных для доставки товаров'));
+                    return;
+                }
 
-            /**
-             * Если есть отложенные товары, то добавляем к дате доставки
-             * срок поставки на склад по графику
-             */
-            if (!$stockResult->getDelayed()->isEmpty()) {
-                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
-            }
+                /**
+                 * Если есть отложенные товары, то добавляем к дате доставки
+                 * срок поставки на склад по графику
+                 */
+                if (!$stockResult->getDelayed()->isEmpty()) {
+                    $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
+                }
 
-            /**
-             * Если склад является магазином, то учитываем его график работы
-             */
-            if ($this->selectedStore->isShop()) {
-                $this->calculateWithStoreSchedule($date, $this->selectedStore);
+                /**
+                 * Если склад является магазином, то учитываем его график работы
+                 */
+                if ($this->selectedStore->isShop()) {
+                    $this->calculateWithStoreSchedule($date, $this->selectedStore);
+                }
             }
         }
 

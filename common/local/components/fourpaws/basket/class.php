@@ -243,21 +243,21 @@ class BasketComponent extends CBitrixComponent
                 continue;
             }
 
-            if ((null === $delivery) ||
-                !(clone $delivery)->setStockResult(
-                    $this->getDeliveryService()->getStockResultForOffer(
-                        $offer,
-                        $delivery,
-                        (int)$basketItem->getQuantity(),
-                        $basketItem->getPrice()
-                    )
-                )->isSuccess()
-            ) {
-                $this->arResult['ONLY_PICKUP'][] = $offer->getId();
-            }
-
             if ($basketItem->isDelay()) {
                 $notAllowedItems->add($basketItem);
+            } else {
+                if ((null === $delivery) ||
+                    !(clone $delivery)->setStockResult(
+                        $this->getDeliveryService()->getStockResultForOffer(
+                            $offer,
+                            $delivery,
+                            (int)$basketItem->getQuantity(),
+                            $basketItem->getPrice()
+                        )
+                    )->isSuccess()
+                ) {
+                    $this->arResult['ONLY_PICKUP'][] = $offer->getId();
+                }
             }
 
             if ($offer->isByRequest()) {

@@ -7,6 +7,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Fuser;
+use Bitrix\Sale\Internals\BasketTable;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -17,6 +19,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -103,8 +106,6 @@ class ProductInfoController extends Controller
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
-        global $APPLICATION;
-
         $response = [
             'products' => []
         ];
@@ -113,44 +114,53 @@ class ProductInfoController extends Controller
         $currentOffer = null;
 
         $cartItems = [];
-        $basket = $this->basketService->getBasket();
-        /** @var BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
-            $cartItems[(int)$basketItem->getProductId()] = $basketItem->getQuantity();
+        $res = BasketTable::query()->setSelect(['PRODUCT_ID', 'QUANTITY'])->setFilter(['FUSER_ID'=>Fuser::getId(), 'ORDER_ID' => null, 'LID' => SITE_ID])->exec();
+        while($basketItem = $res->fetch()){
+            $cartItems[(int)$basketItem['PRODUCT_ID']] = (float)$basketItem['QUANTITY'];
         }
 
         if (!$this->validator->validate($productListRequest)->count()) {
             /** @var ProductSearchResult $result */
-            $searchResult = $this->searchService->searchProducts(
-                $productListRequest->getFilters(),
-                new Sorting(),
-                new Navigation()
-            );
-
+            /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
+            $productCollection = (new ProductQuery())->withFilter(['=ID' => $productListRequest->getProductIds()])->exec();
             /** @var Product $product */
-            foreach ($searchResult->getProductCollection() as $product) {
-                /** @var Offer $offer */
-                foreach ($product->getOffers() as $offer) {
-                    $offer->setProduct($product);
-                    /* @todo костыль - в elastic не проставляется ссылка на товар у оффера */
+            $products = [];
+            if($productCollection->count() === 1) {
+                $product = $productCollection->first();
+                $products[$product->getId()] = $product;
+            } else{
+                foreach ($productCollection as $product) {
+                    $products[$product->getId()] = $product;
+                }
+            }
+            $offerCollection = (new OfferQuery())->withFilter(['=PROPERTY_CML2_LINK'=>$productListRequest->getProductIds(), 'ACTIVE' => 'Y'])->exec();
+
+            /** @var Offer $offer */
+            foreach ($offerCollection as $offer) {
+                $product = $products[$offer->getCml2Link()];
+                $offer->setProduct($product);
                     $offerId = $offer->getId();
                     if ($requestedOfferId && $offerId === $requestedOfferId) {
                         $currentOffer = $offer;
                     }
                     $price = ceil($offer->getPrice());
                     $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
-                    $response['products'][$product->getId()][$offerId] = [
+                    $responseItem = [
                         'available' => $offer->isAvailable(),
                         'byRequest' => $offer->isByRequest(),
-                        'pickup' => $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
                         'price' => $price,
                         'oldPrice' => $oldPrice,
-                        'inCart' => $cartItems[$offerId] ?? 0
+                        'inCart' => $cartItems[$offerId] ?? 0,
+                        'pickup' => false
                     ];
-                }
+                    if($responseItem['available']){
+                        $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
+                    }
+                    $response['products'][$product->getId()][$offerId] = $responseItem;
             }
 
             if ($currentOffer) {
+                global $APPLICATION;
                 ob_start();
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.product.delivery.info',
