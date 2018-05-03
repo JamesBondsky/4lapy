@@ -7,6 +7,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Fuser;
+use Bitrix\Sale\Internals\BasketTable;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -112,10 +114,9 @@ class ProductInfoController extends Controller
         $currentOffer = null;
 
         $cartItems = [];
-        $basket = $this->basketService->getBasket();
-        /** @var BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
-            $cartItems[(int)$basketItem->getProductId()] = $basketItem->getQuantity();
+        $res = BasketTable::query()->setSelect(['PRODUCT_ID', 'QUANTITY'])->setFilter(['FUSER_ID'=>Fuser::getId(), 'ORDER_ID' => null, 'LID' => SITE_ID])->exec();
+        while($basketItem = $res->fetch()){
+            $cartItems[(int)$basketItem['PRODUCT_ID']] = (float)$basketItem['QUANTITY'];
         }
 
         if (!$this->validator->validate($productListRequest)->count()) {
@@ -136,7 +137,8 @@ class ProductInfoController extends Controller
 
             /** @var Offer $offer */
             foreach ($offerCollection as $offer) {
-                $offer->setProduct($products[$offer->getCml2Link()]);
+                $product = $products[$offer->getCml2Link()];
+                $offer->setProduct($product);
                     $offerId = $offer->getId();
                     if ($requestedOfferId && $offerId === $requestedOfferId) {
                         $currentOffer = $offer;
@@ -158,7 +160,6 @@ class ProductInfoController extends Controller
             }
 
             if ($currentOffer) {
-                $time = microtime();
                 global $APPLICATION;
                 ob_start();
                 $APPLICATION->IncludeComponent(
