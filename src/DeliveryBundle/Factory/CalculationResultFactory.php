@@ -5,13 +5,10 @@
 
 namespace FourPaws\DeliveryBundle\Factory;
 
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Error;
-use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
-use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -37,10 +34,9 @@ class CalculationResultFactory
      * @param Shipment $shipment
      *
      * @return CalculationResultInterface
-     * @throws ApplicationCreateException
-     * @throws ObjectNotFoundException
      * @throws UnknownDeliveryException
      * @throws DeliveryInitializeException
+     * @throws ArgumentNullException
      */
     public static function fromBitrixResult(
         CalculationResult $bitrixResult,
@@ -96,25 +92,11 @@ class CalculationResultFactory
      * @param Shipment $shipment
      *
      * @return string
-     * @throws ObjectNotFoundException
-     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
      */
     public static function getDpdCacheKeyByShipment(Shipment $shipment): string
     {
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
-
-        $order = [
-            'LOCATION_TO' => $deliveryService->getDeliveryLocation($shipment)
-        ];
-        /** @var BasketItem $item */
-        foreach ($basket as $item) {
-            $order['ITEMS'][] = [
-                'ID' => $item->getId(),
-                'PRODUCT_ID' => $item->getProductId(),
-                'QUANTITY' => $item->getQuantity()
-            ];
-        }
+        $order = \CSaleDelivery::convertOrderNewToOld($shipment);
 
         return static::getDpdCacheKey($order);
     }
@@ -124,9 +106,8 @@ class CalculationResultFactory
      * @param string $serviceCode
      * @param Shipment $shipment
      *
-     * @throws ApplicationCreateException
-     * @throws ObjectNotFoundException
      * @throws DeliveryInitializeException
+     * @throws ArgumentNullException
      */
     protected static function fillDpdData(
         CalculationResultInterface $result,
