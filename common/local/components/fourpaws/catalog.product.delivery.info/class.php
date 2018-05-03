@@ -83,7 +83,10 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         }
         /** @var Offer $currentOffer */
         $currentOffer = $this->arParams['OFFER'];
-        if($currentOffer->isAvailable()) {
+        $this->arParams['OFFER_ID'] = $currentOffer->getId();
+        $this->arParams['IS_AVAILABLE'] = $currentOffer->isAvailable();
+        $this->arParams['BY_REQUEST'] = $currentOffer->isByRequest();
+        if($this->arParams['IS_AVAILABLE']) {
             parent::prepareResult();
 
             if (isset($this->arResult['CURRENT']['PICKUP']) &&
@@ -93,14 +96,19 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
                     $this->arResult['CURRENT']['PICKUP']['RESULT']
                 );
             }
-            $this->arParams['NOT_AVAILABLE'] = false;
-            $this->arParams['CACHE_TYPE'] = 'N';
-            return $this;
+            if($this->arResult['CURRENT']['PICKUP'] || $this->arResult['CURRENT']['DELIVERY']){
+                $this->arParams['CACHE_TIME'] = 0;
+                $this->arParams['CACHE_TYPE'] = 'N';
+                return $this;
+            }
+
+            $this->arParams['CACHE_TIME'] = 360000;
+            $this->arParams['CACHE_TYPE'] = 'A';
+            return null;
         }
         $this->arParams['CACHE_TIME'] = 360000;
         $this->arParams['CACHE_TYPE'] = 'A';
-        $this->arParams['NOT_AVAILABLE'] = true;
-        $this->arParams['BY_REQUEST'] = $currentOffer->isByRequest();
+
         return null;
     }
 
