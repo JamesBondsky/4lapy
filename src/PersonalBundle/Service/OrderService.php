@@ -51,6 +51,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -536,13 +537,11 @@ class OrderService
         $bitrixOrder->setFieldNoDemand('DATE_UPDATE', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('PAYED', 'Y');
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
-//        $bitrixOrder->setField('DATE_DEDUCTED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
         /** корзина */
         $orderBasket = Basket::create(SITE_ID);
         /** @var OrderItem $item */
-//        $hasClothes = 'N';
         $allBonuses = 0;
         foreach ($order->getItems() as $item) {
             $productId = $item->getId();
@@ -550,21 +549,17 @@ class OrderService
             $offer = $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()];
             $basketItem = $orderBasket->createItem('catalog', $productId);
             $basketItem->setPrice($item->getPrice(), true);
-            $basketItem->setField('QUANTITY', $item->getQuantity());
-            $basketItem->setField('CAN_BUY', 'Y');
-            $basketItem->setField('DELAY', 'N');
-            $basketItem->setField('CURRENCY', 'RUB');
+            $basketItem->setFieldNoDemand('QUANTITY', $item->getQuantity());
+            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+            $basketItem->setFieldNoDemand('DELAY', 'N');
+            $basketItem->setFieldNoDemand('CURRENCY', 'RUB');
             $basketItem->setFieldNoDemand('NAME', $offer->getName());
-//            $basketItem->setField('BASE_PRICE', $item->getPrice());
-            $basketItem->setField('WEIGHT', $offer->getCatalogProduct()->getWeight());
+            $basketItem->setFieldNoDemand('WEIGHT', $offer->getCatalogProduct()->getWeight());
             $basketItem->setFieldNoDemand('DETAIL_PAGE_URL', $offer->getProduct()->getDetailPageUrl().'?offer='.$offer->getId());
-            $basketItem->setField('PRODUCT_PROVIDER_CLASS', 'Bitrix\Catalog\Product\CatalogProvider');
+            $basketItem->setFieldNoDemand('PRODUCT_PROVIDER_CLASS', 'Bitrix\Catalog\Product\CatalogProvider');
             $basketItem->setFieldNoDemand('CATALOG_XML_ID', IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
             $basketItem->setFieldNoDemand('PRODUCT_XML_ID', $item->getArticle());
             $allBonuses += $item->getBonus();
-            /** @var Offer $offer */
-//            $offer = $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()];
-//            $hasClothes = $offer->getProduct()->isFood()
         }
         $bitrixOrder->setBasket($orderBasket);
 
@@ -585,30 +580,15 @@ class OrderService
         $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'SHIPMENT_PLACE_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
         $orderProp = $orderProps->getItemByOrderPropertyId($propId);
         $orderProp->setValue('DC01');
-        // есть ли одежда в заказе
-//        $orderProp = $orderProps->getItemByOrderPropertyId(OrderPropsTable::query()->setFilter(['=CODE'=>'HAS_CLOTHES'])->setCacheTtl(360000)->exec()->fetch()['ID']);
-//        $orderProp->setValue('Y');
 
-        /** оплата */
-        $paymentCollection = $bitrixOrder->getPaymentCollection();
-
-        try {
-            $extPayment = $paymentCollection->createItem();
-            $extPayment->setField('SUM', $order->getPrice());
-            $extPayment->setField('PAY_SYSTEM_ID', $order->getPaySystemId());
-            $extPayment->setPaid('Y');
-            $extPayment->setField('DATE_PAID', $order->getDateInsert());
-            $extPayment->setField('DATE_BILL', $order->getDateInsert());
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
-            $paySystem = $extPayment->getPaySystem();
-            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
-        } catch (\Exception $e) {
-            LoggerFactory::create('manzanaOrder')->error(sprintf('order payment failed: %s', $e->getMessage()), [
-                'userId'    => $bitrixOrder->getUserId(),
-                'manzanaId' => $order->getManzanaId(),
-            ]);
-            throw new OrderCreateException('Order payment failed');
-        }
+        $userCityService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
+        $city = $userCityService->getSelectedCity();
+        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
+        $orderProp->setValue($city['CODE']);
+        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
+        $orderProp->setValue($city['DISPLAY']);
 
         /** доставка */
         $shipmentCollection = $bitrixOrder->getShipmentCollection();
@@ -638,7 +618,28 @@ class OrderService
                 ]);
             throw new OrderCreateException('Ошибка при создании отгрузки');
         }
-//        $shipmentCollection->calculateDelivery();
+        $shipmentCollection->calculateDelivery();
+
+        /** оплата */
+        $paymentCollection = $bitrixOrder->getPaymentCollection();
+
+        try {
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $bitrixOrder->getPrice());
+            $extPayment->setField('PAY_SYSTEM_ID', $order->getPaySystemId());
+            $extPayment->setPaid('Y');
+            $extPayment->setField('DATE_PAID', $order->getDateInsert());
+            $extPayment->setField('DATE_BILL', $order->getDateInsert());
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+        } catch (\Exception $e) {
+            LoggerFactory::create('manzanaOrder')->error(sprintf('order payment failed: %s', $e->getMessage()), [
+                'userId'    => $bitrixOrder->getUserId(),
+                'manzanaId' => $order->getManzanaId(),
+            ]);
+            throw new OrderCreateException('Order payment failed');
+        }
 
         $result = $bitrixOrder->save();
         return $result->isSuccess();

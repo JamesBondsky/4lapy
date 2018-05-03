@@ -18,10 +18,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-last-name">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="data-last-name">Фамилия</label>
-                    <span class="b-input-line__require">(обязательно)</span>
                 </div>
                 <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="data-last-name"
                            name="LAST_NAME"
@@ -38,7 +37,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <span class="b-input-line__require">(обязательно)</span>
                 </div>
                 <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-small-input"
                            type="text"
                            id="data-first-name"
                            name="NAME"
@@ -54,7 +53,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="data-patronymic">Отчество</label>
                 </div>
                 <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="data-patronymic"
                            name="SECOND_NAME"
@@ -70,7 +69,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="data-date">Дата рождения</label>
                 </div>
                 <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="data-date"
                            placeholder=""
