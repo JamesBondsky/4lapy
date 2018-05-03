@@ -15,6 +15,11 @@ use FourPaws\Enum\IblockType;
 use FourPaws\ProductAutoSort\UserType\ElementPropertyConditionUserType;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class Event
+ *
+ * @package FourPaws\ProductAutoSort
+ */
 abstract class Event implements ServiceHandlerInterface
 {
     /**
