@@ -180,7 +180,7 @@ if ($orderSubscribe) {
                 <?php $payment = $order->getPayment();
                 $paymentCode = $payment->getCode();
                 $paymentName = '';
-                if($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
+                if($paymentCode ===OrderService::PAYMENT_CASH_OR_CARD && !$order->isManzana() && !$order->isPayed()) {
                     /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
                     /** @var OrderService $orderService */
                     $orderService = SymfoniApplication::getInstance()->getContainer()->get(OrderService::class);
@@ -199,7 +199,7 @@ if ($orderSubscribe) {
                     echo $paymentName;
                 }
                 else{
-                    $paymentName = $paymentCode === 'cash' ? 'наличными' : $paymentCode === 'card-online' ? 'онлайн' : 'банковской картой';
+                    $paymentName = $paymentCode === OrderService::PAYMENT_CASH_OR_CARD ? 'наличными или картой' : $paymentCode === OrderService::PAYMENT_CASH ? 'онлайн' : 'наличными';
                     echo $order->getPayPrefixText() . ' ' . $paymentName;
                 } ?>
             </div>

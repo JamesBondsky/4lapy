@@ -337,6 +337,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
             $storage->setSplit(true);
             $storage->setDeliveryId($pickup->getDeliveryId());
+            $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
 
             [$available, $delayed] = $this->orderStorageService->splitStockResult($pickup);
             $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
@@ -346,6 +347,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderStorageService->canSplitOrder($pickup);
             $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
             $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
+            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage);
         }
     }
 

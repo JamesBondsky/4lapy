@@ -9,7 +9,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class Stock extends Base
+class Stock extends Base implements \Serializable
 {
     /**
      * @var int
