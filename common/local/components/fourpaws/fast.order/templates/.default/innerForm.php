@@ -53,13 +53,12 @@ if ($request->offsetExists('phone')) {
 ?>
 <div class="b-popup-one-click__close-bar">
     <a class="b-popup-one-click__close js-close-popup" href="javascript:void(0)" title="Закрыть"></a>
-    <h1 class="b-title b-title--one-click b-title--one-click-head">Быстрый заказ</h1>
+    <h1 class="b-title b-title--one-click b-title--one-click-head">Заказ в один клик</h1>
 </div>
 <form class="b-popup-one-click__form js-form-validation js-phone js-popup-buy-one-click"
       data-url="/ajax/sale/fast_order/create/" method="get">
     <input type="hidden" name="type" value="<?= $requestType ?>">
-    <p class="b-popup-one-click__description">Укажите ваше имя и телефон, мы вам перезвоним, чтобы уточнить и
-        оформить заказ</p>
+    <p class="b-popup-one-click__description">Укажите ваше имя и номер телефона, по которому менеджер нашего магазина свяжется с вами для уточнения деталей заказа</p>
     <div class="b-popup-one-click__input-block">
         <label class="b-popup-one-click__label" for="one-click-name">Имя</label>
         <div class="b-input b-input--recall">
