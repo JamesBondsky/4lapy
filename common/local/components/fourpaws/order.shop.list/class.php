@@ -14,6 +14,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
+use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
@@ -146,6 +147,16 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             /** @var Store $store */
             $shopCount = 0;
             $isDpd = $this->deliveryService->isDpdPickup($pickupDelivery);
+            $storage = clone $this->orderStorageService->getStorage();
+            $storage->setDeliveryPlaceCode('');
+            $storage->setDeliveryId($pickupDelivery->getDeliveryId());
+            $payments = $this->orderStorageService->getAvailablePayments($storage, false, false);
+            /** @var array $payment */
+            $paymentCodeToName = [];
+            foreach ($payments as $payment) {
+                $paymentCodeToName[$payment['CODE']] = $payment['NAME'];
+            }
+
             foreach ($bestShops as $store) {
                 $fullResult = (clone $pickupDelivery)->setSelectedShop($store);
                 [$available, $delayed] = $this->orderStorageService->splitStockResult($fullResult);
@@ -211,6 +222,31 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     $price = $fullResult->getStockResult()->getPrice();
                 }
 
+                $storePayments = [[
+                    'name' => $paymentCodeToName[OrderService::PAYMENT_ONLINE],
+                    'code' => OrderService::PAYMENT_ONLINE
+                ]];
+                if ($store instanceof Terminal) {
+                    if ($store->isNppAvailable()) {
+                        if ($store->hasCardPayment()) {
+                            $storePayments[] = [
+                                'name' => $paymentCodeToName[OrderService::PAYMENT_CASH_OR_CARD],
+                                'code' => OrderService::PAYMENT_CASH_OR_CARD
+                            ];
+                        } elseif ($store->hasCashPayment()) {
+                            $storePayments[] = [
+                                'name' => $paymentCodeToName[OrderService::PAYMENT_CASH],
+                                'code' => OrderService::PAYMENT_CASH
+                            ];
+                        }
+                    }
+                } else {
+                    $storePayments[] = [
+                        'name' => $paymentCodeToName[OrderService::PAYMENT_CASH_OR_CARD],
+                        'code' => OrderService::PAYMENT_CASH_OR_CARD
+                    ];
+                }
+
                 $result['items'][] = [
                     'id' => $store->getXmlId(),
                     'adress' => $address,
@@ -241,6 +277,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     /* @todo поменять местами gps_s и gps_n */
                     'gps_n' => $store->getLongitude(),
                     'gps_s' => $store->getLatitude(),
+                    'payments' => $storePayments
                 ];
                 $avgGpsN += $store->getLongitude();
                 $avgGpsS += $store->getLatitude();

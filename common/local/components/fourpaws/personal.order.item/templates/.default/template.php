@@ -181,14 +181,14 @@ if ($orderSubscribe) {
                     <?php $payment = $order->getPayment();
                     $paymentCode = $payment->getCode();
                     switch ($paymentCode) {
-                        case 'cash':
-                            $paymentName = 'наличными';
+                        case OrderService::PAYMENT_CASH_OR_CARD:
+                            $paymentName = 'наличными или картой';
                             break;
-                        case 'card-online':
+                        case OrderService::PAYMENT_ONLINE:
                             $paymentName = 'онлайн';
                             break;
-                        case 'card':
-                            $paymentName = 'картой';
+                        case OrderService::PAYMENT_CASH:
+                            $paymentName = 'наличными';
                             break;
                         default:
                             $paymentName = '';
