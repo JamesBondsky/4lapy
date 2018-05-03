@@ -258,11 +258,15 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param OrderStorage $storage
-     * @param Basket|null $basket
+     * @param OrderStorage                    $storage
+     * @param Basket|null                     $basket
      * @param CalculationResultInterface|null $selectedDelivery
-     * @param bool $fastOrder
+     * @param bool                            $fastOrder
      *
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
@@ -572,6 +576,7 @@ class OrderService implements LoggerAwareInterface
         /** установка свойств для быстрого заказа, здесь ибо сбрасывается выше */
         if($fastOrder) {
             $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
             $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
         }
@@ -579,11 +584,20 @@ class OrderService implements LoggerAwareInterface
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Order $order
-     * @param OrderStorage $storage
+     * @param Order                           $order
+     * @param OrderStorage                    $storage
      * @param CalculationResultInterface|null $selectedDelivery
-     * @param bool $fastOrder
+     * @param bool                            $fastOrder
      *
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -795,6 +809,11 @@ class OrderService implements LoggerAwareInterface
      *
      * @param OrderStorage $storage
      *
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
@@ -920,6 +939,15 @@ class OrderService implements LoggerAwareInterface
      *
      * @param OrderStorage $storage
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -1091,6 +1119,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -1116,6 +1145,8 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \Exception
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -1147,7 +1178,7 @@ class OrderService implements LoggerAwareInterface
 
                         if ($store->getMetro()) {
                             /** @noinspection PhpUnusedLocalVariableInspection */
-                            list($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
+                            [$services, $metro] = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
 
                             if ($metro[$store->getMetro()]) {
                                 $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
@@ -1191,6 +1222,10 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -1268,10 +1303,11 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order                      $order
      * @param CalculationResultInterface $delivery
-     * @param bool $isFastOrder
+     * @param bool                       $isFastOrder
      *
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
      * @throws ObjectPropertyException
@@ -1338,6 +1374,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -1394,9 +1431,13 @@ class OrderService implements LoggerAwareInterface
      * Бонусы, начисленные за заказ
      *
      * @param Order $order
-     * @param User $user
+     * @param User  $user
      *
      * @return string
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \RuntimeException
      */
     public function getOrderBonusSum(Order $order, ?User $user = null): string
     {
@@ -1439,16 +1480,19 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     *
      * @return bool
      * @throws ObjectNotFoundException
      */
     public function isOnlinePayment(Order $order): bool
     {
         $result = false;
-        $paymentCode = $this->getOrderPaymentType($order);
-        if ($paymentCode === static::PAYMENT_ONLINE) {
-            $result = true;
-        }
+        try{
+            $paymentCode = $this->getOrderPaymentType($order);
+            if ($paymentCode === static::PAYMENT_ONLINE) {
+                $result = true;
+            }
+        } catch(NotFoundException $e){}
 
         return $result;
     }
@@ -1470,9 +1514,26 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isManzanaOrder(Order $order): bool
+    {
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER');
+            $result = !empty($propValue);
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return null|\Bitrix\Sale\PaySystem\Service
      */
-    public function getCashPaySystemService()
+    public function getCashPaySystemService(): ?\Bitrix\Sale\PaySystem\Service
     {
         $paySystemService = null;
         if (!isset($this->paySystemServiceCache['cash'])) {

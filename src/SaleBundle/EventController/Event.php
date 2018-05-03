@@ -8,6 +8,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
@@ -134,6 +135,8 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
@@ -161,8 +164,8 @@ class Event implements ServiceHandlerInterface
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
         );
-        if ($orderService->isSubscribe($order)) {
-            // пропускаются заказы, созданные по подписке (для них уведомления отправляются отдельно)
+        if ($orderService->isSubscribe($order) || $orderService->isManzanaOrder($order)) {
+            // пропускаются заказы, созданные по подписке
             return;
         }
 
@@ -177,6 +180,8 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
@@ -186,6 +191,14 @@ class Event implements ServiceHandlerInterface
     {
         /** @var Payment $payment */
         $order = $event->getParameter('ENTITY');
+
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(
+            OrderService::class
+        );
+        if($orderService->isManzanaOrder($order)){
+            return ;
+        }
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
@@ -207,6 +220,14 @@ class Event implements ServiceHandlerInterface
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
 
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(
+            OrderService::class
+        );
+        if($orderService->isManzanaOrder($order)){
+            return ;
+        }
+
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()
             ->getContainer()
@@ -218,12 +239,25 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
      * @throws ApplicationCreateException
      */
     public static function sendOrderStatusMessage(BitrixEvent $event): void
     {
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
+
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(
+            OrderService::class
+        );
+        if($orderService->isManzanaOrder($order)){
+            return ;
+        }
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()

@@ -721,22 +721,24 @@ class Order extends BaseEntity
      */
     public function getPaymentIdByPayments(): ?int
     {
-        $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
-        $bitrixOrder = $orderService->getOrderById($this->getId());
-        $innerSystemId = (int)PaySystemActionTable::query()
-            ->where('CODE', 'inner')
-            ->setCacheTtl(360000)
-            ->setLimit(1)
-            ->setSelect([
-                'ID',
-            ])->exec()->fetch()['ID'];
-        /** @var Payment $payment */
-        foreach ($bitrixOrder->getPaymentCollection()->getIterator() as $payment) {
-            $paySystemId = (int)$payment->getPaymentSystemId();
-            if ($payment->isInner() || $paySystemId === $innerSystemId) {
-                continue;
+        if($this->getId() > 0) {
+            $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
+            $bitrixOrder = $orderService->getOrderById($this->getId());
+            $innerSystemId = (int)PaySystemActionTable::query()
+                ->where('CODE', 'inner')
+                ->setCacheTtl(360000)
+                ->setLimit(1)
+                ->setSelect([
+                    'ID',
+                ])->exec()->fetch()['ID'];
+            /** @var Payment $payment */
+            foreach ($bitrixOrder->getPaymentCollection()->getIterator() as $payment) {
+                $paySystemId = (int)$payment->getPaymentSystemId();
+                if ($payment->isInner() || $paySystemId === $innerSystemId) {
+                    continue;
+                }
+                return $paySystemId;
             }
-            return $paySystemId;
         }
         return null;
     }
@@ -811,12 +813,12 @@ class Order extends BaseEntity
     }
 
     /**
-     * @return Store
+     * @return Store|null
      * @throws ApplicationCreateException
      * @throws \Exception
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getStore(): Store
+    public function getStore(): ?Store
     {
         if (!$this->store && $this->getId()) {
             $this->store = $this->getPersonalOrderService()->getStore($this);
