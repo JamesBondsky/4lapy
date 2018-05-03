@@ -19,7 +19,7 @@ class Payment_system_restrictions20180205114524 extends SprintMigrationBase
     protected $description = 'Задание ограничений платежным системам по службам доставки';
 
     protected $restrictions = [
-        OrderService::PAYMENT_CARD => [
+        OrderService::PAYMENT_CASH => [
             'CLASS_NAME' => '\\' . PaymentByDeliveryRestriction::class,
             'PARAMS'     => [
                 DeliveryService::DPD_PICKUP_CODE     => 'Y',

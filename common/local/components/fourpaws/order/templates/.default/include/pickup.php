@@ -14,6 +14,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 
 /**
@@ -73,21 +74,19 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
     </div>
     <div class="b-input-line b-input-line--myself">
         <div class="b-input-line__label-wrapper">
-            <span class="b-input-line__label">Оплата в магазине</span>
+            <span class="b-input-line__label">Оплата</span>
         </div>
         <div class="b-input-line__text-line">
-            <span class="b-input-line__pay-type">
-                <span class="b-icon b-icon--icon-cash">
-                    <?= new SvgDecorator('icon-cash', 16, 12) ?>
+            <?php foreach ($arResult['PICKUP_AVAILABLE_PAYMENTS'] as $payment) {
+                $icon = $payment['CODE'] === OrderService::PAYMENT_CASH ? 'icon-cash' : 'icon-bank-card'
+                ?>
+                <span class="b-input-line__pay-type">
+                    <span class="b-icon b-icon--icon-cash">
+                        <?= new SvgDecorator($icon, 16, 12) ?>
+                    </span>
+                    <?= $payment['NAME'] ?>
                 </span>
-                наличными
-            </span>
-            <span class="b-input-line__pay-type">
-                <span class="b-icon b-icon--icon-bank">
-                    <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
-                </span>
-                банковской картой
-            </span>
+            <?php } ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--partially">

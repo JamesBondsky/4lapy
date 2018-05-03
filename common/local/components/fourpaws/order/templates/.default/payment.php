@@ -40,7 +40,7 @@ $selectedPayment = null;
 /** @var array $payments */
 $payments = $arResult['PAYMENTS'];
 $selectedPayment = current(array_filter($payments, function ($item) {
-    return $item['CODE'] === OrderService::PAYMENT_CASH;
+    return $item['CODE'] === OrderService::PAYMENT_CASH_OR_CARD;
 }));
 
 foreach ($payments as $i => $payment) {
@@ -112,11 +112,6 @@ $user = $arResult['USER'];
                             $i = 0;
                             $max = count($payments);
                             foreach ($payments as $payment) {
-                                if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
-                                    $displayName = 'Наличными или картой при получении';
-                                } else {
-                                    $displayName = $payment['NAME'];
-                                }
                                 $labelClass = $i % 2 !== 0
                                     ? ' b-choice-recovery__label--right'
                                     : ' b-choice-recovery__label--left';
@@ -133,7 +128,7 @@ $user = $arResult['USER'];
                                     <?= (int)$payment['ID'] === (int)$selectedPayment['ID'] ? 'checked="checked"' : '' ?>/>
                                 <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
-                                    <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
+                                    <span class="b-choice-recovery__main-text"><?= $payment['NAME'] ?></span>
                                 </label>
                                 <?php
                                 $i++;
