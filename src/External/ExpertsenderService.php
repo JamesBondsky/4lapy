@@ -366,8 +366,6 @@ class ExpertsenderService implements LoggerAwareInterface
                 $addUserToList->setListId(static::MAIN_LIST_ID);
                 $addUserToList->setId($expertSenderId);
 
-                /** добим email иначе еррор */
-                $addUserToList->setEmail($curUser->getEmail());
                 $addUserToList->setName($curUser->getName());
                 $addUserToList->setLastName($curUser->getLastName());
                 /** ip юзверя */
