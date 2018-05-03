@@ -155,7 +155,7 @@ $user = $arResult['USER'];
                                        maxlength="5"
                                        size="5"
                                        data-max-value="<?= $arResult['MAX_BONUS_SUM'] ?>"
-                                       value="<?= $storage->getBonus() ?>">
+                                       value="<?= min($storage->getBonus(), $arResult['MAX_BONUS_SUM']) ?>">
                                 <div class="b-error">
                                     <span class="js-message"></span>
                                 </div>
@@ -236,19 +236,19 @@ $user = $arResult['USER'];
                             </div>
                         </li>
                         <?php if ($storage->getBonus()) { ?>
-                            <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
-                                <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
-                                    <div class="b-order-list__clipped-text">
-                                        <div class="b-order-list__text-backed">
-                                            Оплачено бонусами
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                    <?= CurrencyHelper::formatPrice($storage->getBonus(), false) ?>
-                                </div>
-                            </li>
-                        <?php } ?>
+                                <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3 b-order-list__pointspay">
+                                        <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
+                                           <div class="b-order-list__clipped-text">
+                                                   <div class="b-order-list__text-backed">
+                                                           Оплачено бонусами
+                                                       </div>
+                                               </div>
+                                       </div>
+                                   <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                           <?= CurrencyHelper::formatPrice(max($storage->getBonus(), $arResult['MAX_BONUS_SUM']), false) ?>
+                                       </div>
+                               </li>
+                       <?php } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">
