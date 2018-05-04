@@ -729,6 +729,13 @@ class OrderService implements LoggerAwareInterface
                 );
             }
         }
+        $this->setOrderPropertyByCode(
+            $order,
+            'DISCOUNT_CARD',
+            $this->manzanaService->prepareCardNumber(
+                $user->getDiscountCardNumber() ?: $storage->getDiscountCardNumber()
+            )
+        );
 
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
 

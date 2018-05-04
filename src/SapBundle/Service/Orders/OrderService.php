@@ -221,7 +221,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
             ->setClientComment($order->getField('USER_DESCRIPTION') ?? '')
             ->setOrderSource($orderSource)
-            ->setBonusCard($orderUser->getDiscountCardNumber());
+            ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'));
 
         if (Env::isStage()) {
             $orderDto

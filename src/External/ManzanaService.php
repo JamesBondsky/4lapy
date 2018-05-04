@@ -538,14 +538,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Card
      *
-     * @throws \Exception
      * @throws ManzanaServiceException
      * @throws CardNotFoundException
      */
     public function searchCardByNumber(string $cardNumber): Card
     {
         $card = null;
-        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        $bag = new ParameterBag(['cardnumber' => $this->prepareCardNumber($cardNumber)]);
 
         try {
             $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
