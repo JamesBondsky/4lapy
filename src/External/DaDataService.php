@@ -7,8 +7,9 @@ namespace FourPaws\External;
 
 use Dadata\Client as DaDataClient;
 use Dadata\Response\Address as AddressResponse;
+use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\External\Exception\DaDataExecuteException;
-use FourPaws\PersonalBundle\Entity\Address;
 use GuzzleHttp\Client;
 
 class DaDataService
@@ -24,28 +25,54 @@ class DaDataService
     }
 
     /**
-     * @param Address $address
+     * @param string $address
      *
-     * @return bool
      * @throws DaDataExecuteException
+     * @return bool
      */
-    public function isValidAddress(Address $address): bool
+    public function validateAddress(string $address): bool
     {
-        return $this->cleanAddress($address)->qc === AddressResponse::QC_GEO_EXACT;
+        $response = $this->cleanAddress($address);
+        return $this->isValidAddress(
+            (new DaDataLocationAdapter())->convertDataToEntity((array)$response, DadataLocation::class)
+        );
     }
 
     /**
-     * @param Address $address
+     * @param string $address
      *
-     * @return AddressResponse
      * @throws DaDataExecuteException
+     * @return DadataLocation
      */
-    public function cleanAddress(Address $address): AddressResponse
+    public function splitAddress(string $address): DadataLocation
+    {
+        $response = $this->cleanAddress($address);
+        return (new DaDataLocationAdapter())->convertDataToEntity((array)$response, DadataLocation::class);
+    }
+
+
+    /**
+     * @param DadataLocation $address
+     *
+     * @return bool
+     */
+    public function isValidAddress(DadataLocation $address): bool
+    {
+        return (int)$address->getQc() === AddressResponse::QC_GEO_EXACT;
+    }
+
+    /**
+     * @param string $address
+     *
+     * @throws DaDataExecuteException
+     * @return AddressResponse
+     */
+    protected function cleanAddress(string $address): AddressResponse
     {
         try {
-            $response = $this->client->cleanAddress((string)$address);
+            $response = $this->client->cleanAddress($address);
         } catch (\Exception $e) {
-            throw new DaDataExecuteException($e->getMessage(), $e->getCode());
+            throw new DaDataExecuteException(\get_class($e) . ': ' . $e->getMessage(), $e->getCode());
         }
 
         return $response;

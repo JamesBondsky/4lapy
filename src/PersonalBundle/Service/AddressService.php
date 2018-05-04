@@ -19,6 +19,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\Entity\Address as LocationAddress;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Repository\OldAddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -55,6 +56,23 @@ class AddressService
     {
         $this->addressRepository = $addressRepository;
         $this->currentUser = $currentUserProvider;
+    }
+
+    /**
+     * @param LocationAddress $locationAddress
+     *
+     * @return Address
+     */
+    public function createFromLocation(LocationAddress $locationAddress): Address
+    {
+        return (new Address())->setCity($locationAddress->getCity())
+            ->setCityLocation($locationAddress->getLocation())
+            ->setStreet($locationAddress->getStreet())
+            ->setHouse($locationAddress->getHouse())
+            ->setHousing($locationAddress->getHousing())
+            ->setEntrance($locationAddress->getEntrance())
+            ->setFloor($locationAddress->getFloor())
+            ->setFlat($locationAddress->getFlat());
     }
 
     /**

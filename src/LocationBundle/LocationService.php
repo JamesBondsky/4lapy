@@ -9,13 +9,18 @@ namespace FourPaws\LocationBundle;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\GroupLocationTable;
+use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
+use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
@@ -23,10 +28,11 @@ use FourPaws\Enum\IblockType;
 use FourPaws\External\DaDataService;
 use FourPaws\External\Exception\DaDataExecuteException;
 use FourPaws\LocationBundle\Enum\CitiesSectionCode;
+use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
-use FourPaws\PersonalBundle\Entity\Address;
+use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -72,6 +78,35 @@ class LocationService
     public function __construct(DaDataService $daDataService)
     {
         $this->daDataService = $daDataService;
+    }
+
+    /**
+     * @param string $cityCode
+     *
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public static function getRegion(string $cityCode): int
+    {
+        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect([
+            'ID',
+            'REGION_ID',
+            'PARENT_ID',
+            'TYPE_CODE' => 'TYPE.CODE',
+            'PARENTS_PARENT_ID' => 'PARENTS.ID',
+            'PARENTS_PARENT_TYPE_CODE' => 'PARENTS.TYPE.CODE',
+        ])->setCacheTtl(360000)->exec()->fetchAll();
+        foreach ($locList as $locItem) {
+            if ($locItem['TYPE_CODE'] === 'REGION') {
+                return $locItem['ID'];
+            }
+            if ($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION') {
+                return $locItem['PARENTS_PARENT_ID'];
+            }
+        }
+        return 0;
     }
 
     /**
@@ -596,13 +631,48 @@ class LocationService
      */
     public function validateAddress(Address $address): bool
     {
-        $result = false;
         try {
-            $result = $this->daDataService->isValidAddress($address);
+            $address->setValid($this->daDataService->validateAddress((string)$address));
         } catch (DaDataExecuteException $e) {
             $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
                 'address' => (string)$address
             ]);
+        }
+
+        return $address->isValid();
+    }
+
+    /**
+     * @param string $address
+     * @param string $locationCode
+     *
+     * @throws AddressSplitException
+     * @return Address
+     */
+    public function splitAddress(string $address, string $locationCode = ''): Address
+    {
+        try {
+            $dadataLocation = $this->daDataService->splitAddress($address);
+
+            if (!$locationCode) {
+                $locationCode = (new DaDataLocationAdapter())->convert($dadataLocation)->getCode();
+            }
+
+            $result = new Address();
+            $result->setLocation($locationCode)
+                ->setCity($dadataLocation->getCity())
+                ->setValid($this->daDataService->isValidAddress($dadataLocation))
+                ->setStreet($dadataLocation->getStreetWithType())
+                ->setHouse($dadataLocation->getHouse())
+                ->setFlat($dadataLocation->getFlat())
+                ->setZipCode($dadataLocation->getPostalCode());
+
+        } catch (DaDataExecuteException $e) {
+            $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
+                'address' => $address
+            ]);
+
+            throw new AddressSplitException($e->getMessage(), $e->getCode());
         }
 
         return $result;

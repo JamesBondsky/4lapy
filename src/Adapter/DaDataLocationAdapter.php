@@ -61,7 +61,7 @@ class DaDataLocationAdapter extends BaseAdapter
             }
 
             /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
-            $selectedCity['REGION_ID'] = StoreService::getRegion($selectedCity['CODE']);
+            $selectedCity['REGION_ID'] = LocationService::getRegion($selectedCity['CODE']);
 
             $selectedCity['REGION'] = $entity->getRegion();
             $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
