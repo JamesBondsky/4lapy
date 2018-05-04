@@ -6,6 +6,7 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
@@ -27,9 +28,9 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Dpd\Calculator;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
@@ -255,8 +256,8 @@ class DeliveryService implements LoggerAwareInterface
         $result = [];
         try {
             $result = (new BitrixCache())
-                          ->withId(__METHOD__ . $zone)
-                          ->resultOf($getServiceCodes)['result'];
+                ->withId(__METHOD__ . $zone)
+                ->resultOf($getServiceCodes)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get deliveries by zone: %s', $e->getMessage()), [
                 'zone' => $zone,
@@ -312,12 +313,6 @@ class DeliveryService implements LoggerAwareInterface
                     'service'  => $service->getCode(),
                 ]);
                 continue;
-            }
-
-            if ($this->isDpdDeliveryCode($service->getCode()) ||
-                $this->isDpdPickupCode($service->getCode())
-            ) {
-                Calculator::$bitrixShipment = $shipment;
             }
 
             $calculationResult = $shipment->calculateDelivery();
@@ -733,8 +728,8 @@ class DeliveryService implements LoggerAwareInterface
         try {
             /** @var array $terminals */
             $terminals = (new BitrixCache())
-                             ->withId(__METHOD__ . $locationCode)
-                             ->resultOf($getTerminals)['result'];
+                ->withId(__METHOD__ . $locationCode)
+                ->resultOf($getTerminals)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get dpd terminals: %s', $e->getMessage()), [
                 'location' => $locationCode,
@@ -764,7 +759,7 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @return Store|null
      */
-    public function getDpdTerminalByCode($code): ?Store
+    public function getDpdTerminalByCode($code): ?Terminal
     {
         $getTerminal = function () use ($code) {
             /** @noinspection PhpUndefinedClassInspection */
@@ -788,8 +783,8 @@ class DeliveryService implements LoggerAwareInterface
 
         try {
             $terminal = (new BitrixCache())
-                            ->withId(__METHOD__ . $code)
-                            ->resultOf($getTerminal)['result'];
+                ->withId(__METHOD__ . $code)
+                ->resultOf($getTerminal)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get dpd terminal: %s', $e->getMessage()), [
                 'code' => $code,
@@ -884,14 +879,19 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param array  $terminal
      * @param string $locationCode
-     * @return Store
+     * @return Terminal
      */
-    protected function dpdTerminalToStore(array $terminal, string $locationCode = ''): Store
+    protected function dpdTerminalToStore(array $terminal, string $locationCode = ''): Terminal
     {
         $schedule = str_replace('<br>', '. ', $terminal['SCHEDULE_SELF_DELIVERY']);
 
-        $store = new Store();
-        $store->setTitle((string)$terminal['NAME'])
+        $store = new Terminal();
+        $nppAvailable = $terminal['NPP_AVAILABLE'] === BitrixUtils::BX_BOOL_TRUE;
+        $store->setNppAvailable($nppAvailable)
+            ->setNppValue((int)$terminal['NPP_AMOUNT'])
+            ->setCardPayment($nppAvailable ?(bool)$terminal['SCHEDULE_PAYMENT_CASHLESS'] : false)
+            ->setCashPayment($nppAvailable ? (bool)$terminal['SCHEDULE_PAYMENT_CASH'] : false)
+            ->setTitle((string)$terminal['NAME'])
             ->setLocation($locationCode)
             ->setAddress((string)$terminal['ADDRESS_SHORT'])
             ->setCode((string)$terminal['CODE'])

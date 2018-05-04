@@ -64,6 +64,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $params['DELIVERY_CODES'] = [];
         }
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -74,7 +77,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             parent::executeComponent();
             $this->prepareResult();
 
-            $this->includeComponentTemplate();
+            if ($this->startResultCache()) {
+                $this->includeComponentTemplate();
+            }
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
@@ -201,6 +206,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'RESULT' => $defaultPickupResult
             ];
         }
+
+        $this->arParams['NOT_AVAILABLE'] = false;
+        $this->arParams['CACHE_TYPE'] = 'N';
 
         return $this;
     }

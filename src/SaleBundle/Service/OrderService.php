@@ -73,9 +73,9 @@ class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const PAYMENT_CASH = 'cash';
+    public const PAYMENT_CASH_OR_CARD = 'cash-or-card';
 
-    public const PAYMENT_CARD = 'card';
+    public const PAYMENT_CASH = 'cash';
 
     public const PAYMENT_ONLINE = 'card-online';
 
@@ -1538,7 +1538,7 @@ class OrderService implements LoggerAwareInterface
         $paySystemService = null;
         if (!isset($this->paySystemServiceCache['cash'])) {
             $this->paySystemServiceCache['cash'] = null;
-            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH);
+            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH_OR_CARD);
             if ($data) {
                 $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
                     $data

@@ -226,6 +226,7 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         $continue = true;
         $expertSenderId = 0;
+        $hasExpertSenderId = false;
         if (!empty($oldUser->getEmail())) {
             /** отключаем блокировку отправки если не подтвержден email */
 //            if (!$oldUser->allowedEASend()) {
@@ -245,6 +246,9 @@ class ExpertsenderService implements LoggerAwareInterface
                 $userIdResult = $this->client->getUserId($oldUser->getEmail());
                 if ($userIdResult->isOk()) {
                     $expertSenderId = $userIdResult->getId();
+                    if(!empty($expertSenderId)) {
+                        $hasExpertSenderId = true;
+                    }
                 }
             } catch (GuzzleException | Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
@@ -267,7 +271,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 if(!$hasNewEmailInSender) {
-                    if ($expertSenderId > 0) {
+                    if ($hasExpertSenderId) {
                         $addUserToList = new AddUserToList();
                         $addUserToList->setForce(true);
                         $addUserToList->setMode(static::MAIN_LIST_MODE);
@@ -334,6 +338,7 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         $continue = true;
         $expertSenderId = 0;
+        $hasExpertSenderId = false;
         if (!empty($curUser->getEmail())) {
             /** отключаем блокировку отправки если не подтвержден email */
 //            if (!$curUser->allowedEASend()) {
@@ -345,12 +350,15 @@ class ExpertsenderService implements LoggerAwareInterface
                 $userIdResult = $this->client->getUserId($curUser->getEmail());
                 if ($userIdResult->isOk()) {
                     $expertSenderId = $userIdResult->getId();
+                    if(!empty($expertSenderId)) {
+                        $hasExpertSenderId = true;
+                    }
                 }
             } catch (GuzzleException | Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
-        if ($continue && $expertSenderId > 0 && !empty($curUser->getEmail())) {
+        if ($continue && $hasExpertSenderId && !empty($curUser->getEmail())) {
             try {
                 $addUserToList = new AddUserToList();
                 $addUserToList->setForce(true);
@@ -373,8 +381,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
                     $apiResult->getErrorCode());
             } catch (GuzzleException|Exception $e) {
-                $a = $e->getMessage();
-                echo $a;
+                $e->getMessage();
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -397,12 +404,16 @@ class ExpertsenderService implements LoggerAwareInterface
         if (!empty($user->getEmail())) {
             try {
                 $expertSenderId = 0;
+                $hasExpertSenderId = false;
                 $userIdResult = $this->client->getUserId($user->getEmail());
                 if ($userIdResult->isOk()) {
                     $expertSenderId = $userIdResult->getId();
+                    if(!empty($expertSenderId)){
+                        $hasExpertSenderId = true;
+                    }
                 }
 
-                if ($expertSenderId > 0) {
+                if ($hasExpertSenderId) {
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode(static::MAIN_LIST_MODE);
@@ -450,12 +461,16 @@ class ExpertsenderService implements LoggerAwareInterface
         if (!empty($user->getEmail())) {
             try {
                 $expertSenderId = 0;
+                $hasExpertSenderId = false;
                 $userIdResult = $this->client->getUserId($user->getEmail());
                 if ($userIdResult->isOk()) {
                     $expertSenderId = $userIdResult->getId();
+                    if(!empty($expertSenderId)){
+                        $hasExpertSenderId = true;
+                    }
                 }
 
-                if ($expertSenderId > 0) {
+                if ($hasExpertSenderId) {
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode(static::MAIN_LIST_MODE);

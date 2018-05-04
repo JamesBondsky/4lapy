@@ -338,11 +338,14 @@ class ProfileController extends Controller
                 $curBirthday = $user->getBirthday();
                 if ($curBirthday instanceof Date) {
                     $birthday = DateHelper::replaceRuMonth($curBirthday->format('d #n# Y'), DateHelper::GENITIVE);
+                    $birthdayFormatted = DateHelper::replaceRuMonth($curBirthday->format('d.m.Y'), DateHelper::GENITIVE);
                 } else {
                     $birthday = '';
+                    $birthdayFormatted = '';
                 }
             } catch (EmptyDateException $e) {
                 $birthday = '';
+                $birthdayFormatted = '';
             }
 
             return JsonSuccessResponse::createWithData(
@@ -352,6 +355,10 @@ class ProfileController extends Controller
                     'fio'      => $user->getFullName(),
                     'gender'   => $user->getGenderText(),
                     'birthday' => $birthday,
+                    'birthdayFormatted' => $birthdayFormatted,
+                    'firstName' => $user->getName(),
+                    'lastName' => $user->getLastName(),
+                    'patronymic' => $user->getSecondName(),
                 ]
             );
         } catch (BitrixRuntimeException $e) {
