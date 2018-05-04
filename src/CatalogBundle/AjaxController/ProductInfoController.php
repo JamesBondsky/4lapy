@@ -67,9 +67,9 @@ class ProductInfoController extends Controller
     /**
      * ProductInfoController constructor.
      *
-     * @param ValidatorInterface $validator
-     * @param SearchService $searchService
-     * @param BasketService $basketService
+     * @param ValidatorInterface    $validator
+     * @param SearchService         $searchService
+     * @param BasketService         $basketService
      * @param BasketRulesRepository $basketRulesRepository
      */
     public function __construct(
@@ -85,11 +85,90 @@ class ProductInfoController extends Controller
     }
 
     /**
+     * @todo переделать после получения конкретики от клиента
+     *
+     * @param Offer $offer
+     *
+     * @return array
+     */
+    public static function getGroupSets(Offer $offer): array
+    {
+        $result = [];
+        if (
+            $offer->isShare()
+            &&
+            ($sharesOfGroupSet = $offer->getShare()->filter(
+                function (Share $e) {
+                    return !empty($e->getPropertyJsonGroupSet());
+                }
+            ))
+            &&
+            $sharesOfGroupSet->count() > 0
+        ) {
+            // находим сначала акцию с двумя группами и запоминаем,
+            // затем, если находим акцию с тремя - запоминаем и брейкаем, иначе выводим с двумя.
+            $groupSet = [];
+            $shareOfResultGroupSet = null;
+            /** @var Share $share */
+            foreach ($sharesOfGroupSet as $share) {
+                $current = json_decode($share->getPropertyJsonGroupSet());
+                // слотов 2 или 3
+                if (\count($current) < 2 || \count($groupSet) > 3) {
+                    continue;
+                }
+                if (empty($groupSet)) {
+                    $groupSet = $current;
+                    $shareOfResultGroupSet = $share;
+                } elseif (\count($current) > \count($groupSet)) {
+                    $groupSet = $current;
+                    $shareOfResultGroupSet = $share;
+                }
+                if (\count($groupSet) > 2) {
+                    break;
+                }
+            }
+            self::sortGroupSet($offer->getId(), $groupSet);
+            $result[] = [
+                'share'    => $shareOfResultGroupSet,
+                'groupSet' => $groupSet,
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     *
+     *
+     * @param int   $offerId
+     * @param array $groupSet
+     *
+     * @return bool
+     */
+    protected static function sortGroupSet(int $offerId, array &$groupSet): bool
+    {
+        return usort($groupSet, function (array $a, array $b) use ($offerId) {
+            $result = 0;
+            if (\in_array($offerId, $a, true)) {
+                $result = -1;
+            }
+            if (\in_array($offerId, $b, true)) {
+                if ($result === -1) {
+                    //todo throw exception ?? товар поидее не может быть в двух разных группах.
+                    $result = 0;
+                } else {
+                    $result = 1;
+                }
+            }
+            return $result;
+        });
+    }
+
+    /**
      * @Route("/", methods={"GET"})
      *
-     * @global \CMain $APPLICATION
+     * @global \CMain            $APPLICATION
      *
-     * @param Request $request
+     * @param Request            $request
      * @param ProductListRequest $productListRequest
      *
      * @throws ServiceNotFoundException
@@ -107,15 +186,18 @@ class ProductInfoController extends Controller
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
         $response = [
-            'products' => []
+            'products' => [],
         ];
 
-        $requestedOfferId = (int)$request->query->get('offer', 0);
         $currentOffer = null;
 
         $cartItems = [];
-        $res = BasketTable::query()->setSelect(['PRODUCT_ID', 'QUANTITY'])->setFilter(['FUSER_ID'=>Fuser::getId(), 'ORDER_ID' => null, 'LID' => SITE_ID])->exec();
-        while($basketItem = $res->fetch()){
+        $res = BasketTable::query()->setSelect(['PRODUCT_ID', 'QUANTITY'])->setFilter([
+            'FUSER_ID' => Fuser::getId(),
+            'ORDER_ID' => null,
+            'LID'      => SITE_ID,
+        ])->exec();
+        while ($basketItem = $res->fetch()) {
             $cartItems[(int)$basketItem['PRODUCT_ID']] = (float)$basketItem['QUANTITY'];
         }
 
@@ -125,38 +207,141 @@ class ProductInfoController extends Controller
             $productCollection = (new ProductQuery())->withFilter(['=ID' => $productListRequest->getProductIds()])->exec();
             /** @var Product $product */
             $products = [];
-            if($productCollection->count() === 1) {
+            if ($productCollection->count() === 1) {
                 $product = $productCollection->first();
                 $products[$product->getId()] = $product;
-            } else{
+            } else {
                 foreach ($productCollection as $product) {
                     $products[$product->getId()] = $product;
                 }
             }
-            $offerCollection = (new OfferQuery())->withFilter(['=PROPERTY_CML2_LINK'=>$productListRequest->getProductIds(), 'ACTIVE' => 'Y'])->exec();
+            $offerCollection = (new OfferQuery())->withFilter([
+                '=PROPERTY_CML2_LINK' => $productListRequest->getProductIds(),
+                'ACTIVE'              => 'Y',
+            ])->exec();
 
             /** @var Offer $offer */
             foreach ($offerCollection as $offer) {
                 $product = $products[$offer->getCml2Link()];
                 $offer->setProduct($product);
-                    $offerId = $offer->getId();
-                    if ($requestedOfferId && $offerId === $requestedOfferId) {
+                $offerId = $offer->getId();
+                $price = ceil($offer->getPrice());
+                $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
+                $responseItem = [
+                    'available' => $offer->isAvailable(),
+                    'byRequest' => $offer->isByRequest(),
+                    'price'     => $price,
+                    'oldPrice'  => $oldPrice,
+                    'inCart'    => $cartItems[$offerId] ?? 0,
+                    'pickup'    => false,
+                ];
+                if ($responseItem['available']) {
+                    $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
+                }
+                $response['products'][$product->getId()][$offerId] = $responseItem;
+                $response['products'][$offer->getCml2Link()][$offerId] = $responseItem;
+            }
+        }
+        return JsonSuccessResponse::createWithData('', $response);
+    }
+
+    /**
+     * @Route("/product/", methods={"GET"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @global \CMain $APPLICATION
+     *
+     */
+    public function infoProductAction(Request $request): JsonResponse
+    {
+        $response = [
+            'products' => [],
+        ];
+
+        $currentOffer = null;
+        $offerId = $request->get('offer', 0);
+        $productId = $request->get('product', 0);
+
+        $offerCollection = null;
+        if ($offerId > 0) {
+            $offerCollection = (new OfferQuery())->withFilter([
+                '=ID' => $offerId,
+            ])->exec();
+            if($offerCollection->count() > 0) {
+                $currentOffer = $offerCollection->first();
+            }
+        } elseif ($productId > 0) {
+            $offerCollection = (new OfferQuery())->withFilter([
+                '=PROPERTY_CML2_LINK' => $productId,
+                'ACTIVE'              => 'Y',
+            ])->exec();
+        }
+
+        if($offerCollection !== null && $offerCollection->count() > 0) {
+            /** @var Offer $offer */
+            /** @var Offer $currentOffer */
+            if($currentOffer !== null){
+                $response['products'][$currentOffer->getCml2Link()][$currentOffer->getId()] = [
+                    'available' => $currentOffer->isAvailable(),
+                ];
+            } else {
+                foreach ($offerCollection as $offer) {
+                    if ($offerId && $offer->getId() === $offerId) {
+                        $response['products'][$offer->getCml2Link()][$offer->getId()] = [
+                            'available' => $offer->isAvailable(),
+                        ];
+                    }
+                }
+            }
+        }
+
+        return JsonSuccessResponse::createWithData('', $response);
+    }
+
+    /**
+     * @Route("/product/deliverySet/", methods={"GET"})
+     *
+     * @param Request            $request
+     *
+     * @return JsonResponse
+     * @global \CMain            $APPLICATION
+     *
+     */
+    public function infoProductDeliveryAction(Request $request): JsonResponse
+    {
+        $response = [];
+
+        $currentOffer = null;
+        $requestedOfferId = $request->get('offer', 0);
+        $productId = $request->get('product', 0);
+        $offerCollection=null;
+
+        if ($requestedOfferId > 0) {
+            $offerCollection = (new OfferQuery())->withFilter([
+                '=ID' => $requestedOfferId,
+            ])->exec();
+            if($offerCollection->count() > 0) {
+                $currentOffer = $offerCollection->first();
+            }
+        } elseif ($productId > 0) {
+            $offerCollection = (new OfferQuery())->withFilter([
+                '=PROPERTY_CML2_LINK' => $productId,
+                'ACTIVE'              => 'Y',
+            ])->exec();
+        }
+
+        if($offerCollection !== null && $offerCollection->count() > 0) {
+            /** @var Offer $offer */
+            if($currentOffer === null) {
+                foreach ($offerCollection as $offer) {
+                    if ($requestedOfferId && $offer->getId() === $requestedOfferId) {
                         $currentOffer = $offer;
                     }
-                    $price = ceil($offer->getPrice());
-                    $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
-                    $responseItem = [
-                        'available' => $offer->isAvailable(),
-                        'byRequest' => $offer->isByRequest(),
-                        'price' => $price,
-                        'oldPrice' => $oldPrice,
-                        'inCart' => $cartItems[$offerId] ?? 0,
-                        'pickup' => false
-                    ];
-                    if($responseItem['available']){
-                        $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
-                    }
-                    $response['products'][$product->getId()][$offerId] = $responseItem;
+                }
             }
 
             if ($currentOffer) {
@@ -166,7 +351,7 @@ class ProductInfoController extends Controller
                     'fourpaws:catalog.product.delivery.info',
                     'detail',
                     [
-                        'OFFER' => $currentOffer
+                        'OFFER' => $currentOffer,
                     ],
                     false,
                     ['HIDE_ICONS' => 'Y']
@@ -227,10 +412,10 @@ class ProductInfoController extends Controller
                         $weight = '';
                     }
                     $items[] = [
-                        'id' => $offer->getId(),
-                        'price' => $offer->getPrice(),
-                        'image' => $image,
-                        'name' => $name,
+                        'id'         => $offer->getId(),
+                        'price'      => $offer->getPrice(),
+                        'image'      => $image,
+                        'name'       => $name,
                         'additional' => $weight,
                     ];
                 }
@@ -260,8 +445,8 @@ class ProductInfoController extends Controller
         if (!isset($response) && isset($discountPercent) && isset($items)) {
             $data = [
                 'discount' => $discountPercent,
-                'title' => 'Выберите товар',
-                'items' => $items
+                'title'    => 'Выберите товар',
+                'items'    => $items,
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -272,84 +457,5 @@ class ProductInfoController extends Controller
         }
 
         return $response;
-    }
-
-    /**
-     * @todo переделать после получения конкретики от клиента
-     *
-     * @param Offer $offer
-     *
-     * @return array
-     */
-    public static function getGroupSets(Offer $offer): array
-    {
-        $result = [];
-        if (
-            $offer->isShare()
-            &&
-            ($sharesOfGroupSet = $offer->getShare()->filter(
-                function (Share $e) {
-                    return !empty($e->getPropertyJsonGroupSet());
-                }
-            ))
-            &&
-            $sharesOfGroupSet->count() > 0
-        ) {
-            // находим сначала акцию с двумя группами и запоминаем,
-            // затем, если находим акцию с тремя - запоминаем и брейкаем, иначе выводим с двумя.
-            $groupSet = [];
-            $shareOfResultGroupSet = null;
-            /** @var Share $share */
-            foreach ($sharesOfGroupSet as $share) {
-                $current = json_decode($share->getPropertyJsonGroupSet());
-                // слотов 2 или 3
-                if (\count($current) < 2 || \count($groupSet) > 3) {
-                    continue;
-                }
-                if (empty($groupSet)) {
-                    $groupSet = $current;
-                    $shareOfResultGroupSet = $share;
-                } elseif (\count($current) > \count($groupSet)) {
-                    $groupSet = $current;
-                    $shareOfResultGroupSet = $share;
-                }
-                if (\count($groupSet) > 2) {
-                    break;
-                }
-            }
-            self::sortGroupSet($offer->getId(), $groupSet);
-            $result[] = [
-                'share' => $shareOfResultGroupSet,
-                'groupSet' => $groupSet,
-            ];
-        }
-        return $result;
-    }
-
-    /**
-     *
-     *
-     * @param int $offerId
-     * @param array $groupSet
-     *
-     * @return bool
-     */
-    protected static function sortGroupSet(int $offerId, array &$groupSet): bool
-    {
-        return usort($groupSet, function (array $a, array $b) use ($offerId) {
-            $result = 0;
-            if (\in_array($offerId, $a, true)) {
-                $result = -1;
-            }
-            if (\in_array($offerId, $b, true)) {
-                if ($result === -1) {
-                    //todo throw exception ?? товар поидее не может быть в двух разных группах.
-                    $result = 0;
-                } else {
-                    $result = 1;
-                }
-            }
-            return $result;
-        });
     }
 }
