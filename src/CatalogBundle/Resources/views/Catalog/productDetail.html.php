@@ -70,7 +70,7 @@ if(null === $offer){
     return;
 }
 ?>
-    <div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>" data-url="/ajax/catalog/product-info/">
+    <div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>" data-url="/ajax/catalog/product-info/product/" data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/">
         <div class="b-container">
             <?php $APPLICATION->IncludeComponent(
                 'fourpaws:breadcrumbs',
