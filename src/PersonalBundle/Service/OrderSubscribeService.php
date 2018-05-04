@@ -48,6 +48,9 @@ class OrderSubscribeService
 {
     use LazyLoggerAwareTrait;
 
+    // За сколько дней до предстоящей доставки должно отправляться напоминание
+    const UPCOMING_DAYS_DELIVERY_MESS = 3;
+
     /** @var OrderSubscribeRepository $orderSubscribeRepository */
     private $orderSubscribeRepository;
     /** @var CurrentUserProviderInterface $currentUser */
@@ -1068,9 +1071,6 @@ class OrderSubscribeService
         $result = new Result();
         $resultData = [];
 
-        // За сколько дней до предстоящей доставки должно отправляться напоминание
-        $checkUpcomingDays = 3;
-
         // запрашиваем подписки с последней датой проверки меньше $checkIntervalHours часов назад
         $lastCheckDateTime = (new \DateTime())->sub((new \DateInterval('PT'.$checkIntervalHours.'H')));
 
@@ -1107,7 +1107,7 @@ class OrderSubscribeService
                         $copyParams->getRealDeliveryDate(), // это дата с учетом даты доставки уже возможно созданного заказа
                         $copyParams->getCurrentDate()
                     );
-                    if ($upcomingDays <= $checkUpcomingDays) {
+                    if ($upcomingDays <= static::UPCOMING_DAYS_DELIVERY_MESS) {
                         $this->sendOrderSubscribeUpcomingDeliveryMessage($copyParams);
                     }
                 }

@@ -15,6 +15,7 @@ use FourPaws\External\SmsTraffic\Exception\SmsTrafficApiException;
 use FourPaws\External\SmsTraffic\Sms\IndividualSms;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\LogDoc\SmsLogDoc;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -140,16 +141,8 @@ class SmsService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $smsEventName
-     * @param string $smsEventKey
-     * @return bool
-     */
-    public function markAlreadySent(string $smsEventName, string $smsEventKey)
-    {
-        /** @todo сделать сохранение метки */
-    }
-
-    /**
+     * Проверка метки, что уведомление уже отправлено
+     *
      * @param string $smsEventName
      * @param string $smsEventKey
      * @return bool
@@ -157,7 +150,30 @@ class SmsService implements LoggerAwareInterface
     public function isAlreadySent(string $smsEventName, string $smsEventKey): bool
     {
         $result = false;
-        /** @todo сделать проверку метки */
+        $smsDocLog = new SmsLogDoc();
+        $doc = $smsDocLog->get($smsEventName, $smsEventKey);
+        if ($doc) {
+            $result = true;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Сохранение метки, что уведомление уже отправлено
+     *
+     * @param string $smsEventName
+     * @param string $smsEventKey
+     * @return bool
+     */
+    public function markAlreadySent(string $smsEventName, string $smsEventKey)
+    {
+        $result = false;
+        $smsDocLog = new SmsLogDoc();
+        $res = $smsDocLog->add($smsEventName, $smsEventKey);
+        if ($res && $res->isSuccess()) {
+            $result = true;
+        }
 
         return $result;
     }
