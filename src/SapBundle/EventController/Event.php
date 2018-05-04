@@ -169,9 +169,13 @@ class Event implements ServiceHandlerInterface
      * @param Order $order
      *
      * @return bool
+     *
+     * @throws ObjectNotFoundException
      */
     private static function isManzanaOrder(Order $order): bool
     {
-        return !empty(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'MANZANA_NUMBER'));
+        $manzanaNumberValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'MANZANA_NUMBER');
+
+        return null !== $manzanaNumberValue && (bool)$manzanaNumberValue->getValue();
     }
 }
