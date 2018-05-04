@@ -1553,4 +1553,25 @@ class OrderService implements LoggerAwareInterface
 
         return $paySystemService;
     }
+
+    /**
+     * @param Order $order
+     * @return \Bitrix\Main\Type\Date|null
+     */
+    public function getOrderDeliveryDate(Order $order): ?\Bitrix\Main\Type\Date
+    {
+        $deliveryDate = null;
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'DELIVERY_DATE');
+            $value = $propValue->getValue();
+            if ($value instanceof \Bitrix\Main\Type\Date) {
+                $deliveryDate = $value;
+            }
+        } catch (\Exception $exception) {
+            // просто вернем null
+        }
+
+        return $deliveryDate;
+    }
+
 }
