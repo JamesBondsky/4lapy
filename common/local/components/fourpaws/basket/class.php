@@ -428,8 +428,15 @@ class BasketComponent extends CBitrixComponent
          * @var Order $order
          */
         $applyResult = $this->arResult['DISCOUNT_RESULT'];
-        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getId()];
-
+        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
+        if(!$basketDiscounts) {
+            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
+            foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
+                if($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
+                    $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
+                }
+            }
+        }
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
