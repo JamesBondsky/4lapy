@@ -21,9 +21,7 @@ use Bitrix\Sale\Delivery\Services\Table as SaleDeliveryServiceTable;
 use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
-use Bitrix\Sale\Internals\StatusTable;
 use Bitrix\Sale\Order as BitrixOrderService;
-use Bitrix\Sale\PropertyValueCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -225,7 +223,7 @@ class OrderService
                                     $item->setArticle($chequeItem->number);
                                     /** @todo лучше вынести вниз в групповой запрос */
                                     $offer = null;
-                                    if(!empty($item->getArticle())) {
+                                    if (!empty($item->getArticle())) {
                                         /** @var Offer $offer */
                                         $offer = (new OfferQuery())->withFilter(['=XML_ID' => $item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount' => 1])->exec()->first();
                                         $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()] = $offer;
@@ -491,12 +489,12 @@ class OrderService
     {
         if ($this->siteManzanaOrders === null) {
             $res = OrderTable::query()->setFilter([
-                'USER_ID' => $userId,
+                'USER_ID'         => $userId,
                 'PROPERTY.CODE'   => 'MANZANA_NUMBER',
                 '!PROPERTY.VALUE' => [null, ''],
             ])->setSelect(['ID', 'PROPERTY_CODE' => 'PROPERTY.CODE', 'PROPERTY_VALUE' => 'PROPERTY.VALUE'])->exec();
             while ($item = $res->fetch()) {
-                if($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
+                if ($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
                     $this->siteManzanaOrders[$item['ID']] = $item['PROPERTY_VALUE'];
                 }
             }
@@ -555,9 +553,11 @@ class OrderService
             $basketItem->setFieldNoDemand('CURRENCY', 'RUB');
             $basketItem->setFieldNoDemand('NAME', $offer->getName());
             $basketItem->setFieldNoDemand('WEIGHT', $offer->getCatalogProduct()->getWeight());
-            $basketItem->setFieldNoDemand('DETAIL_PAGE_URL', $offer->getProduct()->getDetailPageUrl().'?offer='.$offer->getId());
+            $basketItem->setFieldNoDemand('DETAIL_PAGE_URL',
+                $offer->getProduct()->getDetailPageUrl() . '?offer=' . $offer->getId());
             $basketItem->setFieldNoDemand('PRODUCT_PROVIDER_CLASS', 'Bitrix\Catalog\Product\CatalogProvider');
-            $basketItem->setFieldNoDemand('CATALOG_XML_ID', IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
+            $basketItem->setFieldNoDemand('CATALOG_XML_ID',
+                IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
             $basketItem->setFieldNoDemand('PRODUCT_XML_ID', $item->getArticle());
             $allBonuses += $item->getBonus();
         }
@@ -594,7 +594,10 @@ class OrderService
         $shipmentCollection = $bitrixOrder->getShipmentCollection();
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
-        $selectedDelivery = SaleDeliveryServiceTable::query()->setSelect(['ID', 'NAME'])->setFilter(['ID' => $order->getDeliveryId()])->setCacheTtl(360000)->exec()->fetch();
+        $selectedDelivery = SaleDeliveryServiceTable::query()->setSelect([
+            'ID',
+            'NAME',
+        ])->setFilter(['ID' => $order->getDeliveryId()])->setCacheTtl(360000)->exec()->fetch();
         try {
             /** @var BasketItem $item */
             foreach ($orderBasket as $item) {
@@ -642,6 +645,13 @@ class OrderService
         }
 
         $result = $bitrixOrder->save();
+        /** костыль для обновления дат */
+        OrderTable::update($result->getId(),
+            [
+                'DATE_INSERT' => $order->getDateInsert(),
+                'DATE_UPDATE' => $order->getDateInsert(),
+            ]
+        );
         return $result->isSuccess();
     }
 }

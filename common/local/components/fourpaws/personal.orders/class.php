@@ -254,11 +254,13 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     public function sortByStatusAndDate(Order $item1, Order $item2): int
     {
         if ($item1->getStatusSort() === $item2->getStatusSort()) {
-            if ($item1->getDateInsert() > $item2->getDateInsert()) {
+            $date1 = $item1->getDateInsert()->getTimestamp();
+            $date2 = $item2->getDateInsert()->getTimestamp();
+            if ($date1 < $date2) {
                 return 1;
             }
 
-            if ($item1->getDateInsert() < $item2->getDateInsert()) {
+            if ($date1 > $date2) {
                 return -1;
             }
 
