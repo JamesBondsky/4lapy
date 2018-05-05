@@ -44,16 +44,38 @@ class CityService implements LoggerAwareInterface
     public function search(string $query, ?int $limit = null, bool $exact = false, array $filter = []): Collection
     {
         try {
-            $locations = $this->locationService->findLocation(
-                $query,
-                $limit,
-                $exact,
-                $filter
+            /** NAME_UPPER в индексе */
+            $locations = $this->locationService->findLocationNew(
+                array_merge([$exact ? '=' : '?'.'NAME.NAME_UPPER' =>ToUpper($query)], $filter),
+                $limit
             );
         } catch (CityNotFoundException $e) {
             $locations = [];
         } catch (\Exception $e) {
             $this->log()->error($e->getMessage(), ['query' => $query]);
+            throw new SystemException($e->getMessage(), $e->getCode(), $e);
+        }
+        return $this->mapLocations($locations);
+    }
+
+    /**
+     * @param string   $query
+     * @param null|int $limit
+     * @param bool     $exact
+     * @param array    $filter
+     *
+     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
+     * @return City[]|Collection
+     * @todo change metro check by metroways
+     */
+    public function searchByCode(string $code): Collection
+    {
+        try {
+            $locations = array($this->locationService->findLocationByCode($code));
+        } catch (CityNotFoundException $e) {
+            $locations = [];
+        } catch (\Exception $e) {
+            $this->log()->error($e->getMessage(), ['code' => $code]);
             throw new SystemException($e->getMessage(), $e->getCode(), $e);
         }
         return $this->mapLocations($locations);
@@ -112,14 +134,7 @@ class CityService implements LoggerAwareInterface
         $locations = [];
         if ($defaultCities) {
             try {
-                $locations = $this->locationService->findLocation(
-                    '',
-                    null,
-                    false,
-                    [
-                        'CODE' => $defaultCities,
-                    ]
-                );
+                $locations = array($this->locationService->findLocationByCode($defaultCities));
             } catch (CityNotFoundException $e) {
             } catch (\Exception $e) {
                 throw new SystemException($e->getMessage(), $e->getCode(), $e);
@@ -137,7 +152,7 @@ class CityService implements LoggerAwareInterface
     {
         $locations = [];
         try {
-            $locations = $this->locationService->findLocation('', 1, true, ['CODE' => $code]);
+            $locations = array($this->locationService->findLocationByCode($code));
         } catch (CityNotFoundException $e) {
         } catch (\Exception $e) {
             throw new SystemException($e->getMessage(), $e->getCode(), $e);
