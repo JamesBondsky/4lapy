@@ -20,6 +20,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderNotAllowedException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -600,35 +601,7 @@ class ExpertsenderService implements LoggerAwareInterface
             }
         }
 
-        $items = [];
-        try {
-            $offers = $orderService->getOrderProducts($order);
-            $basket = $order->getBasket();
-            /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
-                $currentOffer = null;
-                /** @var Offer $offer */
-                foreach ($offers as $offer) {
-                    if ($offer->getId() === (int)$basketItem->getProductId()) {
-                        $currentOffer = $offer;
-                    }
-                }
-                if (!$currentOffer) {
-                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getProductId()));
-                }
-
-                $items[] = '<Product>
-                    <Name>' . $basketItem->getField('NAME') . '</Name>
-                    <PicUrl>' . new FullHrefDecorator((string)$offer->getImages()->first()) . '</PicUrl>
-                    <Link>' . new FullHrefDecorator($offer->getDetailPageUrl()) . '</Link>
-                    <Price1>' . $basketItem->getBasePrice() . '</Price1>
-                    <Price2>' . $basketItem->getPrice() . '</Price2>
-                    <Amount>' . $basketItem->getQuantity() . '</Amount>
-                </Product>';
-            }
-        } catch (NotFoundException $e) {
-            throw new ExpertsenderServiceException($e->getMessage());
-        }
+        $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
@@ -697,5 +670,190 @@ class ExpertsenderService implements LoggerAwareInterface
         } catch (GuzzleException|Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
+    }
+
+    /**
+     * @param Order $order
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ExpertsenderServiceException
+     */
+    protected function getAltProductsItems(Order $order): array
+    {
+        $items = [];
+        try {
+            /** @var OrderService $orderService */
+            $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+            $offers = $orderService->getOrderProducts($order);
+            $basket = $order->getBasket();
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $currentOffer = null;
+                /** @var Offer $offer */
+                foreach ($offers as $offer) {
+                    if ($offer->getId() === (int)$basketItem->getProductId()) {
+                        $currentOffer = $offer;
+                    }
+                }
+                if (!$currentOffer) {
+                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getProductId()));
+                }
+                $item = '';
+                $item .= '<Product>';
+                $item .= '<Name>' . $basketItem->getField('NAME') . '</Name>';
+                $item .= '<PicUrl>' . new FullHrefDecorator((string)$offer->getImages()->first()) . '</PicUrl>';
+                $item .= '<Link>' . new FullHrefDecorator($offer->getDetailPageUrl()) . '</Link>';
+                $item .= '<Price1>' . $basketItem->getBasePrice() . '</Price1>';
+                $item .= '<Price2>' . $basketItem->getPrice() . '</Price2>';
+                $item .= '<Amount>' . $basketItem->getQuantity() . '</Amount>';
+                $item .= '</Product>';
+                $items[] = $item;
+            }
+        } catch (NotFoundException $e) {
+            throw new ExpertsenderServiceException($e->getMessage());
+        }
+
+        return $items;
+    }
+
+    /**
+     * Оформлена подписка на доставку
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws Exception
+     * @throws ExpertsenderServiceException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function sendOrderSubscribedEmail(OrderSubscribe $orderSubscribe): int
+    {
+        $transactionId = 7197;
+        $snippets = [];
+
+        $personalOrder = $orderSubscribe->getOrder();
+        $email = $personalOrder->getPropValue('EMAIL');
+        if ($email === '') {
+            throw new ExpertsenderServiceException('order email is empty');
+        }
+
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $order = $personalOrder->getBitrixOrder();
+
+        $snippets[] = new Snippet('user_name', $personalOrder->getPropValue('NAME'));
+        $snippets[] = new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order));
+        $snippets[] = new Snippet('delivery_date', $orderSubscribe->getDateStartFormatted());
+        $snippets[] = new Snippet('delivery_period', $orderSubscribe->getDeliveryTimeFormattedRu());
+        $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
+        $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
+
+        $items = $this->getAltProductsItems($order);
+        $items = '<Products>' . implode('', $items) . '</Products>';
+        $snippets[] = new Snippet('alt_products', $items, true);
+
+        try {
+            $apiResult = $this->client->sendSystemTransactional(
+                $transactionId,
+                new Receiver($email),
+                $snippets
+            );
+            if (!$apiResult->isOk()) {
+                throw new ExpertsenderServiceException(
+                    $apiResult->getErrorMessage(),
+                    $apiResult->getErrorCode()
+                );
+            }
+        } catch (GuzzleException|Exception $exception) {
+            throw new ExpertsenderServiceException(
+                $exception->getMessage(),
+                $exception->getCode(),
+                $exception
+            );
+        }
+
+        return $transactionId;
+    }
+
+    /**
+     * Информация о предстоящем заказе по подписке (только что созданном)
+     *
+     * @param Order $order
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ExpertsenderServiceException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function sendOrderSubscribeOrderNewEmail(Order $order): int
+    {
+        $transactionId = 7198;
+        $snippets = [];
+
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+
+        $properties = $orderService->getOrderPropertiesByCode(
+            $order,
+            [
+                'EMAIL',
+                'NAME',
+                'DELIVERY_DATE',
+                'DELIVERY_INTERVAL',
+                'PHONE',
+            ]
+        );
+
+        $properties['EMAIL'] = $properties['EMAIL'] ?? '';
+        $properties['NAME'] = $properties['NAME'] ?? '';
+        $properties['DELIVERY_DATE'] = $properties['DELIVERY_DATE'] ?? '';
+        $properties['DELIVERY_INTERVAL'] = $properties['DELIVERY_INTERVAL'] ?? '';
+        $properties['PHONE'] = $properties['PHONE'] ?? '';
+
+        $email = $properties['EMAIL'];
+        if ($email === '') {
+            throw new ExpertsenderServiceException('order email is empty');
+        }
+
+        $snippets[] = new Snippet('user_name', $properties['NAME']);
+        $snippets[] = new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order));
+        $snippets[] = new Snippet('delivery_date', $properties['DELIVERY_DATE']);
+        $snippets[] = new Snippet('delivery_time', $properties['DELIVERY_INTERVAL']);
+        $snippets[] = new Snippet('tel_number', $properties['PHONE'] !== '' ? PhoneHelper::formatPhone($properties['PHONE']) : '');
+        $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
+
+        $items = $this->getAltProductsItems($order);
+        $items = '<Products>' . implode('', $items) . '</Products>';
+        $snippets[] = new Snippet('alt_products', $items, true);
+
+        try {
+            $apiResult = $this->client->sendSystemTransactional(
+                $transactionId,
+                new Receiver($email),
+                $snippets
+            );
+            if (!$apiResult->isOk()) {
+                throw new ExpertsenderServiceException(
+                    $apiResult->getErrorMessage(),
+                    $apiResult->getErrorCode()
+                );
+            }
+        } catch (GuzzleException|Exception $exception) {
+            throw new ExpertsenderServiceException(
+                $exception->getMessage(),
+                $exception->getCode(),
+                $exception
+            );
+        }
+
+        return $transactionId;
     }
 }
