@@ -18,7 +18,7 @@ interface UserCitySelectInterface
     /**
      * @param string $code
      * @param string $name
-     * @param string $parentName
+     * @param string|array|null $parentName
      *
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -28,7 +28,7 @@ interface UserCitySelectInterface
      * @throws BitrixRuntimeException
      * @return array|bool
      */
-    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '');
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = null);
 
     /**
      * @throws InvalidIdentifierException

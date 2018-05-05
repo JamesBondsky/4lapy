@@ -9,7 +9,6 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\StoreBundle\Service\StoreService;
 
 /**
  * Class DaDataLocationAdapter
@@ -31,7 +30,7 @@ class DaDataLocationAdapter extends BaseAdapter
         /** @var LocationService $locationService */
         try {
             $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $country = !empty($entity->getCountry()) ? $entity->getCountry() : '';
+            /** пока доставка в одной стране - убираем поиск по стране */
             $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
             if (empty($city)) {
                 $city = $entity->getSettlement();
@@ -39,29 +38,30 @@ class DaDataLocationAdapter extends BaseAdapter
                 if ($entity->getSettlementType() === 'рп') {
                     $type = 'рабочий посёлок';
                 }
-                $fullCity = $entity->getSettlement() . ' ' . $type;
+                $fullCity = $city . ' ' . $type;
             }
-            $region = !empty($entity->getRegion()) && $city !== $entity->getRegion() ? ' ' . str_replace('/', '',
-                    $entity->getRegion()) : '';
-            /** из-за того что битрикс не сортирует по релевантности получаем количество адресов больше чем надо
-             * и щем в нем нужный нам адрес - количество для поиска надо подобрать, на 100 работает
-             */
-            $cities = $locationService->findLocationCity($city, $country . $region, 100, true);
-            $countCities = \count($cities);
-            if ($countCities > 1) {
-                foreach ($cities as $bitrixCity) {
-                    if ($bitrixCity['NAME'] === $fullCity) {
-                        $selectedCity = $bitrixCity;
-                        break;
-                    }
+            $fullRegion = '';
+            $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? str_replace('/', '',
+                    $entity->getRegion()) : '');
+            if (!empty($region)) {
+                $regionType = trim($entity->getRegionTypeFull());
+                if ($entity->getRegionType() === 'Респ') {
+                    $fullRegion = $regionType . ' ' . $region;
+                } else {
+                    $fullRegion = $region . ' ' . $regionType;
                 }
             }
-            if (!isset($selectedCity)) {
-                $selectedCity = reset($cities);
-            }
+            $cities = $locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
+            $selectedCity = reset($cities);
 
             /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
-            $selectedCity['REGION_ID'] = LocationService::getRegion($selectedCity['CODE']);
+            foreach ($selectedCity['PATH'] as $pathItem) {
+                if (ToUpper($pathItem['TYPE']['CODE']) === 'REGION') {
+                    $selectedCity['REGION_ID'] = $pathItem['ID'];
+                    $selectedCity['REGION_CODE'] = $pathItem['CODE'];
+                    break;
+                }
+            }
 
             $selectedCity['REGION'] = $entity->getRegion();
             $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
