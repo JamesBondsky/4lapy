@@ -33,6 +33,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
@@ -44,8 +45,9 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\Entity\Address;
+use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -730,36 +732,55 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
-
-        /**
-         * Сохраняем адрес, если:
-         * 1) пользователь только что зарегистрирован
-         * 2) авторизованный пользователь задал новый адрес
-         */
-        if (!$fastOrder &&
-            $needCreateAddress &&
-            $this->deliveryService->isDelivery($selectedDelivery)
-        ) {
-            $address = $this->compileOrderAddress($order);
-
-            try {
-                $this->addressService->add($address);
-                $storage->setAddressId($address->getId());
-            } catch (\Exception $e) {
-                $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
-                    'city' => $address->getCity(),
-                    'location' => $address->getCityLocation(),
-                    'userId' => $address->getUserId(),
-                    'street' => $address->getStreet(),
-                    'house' => $address->getHouse(),
-                    'housing' => $address->getHousing(),
-                    'entrance' => $address->getEntrance(),
-                    'floor' => $address->getFloor(),
-                    'flat' => $address->getFlat(),
-                ]);
+        if (!$fastOrder) {
+            /**
+             * Сохраняем адрес, если:
+             * 1) пользователь только что зарегистрирован
+             * 2) авторизованный пользователь задал новый адрес
+             */
+            if ($needCreateAddress &&
+                $this->deliveryService->isDelivery($selectedDelivery)
+            ) {
+                $address = $this->compileOrderAddress($order);
+                $personalAddress = $this->addressService->createFromLocation($address)
+                    ->setUserId($order->getUserId());
+                try {
+                    $this->addressService->add($personalAddress);
+                    $storage->setAddressId($personalAddress->getId());
+                } catch (\Exception $e) {
+                    $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
+                        'city' => $personalAddress->getCity(),
+                        'location' => $personalAddress->getCityLocation(),
+                        'userId' => $personalAddress->getUserId(),
+                        'street' => $personalAddress->getStreet(),
+                        'house' => $personalAddress->getHouse(),
+                        'housing' => $personalAddress->getHousing(),
+                        'entrance' => $personalAddress->getEntrance(),
+                        'floor' => $personalAddress->getFloor(),
+                        'flat' => $personalAddress->getFlat(),
+                    ]);
+                }
+                /**
+                 * Для самовывоза разбиваем адрес магазина и сохраняем в свойствах заказа
+                 */
+            } elseif ($this->deliveryService->isPickup($selectedDelivery)) {
+                /** @var PickupResultInterface $selectedDelivery */
+                $shop = $selectedDelivery->getSelectedShop();
+                $addressString = $this->getOrderPropertyByCode($order, 'CITY')->getValue() . ', ' . $shop->getAddress();
+                try {
+                    $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                    $this->setOrderAddress($order, $address);
+                } catch (AddressSplitException $e) {
+                    $this->log()->error(sprintf('failed to save shop address: %s', $e->getMessage()), [
+                        'fuserId' => $storage->getFuserId(),
+                        'userId' => $storage->getUserId(),
+                        'shop' => $shop->getXmlId()
+                    ]);
+                }
             }
         }
+
+        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
 
         /**
          * Заполнение складов довоза товара для элементов корзины
@@ -1118,6 +1139,25 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     * @param array $properties
+     *
+     * @return Order
+     */
+    public function setOrderPropertiesByCode(Order $order, array $properties): Order
+    {
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            $code = $propertyValue->getField('CODE');
+            if (isset($properties[$code])) {
+                $propertyValue->setValue($properties[$code]);
+            }
+        }
+
+        return $order;
+    }
+
+    /**
+     * @param Order $order
      *
      * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws ArgumentException
@@ -1412,7 +1452,7 @@ class OrderService implements LoggerAwareInterface
 
         $address = (new Address())
             ->setCity($properties['CITY'])
-            ->setCityLocation($properties['CITY_CODE'])
+            ->setLocation($properties['CITY_CODE'])
             ->setStreet($properties['STREET'])
             ->setHouse($properties['HOUSE'])
             ->setHousing($properties['BUILDING'])
@@ -1420,11 +1460,29 @@ class OrderService implements LoggerAwareInterface
             ->setFloor($properties['FLOOR'])
             ->setFlat($properties['APARTMENT']);
 
-        if ($order->getUserId()) {
-            $address->setUserId($order->getUserId());
-        }
-
         return $address;
+    }
+
+    /**
+     * @param Order $order
+     * @param Address $address
+     *
+     * @return Order
+     */
+    protected function setOrderAddress(Order $order, Address $address): Order
+    {
+        $properties = [
+            'CITY_CODE' => $address->getLocation(),
+            'CITY' => $address->getCity(),
+            'STREET' => $address->getStreet(),
+            'HOUSE' => $address->getHouse(),
+            'BUILDING' => $address->getHousing(),
+            'PORCH' => $address->getEntrance(),
+            'FLOOR' => $address->getFloor(),
+            'APARTMENT' => $address->getFlat()
+        ];
+
+        return $this->setOrderPropertiesByCode($order, $properties);
     }
 
     /**

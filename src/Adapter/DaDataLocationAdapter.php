@@ -9,7 +9,6 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\StoreBundle\Service\StoreService;
 
 /**
  * Class DaDataLocationAdapter
