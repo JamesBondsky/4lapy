@@ -365,9 +365,6 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 'BASKET_CODE' => $basketRow['ID'],
             ];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
-            if ($applyCount < 1) {
-                break;
-            }
         }
     }
 }

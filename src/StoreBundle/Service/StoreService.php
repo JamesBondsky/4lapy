@@ -12,8 +12,6 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\Adapter\DaDataLocationAdapter;
@@ -29,7 +27,6 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -103,34 +100,6 @@ class StoreService implements LoggerAwareInterface
         $this->setLogger(LoggerFactory::create('StoreService'));
     }
 
-    /**
-     * @param $cityCode
-     *
-     * @return int
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
-    public static function getRegion($cityCode): int
-    {
-        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect([
-            'ID',
-            'REGION_ID',
-            'PARENT_ID',
-            'TYPE_CODE'                => 'TYPE.CODE',
-            'PARENTS_PARENT_ID'        => 'PARENTS.ID',
-            'PARENTS_PARENT_TYPE_CODE' => 'PARENTS.TYPE.CODE',
-        ])->setCacheTtl(360000)->exec()->fetchAll();
-        foreach ($locList as $locItem) {
-            if ($locItem['TYPE_CODE'] === 'REGION') {
-                return $locItem['ID'];
-            }
-            if ($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION') {
-                return $locItem['PARENTS_PARENT_ID'];
-            }
-        }
-        return 0;
-    }
 
     /**
      * @param string $type
@@ -442,9 +411,9 @@ class StoreService implements LoggerAwareInterface
                     $dadataLocationAdapter = new DaDataLocationAdapter();
                     /** @var BitrixLocation $bitrixLocation */
                     $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
-                    $regionId = static::getRegion($bitrixLocation->getRegionId());
+                    $regionId = LocationService::getRegion($bitrixLocation->getRegionId());
                 } else {
-                    $regionId = static::getRegion($code);
+                    $regionId = LocationService::getRegion($code);
                 }
                 if ($regionId > 0) {
                     $locRegion = $regionId;

@@ -28,7 +28,6 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Dpd\Calculator;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Terminal;
@@ -257,8 +256,8 @@ class DeliveryService implements LoggerAwareInterface
         $result = [];
         try {
             $result = (new BitrixCache())
-                          ->withId(__METHOD__ . $zone)
-                          ->resultOf($getServiceCodes)['result'];
+                ->withId(__METHOD__ . $zone)
+                ->resultOf($getServiceCodes)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get deliveries by zone: %s', $e->getMessage()), [
                 'zone' => $zone,
@@ -314,12 +313,6 @@ class DeliveryService implements LoggerAwareInterface
                     'service'  => $service->getCode(),
                 ]);
                 continue;
-            }
-
-            if ($this->isDpdDeliveryCode($service->getCode()) ||
-                $this->isDpdPickupCode($service->getCode())
-            ) {
-                Calculator::$bitrixShipment = $shipment;
             }
 
             $calculationResult = $shipment->calculateDelivery();
@@ -735,8 +728,8 @@ class DeliveryService implements LoggerAwareInterface
         try {
             /** @var array $terminals */
             $terminals = (new BitrixCache())
-                             ->withId(__METHOD__ . $locationCode)
-                             ->resultOf($getTerminals)['result'];
+                ->withId(__METHOD__ . $locationCode)
+                ->resultOf($getTerminals)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get dpd terminals: %s', $e->getMessage()), [
                 'location' => $locationCode,
@@ -790,8 +783,8 @@ class DeliveryService implements LoggerAwareInterface
 
         try {
             $terminal = (new BitrixCache())
-                            ->withId(__METHOD__ . $code)
-                            ->resultOf($getTerminal)['result'];
+                ->withId(__METHOD__ . $code)
+                ->resultOf($getTerminal)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get dpd terminal: %s', $e->getMessage()), [
                 'code' => $code,

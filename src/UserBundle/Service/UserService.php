@@ -254,7 +254,7 @@ class UserService implements
     /**
      * @param string $code
      * @param string $name
-     * @param string $parentName
+     * @param string|array|null $parentName
      *
      * @throws \Exception
      * @throws ValidationException
@@ -265,14 +265,14 @@ class UserService implements
      * @throws BitrixRuntimeException
      * @return array|bool
      */
-    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = null)
     {
         $city = null;
         if ($code) {
             $city = $this->locationService->findLocationCityByCode($code);
         } else {
             /** @noinspection PassingByReferenceCorrectnessInspection */
-            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
+            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true, false));
         }
 
         if ($city && $this->isAuthorized()) {
