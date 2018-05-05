@@ -37,6 +37,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
@@ -57,6 +58,7 @@ class UserService implements
     UserRegistrationProviderInterface,
     UserCitySelectInterface,
     UserAvatarAuthorizationInterface,
+    UserSearchInterface,
     LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -669,6 +671,71 @@ class UserService implements
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param string $phone
+     * @param string $email
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByPhoneOrEmail(string $phone, string $email): User
+    {
+        $user = null;
+        try {
+            $user = $this->findOneByPhone($phone);
+        } catch (NotFoundException $e) {
+        }
+
+        if (!$user) {
+            try {
+                $user = $this->findOneByEmail($email);
+            } catch (NotFoundException $e) {
+            }
+        }
+
+        if (!$user) {
+            throw new NotFoundException(sprintf(
+                'No users found with phone %s and email %s',
+                $phone,
+                $email
+            ));
+        }
+
+        return $user;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByEmail(string $email): User
+    {
+        $users = $this->userRepository->findOneByEmail($email);
+        if (empty($users)) {
+            throw new NotFoundException(sprintf('No users found with email %s', $email));
+        }
+
+        return current($users);
+    }
+
+    /**
+     * @param string $phone
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByPhone(string $phone): User
+    {
+        $users = $this->userRepository->findOneByPhone($phone);
+        if (empty($users)) {
+            throw new NotFoundException(sprintf('No users found with phone %s', $phone));
+        }
+
+        return current($users);
     }
 
     /**

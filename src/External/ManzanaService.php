@@ -822,6 +822,30 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
 
     /**
+     * @param User $user
+     * @param string $cardNumber
+     *
+     * @throws ApplicationCreateException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     */
+    public function addUserBonusCard(User $user, string $cardNumber): void
+    {
+        $cardNumber = $this->prepareCardNumber($cardNumber);
+        $existingContact = $this->getContactByUser($user);
+        $contact = new Client();
+        $contact->cardnumber = $cardNumber;
+        $contact->contactId = $existingContact->contactId;
+        $this->updateContact($contact);
+        $this->userRepository->updateDiscountCard(
+            $user->getId(),
+            $cardNumber
+        );
+    }
+
+    /**
      * @param string $cardNumber
      *
      * @return string

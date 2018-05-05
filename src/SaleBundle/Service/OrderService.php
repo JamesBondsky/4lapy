@@ -38,9 +38,8 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
-use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -59,9 +58,11 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use Psr\Log\LoggerAwareInterface;
 
 /**
@@ -134,6 +135,11 @@ class OrderService implements LoggerAwareInterface
     protected $currentUserProvider;
 
     /**
+     * @var UserSearchInterface
+     */
+    protected $userProvider;
+
+    /**
      * @var DeliveryService
      */
     protected $deliveryService;
@@ -178,6 +184,7 @@ class OrderService implements LoggerAwareInterface
      * @param AddressService $addressService
      * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
+     * @param UserSearchInterface $userProvider
      * @param DeliveryService $deliveryService
      * @param LocationService $locationService
      * @param StoreService $storeService
@@ -191,6 +198,7 @@ class OrderService implements LoggerAwareInterface
         AddressService $addressService,
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
+        UserSearchInterface $userProvider,
         DeliveryService $deliveryService,
         LocationService $locationService,
         StoreService $storeService,
@@ -204,6 +212,7 @@ class OrderService implements LoggerAwareInterface
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
+        $this->userProvider = $userProvider;
         $this->deliveryService = $deliveryService;
         $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
@@ -633,9 +642,15 @@ class OrderService implements LoggerAwareInterface
         $needCreateAddress = false;
         $addressUserId = null;
         $newUser = false;
+
         $canAttachCard = false;
+        if ($storage->getDiscountCardNumber()) {
+            try {
+                $canAttachCard = $this->manzanaService->validateCardByNumber($storage->getDiscountCardNumber());
+            } catch (ManzanaServiceException $e) {}
+        }
+
         if ($storage->getUserId()) {
-            $canAttachCard = true;
             /** @noinspection PhpInternalEntityUsedInspection */
             $order->setFieldNoDemand('USER_ID', $storage->getUserId());
             $user = $this->currentUserProvider->getCurrentUser();
@@ -649,26 +664,22 @@ class OrderService implements LoggerAwareInterface
             if (!$storage->getAddressId()) {
                 $needCreateAddress = true;
             }
-        } else {
-            /** проверять надо на пустоту иначе  */
-            if (!empty($storage->getEmail()) && !empty($storage->getPhone())) {
-                $users = $this->currentUserProvider->getUserRepository()->findBy(
-                    ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
-                );
-            } elseif (!empty($storage->getEmail())) {
-                $users = $this->currentUserProvider->getUserRepository()->findBy(['=EMAIL' => $storage->getEmail()]);
-            } elseif (!empty($storage->getPhone())) {
-                $users = $this->currentUserProvider->getUserRepository()->findBy(['=PERSONAL_PHONE' => $storage->getPhone()]);
-            }
 
-            $user = null;
-            /** @var User $user */
-            foreach ($users as $foundUser) {
-                if (mb_strtolower($foundUser->getEmail()) === mb_strtolower($storage->getEmail())) {
-                    $user = $foundUser;
-                } elseif ($foundUser->getPersonalPhone() === $storage->getPhone()) {
-                    $user = $foundUser;
+            if ($canAttachCard && !$user->getDiscountCardNumber()) {
+                try {
+                    $this->manzanaService->addUserBonusCard($user, $storage->getDiscountCardNumber());
+                } catch (ManzanaServiceException|ManzanaException $e) {
+                    $this->log()->error(
+                        sprintf('failed to add user bonus card: %s: %s', \get_class($e), $e->getMessage()),
+                        ['user' => $user->getId(), 'card' => $storage->getDiscountCardNumber()]
+                    );
                 }
+            }
+        } else {
+            $user = null;
+            try {
+                $user = $this->userProvider->findOneByPhoneOrEmail($storage->getPhone(), $storage->getEmail());
+            } catch (UserNotFoundException $e) {
             }
 
             if ($user) {
@@ -682,6 +693,11 @@ class OrderService implements LoggerAwareInterface
                     ->setLogin($storage->getPhone())
                     ->setPassword($password)
                     ->setPersonalPhone($storage->getPhone());
+
+                if ($canAttachCard) {
+                    $user->setDiscountCardNumber($storage->getDiscountCardNumber());
+                }
+
                 $_SESSION['SEND_REGISTER_EMAIL'] = true;
                 $user = $this->userRegistrationProvider->register($user);
 
@@ -708,27 +724,6 @@ class OrderService implements LoggerAwareInterface
             $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
         );
 
-        /**
-         * Привязываем бонусную карту
-         */
-        if ($canAttachCard && !$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
-            try {
-                $existingContact = $this->manzanaService->getContactByUser($user);
-                $contact = new Client();
-                $contact->cardnumber = $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber());
-                $contact->contactId = $existingContact->contactId;
-                $this->manzanaService->updateContact($contact);
-                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
-                    $user->getId(),
-                    $this->manzanaService->prepareCardNumber($storage->getDiscountCardNumber())
-                );
-            } catch (ManzanaServiceException|ContactUpdateException $e) {
-                $this->log()->error(
-                    sprintf('failed to add bonus card to user: %s: %s', \get_class($e), $e->getMessage()),
-                    ['userId' => $user->getId(), 'card' => $storage->getDiscountCardNumber()]
-                );
-            }
-        }
         $this->setOrderPropertyByCode(
             $order,
             'DISCOUNT_CARD',
