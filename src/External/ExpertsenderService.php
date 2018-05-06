@@ -221,13 +221,8 @@ class ExpertsenderService implements LoggerAwareInterface
         $expertSenderId = 0;
         $hasExpertSenderId = false;
         $hasNewEmailInSender = false;
-        if (!empty($oldUser->getEmail())) {
-            /** отключаем блокировку отправки если не подтвержден email */
-//            if (!$oldUser->allowedEASend()) {
-//                throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
-//            }
-
-            /** проверяем наличие новой почты в сендере */
+        /** проверяем наличие новой почты в сендере */
+        if(!empty($curUser->getEmail())) {
             try {
                 $userIdResult = $this->client->getUserId($curUser->getEmail());
                 if ($userIdResult->isOk()) {
@@ -236,6 +231,13 @@ class ExpertsenderService implements LoggerAwareInterface
             } catch (GuzzleException | Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
+        }
+
+        if (!empty($oldUser->getEmail())) {
+            /** отключаем блокировку отправки если не подтвержден email */
+//            if (!$oldUser->allowedEASend()) {
+//                throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
+//            }
 
             $continue = false;
             /** отправка почты на старый email */
