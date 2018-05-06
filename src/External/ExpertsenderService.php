@@ -149,7 +149,6 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $user
      *
      * @return bool
-     * @throws ExpertsenderNotAllowedException
      * @throws ExpertsenderServiceException
      */
     public function sendChangePasswordByProfile(User $user): bool
@@ -175,7 +174,6 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param string $backUrl
      *
      * @return bool
-     * @throws ExpertsenderNotAllowedException
      * @throws ExpertsenderServiceException
      */
     public function sendForgotPassword(User $user, string $backUrl = ''): bool
@@ -215,11 +213,6 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $curUser
      *
      * @return bool
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws ExpertsenderNotAllowedException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      * @throws ExpertsenderServiceException
      */
     public function sendChangeEmail(User $oldUser, User $curUser): bool
@@ -227,6 +220,19 @@ class ExpertsenderService implements LoggerAwareInterface
         $continue = true;
         $expertSenderId = 0;
         $hasExpertSenderId = false;
+        $hasNewEmailInSender = false;
+        /** проверяем наличие новой почты в сендере */
+        if(!empty($curUser->getEmail())) {
+            try {
+                $userIdResult = $this->client->getUserId($curUser->getEmail());
+                if ($userIdResult->isOk()) {
+                    $hasNewEmailInSender = true;
+                }
+            } catch (GuzzleException | Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+
         if (!empty($oldUser->getEmail())) {
             /** отключаем блокировку отправки если не подтвержден email */
 //            if (!$oldUser->allowedEASend()) {
@@ -242,12 +248,14 @@ class ExpertsenderService implements LoggerAwareInterface
                     $continue = true;
                 }
 
-                /** получение id подписчика по старому email */
-                $userIdResult = $this->client->getUserId($oldUser->getEmail());
-                if ($userIdResult->isOk()) {
-                    $expertSenderId = $userIdResult->getId();
-                    if(!empty($expertSenderId)) {
-                        $hasExpertSenderId = true;
+                if(!$hasNewEmailInSender) {
+                    /** получение id подписчика по старому email */
+                    $userIdResult = $this->client->getUserId($oldUser->getEmail());
+                    if ($userIdResult->isOk()) {
+                        $expertSenderId = $userIdResult->getId();
+                        if (!empty($expertSenderId)) {
+                            $hasExpertSenderId = true;
+                        }
                     }
                 }
             } catch (GuzzleException | Exception $e) {
@@ -256,21 +264,8 @@ class ExpertsenderService implements LoggerAwareInterface
         }
         if ($continue && !empty($curUser->getEmail())) {
             try {
-                $continue = false;
-
-                /** проверяем наличие новой почты в сендере */
-                $hasNewEmailInSender = false;
-                try {
-                    $userIdResult = $this->client->getUserId($curUser->getEmail());
-                    if ($userIdResult->isOk()) {
-                        $hasNewEmailInSender = true;
-                        $continue = true;
-                    }
-                } catch (GuzzleException | Exception $e) {
-                    throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-                }
-
                 if(!$hasNewEmailInSender) {
+                    $continue = false;
                     if ($hasExpertSenderId) {
                         $addUserToList = new AddUserToList();
                         $addUserToList->setForce(true);
@@ -296,17 +291,15 @@ class ExpertsenderService implements LoggerAwareInterface
                     } else {
                         /** если нет старой почты или не нашли на сайте регистрируем в сендере */
                         if ($this->sendEmailAfterRegister($curUser, ['isReg' => 0, 'type' => 'email_change_email'])) {
-                            $continue = false;
+                            $continue = true;
                         }
                     }
                 }
 
                 if ($continue) {
-                    /** отправка почты на новый email, отправляем именно при смене, при регистрации еще подтвердить надо */
+                    /** отправка почты на новый email, отправляем именно при смене и при регистрации */
                     $receiver = new Receiver($curUser->getEmail());
                     $apiResult = $this->client->sendSystemTransactional(7071, $receiver);
-                    /** если выдаст ошибку переключить чтобы проверит */
-//                    $apiResult = $this->client->sendTransactional(7071, $receiver);
                     if ($apiResult->isOk()) {
                         return true;
                     }
@@ -314,8 +307,6 @@ class ExpertsenderService implements LoggerAwareInterface
                         $apiResult->getErrorCode());
                 }
             } catch (GuzzleException|Exception $e) {
-                $a = $e->getMessage();
-                echo $a;
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -327,11 +318,6 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $curUser
      *
      * @return bool
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws ExpertsenderNotAllowedException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      * @throws ExpertsenderServiceException
      */
     public function changeUserData(User $curUser): bool
@@ -367,6 +353,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 $addUserToList->setListId(static::MAIN_LIST_ID);
                 $addUserToList->setId($expertSenderId);
 
+                $addUserToList->setEmail($curUser->getEmail());
                 $addUserToList->setName($curUser->getName());
                 $addUserToList->setLastName($curUser->getLastName());
                 /** ip юзверя */
@@ -420,6 +407,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setTrackingCode('subscribe');
                     $addUserToList->setListId(static::MAIN_LIST_ID);
                     $addUserToList->setEmail($user->getEmail());
+                    $addUserToList->setId($expertSenderId);
 
                     /** флаг подписки на новости */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', true));
@@ -503,6 +491,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param string $email
      *
      * @return bool
+     * @throws \RuntimeException
      */
     public function checkConfirmEmailSubscribe(string $email): bool
     {
@@ -529,6 +518,11 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
+     * @throws \InvalidArgumentException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws ApplicationCreateException
      * @throws ExpertsenderServiceException
      * @throws ArgumentException
@@ -620,6 +614,9 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @return int
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ExpertsenderServiceException
@@ -674,7 +671,11 @@ class ExpertsenderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     *
      * @return array
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \InvalidArgumentException
      * @throws ApplicationCreateException
      * @throws ExpertsenderServiceException
      */
@@ -720,7 +721,11 @@ class ExpertsenderService implements LoggerAwareInterface
      * Оформлена подписка на доставку
      *
      * @param OrderSubscribe $orderSubscribe
+     *
      * @return int
+     * @throws \InvalidArgumentException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws Exception
@@ -787,6 +792,9 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @param Order $order
      * @return int
+     * @throws \InvalidArgumentException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ExpertsenderServiceException
