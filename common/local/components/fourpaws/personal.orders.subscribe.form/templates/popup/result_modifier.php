@@ -43,3 +43,10 @@ if (!$arResult['canBeSubscribed'] && !$arResult['isActualSubscription']) {
     $arResult['isCorrect'] = false;
     return;
 }
+
+/*
+$arResult['deliveryAddress'] = $component->getOrderSubscribeService()->getOrderService()->getOrderDeliveryAddress(
+    $order->getBitrixOrder()
+);
+*/
+$arResult['deliveryAddress'] = $order->getDeliveryAddress();
