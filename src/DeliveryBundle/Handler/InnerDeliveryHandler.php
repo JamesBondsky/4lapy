@@ -167,20 +167,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $hasDelivery = true;
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            if (!$offer->getProduct()->isDeliveryAvailable()) {
-                $result->addError(new Error(
-                    sprintf('Доставка товара %s недоступна', $offer->getId())
-                ));
-                $hasDelivery = false;
-            }
-        }
-        if (!$hasDelivery) {
-            return $result;
-        }
-
         $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
         if ($availableStores->isEmpty()) {
             $result->addError(new Error('Не найдено доступных складов'));
