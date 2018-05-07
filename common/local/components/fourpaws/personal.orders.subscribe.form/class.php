@@ -234,6 +234,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         );
                         if ($updateResult->isSuccess()) {
                             $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+
+                            // отправка уведомления о созданной подписке (в данном случае - возобновленной)
+                            if ($this->arResult['SUBSCRIBE_ACTION']['RESUMED'] === 'Y') {
+                                $this->sendOrderSubscribedNotification(
+                                    $orderSubscribe->getId()
+                                );
+                            }
+
                             $this->flushOrderSubscribe();
                             $this->clearTaggedCache();
                         } else {
@@ -249,6 +257,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     if ($addResult->isSuccess()) {
                         $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
                         $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $addResult->getId();
+
+                        // отправка уведомления о созданной подписке
+                        $this->sendOrderSubscribedNotification($addResult->getId());
+
                         $this->flushOrderSubscribe();
                         $this->clearTaggedCache();
                     } else {
@@ -303,6 +315,21 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         $this->loadData();
+    }
+
+    /**
+     * Отправка уведомления о созданной подписке
+     *
+     * @param int $subscribeId
+     * @throws ApplicationCreateException
+     */
+    protected function sendOrderSubscribedNotification(int $subscribeId)
+    {
+        $orderSubscribeService = $this->getOrderSubscribeService();
+        $orderSubscribe = $orderSubscribeService->getSubscribeById($subscribeId);
+        if ($orderSubscribe) {
+            $orderSubscribeService->sendOrderSubscribedNotification($orderSubscribe);
+        }
     }
 
     /**

@@ -1,12 +1,12 @@
 <?php
 /**
- * @var CBitrixComponentTemplate      $this
- * @var CMain                         $APPLICATION
- * @var array                         $arParams
- * @var array                         $arResult
+ * @var CBitrixComponentTemplate $this
+ * @var CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  * @var CatalogElementDetailComponent $component
- * @var Product                       $product
- * @var Offer                         $currentOffer
+ * @var Product $product
+ * @var Offer $currentOffer
  */
 
 use FourPaws\App\Application;
@@ -24,7 +24,7 @@ use FourPaws\LocationBundle\LocationService;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-
+dump([$arResult, $arParams]);
 global $APPLICATION;
 
 /** @var LocationService $locationService */
@@ -340,12 +340,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>
-            <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
-               title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
-               data-offerId="<?= $currentOffer->getId() ?>" data-type="card">
-                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
-            </a>
-            <hr class="b-counter-basket__hr"/>
+            <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
+                <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
+                   title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
+                   data-offerId="<?= $currentOffer->getId() ?>" data-type="card">
+                    <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
+                </a>
+            <?php } ?>
+            <hr class="b-counter-basket__hr">
             <?php if ($currentOffer->isShare()) {
                 /** @var IblockElement $share */
                 foreach ($currentOffer->getShare() as $share) {

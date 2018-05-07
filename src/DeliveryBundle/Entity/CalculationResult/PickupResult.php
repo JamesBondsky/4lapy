@@ -101,6 +101,6 @@ class PickupResult extends BaseResult implements PickupResultInterface
      */
     protected function checkIsDeliverable(Offer $offer): bool
     {
-        return $offer->getProduct()->isPickupAvailable();
+        return parent::checkIsDeliverable($offer) && $offer->getProduct()->isPickupAvailable();
     }
 }

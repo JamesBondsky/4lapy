@@ -287,7 +287,11 @@ class ProfileController extends Controller
 //            }
             try {
                 /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
-                $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
+                $updateData = $userRepository->prepareData($data);
+                if(empty($data['PERSONAL_BIRTHDAY'])){
+                    $updateData['PERSONAL_BIRTHDAY'] = '';
+                }
+                $res = $userRepository->updateData($user->getId(), $updateData);
                 if (!$res) {
                     return $this->ajaxMess->getUpdateError();
                 }
@@ -304,23 +308,14 @@ class ProfileController extends Controller
             }
 
             $isSend = false;
-            if (!$curUser->hasEmail() || $curUser->allowedEASend()) {
-                if ($user->getEmail() !== $curUser->getEmail()) {
-                    try {
-                        $expertSenderService = $container->get('expertsender.service');
-                        $expertSenderService->sendChangeEmail($curUser, $user);
-                        $isSend = true;
-                    } catch (ExpertsenderServiceException $e) {
-                        $logger = LoggerFactory::create('expertsender');
-                        $logger->error('expertsender error:' . $e->getMessage());
-                    }
-                }
-            } else {
+            if ($user->hasEmail() && $user->getEmail() !== $curUser->getEmail()) {
                 try {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->sendChangeEmail($curUser, $user);
+                    $isSend = true;
+                } catch (ExpertsenderServiceException $e) {
                     $logger = LoggerFactory::create('expertsender');
-                    $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
-                } catch (\RuntimeException $e) {
-                    /** оч. плохо - логи мы не получим */
+                    $logger->error('expertsender error:' . $e->getMessage());
                 }
             }
 
