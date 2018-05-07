@@ -138,20 +138,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $hasDelivery = true;
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            if (!$offer->getProduct()->isPickupAvailable()) {
-                $result->addError(new Error(
-                    sprintf('Самовывоз товара %s недоступен', $offer->getId())
-                ));
-                $hasDelivery = false;
-            }
-        }
-        if (!$hasDelivery) {
-            return $result;
-        }
-
         $stockResult = static::getStocks($basket, $offers, $shops);
         if ($stockResult->getAvailable()->isEmpty() && $stockResult->getDelayed()->isEmpty()) {
             $result->addError(new Error('Товары не в наличии'));
