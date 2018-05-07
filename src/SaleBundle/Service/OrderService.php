@@ -263,7 +263,6 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage                    $storage
      * @param Basket|null                     $basket
      * @param CalculationResultInterface|null $selectedDelivery
-     * @param bool                            $fastOrder
      *
      * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
@@ -282,15 +281,16 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return Order
+     * @return Order|array
      */
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
-        ?CalculationResultInterface $selectedDelivery = null,
-        bool $fastOrder = false
-    ): Order
+        ?CalculationResultInterface $selectedDelivery = null
+    )
     {
+        $fastOrder = $storage->isFastOrder();
+
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
@@ -581,6 +581,7 @@ class OrderService implements LoggerAwareInterface
             $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
             $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
+            return [$order, $selectedDelivery];
         }
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
@@ -589,7 +590,6 @@ class OrderService implements LoggerAwareInterface
      * @param Order                           $order
      * @param OrderStorage                    $storage
      * @param CalculationResultInterface|null $selectedDelivery
-     * @param bool                            $fastOrder
      *
      * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws \FourPaws\UserBundle\Exception\ValidationException
@@ -616,10 +616,11 @@ class OrderService implements LoggerAwareInterface
     public function saveOrder(
         Order $order,
         OrderStorage $storage,
-        ?CalculationResultInterface $selectedDelivery = null,
-        bool $fastOrder = false
+        ?CalculationResultInterface $selectedDelivery = null
     ): void
     {
+        $fastOrder = $storage->isFastOrder();
+
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
