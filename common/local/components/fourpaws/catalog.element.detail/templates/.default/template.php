@@ -24,7 +24,7 @@ use FourPaws\LocationBundle\LocationService;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-dump([$arResult, $arParams]);
+
 global $APPLICATION;
 
 /** @var LocationService $locationService */
