@@ -90,6 +90,6 @@ class DeliveryResult extends BaseResult
      */
     protected function checkIsDeliverable(Offer $offer): bool
     {
-        return $offer->getProduct()->isDeliveryAvailable();
+        return parent::checkIsDeliverable($offer) && $offer->getProduct()->isDeliveryAvailable();
     }
 }

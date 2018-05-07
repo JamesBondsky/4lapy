@@ -102,6 +102,13 @@ class OrderItem extends BaseEntity
      */
     protected $brand = '';
 
+    /** @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("DETAIL_PAGE_URL")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $detailPageUrl = '';
+
     /**
      * @return string
      */
@@ -377,5 +384,21 @@ class OrderItem extends BaseEntity
     public function setFlavour(string $flavour): void
     {
         $this->flavour = $flavour;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDetailPageUrl(): string
+    {
+        return $this->detailPageUrl;
+    }
+
+    /**
+     * @param string $detailPageUrl
+     */
+    public function setDetailPageUrl(string $detailPageUrl): void
+    {
+        $this->detailPageUrl = $detailPageUrl;
     }
 }
