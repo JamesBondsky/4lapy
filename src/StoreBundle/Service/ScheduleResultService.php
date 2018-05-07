@@ -5,6 +5,7 @@
 
 namespace FourPaws\StoreBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -20,9 +21,12 @@ use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\ValidationException;
 use FourPaws\StoreBundle\Repository\ScheduleResultRepository;
+use Psr\Log\LoggerAwareInterface;
 
-class ScheduleResultService
+class ScheduleResultService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     public const MAX_TRANSITION_COUNT = 1;
 
     /**
@@ -296,13 +300,23 @@ class ScheduleResultService
         ?\DateTime $from = null,
         int $maxTransitions = self::MAX_TRANSITION_COUNT
     ): ScheduleResultCollection {
-        return $this->doCalculateScheduleDate($sender, $receiver, $from, $maxTransitions);
+        if (null === $from) {
+            $from = new \DateTime();
+        }
+        $dates = [
+            11 => (clone $from)->setTime(10, 0,0),
+            13 => (clone $from)->setTime(12, 0,0),
+            18 => (clone $from)->setTime(17, 0,0),
+            24 => (clone $from)->setTime(23, 0,0),
+        ];
+
+        return $this->doCalculateScheduleDate($sender, $receiver, $dates, $maxTransitions);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param Store $sender
      * @param Store $receiver
-     * @param \DateTime|null $from
+     * @param \DateTime[] $dates
      * @param int $maxTransitions
      * @param StoreCollection|null $route
      *
@@ -314,36 +328,45 @@ class ScheduleResultService
     protected function doCalculateScheduleDate(
         Store $sender,
         Store $receiver,
-        ?\DateTime $from = null,
+        array $dates,
         int $maxTransitions = self::MAX_TRANSITION_COUNT,
         ?StoreCollection $route = null
     ): ScheduleResultCollection {
-        $from = $from instanceof \DateTime ? clone $from : new \DateTime();
-
         static $transitionCount = 0;
-        static $startDate;
+        static $startDates;
         if ($transitionCount === 0) {
-            $startDate = $from;
+            foreach ($dates as $hour => $date) {
+                $startDates[$hour] = clone $date;
+            }
         }
 
         $result = new ScheduleResultCollection();
 
         if ($transitionCount < $maxTransitions) {
-            $from = $from instanceof \DateTime ? clone $from : new \DateTime();
+            $from = [];
+            foreach ($dates as $hour => $date) {
+                $from[$hour] = clone $date;
+            }
 
+            $modifier = 0;
             if ($sender->isSupplier()) {
                 if ($transitionCount === 0) {
                     $maxTransitions++;
                 }
+
                 /**
                  * Для товаров под заказ добавляем два дня к дате доставки
                  */
-                $from->modify('+2 days');
-            } else {
-                /**
-                 * Для обычных товаров добавляем один день к дате доставки
-                 */
-                $from->modify('+1 day');
+                $modifier = 2;
+            }
+
+            /**
+             * Добавляем один день к дате доставки
+             */
+            $modifier++;
+
+            foreach ($from as $date) {
+                $date->modify(sprintf('+%s days', $modifier));
             }
 
             if (null === $route) {
@@ -356,20 +379,50 @@ class ScheduleResultService
                 /**
                  * Поиск даты поставки
                  */
-                $nextDelivery = $schedule->getNextDelivery($from);
-                if (null === $nextDelivery) {
-                    continue;
+                $nextDeliveries = [];
+                foreach ($from as $hour => $date) {
+                    /**
+                     * Дата отгрузки со склада
+                     */
+                    $shipmentDate = $schedule->getReceiver()->getShipmentDate($date);
+
+                    $nextDelivery = $schedule->getNextDelivery($shipmentDate);
+
+                    if (null !== $nextDelivery) {
+                        $nextDeliveries[$hour] = $nextDelivery;
+                    }
                 }
 
+                if (empty($nextDeliveries)) {
+                    continue;
+                }
                 /**
                  * Найдена конечная точка
                  */
                 if ($schedule->getReceiver()->getXmlId() === $receiver->getXmlId()) {
                     $route[$receiver->getXmlId()] = $receiver;
-                    $result->add((new ScheduleResult())->setDays($nextDelivery->diff($startDate)->days)
+
+                    $res = (new ScheduleResult())
                         ->setSender($route->first())
                         ->setReceiver($schedule->getReceiver())
-                        ->setRoute($route));
+                        ->setRoute($route);
+
+                    foreach ($nextDeliveries as $hour => $date) {
+                        $days = $date->diff($startDates[$hour])->days;
+                        $setter = 'setDays' . $hour;
+                        if (!method_exists($res, $setter)) {
+                            $this->log()->error(sprintf(
+                                'method %s not found in %s',
+                                $setter,
+                                \get_class($res)
+                            ));
+                            continue;
+                        }
+
+                        $res->$setter($days);
+                    }
+
+                    $result->add($res);
                     continue;
                 }
 
@@ -377,7 +430,7 @@ class ScheduleResultService
                 $results = $this->doCalculateScheduleDate(
                     $schedule->getReceiver(),
                     $receiver,
-                    $nextDelivery,
+                    $nextDeliveries,
                     $maxTransitions,
                     $route
                 );

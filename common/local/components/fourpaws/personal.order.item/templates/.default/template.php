@@ -270,7 +270,10 @@ if ($orderSubscribe) {
         <div class="b-accordion-order-item__hidden js-hidden-order">
             <ul class="b-list-order">
                 <?php /** @var OrderItem $item */
-                foreach ($order->getItems() as $item) { ?>
+                foreach ($order->getItems() as $item) {
+                    if(!$order->isManzana() && !empty($item->getDetailPageUrl())){ ?>
+                        <a href="<?=$item->getDetailPageUrl()?>">
+                    <?php } ?>
                     <li class="b-list-order__item">
                         <div class="b-list-order__image-wrapper">
                             <img class="b-list-order__image js-image-wrapper"
@@ -330,6 +333,9 @@ if ($orderSubscribe) {
                             </div>
                         </div>
                     </li>
+                    <?php if(!$order->isManzana() && !empty($item->getDetailPageUrl())){ ?>
+                        </a>
+                    <?php } ?>
                 <?php } ?>
             </ul>
             <div class="b-accordion-order-item__calculation-full">

@@ -275,18 +275,19 @@ if ($arParams['IS_AJAX']) {
                        title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
                         Начать оформление
                     </a>
-                    <div class="b-information-order__one-click">
-                        <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
-                           href="javascript:void(0)" title="Купить в 1 клик"
-                            <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"' ?>
-                            <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                            <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
-                        </a>
-                    </div>
+                    <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
+                        <div class="b-information-order__one-click">
+                            <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
+                               href="javascript:void(0)" title="Купить в 1 клик"
+                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"' ?>
+                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
+                            </a>
+                        </div>
+                    <?php } ?>
                 </div>
             </div>
         </aside>
-
         <?php
 
         /**

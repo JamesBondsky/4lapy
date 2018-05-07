@@ -15,24 +15,29 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 class DeliveryScheduleResultCollection extends ArrayCollection
 {
     /**
+     * @param \DateTime $from
+     *
      * @throws NotFoundException
      * @return DeliveryScheduleResult|null
      */
-    public function getFastest(): ?DeliveryScheduleResultCollection
+    public function getFastest(\DateTime $from): ?DeliveryScheduleResultCollection
     {
         $collections = $this->splitByLastSenders();
 
         usort(
             $collections,
-            function (DeliveryScheduleResultCollection $collection1, DeliveryScheduleResultCollection $collection2) {
+            function (
+                DeliveryScheduleResultCollection $collection1,
+                DeliveryScheduleResultCollection $collection2
+            ) use ($from) {
                 $price1 = $collection1->getPrice();
                 $price2 = $collection2->getPrice();
                 if ($price1 !== $price2) {
                     return $price2 <=> $price1;
                 }
 
-                $date1 = $collection1->getDays();
-                $date2 = $collection1->getDays();
+                $date1 = $collection1->getDays($from);
+                $date2 = $collection1->getDays($from);
                 return $date1 <=> $date2;
             }
         );
@@ -95,15 +100,17 @@ class DeliveryScheduleResultCollection extends ArrayCollection
     }
 
     /**
+     * @param $from
+     *
      * @return int
      */
-    public function getDays(): int
+    public function getDays(\DateTime $from): int
     {
         $days = [0];
 
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $days[] = $item->getScheduleResult()->getDays();
+            $days[] = $item->getScheduleResult()->getDays($from);
         }
 
         return max($days);
