@@ -584,9 +584,6 @@ class OrderService implements LoggerAwareInterface
             /** зануляем дату доставки и интервал - ибо не пользователь все выбирал а система */
             $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
             $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
-            if(empty($this->getOrderPropertyByCode('SHIPMENT_PLACE_CODE')->getValue())){
-                $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
-            }
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
             $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
             return [$order, $selectedDelivery];
@@ -797,7 +794,7 @@ class OrderService implements LoggerAwareInterface
                 $this->basketService->setBasketItemPropertyValue(
                     $item,
                     'SHIPMENT_PLACE_CODE',
-                    $deliveryResult->getScheduleResult()->getSenderCode()
+                    $deliveryResult->getScheduleResult()->getSenderCode() ?: 'DC01'
                 );
             }
         }
