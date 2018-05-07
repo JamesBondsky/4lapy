@@ -391,7 +391,7 @@ class OrderItem extends BaseEntity
      */
     public function getDetailPageUrl(): string
     {
-        return $this->detailPageUrl;
+        return $this->detailPageUrl ?? '';
     }
 
     /**
