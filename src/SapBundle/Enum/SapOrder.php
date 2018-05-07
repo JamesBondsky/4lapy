@@ -28,7 +28,7 @@ final class SapOrder
     public const DELIVERY_TYPE_COURIER_SHOP = '06';
     public const DELIVERY_TYPE_CONTRACTOR = '07';
     public const DELIVERY_TYPE_ROUTE = '08';
-    
+
     /**
      * Тип доставки подрядчиком
      * Поле должно быть заполнено, если выбран способ получения заказа 07.
@@ -39,15 +39,20 @@ final class SapOrder
     public const DELIVERY_TYPE_CONTRACTOR_DELIVERY = 'ТД';
     public const DELIVERY_TYPE_CONTRACTOR_PICKUP = 'ТТ';
     public const DELIVERY_CONTRACTOR_CODE = '0000802070';
-    
+
+    public const DELIVERY_ZONE_1_ARTICLE = '2000282';
+    public const DELIVERY_ZONE_2_ARTICLE = '2000311';
+    public const DELIVERY_ZONE_3_ARTICLE = '2000311';
+    public const DELIVERY_ZONE_4_ARTICLE = '2000001';
+
     public const ORDER_PAYMENT_ONLINE_MERCHANT_ID = '850000314610';
     public const ORDER_PAYMENT_ONLINE_CODE = '05';
     public const ORDER_PAYMENT_STATUS_PAYED = '01';
     public const ORDER_PAYMENT_STATUS_NOT_PAYED = '02';
     public const ORDER_PAYMENT_STATUS_PRE_PAYED = '03';
-    
+
     public const PAYMENT_SYSTEM_ONLINE_ID = 3;
-    
+
     public const UNIT_PTC_CODE = 'PCE';
 
     public const TEST_PHONE = '79060767386';
