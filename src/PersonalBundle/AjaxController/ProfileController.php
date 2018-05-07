@@ -308,23 +308,14 @@ class ProfileController extends Controller
             }
 
             $isSend = false;
-            if (!$curUser->hasEmail() || $curUser->allowedEASend()) {
-                if ($user->getEmail() !== $curUser->getEmail()) {
-                    try {
-                        $expertSenderService = $container->get('expertsender.service');
-                        $expertSenderService->sendChangeEmail($curUser, $user);
-                        $isSend = true;
-                    } catch (ExpertsenderServiceException $e) {
-                        $logger = LoggerFactory::create('expertsender');
-                        $logger->error('expertsender error:' . $e->getMessage());
-                    }
-                }
-            } else {
+            if ($user->hasEmail() && $user->getEmail() !== $curUser->getEmail()) {
                 try {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->sendChangeEmail($curUser, $user);
+                    $isSend = true;
+                } catch (ExpertsenderServiceException $e) {
                     $logger = LoggerFactory::create('expertsender');
-                    $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
-                } catch (\RuntimeException $e) {
-                    /** оч. плохо - логи мы не получим */
+                    $logger->error('expertsender error:' . $e->getMessage());
                 }
             }
 
