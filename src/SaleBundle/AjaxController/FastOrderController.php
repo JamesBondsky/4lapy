@@ -192,9 +192,6 @@ class FastOrderController extends Controller
             ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID'])
             ->setDeliveryId(DeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'])
             ->setDeliveryPlaceCode($currentStore->getCode())
-//            ->setDeliveryDate($currentStore->getDeliveryTime())
-//            ->setDeliveryDate($currentStore->getShipmentDate()->getTimestamp())
-//            ->setDeliveryInterval($currentStore->getSh())
         ;
 
         if ($this->userAuthProvider->isAuthorized()) {
