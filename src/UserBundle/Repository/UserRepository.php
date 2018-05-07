@@ -209,6 +209,37 @@ class UserRepository
     }
 
     /**
+     * @param string $email
+     *
+     * @return User[]
+     */
+    public function findOneByEmail(string $email): array
+    {
+        $result = [];
+        if (!empty($email)) {
+            $result = $this->findBy(['=EMAIL' => $email], [], 1);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $phone
+     *
+     * @return User[]
+     */
+    public function findOneByPhone(string $phone): array
+    {
+        $result = [];
+
+        if (PhoneHelper::isPhone($phone)) {
+            $result = $this->findBy(['=PERSONAL_PHONE' => $phone], [], 1);
+        }
+
+        return $result;
+    }
+
+    /**
      * @param string $rawLogin
      * @param bool   $onlyActive
      *

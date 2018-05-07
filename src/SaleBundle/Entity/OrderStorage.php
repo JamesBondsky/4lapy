@@ -352,10 +352,6 @@ class OrderStorage
      * Бысрый заказ или нет
      *
      * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("CAPTCHA_FILLED")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\IsTrue(groups={"auth","delivery","payment"}, message="Заполните капчу")
      */
     protected $fastOrder = false;
 
