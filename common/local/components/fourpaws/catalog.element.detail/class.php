@@ -34,9 +34,11 @@ use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
-/** @noinspection EfferentObjectCouplingInspection */
-
-/** @noinspection AutoloadingIssuesInspection */
+/** @noinspection AutoloadingIssuesInspection EfferentObjectCouplingInspection
+ *
+ * Class CatalogElementDetailComponent
+ * @package FourPaws\Components
+ */
 class CatalogElementDetailComponent extends \CBitrixComponent
 {
     public const EXPAND_CLOSURES = 'EXPAND_CLOSURES';
@@ -62,7 +64,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        } catch (ApplicationCreateException|ServiceCircularReferenceException|ServiceNotFoundException $e) {
+        } catch (ApplicationCreateException | ServiceCircularReferenceException | ServiceNotFoundException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             /** @noinspection PhpUnhandledExceptionInspection */
@@ -81,6 +83,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             $params['CACHE_TIME'] = 36000000;
         }
 
+        $params['SHOW_FAST_ORDER'] = $params['SHOW_FAST_ORDER'] ?? false;
         $params['CODE'] = $params['CODE'] ?? '';
         $params['OFFER_ID'] = $params['OFFER_ID'] ?? 0;
         $params['SET_TITLE'] = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
@@ -91,6 +94,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     /**
      * @return mixed
+     *
      * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -122,6 +126,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'PRODUCT' => $product,
                 'CURRENT_OFFER' => $currentOffer,
                 'SECTION_CHAIN' => $this->getSectionChain($sectionId),
+                'SHOW_FAST_ORDER' => $this->arParams['SHOW_FAST_ORDER'],
                 /**
                  * @todo впилить seo
                  */
@@ -135,7 +140,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'iblock:item:' . $product->getId(),
             ]);
 
-            $this->setResultCacheKeys(['PRODUCT', 'CURRENT_OFFER']);
+            $this->setResultCacheKeys(['PRODUCT', 'CURRENT_OFFER', 'SHOW_FAST_ORDER']);
 
             $this->includeComponentTemplate();
         }
@@ -206,6 +211,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         $sectionChain = [];
         if ($sectionId > 0) {
             $items = \CIBlockSection::GetNavChain(false, $sectionId, ['ID', 'NAME']);
+            /** @noinspection PhpAssignmentInConditionInspection */
             while ($item = $items->getNext(true, false)) {
                 $sectionChain[] = $item;
             }

@@ -26,7 +26,6 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -152,6 +151,7 @@ class BasketComponent extends CBitrixComponent
             $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
             $this->calcTemplateFields();
             $this->checkSelectedGifts();
+            $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
         }
 
         $this->loadImages();
@@ -429,10 +429,10 @@ class BasketComponent extends CBitrixComponent
          */
         $applyResult = $this->arResult['DISCOUNT_RESULT'];
         $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
-        if(!$basketDiscounts) {
+        if (!$basketDiscounts) {
             /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
             foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
-                if($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
+                if ($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
                     $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
                 }
             }
