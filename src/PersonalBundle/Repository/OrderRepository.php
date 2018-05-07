@@ -10,11 +10,13 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
@@ -165,6 +167,7 @@ class OrderRepository extends BaseRepository
             ->setSelect([
                 '*',
                 'SUMMARY_PRICE',
+                'DETAIL_PAGE_URL',
 
                 'PROPERTY_IMG'    => 'OFFER_PROPS.PROPERTY_' . $imgPropId,
                 'PROPERTY_VOLUME' => 'OFFER_PROPS.PROPERTY_' . $volumePropId,
