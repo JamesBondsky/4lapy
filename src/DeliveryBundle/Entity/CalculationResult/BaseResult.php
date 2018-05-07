@@ -514,9 +514,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 $delayed->setType(StockResult::TYPE_UNAVAILABLE);
             }
         } else {
-            $this->shipmentResults = $resultCollection->getFastest();
+            $this->shipmentResults = $resultCollection->getFastest($this->getCurrentDate());
 
-            $date->modify(sprintf('+%s days', $this->shipmentResults->getDays()));
+            $date->modify(sprintf('+%s days', $this->shipmentResults->getDays($this->getCurrentDate())));
 
             $delayed = $stockResult->getDelayed();
             foreach ($delayed->getOffers() as $offer) {
@@ -589,8 +589,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             /** @var ScheduleResult $scheduleResult */
             foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver) as $scheduleResult) {
                 $key = implode(',', $scheduleResult->getRouteCodes());
+
+                $days = $scheduleResult->getDays($this->getCurrentDate());
+                if ($days === ScheduleResult::RESULT_ERROR) {
+                    continue;
+                }
+
                 if (!isset($scheduleResults[$key]) ||
-                    $scheduleResults[$key]->getDays() > $scheduleResult->getDays()
+                    ($scheduleResults[$key]->getDays($this->getCurrentDate()) > $days)
                 ) {
                     $scheduleResults[$key] = $scheduleResult;
                 }
