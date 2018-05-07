@@ -45,7 +45,8 @@ class DaDataLocationAdapter extends BaseAdapter
                     $entity->getRegion()) : '');
             if (!empty($region)) {
                 $regionType = trim($entity->getRegionTypeFull());
-                if ($entity->getRegionType() === 'Респ') {
+                $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
+                if ($entity->getRegionType() === 'Респ' && !\in_array($region, $regionExcluded, true)) {
                     $fullRegion = $regionType . ' ' . $region;
                 } else {
                     $fullRegion = $region . ' ' . $regionType;
