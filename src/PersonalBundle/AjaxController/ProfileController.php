@@ -287,7 +287,11 @@ class ProfileController extends Controller
 //            }
             try {
                 /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
-                $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
+                $updateData = $userRepository->prepareData($data);
+                if(empty($data['PERSONAL_BIRTHDAY'])){
+                    $updateData['PERSONAL_BIRTHDAY'] = '';
+                }
+                $res = $userRepository->updateData($user->getId(), $updateData);
                 if (!$res) {
                     return $this->ajaxMess->getUpdateError();
                 }
