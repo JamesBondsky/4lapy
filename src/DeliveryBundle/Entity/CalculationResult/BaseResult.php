@@ -471,7 +471,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @param Store $store
+     * @param Store                 $store
      * @param StockResultCollection $stockResult
      *
      * @throws ApplicationCreateException
@@ -495,7 +495,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         foreach ($stockResult->getOffers() as $offer) {
             $stockResultForOffer = $delayed->filterByOffer($offer);
             /** @var Stock $stock */
-            foreach ($offer->getStocks() as $stock) {
+            foreach ($offer->getAllStocks() as $stock) {
+                if ($stock->getStore()->getXmlId() === $store->getXmlId()) {
+                    continue;
+                }
+
                 foreach ($this->getScheduleResults(
                     $stock->getStore(),
                     $store,
@@ -564,7 +568,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @param Store $sender
      * @param Store $receiver
      * @param Offer $offer
-     * @param int $amount
+     * @param int   $amount
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -577,7 +581,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         Store $receiver,
         Offer $offer,
         int $amount = 0
-    ): DeliveryScheduleResultCollection {
+    ): DeliveryScheduleResultCollection
+    {
         /** @var Store $sender */
         $cacheKey = implode('_', [$sender->getXmlId(), $receiver->getXmlId()]);
         if (array_key_exists($cacheKey, static::$scheduleResults)) {
@@ -711,7 +716,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * Изменяет дату доставки в соответствии с графиком работы магазина
      *
      * @param \DateTime $date
-     * @param Store $store
+     * @param Store     $store
      */
     protected function calculateWithStoreSchedule(\DateTime $date, Store $store): void
     {
@@ -748,9 +753,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 // не нужно
             }
             $storeData[$store->getXmlId()] = [
-                'RESULT' => $calculationResult,
+                'RESULT'          => $calculationResult,
                 'AVAILABLE_PRICE' => $calculationResult->getStockResult()->getAvailable()->getPrice(),
-                'ORDERABLE_PRICE' => $calculationResult->getStockResult()->getOrderable()->getPrice()
+                'ORDERABLE_PRICE' => $calculationResult->getStockResult()->getOrderable()->getPrice(),
             ];
         }
 
