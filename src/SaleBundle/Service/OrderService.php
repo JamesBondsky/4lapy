@@ -574,7 +574,7 @@ class OrderService implements LoggerAwareInterface
         /** установка свойств для быстрого заказа и сброс ненужных свойств */
         if ($fastOrder) {
             /** зануляем дату доставки и интервал - ибо не пользователь все выбирал а система */
-            $this->setOrderPropertyByCode($ordЛer, 'DELIVERY_INTERVAL', '');
+            $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
             $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
             if(empty($this->getOrderPropertyByCode('SHIPMENT_PLACE_CODE')->getValue())){
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
