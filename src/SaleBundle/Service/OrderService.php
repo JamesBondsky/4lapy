@@ -177,17 +177,17 @@ class OrderService implements LoggerAwareInterface
     /**
      * OrderService constructor.
      *
-     * @param AddressService $addressService
-     * @param BasketService $basketService
-     * @param CurrentUserProviderInterface $currentUserProvider
-     * @param DeliveryService $deliveryService
-     * @param LocationService $locationService
-     * @param StoreService $storeService
-     * @param OrderStorageService $orderStorageService
-     * @param UserCitySelectInterface $userCityProvider
+     * @param AddressService                    $addressService
+     * @param BasketService                     $basketService
+     * @param CurrentUserProviderInterface      $currentUserProvider
+     * @param DeliveryService                   $deliveryService
+     * @param LocationService                   $locationService
+     * @param StoreService                      $storeService
+     * @param OrderStorageService               $orderStorageService
+     * @param UserCitySelectInterface           $userCityProvider
      * @param UserRegistrationProviderInterface $userRegistrationProvider
-     * @param ManzanaPosService $manzanaPosService
-     * @param ManzanaService $manzanaService
+     * @param ManzanaPosService                 $manzanaPosService
+     * @param ManzanaService                    $manzanaService
      */
     public function __construct(
         AddressService $addressService,
@@ -201,8 +201,7 @@ class OrderService implements LoggerAwareInterface
         UserRegistrationProviderInterface $userRegistrationProvider,
         ManzanaPosService $manzanaPosService,
         ManzanaService $manzanaService
-    )
-    {
+    ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -220,10 +219,10 @@ class OrderService implements LoggerAwareInterface
     /**
      * Получение заказа по id
      *
-     * @param int $id id заказа
-     * @param bool $check выполнять ли проверки
-     * @param int $userId id пользователя, к которому привязан заказ
-     * @param string $hash хеш заказа (проверяется, если не передан userId)
+     * @param int    $id     id заказа
+     * @param bool   $check  выполнять ли проверки
+     * @param int    $userId id пользователя, к которому привязан заказ
+     * @param string $hash   хеш заказа (проверяется, если не передан userId)
      *
      * @throws NotFoundException
      * @throws ArgumentNullException
@@ -263,7 +262,6 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage                    $storage
      * @param Basket|null                     $basket
      * @param CalculationResultInterface|null $selectedDelivery
-     * @param bool                            $fastOrder
      *
      * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
@@ -282,15 +280,15 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return Order
+     * @return Order|array
      */
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
-        ?CalculationResultInterface $selectedDelivery = null,
-        bool $fastOrder = false
-    ): Order
-    {
+        ?CalculationResultInterface $selectedDelivery = null
+    ) {
+        $fastOrder = $storage->isFastOrder();
+
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
@@ -337,8 +335,8 @@ class OrderService implements LoggerAwareInterface
                             'DELAY' => BitrixUtils::BX_BOOL_TRUE,
                             'PROPS' => [
                                 [
-                                    'NAME' => 'IS_TEMPORARY',
-                                    'CODE' => 'IS_TEMPORARY',
+                                    'NAME'  => 'IS_TEMPORARY',
+                                    'CODE'  => 'IS_TEMPORARY',
                                     'VALUE' => 'Y',
                                 ],
                             ],
@@ -394,10 +392,10 @@ class OrderService implements LoggerAwareInterface
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID' => $selectedDelivery->getDeliveryId(),
-                    'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
-                    'CURRENCY' => $order->getCurrency(),
-                    'PRICE_DELIVERY' => $selectedDelivery->getPrice(),
+                    'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME'         => $selectedDelivery->getDeliveryName(),
+                    'CURRENCY'              => $order->getCurrency(),
+                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
                     'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
@@ -416,61 +414,59 @@ class OrderService implements LoggerAwareInterface
          * Задание свойств заказа, связанных с доставкой
          */
         /** @var PropertyValue $propertyValue */
-        if (!$fastOrder) {
-            foreach ($propertyValueCollection as $propertyValue) {
-                $code = $propertyValue->getProperty()['CODE'];
-                switch ($code) {
-                    case 'DELIVERY_PLACE_CODE':
-                        if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
-                            /** @var PickupResult $selectedDelivery */
-                            $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+        foreach ($propertyValueCollection as $propertyValue) {
+            $code = $propertyValue->getProperty()['CODE'];
+            switch ($code) {
+                case 'DELIVERY_PLACE_CODE':
+                    if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                        /** @var PickupResult $selectedDelivery */
+                        $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+                    } else {
+                        $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                    }
+                    break;
+                case 'DPD_TERMINAL_CODE':
+                    if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
+                        continue 2;
+                    }
+                    /** @var DpdPickupResult $selectedDelivery */
+                    $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+                    break;
+                case 'DELIVERY_DATE':
+                    $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
+                    break;
+                case 'DELIVERY_INTERVAL':
+                    /**
+                     * У доставок есть выбор интервала доставки
+                     */
+                    if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                        if ($interval = $selectedDelivery->getSelectedInterval()) {
+                            $value = sprintf(
+                                '%s:00-%s:00',
+                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
+                            );
                         } else {
-                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
-                        }
-                        break;
-                    case 'DPD_TERMINAL_CODE':
-                        if (!$this->deliveryService->isDpdPickup($selectedDelivery)) {
                             continue 2;
                         }
-                        /** @var DpdPickupResult $selectedDelivery */
-                        $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
-                        break;
-                    case 'DELIVERY_DATE':
-                        $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
-                        break;
-                    case 'DELIVERY_INTERVAL':
-                        /**
-                         * У доставок есть выбор интервала доставки
-                         */
-                        if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                            if ($interval = $selectedDelivery->getSelectedInterval()) {
-                                $value = sprintf(
-                                    '%s:00-%s:00',
-                                    str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
-                                    str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
-                                );
-                            } else {
-                                continue 2;
-                            }
-                        } else {
-                            $value = sprintf(
-                                '%s:00-23:59',
-                                $deliveryDate->format('H')
-                            );
-                        }
+                    } else {
+                        $value = sprintf(
+                            '%s:00-23:59',
+                            $deliveryDate->format('H')
+                        );
+                    }
 
-                        break;
-                    case 'REGION_COURIER_FROM_DC':
-                        $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
-                            ? BitrixUtils::BX_BOOL_FALSE
-                            : BitrixUtils::BX_BOOL_TRUE;
-                        break;
-                    default:
-                        continue 2;
-                }
-
-                $propertyValue->setValue($value);
+                    break;
+                case 'REGION_COURIER_FROM_DC':
+                    $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
+                        ? BitrixUtils::BX_BOOL_FALSE
+                        : BitrixUtils::BX_BOOL_TRUE;
+                    break;
+                default:
+                    continue 2;
             }
+
+            $propertyValue->setValue($value);
         }
 
         /**
@@ -497,7 +493,7 @@ class OrderService implements LoggerAwareInterface
                 }
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()), [
-                    'userId' => $storage->getUserId(),
+                    'userId'  => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
                 ]);
                 throw new OrderCreateException('Bonus payment failed');
@@ -512,7 +508,7 @@ class OrderService implements LoggerAwareInterface
                 $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('order payment failed: %s', $e->getMessage()), [
-                    'userId' => $storage->getUserId(),
+                    'userId'  => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
                 ]);
                 throw new OrderCreateException('Order payment failed');
@@ -575,12 +571,17 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        /** установка свойств для быстрого заказа, здесь ибо сбрасывается выше */
-        if($fastOrder) {
+        /** установка свойств для быстрого заказа и сброс ненужных свойств */
+        if ($fastOrder) {
+            /** зануляем дату доставки и интервал - ибо не пользователь все выбирал а система */
             $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
-            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
+            $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
+            if(empty($this->getOrderPropertyByCode('SHIPMENT_PLACE_CODE')->getValue())){
+                $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
+            }
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
             $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
+            return [$order, $selectedDelivery];
         }
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
@@ -589,7 +590,6 @@ class OrderService implements LoggerAwareInterface
      * @param Order                           $order
      * @param OrderStorage                    $storage
      * @param CalculationResultInterface|null $selectedDelivery
-     * @param bool                            $fastOrder
      *
      * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws \FourPaws\UserBundle\Exception\ValidationException
@@ -616,10 +616,10 @@ class OrderService implements LoggerAwareInterface
     public function saveOrder(
         Order $order,
         OrderStorage $storage,
-        ?CalculationResultInterface $selectedDelivery = null,
-        bool $fastOrder = false
-    ): void
-    {
+        ?CalculationResultInterface $selectedDelivery = null
+    ): void {
+        $fastOrder = $storage->isFastOrder();
+
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
@@ -695,7 +695,7 @@ class OrderService implements LoggerAwareInterface
                 /* @todo вынести из сессии? */
                 /* нужно для expertsender */
                 $_SESSION['NEW_USER'] = [
-                    'LOGIN' => $storage->getPhone(),
+                    'LOGIN'    => $storage->getPhone(),
                     'PASSWORD' => $password,
                 ];
 
@@ -749,15 +749,15 @@ class OrderService implements LoggerAwareInterface
                     $storage->setAddressId($personalAddress->getId());
                 } catch (\Exception $e) {
                     $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
-                        'city' => $personalAddress->getCity(),
+                        'city'     => $personalAddress->getCity(),
                         'location' => $personalAddress->getCityLocation(),
-                        'userId' => $personalAddress->getUserId(),
-                        'street' => $personalAddress->getStreet(),
-                        'house' => $personalAddress->getHouse(),
-                        'housing' => $personalAddress->getHousing(),
+                        'userId'   => $personalAddress->getUserId(),
+                        'street'   => $personalAddress->getStreet(),
+                        'house'    => $personalAddress->getHouse(),
+                        'housing'  => $personalAddress->getHousing(),
                         'entrance' => $personalAddress->getEntrance(),
-                        'floor' => $personalAddress->getFloor(),
-                        'flat' => $personalAddress->getFlat(),
+                        'floor'    => $personalAddress->getFloor(),
+                        'flat'     => $personalAddress->getFlat(),
                     ]);
                 }
                 /**
@@ -773,8 +773,8 @@ class OrderService implements LoggerAwareInterface
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to save shop address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
-                        'userId' => $storage->getUserId(),
-                        'shop' => $shop->getXmlId()
+                        'userId'  => $storage->getUserId(),
+                        'shop'    => $shop->getXmlId(),
                     ]);
                 }
             }
@@ -789,7 +789,7 @@ class OrderService implements LoggerAwareInterface
             /** @var BasketItem $item */
             foreach ($order->getBasket()->getOrderableItems() as $item) {
                 /** @var DeliveryScheduleResult $deliveryResult */
-                if(!$deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first()) {
+                if (!$deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first()) {
                     continue;
                 }
 
@@ -1017,7 +1017,7 @@ class OrderService implements LoggerAwareInterface
                     $order2->save();
                 } catch (\Exception $e) {
                     $this->log()->error('failed to set related order id', [
-                        'order' => $order2->getId(),
+                        'order'        => $order2->getId(),
                         'relatedOrder' => $order->getId(),
                     ]);
                 }
@@ -1026,7 +1026,7 @@ class OrderService implements LoggerAwareInterface
                     $order->save();
                 } catch (\Exception $e) {
                     $this->log()->error('failed to set related order id', [
-                        'order' => $order->getId(),
+                        'order'        => $order->getId(),
                         'relatedOrder' => $order2->getId(),
                     ]);
                 }
@@ -1083,7 +1083,7 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order  $order
      * @param string $code
      *
      * @throws NotFoundException
@@ -1102,7 +1102,7 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order  $order
      * @param string $code
      * @param        $value
      */
@@ -1343,6 +1343,156 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
+     * Бонусы, начисленные за заказ
+     *
+     * @param Order $order
+     * @param User  $user
+     *
+     * @return string
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \RuntimeException
+     */
+    public function getOrderBonusSum(Order $order, ?User $user = null): string
+    {
+        $propertyValue = $this->getOrderPropertyByCode($order, 'BONUS_COUNT');
+
+        if (!$user) {
+            $user = $this->currentUserProvider->getUserRepository()->find($order->getUserId());
+        }
+
+        if (null === $propertyValue->getValue()) {
+            try {
+                $propertyValue->setValue(0);
+                if ($user->getDiscountCardNumber()) {
+                    /**
+                     * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
+                     */
+                    $cheque = $this->manzanaPosService->processChequeWithoutBonus(
+                        $this->manzanaPosService->buildRequestFromBasket(
+                            $order->getBasket(),
+                            $user->getDiscountCardNumber()
+                        )
+                    );
+                    $propertyValue->setValue($cheque->getChargedBonus());
+                }
+                $order->save();
+            } catch (ExecuteException $e) {
+                $this->log()->error(sprintf('failed to get charged bonus: %s', $e->getMessage()), [
+                    'orderId' => $order->getId(),
+                ]);
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('failed to set charged bonus for order: %s', $e->getMessage()), [
+                    'orderId' => $order->getId(),
+                    'bonus'   => $propertyValue->getValue(),
+                ]);
+            }
+        }
+
+        return $propertyValue->getValue();
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     * @throws ObjectNotFoundException
+     */
+    public function isOnlinePayment(Order $order): bool
+    {
+        $result = false;
+        try {
+            $paymentCode = $this->getOrderPaymentType($order);
+            if ($paymentCode === static::PAYMENT_ONLINE) {
+                $result = true;
+            }
+        } catch (NotFoundException $e) {
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isSubscribe(Order $order): bool
+    {
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'IS_SUBSCRIBE');
+            $result = $propValue->getValue() === 'Y';
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isManzanaOrder(Order $order): bool
+    {
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER');
+            $result = !empty($propValue);
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return null|\Bitrix\Sale\PaySystem\Service
+     */
+    public function getCashPaySystemService(): ?\Bitrix\Sale\PaySystem\Service
+    {
+        $paySystemService = null;
+        if (!isset($this->paySystemServiceCache['cash'])) {
+            $this->paySystemServiceCache['cash'] = null;
+            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH_OR_CARD);
+            if ($data) {
+                $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
+                    $data
+                );
+            }
+        }
+
+        if ($this->paySystemServiceCache['cash']) {
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystemService */
+            $paySystemService = clone $this->paySystemServiceCache['cash'];
+        }
+
+        return $paySystemService;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return \Bitrix\Main\Type\Date|null
+     */
+    public function getOrderDeliveryDate(Order $order): ?\Bitrix\Main\Type\Date
+    {
+        $deliveryDate = null;
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'DELIVERY_DATE');
+            $value = $propValue->getValue();
+            if ($value instanceof \Bitrix\Main\Type\Date) {
+                $deliveryDate = $value;
+            }
+        } catch (\Exception $exception) {
+            // просто вернем null
+        }
+
+        return $deliveryDate;
+    }
+
+    /**
      * @param Order                      $order
      * @param CalculationResultInterface $delivery
      * @param bool                       $isFastOrder
@@ -1357,8 +1507,7 @@ class OrderService implements LoggerAwareInterface
         Order $order,
         CalculationResultInterface $delivery,
         bool $isFastOrder = false
-    ): void
-    {
+    ): void {
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
         $changed = false;
@@ -1464,7 +1613,7 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order   $order
      * @param Address $address
      *
      * @return Order
@@ -1473,163 +1622,16 @@ class OrderService implements LoggerAwareInterface
     {
         $properties = [
             'CITY_CODE' => $address->getLocation(),
-            'CITY' => $address->getCity(),
-            'STREET' => $address->getStreet(),
-            'HOUSE' => $address->getHouse(),
-            'BUILDING' => $address->getHousing(),
-            'PORCH' => $address->getEntrance(),
-            'FLOOR' => $address->getFloor(),
-            'APARTMENT' => $address->getFlat()
+            'CITY'      => $address->getCity(),
+            'STREET'    => $address->getStreet(),
+            'HOUSE'     => $address->getHouse(),
+            'BUILDING'  => $address->getHousing(),
+            'PORCH'     => $address->getEntrance(),
+            'FLOOR'     => $address->getFloor(),
+            'APARTMENT' => $address->getFlat(),
         ];
 
         return $this->setOrderPropertiesByCode($order, $properties);
-    }
-
-    /**
-     * Бонусы, начисленные за заказ
-     *
-     * @param Order $order
-     * @param User  $user
-     *
-     * @return string
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \RuntimeException
-     */
-    public function getOrderBonusSum(Order $order, ?User $user = null): string
-    {
-        $propertyValue = $this->getOrderPropertyByCode($order, 'BONUS_COUNT');
-
-        if (!$user) {
-            $user = $this->currentUserProvider->getUserRepository()->find($order->getUserId());
-        }
-
-        if (null === $propertyValue->getValue()) {
-            try {
-                $propertyValue->setValue(0);
-                if ($user->getDiscountCardNumber()) {
-                    /**
-                     * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
-                     */
-                    $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                        $this->manzanaPosService->buildRequestFromBasket(
-                            $order->getBasket(),
-                            $user->getDiscountCardNumber()
-                        )
-                    );
-                    $propertyValue->setValue($cheque->getChargedBonus());
-                }
-                $order->save();
-            } catch (ExecuteException $e) {
-                $this->log()->error(sprintf('failed to get charged bonus: %s', $e->getMessage()), [
-                    'orderId' => $order->getId(),
-                ]);
-            } catch (\Exception $e) {
-                $this->log()->error(sprintf('failed to set charged bonus for order: %s', $e->getMessage()), [
-                    'orderId' => $order->getId(),
-                    'bonus' => $propertyValue->getValue(),
-                ]);
-            }
-        }
-
-        return $propertyValue->getValue();
-    }
-
-    /**
-     * @param Order $order
-     *
-     * @return bool
-     * @throws ObjectNotFoundException
-     */
-    public function isOnlinePayment(Order $order): bool
-    {
-        $result = false;
-        try{
-            $paymentCode = $this->getOrderPaymentType($order);
-            if ($paymentCode === static::PAYMENT_ONLINE) {
-                $result = true;
-            }
-        } catch(NotFoundException $e){}
-
-        return $result;
-    }
-
-    /**
-     * @param Order $order
-     * @return bool
-     */
-    public function isSubscribe(Order $order): bool
-    {
-        try {
-            $propValue = $this->getOrderPropertyByCode($order, 'IS_SUBSCRIBE');
-            $result = $propValue->getValue() === 'Y';
-        } catch (\Exception $exception) {
-            $result = false;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param Order $order
-     *
-     * @return bool
-     */
-    public function isManzanaOrder(Order $order): bool
-    {
-        try {
-            $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER');
-            $result = !empty($propValue);
-        } catch (\Exception $exception) {
-            $result = false;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return null|\Bitrix\Sale\PaySystem\Service
-     */
-    public function getCashPaySystemService(): ?\Bitrix\Sale\PaySystem\Service
-    {
-        $paySystemService = null;
-        if (!isset($this->paySystemServiceCache['cash'])) {
-            $this->paySystemServiceCache['cash'] = null;
-            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH_OR_CARD);
-            if ($data) {
-                $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
-                    $data
-                );
-            }
-        }
-
-        if ($this->paySystemServiceCache['cash']) {
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystemService */
-            $paySystemService = clone $this->paySystemServiceCache['cash'];
-        }
-
-        return $paySystemService;
-    }
-
-    /**
-     * @param Order $order
-     * @return \Bitrix\Main\Type\Date|null
-     */
-    public function getOrderDeliveryDate(Order $order): ?\Bitrix\Main\Type\Date
-    {
-        $deliveryDate = null;
-        try {
-            $propValue = $this->getOrderPropertyByCode($order, 'DELIVERY_DATE');
-            $value = $propValue->getValue();
-            if ($value instanceof \Bitrix\Main\Type\Date) {
-                $deliveryDate = $value;
-            }
-        } catch (\Exception $exception) {
-            // просто вернем null
-        }
-
-        return $deliveryDate;
     }
 
 }
