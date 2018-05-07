@@ -538,14 +538,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Card
      *
-     * @throws \Exception
      * @throws ManzanaServiceException
      * @throws CardNotFoundException
      */
     public function searchCardByNumber(string $cardNumber): Card
     {
         $card = null;
-        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        $bag = new ParameterBag(['cardnumber' => $this->prepareCardNumber($cardNumber)]);
 
         try {
             $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
@@ -820,6 +819,30 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
+    }
+
+    /**
+     * @param User $user
+     * @param string $cardNumber
+     *
+     * @throws ApplicationCreateException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     */
+    public function addUserBonusCard(User $user, string $cardNumber): void
+    {
+        $cardNumber = $this->prepareCardNumber($cardNumber);
+        $existingContact = $this->getContactByUser($user);
+        $contact = new Client();
+        $contact->cardnumber = $cardNumber;
+        $contact->contactId = $existingContact->contactId;
+        $this->updateContact($contact);
+        $this->userRepository->updateDiscountCard(
+            $user->getId(),
+            $cardNumber
+        );
     }
 
     /**
