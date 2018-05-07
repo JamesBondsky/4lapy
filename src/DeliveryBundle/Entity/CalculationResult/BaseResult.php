@@ -853,7 +853,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function checkIsDeliverable(Offer $offer): bool
     {
-        return true;
+        return (bool)$offer->getId();
     }
 
     public function __clone()
