@@ -222,7 +222,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $hasExpertSenderId = false;
         $hasNewEmailInSender = false;
         /** проверяем наличие новой почты в сендере */
-        if(!empty($curUser->getEmail())) {
+        if($curUser->hasEmail()) {
             try {
                 $userIdResult = $this->client->getUserId($curUser->getEmail());
                 if ($userIdResult->isOk()) {
@@ -233,7 +233,7 @@ class ExpertsenderService implements LoggerAwareInterface
             }
         }
 
-        if (!empty($oldUser->getEmail())) {
+        if ($oldUser->hasEmail()) {
             /** отключаем блокировку отправки если не подтвержден email */
 //            if (!$oldUser->allowedEASend()) {
 //                throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
@@ -262,7 +262,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
-        if ($continue && !empty($curUser->getEmail())) {
+        if ($continue && $curUser->hasEmail()) {
             try {
                 if(!$hasNewEmailInSender) {
                     $continue = false;
