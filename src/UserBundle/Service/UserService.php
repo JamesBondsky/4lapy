@@ -674,6 +674,22 @@ class UserService implements
     }
 
     /**
+     * @param int $id
+     *
+     * @return User
+     * @throws NotFoundException
+     */
+    public function findOne(int $id): User
+    {
+        $user = $this->userRepository->find($id);
+        if (!$user instanceof User) {
+            throw new NotFoundException(sprintf('User with id %s no found', $id));
+        }
+
+        return $user;
+    }
+
+    /**
      * @param string $phone
      * @param string $email
      *

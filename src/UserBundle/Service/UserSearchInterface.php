@@ -11,6 +11,14 @@ use FourPaws\UserBundle\Exception\NotFoundException;
 interface UserSearchInterface
 {
     /**
+     * @param int $id
+     *
+     * @return User
+     * @throws NotFoundException
+     */
+    public function findOne(int $id): User;
+
+    /**
      * @param string $phone
      * @param string $email
      *
