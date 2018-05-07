@@ -84,7 +84,9 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
                     <span class="b-icon b-icon--icon-cash">
                         <?= new SvgDecorator($icon, 16, 12) ?>
                     </span>
-                    <?= $payment['NAME'] ?>
+                    <span class="b-input-line_pay-type--name">
+                        <?= $payment['NAME'] ?>
+                    </span>
                 </span>
             <?php } ?>
         </div>
