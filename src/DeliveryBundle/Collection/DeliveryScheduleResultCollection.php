@@ -22,7 +22,7 @@ class DeliveryScheduleResultCollection extends ArrayCollection
      */
     public function getFastest(\DateTime $from): ?DeliveryScheduleResultCollection
     {
-        $collections = $this->splitByLastSenders();
+        $collections = $this->splitByLastSenders($from);
 
         usort(
             $collections,
@@ -153,21 +153,29 @@ class DeliveryScheduleResultCollection extends ArrayCollection
     }
 
     /**
+     * @param \DateTime $from
      * @return array
      * @throws NotFoundException
      */
-    protected function splitByLastSenders(): array
+    protected function splitByLastSenders(\DateTime $from): array
     {
         $result = [];
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
             $lastSender = $item->getScheduleResult()->getLastSender();
-
-            if (null === $result[$lastSender->getXmlId()]) {
-                $result[$lastSender->getXmlId()] = new static();
+            $xmlId = $lastSender->getXmlId();
+            if (null === $result[$xmlId]) {
+                $result[$xmlId] = new static();
             }
-
-            $result[$lastSender->getXmlId()]->add($item);
+            $offerId = $item->getOffer()->getId();
+            if (null === $result[$xmlId]->get($offerId)) {
+                $result[$xmlId][$offerId] = $item;
+            } else {
+                $days = $result[$xmlId]->get($offerId)->getScheduleResult()->getDays($from);
+                if ($days > $item->getScheduleResult()->getDays($from)) {
+                    $result[$xmlId][$offerId] = $item;
+                }
+            }
         }
 
         return $result;
