@@ -32,6 +32,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
@@ -424,11 +425,13 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
+     *
      * @param BasketItem $basketItem
+     * @param bool $onlyApplied
      *
      * @return array
      */
-    public function getPromoLink(BasketItem $basketItem): array
+    public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
         $result = [];
         /**
@@ -445,9 +448,13 @@ class BasketComponent extends CBitrixComponent
                 }
             }
         }
+
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
+                    continue;
+                }
                 if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
                     $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
                 }
