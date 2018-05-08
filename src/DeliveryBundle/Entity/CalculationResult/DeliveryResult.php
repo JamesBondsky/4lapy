@@ -13,21 +13,54 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 
-class DeliveryResult extends BaseResult
+class DeliveryResult extends BaseResult implements DeliveryResultInterface
 {
+    use DeliveryResultTrait;
+
+    /**
+     * @return int
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     */
+    public function getPeriodTo(): int
+    {
+        return $this->getPeriodFrom() + 10;
+    }
+
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws StoreNotFoundException
      * @throws SystemException
      * @throws NotFoundException
+     * @return \DateTime
      */
-    public function doCalculateDeliveryDate(): void
+    public function getDeliveryDate(): \DateTime
     {
-        parent::doCalculateDeliveryDate();
+        $date = parent::getDeliveryDate();
+        if (null === $this->intervalOffset) {
+            $this->intervalOffset = $this->calculateIntervalOffset();
+        }
+
+        return (clone $date)->modify(sprintf('+%s days', $this->intervalOffset));
+    }
+
+    /**
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws NotFoundException
+     */
+    protected function calculateIntervalOffset(): int
+    {
+        $result = 0;
 
         if ($this->getIntervals()->isEmpty()) {
-            return;
+            return $result;
         }
 
         /**
@@ -40,24 +73,26 @@ class DeliveryResult extends BaseResult
             $interval = $this->selectedInterval;
         }
         if (!$interval instanceof Interval) {
-            return;
+            return $result;
         }
 
         /** @var BaseRule $rule */
+        $defaultDate = clone $this->deliveryDate;
         $date = clone $this->deliveryDate;
         foreach ($interval->getRules() as $rule) {
             if (!$rule instanceof TimeRuleInterface) {
                 continue;
             }
 
-            if (!$rule->isSuitable($this)) {
+            if (!$rule->isSuitable($defaultDate)) {
                 continue;
             }
 
-            $rule->apply($this);
+            $date = $rule->apply($defaultDate);
             break;
         }
 
+        $result = $date->diff($defaultDate)->days;
         if ($this->getDateOffset() > 0) {
             $defaultOffset = 0;
             if ((null !== $firstInterval) && (string)$interval !== (string)$firstInterval) {
@@ -65,21 +100,24 @@ class DeliveryResult extends BaseResult
                     (clone $this)->setSelectedInterval($firstInterval)->getDeliveryDate()
                 );
             }
-            $newOffset = $date->diff($this->deliveryDate)->days;
-            $diff = $newOffset - $defaultOffset;
-            $this->deliveryDate->modify(sprintf('+%s days', $this->getDateOffset() - $diff));
+            $diff = $result - $defaultOffset;
+            $result = $this->getDateOffset() - $diff;
         }
+
+        return $result;
     }
 
     /**
-     * @return int
-     * @throws ArgumentException
+     * @param bool $internalCall
+     * @return bool
      * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @throws StoreNotFoundException
+     * @throws SystemException
      */
-    public function getPeriodTo(): int
+    public function isSuccess($internalCall = false)
     {
-        return $this->getPeriodFrom() + 10;
+        return parent::isSuccess($internalCall);
     }
 
     /**
@@ -91,5 +129,11 @@ class DeliveryResult extends BaseResult
     protected function checkIsDeliverable(Offer $offer): bool
     {
         return parent::checkIsDeliverable($offer) && $offer->getProduct()->isDeliveryAvailable();
+    }
+
+    protected function resetResult(): void
+    {
+        parent::resetResult();
+        $this->selectedInterval = null;
     }
 }

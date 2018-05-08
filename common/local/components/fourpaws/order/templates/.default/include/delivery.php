@@ -7,12 +7,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $arResult
  * @var OrderStorage $storage
- * @var CalculationResultInterface $delivery
+ * @var DeliveryResultInterface $delivery
  */
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -46,7 +46,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
 
 $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
 
-function showDeliveryDateSelector(CalculationResultInterface $delivery, OrderStorage $storage, string $name)
+function showDeliveryDateSelector(DeliveryResultInterface $delivery, OrderStorage $storage, string $name)
 {
     $result = '
     <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date" name="' . $name . '">
@@ -63,7 +63,7 @@ function showDeliveryDateSelector(CalculationResultInterface $delivery, OrderSto
     return $result;
 }
 
-function showDeliveryIntervalSelector(CalculationResultInterface $delivery, OrderStorage $storage, string $name)
+function showDeliveryIntervalSelector(DeliveryResultInterface $delivery, OrderStorage $storage, string $name)
 {
     $tmpDelivery = clone $delivery;
     $tmpDelivery->setDateOffset($storage->getDeliveryDate());
@@ -280,7 +280,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
         </div>
     </div>
     <?php if (!empty($arResult['SPLIT_RESULT'])) {
-        /** @var CalculationResultInterface $delivery1 */
+        /** @var DeliveryResultInterface $delivery1 */
         $delivery1 = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
         ?>
         <div class="change-delivery-type"><span class="js-change-delivery-type" data-type="twoDeliveries">Доставить быстрее</span>

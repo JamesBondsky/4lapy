@@ -31,6 +31,7 @@ use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
@@ -375,15 +376,15 @@ class OrderService implements LoggerAwareInterface
         }
         $locationProp->setValue($selectedCity['CODE']);
 
-        $selectedDelivery->setDateOffset($storage->getDeliveryDate());
-        if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
-            /** @var Interval $interval */
-            if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
-                $selectedDelivery->setSelectedInterval($interval);
-            }
-        }
-
         if ($this->deliveryService->isDelivery($selectedDelivery)) {
+            /** @var DeliveryResultInterface $selectedDelivery */
+            $selectedDelivery->setDateOffset($storage->getDeliveryDate());
+            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+                /** @var Interval $interval */
+                if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
+                    $selectedDelivery->setSelectedInterval($interval);
+                }
+            }
             /** @noinspection PhpInternalEntityUsedInspection */
             $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
         }
@@ -448,6 +449,7 @@ class OrderService implements LoggerAwareInterface
                      * У доставок есть выбор интервала доставки
                      */
                     if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                        /** @var DeliveryResultInterface $selectedDelivery */
                         if ($interval = $selectedDelivery->getSelectedInterval()) {
                             $value = sprintf(
                                 '%s:00-%s:00',
