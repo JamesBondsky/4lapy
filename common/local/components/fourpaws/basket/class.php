@@ -17,6 +17,7 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\PriceMaths;
 use CBitrixComponent;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -339,6 +340,11 @@ class BasketComponent extends CBitrixComponent
         }
     }
 
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
     private function calcTemplateFields(): void
     {
         $weight = $quantity = $basePrice = $price = 0;
@@ -351,13 +357,15 @@ class BasketComponent extends CBitrixComponent
             $itemQuantity = (int)$basketItem->getQuantity();
             $weight += (float)$basketItem->getWeight() * $itemQuantity;
             $quantity += $itemQuantity;
-            $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
-            $price += (float)$basketItem->getPrice() * $itemQuantity;
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
+                $price += (float)$basketItem->getPrice() * $itemQuantity;
+            }
         }
 
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
-        $this->arResult['TOTAL_DISCOUNT'] = $basePrice - $price;
+        $this->arResult['TOTAL_DISCOUNT'] = PriceMaths::roundPrecision($basePrice - $price);
         $this->arResult['TOTAL_PRICE'] = $price;
         $this->arResult['TOTAL_BASE_PRICE'] = $basePrice;
     }
