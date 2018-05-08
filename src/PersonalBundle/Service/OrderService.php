@@ -28,6 +28,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
@@ -45,6 +46,7 @@ use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -404,7 +406,7 @@ class OrderService
     /**
      * @param Order $order
      *
-     * @return Store
+     * @return Store|null
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -412,7 +414,7 @@ class OrderService
      * @throws \Exception
      * @throws NotFoundException
      */
-    public function getStore(Order $order): Store
+    public function getStore(Order $order): ?Store
     {
         /** @var OrderProp $prop */
         //CITY_CODE
@@ -421,14 +423,24 @@ class OrderService
             $dpdTerminal = $props->get('DPD_TERMINAL_CODE');
             $deliveryPlace = $props->get('DELIVERY_PLACE_CODE');
             if ($dpdTerminal instanceof OrderProp && $dpdTerminal->getValue()) {
-                $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+                try {
+                    /** @var DeliveryService $deliveryService */
+                    $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
 
-                return $deliveryService->getDpdTerminalByCode($dpdTerminal->getValue());
+                    return $deliveryService->getDpdTerminalByCode($dpdTerminal->getValue());
+                } catch (\Exception $exception) {
+                    return null;
+                }
             }
             if ($deliveryPlace instanceof OrderProp && $deliveryPlace->getValue()) {
-                $storeService = App::getInstance()->getContainer()->get('store.service');
+                try {
+                    /** @var StoreService $storeService */
+                    $storeService = App::getInstance()->getContainer()->get('store.service');
 
-                return $storeService->getStoreByXmlId($deliveryPlace->getValue());
+                    return $storeService->getStoreByXmlId($deliveryPlace->getValue());
+                } catch (\Exception $exception) {
+                    return null;
+                }
             }
         }
 

@@ -9,12 +9,14 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Internals\BasketTable;
+use function foo\func;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
@@ -33,6 +35,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class ProductInfoController
@@ -204,42 +207,69 @@ class ProductInfoController extends Controller
         if (!$this->validator->validate($productListRequest)->count()) {
             /** @var ProductSearchResult $result */
             /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
-            $productCollection = (new ProductQuery())->withFilter(['=ID' => $productListRequest->getProductIds()])->exec();
-            /** @var Product $product */
-            $products = [];
-            if ($productCollection->count() === 1) {
-                $product = $productCollection->first();
-                $products[$product->getId()] = $product;
-            } else {
-                foreach ($productCollection as $product) {
+            $productIds = $productListRequest->getProductIds();
+            $getProducts = function () use ($productIds) {
+                $productCollection = (new ProductQuery())->withFilter(['=ID' => $productIds])->exec();
+                /** @var Product $product */
+                $products = [];
+                if ($productCollection->count() === 1) {
+                    $product = $productCollection->first();
                     $products[$product->getId()] = $product;
+                } else {
+                    foreach ($productCollection as $product) {
+                        $products[$product->getId()] = $product;
+                    }
                 }
+                return $products;
+            };
+
+            $bitrixCache = new BitrixCache();
+            $bitrixCache
+                ->withId(__METHOD__ . '_product_' . implode('-', $productIds));
+            foreach ($productIds as $productId) {
+                $bitrixCache->withTag('catalog:product:' . $productId);
+                $bitrixCache->withTag('iblock:item:' . $productId);
             }
+            $products = $bitrixCache->resultOf($getProducts);
+
+            /** кешировать нельзя так как мы не знаем id для сброса кеша */
             $offerCollection = (new OfferQuery())->withFilter([
-                '=PROPERTY_CML2_LINK' => $productListRequest->getProductIds(),
+                '=PROPERTY_CML2_LINK' => $productIds,
                 'ACTIVE'              => 'Y',
             ])->exec();
 
             /** @var Offer $offer */
             foreach ($offerCollection as $offer) {
+                /** @var Product $product */
                 $product = $products[$offer->getCml2Link()];
-                $offer->setProduct($product);
-                $offerId = $offer->getId();
-                $price = ceil($offer->getPrice());
-                $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
-                $responseItem = [
-                    'available' => $offer->isAvailable(),
-                    'byRequest' => $offer->isByRequest(),
-                    'price'     => $price,
-                    'oldPrice'  => $oldPrice,
-                    'inCart'    => $cartItems[$offerId] ?? 0,
-                    'pickup'    => false,
-                ];
-                if ($responseItem['available']) {
-                    $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
-                }
-                $response['products'][$product->getId()][$offerId] = $responseItem;
-                $response['products'][$offer->getCml2Link()][$offerId] = $responseItem;
+                $getResponseItem = function () use ($product, $offer) {
+                    $offer->setProduct($product);
+                    $price = ceil($offer->getPrice());
+                    $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
+                    $responseItem = [
+                        'available' => $offer->isAvailable(),
+                        'byRequest' => $offer->isByRequest(),
+                        'price'     => $price,
+                        'oldPrice'  => $oldPrice,
+                        'pickup'    => false,
+                    ];
+                    if ($responseItem['available']) {
+                        $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
+                    }
+                    return $responseItem;
+                };
+                $bitrixCache = new BitrixCache();
+                $bitrixCache
+                    ->withId(__METHOD__ . '_product_' . $product->getId());
+                $bitrixCache->withTag('catalog:product:' . $product->getId());
+                $bitrixCache->withTag('iblock:item:' . $product->getId());
+                $bitrixCache->withTag('catalog:offer:' . $offer->getId());
+                $bitrixCache->withTag('iblock:item:' . $offer->getId());
+                $responseItem = $bitrixCache->resultOf($getResponseItem);
+
+                $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
+
+                $response['products'][$product->getId()][$offer->getId()] = $responseItem;
             }
         }
         return JsonSuccessResponse::createWithData('', $response);
@@ -258,46 +288,47 @@ class ProductInfoController extends Controller
      */
     public function infoProductAction(Request $request): JsonResponse
     {
-        $response = [
-            'products' => [],
-        ];
-
         $currentOffer = null;
-        $offerId = $request->get('offer', 0);
-        $productId = $request->get('product', 0);
+        $offerId = (int)$request->get('offer', 0);
+        $productId = (int)$request->get('product', 0);
 
-        $offerCollection = null;
-        if ($offerId > 0) {
-            $offerCollection = (new OfferQuery())->withFilter([
-                '=ID' => $offerId,
-            ])->exec();
-            if($offerCollection->count() > 0) {
-                $currentOffer = $offerCollection->first();
+        $getResponse = function () use ($offerId) {
+            $response = [
+                'products' => [],
+            ];
+
+            if ($offerId > 0) {
+                $offerCollection = (new OfferQuery())->withFilter([
+                    '=ID' => $offerId,
+                ])->exec();
+                if(!$offerCollection->isEmpty()){
+                    $currentOffer = $offerCollection->first();
+                }
             }
-        } elseif ($productId > 0) {
-            $offerCollection = (new OfferQuery())->withFilter([
-                '=PROPERTY_CML2_LINK' => $productId,
-                'ACTIVE'              => 'Y',
-            ])->exec();
-        }
 
-        if($offerCollection !== null && $offerCollection->count() > 0) {
             /** @var Offer $offer */
             /** @var Offer $currentOffer */
-            if($currentOffer !== null){
+            if ($currentOffer !== null) {
                 $response['products'][$currentOffer->getCml2Link()][$currentOffer->getId()] = [
                     'available' => $currentOffer->isAvailable(),
                 ];
-            } else {
-                foreach ($offerCollection as $offer) {
-                    if ($offerId && $offer->getId() === $offerId) {
-                        $response['products'][$offer->getCml2Link()][$offer->getId()] = [
-                            'available' => $offer->isAvailable(),
-                        ];
-                    }
-                }
             }
+
+            return $response;
+        };
+
+        $bitrixCache = new BitrixCache();
+        $bitrixCache
+            ->withId(__METHOD__ . '_offer_' . $offerId . '_product_' . $productId);
+        if ($offerId > 0) {
+            $bitrixCache->withTag('catalog:offer:' . $offerId);
+            $bitrixCache->withTag('iblock:item:' . $offerId);
         }
+        if ($productId > 0) {
+            $bitrixCache->withTag('catalog:product:' . $productId)
+                ->withTag('iblock:item:' . $productId);
+        }
+        $response = $bitrixCache->resultOf($getResponse);
 
         return JsonSuccessResponse::createWithData('', $response);
     }
@@ -305,10 +336,10 @@ class ProductInfoController extends Controller
     /**
      * @Route("/product/deliverySet/", methods={"GET"})
      *
-     * @param Request            $request
+     * @param Request $request
      *
      * @return JsonResponse
-     * @global \CMain            $APPLICATION
+     * @global \CMain $APPLICATION
      *
      */
     public function infoProductDeliveryAction(Request $request): JsonResponse
@@ -316,49 +347,49 @@ class ProductInfoController extends Controller
         $response = [];
 
         $currentOffer = null;
-        $requestedOfferId = $request->get('offer', 0);
-        $productId = $request->get('product', 0);
-        $offerCollection=null;
+        $requestedOfferId = (int)$request->get('offer', 0);
+        $productId = (int)$request->get('product', 0);
 
-        if ($requestedOfferId > 0) {
-            $offerCollection = (new OfferQuery())->withFilter([
-                '=ID' => $requestedOfferId,
-            ])->exec();
-            if($offerCollection->count() > 0) {
-                $currentOffer = $offerCollection->first();
-            }
-        } elseif ($productId > 0) {
-            $offerCollection = (new OfferQuery())->withFilter([
-                '=PROPERTY_CML2_LINK' => $productId,
-                'ACTIVE'              => 'Y',
-            ])->exec();
-        }
-
-        if($offerCollection !== null && $offerCollection->count() > 0) {
-            /** @var Offer $offer */
-            if($currentOffer === null) {
-                foreach ($offerCollection as $offer) {
-                    if ($requestedOfferId && $offer->getId() === $requestedOfferId) {
-                        $currentOffer = $offer;
-                    }
+        $getCurrentOffer = function () use ($requestedOfferId) {
+            $currentOffer = null;
+            if ($requestedOfferId > 0) {
+                $offerCollection = (new OfferQuery())->withFilter([
+                    '=ID' => $requestedOfferId,
+                ])->exec();
+                if(!$offerCollection->isEmpty()){
+                    $currentOffer = $offerCollection->first();
                 }
             }
+            return $currentOffer;
+        };
 
-            if ($currentOffer) {
-                global $APPLICATION;
-                ob_start();
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:catalog.product.delivery.info',
-                    'detail',
-                    [
-                        'OFFER' => $currentOffer,
-                    ],
-                    false,
-                    ['HIDE_ICONS' => 'Y']
-                );
+        $bitrixCache = new BitrixCache();
+        $bitrixCache
+            ->withId(__METHOD__ . '_offer_' . $requestedOfferId . '_product_' . $productId);
+        if ($requestedOfferId > 0) {
+            $bitrixCache->withTag('catalog:offer:' . $requestedOfferId);
+            $bitrixCache->withTag('iblock:item:' . $requestedOfferId);
+        }
+        if ($productId > 0) {
+            $bitrixCache->withTag('catalog:product:' . $productId)
+                ->withTag('iblock:item:' . $productId);
+        }
+        /** @var OfferCollection $offerCollection */
+        $currentOffer = $bitrixCache->resultOf($getCurrentOffer)['result'];
+        if ($currentOffer) {
+            global $APPLICATION;
+            ob_start();
+            $APPLICATION->IncludeComponent(
+                'fourpaws:catalog.product.delivery.info',
+                'detail',
+                [
+                    'OFFER' => $currentOffer,
+                ],
+                false,
+                ['HIDE_ICONS' => 'Y']
+            );
 
-                $response['deliveryHtml'] = ob_get_clean();
-            }
+            $response['deliveryHtml'] = ob_get_clean();
         }
         return JsonSuccessResponse::createWithData('', $response);
     }
