@@ -27,6 +27,9 @@ use FourPaws\SaleBundle\Exception\RuntimeException;
  */
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
+    public static $skippedDiscountsFakeIds = [];
+
+
     /**
      * @throws RuntimeException
      * @throws InvalidArgumentException
@@ -125,10 +128,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     }
 
     /**
-     * @todo Обновить дискаунт резалт
-     */
-
-    /**
      * Возвращает массив фэйков айдишников скидок, которые не нужно применять,
      * т.к. они пересакаются с другими и менее выгодны
      *
@@ -223,13 +222,20 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     }
 
     /**
-     * Удаляет переданные скидки из дискаун ресалта и обновляет его
-     *
-     * @param array $fakeDiscountsIds
-     *
+     * @return array
      */
-    public function purifyDiscountResult(array $fakeDiscountsIds): void
+    public static function getSkippedDiscountsFakeIds(): array
     {
+        return self::$skippedDiscountsFakeIds;
+    }
 
+    /**
+     * @param array $skippedDiscountsFakeIds
+     */
+    public static function setSkippedDiscountsFakeIds(array $skippedDiscountsFakeIds): void
+    {
+        self::$skippedDiscountsFakeIds = array_flip(array_flip(array_merge(
+            $skippedDiscountsFakeIds, self::$skippedDiscountsFakeIds
+        )));
     }
 }

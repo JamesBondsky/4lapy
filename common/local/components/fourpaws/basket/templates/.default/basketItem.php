@@ -37,8 +37,10 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
     $templateData['OFFERS'][$offer->getId() . '_' . $basketItem->getQuantity()] = $offer;
 } ?>
 <div class="b-item-shopping js-remove-shopping">
-    <?php if (\is_array($promoLink) && !empty($promoLink)) {
-        foreach ($promoLink as $oneLink) { ?>
+    <?php
+    if (\is_iterable($promoLink)) {
+        foreach ($promoLink as $oneLink) {
+            ?>
             <div class="b-gift-order b-gift-order--shopping js-open-gift">
                 <div class="b-gift-order__info">
                     <span class="b-gift-order__text">Товар участвует в акции
@@ -52,8 +54,10 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     </span>
                 </div>
             </div>
-        <?php }
-    } ?>
+            <?php
+        }
+    }
+    ?>
     <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
         <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
             <?php if (null !== $image) { ?>
@@ -73,12 +77,15 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <?= $basketItem->getField('NAME') ?>
                 </span>
             </span>
-                <?php if ($basketItem->getWeight() > 0) { ?>
+                <?php
+                if ($basketItem->getWeight() > 0) {
+                    ?>
                     <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
                         <span class="b-common-item__name-value">Вес: </span>
                         <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
                     </span>
-                <?php }
+                    <?php
+                }
 
                 if ($useOffer) {
                     $color = $offer->getColor();
@@ -107,8 +114,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         </div>
     </div>
     <div class="b-item-shopping__operation<?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
-        <?php $maxQuantity = 1000;
-
+        <?php
+        $maxQuantity = 1000;
         if ($useOffer) {
             $maxQuantity = $offer->getQuantity();
         }
@@ -183,12 +190,24 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <span class="b-old-price__old"><?= $basketItem->getQuantity() ?> </span>
                     <span class="b-ruble b-ruble--old-weight-price">шт</span>
                 </span>
-                <?php if ($isDiscounted) { ?>
+                <?php
+                if ($isDiscounted) {
+                    $informationText = 'Товар со скидкой';
+                    $descriptions = $component->getPromoLink($basketItem, true);
+                    if (\count($descriptions) === 1) {
+                        $informationText = 'Скидка: <br>';
+                    } elseif (\count($descriptions) > 1) {
+                        $informationText = 'Скидки: <br>';
+                    }
+                    foreach ($descriptions as $description) {
+                        $informationText .= $description . '<br>';
+                    }
+                    ?>
                     <a class="b-information-link js-popover-information-open js-popover-information-open"
                        href="javascript:void(0);" title="">
                         <span class="b-information-link__icon">i</span>
                         <div class="b-popover-information js-popover-information">
-                            На Ваш телефон будет отправлено сообщение с информацией
+                            <?= $informationText; ?>
                         </div>
                     </a>
                 <?php } ?>
