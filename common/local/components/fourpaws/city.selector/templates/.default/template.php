@@ -44,6 +44,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
         <a class="b-popover__link b-popover__link--last js-open-popup"
            href="javascript:void(0)"
            title=""
-           data-popup-id="pick-city">Нет, выбрать другой</a>
+           data-popup-id="pick-city"
+           data-baseUrl="<?= $arResult['CITY_SET_URL'] ?>">Нет, выбрать другой</a>
     </div>
 </div>
