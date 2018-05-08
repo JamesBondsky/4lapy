@@ -796,6 +796,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     {
         $itemId = 0;
         $element = [];
+        $xmlId = \ltrim($externalItem->getOfferXmlId(), '0');
+
+        if (\strpos($xmlId, 2) === 0) {
+            /**
+             * Если артикул начинается с 2, то это доставка (или какая-либо ещё услуга), мы её не добавляем
+             */
+            return;
+        }
 
         try {
             /**
@@ -804,7 +812,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $element = (new Query(ElementTable::class))
                 ->setFilter([
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'XML_ID' => \ltrim($externalItem->getOfferXmlId(), '0'),
+                    'XML_ID' => $xmlId,
                 ])
                 ->setLimit(1)
                 ->setSelect(['XML_ID', 'ID', 'NAME'])
