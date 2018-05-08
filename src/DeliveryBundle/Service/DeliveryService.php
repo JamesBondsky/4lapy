@@ -757,7 +757,7 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param $code
      *
-     * @return Store|null
+     * @return Terminal|null
      */
     public function getDpdTerminalByCode($code): ?Terminal
     {
