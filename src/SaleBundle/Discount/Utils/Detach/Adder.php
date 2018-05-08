@@ -217,7 +217,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             /** @var $bestDiscount int */
             $result = $conflicts[$bestDiscount];
         }
-
+        self::setSkippedDiscountsFakeIds($result);
         return $result;
     }
 

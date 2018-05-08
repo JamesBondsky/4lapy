@@ -200,7 +200,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                         $informationText = 'Скидки: <br>';
                     }
                     foreach ($descriptions as $description) {
-                        $informationText .= $description . '<br>';
+                        $informationText .= $description['name'] . '<br>';
                     }
                     ?>
                     <a class="b-information-link js-popover-information-open js-popover-information-open"
