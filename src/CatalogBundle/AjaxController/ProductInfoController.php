@@ -260,7 +260,7 @@ class ProductInfoController extends Controller
                 };
                 $bitrixCache = new BitrixCache();
                 $bitrixCache
-                    ->withId(__METHOD__ . '_product_' . implode('-', $productIds));
+                    ->withId(__METHOD__ . '_product_' . $product->getId());
                 $bitrixCache->withTag('catalog:product:' . $product->getId());
                 $bitrixCache->withTag('iblock:item:' . $product->getId());
                 $bitrixCache->withTag('catalog:offer:' . $offer->getId());
