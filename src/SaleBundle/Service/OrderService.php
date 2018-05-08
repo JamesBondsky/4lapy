@@ -585,7 +585,8 @@ class OrderService implements LoggerAwareInterface
             $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
             $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
             /** должен быть установлен всегда */
-            if(empty($this->getOrderPropertyByCode('SHIPMENT_PLACE_CODE')->getValue())){
+            $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE');
+            if($shipmentPlaceCode === null || empty($shipmentPlaceCode->getValue())){
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
             }
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
