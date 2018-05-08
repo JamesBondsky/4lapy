@@ -28,6 +28,11 @@ trait DeliveryResultTrait
     protected $selectedInterval;
 
     /**
+     * @var Interval
+     */
+    protected $firstInterval;
+
+    /**
      * @var int
      */
     protected $dateOffset = 0;
@@ -39,22 +44,20 @@ trait DeliveryResultTrait
 
     /**
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
      * @return Interval|null
      */
     public function getSelectedInterval(): ?Interval
     {
-        $result = $this->selectedInterval;
-
-        if (null === $result) {
+        if (null === $this->selectedInterval) {
             /**
              * Если интервал не выбран, подбираем наиболее подходящий (с минимальной датой доставки)
              */
-            $result = $this->getFirstInterval();
+            try {
+                $this->selectedInterval = $this->getFirstInterval();
+            } catch (NotFoundException $e) {}
         }
 
-        return $result;
+        return $this->selectedInterval;
     }
 
     /**
@@ -124,7 +127,6 @@ trait DeliveryResultTrait
      * @throws ArgumentException
      * @throws StoreNotFoundException
      * @throws SystemException
-     * @throws NotFoundException
      * @return IntervalCollection
      */
     public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection
@@ -135,22 +137,15 @@ trait DeliveryResultTrait
             $dateIndex = $this->getDateOffset();
         }
 
-        /** @var \DateTime $date */
-        $date = clone $this->getDeliveryDate();
         $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
         if (($dateIndex >= 0) && ($dateIndex <= $diff)) {
-            if ($dateIndex > 0) {
-                $date->modify(sprintf('+%s days', $dateIndex));
-            }
-            $date->setTime(0, 0, 0, 0);
-
+            $days = $this->getIntervalOffset() + $dateIndex;
+            $tmpDelivery = clone $this;
             /** @var Interval $interval */
             foreach ($this->getIntervals() as $interval) {
-                $tmpDelivery = clone $this;
-                /** @var \DateTime $tmpDate */
-                $tmpDate = clone $tmpDelivery->setSelectedInterval($interval)->getDeliveryDate();
-                $tmpDate->setTime(0, 0, 0, 0);
-                if ($tmpDate <= $date) {
+                $intervalDays = $tmpDelivery->setSelectedInterval($interval)->getIntervalOffset();
+
+                if ($intervalDays <= $days) {
                     $result->add($interval);
                 }
             }
@@ -161,25 +156,17 @@ trait DeliveryResultTrait
 
     /**
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
-     * @return Interval|null
+     * @throws NotFoundException
+     * @return Interval
      */
-    protected function getFirstInterval(): ?Interval
+    protected function getFirstInterval(): Interval
     {
-        $result = null;
-        /** @var IntervalService $intervalService */
-        $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
-        try {
-            $result = $intervalService->getFirstInterval(
-                $this->getIntervals()
-            );
-        } catch (NotFoundException $e) {
-            if (!$this->getIntervals()->isEmpty()) {
-                $result = $this->getIntervals()->first();
-            }
+        if (null === $this->firstInterval) {
+            /** @var IntervalService $intervalService */
+            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+            $this->firstInterval = $intervalService->getFirstInterval($this);
         }
 
-        return $result;
+        return $this->firstInterval;
     }
 }

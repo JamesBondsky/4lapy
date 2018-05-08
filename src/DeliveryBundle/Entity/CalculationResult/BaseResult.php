@@ -348,9 +348,15 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->deliveryDate = $date;
     }
 
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     */
     protected function doCalculatePeriod(): void
     {
-        $this->setPeriodFrom($this->deliveryDate->diff($this->getCurrentDate())->days);
+        $this->setPeriodFrom($this->getDeliveryDate()->diff($this->getCurrentDate())->days);
         $this->setPeriodType(self::PERIOD_TYPE_DAY);
     }
 

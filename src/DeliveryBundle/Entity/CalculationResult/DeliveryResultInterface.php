@@ -52,4 +52,6 @@ interface DeliveryResultInterface extends CalculationResultInterface
      * @return DeliveryResultInterface
      */
     public function setSelectedInterval(Interval $selectedInterval): DeliveryResultInterface;
+
+    public function getIntervalOffset(): int;
 }

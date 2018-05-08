@@ -94,36 +94,31 @@ class IntervalService implements LoggerAwareInterface
     }
 
     /**
-     * @param IntervalCollection $intervals
-     * @param string             $location
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
+     * @param DeliveryResultInterface $delivery
      * @throws NotFoundException
-     * @throws StoreNotFoundException
      * @return Interval
      */
-    public function getFirstInterval(IntervalCollection $intervals, $location = ''): Interval
+    public function getFirstInterval(DeliveryResultInterface $delivery): Interval
     {
         $result = null;
 
-      /*  $delivery = current($this->deliveryService->getByLocation($location, DeliveryService::DELIVERY_CODES));
+        $intervals = $delivery->getIntervals();
         if ($delivery instanceof DeliveryResultInterface) {
             $min = null;
 
             $tmpDelivery = clone $delivery;
             /** @var Interval $interval */
-      /*
             foreach ($intervals as $i => $interval) {
                 $tmpDelivery->setSelectedInterval($interval);
 
-                if ((null === $min) || $min > $tmpDelivery->getDeliveryDate()) {
+                if ((null === $min) || $min > $tmpDelivery->getIntervalOffset()) {
                     $result = $interval;
-                    $min = $tmpDelivery->getDeliveryDate();
+                    $min = $tmpDelivery->getIntervalOffset();
                 }
             }
         } else {
-        */    $result = $intervals->first();
-//        }
+            $result = $intervals->first();
+        }
 
         if (!$result instanceof Interval) {
             throw new NotFoundException('No intervals found');
