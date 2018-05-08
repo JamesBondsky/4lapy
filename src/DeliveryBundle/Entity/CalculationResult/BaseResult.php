@@ -434,7 +434,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
                 /** @var StockResult $item */
                 foreach ($stockResult as $item) {
-                    if (!$item->getOffer()->getProduct()->isDeliveryAvailable()) {
+                    if (!$this->checkIsDeliverable($item->getOffer())) {
                         $item->setType(StockResult::TYPE_UNAVAILABLE);
                     }
                 }
