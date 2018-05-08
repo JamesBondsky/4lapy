@@ -249,7 +249,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 </div>
 
 
-<div class="delivery-block__type <?= $storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
+<div class="delivery-block__type <?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'js-hidden-valid-fields' : 'visible' ?>"
      data-delivery="<?= $delivery->getPrice() ?>"
      data-full="<?= $orderPrice ?>" data-type="oneDelivery">
 
