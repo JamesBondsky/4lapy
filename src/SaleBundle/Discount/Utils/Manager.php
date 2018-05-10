@@ -37,7 +37,10 @@ class Manager
     protected static $extendEnabled = true;
     protected static $extendCalculated = false;
 
-    public static function OnBeforeSaleOrderFinalAction(Event $event)
+    /**
+     * @param Event $event
+     */
+    public static function OnBeforeSaleOrderFinalAction(Event $event): void
     {
         if(!self::$extendEnabled) {
             $event->addResult(new EventResult(EventResult::ERROR));
