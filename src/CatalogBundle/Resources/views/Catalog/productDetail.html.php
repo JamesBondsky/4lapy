@@ -114,8 +114,7 @@ if (null === $offer) {
                     ?>
                 </div>
             </div>
-            <?php
-            $APPLICATION->IncludeComponent(
+            <?php $hasSetFirst = $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.groupset',
                 '',
                 [
@@ -124,7 +123,17 @@ if (null === $offer) {
                 null,
                 ['HIDE_ICONS' => 'Y']
             );
-            ?>
+            if(!$hasSetFirst) {
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:catalog.product.bundle',
+                    '',
+                    [
+                        'OFFER' => $offer,
+                    ],
+                    null,
+                    ['HIDE_ICONS' => 'Y']
+                );
+            }?>
         </div>
         <div class="b-product-card__tab">
             <div class="b-tab">
