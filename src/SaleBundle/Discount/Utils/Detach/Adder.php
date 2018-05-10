@@ -78,11 +78,12 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             ) {
                                 if ((int)$basketItem->getQuantity() > $applyCount) {
                                     //Детачим
-                                    $basketItem->setField('QUANTITY', $basketItem->getQuantity() - $applyCount);
+                                    $price = (100 - $percent) * $basketItem->getPrice() / 100;
+                                    $basketItem->setField('QUANTITY', $applyCount);
+                                    $basketItem->setField('PRICE', $price);
+                                    $basketItem->setField('DISCOUNT_PRICE', $basketItem->getBasePrice() - $price);
+                                    $basketItem->setField('CUSTOM_PRICE', 'Y');
                                     $fields = [
-                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
-                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
-                                        'CUSTOM_PRICE' => 'Y',
                                         'PROPS' => [
                                             [
                                                 'NAME' => 'Отделено от элемента корзины',
@@ -101,9 +102,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                     /**
                                      * вызывает то же событие, но у нас обработчик заблокирован пока выполняется
                                      */
-                                    $this->basketService->addOfferToBasket(
+                                    $newBasketItem = $this->basketService->addOfferToBasket(
                                         $basketItem->getProductId(),
-                                        $applyCount,
+                                        $basketItem->getQuantity() - $applyCount,
                                         $fields,
                                         false
                                     );
