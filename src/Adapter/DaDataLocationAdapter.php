@@ -136,7 +136,7 @@ class DaDataLocationAdapter extends BaseAdapter
         });
 
         return \array_reduce($result, function ($array, $item) {
-            if ($this::TYPE_MAP[$item['TYPE']['CODE']] === 'REGION') {
+            if ($item['TYPE']['CODE'] === 'REGION') {
                 $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE, '', \strtolower($item['NAME'])));
             }
 
