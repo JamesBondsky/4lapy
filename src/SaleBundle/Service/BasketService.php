@@ -74,7 +74,8 @@ class BasketService implements LoggerAwareInterface
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaPosService $manzanaPosService
-    ) {
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
     }
@@ -103,7 +104,8 @@ class BasketService implements LoggerAwareInterface
         array $rewriteFields = [],
         bool $save = true,
         ?Basket $basket = null
-    ): BasketItem {
+    ): BasketItem
+    {
         if ($offerId < 1) {
             throw new InvalidArgumentException('Неверный ID товара');
         }
@@ -300,7 +302,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @param bool $renew
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * @return OfferCollection
      *
@@ -312,7 +314,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * @return OfferCollection
      */
@@ -527,7 +529,8 @@ class BasketService implements LoggerAwareInterface
             $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                 $this->manzanaPosService->buildRequestFromBasket(
                     $this->getBasket(),
-                    $cardNumber ?? ''
+                    $cardNumber ?? '',
+                    $this
                 )
             );
 
@@ -579,7 +582,8 @@ class BasketService implements LoggerAwareInterface
                 if ($user && $user->getDiscountCardNumber()) {
                     $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
                         $basket,
-                        $user->getDiscountCardNumber()
+                        $user->getDiscountCardNumber(),
+                        $this
                     );
                     $chequeRequest->setPaidByBonus($basket->getPrice());
 
@@ -620,31 +624,41 @@ class BasketService implements LoggerAwareInterface
      *
      * @param BasketItem $basketItem
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * @return bool
      */
-    public function isItemWithBonusAwarding(BasketItem $basketItem): bool
+    public function isItemWithBonusAwarding(BasketItem $basketItem, ?Order $order = null): bool
     {
         /**
          * @var BasketItemCollection $basketItemCollection
          * @var Order $order
+         * @var Basket $basket
          */
+
         if (
-            !($basketItemCollection = $basketItem->getCollection())
-            ||
-            !($basket = $basketItemCollection->getBasket())
-            ||
-            !($order = $basket->getOrder())
-            ||
+            !$order
+            &&
+            (
+                !($basketItemCollection = $basketItem->getCollection())
+                ||
+                !($basket = $basketItemCollection->getBasket())
+                ||
+                !($order = $basket->getOrder())
+            )
+        ) {
+            throw new InvalidArgumentException('У элемента корзины не установлен заказ');
+        }
+
+        if (
             !($discount = $order->getDiscount())
             ||
             !($applyResult = $discount->getApplyResult(true))
         ) {
             throw new InvalidArgumentException('У элемента корзины не расчитаны скидки');
         }
-
         $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
+
         if (!$basketDiscounts) {
             /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
             foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
@@ -668,6 +682,7 @@ class BasketService implements LoggerAwareInterface
                 }
             }
         }
+
         if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
             $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
         }
@@ -732,7 +747,8 @@ class BasketService implements LoggerAwareInterface
         string $code,
         string $value,
         string $name = ''
-    ): void {
+    ): void
+    {
         try {
             $found = false;
             /** @var BasketPropertyItem $property */

@@ -1381,7 +1381,8 @@ class OrderService implements LoggerAwareInterface
                     $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                         $this->manzanaPosService->buildRequestFromBasket(
                             $order->getBasket(),
-                            $user->getDiscountCardNumber()
+                            $user->getDiscountCardNumber(),
+                            $this->basketService
                         )
                     );
                     $propertyValue->setValue($cheque->getChargedBonus());
