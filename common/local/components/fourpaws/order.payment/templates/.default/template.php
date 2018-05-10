@@ -46,8 +46,8 @@ $declension = new Declension('товар', 'товара', 'товаров');
     /** @var Order $relatedOrder */
     $relatedOrder = $arResult['RELATED_ORDER'];
     if ($relatedOrder) {
-        $relatedOrderWeight = $order->getBasket()->getWeight();
-        $relatedOrderQuantity = array_sum($order->getBasket()->getQuantityList());
+        $relatedOrderWeight = $relatedOrder->getBasket()->getWeight();
+        $relatedOrderQuantity = array_sum($relatedOrder->getBasket()->getQuantityList());
     }
     ?>
     <div class="b-container">

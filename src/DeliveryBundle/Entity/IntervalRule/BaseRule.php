@@ -7,7 +7,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 
 abstract class BaseRule
 {
-    const TYPE_ADD_DAYS = 'ADD_DAYS';
+    public const TYPE_ADD_DAYS = 'ADD_DAYS';
 
     /**
      * @var string
@@ -21,18 +21,4 @@ abstract class BaseRule
     {
         return $this->type;
     }
-
-    /**
-     * @param CalculationResultInterface $result
-     *
-     * @return bool
-     */
-    abstract public function isSuitable(CalculationResultInterface $result): bool;
-
-    /**
-     * @param CalculationResultInterface $result
-     *
-     * @return CalculationResultInterface
-     */
-    abstract public function apply(CalculationResultInterface $result): CalculationResultInterface;
 }

@@ -3,14 +3,17 @@
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
-class DpdDeliveryResult extends BaseResult
+class DpdDeliveryResult extends BaseResult implements DeliveryResultInterface
 {
+    use DeliveryResultTrait;
+
     /**
      * Данные по длительности доставки, пришедшие от DPD
      * @var int
@@ -21,10 +24,11 @@ class DpdDeliveryResult extends BaseResult
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws StoreNotFoundException
+     * @throws SystemException
      */
-    public function doCalculateDeliveryDate(): void
+    public function getDeliveryDate(): \DateTime
     {
-        parent::doCalculateDeliveryDate();
+        $date = parent::getDeliveryDate();
         $modifier = $this->getInitialPeriod();
 
         /**
@@ -37,8 +41,10 @@ class DpdDeliveryResult extends BaseResult
         $modifier += $this->getDateOffset();
 
         if ($modifier > 0) {
-            $this->deliveryDate->modify(sprintf('+%s days', $modifier));
+            $date = (clone $date)->modify(sprintf('+%s days', $modifier));
         }
+
+        return $date;
     }
 
     /**
@@ -46,6 +52,7 @@ class DpdDeliveryResult extends BaseResult
      * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws StoreNotFoundException
+     * @throws SystemException
      */
     public function getPeriodTo(): int
     {
@@ -66,7 +73,6 @@ class DpdDeliveryResult extends BaseResult
      */
     public function setInitialPeriod(int $initialPeriod): DpdDeliveryResult
     {
-        $this->resetResult();
         $this->initialPeriod = $initialPeriod;
         return $this;
     }
@@ -79,6 +85,19 @@ class DpdDeliveryResult extends BaseResult
     {
         $this->selectedStore = $selectedStore;
         return $this;
+    }
+
+    /**
+     * @param bool $internalCall
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     */
+    public function isSuccess($internalCall = false)
+    {
+        return parent::isSuccess($internalCall);
     }
 
     /**
