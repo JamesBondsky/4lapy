@@ -6,8 +6,8 @@
 namespace FourPaws\DeliveryBundle\Collection;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -18,7 +18,7 @@ class DeliveryScheduleResultCollection extends ArrayCollection
      * @param \DateTime $from
      *
      * @throws NotFoundException
-     * @return DeliveryScheduleResult|null
+     * @return DeliveryScheduleResultCollection|null
      */
     public function getFastest(\DateTime $from): ?DeliveryScheduleResultCollection
     {
@@ -124,7 +124,7 @@ class DeliveryScheduleResultCollection extends ArrayCollection
         $price = 0;
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $price += $item->getOffer()->getPrice() * $item->getAmount();
+            $price += $item->getPrice();
         }
 
         return $price;
@@ -132,24 +132,17 @@ class DeliveryScheduleResultCollection extends ArrayCollection
 
     /**
      * @param Offer $offer
-     *
-     * @return DeliveryScheduleResultCollection
+     * @return int
      */
-    public function filterByOffer(Offer $offer): DeliveryScheduleResultCollection
+    public function getAmountByOffer(Offer $offer): int
     {
-        return $this->filterByOfferId($offer->getId());
-    }
+        $total = 0;
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            $total += $item->getAmountByOffer($offer);
+        }
 
-    /**
-     * @param int $offerId
-     *
-     * @return DeliveryScheduleResultCollection
-     */
-    public function filterByOfferId(int $offerId): DeliveryScheduleResultCollection
-    {
-        return $this->filter(function (DeliveryScheduleResult $result) use ($offerId) {
-            return $result->getOffer()->getId() === $offerId;
-        });
+        return $total;
     }
 
     /**
@@ -159,25 +152,33 @@ class DeliveryScheduleResultCollection extends ArrayCollection
      */
     protected function splitByLastSenders(\DateTime $from): array
     {
-        $result = [];
+        /** @var DeliveryScheduleResultCollection[] $result */
+        $results = [];
+
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $lastSender = $item->getScheduleResult()->getLastSender();
-            $xmlId = $lastSender->getXmlId();
-            if (null === $result[$xmlId]) {
-                $result[$xmlId] = new static();
-            }
-            $offerId = $item->getOffer()->getId();
-            if (null === $result[$xmlId]->get($offerId)) {
-                $result[$xmlId][$offerId] = $item;
-            } else {
-                $days = $result[$xmlId]->get($offerId)->getScheduleResult()->getDays($from);
-                if ($days > $item->getScheduleResult()->getDays($from)) {
-                    $result[$xmlId][$offerId] = $item;
+            $xmlId = $item->getScheduleResult()->getLastSender()->getXmlId();
+            /** @var DeliveryScheduleResultCollection $res */
+            $result = $results[$xmlId] ?? new static();
+
+            /** @var Offer $offer */
+            foreach ($item->getStockResults()->getOffers() as $offer) {
+                $offerId = $offer->getId();
+                $resultByOffer = $result[$offerId];
+                if (null === $resultByOffer) {
+                    $result[$offerId] = $item;
+                } else {
+                    /** @var DeliveryScheduleResult $resultByOffer */
+                    $days = $resultByOffer->getScheduleResult()->getDays($from);
+                    if ($days > $item->getScheduleResult()->getDays($from)) {
+                        $result[$offerId] = $item;
+                    }
                 }
             }
+
+            $results[$xmlId] = $result;
         }
 
-        return $result;
+        return $results;
     }
 }

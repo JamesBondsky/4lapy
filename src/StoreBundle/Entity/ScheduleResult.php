@@ -13,7 +13,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class ScheduleResult extends Base
+class ScheduleResult extends Base implements \Serializable
 {
     public const RESULT_ERROR  = -1;
 

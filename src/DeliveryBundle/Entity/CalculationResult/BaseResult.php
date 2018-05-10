@@ -9,21 +9,18 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
-use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
-use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
+use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Stock;
@@ -72,11 +69,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $stockResult;
 
     /**
-     * @var IntervalCollection
-     */
-    protected $intervals;
-
-    /**
      * @var int
      */
     protected $freeFrom = 0;
@@ -87,19 +79,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $deliveryDate;
 
     /**
-     * @var Interval
-     */
-    protected $selectedInterval;
-
-    /**
      * @var Store
      */
     protected $selectedStore;
-
-    /**
-     * @var int
-     */
-    protected $dateOffset = 0;
 
     /**
      * @var DeliveryScheduleResultCollection
@@ -250,71 +232,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @return IntervalCollection
-     */
-    public function getIntervals(): IntervalCollection
-    {
-        if (!$this->intervals) {
-            $this->intervals = new IntervalCollection();
-        }
-
-        return $this->intervals;
-    }
-
-    /**
-     * @param IntervalCollection $intervals
-     *
-     * @return CalculationResultInterface
-     */
-    public function setIntervals(IntervalCollection $intervals): CalculationResultInterface
-    {
-        $this->resetResult();
-        $this->intervals = $intervals;
-
-        return $this;
-    }
-
-    /**
-     * @param int|null $dateIndex
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws NotFoundException
-     * @throws StoreNotFoundException
-     * @throws SystemException
-     * @return IntervalCollection
-     */
-    public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection
-    {
-        $result = new IntervalCollection();
-
-        if (null === $dateIndex) {
-            $dateIndex = $this->getDateOffset();
-        }
-
-        $date = clone $this->getDeliveryDate();
-        $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
-        if (($dateIndex >= 0) && ($dateIndex <= $diff)) {
-            if ($dateIndex > 0) {
-                $date->modify(sprintf('+%s days', $dateIndex));
-            }
-            $date->setTime(0, 0, 0, 0);
-
-            /** @var Interval $interval */
-            foreach ($this->getIntervals() as $interval) {
-                $tmpDelivery = clone $this;
-                $tmpDate = clone $tmpDelivery->setSelectedInterval($interval)->getDeliveryDate();
-                $tmpDate->setTime(0, 0, 0, 0);
-                if ($tmpDate <= $date) {
-                    $result->add($interval);
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    /**
      * @return int
      */
     public function getFreeFrom(): int
@@ -351,39 +268,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $this->resetResult();
         $this->deliveryZone = $deliveryZone;
-
-        return $this;
-    }
-
-    /**
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
-     * @return Interval|null
-     */
-    public function getSelectedInterval(): ?Interval
-    {
-        $result = $this->selectedInterval;
-
-        if (null === $result) {
-            /**
-             * Если интервал не выбран, подбираем наиболее подходящий (с минимальной датой доставки)
-             */
-            $result = $this->getFirstInterval();
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param Interval $selectedInterval
-     *
-     * @return CalculationResultInterface
-     */
-    public function setSelectedInterval(Interval $selectedInterval): CalculationResultInterface
-    {
-        $this->resetResult();
-        $this->selectedInterval = $selectedInterval;
 
         return $this;
     }
@@ -434,7 +318,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
                 /** @var StockResult $item */
                 foreach ($stockResult as $item) {
-                    if (!$item->getOffer()->getProduct()->isDeliveryAvailable()) {
+                    if (!$this->checkIsDeliverable($item->getOffer())) {
                         $item->setType(StockResult::TYPE_UNAVAILABLE);
                     }
                 }
@@ -464,9 +348,15 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->deliveryDate = $date;
     }
 
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     */
     protected function doCalculatePeriod(): void
     {
-        $this->setPeriodFrom($this->deliveryDate->diff($this->getCurrentDate())->days);
+        $this->setPeriodFrom($this->getDeliveryDate()->diff($this->getCurrentDate())->days);
         $this->setPeriodType(self::PERIOD_TYPE_DAY);
     }
 
@@ -475,9 +365,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @param StockResultCollection $stockResult
      *
      * @throws ApplicationCreateException
-     * @throws ArgumentException
      * @throws StoreNotFoundException
-     * @throws SystemException
      * @return \DateTime
      */
     protected function getStoreShipmentDate(Store $store, StockResultCollection $stockResult): \DateTime
@@ -489,25 +377,35 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $date = clone $this->getCurrentDate();
 
         $delayed = $stockResult->getDelayed();
-        $resultCollection = new DeliveryScheduleResultCollection();
+        /** @var StockCollection[] $stocksByStore */
+        $stocksByStore = [];
+        $stores = [];
 
+        $offers = $delayed->getOffers();
         /** @var Offer $offer */
-        foreach ($stockResult->getOffers() as $offer) {
-            $stockResultForOffer = $delayed->filterByOffer($offer);
+        foreach ($offers as $offer) {
             /** @var Stock $stock */
             foreach ($offer->getAllStocks() as $stock) {
-                if ($stock->getStore()->getXmlId() === $store->getXmlId()) {
-                    continue;
+                $storeXmlId = $stock->getStore()->getXmlId();
+                if (!isset($stores[$storeXmlId])) {
+                    $stores[$storeXmlId] = $stock->getStore();
                 }
 
-                foreach ($this->getScheduleResults(
-                    $stock->getStore(),
-                    $store,
-                    $offer,
-                    $stockResultForOffer->getAmount()
-                ) as $result) {
-                    $resultCollection->add($result);
+                if (!isset($stocksByStore[$storeXmlId])) {
+                    $stocksByStore[$storeXmlId] = new StockCollection();
                 }
+                $stocksByStore[$storeXmlId][$offer->getId()] = $stock;
+            }
+        }
+
+        /**
+         * @var string $storeXmlId
+         * @var StockCollection $stocks
+         */
+        $resultCollection = new DeliveryScheduleResultCollection();
+        foreach ($stocksByStore as $storeXmlId => $stocks) {
+            foreach ($this->getScheduleResults($stores[$storeXmlId], $store, $stocks, $delayed) as $scheduleResult) {
+                $resultCollection->add($scheduleResult);
             }
         }
 
@@ -521,20 +419,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->shipmentResults = $resultCollection->getFastest($this->getCurrentDate());
 
             $date->modify(sprintf('+%s days', $this->shipmentResults->getDays($this->getCurrentDate())));
-
-            $delayed = $stockResult->getDelayed();
-            foreach ($delayed->getOffers() as $offer) {
-                /** @var DeliveryScheduleResult $shipmentResultForOffer */
-                $shipmentResultForOffer = $this->shipmentResults->filterByOffer($offer)->first();
+            foreach ($offers as $offer) {
+                $amount = $this->shipmentResults->getAmountByOffer($offer);
                 /** @var StockResult $stockResultForOffer */
                 $stockResultForOffer = $delayed->filterByOffer($offer)->first();
-                if ($shipmentResultForOffer) {
-                    $diff = $stockResultForOffer->getAmount() - $shipmentResultForOffer->getAmount();
+                if ($amount) {
+                    $diff = $stockResultForOffer->getAmount() - $amount;
                     if ($diff > 0) {
                         /**
                          * Если может быть поставлено меньшее, чем нужно, количество
                          */
-                        $stockResultForOffer->setAmount($shipmentResultForOffer->getAmount());
+                        $stockResultForOffer->setAmount($amount);
                         $this->stockResult->add(
                             (clone $stockResultForOffer)->setAmount($diff)
                                 ->setType(StockResult::TYPE_UNAVAILABLE)
@@ -565,22 +460,19 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store $sender
-     * @param Store $receiver
-     * @param Offer $offer
-     * @param int   $amount
+     * @param Store                 $sender
+     * @param Store                 $receiver
+     * @param StockCollection       $stocks
+     * @param StockResultCollection $delayed
      *
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      * @return DeliveryScheduleResultCollection
      */
     protected function getScheduleResults(
         Store $sender,
         Store $receiver,
-        Offer $offer,
-        int $amount = 0
+        StockCollection $stocks,
+        StockResultCollection $delayed
     ): DeliveryScheduleResultCollection
     {
         /** @var Store $sender */
@@ -591,6 +483,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
 
             $scheduleResults = new ScheduleResultCollection();
+
             /** @var ScheduleResult $scheduleResult */
             foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver) as $scheduleResult) {
                 $key = implode(',', $scheduleResult->getRouteCodes());
@@ -611,12 +504,19 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         }
 
         $results = new DeliveryScheduleResultCollection();
-        /** @var ScheduleResult $result */
+
+        $currentStockResults = new StockResultCollection();
+        /** @var Stock $stock */
+        foreach ($stocks as $stock) {
+            $offerId = $stock->getProductId();
+            $currentStockResults[$offerId] = $delayed->filterByOfferId($offerId)->first();
+        }
+
         foreach ($scheduleResults as $scheduleResult) {
             $results->add(
                 (new DeliveryScheduleResult())->setScheduleResult($scheduleResult)
-                    ->setOffer($offer)
-                    ->setAmount($amount)
+                    ->setStocks($stocks)
+                    ->setStockResults($currentStockResults)
             );
         }
 
@@ -651,26 +551,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $this->getDeliveryDate();
         return parent::getPeriodType();
-    }
-
-    /**
-     * @return int
-     */
-    public function getDateOffset(): int
-    {
-        return $this->dateOffset;
-    }
-
-    /**
-     * @param int $dateOffset
-     *
-     * @return BaseResult
-     */
-    public function setDateOffset(int $dateOffset): CalculationResultInterface
-    {
-        $this->dateOffset = $dateOffset;
-        $this->resetResult();
-        return $this;
     }
 
     /**
@@ -814,31 +694,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         return new StoreCollection(iterator_to_array($iterator));
     }
 
-    /**
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
-     * @return Interval|null
-     */
-    protected function getFirstInterval(): ?Interval
-    {
-        $result = null;
-        /** @var IntervalService $intervalService */
-        $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
-        try {
-            $result = $intervalService->getFirstInterval(
-                $this,
-                $this->getIntervals()
-            );
-        } catch (NotFoundException $e) {
-            if (!$this->getIntervals()->isEmpty()) {
-                $result = $this->getIntervals()->first();
-            }
-        }
-
-        return $result;
-    }
-
     protected function resetResult(): void
     {
         $this->deliveryDate = null;
@@ -847,8 +702,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $this->warnings = new ErrorCollection();
         $this->stockResult = null;
         $this->periodFrom = null;
-
-        $this->selectedInterval = null;
+        $this->shipmentResults = null;
     }
 
     /**
@@ -863,6 +717,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     public function __clone()
     {
-        $this->resetResult();
+        $this->stockResult = $this->stockResult instanceof StockResultCollection
+            ? clone $this->stockResult
+            : $this->stockResult;
+        $this->deliveryDate = $this->deliveryDate instanceof \DateTime
+            ? clone $this->deliveryDate
+            : $this->deliveryDate;
+        $this->currentDate = $this->currentDate instanceof \DateTime
+            ? clone $this->currentDate
+            : $this->currentDate;
     }
 }
