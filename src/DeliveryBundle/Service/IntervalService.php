@@ -11,7 +11,7 @@ use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\AddDaysRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
@@ -39,10 +39,18 @@ class IntervalService implements LoggerAwareInterface
     ];
 
     /**
-     * IntervalService constructor.
+     * @var DeliveryService
      */
-    public function __construct()
-    {}
+    protected $deliveryService;
+
+    /**
+     * IntervalService constructor.
+     * @param DeliveryService $deliveryService
+     */
+    public function __construct(DeliveryService $deliveryService)
+    {
+        $this->deliveryService = $deliveryService;
+    }
 
     /**
      * @param string $type
@@ -86,33 +94,34 @@ class IntervalService implements LoggerAwareInterface
     }
 
     /**
-     * @param CalculationResultInterface $delivery
-     * @param IntervalCollection $intervals
-     *
-     * @return Interval
-     *
+     * @param DeliveryResultInterface $delivery
      * @throws NotFoundException
-     * @throws ArgumentException
-     * @throws ApplicationCreateException
-     * @throws StoreNotFoundException
+     * @return Interval
      */
-    public function getFirstInterval(CalculationResultInterface $delivery, IntervalCollection $intervals): Interval
+    public function getFirstInterval(DeliveryResultInterface $delivery): Interval
     {
         $result = null;
 
-        $min = null;
-        /** @var Interval $interval */
-        foreach ($intervals as $i => $interval) {
-            $tmpDelivery = clone $delivery;
-            $tmpDelivery->setSelectedInterval($interval);
+        $intervals = $delivery->getIntervals();
+        if ($delivery instanceof DeliveryResultInterface) {
+            $min = null;
 
-            if ((null === $min) || $min > $tmpDelivery->getDeliveryDate()->getTimestamp()) {
-                $result = $interval;
+            $tmpDelivery = clone $delivery;
+            /** @var Interval $interval */
+            foreach ($intervals as $i => $interval) {
+                $tmpDelivery->setSelectedInterval($interval);
+
+                if ((null === $min) || $min > $tmpDelivery->getIntervalOffset()) {
+                    $result = $interval;
+                    $min = $tmpDelivery->getIntervalOffset();
+                }
             }
+        } else {
+            $result = $intervals->first();
         }
 
         if (!$result instanceof Interval) {
-            throw new NotFoundException('Не найдено подходящих интервалов');
+            throw new NotFoundException('No intervals found');
         }
 
         return $result;

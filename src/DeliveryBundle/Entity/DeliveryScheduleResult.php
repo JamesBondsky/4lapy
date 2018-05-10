@@ -7,7 +7,10 @@
 namespace FourPaws\DeliveryBundle\Entity;
 
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
+use FourPaws\StoreBundle\Entity\Stock;
 
 /**
  * Class TmpDeliveryScheduleResult
@@ -15,57 +18,29 @@ use FourPaws\StoreBundle\Entity\ScheduleResult;
 class DeliveryScheduleResult
 {
     /**
-     * @var int
-     */
-    protected $amount;
-
-    /**
      * @var ScheduleResult
      */
     protected $scheduleResult;
 
     /**
-     * @var Offer
+     * @var StockCollection
      */
-    protected $offer;
+    protected $stocks;
 
     /**
-     * @return Offer
+     * @var float
      */
-    public function getOffer(): Offer
-    {
-        return $this->offer;
-    }
+    protected $price;
 
     /**
-     * @param Offer $offer
-     *
-     * @return DeliveryScheduleResult
+     * @var StockResultCollection
      */
-    public function setOffer(Offer $offer): DeliveryScheduleResult
-    {
-        $this->offer = $offer;
-        return $this;
-    }
+    protected $stockResults;
 
     /**
-     * @return int
+     * @var int[]
      */
-    public function getAmount(): int
-    {
-        return $this->amount;
-    }
-
-    /**
-     * @param int $amount
-     *
-     * @return DeliveryScheduleResult
-     */
-    public function setAmount(int $amount): DeliveryScheduleResult
-    {
-        $this->amount = $amount;
-        return $this;
-    }
+    protected $deliverableAmounts = [];
 
     /**
      * @return ScheduleResult
@@ -84,5 +59,84 @@ class DeliveryScheduleResult
     {
         $this->scheduleResult = $scheduleResult;
         return $this;
+    }
+
+    /**
+     * @return StockCollection
+     */
+    public function getStocks(): StockCollection
+    {
+        return $this->stocks;
+    }
+
+    /**
+     * @param StockCollection $stocks
+     * @return DeliveryScheduleResult
+     */
+    public function setStocks(StockCollection $stocks): DeliveryScheduleResult
+    {
+        $this->stocks = $stocks;
+        $this->price = null;
+        $this->deliverableAmounts = [];
+        return $this;
+    }
+
+    /**
+     * @return StockResultCollection
+     */
+    public function getStockResults(): StockResultCollection
+    {
+        return $this->stockResults;
+    }
+
+    /**
+     * @param StockResultCollection $stockResults
+     * @return DeliveryScheduleResult
+     */
+    public function setStockResults(StockResultCollection $stockResults): DeliveryScheduleResult
+    {
+        $this->stockResults = $stockResults;
+        $this->price = null;
+        $this->deliverableAmounts = [];
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getPrice(): float
+    {
+        if (null === $this->price) {
+            $price = 0;
+            /** @var StockResult $stockResult */
+            foreach ($this->getStockResults() as $stockResult) {
+                $offer = $stockResult->getOffer();
+                $amount = $this->getAmountByOffer($offer);
+                $price += $amount * $offer->getPrice();
+            }
+
+            $this->price = $price;
+        }
+
+        return $this->price;
+    }
+
+    /**
+     * @param Offer $offer
+     * @return int
+     */
+    public function getAmountByOffer(Offer $offer): int
+    {
+        if (!isset($this->deliverableAmounts[$offer->getId()])) {
+            $neededAmount = $this->getStockResults()->filterByOffer($offer)->getAmount();
+
+            $stock = $this->getStocks()->filterByOffer($offer)->first();
+            $availableAmount = $stock instanceof Stock ? $stock->getAmount() : 0;
+            $this->deliverableAmounts[$offer->getId()] = $neededAmount > $availableAmount
+                ? $availableAmount
+                : $neededAmount;
+        }
+
+        return $this->deliverableAmounts[$offer->getId()];
     }
 }

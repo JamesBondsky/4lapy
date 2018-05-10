@@ -6,80 +6,103 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 
-class DeliveryResult extends BaseResult
+class DeliveryResult extends BaseResult implements DeliveryResultInterface
 {
-    /**
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
-     * @throws SystemException
-     * @throws NotFoundException
-     */
-    public function doCalculateDeliveryDate(): void
-    {
-        parent::doCalculateDeliveryDate();
-
-        if ($this->getIntervals()->isEmpty()) {
-            return;
-        }
-
-        /**
-         * Расчет даты доставки с учетом правил интервалов
-         */
-        $firstInterval = $this->getFirstInterval();
-        if (null === $this->selectedInterval) {
-            $interval = $firstInterval;
-        } else {
-            $interval = $this->selectedInterval;
-        }
-        if (!$interval instanceof Interval) {
-            return;
-        }
-
-        /** @var BaseRule $rule */
-        $date = clone $this->deliveryDate;
-        foreach ($interval->getRules() as $rule) {
-            if (!$rule instanceof TimeRuleInterface) {
-                continue;
-            }
-
-            if (!$rule->isSuitable($this)) {
-                continue;
-            }
-
-            $rule->apply($this);
-            break;
-        }
-
-        if ($this->getDateOffset() > 0) {
-            $defaultOffset = 0;
-            if ((null !== $firstInterval) && (string)$interval !== (string)$firstInterval) {
-                $defaultOffset = $date->diff(
-                    (clone $this)->setSelectedInterval($firstInterval)->getDeliveryDate()
-                );
-            }
-            $newOffset = $date->diff($this->deliveryDate)->days;
-            $diff = $newOffset - $defaultOffset;
-            $this->deliveryDate->modify(sprintf('+%s days', $this->getDateOffset() - $diff));
-        }
-    }
+    use DeliveryResultTrait;
 
     /**
      * @return int
      * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws StoreNotFoundException
+     * @throws SystemException
      */
     public function getPeriodTo(): int
     {
         return $this->getPeriodFrom() + 10;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws NotFoundException
+     * @return \DateTime
+     */
+    public function getDeliveryDate(): \DateTime
+    {
+        $date = parent::getDeliveryDate();
+
+        return (clone $date)->modify(sprintf('+%s days', $this->getFullOffset()));
+    }
+
+    /**
+     * Кол-во дней, прибавляемых к дате доставки при применении правила интервала
+     *
+     * @throws ApplicationCreateException
+     * @return int
+     */
+    public function getIntervalOffset(): int
+    {
+        if (null === $this->intervalOffset) {
+            $this->intervalOffset = 0;
+            if ($interval = $this->getSelectedInterval()) {
+                $defaultDate = clone ($this->deliveryDate ?? $this->getCurrentDate());
+                $date = clone $defaultDate;
+                foreach ($interval->getRules() as $rule) {
+                    if (!$rule instanceof TimeRuleInterface) {
+                        continue;
+                    }
+
+                    if (!$rule->isSuitable($defaultDate)) {
+                        continue;
+                    }
+
+                    $date = $rule->apply($defaultDate);
+                    break;
+                }
+
+                $this->intervalOffset = $date->diff($defaultDate)->days;
+            }
+        }
+
+        return $this->intervalOffset;
+    }
+
+    /**
+     * Комбинирует выбранную дату доставки и результат применения правил интервалов
+     *
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @return int
+     */
+    protected function getFullOffset(): int
+    {
+        $result = $this->getDateOffset();
+        if (!$this->getIntervals()->isEmpty()) {
+            $result += (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param bool $internalCall
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     */
+    public function isSuccess($internalCall = false)
+    {
+        return parent::isSuccess($internalCall);
     }
 
     /**
@@ -91,5 +114,11 @@ class DeliveryResult extends BaseResult
     protected function checkIsDeliverable(Offer $offer): bool
     {
         return parent::checkIsDeliverable($offer) && $offer->getProduct()->isDeliveryAvailable();
+    }
+
+    protected function resetResult(): void
+    {
+        parent::resetResult();
+        $this->selectedInterval = null;
     }
 }
