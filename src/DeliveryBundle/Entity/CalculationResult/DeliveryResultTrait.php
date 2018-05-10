@@ -155,6 +155,14 @@ trait DeliveryResultTrait
     }
 
     /**
+     * @return int
+     */
+    public function getIntervalOffset(): int
+    {
+        return 0;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws NotFoundException
      * @return Interval

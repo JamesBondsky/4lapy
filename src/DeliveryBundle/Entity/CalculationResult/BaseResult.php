@@ -9,7 +9,6 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
@@ -21,6 +20,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
+use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Stock;
@@ -365,9 +365,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @param StockResultCollection $stockResult
      *
      * @throws ApplicationCreateException
-     * @throws ArgumentException
      * @throws StoreNotFoundException
-     * @throws SystemException
      * @return \DateTime
      */
     protected function getStoreShipmentDate(Store $store, StockResultCollection $stockResult): \DateTime
@@ -379,25 +377,35 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $date = clone $this->getCurrentDate();
 
         $delayed = $stockResult->getDelayed();
-        $resultCollection = new DeliveryScheduleResultCollection();
+        /** @var StockCollection[] $stocksByStore */
+        $stocksByStore = [];
+        $stores = [];
 
+        $offers = $delayed->getOffers();
         /** @var Offer $offer */
-        foreach ($stockResult->getOffers() as $offer) {
-            $stockResultForOffer = $delayed->filterByOffer($offer);
+        foreach ($offers as $offer) {
             /** @var Stock $stock */
             foreach ($offer->getAllStocks() as $stock) {
-                if ($stock->getStore()->getXmlId() === $store->getXmlId()) {
-                    continue;
+                $storeXmlId = $stock->getStore()->getXmlId();
+                if (!isset($stores[$storeXmlId])) {
+                    $stores[$storeXmlId] = $stock->getStore();
                 }
 
-                foreach ($this->getScheduleResults(
-                    $stock->getStore(),
-                    $store,
-                    $offer,
-                    $stockResultForOffer->getAmount()
-                ) as $result) {
-                    $resultCollection->add($result);
+                if (!isset($stocksByStore[$storeXmlId])) {
+                    $stocksByStore[$storeXmlId] = new StockCollection();
                 }
+                $stocksByStore[$storeXmlId][$offer->getId()] = $stock;
+            }
+        }
+
+        /**
+         * @var string $storeXmlId
+         * @var StockCollection $stocks
+         */
+        $resultCollection = new DeliveryScheduleResultCollection();
+        foreach ($stocksByStore as $storeXmlId => $stocks) {
+            foreach ($this->getScheduleResults($stores[$storeXmlId], $store, $stocks, $delayed) as $scheduleResult) {
+                $resultCollection->add($scheduleResult);
             }
         }
 
@@ -411,20 +419,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->shipmentResults = $resultCollection->getFastest($this->getCurrentDate());
 
             $date->modify(sprintf('+%s days', $this->shipmentResults->getDays($this->getCurrentDate())));
-
-            $delayed = $stockResult->getDelayed();
-            foreach ($delayed->getOffers() as $offer) {
-                /** @var DeliveryScheduleResult $shipmentResultForOffer */
-                $shipmentResultForOffer = $this->shipmentResults->filterByOffer($offer)->first();
+            foreach ($offers as $offer) {
+                $amount = $this->shipmentResults->getAmountByOffer($offer);
                 /** @var StockResult $stockResultForOffer */
                 $stockResultForOffer = $delayed->filterByOffer($offer)->first();
-                if ($shipmentResultForOffer) {
-                    $diff = $stockResultForOffer->getAmount() - $shipmentResultForOffer->getAmount();
+                if ($amount) {
+                    $diff = $stockResultForOffer->getAmount() - $amount;
                     if ($diff > 0) {
                         /**
                          * Если может быть поставлено меньшее, чем нужно, количество
                          */
-                        $stockResultForOffer->setAmount($shipmentResultForOffer->getAmount());
+                        $stockResultForOffer->setAmount($amount);
                         $this->stockResult->add(
                             (clone $stockResultForOffer)->setAmount($diff)
                                 ->setType(StockResult::TYPE_UNAVAILABLE)
@@ -455,22 +460,19 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store $sender
-     * @param Store $receiver
-     * @param Offer $offer
-     * @param int   $amount
+     * @param Store                 $sender
+     * @param Store                 $receiver
+     * @param StockCollection       $stocks
+     * @param StockResultCollection $delayed
      *
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      * @return DeliveryScheduleResultCollection
      */
     protected function getScheduleResults(
         Store $sender,
         Store $receiver,
-        Offer $offer,
-        int $amount = 0
+        StockCollection $stocks,
+        StockResultCollection $delayed
     ): DeliveryScheduleResultCollection
     {
         /** @var Store $sender */
@@ -481,6 +483,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
 
             $scheduleResults = new ScheduleResultCollection();
+
             /** @var ScheduleResult $scheduleResult */
             foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver) as $scheduleResult) {
                 $key = implode(',', $scheduleResult->getRouteCodes());
@@ -501,12 +504,19 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         }
 
         $results = new DeliveryScheduleResultCollection();
-        /** @var ScheduleResult $result */
+
+        $currentStockResults = new StockResultCollection();
+        /** @var Stock $stock */
+        foreach ($stocks as $stock) {
+            $offerId = $stock->getProductId();
+            $currentStockResults[$offerId] = $delayed->filterByOfferId($offerId)->first();
+        }
+
         foreach ($scheduleResults as $scheduleResult) {
             $results->add(
                 (new DeliveryScheduleResult())->setScheduleResult($scheduleResult)
-                    ->setOffer($offer)
-                    ->setAmount($amount)
+                    ->setStocks($stocks)
+                    ->setStockResults($currentStockResults)
             );
         }
 
