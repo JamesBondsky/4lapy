@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Order;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\Coupon;
@@ -75,19 +76,25 @@ class Manzana implements LoggerAwareInterface
     }
 
     /**
+     * @param Order|null $order
+     *
      * @throws RuntimeException
      * @throws ManzanaPromocodeUnavailableException
      * @throws ArgumentOutOfRangeException
      */
-    public function calculate()
+    public function calculate(?Order $order = null): void
     {
-        $basket = $this->basketService->getBasket();
+        if ($order) {
+            $basket = $order->getBasket();
+        } else {
+            $basket = $this->basketService->getBasket();
 
-        if (!$basket->count()) {
-            /**
-             * Empty basket
-             */
-            return;
+            if (!$basket->count()) {
+                /**
+                 * Empty basket
+                 */
+                return;
+            }
         }
 
         $price = $basket->getPrice();
@@ -100,7 +107,7 @@ class Manzana implements LoggerAwareInterface
             $card = '';
         }
 
-        $request = $this->manzanaPosService->buildRequestFromBasket($basket, $card);
+        $request = $this->manzanaPosService->buildRequestFromBasket($basket, $card, $this->basketService);
 
         try {
             if ($this->promocode) {
