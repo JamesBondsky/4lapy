@@ -8,6 +8,7 @@ namespace FourPaws\SaleBundle\Discount\Utils;
 
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
@@ -35,6 +36,13 @@ class Manager
 {
     protected static $extendEnabled = true;
     protected static $extendCalculated = false;
+
+    public static function OnBeforeSaleOrderFinalAction(Event $event)
+    {
+        if(!self::$extendEnabled) {
+            $event->addResult(new EventResult(2));
+        }
+    }
 
     /**
      * @param null|Event $event
@@ -85,7 +93,7 @@ class Manager
                 $couponStorage->delete($promoCode);
             }
 
-            self::enableExtendsDiscount(); // че за кек? перенес ниже. Да и вообще все так банально
+            self::enableExtendsDiscount();
             self::$extendCalculated = true;
         }
     }

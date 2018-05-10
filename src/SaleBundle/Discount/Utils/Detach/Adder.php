@@ -31,6 +31,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 
 
     /**
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws RuntimeException
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
@@ -78,6 +80,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                     //Детачим
                                     $basketItem->setField('QUANTITY', $basketItem->getQuantity() - $applyCount);
                                     $fields = [
+                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
+                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                                        'CUSTOM_PRICE' => 'Y',
                                         'PROPS' => [
                                             [
                                                 'NAME' => 'Отделено от элемента корзины',
@@ -96,18 +101,12 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                     /**
                                      * вызывает то же событие, но у нас обработчик заблокирован пока выполняется
                                      */
-                                    $newBasketItem = $this->basketService->addOfferToBasket(
+                                    $this->basketService->addOfferToBasket(
                                         $basketItem->getProductId(),
                                         $applyCount,
                                         $fields,
                                         false
                                     );
-                                    /** @noinspection PhpInternalEntityUsedInspection */
-                                    $newBasketItem->setFieldsNoDemand([
-                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
-                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
-                                        'CUSTOM_PRICE' => 'Y'
-                                    ]);
                                 } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
                                     //Просто проставляем поля
                                     /** @noinspection PhpInternalEntityUsedInspection */
