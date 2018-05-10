@@ -27,7 +27,7 @@ if (!is_array($arResult['IBLOCKS']) || empty($arResult['IBLOCKS'])) {
 use FourPaws\Decorators\SvgDecorator;
 
 $frame = $this->createFrame(); ?>
-<section class="b-common-section" data-url="/ajax/catalog/product-info/">
+<section class="b-common-section">
     <div class="b-common-section__title-box b-common-section__title-box--latest-event b-common-section__title-box--wrap">
         <h2 class="b-title b-title--latest-event b-title--wrap">Последние события</h2>
         <div class="b-common-section__link-block">

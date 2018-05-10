@@ -12,6 +12,11 @@ use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\External\Exception\DaDataExecuteException;
 use GuzzleHttp\Client;
 
+/**
+ * Class DaDataService
+ *
+ * @package FourPaws\External
+ */
 class DaDataService
 {
     /**
@@ -19,9 +24,15 @@ class DaDataService
      */
     protected $client;
 
+    /**
+     * DaDataService constructor.
+     *
+     * @param string $token
+     * @param string $secret
+     */
     public function __construct(string $token, string $secret)
     {
-        $this->client = new DaDataClient(new Client(), ['token' => $token, 'secret' => $secret]);
+        $this->client = new DaDataClient(new Client(), \compact('token', 'secret'));
     }
 
     /**
@@ -33,6 +44,7 @@ class DaDataService
     public function validateAddress(string $address): bool
     {
         $response = $this->cleanAddress($address);
+
         return $this->isValidAddress(
             (new DaDataLocationAdapter())->convertDataToEntity((array)$response, DadataLocation::class)
         );

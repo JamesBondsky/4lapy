@@ -13,6 +13,7 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
@@ -134,7 +135,9 @@ class CalculationResultFactory
             $result->setStockResult($dpdData['STOCK_RESULT']);
         }
 
-        if ($dpdData['INTERVALS'] instanceof IntervalCollection) {
+        if ($result instanceof DeliveryResultInterface &&
+            $dpdData['INTERVALS'] instanceof IntervalCollection
+        ) {
             $result->setIntervals($dpdData['INTERVALS']);
         }
 
@@ -185,7 +188,9 @@ class CalculationResultFactory
                     $result->setStockResult($value);
                     break;
                 case 'INTERVALS':
-                    $result->setIntervals($value);
+                    if ($result instanceof DeliveryResultInterface) {
+                        $result->setIntervals($value);
+                    }
                     break;
             }
         }

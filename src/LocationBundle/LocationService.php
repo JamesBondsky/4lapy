@@ -29,12 +29,12 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\External\DaDataService;
 use FourPaws\External\Exception\DaDataExecuteException;
+use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Enum\CitiesSectionCode;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
-use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -149,7 +149,7 @@ class LocationService
             /** @noinspection OffsetOperationsInspection */
             $filter = [
                 'LOCATION.CODE' => $location['CODE'],
-                'SERVICE.CODE'  => self::REGION_SERVICE_CODE,
+                'SERVICE.CODE' => self::REGION_SERVICE_CODE,
             ];
 
             /** @noinspection OffsetOperationsInspection */
@@ -218,8 +218,8 @@ class LocationService
                 }
 
                 $result[CitiesSectionCode::POPULAR][] = [
-                    'NAME'  => $element['NAME'],
-                    'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
+                    'NAME' => $element['NAME'],
+                    'CODE' => $element['PROPERTY_LOCATION_VALUE'],
                     'SHOPS' => $storeCodes,
                 ];
             }
@@ -244,8 +244,8 @@ class LocationService
                 }
 
                 $result[CitiesSectionCode::MOSCOW_REGION][] = [
-                    'NAME'  => $element['NAME'],
-                    'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
+                    'NAME' => $element['NAME'],
+                    'CODE' => $element['PROPERTY_LOCATION_VALUE'],
                     'SHOPS' => $storeCodes,
                 ];
             }
@@ -263,9 +263,9 @@ class LocationService
      * Поиск местоположения по названию
      *
      * @param string $query
-     * @param int    $limit
-     * @param bool   $exact
-     * @param array  $additionalFilter
+     * @param int $limit
+     * @param bool $exact
+     * @param array $additionalFilter
      *
      * @throws CityNotFoundException
      * @return array
@@ -276,13 +276,14 @@ class LocationService
         int $limit = null,
         bool $exact = false,
         array $additionalFilter = []
-    ): array {
+    ): array
+    {
         $findLocation = function () use ($query, $limit, $exact, $additionalFilter) {
             $filter = [];
             if ($query) {
                 $filter = [
                     'NAME.LANGUAGE_ID' => LANGUAGE_ID,
-                    'PHRASE'           => $query,
+                    'PHRASE' => $query,
                 ];
 
                 if ($exact) {
@@ -337,8 +338,8 @@ class LocationService
      * Поиск местоположения по названию
      *
      * @param Query|array $queryParams
-     * @param int         $limit
-     * @param bool         $needPath
+     * @param int $limit
+     * @param bool $needPath
      *
      * @return array
      * @throws ArgumentException
@@ -349,7 +350,8 @@ class LocationService
         $queryParams,
         int $limit = 0,
         bool $needPath = true
-    ): array {
+    ): array
+    {
         $cacheFinder = function () use ($queryParams, $limit, $needPath) {
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
@@ -380,7 +382,7 @@ class LocationService
                  */
                 $parentList = [];
                 /** очень долгий запрос на получение родителей */
-                if($needPath) {
+                if ($needPath) {
                     $parentRes = LocationTable::query()
                         ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
                         ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
@@ -388,8 +390,8 @@ class LocationService
                         ->setSelect([
                             'ID',
                             'CODE',
-                            'DISPLAY'    => 'NAME.NAME',
-                            '_TYPE_ID'   => 'TYPE.ID',
+                            'DISPLAY' => 'NAME.NAME',
+                            '_TYPE_ID' => 'TYPE.ID',
                             '_TYPE_CODE' => 'TYPE.CODE',
                             '_TYPE_NAME' => 'TYPE.NAME.NAME',
                         ])->exec();
@@ -421,7 +423,7 @@ class LocationService
                     if (\is_array($typeList[$item['ID']])) {
                         foreach ($typeList[$item['ID']] as $itemId) {
                             $locations[$itemId]['TYPE'] = [
-                                'ID'   => $item['ID'],
+                                'ID' => $item['ID'],
                                 'CODE' => $item['CODE'],
                                 'NAME' => $item['DISPLAY'],
                             ];
@@ -469,11 +471,11 @@ class LocationService
     /**
      * Поиск местоположений с типом "город" и "деревня" по названию
      *
-     * @param string            $query
+     * @param string $query
      * @param string|array|null $parentName
-     * @param null|int          $limit
-     * @param bool              $exact
-     * @param bool              $exactRegion
+     * @param null|int $limit
+     * @param bool $exact
+     * @param bool $exactRegion
      *
      * @return array
      * @throws ArgumentException
@@ -486,13 +488,14 @@ class LocationService
         int $limit = null,
         bool $exact = false,
         bool $exactRegion = false
-    ): array {
+    ): array
+    {
         $prefix = $exact ? '=' : '?';
         $prefixRegion = $exactRegion ? '=' : '?';
         /** NAME_UPPER в индексе */
         $filter = [
             $prefix . 'NAME.NAME_UPPER' => ToUpper($query),
-            'TYPE.CODE'                 => [
+            'TYPE.CODE' => [
                 static::TYPE_CITY,
                 static::TYPE_VILLAGE,
             ],
@@ -504,19 +507,19 @@ class LocationService
                     $parentFilter = ['LOGIC' => 'AND'];
                     foreach ($parentName as $typeCode => $name) {
                         $filterItem = [
-                            $prefixRegion.'PARENTS.NAME.NAME_UPPER' => ToUpper($name),
+                            $prefixRegion . 'PARENTS.NAME.NAME_UPPER' => ToUpper($name),
                             '=PARENTS.TYPE.CODE' => ToUpper($typeCode)
                         ];
                         $filter[] = $filterItem;
                     }
                     $filter[] = $parentFilter;
                 } else {
-                    $filter[$prefixRegion.'PARENTS.NAME.NAME_UPPER'] = ToUpper(current($parentName));
+                    $filter[$prefixRegion . 'PARENTS.NAME.NAME_UPPER'] = ToUpper(current($parentName));
                     $filter['=PARENTS.TYPE.CODE'] = ToUpper(key($parentName));
                 }
 
             } else {
-                $filter[$prefixRegion.'PARENTS.NAME.NAME_UPPER'] = ToUpper($parentName);
+                $filter[$prefixRegion . 'PARENTS.NAME.NAME_UPPER'] = ToUpper($parentName);
                 $filter['=PARENTS.TYPE.CODE'] = 'REGION';
             }
         }
@@ -539,7 +542,7 @@ class LocationService
         if ($code) {
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
-                    '=CODE'     => $code,
+                    '=CODE' => $code,
                     'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
                 ]));
             }
@@ -643,7 +646,7 @@ class LocationService
             while ($group = $groups->fetch()) {
                 /** @noinspection OffsetOperationsInspection */
                 $item = [
-                    'ID'   => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_ID'],
+                    'ID' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_ID'],
                     'CODE' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE'],
                     'NAME' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_NAME_NAME'],
                 ];
@@ -834,10 +837,10 @@ class LocationService
     }
 
     /**
-     * @param array  $fields
+     * @param array $fields
      * @param string $code
      *
-     * @param array  $excludeWords
+     * @param array $excludeWords
      *
      * @return array
      */
@@ -890,16 +893,16 @@ class LocationService
 
         $data = CBitrixLocationSelectorSearchComponent::processSearchRequestV2(
             [
-                'select'      => [
+                'select' => [
                     'CODE',
-                    'VALUE'   => 'ID',
+                    'VALUE' => 'ID',
                     'DISPLAY' => 'NAME.NAME',
                     'TYPE_ID',
                 ],
-                'filter'      => $filter,
+                'filter' => $filter,
                 'additionals' => ['PATH'],
-                'PAGE_SIZE'   => $limit,
-                'PAGE'        => 0,
+                'PAGE_SIZE' => $limit,
+                'PAGE' => 0,
             ]
         );
 
@@ -920,7 +923,7 @@ class LocationService
                 ];
             }
             $result[] = [
-                'ID'   => $item['VALUE'],
+                'ID' => $item['VALUE'],
                 'CODE' => $item['CODE'],
                 'NAME' => $item['DISPLAY'],
                 'TYPE' => $types[$item['TYPE_ID']],
@@ -929,5 +932,15 @@ class LocationService
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $location
+     *
+     * @return string
+     */
+    public function getDadataJsonFromLocationArray(array $location): string
+    {
+        return \json_encode((new DaDataLocationAdapter())->convertLocationArrayToDadataArray($location), JSON_OBJECT_AS_ARRAY);
     }
 }

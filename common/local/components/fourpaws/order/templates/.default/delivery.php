@@ -93,7 +93,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                value="<?= /** @noinspection PhpUnhandledExceptionInspection */
                                $pickup ? $pickup->getSelectedShop()->getXmlId() : '' ?>">
                         <input type="hidden" name="delyveryType"
-                               value="<?= $storage->isSplit() ? 'twoDeliveries' : 'oneDelivery' ?>" class="js-no-valid">
+                               value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>" class="js-no-valid">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) {
                                 ?>

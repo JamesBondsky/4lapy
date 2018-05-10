@@ -7,12 +7,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $arResult
  * @var OrderStorage $storage
- * @var CalculationResultInterface $delivery
+ * @var DeliveryResultInterface $delivery
  */
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -46,7 +46,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
 
 $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
 
-function showDeliveryDateSelector(CalculationResultInterface $delivery, OrderStorage $storage, string $name)
+function showDeliveryDateSelector(DeliveryResultInterface $delivery, OrderStorage $storage, string $name)
 {
     $result = '
     <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date" name="' . $name . '">
@@ -63,7 +63,7 @@ function showDeliveryDateSelector(CalculationResultInterface $delivery, OrderSto
     return $result;
 }
 
-function showDeliveryIntervalSelector(CalculationResultInterface $delivery, OrderStorage $storage, string $name)
+function showDeliveryIntervalSelector(DeliveryResultInterface $delivery, OrderStorage $storage, string $name)
 {
     $tmpDelivery = clone $delivery;
     $tmpDelivery->setDateOffset($storage->getDeliveryDate());
@@ -91,7 +91,9 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 }
 
 ?>
-
+<script>
+    window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>
+</script>
 <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address"
     <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
     <div class="b-input-line__label-wrapper">
@@ -131,7 +133,6 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     </div>
 </div>
 <div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields active" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
-    <input type="hidden" class="js-order-address-city js-no-valid" value="<?=$arResult['SELECTED_CITY']['NAME']?>">
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
             <?php if ($showNewAddressFormHeader) {
@@ -249,7 +250,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 </div>
 
 
-<div class="delivery-block__type <?= $storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
+<div class="delivery-block__type <?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'js-hidden-valid-fields' : 'visible' ?>"
      data-delivery="<?= $delivery->getPrice() ?>"
      data-full="<?= $orderPrice ?>" data-type="oneDelivery">
 
@@ -280,7 +281,7 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
         </div>
     </div>
     <?php if (!empty($arResult['SPLIT_RESULT'])) {
-        /** @var CalculationResultInterface $delivery1 */
+        /** @var DeliveryResultInterface $delivery1 */
         $delivery1 = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
         ?>
         <div class="change-delivery-type"><span class="js-change-delivery-type" data-type="twoDeliveries">Доставить быстрее</span>

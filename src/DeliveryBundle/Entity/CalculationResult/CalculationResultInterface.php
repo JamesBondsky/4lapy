@@ -12,10 +12,8 @@ use Bitrix\Main\Entity\FieldError;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
-use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -102,25 +100,6 @@ interface CalculationResultInterface
     public function setDeliveryName(string $deliveryName): CalculationResultInterface;
 
     /**
-     * @return IntervalCollection
-     */
-    public function getIntervals(): IntervalCollection;
-
-    /**
-     * @param IntervalCollection $intervals
-     *
-     * @return CalculationResultInterface
-     */
-    public function setIntervals(IntervalCollection $intervals): CalculationResultInterface;
-
-    /**
-     * @param int|null $dateIndex
-     *
-     * @return IntervalCollection
-     */
-    public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection;
-
-    /**
      * @return int
      */
     public function getFreeFrom(): int;
@@ -143,18 +122,6 @@ interface CalculationResultInterface
      * @return CalculationResultInterface
      */
     public function setDeliveryZone(string $deliveryZone): CalculationResultInterface;
-
-    /**
-     * @return Interval
-     */
-    public function getSelectedInterval(): ?Interval;
-
-    /**
-     * @param Interval $selectedInterval
-     *
-     * @return CalculationResultInterface
-     */
-    public function setSelectedInterval(Interval $selectedInterval): CalculationResultInterface;
 
     /**
      * @throws NotFoundException
@@ -195,17 +162,6 @@ interface CalculationResultInterface
      * @return bool
      */
     public function isSuccess($internalCall = false);
-
-    /**
-     * @return int
-     */
-    public function getDateOffset(): int;
-
-    /**
-     * @param int $offset
-     * @return CalculationResultInterface
-     */
-    public function setDateOffset(int $offset): CalculationResultInterface;
 
     /**
      * @return DeliveryScheduleResult|null

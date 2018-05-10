@@ -60,7 +60,13 @@ class Manager
      */
     public static function OnAfterSaleOrderFinalAction(Event $event): void
     {
-        if (self::$extendEnabled && !self::$extendCalculated) {
+        /**
+         * @var Order $order
+         */
+        $order = $event->getParameter('ENTITY');
+        $isOrderBasketFilled = $order->getBasket()->count() > 0;
+
+        if ($isOrderBasketFilled && self::$extendEnabled && !self::$extendCalculated) {
             self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
@@ -87,7 +93,7 @@ class Manager
             }
 
             try {
-                $manzana->calculate();
+                $manzana->calculate($order);
                 $basketService->setPromocodeDiscount($manzana->getDiscount());
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $couponStorage->delete($promoCode);
