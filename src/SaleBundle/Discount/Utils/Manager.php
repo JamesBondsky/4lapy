@@ -40,7 +40,7 @@ class Manager
     public static function OnBeforeSaleOrderFinalAction(Event $event)
     {
         if(!self::$extendEnabled) {
-            $event->addResult(new EventResult(2));
+            $event->addResult(new EventResult(EventResult::ERROR));
         }
     }
 
