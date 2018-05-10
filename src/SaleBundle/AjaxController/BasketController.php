@@ -135,8 +135,8 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      */
     public function bulkAddAction(Request $request): JsonResponse
     {
@@ -170,6 +170,60 @@ class BasketController extends Controller implements LoggerAwareInterface
             ];
             $response = JsonSuccessResponse::createWithData(
                 'Набор добавлен в корзину',
+                $data,
+                200,
+                ['reload' => false]
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/bulkAddBundle/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
+     */
+    public function bulkAddBundleAction(Request $request): JsonResponse
+    {
+        $offers = (array)$request->get('offerId', []);
+
+        if (empty($offers)) {
+            $response = JsonErrorResponse::createWithData(
+                'Не переданы товары',
+                [],
+                200,
+                ['reload' => true]
+            );
+        } else {
+            foreach ($offers as $offer) {
+                $explode = explode('_', $offer);
+                $offerId=(int)$explode[0];
+                $quantity = (int)$explode[1];
+
+                try {
+                    $this->basketService->addOfferToBasket($offerId, $quantity);
+                } catch (BaseExceptionInterface $e) {
+                    $response = JsonErrorResponse::createWithData(
+                        $e->getMessage(),
+                        [],
+                        200,
+                        ['reload' => false]
+                    );
+                }
+            }
+        }
+        /** @noinspection UnSafeIsSetOverArrayInspection */
+        if(!isset($response)) {
+            $data = [
+                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+            ];
+            $response = JsonSuccessResponse::createWithData(
+                'Комплект добавлен в корзину',
                 $data,
                 200,
                 ['reload' => false]

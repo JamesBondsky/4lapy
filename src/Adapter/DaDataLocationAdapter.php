@@ -28,11 +28,21 @@ class DaDataLocationAdapter extends BaseAdapter
     ];
 
     public const EXCLUDE_REGION_TYPE = [
-        'край',
-        'область',
-        'автономная область',
-        'автономный округ',
-        'республика',
+        'REGION' => [
+            'край',
+            'область',
+            'автономная область',
+            'автономный округ',
+            'республика',
+        ],
+        'VILLAGE' => [
+            'село',
+            'посёлок',
+            'посёлок городского типа',
+            'хутор',
+            'аул',
+            'деревня',
+        ]
     ];
 
     /**
@@ -136,8 +146,8 @@ class DaDataLocationAdapter extends BaseAdapter
         });
 
         return \array_reduce($result, function ($array, $item) {
-            if ($item['TYPE']['CODE'] === 'REGION') {
-                $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE, '', \strtolower($item['NAME'])));
+            if (self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']]) {
+                $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']], '', \strtolower($item['NAME'])));
             }
 
             return array_merge($array, [

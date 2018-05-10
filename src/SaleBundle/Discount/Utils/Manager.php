@@ -8,6 +8,7 @@ namespace FourPaws\SaleBundle\Discount\Utils;
 
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
@@ -35,6 +36,16 @@ class Manager
 {
     protected static $extendEnabled = true;
     protected static $extendCalculated = false;
+
+    /**
+     * @param Event $event
+     */
+    public static function OnBeforeSaleOrderFinalAction(Event $event): void
+    {
+        if(!self::$extendEnabled) {
+            $event->addResult(new EventResult(EventResult::ERROR));
+        }
+    }
 
     /**
      * @param null|Event $event

@@ -146,6 +146,39 @@ class DeliveryScheduleResultCollection extends ArrayCollection
     }
 
     /**
+     * @param Offer          $offer
+     * @param \DateTime|null $for
+     * @return DeliveryScheduleResult|null
+     */
+    public function getByOffer(Offer $offer, ?\DateTime $for = null): ?DeliveryScheduleResult
+    {
+        return $this->getByOfferId($offer->getId(), $for);
+    }
+
+    /**
+     * @param int            $offerId
+     * @param \DateTime|null $for
+     * @return DeliveryScheduleResult|null
+     */
+    public function getByOfferId(int $offerId, ?\DateTime $for = null): ?DeliveryScheduleResult
+    {
+        $results = [];
+        $for = $for ?: new \DateTime();
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            $hasOffer = !$item->getStockResults()->filterByOfferId($offerId)->isEmpty();
+            if ($hasOffer) {
+                $days = $item->getScheduleResult()->getDays($for);
+                $results[$days] = $item;
+            }
+        }
+
+        krsort($results);
+
+        return !empty($results) ? reset($results) : null;
+    }
+
+    /**
      * @param \DateTime $from
      * @return array
      * @throws NotFoundException

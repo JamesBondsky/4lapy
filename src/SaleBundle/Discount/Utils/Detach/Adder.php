@@ -31,6 +31,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 
 
     /**
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws RuntimeException
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
@@ -76,7 +78,11 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             ) {
                                 if ((int)$basketItem->getQuantity() > $applyCount) {
                                     //Детачим
-                                    $basketItem->setField('QUANTITY', $basketItem->getQuantity() - $applyCount);
+                                    $price = (100 - $percent) * $basketItem->getPrice() / 100;
+                                    $basketItem->setField('QUANTITY', $applyCount);
+                                    $basketItem->setField('PRICE', $price);
+                                    $basketItem->setField('DISCOUNT_PRICE', $basketItem->getBasePrice() - $price);
+                                    $basketItem->setField('CUSTOM_PRICE', 'Y');
                                     $fields = [
                                         'PROPS' => [
                                             [
@@ -98,16 +104,10 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                      */
                                     $newBasketItem = $this->basketService->addOfferToBasket(
                                         $basketItem->getProductId(),
-                                        $applyCount,
+                                        $basketItem->getQuantity() - $applyCount,
                                         $fields,
                                         false
                                     );
-                                    /** @noinspection PhpInternalEntityUsedInspection */
-                                    $newBasketItem->setFieldsNoDemand([
-                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
-                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
-                                        'CUSTOM_PRICE' => 'Y'
-                                    ]);
                                 } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
                                     //Просто проставляем поля
                                     /** @noinspection PhpInternalEntityUsedInspection */
@@ -217,7 +217,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             /** @var $bestDiscount int */
             $result = $conflicts[$bestDiscount];
         }
-
+        self::setSkippedDiscountsFakeIds($result);
         return $result;
     }
 

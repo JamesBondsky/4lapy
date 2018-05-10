@@ -47,7 +47,7 @@ class GroupSet extends CBitrixComponent
         $this->basketService = $container->get(BasketService::class);
     }
 
-    public function executeComponent(): void
+    public function executeComponent()
     {
         /** @var Offer $currentOffer */
         $currentOffer = $this->arParams['OFFER'];
@@ -60,12 +60,13 @@ class GroupSet extends CBitrixComponent
             $logger->error($e->getMessage());
         }
         if (empty($groupSets)) {
-            return;
+            return null;
         }
         $this->arResult['SHARE'] = $groupSets[0]['share'];
         $this->arResult['EMPTY_SLOTS'] = \count($groupSets[0]['groupSet']) - 1;
         $this->loadTemplateFields();
         $this->includeComponentTemplate();
+        return $this->arResult['PRICE'] > 0 && $this->arResult['OFFER_ID'] > 0;
     }
 
     protected function loadTemplateFields()
