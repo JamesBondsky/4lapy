@@ -14,6 +14,11 @@ use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/**
+ * Trait ManzanaServiceTrait
+ *
+ * @package FourPaws\External\Traits
+ */
 trait ManzanaServiceTrait
 {
     use LoggerAwareTrait;
@@ -51,11 +56,10 @@ trait ManzanaServiceTrait
     /**
      * @throws RuntimeException
      */
-    public function setServiceLogger()
+    public function setServiceLogger(): void
     {
         if (!$this->logger) {
             $this->setLogger(LoggerFactory::create('manzana'));
         }
     }
-
 }

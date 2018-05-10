@@ -31,6 +31,7 @@ use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
@@ -375,15 +376,15 @@ class OrderService implements LoggerAwareInterface
         }
         $locationProp->setValue($selectedCity['CODE']);
 
-        $selectedDelivery->setDateOffset($storage->getDeliveryDate());
-        if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
-            /** @var Interval $interval */
-            if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
-                $selectedDelivery->setSelectedInterval($interval);
-            }
-        }
-
         if ($this->deliveryService->isDelivery($selectedDelivery)) {
+            /** @var DeliveryResultInterface $selectedDelivery */
+            $selectedDelivery->setDateOffset($storage->getDeliveryDate());
+            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+                /** @var Interval $interval */
+                if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
+                    $selectedDelivery->setSelectedInterval($interval);
+                }
+            }
             /** @noinspection PhpInternalEntityUsedInspection */
             $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
         }
@@ -448,6 +449,7 @@ class OrderService implements LoggerAwareInterface
                      * У доставок есть выбор интервала доставки
                      */
                     if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                        /** @var DeliveryResultInterface $selectedDelivery */
                         if ($interval = $selectedDelivery->getSelectedInterval()) {
                             $value = sprintf(
                                 '%s:00-%s:00',
@@ -563,7 +565,6 @@ class OrderService implements LoggerAwareInterface
         $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery);
 
         /** @var PropertyValue $propertyValue */
-        /** в быстром заказе здесь все сбрасывается нафиг */
         foreach ($propertyValueCollection as $propertyValue) {
             $code = $propertyValue->getProperty()['CODE'];
             if ($skipAddressProperties && \in_array($code, $addressProperties, true)) {
@@ -584,10 +585,6 @@ class OrderService implements LoggerAwareInterface
             /** зануляем дату доставки и интервал - ибо не пользователь все выбирал а система */
             $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
             $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
-            /** должен быть установлен всегда */
-            if(empty($this->getOrderPropertyByCode('SHIPMENT_PLACE_CODE')->getValue())){
-                $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', 'DC01');
-            }
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
             $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
             return [$order, $selectedDelivery];
@@ -716,7 +713,6 @@ class OrderService implements LoggerAwareInterface
                 ];
 
                 $storage->setUserId($user->getId());
-                $canAttachCard = true;
             }
         }
 
@@ -787,20 +783,31 @@ class OrderService implements LoggerAwareInterface
         /**
          * Заполнение складов довоза товара для элементов корзины
          */
-        if ($shipmentResults = $selectedDelivery->getShipmentResults()) {
-            /** @var BasketItem $item */
-            foreach ($order->getBasket()->getOrderableItems() as $item) {
-                /** @var DeliveryScheduleResult $deliveryResult */
-                if (!$deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first()) {
-                    continue;
+        $shipmentResults = $selectedDelivery->getShipmentResults();
+        $shipmentDays = [];
+        /** @var BasketItem $item */
+        foreach ($order->getBasket()->getOrderableItems() as $item) {
+            $shipmentPlaceCode = 'DC01';
+            /** @var DeliveryScheduleResult $deliveryResult */
+            if ($shipmentResults &&
+                ($deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first())
+            ) {
+                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode();
+                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
+                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
+                    $shipmentDays[$shipmentPlaceCode] = $days;
                 }
-
-                $this->basketService->setBasketItemPropertyValue(
-                    $item,
-                    'SHIPMENT_PLACE_CODE',
-                    $deliveryResult->getScheduleResult()->getSenderCode() ?: 'DC01'
-                );
             }
+
+            $this->basketService->setBasketItemPropertyValue(
+                $item,
+                'SHIPMENT_PLACE_CODE',
+                $shipmentPlaceCode
+            );
+        }
+        if (!empty($shipmentDays)) {
+            arsort($shipmentDays);
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
         }
 
         try {
@@ -1374,7 +1381,8 @@ class OrderService implements LoggerAwareInterface
                     $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                         $this->manzanaPosService->buildRequestFromBasket(
                             $order->getBasket(),
-                            $user->getDiscountCardNumber()
+                            $user->getDiscountCardNumber(),
+                            $this->basketService
                         )
                     );
                     $propertyValue->setValue($cheque->getChargedBonus());

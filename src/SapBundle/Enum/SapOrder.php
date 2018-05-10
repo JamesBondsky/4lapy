@@ -18,6 +18,7 @@ final class SapOrder
      *
      * 01 – Курьерская доставка из РЦ;
      * 02 – Самовывоз из магазина;
+     * 04 – Сборка заказа из магазина;
      * 06 – Курьерская доставка из магазина;
      * 07 – Доставка внешним подрядчиком (курьер или самовывоз из пункта выдачи заказов);
      * 08 – РЦ – магазин – домой.
@@ -42,7 +43,7 @@ final class SapOrder
 
     public const DELIVERY_ZONE_1_ARTICLE = '2000282';
     public const DELIVERY_ZONE_2_ARTICLE = '2000311';
-    public const DELIVERY_ZONE_3_ARTICLE = '2000311';
+    public const DELIVERY_ZONE_3_ARTICLE = '2000001';
     public const DELIVERY_ZONE_4_ARTICLE = '2000001';
 
     public const ORDER_PAYMENT_ONLINE_MERCHANT_ID = '850000314610';

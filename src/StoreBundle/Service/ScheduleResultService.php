@@ -22,6 +22,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\ValidationException;
 use FourPaws\StoreBundle\Repository\ScheduleResultRepository;
 use Psr\Log\LoggerAwareInterface;
+use WebArch\BitrixCache\BitrixCache;
 
 class ScheduleResultService implements LoggerAwareInterface
 {
@@ -47,15 +48,16 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * ScheduleResultService constructor.
      *
-     * @param DeliveryScheduleService $deliveryScheduleService
-     * @param StoreService $storeService
+     * @param DeliveryScheduleService  $deliveryScheduleService
+     * @param StoreService             $storeService
      * @param ScheduleResultRepository $repository
      */
     public function __construct(
         DeliveryScheduleService $deliveryScheduleService,
         StoreService $storeService,
         ScheduleResultRepository $repository
-    ) {
+    )
+    {
         $this->deliveryScheduleService = $deliveryScheduleService;
         $this->storeService = $storeService;
         $this->repository = $repository;
@@ -179,26 +181,52 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param Store $sender
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findResultsBySender(Store $sender): ScheduleResultCollection
     {
-        return $this->repository->findBySender($sender);
+        $getResults = function () use ($sender) {
+            return ['result' => $this->repository->findBySender($sender)];
+        };
+
+        $result = null;
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $sender->getXmlId())
+                          ->withTag('catalog:store:schedule:results')
+                          ->resultOf($getResults)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['sender' => $sender->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
     }
 
     /**
      * @param Store $receiver
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findResultsByReceiver(Store $receiver): ScheduleResultCollection
     {
-        return $this->repository->findByReceiver($receiver);
+        $getResults = function () use ($receiver) {
+            return ['result' => $this->repository->findByReceiver($receiver)];
+        };
+
+        $result = null;
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $receiver->getXmlId())
+                          ->withTag('catalog:store:schedule:results')
+                          ->resultOf($getResults)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['receiver' => $receiver->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
     }
 
     /**
@@ -206,18 +234,31 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param Store $receiver
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findResultsBySenderAndReceiver(Store $sender, Store $receiver): ScheduleResultCollection
     {
-        return $this->repository->findBySenderAndReceiver($sender, $receiver);
+        $getResults = function () use ($sender, $receiver) {
+            return ['result' => $this->repository->findBySenderAndReceiver($sender, $receiver)];
+        };
+
+        $result = null;
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $sender->getXmlId() . '_' . $receiver->getXmlId())
+                          ->withTag('catalog:store:schedule:results')
+                          ->resultOf($getResults)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['receiver' => $receiver->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
     }
 
     /**
      * @param \DateTime $date
-     * @param int|null $transitionCount
+     * @param int|null  $transitionCount
      *
      * @throws ArgumentException
      * @throws NotFoundException
@@ -227,7 +268,8 @@ class ScheduleResultService implements LoggerAwareInterface
     public function calculateForAll(
         \DateTime $date,
         ?int $transitionCount = null
-    ): ScheduleResultCollection {
+    ): ScheduleResultCollection
+    {
         $result = [];
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
 
@@ -245,9 +287,9 @@ class ScheduleResultService implements LoggerAwareInterface
     }
 
     /**
-     * @param Store $sender
+     * @param Store     $sender
      * @param \DateTime $date
-     * @param int|null $transitionCount
+     * @param int|null  $transitionCount
      *
      * @return ScheduleResultCollection
      * @throws ApplicationCreateException
@@ -258,7 +300,8 @@ class ScheduleResultService implements LoggerAwareInterface
         Store $sender,
         \DateTime $date,
         ?int $transitionCount = null
-    ): ScheduleResultCollection {
+    ): ScheduleResultCollection
+    {
         if (null === $transitionCount) {
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
@@ -284,10 +327,10 @@ class ScheduleResultService implements LoggerAwareInterface
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store $sender
-     * @param Store $receiver
+     * @param Store          $sender
+     * @param Store          $receiver
      * @param \DateTime|null $from
-     * @param int $maxTransitions
+     * @param int            $maxTransitions
      *
      * @throws ArgumentException
      * @throws NotFoundException
@@ -299,25 +342,26 @@ class ScheduleResultService implements LoggerAwareInterface
         Store $receiver,
         ?\DateTime $from = null,
         int $maxTransitions = self::MAX_TRANSITION_COUNT
-    ): ScheduleResultCollection {
+    ): ScheduleResultCollection
+    {
         if (null === $from) {
             $from = new \DateTime();
         }
         $dates = [
-            11 => (clone $from)->setTime(10, 0,0),
-            13 => (clone $from)->setTime(12, 0,0),
-            18 => (clone $from)->setTime(17, 0,0),
-            24 => (clone $from)->setTime(23, 0,0),
+            11 => (clone $from)->setTime(10, 0, 0),
+            13 => (clone $from)->setTime(12, 0, 0),
+            18 => (clone $from)->setTime(17, 0, 0),
+            24 => (clone $from)->setTime(23, 0, 0),
         ];
 
         return $this->doCalculateScheduleDate($sender, $receiver, $dates, $maxTransitions);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store $sender
-     * @param Store $receiver
-     * @param \DateTime[] $dates
-     * @param int $maxTransitions
+     * @param Store                $sender
+     * @param Store                $receiver
+     * @param \DateTime[]          $dates
+     * @param int                  $maxTransitions
      * @param StoreCollection|null $route
      *
      * @throws ArgumentException
@@ -331,7 +375,8 @@ class ScheduleResultService implements LoggerAwareInterface
         array $dates,
         int $maxTransitions = self::MAX_TRANSITION_COUNT,
         ?StoreCollection $route = null
-    ): ScheduleResultCollection {
+    ): ScheduleResultCollection
+    {
         static $transitionCount = 0;
         static $startDates;
         if ($transitionCount === 0) {

@@ -17,6 +17,8 @@ use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\ArithmeticHelper;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Service\BasketService;
 use Psr\Log\LoggerAwareInterface;
 use Throwable;
 
@@ -34,12 +36,14 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     /**
      * @param BasketBase $basket
      * @param string $card
+     * @param BasketService $basketService
      *
      * @return SoftChequeRequest
      */
     public function buildRequestFromBasket(
         BasketBase $basket,
-        string $card = ''
+        string $card = '',
+        BasketService $basketService
     ): SoftChequeRequest {
         $sum = $sumDiscounted = 0.0;
 
@@ -74,12 +78,13 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     ->setArticleId($xmlId)
                     ->setChequeItemId($item->getId());
 
-            /**
-             * @todo add SignCharge=0 (BonusBuy)
-             */
-            if ((int)$chequePosition->getDiscount() === 3) {
-                $chequePosition->setSignCharge(0);
+            try {
+                $signCharge = $basketService->isItemWithBonusAwarding($item, $basket->getOrder()) ? 1 : 0;
+            } catch (InvalidArgumentException $e) {
+                $signCharge = 0;
             }
+
+            $chequePosition->setSignCharge($signCharge);
 
             $request->addItem($chequePosition);
         }
