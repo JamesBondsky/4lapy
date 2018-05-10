@@ -91,7 +91,9 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
 }
 
 ?>
-
+<script>
+    window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>
+</script>
 <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address"
     <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
     <div class="b-input-line__label-wrapper">
@@ -131,10 +133,6 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     </div>
 </div>
 <div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields active" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
-    <input type="hidden" class="js-order-address-city js-no-valid" value="<?= $arResult['SELECTED_CITY']['NAME'] ?>">
-    <?php if ($arResult['SELECTED_REGION']['NAME']) { ?>
-        <input type="hidden" class="js-order-address-region js-no-valid" value="<?= $arResult['SELECTED_REGION']['NAME'] ?>">
-    <?php } ?>
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
             <?php if ($showNewAddressFormHeader) {

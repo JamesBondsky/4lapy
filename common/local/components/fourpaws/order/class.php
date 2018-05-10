@@ -25,6 +25,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -57,33 +58,26 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
     /** @var string */
     protected $currentStep;
-
     /** @var OrderService */
     protected $orderService;
-
     /** @var OrderStorageService */
     protected $orderStorageService;
-
     /** @var DeliveryService */
     protected $deliveryService;
-
     /** @var StoreService */
     protected $storeService;
-
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
-
     /** @var UserCitySelectInterface */
     protected $userCityProvider;
-
     /** @var BasketService $basketService */
     protected $basketService;
-
     /** @var UserAccountService */
     protected $userAccountService;
-
     /** @var LoggerInterface */
     protected $logger;
+    /** @var LocationService */
+    protected $locationService;
 
     /**
      * FourPawsOrderComponent constructor.
@@ -106,6 +100,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->userCityProvider = $serviceContainer->get(UserCitySelectInterface::class);
         $this->basketService = $serviceContainer->get(BasketService::class);
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
+        $this->locationService = $serviceContainer->get(LocationService::class);
         $this->logger = LoggerFactory::create('component_order');
 
         parent::__construct($component);
@@ -300,13 +295,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['USER'] = $user;
         $this->arResult['PAYMENTS'] = $payments;
         $this->arResult['SELECTED_CITY'] = $selectedCity;
-
-        $selectedRegion = \array_filter($selectedCity['PATH'], function (array $item) {
-            return $item['TYPE']['CODE'] === 'REGION';
-        });
-
-        $selectedRegion = $selectedRegion ? \array_shift($selectedRegion) : [];
-        $this->arResult['SELECTED_REGION'] = $selectedRegion;
+        $this->arResult['DADATA_CONSTRAINTS'] = $this->locationService->getDadataJsonFromLocationArray($selectedCity);
 
         $this->arResult['METRO'] = $this->storeService->getMetroInfo();
         $this->arResult['STORAGE'] = $storage;

@@ -17,6 +17,31 @@ use FourPaws\LocationBundle\LocationService;
  */
 class DaDataLocationAdapter extends BaseAdapter
 {
+    public const TYPE_MAP = [
+        'COUNTRY' => false,
+        'COUNTRY_DISTRICT' => false,
+        'REGION' => 'region',
+        'SUBREGION' => false,
+        'CITY' => 'city',
+        'VILLAGE' => 'settlement',
+        'STREET' => false,
+    ];
+
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
+     * DaDataLocationAdapter constructor.
+     */
+    public function __construct()
+    {
+        $this->locationService = Application::getInstance()->getContainer()->get('location.service');
+
+        parent::__construct();
+    }
+
     /**
      * @param DadataLocation $entity
      *
@@ -27,9 +52,7 @@ class DaDataLocationAdapter extends BaseAdapter
         /** @var DadataLocation $entity */
         $bitrixLocation = new BitrixLocation();
 
-        /** @var LocationService $locationService */
         try {
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
             /** пока доставка в одной стране - убираем поиск по стране */
             $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
             if (empty($city)) {
@@ -40,9 +63,10 @@ class DaDataLocationAdapter extends BaseAdapter
                 }
                 $fullCity = $city . ' ' . $type;
             }
+
             $fullRegion = '';
             $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? str_replace('/', '',
-                    $entity->getRegion()) : '');
+                $entity->getRegion()) : '');
             if (!empty($region)) {
                 $regionType = trim($entity->getRegionTypeFull());
                 $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
@@ -52,7 +76,7 @@ class DaDataLocationAdapter extends BaseAdapter
                     $fullRegion = $region . ' ' . $regionType;
                 }
             }
-            $cities = $locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
+            $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
             $selectedCity = reset($cities);
 
             /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
@@ -75,6 +99,7 @@ class DaDataLocationAdapter extends BaseAdapter
             $logger = LoggerFactory::create('system');
             $logger->error('системная ошибка загрузки сервисов');
         }
+
         return $bitrixLocation;
     }
 
@@ -87,6 +112,38 @@ class DaDataLocationAdapter extends BaseAdapter
     {
         /** @var DadataLocation $entity */
         $entity = $this->convertDataToEntity($data, DadataLocation::class);
+
         return $this->convert($entity);
+    }
+
+    /**
+     * @param array $location
+     *
+     * @return array
+     */
+    public function convertLocationArrayToDadataArray(array $location): array
+    {
+        $result = \array_filter($this->expandLocation($location), function ($item) {
+            return $this::TYPE_MAP[$item['TYPE']['CODE']];
+        });
+
+        return \array_reduce($result, function ($array, $item) {
+            return array_merge($array, [
+                $this::TYPE_MAP[$item['TYPE']['CODE']] => $item['NAME'],
+            ]);
+        }, []);
+    }
+
+    /**
+     * @param array $location
+     *
+     * @return array
+     */
+    protected function expandLocation(array $location): array
+    {
+        $path = $location['PATH'];
+        unset($location['PATH']);
+
+        return \array_merge([$location], $path);
     }
 }
