@@ -17,6 +17,7 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
+use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -74,8 +75,7 @@ class BasketService implements LoggerAwareInterface
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaPosService $manzanaPosService
-    )
-    {
+    ) {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
     }
@@ -90,13 +90,15 @@ class BasketService implements LoggerAwareInterface
      * @param bool $save
      * @param Basket|null $basket
      *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
      * @throws ObjectNotFoundException
      * @throws LoaderException
+     * @throws Exception
      *
      * @return BasketItem
-     *
      */
     public function addOfferToBasket(
         int $offerId,
@@ -104,8 +106,7 @@ class BasketService implements LoggerAwareInterface
         array $rewriteFields = [],
         bool $save = true,
         ?Basket $basket = null
-    ): BasketItem
-    {
+    ): BasketItem {
         if ($offerId < 1) {
             throw new InvalidArgumentException('Неверный ID товара');
         }
@@ -124,6 +125,13 @@ class BasketService implements LoggerAwareInterface
         }
 
         $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+
+        $oldBasketCodes = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            $oldBasketCodes[] = $basketItem->getBasketCode();
+        }
+
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
             $basket,
             $fields,
@@ -131,19 +139,39 @@ class BasketService implements LoggerAwareInterface
         );
 
         if (!$result->isSuccess()) {
-            throw new BitrixProxyException($result);
+            $found = false;
+            foreach ($result->getErrors() as $error) {
+                if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
+                    $found = true;
+                }
+            }
+            if (!$found) {
+                throw new BitrixProxyException($result);
+            }
         }
         if ($save) {
-            $basket->save();
+            /** @var BasketItem $basketItem */
+            if ($result->isSuccess()) {
+                $basketItem = $result->getData()['BASKET_ITEM'];
+            } else {
+                foreach ($basket->getBasketItems() as $basketItem) {
+                    if (!\in_array($basketItem->getBasketCode(), $oldBasketCodes, true)) {
+                        break;
+                    }
+                }
+            }
+            $basketItem->save();
         }
 
-        return $result->getData()['BASKET_ITEM'];
+        return $basketItem;
     }
 
 
     /**
      * @param int $basketId
      *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws ObjectNotFoundException
      * @throws BitrixProxyException
      * @throws NotFoundException
@@ -157,7 +185,7 @@ class BasketService implements LoggerAwareInterface
         if ($basketId < 1) {
             throw new InvalidArgumentException('Wrong $basketId');
         }
-
+        /** @var BasketItem $basketItem */
         $basketItem = $this->getBasket()->getItemById($basketId);
         if (null === $basketItem) {
             throw new NotFoundException('Не найден элемент корзины');
@@ -168,9 +196,7 @@ class BasketService implements LoggerAwareInterface
             throw new BitrixProxyException($result);
         }
 
-        $this->getBasket()->save();
-
-        return true;
+        return BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
     }
 
     /**
@@ -204,8 +230,14 @@ class BasketService implements LoggerAwareInterface
         if (!$result->isSuccess()) {
             throw new BitrixProxyException($result);
         }
-
-        $this->getBasket()->save();
+        if ($this->getBasket()->getOrder()) {
+            $updateResult = BasketTable::update($basketItem->getId(), ['QUANTITY' => $quantity]);
+            if (!$updateResult->isSuccess()) {
+                throw new BitrixProxyException($updateResult);
+            }
+        } else {
+            $this->getBasket()->save();
+        }
 
         return true;
     }
@@ -747,8 +779,7 @@ class BasketService implements LoggerAwareInterface
         string $code,
         string $value,
         string $name = ''
-    ): void
-    {
+    ): void {
         try {
             $found = false;
             /** @var BasketPropertyItem $property */
