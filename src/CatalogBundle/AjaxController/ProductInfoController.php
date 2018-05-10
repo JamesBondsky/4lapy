@@ -3,13 +3,10 @@
 namespace FourPaws\CatalogBundle\AjaxController;
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\LoaderException;
-use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sale\BasketItem;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Internals\BasketTable;
-use function foo\func;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -19,14 +16,12 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
-use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -169,22 +164,21 @@ class ProductInfoController extends Controller
     /**
      * @Route("/", methods={"GET"})
      *
-     * @global \CMain            $APPLICATION
-     *
      * @param Request            $request
      * @param ProductListRequest $productListRequest
      *
+     * @return JsonResponse
+     * @throws \InvalidArgumentException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
-     * @throws ArgumentException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @global \CMain            $APPLICATION
      *
-     * @return JsonResponse
+     * @throws \Exception
+     * @throws \Exception
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
@@ -281,10 +275,8 @@ class ProductInfoController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
+     * @throws \Exception
      * @global \CMain $APPLICATION
-     *
      */
     public function infoProductAction(Request $request): JsonResponse
     {
@@ -301,7 +293,7 @@ class ProductInfoController extends Controller
                 $offerCollection = (new OfferQuery())->withFilter([
                     '=ID' => $offerId,
                 ])->exec();
-                if(!$offerCollection->isEmpty()){
+                if (!$offerCollection->isEmpty()) {
                     $currentOffer = $offerCollection->first();
                 }
             }
@@ -339,8 +331,8 @@ class ProductInfoController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws \Exception
      * @global \CMain $APPLICATION
-     *
      */
     public function infoProductDeliveryAction(Request $request): JsonResponse
     {
@@ -356,7 +348,7 @@ class ProductInfoController extends Controller
                 $offerCollection = (new OfferQuery())->withFilter([
                     '=ID' => $requestedOfferId,
                 ])->exec();
-                if(!$offerCollection->isEmpty()){
+                if (!$offerCollection->isEmpty()) {
                     $currentOffer = $offerCollection->first();
                 }
             }
@@ -399,10 +391,10 @@ class ProductInfoController extends Controller
      *
      * @param Request $request
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \InvalidArgumentException
      *
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @return JsonResponse
      */
     public function getGroupSetAction(Request $request): JsonResponse
