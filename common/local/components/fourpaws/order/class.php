@@ -304,9 +304,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $selectedRegion = \array_filter($selectedCity['PATH'], function (array $item) {
             return $item['TYPE']['CODE'] === 'REGION';
         });
-        $selectedRegion = $selectedRegion ? \array_shift($selectedRegion) : [];
 
-        $this->arResult['SELECTED_REGION'] = $selectedRegion ?: $selectedCity;
+        $selectedRegion = $selectedRegion ? \array_shift($selectedRegion) : [];
+        $this->arResult['SELECTED_REGION'] = $selectedRegion;
 
         $this->arResult['METRO'] = $this->storeService->getMetroInfo();
         $this->arResult['STORAGE'] = $storage;
