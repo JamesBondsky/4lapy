@@ -301,6 +301,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['PAYMENTS'] = $payments;
         $this->arResult['SELECTED_CITY'] = $selectedCity;
 
+        $selectedRegion = \array_filter($selectedCity['PATH'], function (array $item) {
+            return $item['TYPE']['CODE'] === 'REGION';
+        });
+        $selectedRegion = $selectedRegion ? \array_shift($selectedRegion) : [];
+
+        $this->arResult['SELECTED_REGION'] = $selectedRegion ?: $selectedCity;
+
         $this->arResult['METRO'] = $this->storeService->getMetroInfo();
         $this->arResult['STORAGE'] = $storage;
         $this->arResult['STEP'] = $this->currentStep;

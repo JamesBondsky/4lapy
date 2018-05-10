@@ -131,7 +131,8 @@ function showDeliveryIntervalSelector(CalculationResultInterface $delivery, Orde
     </div>
 </div>
 <div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields active" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
-    <input type="hidden" class="js-order-address-city js-no-valid" value="<?=$arResult['SELECTED_CITY']['NAME']?>">
+    <input type="hidden" class="js-order-address-city js-no-valid" value="<?= $arResult['SELECTED_CITY']['NAME'] ?>">
+    <input type="hidden" class="js-order-address-region js-no-valid" value="<?= $arResult['SELECTED_REGION']['NAME'] ?>">
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
             <?php if ($showNewAddressFormHeader) {
