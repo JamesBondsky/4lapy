@@ -27,6 +27,14 @@ class DaDataLocationAdapter extends BaseAdapter
         'STREET' => false,
     ];
 
+    public const EXCLUDE_REGION_TYPE = [
+        'край',
+        'область',
+        'автономная область',
+        'автономный округ',
+        'республика',
+    ];
+
     /**
      * @var LocationService
      */
@@ -128,6 +136,10 @@ class DaDataLocationAdapter extends BaseAdapter
         });
 
         return \array_reduce($result, function ($array, $item) {
+            if ($this::TYPE_MAP[$item['TYPE']['CODE']] === 'REGION') {
+                $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE, '', \strtolower($item['NAME'])));
+            }
+
             return array_merge($array, [
                 $this::TYPE_MAP[$item['TYPE']['CODE']] => $item['NAME'],
             ]);

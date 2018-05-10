@@ -100,7 +100,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->userCityProvider = $serviceContainer->get(UserCitySelectInterface::class);
         $this->basketService = $serviceContainer->get(BasketService::class);
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
-        $this->locationService = $serviceContainer->get(LocationService::class);
+        $this->locationService = $serviceContainer->get('location.service');
         $this->logger = LoggerFactory::create('component_order');
 
         parent::__construct($component);
