@@ -5,6 +5,7 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Order as BitrixOrder;
 use FourPaws\App\Application as SymfoniApplication;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
@@ -97,27 +98,27 @@ if ($orderSubscribe) {
                 <a class="b-accordion-order-item__open-accordion js-open-accordion"
                    href="javascript:void(0);"
                    title="">
-                <span class="b-accordion-order-item__arrow">
-                    <span class="b-icon b-icon--account">
-                        <?= new SvgDecorator('icon-arrow-account', 25, 25) ?>
+                    <span class="b-accordion-order-item__arrow">
+                        <span class="b-icon b-icon--account">
+                            <?= new SvgDecorator('icon-arrow-account', 25, 25) ?>
+                        </span>
                     </span>
-                </span>
                     <?php
                     if ($orderSubscribe) {
                         ?>
                         <span class="b-accordion-order-item__number-order">
-                        <?php
-                        echo $orderSubscribe->getDeliveryFrequencyEntity()->getValue();
-                        echo ', ';
-                        echo $orderSubscribe->getDateStartWeekdayRu();
-                        ?>
-                    </span>
+                            <?php
+                            echo $orderSubscribe->getDeliveryFrequencyEntity()->getValue();
+                            echo ', ';
+                            echo $orderSubscribe->getDateStartWeekdayRu();
+                            ?>
+                        </span>
                         <?php
                     } else {
                         ?>
                         <span class="b-accordion-order-item__number-order">
-                        <?= ('№ ' . $order->getId() . ' от ' . $order->getFormatedDateInsert()) ?>
-                    </span>
+                            <?= ('№ ' . $order->getId() . ' от ' . $order->getFormatedDateInsert()) ?>
+                        </span>
                         <?php
                     }
                     ?>
@@ -140,20 +141,31 @@ if ($orderSubscribe) {
             <div class="b-accordion-order-item__adress">
                 <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
                     <?php
-                    echo $order->getStatus();
-                    echo ' ';
-                    echo '<span>';
-                    echo ' ';
-                    /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
-                    $checkStatuses = [
-                        OrderService::STATUS_IN_ASSEMBLY_1,
-                        OrderService::STATUS_IN_ASSEMBLY_2,
-                        OrderService::STATUS_ISSUING_POINT,
-                    ];
-                    echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
-                    echo $order->getFormatedDateStatus();
-                    echo ' ';
-                    echo '</span>';
+                    if ($orderSubscribe) {
+                        echo '<span>';
+                        echo 'Следующая доставка ';
+                        echo DateHelper::replaceRuMonth(
+                            $orderSubscribe->getNextDeliveryDate()->format('d #n# Y'),
+                            DateHelper::GENITIVE,
+                            true
+                        );
+                        echo '</span>';
+                    } else {
+                        echo $order->getStatus();
+                        echo ' ';
+                        echo '<span>';
+                        echo ' ';
+                        /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
+                        $checkStatuses = [
+                            OrderService::STATUS_IN_ASSEMBLY_1,
+                            OrderService::STATUS_IN_ASSEMBLY_2,
+                            OrderService::STATUS_ISSUING_POINT,
+                        ];
+                        echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
+                        echo $order->getFormatedDateStatus();
+                        echo ' ';
+                        echo '</span>';
+                    }
                     ?>
                 </div>
                 <?php if (!$order->isFastOrder()) { ?>
@@ -163,7 +175,7 @@ if ($orderSubscribe) {
                     </div>
                 <?php }
                 $store = $order->getStore();
-                if ($store !== null && $store->getId() > 0) { ?>
+                if ($store !== null && $store->getId() > 0 && !empty($store->getAddress())) { ?>
                     <div class="b-adress-info b-adress-info--order">
                         <?php if ($store->getMetro() > 0 && $arResult['METRO'] !== null) { ?>
                             <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($store->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
@@ -178,42 +190,47 @@ if ($orderSubscribe) {
             </div>
             <div class="b-accordion-order-item__pay">
                 <div class="b-accordion-order-item__not-pay">
-                    <?php $payment = $order->getPayment();
-                    $paymentCode = $payment->getCode();
-                    switch ($paymentCode) {
-                        case OrderService::PAYMENT_CASH_OR_CARD:
-                            $paymentName = 'наличными или картой';
-                            break;
-                        case OrderService::PAYMENT_ONLINE:
-                            $paymentName = 'онлайн';
-                            break;
-                        case OrderService::PAYMENT_CASH:
-                            $paymentName = 'наличными';
-                            break;
-                        default:
-                            $paymentName = '';
-                    }
-                    if ($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
-                        /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
-                        /** @var OrderService $orderService */
-                        $orderService = SymfoniApplication::getInstance()->getContainer()->get(OrderService::class);
-                        $bitrixOrder = BitrixOrder::load($order->getId());
-                        if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
-                            $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
-                            if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
-                                $paymentName = 'Постоплата';
+                    <?php
+                    $paymentName = '';
+                    if ($orderSubscribe) {
+                        $paymentName = 'Оплата наличными или картой при получении';
+                    } else {
+                        $payment = $order->getPayment();
+                        $paymentCode = $payment->getCode();
+                        switch ($paymentCode) {
+                            case OrderService::PAYMENT_CASH_OR_CARD:
+                                $paymentName = 'наличными или картой';
+                                break;
+                            case OrderService::PAYMENT_ONLINE:
+                                $paymentName = 'онлайн';
+                                break;
+                            case OrderService::PAYMENT_CASH:
+                                $paymentName = 'наличными';
+                                break;
+                        }
+                        if ($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
+                            /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
+                            /** @var OrderService $orderService */
+                            $orderService = SymfoniApplication::getInstance()->getContainer()->get(OrderService::class);
+                            $bitrixOrder = BitrixOrder::load($order->getId());
+                            if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
+                                $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
+                                if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                                    $paymentName = 'Постоплата';
+                                }
+                            }
+                        }
+                        if ($order->isFastOrder() && \in_array($order->getStatusId(), ['N', 'Q'], true)) {
+                            $paymentName = 'Постоплата';
+                        }
+                        if (!empty($paymentName)) {
+                            if($paymentName !== 'Постоплата') {
+                                $paymentName = $order->getPayPrefixText() . ' ' . $paymentName;
                             }
                         }
                     }
-                    if ($order->isFastOrder() && \in_array($order->getStatusId(), ['N', 'Q'], true)) {
-                        $paymentName = 'Постоплата';
-                    }
-                    if (!empty($paymentName)) {
-                        if($paymentName !== 'Постоплата'){
-                            echo $order->getPayPrefixText() . ' ';
-                        }
-                        echo $paymentName;
-                    }  ?>
+                    echo $paymentName;
+                    ?>
                 </div>
             </div>
             <div class="b-accordion-order-item__button js-button-default">

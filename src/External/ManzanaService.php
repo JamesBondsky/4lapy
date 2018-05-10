@@ -225,8 +225,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function updateContact(Client $contact): Client
     {
+        $data = $this->serializer->toArray($contact);
+        /** на обновление это поле ненужно */
+        if(isset($data['HasChildrenCode'])) {
+            unset($data['HasChildrenCode']);
+        }
         /** @noinspection PhpUndefinedMethodInspection */
-        $bag = new ParameterBag($this->serializer->toArray($contact), ['ff_bird', 'ff_cat', 'ff_dog', 'ff_fish', 'ff_rodent', 'ff_others']);
+        $bag = new ParameterBag($data, ['ff_bird', 'ff_cat', 'ff_dog', 'ff_fish', 'ff_rodent', 'ff_others']);
 
         try {
             $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());

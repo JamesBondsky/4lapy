@@ -190,6 +190,9 @@ class Order extends BaseEntity
     /** @var bool */
     protected $newManzana = false;
 
+    /** @var string */
+    protected $deliveryAddress;
+
     /**
      * @return string
      */
@@ -722,7 +725,7 @@ class Order extends BaseEntity
     public function getPaymentIdByPayments(): ?int
     {
         if($this->getId() > 0) {
-            $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
+            $orderService = $this->getOrderService();
             $bitrixOrder = $orderService->getOrderById($this->getId());
             $innerSystemId = (int)PaySystemActionTable::query()
                 ->where('CODE', 'inner')
@@ -1023,5 +1026,36 @@ class Order extends BaseEntity
         $service = $appCont->get('order.service');
 
         return $service;
+    }
+
+    /**
+     * @return SaleOrderService
+     * @throws ApplicationCreateException
+     */
+    private function getOrderService(): SaleOrderService
+    {
+        $appCont = Application::getInstance()->getContainer();
+        /** @var SaleOrderService $service */
+        $service = $appCont->get(SaleOrderService::class);
+
+        return $service;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryAddress(): string
+    {
+        if (!isset($this->deliveryAddress)) {
+            try {
+                $this->deliveryAddress = $this->getOrderService()->getOrderDeliveryAddress(
+                    $this->getBitrixOrder()
+                );
+            } catch (\Exception $exception) {
+                $this->deliveryAddress = '';
+            }
+        }
+
+        return $this->deliveryAddress;
     }
 }

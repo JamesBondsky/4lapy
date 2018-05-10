@@ -565,7 +565,6 @@ class OrderService implements LoggerAwareInterface
         $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery);
 
         /** @var PropertyValue $propertyValue */
-        /** в быстром заказе здесь все сбрасывается нафиг */
         foreach ($propertyValueCollection as $propertyValue) {
             $code = $propertyValue->getProperty()['CODE'];
             if ($skipAddressProperties && \in_array($code, $addressProperties, true)) {
@@ -714,7 +713,6 @@ class OrderService implements LoggerAwareInterface
                 ];
 
                 $storage->setUserId($user->getId());
-                $canAttachCard = true;
             }
         }
 
@@ -785,20 +783,31 @@ class OrderService implements LoggerAwareInterface
         /**
          * Заполнение складов довоза товара для элементов корзины
          */
-        if ($shipmentResults = $selectedDelivery->getShipmentResults()) {
-            /** @var BasketItem $item */
-            foreach ($order->getBasket()->getOrderableItems() as $item) {
-                /** @var DeliveryScheduleResult $deliveryResult */
-                if (!$deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first()) {
-                    continue;
+        $shipmentResults = $selectedDelivery->getShipmentResults();
+        $shipmentDays = [];
+        /** @var BasketItem $item */
+        foreach ($order->getBasket()->getOrderableItems() as $item) {
+            $shipmentPlaceCode = 'DC01';
+            /** @var DeliveryScheduleResult $deliveryResult */
+            if ($shipmentResults &&
+                ($deliveryResult = $shipmentResults->filterByOfferId($item->getProductId())->first())
+            ) {
+                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode();
+                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
+                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
+                    $shipmentDays[$shipmentPlaceCode] = $days;
                 }
-
-                $this->basketService->setBasketItemPropertyValue(
-                    $item,
-                    'SHIPMENT_PLACE_CODE',
-                    $deliveryResult->getScheduleResult()->getSenderCode() ?: 'DC01'
-                );
             }
+
+            $this->basketService->setBasketItemPropertyValue(
+                $item,
+                'SHIPMENT_PLACE_CODE',
+                $shipmentPlaceCode
+            );
+        }
+        if (!empty($shipmentDays)) {
+            arsort($shipmentDays);
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
         }
 
         try {
