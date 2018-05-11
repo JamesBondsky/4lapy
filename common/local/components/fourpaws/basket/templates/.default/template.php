@@ -9,6 +9,7 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
@@ -75,7 +76,13 @@ if ($arParams['IS_AJAX']) {
                         /** @noinspection PhpUndefinedMethodInspection */
                         if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
-                        } ?>
+                        }
+                        if ($group['list'] instanceof OfferCollection) {
+                            $giftCanBeRefused = $group['list']->count() > 1;
+                        } elseif (\is_array($group['list'])) {
+                            $giftCanBeRefused =  count($group['list']) > 1;
+                        }
+                        ?>
                         <div class="b-gift-order">
                             <div class="b-gift-order__info">
                                 <span class="b-gift-order__text">
@@ -124,9 +131,19 @@ if ($arParams['IS_AJAX']) {
                                                        href="javascript:void(0);" title=""
                                                        data-url="/ajax/sale/basket/gift/refuse/"
                                                        data-gift-id="<?= $gift['basketId']; ?>">
-                                                        <span class="b-icon b-icon--delete">
-                                                            <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
-                                                        </span>
+                                                        <?php
+                                                        if ($giftCanBeRefused) {
+                                                            ?>
+                                                            <span class="b-icon b-icon--delete">
+                                                                <?= new SvgDecorator(
+                                                                    'icon-delete-cart-product',
+                                                                    12,
+                                                                    14
+                                                                ); ?>
+                                                            </span>
+                                                            <?php
+                                                        }
+                                                        ?>
                                                     </a>
                                                 </div>
                                             </div>

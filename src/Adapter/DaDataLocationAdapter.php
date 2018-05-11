@@ -83,8 +83,8 @@ class DaDataLocationAdapter extends BaseAdapter
             }
 
             $fullRegion = '';
-            $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? str_replace('/', '',
-                $entity->getRegion()) : '');
+            $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? sprintf(str_replace('/', '%s',
+                $entity->getRegion()),'(',')') : '');
             if (!empty($region)) {
                 $regionType = trim($entity->getRegionTypeFull());
                 $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];

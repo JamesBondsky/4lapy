@@ -61,6 +61,9 @@ class CityController extends Controller
 
         try {
             $city = $this->userService->setSelectedCity($code, $name, $regionName);
+            if(\is_bool($city)){
+                throw new CityNotFoundException('населенный пункт не найден');
+            }
             $response = JsonSuccessResponse::createWithData(
                 'Условия приобретения товаров будут пересчитаны после изменения выбранного региона',
                 $city,

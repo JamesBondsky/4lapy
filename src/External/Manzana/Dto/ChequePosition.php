@@ -115,7 +115,8 @@ class ChequePosition
     /**
      * SignCharge=0 должно передаваться в позиции чека:
      *
-     * - Данная позиция участвует в акции БонусБай, для которой стоит признак "не начислять бонусы"
+     * - Данная позиция участвует в акции БонусБай
+     *   (@backlog - для которой стоит признак "не начислять бонусы")
      * - Для всех позиций, на которые действует скидка, за исключением скидки на упаковку (3%)
      *
      * Для всех остальных позиций должно передаваться SignCharge=1, даже если в заказе не указана БК
@@ -300,7 +301,7 @@ class ChequePosition
      *
      * @return $this
      */
-    public function setChequeItemNumber(int $chequeItemNumber)
+    public function setChequeItemNumber(int $chequeItemNumber): ChequePosition
     {
         $this->chequeItemNumber = $chequeItemNumber;
         

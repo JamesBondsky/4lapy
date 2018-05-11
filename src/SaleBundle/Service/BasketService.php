@@ -80,10 +80,7 @@ class BasketService implements LoggerAwareInterface
         $this->manzanaPosService = $manzanaPosService;
     }
 
-
     /**
-     *
-     *
      * @param int $offerId
      * @param int|null $quantity
      * @param array $rewriteFields
@@ -699,7 +696,7 @@ class BasketService implements LoggerAwareInterface
                     $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
                 } elseif ($propCode === 'IS_GIFT') {
                     $discountId = $basketPropertyItem->getField('VALUE');
-                    if (is_iterable($applyResult['DISCOUNT_LIST'])) {
+                    if (\is_iterable($applyResult['DISCOUNT_LIST'])) {
                         foreach ($applyResult['DISCOUNT_LIST'] as $appliedDiscount) {
                             if ((int)$appliedDiscount['REAL_DISCOUNT_ID'] === (int)$discountId) {
                                 $basketDiscounts = [
@@ -723,7 +720,7 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     *
+     * ad
      *
      * @param array $applyResult
      * @param array $appliedDiscounts
@@ -735,35 +732,39 @@ class BasketService implements LoggerAwareInterface
         foreach ($appliedDiscounts as $k => $appliedDiscount) {
             $id = $applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
             $settings = $applyResult['FULL_DISCOUNT_LIST'][$id]['ACTIONS']['CHILDREN'];
-            // упоролся или нет?
+
             if (
-                \count($settings) === 1
-                &&
-                ($settings = current($settings))
-                &&
-                $settings['CLASS_ID'] === 'ActSaleBsktGrp'
-                &&
-                ($settings = array_values($settings['CHILDREN']))
-                &&
-                \count($settings) === 2
-                &&
-                (
+                !(
+                    \count($settings) === 1
+                    &&
+                    ($settings = \current($settings))
+                    &&
+                    $settings['CLASS_ID'] === 'ActSaleBsktGrp'
+                    &&
+                    ($settings = \array_values($settings['CHILDREN']))
+                    &&
+                    \count($settings) === 2
+                    &&
                     (
-                        0 === \strpos($settings[0]['CLASS_ID'], 'BasketQuantity')
-                        &&
-                        0 === \strpos($settings[1]['CLASS_ID'], 'CondIBProp')
-                    )
-                    xor
-                    (
-                        0 === \strpos($settings[1]['CLASS_ID'], 'BasketQuantity')
-                        &&
-                        0 === \strpos($settings[0]['CLASS_ID'], 'CondIBProp')
+                        (
+                            0 === \strpos($settings[0]['CLASS_ID'], 'BasketQuantity')
+                            &&
+                            0 === \strpos($settings[1]['CLASS_ID'], 'CondIBProp')
+                        )
+                        ||
+                        (
+                            0 === \strpos($settings[1]['CLASS_ID'], 'BasketQuantity')
+                            &&
+                            0 === \strpos($settings[0]['CLASS_ID'], 'CondIBProp')
+                        )
                     )
                 )
             ) {
                 $appliedDiscounts = [];
+                break;
             }
         }
+
         return $appliedDiscounts;
     }
 
