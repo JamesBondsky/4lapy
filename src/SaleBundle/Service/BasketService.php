@@ -138,7 +138,10 @@ class BasketService implements LoggerAwareInterface
             $this->getContext()
         );
 
-        if (!$result->isSuccess()) {
+        if ($result->isSuccess()) {
+            $basketItem = $result->getData()['BASKET_ITEM'];
+        } else {
+            // проверяем не специально ли было запорото
             $found = false;
             foreach ($result->getErrors() as $error) {
                 if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
@@ -148,18 +151,15 @@ class BasketService implements LoggerAwareInterface
             if (!$found) {
                 throw new BitrixProxyException($result);
             }
-        }
-        if ($save) {
-            /** @var BasketItem $basketItem */
-            if ($result->isSuccess()) {
-                $basketItem = $result->getData()['BASKET_ITEM'];
-            } else {
-                foreach ($basket->getBasketItems() as $basketItem) {
-                    if (!\in_array($basketItem->getBasketCode(), $oldBasketCodes, true)) {
-                        break;
-                    }
+            // и если специально ищем баскет айтем
+            // todo проверить еще и количества
+            foreach ($basket->getBasketItems() as $basketItem) {
+                if (!\in_array($basketItem->getBasketCode(), $oldBasketCodes, true)) {
+                    break;
                 }
             }
+        }
+        if ($save) {
             $basketItem->save();
         }
 
