@@ -26,8 +26,9 @@ $storage = $arResult['STORAGE'];
 
 /** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
+$deliveryPrice = $selectedDelivery->getPrice();
 if (!empty($arResult['SPLIT_RESULT'])) {
-    $selectedDelivery = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
+    $deliveryPrice = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getPrice();
 }
 
 /** @var BasketBase $basket */
@@ -226,8 +227,8 @@ $user = $arResult['USER'];
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3"
-                                 data-cost="<?= $selectedDelivery->getPrice() ?>">
-                                <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
+                                 data-cost="<?= $deliveryPrice ?>">
+                                <?= CurrencyHelper::formatPrice($deliveryPrice, false) ?>
                             </div>
                         </li>
                         <?php if ($storage->getBonus()) { ?>
@@ -254,7 +255,7 @@ $user = $arResult['USER'];
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
                                 <?= CurrencyHelper::formatPrice(
-                                    $basketPrice - $storage->getBonus() + $selectedDelivery->getPrice()
+                                    $basketPrice - $storage->getBonus() + $deliveryPrice
                                 ) ?>
                             </div>
                         </li>

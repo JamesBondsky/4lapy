@@ -19,7 +19,8 @@ $items = $arResult['ITEMS'];
     <div class="b-account-adress">
         <?php /** @var Pet $pet */
         if (!$items->isEmpty()) {
-            foreach ($items as $pet) {?>
+            foreach ($items as $pet) {
+                $codeGender = $pet->getCodeGender()?>
                 <div class="b-account-border-block b-account-border-block--pet js-parent-cont js-parent-cont--pet"
                      data-image="<?= $pet->getResizePopupImgPath() ?>"
                      data-name-pet="<?= $pet->getName() ?>"
@@ -27,8 +28,8 @@ $items = $arResult['ITEMS'];
                      data-breed="<?= $pet->getBreed() ?>"
                      data-data="<?php $birthday = $pet->getBirthday();
                      echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
-                     data-male="<?= $pet->getGender() === 'M' ? 1 : 0 ?>"
-                     data-female="<?= $pet->getGender() === 'F' ? 1 : 0 ?>"
+                     data-male="<?= $pet->getCodeGender() === 'M' ? 1 : 0 ?>"
+                     data-female="<?= $pet->getCodeGender() === 'F' ? 1 : 0 ?>"
                      data-id="<?= $pet->getId() ?>">
                     <div class="b-account-border-block__content b-account-border-block__content--pet js-parent-cont">
                         <div class="b-account-border-block__image-wrap">

@@ -360,36 +360,45 @@ if ($orderSubscribe) {
                     <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                         <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
                             <span>Товары</span>
-                            <div class="b-characteristics-tab__dots">
-                            </div>
+                            <div class="b-characteristics-tab__dots"></div>
                         </div>
                         <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
-                            <?= $order->getFormattedItemsSum() ?><span
-                                    class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
+                            <?= $order->getFormattedItemsSum() ?>
+                            <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                         </div>
                     </li>
                     <?php if ($order->getDelivery()->getPriceDelivery() > 0) { ?>
                         <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                             <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
                                 <span>Доставка</span>
-                                <div class="b-characteristics-tab__dots">
-                                </div>
+                                <div class="b-characteristics-tab__dots"></div>
                             </div>
                             <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
-                                <?= $order->getDelivery()->getFormatedPriceDelivery() ?><span
-                                        class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
+                                <?= $order->getDelivery()->getFormatedPriceDelivery() ?>
+                                <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
+                            </div>
+                        </li>
+                    <?php }
+                    if($order->getBonusPay() > 0){ ?>
+                        <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
+                            <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
+                                <span>Оплата бонусами</span>
+                                <div class="b-characteristics-tab__dots"></div>
+                            </div>
+                            <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
+                                -<?= $order->getBonusPayFormatted() ?>
+                                <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                             </div>
                         </li>
                     <?php } ?>
                     <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                         <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account b-characteristics-tab__characteristics-text--last">
                             <span>Итого к оплате</span>
-                            <div class="b-characteristics-tab__dots">
-                            </div>
+                            <div class="b-characteristics-tab__dots"></div>
                         </div>
                         <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account b-characteristics-tab__characteristics-value--last">
-                            <?= $order->getFormatedPrice() ?><span
-                                    class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
+                            <?= $order->getFormatedPrice() ?>
+                            <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                         </div>
                     </li>
                 </ul>

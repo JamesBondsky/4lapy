@@ -66,7 +66,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
                     <div class="b-order__text-block b-order__text-block--gotopay">
                         <p><?= $orderQuantity ?> <?= $declension->get($orderQuantity) ?>
                             (<?= WordHelper::showWeight($orderWeight) ?>) на
-                            сумму <?= CurrencyHelper::formatPrice($order->getPrice() + $order->getDeliveryPrice()) ?></p>
+                            сумму <?= CurrencyHelper::formatPrice($order->getPrice()) ?></p>
                     </div>
                     <?php if ($order->isPaid()) { ?>
                         <button class="b-button b-button--order-step-3 b-button--next" disabled="disabled">
@@ -94,7 +94,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
                             <p><?= $relatedOrderQuantity ?>  <?= $declension->get($relatedOrderQuantity) ?>
                                 (<?= WordHelper::showWeight($relatedOrderWeight) ?>)
                                 на
-                                сумму <?= CurrencyHelper::formatPrice($relatedOrder->getPrice() + $relatedOrder->getDeliveryPrice()) ?>
+                                сумму <?= CurrencyHelper::formatPrice($relatedOrder->getPrice()) ?>
                             </p>
                         </div>
                         <?php if ($relatedOrder->isPaid()) { ?>

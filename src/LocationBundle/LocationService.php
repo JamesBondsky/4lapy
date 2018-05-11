@@ -464,8 +464,11 @@ class LocationService
     {
         if (!isset($this->locationsByCode[$code])) {
             $this->locationsByCode[$code] = reset($this->findLocationNew(['=CODE' => $code]));
+            if(\is_bool($this->locationsByCode[$code])){
+                $this->locationsByCode[$code] = [];
+            }
         }
-        return $this->locationsByCode[$code];
+        return $this->locationsByCode[$code] ?? [];
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
@@ -546,7 +549,7 @@ class LocationService
                     'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
                 ]));
             }
-            if (!empty($this->locationsByCode[$code])) {
+            if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {
                 return $this->locationsByCode[$code];
             }
         }

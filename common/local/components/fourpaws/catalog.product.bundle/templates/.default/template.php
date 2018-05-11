@@ -17,7 +17,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $bundle = $arResult['BUNDLE']; ?>
 <div class="b-advice">
     <?php if (!empty($bundle->getName())){ ?>
-        <h2 class="b-title b-title--advice"><?php $bundle->getName() ?></h2>
+        <h2 class="b-title b-title--advice"><?=$bundle->getName() ?></h2>
     <?php } ?>
         <div class="b-advice__list">
             <?php /** @var \FourPaws\Catalog\Model\BundleItem $product */
