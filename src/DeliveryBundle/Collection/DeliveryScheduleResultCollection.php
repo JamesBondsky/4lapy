@@ -201,10 +201,14 @@ class DeliveryScheduleResultCollection extends ArrayCollection
                 if (null === $resultByOffer) {
                     $result[$offerId] = $item;
                 } else {
-                    /** @var DeliveryScheduleResult $resultByOffer */
-                    $days = $resultByOffer->getScheduleResult()->getDays($from);
-                    if ($days > $item->getScheduleResult()->getDays($from)) {
+                    if ($item->getAmountByOffer($offer) > $resultByOffer->getAmountByOffer($offer)) {
                         $result[$offerId] = $item;
+                    } else {
+                        /** @var DeliveryScheduleResult $resultByOffer */
+                        $days = $resultByOffer->getScheduleResult()->getDays($from);
+                        if ($days > $item->getScheduleResult()->getDays($from)) {
+                            $result[$offerId] = $item;
+                        }
                     }
                 }
             }

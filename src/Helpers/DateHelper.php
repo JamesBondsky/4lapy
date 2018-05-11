@@ -243,7 +243,7 @@ class DateHelper
             $isToday = ($diff === 0) && ($date->format('Z') === $tmpDate->format('Z'));
             $isTomorrow = ($diff === 1) && ($date->format('Z') === $tmpDate->format('Z'));
 
-            switch ($date->diff(new \DateTime())->days) {
+            switch (true) {
                 case $isToday:
                     $str = 'Сегодня';
                     break;
