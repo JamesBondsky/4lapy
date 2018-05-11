@@ -172,13 +172,12 @@ class ProductInfoController extends Controller
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws \Exception
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @global \CMain            $APPLICATION
      *
-     * @throws \Exception
-     * @throws \Exception
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
@@ -202,6 +201,8 @@ class ProductInfoController extends Controller
             /** @var ProductSearchResult $result */
             /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
             $productIds = $productListRequest->getProductIds();
+            /** исправляем проблему с сортировкой */
+            sort($productIds, SORT_NUMERIC);
             $getProducts = function () use ($productIds) {
                 $productCollection = (new ProductQuery())->withFilter(['=ID' => $productIds])->exec();
                 /** @var Product $product */
