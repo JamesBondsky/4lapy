@@ -148,18 +148,10 @@ class BasketService implements LoggerAwareInterface
             if (!$found) {
                 throw new BitrixProxyException($result);
             }
+        } else {
+            $basketItem = $result->getData()['BASKET_ITEM'];
         }
         if ($save) {
-            /** @var BasketItem $basketItem */
-            if ($result->isSuccess()) {
-                $basketItem = $result->getData()['BASKET_ITEM'];
-            } else {
-                foreach ($basket->getBasketItems() as $basketItem) {
-                    if (!\in_array($basketItem->getBasketCode(), $oldBasketCodes, true)) {
-                        break;
-                    }
-                }
-            }
             $basketItem->save();
         }
 
