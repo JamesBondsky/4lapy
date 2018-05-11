@@ -475,11 +475,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                  * @todo
                  */
                 ->setChargeBonus(true)
-                ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'));
-
-            if ($orderDto->getDeliveryType() !== SapOrder::DELIVERY_TYPE_CONTRACTOR) {
-                $offer->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
-            }
+                ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
+                ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
             $collection->add($offer);
             $position++;
