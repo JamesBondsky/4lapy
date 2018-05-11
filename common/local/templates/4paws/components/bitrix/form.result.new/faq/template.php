@@ -74,7 +74,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
             <?php
         } ?>
         <div class="b-checkbox b-checkbox--agree">
-            <input class="b-checkbox__input" type="checkbox" name="agree" id="checkbox1" value=""/>
+            <input class="b-checkbox__input" type="checkbox" name="agree" id="checkbox1" value="" required="required"/>
             <label class="b-checkbox__name b-checkbox__name--agree" for="checkbox1">
                 <span class="b-checkbox__text-agree">Я ознакомлен(а) и соглашаюсь с условиями
                     <a class="b-checkbox__link-agree" href="/company/user-agreement/" target='_blank'
