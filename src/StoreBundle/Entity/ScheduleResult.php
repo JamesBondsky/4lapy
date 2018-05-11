@@ -292,7 +292,7 @@ class ScheduleResult extends Base implements \Serializable
      */
     public function getDays11(): int
     {
-        return $this->days11;
+        return $this->days11 ?? static::RESULT_ERROR;
     }
 
     /**
@@ -311,7 +311,7 @@ class ScheduleResult extends Base implements \Serializable
      */
     public function getDays13(): int
     {
-        return $this->days13;
+        return $this->days13 ?? static::RESULT_ERROR;
     }
 
     /**
@@ -330,7 +330,7 @@ class ScheduleResult extends Base implements \Serializable
      */
     public function getDays18(): int
     {
-        return $this->days18;
+        return $this->days18 ?? static::RESULT_ERROR;
     }
 
     /**
@@ -349,7 +349,7 @@ class ScheduleResult extends Base implements \Serializable
      */
     public function getDays24(): int
     {
-        return $this->days24;
+        return $this->days24 ?? static::RESULT_ERROR;
     }
 
     /**

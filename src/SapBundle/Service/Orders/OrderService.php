@@ -977,6 +977,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
         $deliveryId = $shipment->getDeliveryId();
 
-        return $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId);
+        return $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId) ?? '';
     }
 }
