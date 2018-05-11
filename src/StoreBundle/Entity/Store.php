@@ -224,7 +224,16 @@ class Store extends Base
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $region = '';
+    protected $subregion = '';
+
+    /**
+     * @var array
+     * @Serializer\SerializedName("UF_REGION")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Type("array_or_false<string>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $region = [];
 
     /**
      * @var int
@@ -787,9 +796,29 @@ class Store extends Base
     /**
      * @return string
      */
-    public function getRegion(): string
+    public function getSubRegion(): string
     {
-        return $this->region ?? '';
+        return $this->subregion;
+    }
+
+    /**
+     * @param string $subregion
+     *
+     * @return Store
+     */
+    public function setSubRegion(string $subregion): Store
+    {
+        $this->subregion = $subregion;
+
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getRegion(): array
+    {
+        return $this->region ?? [];
     }
 
     /**
