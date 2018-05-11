@@ -73,12 +73,24 @@ class DeleteUnusedMailTemplate20180511151918 extends \Adv\Bitrixtools\Migration\
             'NEW_USER_CONFIRM',
         ];
 
+        $deactivateEventTypes = [
+            'USER_PASS_CHANGED',
+            'USER_PASS_REQUEST',
+            'NEW_USER',
+        ];
+
         foreach ($eventTypes as $eventType) {
             $res = EventMessageTable::query()->setSelect(['ID'])->where('EVENT_NAME', $eventType)->exec();
             while ($eventMessageItem = $res->fetch()) {
                 \CEventMessage::Delete($eventMessageItem['ID']);
             }
             \CEventType::Delete($eventType);
+        }
+
+        $res = EventMessageTable::query()->setSelect(['ID'])->whereIn('EVENT_NAME', $deactivateEventTypes)->exec();
+        $eventMessage = new \CEventMessage();
+        while ($eventMessageItem = $res->fetch()) {
+            $eventMessage->Update($eventMessageItem['ID'], ['ACTIVE' => 'N']);
         }
     }
 
