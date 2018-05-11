@@ -71,7 +71,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         }
                     }
                     if (!empty($offerId)) {
-                        $this->addGift($offerId, $group['count'], $group['discountId']);
+                        $this->addGift($offerId, $group['count'], $group['discountId'], $OfferCollection->count() === 1);
                     }
                 }
             }
