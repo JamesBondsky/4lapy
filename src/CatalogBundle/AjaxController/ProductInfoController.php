@@ -220,7 +220,7 @@ class ProductInfoController extends Controller
 
             $bitrixCache = new BitrixCache();
             $bitrixCache
-                ->withId(__METHOD__ . '_product_' . implode('-', $productIds));
+                ->withId(__METHOD__ . '_location_' . '_product_' . implode('-', $productIds));
             foreach ($productIds as $productId) {
                 $bitrixCache->withTag('catalog:product:' . $productId);
                 $bitrixCache->withTag('iblock:item:' . $productId);
