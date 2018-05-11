@@ -520,6 +520,8 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws Exception
      * @throws ObjectNotFoundException
@@ -561,7 +563,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                     'basket' => $this->basketViewService->getBasketHtml(true)
                 ],
                 200,
-                ['reload' => false]
+                ['reload' => true] // todo разобраться зачем это на стейдж
             );
         }
 
