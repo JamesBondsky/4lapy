@@ -162,6 +162,17 @@ class Manzana implements LoggerAwareInterface
                         'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
                         'CUSTOM_PRICE' => 'Y',
                     ]);
+
+                    try {
+                        $item->getPropertyCollection()->createItem()->setFields([
+                            'CODE' => 'HAS_BONUS',
+                            'VALUE' => (bool)$position->getSignCharge()
+                        ]);
+                    } catch (\Exception $e) {
+                        /**
+                         * Да не может быть
+                         */
+                    }
                 }
             });
         }

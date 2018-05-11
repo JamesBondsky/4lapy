@@ -64,7 +64,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $sum += $item->getBasePrice() * $item->getQuantity();
             $sumDiscounted += $item->getPrice() * $item->getQuantity();
 
-            $basketCode = (int)str_replace('n', '', $item->getBasketCode());
+            $basketCode = (int)\str_replace('n', '', $item->getBasketCode());
             $chequePosition =
                 (new ChequePosition())->setChequeItemNumber($basketCode)
                     ->setSumm($item->getBasePrice() * $item->getQuantity())
@@ -79,9 +79,9 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     ->setChequeItemId($item->getId());
 
             try {
-                $signCharge = $basketService->isItemWithBonusAwarding($item, $basket->getOrder()) ? 1 : 0;
+                $signCharge = $basketService->isItemWithBonusAwarding($item, $basket->getOrder()) ? 0 : 1;
             } catch (InvalidArgumentException $e) {
-                $signCharge = 0;
+                $signCharge = 1;
             }
 
             $chequePosition->setSignCharge($signCharge);
