@@ -243,6 +243,17 @@ class StoreService implements LoggerAwareInterface
             );
             $stores = new StoreCollection();
         }
+
+        /**
+         * Ищем склады района и региона
+         */
+        if (!$strict && $stores->isEmpty()) {
+            $stores = $this->getSubRegionalStores($locationCode, $type);
+            if ($stores->isEmpty()) {
+                $stores = $this->getRegionalStores($locationCode, $type);
+            }
+        }
+
         /**
          * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
          */
@@ -256,6 +267,37 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $stores;
+    }
+
+    /**
+     * @param string $locationCode
+     * @param string $type
+     * @return StoreCollection
+     */
+    public function getSubRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
+    {
+        if ($subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE']) {
+            $getStores = function () use ($type, $subregionCode) {
+                return ['result' => $this->getStores($type, ['UF_SUBREGION' => $subregionCode])];
+            };
+
+            try {
+                $result = (new BitrixCache())->withId(__METHOD__ . $subregionCode . $type)->resultOf($getStores);
+
+                /** @var StoreCollection $stores */
+                $stores = $result['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf(
+                        'failed to get stores for location: %s',
+                        $e->getMessage()
+                    ),
+                    ['location' => $locationCode, 'type' => $type]
+                );
+            }
+        }
+
+        return $stores ?? new StoreCollection();
     }
 
     /**
