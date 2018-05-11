@@ -290,8 +290,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             case DeliveryService::INNER_PICKUP_CODE:
                 $result = $storeService->getStoresByLocation(
                     $locationCode,
-                    StoreService::TYPE_SHOP,
-                    true
+                    StoreService::TYPE_SHOP
                 );
                 break;
             case DeliveryService::INNER_DELIVERY_CODE:
