@@ -7,6 +7,8 @@ declare(strict_types=1);
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Grid\Declension;
 use Bitrix\Main\LoaderException;
@@ -86,9 +88,12 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws ArgumentNullException
+     * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws LoaderException
      * @throws RuntimeException
+     * @throws Exception
      *
      * @return JsonResponse
      */
@@ -134,9 +139,13 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
-     * @return JsonResponse
+     * @throws ArgumentNullException
+     * @throws Exception
+     * @throws ArgumentException
      * @throws LoaderException
      * @throws ObjectNotFoundException
+     *
+     * @return JsonResponse
      */
     public function bulkAddAction(Request $request): JsonResponse
     {
@@ -184,9 +193,13 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
-     * @return JsonResponse
+     * @throws ArgumentNullException
+     * @throws ArgumentException
+     * @throws Exception
      * @throws LoaderException
      * @throws ObjectNotFoundException
+     *
+     * @return JsonResponse
      */
     public function bulkAddBundleAction(Request $request): JsonResponse
     {
@@ -495,7 +508,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                     'basket' => $this->basketViewService->getBasketHtml(true)
                 ],
                 200,
-                ['reload' => false]
+                ['reload' => true] // todo разобраться почему это нужно на stage
             );
         }
 
