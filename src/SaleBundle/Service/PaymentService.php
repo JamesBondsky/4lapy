@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use CUser;
 
@@ -28,10 +29,11 @@ class PaymentService
      * @todo переделать на DTO
      * @todo переделать на сериализацию
      *
-     * @param Order $order
+     * @param Order       $order
      * @param CUser|array $user
-     * @param int $taxSystem
+     * @param int         $taxSystem
      *
+     * @throws ObjectNotFoundException
      * @return array
      */
     public function getFiscalization(Order $order, $user, int $taxSystem): array
@@ -96,7 +98,7 @@ class PaymentService
             18 => 3,
         ];
 
-        $itemsCnt = 1;
+        $itemsCnt = 0;
         $arCheck = null;
         $itemMap = [];
 
@@ -113,7 +115,7 @@ class PaymentService
             $amount += $itemAmount * $basketItem->getQuantity(); //Для фискализации общая сумма берется путем суммирования округленных позиций.
 
             $fiscal['orderBundle']['cartItems']['items'][] = [
-                'positionId' => $itemsCnt++,
+                'positionId' => ++$itemsCnt,
                 'name' => $basketItem->getField('NAME'),
                 'quantity' => [
                     'value' => $basketItem->getQuantity(),
@@ -147,6 +149,25 @@ class PaymentService
             ];
 
             $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
+        }
+
+        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
+        if ($innerPayment && $innerPayment->isPaid()) {
+            $fiscal['orderBundle']['cartItems']['items'][] = [
+                'positionId' => $itemsCnt + 2,
+                'name' => 'Оплачено баллами',
+                'quantity' => [
+                    'value' => 1,
+                    'measure' => Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT'),
+                ],
+                'itemAmount' => -1 * $innerPayment->getSum() * 100,
+                'itemCode' => $order->getId() . '_BONUS_PAID',
+                'itemPrice' => -1 * $innerPayment->getSum() * 100,
+                'tax' => [
+                    'taxType' => 0,
+                ],
+            ];
+            $amount -= $innerPayment->getSum() * 100;
         }
 
         return \compact('amount', 'fiscal', 'itemMap');
