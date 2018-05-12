@@ -9,16 +9,13 @@ namespace Sprint\Migration;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Sale\Location\ExternalServiceTable;
 use Bitrix\Sale\Location\ExternalTable;
-use Bitrix\Sale\Location\LocationTable;
 use FourPaws\App\Application;
-use FourPaws\LocationBundle\LocationService;
 
 class DeliveryDpdLocations20180512205141 extends SprintMigrationBase
 {
     protected $description = 'Создание внешнего сервиса KLADR для местоположений';
 
     protected const EXTERNAL_CODE = 'KLADR';
-
 
     /**
      * @return bool

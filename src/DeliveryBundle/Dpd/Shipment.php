@@ -10,8 +10,8 @@ use Bitrix\Main\Loader;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Dpd\Lib\Calculator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use Ipolh\DPD\API\User;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Shipment
@@ -38,7 +38,7 @@ class Shipment extends \Ipolh\DPD\Shipment
     {
         $this->locationFrom = \is_array($locationCode)
             ? $locationCode
-            : LocationTable::getByLocationCode($locationCode);
+            : $this->getDpdLocation($locationCode);
 
         return $this;
     }
@@ -54,7 +54,7 @@ class Shipment extends \Ipolh\DPD\Shipment
     {
         $this->locationTo = \is_array($locationCode)
             ? $locationCode
-            : LocationTable::getByLocationCode($locationCode);
+            : $this->getDpdLocation($locationCode);
 
         return $this;
     }
@@ -109,5 +109,27 @@ class Shipment extends \Ipolh\DPD\Shipment
     public function calculator()
     {
         return new Calculator($this, $this->api);
+    }
+
+    /**
+     * @param $locationCode
+     */
+    protected function getDpdLocation($locationCode)
+    {
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $location = $locationService->findLocationCityByCode($locationCode);
+
+        return [
+            'ID'           => $location['ID'],
+            'CODE'         => $locationCode,
+            'COUNTRY_CODE' => 'RU',
+            'REGION_CODE'  => '',
+            'REGION_NAME'  => '',
+            'CITY_ID'      => '',
+            'CITY_CODE'    => substr($locationService->getLocationKladrCode($locationCode), 0, 10),
+            'CITY_NAME'    => $location['NAME'],
+            'IS_CASH_PAY'  => 'Y',
+        ];
     }
 }
