@@ -18,17 +18,17 @@ use FourPaws\LocationBundle\LocationService;
 class DaDataLocationAdapter extends BaseAdapter
 {
     public const TYPE_MAP = [
-        'COUNTRY' => false,
+        'COUNTRY'          => false,
         'COUNTRY_DISTRICT' => false,
-        'REGION' => 'region',
-        'SUBREGION' => false,
-        'CITY' => 'city',
-        'VILLAGE' => 'settlement',
-        'STREET' => false,
+        'REGION'           => 'region',
+        'SUBREGION'        => false,
+        'CITY'             => 'city',
+        'VILLAGE'          => 'settlement',
+        'STREET'           => false,
     ];
 
     public const EXCLUDE_REGION_TYPE = [
-        'REGION' => [
+        'REGION'  => [
             'край',
             'область',
             'автономная область',
@@ -42,7 +42,7 @@ class DaDataLocationAdapter extends BaseAdapter
             'хутор',
             'аул',
             'деревня',
-        ]
+        ],
     ];
 
     /**
@@ -83,8 +83,9 @@ class DaDataLocationAdapter extends BaseAdapter
             }
 
             $fullRegion = '';
-            $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? sprintf(str_replace('/', '%s',
-                $entity->getRegion()),'(',')') : '');
+            $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? sprintf(str_replace('/',
+                '%s',
+                $entity->getRegion()), '(', ')') : '');
             if (!empty($region)) {
                 $regionType = trim($entity->getRegionTypeFull());
                 $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
@@ -95,18 +96,24 @@ class DaDataLocationAdapter extends BaseAdapter
                 }
             }
             $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
-            $selectedCity = reset($cities);
+            if (!empty($cities)) {
+                $selectedCity = reset($cities);
+            } else {
+                $selectedCity['NAME'] = $city;
+            }
 
             /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
-            foreach ($selectedCity['PATH'] as $pathItem) {
-                if (ToUpper($pathItem['TYPE']['CODE']) === 'REGION') {
-                    $selectedCity['REGION_ID'] = $pathItem['ID'];
-                    $selectedCity['REGION_CODE'] = $pathItem['CODE'];
-                    break;
+            if (!empty($selectedCity['PATH'])) {
+                foreach ($selectedCity['PATH'] as $pathItem) {
+                    if (ToUpper($pathItem['TYPE']['CODE']) === 'REGION') {
+                        $selectedCity['REGION_ID'] = $pathItem['ID'];
+                        $selectedCity['REGION_CODE'] = $pathItem['CODE'];
+                        break;
+                    }
                 }
             }
 
-            $selectedCity['REGION'] = $entity->getRegion();
+            $selectedCity['REGION'] = $region;
             $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
 
         } catch (CityNotFoundException $e) {
@@ -147,7 +154,8 @@ class DaDataLocationAdapter extends BaseAdapter
 
         return \array_reduce($result, function ($array, $item) {
             if (self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']]) {
-                $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']], '', \strtolower($item['NAME'])));
+                $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']], '',
+                    \strtolower($item['NAME'])));
             }
 
             return array_merge($array, [
