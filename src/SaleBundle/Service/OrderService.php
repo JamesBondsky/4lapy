@@ -1013,6 +1013,15 @@ class OrderService implements LoggerAwareInterface
             $storage1 = $splitResult1->getOrderStorage();
             $order2 = $splitResult2->getOrder();
             $storage2 = $splitResult2->getOrderStorage();
+            $basket = $this->basketService->getBasket();
+
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                if (!$basketItem->isDelay()) {
+                    $basketItem->delete();
+                }
+            }
+            $basket->save();
 
             $this->saveOrder($order, $storage1, $splitResult1->getDelivery());
             /**
@@ -1044,11 +1053,20 @@ class OrderService implements LoggerAwareInterface
                         'relatedOrder' => $order2->getId(),
                     ]);
                 }
-            }
+            } else {
+                $basket2 = $order2->getBasket();
+                /** @var BasketItem $basketItem */
+                foreach ($basket2 as $basketItem) {
+                    $basketItem->setFieldNoDemand('DELAY', BitrixUtils::BX_BOOL_TRUE);
 
-            $basket = $this->basketService->getBasket();
-            $basket->clearCollection();
-            $basket->save();
+                    $this->basketService->setBasketItemPropertyValue(
+                        $basketItem,
+                        'IS_TEMPORARY',
+                        BitrixUtils::BX_BOOL_TRUE
+                    );
+                }
+                $basket2->save();
+            }
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);

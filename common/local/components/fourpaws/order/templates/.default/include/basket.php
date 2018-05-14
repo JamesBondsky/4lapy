@@ -82,8 +82,6 @@ if (null !== $pickup) {
     $stockResult = $pickup->getStockResult();
 
     $available = $stockResult->getAvailable();
-    $availableWeight = 0;
-    $availablePrice = 0;
     // если нет доступных товаров, частичного получения не будет
     if ($available->isEmpty()) {
         $available = $stockResult->getDelayed();
@@ -94,12 +92,11 @@ if (null !== $pickup) {
         $availableQuantity = $available->getAmount();
         [$availableItems, $availableWeight] = getOrderItemData($available);
         $availablePrice = $available->getPrice();
-        $availableItems = [];
 
         $delayed = $stockResult->getDelayed();
-        $delayedQuantity = $available->getAmount();
-        [$delayedItems, $delayedWeight] = getOrderItemData($available);
-        $availablePrice = $available->getPrice();
+        $delayedQuantity = $delayed->getAmount();
+        [$delayedItems, $delayedWeight] = getOrderItemData($delayed);
+        $delayedPrice = $delayed->getPrice();
 
         if (!$delayed->isEmpty()) {
             $showDelayedItems = true;
@@ -116,14 +113,13 @@ if (null !== $delivery) {
     [$deliveryOrderableItems, $deliveryOrderableWeight] = getOrderItemData($deliveryResult);
     $deliveryOrderablePrice = $deliveryResult->getPrice();
 
-
     $isSplit = $storage->isSplit() && !empty($arResult['SPLIT_RESULT']);
     if (!empty($arResult['SPLIT_RESULT'])) {
         /** @var StockResultCollection $deliveryResult1 */
         $deliveryResult1 = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getStockResult();
         /** @var StockResultCollection $deliveryResult2 */
         $deliveryResult2 = $arResult['SPLIT_RESULT']['2']['DELIVERY']->getStockResult();
-//var_dump($deliveryResult2);
+
         $deliveryResult1Quantity = $deliveryResult1->getAmount();
         [$deliveryResult1Items, $deliveryResult1Weight] = getOrderItemData($deliveryResult1);
         $deliveryResult1Price = $deliveryResult1->getPrice();
@@ -309,7 +305,7 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value">
-                        <?= CurrencyHelper::formatPrice($item['price'] * $item['quantity']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price']) ?>
                     </div>
                 </li>
             <?php } ?>
@@ -342,7 +338,7 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--aside">
-                        <?= CurrencyHelper::formatPrice($item['price'] * $item['quantity']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price']) ?>
                     </div>
                 </li>
             <?php } ?>
