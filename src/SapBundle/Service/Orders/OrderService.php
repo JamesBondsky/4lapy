@@ -426,13 +426,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
+        $deliveryAddress = $this->getDeliveryAddress($order, $terminalCode);
+
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
             ->setDeliveryTimeInterval($interval)
-            ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
-            ->setDeliveryAddressOrPoint($deliveryPoint)
+            ->setDeliveryAddress($deliveryAddress)
+            ->setDeliveryAddressOrPoint($deliveryAddress->__toString())
             ->setContractorCode($deliveryTypeCode === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
 
         if ($deliveryDate) {
