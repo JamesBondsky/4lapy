@@ -22,8 +22,8 @@ class Gift extends \CSaleActionCtrlAction
     {
         $controlDescr = parent::GetControlDescr();
         $controlDescr['FORCED_SHOW_LIST'] = [
-            'GifterElement',
             'ADV:BasketFilterBasePriceRatio',
+            'ADV:BasketFilterQuantityRatio',
         ];
         $controlDescr['SORT'] = 300;
         return $controlDescr;
@@ -49,49 +49,64 @@ class Gift extends \CSaleActionCtrlAction
         $description['label'] = 'Предоставить выбор подарка';
         $description['containsOneAction'] = false;
         $description['mess'] = [
-            'ADD_CONTROL'    => 'Добавить условие',
+            'ADD_CONTROL' => 'Добавить условие',
             'SELECT_CONTROL' => 'Выбрать условие',
         ];
         $description['control'] = [
             'предоставить подарок',
             $arAtoms['Count_operator'],
+            'если выполнены',
+            $arAtoms['All'],
+            'в количестве',
+            $arAtoms['count'],
+            'из следующих товаров: ',
+            $arAtoms['list'],
         ];
         return $description;
     }
 
     /**
-     * @param            $arOneCondition
-     * @param            $arParams
+     * @param            $parameters
+     * @param            $variables
      * @param            $arControl
      * @param array|bool $arSubs
      *
-     * @return array|bool|string
+     * @return bool|string
      */
-    public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false)
+    public static function Generate($parameters, $variables, $arControl, $arSubs = false)
     {
-        $result = '$applyCount = 0; $originalOrder = $arOrder;';
+        $result = '';
+        if (
+            \in_array($parameters['All'], ['AND', 'OR'], true)
+            &&
+            \in_array($parameters['Count_operator'], ['condition_count', 'once'], true)
+            &&
+            (int)$parameters['count'] >= 1
+            &&
+            \is_array($parameters['list']) && !empty($parameters['list'])
+            &&
+            \is_array($arSubs) && \count($arSubs) >= 1
+        ) {
+            $orderVar = $variables['ORDER'];
+            $countOperator = $parameters['Count_operator'] === 'once' ? '(int)(bool)' : '';
+            $countOperator .= $parameters['All'] === 'AND' ? 'min' : 'array_sum';
+            $legacyJSONSettings = json_encode([
+                [ //todo перейти на обычные параметры. Пока сделано так для обратной совместимости
+                    'count' => (int)$parameters['count'],
+                    'list' => $parameters['list'],
+                ]
+            ]);
 
-
-        if (null !== $arSubs && \is_array($arSubs) && !empty($arSubs) && implode('', $arSubs)) {
-            $subs = [];
-            foreach ($arSubs as $elem) {
-                $giftGroupSettings = \json_decode($elem, true);
-                if (\is_array($giftGroupSettings)) {
-                    $subs[] = $giftGroupSettings;
-                } else {
-                    // функция для фильтрации корзины и определения сколько подарков выдавать.
-                    // todo если функций несколько, то вычислить пересечение результатов фильтрации и минимальное количество выполений фильтра (но пока она одна)
-                    $countOperator = '';
-                    if ($arOneCondition['Count_operator'] === 'once') {
-                        $countOperator = '(int)(bool)';
-                    }
-                    $result .= '$applyCount = ' . $countOperator . $elem;
-                }
+            $result = PHP_EOL . '$counts = []; $originalOrder = ' . $orderVar . ';' . PHP_EOL;
+            foreach ($arSubs as $sub) {
+                $result .= '$counts[] = ' . $sub . PHP_EOL;
+                $result .= $orderVar . ' = $originalOrder;' . PHP_EOL;
             }
-            $subs = \json_encode($subs);
-            $result .= static::class . '::applyGift(' . $arParams['ORDER'] . ', \'' . $subs . '\', (isset($this) ? $this : null), $applyCount);$arOrder = $originalOrder;';
+            $result .= '$applyCount = ' . $countOperator . '($counts);' . PHP_EOL;
+            $result .= static::class . '::applyGift(' . $orderVar . ', \'' . $legacyJSONSettings . '\', '
+                . '(isset($this) ? $this : null), $applyCount);' . PHP_EOL;
+            $result .= '$arOrder = $originalOrder;' . PHP_EOL;
         }
-
         return $result;
     }
 
@@ -100,17 +115,17 @@ class Gift extends \CSaleActionCtrlAction
      * @param               $order
      * @param               $params
      * @param Discount|null $callerObject
-     * @param int           $applyCount
+     * @param int $applyCount
      *
      */
     public static function applyGift(
         array $order,
         $params,
+        //todo заюзать и избавиться от Utils
         /** @noinspection PhpUnusedParameterInspection */
         Discount $callerObject = null,
         int $applyCount
-    )
-    {
+    ) {
         $applyBasket = null;
         $actionDescription = null;
         if (!empty($order['BASKET_ITEMS']) && \is_array($order['BASKET_ITEMS']) && $applyCount) {
@@ -122,7 +137,7 @@ class Gift extends \CSaleActionCtrlAction
                 $params['discountType'] = 'GIFT';
             }
             $actionDescription = [
-                'ACTION_TYPE'        => OrderDiscountManager::DESCR_TYPE_SIMPLE,
+                'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
                 'ACTION_DESCRIPTION' => \json_encode($params),
             ];
             Actions::increaseApplyCounter();
@@ -153,7 +168,7 @@ class Gift extends \CSaleActionCtrlAction
         $result = false;
         if (isset($arParams['ID']) && $arParams['ID'] === static::GetControlID()) {
             $arControl = [
-                'ID'    => $arParams['ID'],
+                'ID' => $arParams['ID'],
                 'ATOMS' => static::GetAtomsEx(false, true),
             ];
             $result = static::CheckAtoms($arParams['DATA'], $arParams, $arControl, true);
@@ -179,28 +194,84 @@ class Gift extends \CSaleActionCtrlAction
     public static function GetAtomsEx($strControlID = false, $boolEx = false): array
     {
         $boolEx = (true === $boolEx);
-
         $arAtomList = [
             'Count_operator' => [
-                'JS'   => [
-                    'id'           => 'Count_operator',
-                    'name'         => 'Count_operator',
-                    'type'         => 'select',
-                    'values'       => [
+                'JS' => [
+                    'id' => 'Count_operator',
+                    'name' => 'Count_operator',
+                    'type' => 'select',
+                    'values' => [
                         'condition_count' => 'столько, сколько выполняется условие',
-                        'once'            => 'один раз',
+                        'once' => 'один раз',
                     ],
-                    'defaultText'  => 'столько, сколько выполняется условие',
+                    'defaultText' => 'столько, сколько выполняется условие',
                     'defaultValue' => 'condition_count',
                     'first_option' => '...',
                 ],
                 'ATOM' => [
-                    'ID'           => 'Count_operator',
-                    'FIELD_TYPE'   => 'string',
+                    'ID' => 'Count_operator',
+                    'FIELD_TYPE' => 'string',
                     'FIELD_LENGTH' => 255,
-                    'MULTIPLE'     => 'N',
-                    'VALIDATE'     => 'list',
+                    'MULTIPLE' => 'N',
+                    'VALIDATE' => 'list',
                 ],
+            ],
+            'count' => [
+                'JS' => [
+                    'id' => 'count',
+                    'name' => 'count',
+                    'type' => 'input',
+                    'defaultText' => 1,
+                    'defaultValue' => 1,
+                ],
+                'ATOM' => [
+                    'ID' => 'count',
+                    'FIELD_TYPE' => 'int',
+                    'MULTIPLE' => 'N',
+                    'VALIDATE' => ''
+                ]
+            ],
+            'list' => [
+                'JS' => [
+                    'id' => 'list',
+                    'name' => 'list',
+                    'type' => 'multiDialog',
+                    'popup_url' => '/bitrix/admin/cat_product_search_dialog.php',
+                    'popup_params' => [
+                        'lang' => LANGUAGE_ID,
+                        'caller' => 'discount_rules',
+                        'allow_select_parent' => 'Y',
+                    ],
+                    'param_id' => 'n',
+                    'show_value' => 'Y'
+                ],
+                'ATOM' => [
+                    'ID' => 'list',
+                    'FIELD_TYPE' => 'int',
+                    'MULTIPLE' => 'Y',
+                    'VALIDATE' => 'element'
+                ]
+            ],
+            'All' => [
+                'JS' => [
+                    'id' => 'All',
+                    'name' => 'aggregator',
+                    'type' => 'select',
+                    'values' => [
+                        'AND' => 'все условия',
+                        'OR' => 'любое из условий'
+                    ],
+                    'defaultText' => 'все условия',
+                    'defaultValue' => 'AND',
+                    'first_option' => '...'
+                ],
+                'ATOM' => [
+                    'ID' => 'All',
+                    'FIELD_TYPE' => 'string',
+                    'FIELD_LENGTH' => 255,
+                    'MULTIPLE' => 'N',
+                    'VALIDATE' => 'list'
+                ]
             ],
         ];
 
@@ -217,7 +288,7 @@ class Gift extends \CSaleActionCtrlAction
 
     /**
      * @param Order|null $order
-     * @param int|null   $discountId
+     * @param int|null $discountId
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
@@ -244,7 +315,7 @@ class Gift extends \CSaleActionCtrlAction
 
     /**
      * @param Order|null $order
-     * @param int|null   $discountId
+     * @param int|null $discountId
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *

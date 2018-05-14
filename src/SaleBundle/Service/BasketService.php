@@ -249,10 +249,12 @@ class BasketService implements LoggerAwareInterface
      * @throws Exception
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     *
      * @return array
      */
     public function getGiftGroupOfferCollection(?int $discountId = null): array
     {
+        //todo эээ так можно или нельзя? определись, чувак)
         if (!$discountId || $discountId < 0) {
             throw new InvalidArgumentException('Отсутствует идентификатор скидки');
         }
