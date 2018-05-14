@@ -26,7 +26,7 @@ class BundleEditPropLinks20180514212648 extends SprintMigrationBase
         $hlblockBundleItemsId = $helper->Hlblock()->getHlblockId('BundleItems');
         $entityBundleItemsId = 'HLBLOCK_' . $hlblockBundleItemsId;
         $hlFieldId = UserFieldTable::query()
-            ->where('ENTITY_ID', $hlblockBundleItemsId)
+            ->where('ENTITY_ID', $entityBundleItemsId)
             ->where('FIELD_NAME','UF_PRODUCT')
             ->setSelect(['ID'])
             ->exec()->fetch()['ID'];
