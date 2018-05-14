@@ -23,8 +23,15 @@ if (!empty($bonus)) { ?>
             }
         });
     </script>
-<?php }
-
+<?php } ?>
+    <script type="text/javascript">
+        $(function () {
+            $('.js-plus-minus-count')
+                .data('cont-max', '<?=$currentOffer->getQuantity()?>')
+                .data('one-price', '<?=$currentOffer->getPrice()?>');
+        });
+    </script>
+<?php
 /** установка количество товаров в корзине для офферов */
 $container = Application::getInstance()->getContainer();
 $basketService = $container->get(BasketService::class);
