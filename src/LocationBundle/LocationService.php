@@ -59,9 +59,13 @@ class LocationService
 
     public const TYPE_VILLAGE = 'VILLAGE';
 
+    public const TYPE_SUBREGION = 'SUBREGION';
+
     public const TYPE_REGION = 'REGION';
 
     public const LOCATION_CODE_MOSCOW = '0000073738';
+
+    public const LOCATION_CODE_MOSCOW_REGION = '0000028025';
 
     public const DEFAULT_REGION_CODE = 'IR77';
 
@@ -464,8 +468,11 @@ class LocationService
     {
         if (!isset($this->locationsByCode[$code])) {
             $this->locationsByCode[$code] = reset($this->findLocationNew(['=CODE' => $code]));
+            if(\is_bool($this->locationsByCode[$code])){
+                $this->locationsByCode[$code] = [];
+            }
         }
-        return $this->locationsByCode[$code];
+        return $this->locationsByCode[$code] ?? [];
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
@@ -546,7 +553,7 @@ class LocationService
                     'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
                 ]));
             }
-            if (!empty($this->locationsByCode[$code])) {
+            if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {
                 return $this->locationsByCode[$code];
             }
         }
@@ -570,6 +577,30 @@ class LocationService
                 if (($pathItem['CODE'] === static::LOCATION_CODE_MOSCOW) ||
                     ($pathItem['TYPE']['CODE'] === static::TYPE_REGION)
                 ) {
+                    $result = $pathItem;
+                    break;
+                }
+            }
+        } catch (CityNotFoundException $e) {
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $cityCode
+     *
+     * @return array
+     */
+    public function findLocationSubRegion(string $cityCode): array
+    {
+        $result = [];
+        try {
+            $data = $this->findLocationCityByCode($cityCode);
+            $path = $data['PATH'];
+
+            foreach ($path as $pathItem) {
+                if ($pathItem['TYPE']['CODE'] === static::TYPE_SUBREGION) {
                     $result = $pathItem;
                     break;
                 }

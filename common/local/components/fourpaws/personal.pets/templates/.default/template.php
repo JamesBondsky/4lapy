@@ -19,8 +19,7 @@ $items = $arResult['ITEMS'];
     <div class="b-account-adress">
         <?php /** @var Pet $pet */
         if (!$items->isEmpty()) {
-            foreach ($items as $pet) {
-                $codeGender = $pet->getCodeGender()?>
+            foreach ($items as $pet) {?>
                 <div class="b-account-border-block b-account-border-block--pet js-parent-cont js-parent-cont--pet"
                      data-image="<?= $pet->getResizePopupImgPath() ?>"
                      data-name-pet="<?= $pet->getName() ?>"

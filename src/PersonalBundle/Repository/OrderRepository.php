@@ -291,6 +291,9 @@ class OrderRepository extends BaseRepository
                 }
 
                 $allWeight += (float)$item['WEIGHT'] * (float)$item['QUANTITY'];
+                if((float)$item['SUMMARY_PRICE'] <= 0){
+                    $item['SUMMARY_PRICE'] = $item['PRICE']*$item['QUANTITY'];
+                }
                 $allSum += (float)$item['SUMMARY_PRICE'];
                 $key = !empty($item['PRODUCT_XML_ID']) ? $item['PRODUCT_XML_ID'] : '';
                 if (\mb_strlen($key) <= 1) {

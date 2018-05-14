@@ -70,7 +70,6 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws NotFoundException
-     * @throws ObjectPropertyException
      * @throws SystemException
      * @throws BitrixRuntimeException
      * @throws ValidationException
@@ -102,12 +101,9 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * @param Store $sender
      *
-     * @throws ArgumentException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      * @return int
      */
     public function deleteResultsForSender(Store $sender): int
@@ -143,7 +139,7 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws BitrixRuntimeException
      * @throws ValidationException
      */
-    public function createResult(ScheduleResult $result)
+    public function createResult(ScheduleResult $result): bool
     {
         return $this->repository->create($result);
     }
@@ -156,7 +152,7 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      */
-    public function deleteResult(ScheduleResult $result)
+    public function deleteResult(ScheduleResult $result): bool
     {
         return $this->repository->delete($result->getId());
     }
@@ -348,10 +344,10 @@ class ScheduleResultService implements LoggerAwareInterface
             $from = new \DateTime();
         }
         $dates = [
-            11 => (clone $from)->setTime(10, 0, 0),
-            13 => (clone $from)->setTime(12, 0, 0),
-            18 => (clone $from)->setTime(17, 0, 0),
-            24 => (clone $from)->setTime(23, 0, 0),
+            11 => (clone $from)->setTime(10, 0, 0, 0),
+            13 => (clone $from)->setTime(12, 0, 0, 0),
+            18 => (clone $from)->setTime(17, 0, 0, 0),
+            24 => (clone $from)->setTime(23, 0, 0, 0),
         ];
 
         return $this->doCalculateScheduleDate($sender, $receiver, $dates, $maxTransitions);
@@ -452,6 +448,10 @@ class ScheduleResultService implements LoggerAwareInterface
                         ->setReceiver($schedule->getReceiver())
                         ->setRoute($route);
 
+                    /**
+                     * @var int $hour
+                     * @var \DateTime $date
+                     */
                     foreach ($nextDeliveries as $hour => $date) {
                         $days = $date->diff($startDates[$hour])->days;
                         $setter = 'setDays' . $hour;

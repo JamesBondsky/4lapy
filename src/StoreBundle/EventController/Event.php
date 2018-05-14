@@ -9,7 +9,6 @@ namespace FourPaws\StoreBundle\EventController;
 use Bitrix\Main\Entity\EventResult;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
-use Bitrix\Main\ObjectNotFoundException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
@@ -74,9 +73,7 @@ class Event implements ServiceHandlerInterface
      */
     public static function addStoreRegion(&$fields) {
         if ($fields['UF_LOCATION']) {
-            /** @var LocationService $locationService */
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $fields['UF_REGION'] = $locationService->findLocationRegion($fields['UF_LOCATION'])['CODE'] ?? '';
+            $fields['UF_REGION'] = static::getRegionCode($fields['UF_LOCATION']);
         }
     }
 
@@ -88,9 +85,7 @@ class Event implements ServiceHandlerInterface
      */
     public static function updateStoreRegion($id, &$fields) {
         if ($fields['UF_LOCATION']) {
-            /** @var LocationService $locationService */
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $fields['UF_REGION'] = $locationService->findLocationRegion($fields['UF_LOCATION'])['CODE'] ?? '';
+            $fields['UF_REGION'] = static::getRegionCode($fields['UF_LOCATION']);
         }
     }
 
@@ -106,9 +101,25 @@ class Event implements ServiceHandlerInterface
         $fields = $event->getParameter('fields');
         if (isset($fields['UF_LOCATION'])) {
             $result = new EventResult();
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $result->modifyFields(['UF_REGION' => $locationService->findLocationRegion($fields['UF_LOCATION'])['CODE'] ?? '']);
+            $result->modifyFields(['UF_REGION' => static::getRegionCode($fields['UF_LOCATION'])]);
             $event->addResult($result);
         }
+    }
+
+    /**
+     * @param string $location
+     * @return array
+     * @throws ApplicationCreateException
+     */
+    protected static function getRegionCode(string $location): array
+    {
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+
+        $region = $locationService->findLocationRegion($location)['CODE'] ?? '';
+        if ($region === LocationService::LOCATION_CODE_MOSCOW) {
+            $region = [$region, LocationService::LOCATION_CODE_MOSCOW_REGION];
+        }
+
+        return (array)$region;
     }
 }

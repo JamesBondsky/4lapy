@@ -15,14 +15,12 @@ use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
+$propertyValues = $basketItem->getPropertyCollection()->getPropertyValues();
+$basketItemId = $basketItem->getId();
+
 /** у отделнных скидками строчек нет айди, поэтому берем айди той строчки от которой отделили */
-if (!$basketItemId = $basketItem->getId()) {
-    if (
-        ($propertyValues = $basketItem->getPropertyCollection()->getPropertyValues())
-        && isset($propertyValues['DETACH_FROM'])
-    ) {
-        $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
-    }
+if (!$basketItemId && $propertyValues['DETACH_FROM']) {
+    $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
 }
 
 $promoLink = $component->getPromoLink($basketItem);
@@ -54,10 +52,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     </span>
                 </div>
             </div>
-            <?php
-        }
-    }
-    ?>
+        <?php }
+    } ?>
     <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
         <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
             <?php if (null !== $image) { ?>
@@ -104,7 +100,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <?php }
                 } ?>
             </a>
-            <?php if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) { ?>
+            <?php if ($propertyValues['HAS_BONUS']['VALUE'] && $useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?= $offer->getId() ?>">
                     <?php if ($arParams['IS_AJAX']) {
                         echo $offer->getBonusFormattedText((int)$userDiscount, $basketItem->getQuantity(), 0);
