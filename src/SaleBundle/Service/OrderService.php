@@ -929,12 +929,17 @@ class OrderService implements LoggerAwareInterface
             [$delivery->getDeliveryCode()],
             $storage1->getCurrentDate()
         );
-        if (!$tmpDelivery = reset($tmpDeliveries)) {
+        if (!$delivery1 = reset($tmpDeliveries)) {
             throw new OrderSplitException('Cannot split order');
         }
 
-        $order1 = $this->initOrder($storage1, $basket1, $tmpDelivery);
-        $order2 = $this->initOrder($storage2, $basket2);
+        $delivery2 = (clone $delivery)->setStockResult($delayed);
+        if (!$delivery2->isSuccess()) {
+            throw new OrderSplitException('Cannot split order');
+        }
+
+        $order1 = $this->initOrder($storage1, $basket1, $delivery1);
+        $order2 = $this->initOrder($storage2, $basket2, $delivery2);
 
         /**
          * У второго заказа (содержащего товары под заказ) доставка бесплатная
@@ -956,10 +961,10 @@ class OrderService implements LoggerAwareInterface
         return [
             (new OrderSplitResult())->setOrderStorage($storage1)
                 ->setOrder($order1)
-                ->setDelivery($tmpDelivery),
+                ->setDelivery($delivery1),
             (new OrderSplitResult())->setOrderStorage($storage2)
                 ->setOrder($order2)
-                ->setDelivery($delivery),
+                ->setDelivery($delivery2),
         ];
     }
 
