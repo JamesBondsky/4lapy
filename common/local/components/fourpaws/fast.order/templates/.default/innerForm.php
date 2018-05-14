@@ -89,6 +89,9 @@ if ($request->offsetExists('phone')) {
         foreach ($orderableItems as $basketItem) {
             $i++;
             $image = $component->getImage($basketItem->getProductId());
+            if($image !== null){
+                $imageSrc = $image->getSrc();
+            }
             $offer = $component->getOffer((int)$basketItem->getProductId());
             $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             <div class="b-item-shopping b-item-shopping--one-click <?= $countItems === $i ? ' b-item-shopping--last' : '' ?> js-remove-shopping">
@@ -108,7 +111,7 @@ if ($request->offsetExists('phone')) {
                 <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping b-common-item--one-click">
                 <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
                     <img class="b-common-item__image b-common-item__image--shopping-cart"
-                         src="<?= $image ?>"
+                         src="<?= $imageSrc ?>"
                          alt="<?= $basketItem->getField('NAME') ?>"
                          title="<?= $basketItem->getField('NAME') ?>"/>
                 </span>
