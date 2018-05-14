@@ -793,7 +793,7 @@ class OrderService implements LoggerAwareInterface
             if ($shipmentResults &&
                 ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
             ) {
-                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode();
+                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
                 $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
                 if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                     $shipmentDays[$shipmentPlaceCode] = $days;
