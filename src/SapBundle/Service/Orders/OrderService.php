@@ -547,7 +547,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             return SapOrder::DELIVERY_TYPE_ROUTE;
         }
 
-        switch ($shipment->getDelivery()->getCode()) {
+        $isFastOrder = $this->getPropertyValueByCode($order, 'IS_FAST_ORDER') === 'Y';
+        $code = $isFastOrder ? '' : $shipment->getDelivery()->getCode();
+
+        switch ($code) {
             case DeliveryService::INNER_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:

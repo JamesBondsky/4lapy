@@ -760,8 +760,7 @@ class BasketService implements LoggerAwareInterface
                     )
                 )
             ) {
-                $appliedDiscounts = [];
-                break;
+                unset($appliedDiscounts[$k]);
             }
         }
 

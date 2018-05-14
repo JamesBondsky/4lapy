@@ -43,6 +43,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
     $orderWeight = $order->getBasket()->getWeight();
     $orderQuantity = array_sum($order->getBasket()->getQuantityList());
 
+
     /** @var Order $relatedOrder */
     $relatedOrder = $arResult['RELATED_ORDER'];
     if ($relatedOrder) {
@@ -65,7 +66,10 @@ $declension = new Declension('товар', 'товара', 'товаров');
                     </h2>
                     <div class="b-order__text-block b-order__text-block--gotopay">
                         <p><?= $orderQuantity ?> <?= $declension->get($orderQuantity) ?>
-                            (<?= WordHelper::showWeight($orderWeight) ?>) на
+                            <?php if ($orderWeight) { ?>
+                                (<?= WordHelper::showWeight($orderWeight) ?>)
+                            <?php } ?>
+                            на
                             сумму <?= CurrencyHelper::formatPrice($order->getPrice()) ?></p>
                     </div>
                     <?php if ($order->isPaid()) { ?>
@@ -92,7 +96,9 @@ $declension = new Declension('товар', 'товара', 'товаров');
                         </h2>
                         <div class="b-order__text-block b-order__text-block--gotopay">
                             <p><?= $relatedOrderQuantity ?>  <?= $declension->get($relatedOrderQuantity) ?>
-                                (<?= WordHelper::showWeight($relatedOrderWeight) ?>)
+                                <?php if ($relatedOrderWeight) { ?>
+                                    (<?= WordHelper::showWeight($relatedOrderWeight) ?>)
+                                <?php } ?>
                                 на
                                 сумму <?= CurrencyHelper::formatPrice($relatedOrder->getPrice()) ?>
                             </p>

@@ -37,8 +37,8 @@ use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Discount\Utils\Manager as DiscountManager;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use WebArch\BitrixCache\BitrixCache;
@@ -284,6 +284,13 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = [], ?\DateTime $from = null): array
     {
+        $isToEnableExtendDiscount = DiscountManager::isExtendDiscountEnabled();
+
+        if ($isToEnableExtendDiscount) {
+            DiscountManager::disableExtendsDiscount();
+            $isToEnableExtendDiscount = true;
+        }
+
         $availableServices = Manager::getRestrictedObjectsList($shipment);
 
         $result = [];
@@ -301,7 +308,7 @@ class DeliveryService implements LoggerAwareInterface
             }
 
             try {
-                $shipment->setFields(
+                $shipment->setFieldsNoDemand(
                     [
                         'DELIVERY_ID'   => $service->getId(),
                         'DELIVERY_NAME' => $name,
@@ -349,6 +356,10 @@ class DeliveryService implements LoggerAwareInterface
                 'location' => $location,
                 'errors' => $errors
             ]);
+        }
+
+        if ($isToEnableExtendDiscount) {
+            DiscountManager::enableExtendsDiscount();
         }
 
         return $result;
