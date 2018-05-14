@@ -426,7 +426,7 @@ class DeliveryAddress
     public function __toString(): string
     {
         return \implode(
-            ',',
+            ', ',
             \array_filter(
                 [
                     $this->cityName,
