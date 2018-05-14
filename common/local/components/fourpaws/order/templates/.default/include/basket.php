@@ -34,7 +34,7 @@ function getOrderItemData(StockResultCollection $stockResultCollection)
         $itemData[] = [
             'name'     => $item->getOffer()->getName(),
             'quantity' => $item->getAmount(),
-            'price'    => $item->getPrice(),
+            'price'    => $item->getPrice() * $item->getAmount(),
             'weight'   => $weight,
         ];
 
