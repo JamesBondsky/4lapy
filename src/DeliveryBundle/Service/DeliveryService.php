@@ -308,7 +308,7 @@ class DeliveryService implements LoggerAwareInterface
             }
 
             try {
-                $shipment->setFields(
+                $shipment->setFieldsNoDemand(
                     [
                         'DELIVERY_ID'   => $service->getId(),
                         'DELIVERY_NAME' => $name,
