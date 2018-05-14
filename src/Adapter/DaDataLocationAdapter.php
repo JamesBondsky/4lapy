@@ -158,7 +158,7 @@ class DaDataLocationAdapter extends BaseAdapter
                     \strtolower($item['NAME'])));
             }
 
-            return array_merge($array, [
+            return \array_merge($array, [
                 $this::TYPE_MAP[$item['TYPE']['CODE']] => $item['NAME'],
             ]);
         }, []);
