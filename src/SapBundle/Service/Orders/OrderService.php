@@ -426,7 +426,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
-        $deliveryAddress = $this->getDeliveryAddress($order, $terminalCode);
+        $deliveryAddress = $this->getDeliveryAddress($order, $deliveryPoint);
 
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
