@@ -587,6 +587,7 @@ class OrderService implements LoggerAwareInterface
             $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
             $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
+            $this->setOrderPropertyByCode($order, 'IS_FAST_ORDER', 'Y');
             return [$order, $selectedDelivery];
         }
         return $order;
