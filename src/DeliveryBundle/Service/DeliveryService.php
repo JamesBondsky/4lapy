@@ -8,6 +8,7 @@ namespace FourPaws\DeliveryBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Catalog\Discount\DiscountManager;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ReferenceField;
@@ -301,7 +302,7 @@ class DeliveryService implements LoggerAwareInterface
             }
 
             try {
-                $shipment->setFields(
+                $shipment->setFieldsNoDemand(
                     [
                         'DELIVERY_ID'   => $service->getId(),
                         'DELIVERY_NAME' => $name,
