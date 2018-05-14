@@ -25,7 +25,7 @@ if (!$basketItemId = $basketItem->getId()) {
     }
 }
 
-$promoLink = $component->getPromoLink($basketItem);
+$promoLinks = $component->getPromoLink($basketItem);
 $image = $component->getImage($basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = $basketItem->getBasePrice() !== $basketItem->getPrice();
@@ -38,8 +38,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
 } ?>
 <div class="b-item-shopping js-remove-shopping">
     <?php
-    if (\is_iterable($promoLink)) {
-        foreach ($promoLink as $oneLink) {
+    if (\is_iterable($promoLinks)) {
+        foreach ($promoLinks as $oneLink) {
             ?>
             <div class="b-gift-order b-gift-order--shopping js-open-gift">
                 <div class="b-gift-order__info">

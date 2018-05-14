@@ -97,13 +97,18 @@ class Gift extends \CSaleActionCtrlAction
                 ]
             ]);
 
-            $result = PHP_EOL . '$counts = []; $originalOrder = ' . $orderVar . ';' . PHP_EOL;
+            $result = PHP_EOL . '$counts = []; $filteredOrder = $originalOrder = ' . $orderVar . ';' . PHP_EOL;
+            $result .= '$filteredOrder[\'BASKET_ITEMS\'] = [];' . PHP_EOL;
             foreach ($arSubs as $sub) {
-                $result .= '$counts[] = ' . $sub . PHP_EOL;
+                $result .= '$count = ' . $sub . PHP_EOL;
+                $result .= 'if ($count) {' . PHP_EOL;
+                $result .= '$filteredOrder[\'BASKET_ITEMS\'] += ' . $orderVar . '[\'BASKET_ITEMS\'];' . PHP_EOL;
+                $result .= '};' . PHP_EOL;
+                $result .= '$counts[] = $count;' . PHP_EOL;
                 $result .= $orderVar . ' = $originalOrder;' . PHP_EOL;
             }
             $result .= '$applyCount = ' . $countOperator . '($counts);' . PHP_EOL;
-            $result .= static::class . '::applyGift(' . $orderVar . ', \'' . $legacyJSONSettings . '\', '
+            $result .= static::class . '::applyGift($filteredOrder, \'' . $legacyJSONSettings . '\', '
                 . '(isset($this) ? $this : null), $applyCount);' . PHP_EOL;
             $result .= '$arOrder = $originalOrder;' . PHP_EOL;
         }
