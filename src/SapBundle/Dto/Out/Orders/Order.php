@@ -93,7 +93,7 @@ class Order
     protected $clientOrderPhone = '';
 
     /**
-     * Адресс клиента
+     * Адрес клиента
      * Для способов получения заказа 02, 04 содержит код магазина или пункта выдачи заказов DPD
      *
      * @Serializer\XmlAttribute()

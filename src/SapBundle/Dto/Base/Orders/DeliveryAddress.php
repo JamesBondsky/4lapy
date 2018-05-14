@@ -159,7 +159,7 @@ class DeliveryAddress
      * @var string
      */
     protected $deliveryPointCode = '';
-    
+
     /**
      * @return string
      */
@@ -167,7 +167,7 @@ class DeliveryAddress
     {
         return $this->countryCode;
     }
-    
+
     /**
      * @param string $countryCode
      *
@@ -179,7 +179,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -187,7 +187,7 @@ class DeliveryAddress
     {
         return $this->regionCode;
     }
-    
+
     /**
      * @param string $regionCode
      *
@@ -199,7 +199,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -207,7 +207,7 @@ class DeliveryAddress
     {
         return $this->postCode;
     }
-    
+
     /**
      * @param string $postCode
      *
@@ -219,7 +219,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -227,7 +227,7 @@ class DeliveryAddress
     {
         return $this->cityName;
     }
-    
+
     /**
      * @param string $cityName
      *
@@ -239,7 +239,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -247,7 +247,7 @@ class DeliveryAddress
     {
         return $this->streetName;
     }
-    
+
     /**
      * @param string $streetName
      *
@@ -259,7 +259,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -267,7 +267,7 @@ class DeliveryAddress
     {
         return $this->streetPrefix;
     }
-    
+
     /**
      * @param string $streetPrefix
      *
@@ -279,7 +279,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -287,7 +287,7 @@ class DeliveryAddress
     {
         return $this->house;
     }
-    
+
     /**
      * @param string $house
      *
@@ -299,7 +299,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -307,7 +307,7 @@ class DeliveryAddress
     {
         return $this->housing;
     }
-    
+
     /**
      * @param string $housing
      *
@@ -319,7 +319,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -327,7 +327,7 @@ class DeliveryAddress
     {
         return $this->building;
     }
-    
+
     /**
      * @param string $building
      *
@@ -339,7 +339,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -347,7 +347,7 @@ class DeliveryAddress
     {
         return $this->ownerShip;
     }
-    
+
     /**
      * @param string $ownerShip
      *
@@ -359,7 +359,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -367,7 +367,7 @@ class DeliveryAddress
     {
         return $this->floor;
     }
-    
+
     /**
      * @param string $floor
      *
@@ -379,7 +379,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -387,7 +387,7 @@ class DeliveryAddress
     {
         return $this->roomNumber;
     }
-    
+
     /**
      * @param string $roomNumber
      *
@@ -399,7 +399,7 @@ class DeliveryAddress
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -407,7 +407,7 @@ class DeliveryAddress
     {
         return $this->deliveryPointCode;
     }
-    
+
     /**
      * @param string $deliveryPointCode
      *
@@ -418,5 +418,28 @@ class DeliveryAddress
         $this->deliveryPointCode = $deliveryPointCode;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return \implode(
+            ',',
+            \array_filter(
+                [
+                    $this->cityName,
+                    ($this->streetPrefix ? $this->streetPrefix . ' ' : '') . $this->streetName,
+                    $this->house ? 'д. ' . $this->house : '',
+                    $this->housing ? 'к. ' . $this->housing : '',
+                    $this->building ? 'стр. ' . $this->building : '',
+                    $this->ownerShip ? 'владение ' . $this->ownerShip : '',
+                    $this->floor ? 'этаж ' . $this->floor : '',
+                    $this->roomNumber,
+                    $this->deliveryPointCode,
+                ]
+            )
+        );
     }
 }
