@@ -238,16 +238,17 @@ class DateHelper
             }
         }
         if (false !== mb_strpos($dateFormat, 'XX')) {
-            $tmpDate = new \DateTime();
-            $diff = $date->diff($tmpDate)->days;
-            $isToday = ($diff === 0) && ($date->format('Z') === $tmpDate->format('Z'));
-            $isTomorrow = ($diff === 1) && ($date->format('Z') === $tmpDate->format('Z'));
+            $tmpDate = clone $date;
+            $currentDate = new \DateTime();
+            $tmpDate->setTime(0,0,0,0);
+            $currentDate->setTime(0,0,0,0);
 
+            $diff = $tmpDate->diff($currentDate)->days;
             switch (true) {
-                case $isToday:
+                case $diff === 0:
                     $str = 'Сегодня';
                     break;
-                case $isTomorrow:
+                case $diff === 1:
                     $str = 'Завтра';
                     break;
                 default:
