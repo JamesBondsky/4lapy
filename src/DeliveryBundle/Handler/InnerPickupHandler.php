@@ -102,9 +102,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
         /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $storesAll = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_ALL);
-        $shops = $storesAll->getShops();
-
         $shopCode = null;
         /** @noinspection PhpInternalEntityUsedInspection */
         /* @var PropertyValue $prop */
