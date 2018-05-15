@@ -857,7 +857,7 @@ class LocationService
                 )
                 ->exec()
                 ->fetch();
-            return ['result' => $result['XML_ID']];
+            return ['result' => $result['XML_ID'] ?: ''];
         };
 
         $result = '';

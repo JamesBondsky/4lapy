@@ -15,10 +15,24 @@ services:
         # but if a service is unused, it's removed anyway
         exclude: '../../{Entity,Tests,EventController,Dpd}'
 
+    FourPaws\DeliveryBundle\Command\DpdLocationsImport:
+        class: FourPaws\DeliveryBundle\Command\DpdLocationsImport
+        arguments:
+          - ''
+          - host: '%dpd.ftp.host%'
+            port: '%dpd.ftp.port%'
+            login: '%dpd.ftp.login%'
+            password: '%dpd.ftp.password%'
+
     delivery.service:
-       class: FourPaws\DeliveryBundle\Service\DeliveryService
-       public: true
+        class: FourPaws\DeliveryBundle\Service\DeliveryService
+        public: true
 
     FourPaws\DeliveryBundle\Service\IntervalService:
-       class: FourPaws\DeliveryBundle\Service\IntervalService
-       public: true
+        class: FourPaws\DeliveryBundle\Service\IntervalService
+        public: true
+
+    FourPaws\DeliveryBundle\Service\DpdLocationsService:
+        class: FourPaws\DeliveryBundle\Service\DpdLocationsService
+        public: true
+
