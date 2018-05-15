@@ -174,6 +174,9 @@ class BasketController extends Controller implements LoggerAwareInterface
         }
         /** @noinspection UnSafeIsSetOverArrayInspection */
         if (!isset($response)) {
+            // @todo костыль - иначе в миникорзине не будет картинки нового товара
+            $this->basketService->getOfferCollection(true);
+
             $data = [
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
@@ -232,6 +235,9 @@ class BasketController extends Controller implements LoggerAwareInterface
         }
         /** @noinspection UnSafeIsSetOverArrayInspection */
         if(!isset($response)) {
+            // @todo костыль - иначе в миникорзине не будет картинки нового товара
+            $this->basketService->getOfferCollection(true);
+
             $data = [
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];

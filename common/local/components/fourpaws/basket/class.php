@@ -130,11 +130,14 @@ class BasketComponent extends CBitrixComponent
 
         $this->arResult['BASKET'] = $basket;
         if (!$this->arParams['MINI_BASKET']) {
+//            $orderableItems = $basket->getOrderableItems();
             // привязывать к заказу нужно для расчета скидок
             if (null === $order = $basket->getOrder()) {
                 $order = Order::create(SITE_ID);
                 $order->setBasket($basket);
             }
+            /** @todo при привязке заказа - если есть подарок, то количество сбарсываетсядо 1. wat?? */
+//            $orderableItems2 = $basket->getOrderableItems();
             // необходимо подгрузить подарки
             $this->offerCollection = $this->basketService->getOfferCollection(true);
             $this->loadPromoDescriptions();
