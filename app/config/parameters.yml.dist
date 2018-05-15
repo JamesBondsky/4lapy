@@ -80,6 +80,9 @@ parameters:
   dadata.secret: 'f798e4ebee26ac9806f48297a67db0265e72497a'
 
   dpd.ftp.host: 'ftp.dpd.ru'
-  dpd.ftp.port: '22'
+  dpd.ftp.port: '21'
   dpd.ftp.login: 'integration'
   dpd.ftp.password: 'xYUX~7W98'
+  dpd.ftp.directory: 'integration'
+  dpd.ftp.filemask: 'GeographyDPD.*\.csv'
+  dpd.ftp.localpath: '/tmp'

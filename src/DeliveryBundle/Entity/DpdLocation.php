@@ -35,6 +35,11 @@ class DpdLocation
     /**
      * @var string
      */
+    public $code;
+
+    /**
+     * @var string
+     */
     public $areaName;
 
     /**
@@ -154,6 +159,24 @@ class DpdLocation
     public function setName(string $name): DpdLocation
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    /**
+     * @param string $code
+     * @return DpdLocation
+     */
+    public function setCode(string $code): DpdLocation
+    {
+        $this->code = $code;
         return $this;
     }
 

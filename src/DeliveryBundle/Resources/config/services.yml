@@ -13,16 +13,19 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests,EventController,Dpd}'
+        exclude: '../../{Entity,Tests,EventController,Dpd,Repository}'
 
     FourPaws\DeliveryBundle\Command\DpdLocationsImport:
         class: FourPaws\DeliveryBundle\Command\DpdLocationsImport
         arguments:
-          - ''
+          - null
           - host: '%dpd.ftp.host%'
             port: '%dpd.ftp.port%'
             login: '%dpd.ftp.login%'
             password: '%dpd.ftp.password%'
+            directory: '%dpd.ftp.directory%'
+            filemask: '%dpd.ftp.filemask%'
+            localpath: '%dpd.ftp.localpath%'
 
     delivery.service:
         class: FourPaws\DeliveryBundle\Service\DeliveryService
@@ -32,7 +35,7 @@ services:
         class: FourPaws\DeliveryBundle\Service\IntervalService
         public: true
 
-    FourPaws\DeliveryBundle\Service\DpdLocationsService:
-        class: FourPaws\DeliveryBundle\Service\DpdLocationsService
+    FourPaws\DeliveryBundle\Service\DpdLocationService:
+        class: FourPaws\DeliveryBundle\Service\DpdLocationService
         public: true
 

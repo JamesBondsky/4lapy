@@ -9,7 +9,7 @@ use FourPaws\DeliveryBundle\Entity\DpdLocation;
 use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Repository\DpdLocationRepository;
 
-class DpdLocationsService
+class DpdLocationService
 {
     /** @var DpdLocationRepository */
     protected $repository;
@@ -70,18 +70,17 @@ class DpdLocationsService
         return $result;
     }
 
-    public function getMultipleById(array $ids)
+    /**
+     * @param DpdLocation $location
+     * @return bool
+     */
+    public function save(DpdLocation $location): bool
     {
-
-    }
-
-    public function getMultipleByDpdId(array $ids)
-    {
-
-    }
-
-    public function getMultipleByCode(array $codes)
-    {
-
+        if ($location->getId()) {
+            $result = $this->repository->update($location);
+        } else {
+            $result = $this->repository->create($location);
+        }
+        return $result;
     }
 }
