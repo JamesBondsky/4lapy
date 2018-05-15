@@ -1548,58 +1548,72 @@ class Offer extends IblockElement
                 continue;
             }
             $setEntity = HLBlockFactory::createTableObject('Bundle');
-            $setItem = $setEntity::query()
+            $resBundle = $setEntity::query()
                 ->where('UF_ACTIVE', true)
                 ->where('UF_PRODUCTS', $bundleItem['ID'])
                 ->setLimit(1)
                 ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
 //                ->addSelect('UF_ACTIVE')
 //                ->addSelect('ID')
-                ->exec()
-                ->fetch();
+                ->exec();
 
-            if(!\is_array($setItem) || empty($setItem)){
+
+            if($resBundle->getSelectedRowsCount() === 0){
                 continue;
             }
-            $countItems = 2;
-            if($setItem['UF_COUNT_ITEMS']) {
-                $enumField = (new UserFieldEnumService())->getEnumValueEntity($setItem['UF_COUNT_ITEMS']);
-                $countItems = $enumField->getValue();
-            }
+            $breakBundle = false;
+            $hasItems = false;
+            while ($breakBundle === false) {
+                $setItem = $resBundle->fetch();
+                if(!$setItem){
+                    $breakBundle = true;
+                    continue;
+                }
+                $countItems = 2;
+                if ($setItem['UF_COUNT_ITEMS']) {
+                    $enumField = (new UserFieldEnumService())->getEnumValueEntity((int)$setItem['UF_COUNT_ITEMS']);
+                    $countItems = (int)$enumField->getValue();
+                }
 
-            $res = $setItemsEntity::query()
-                ->where('UF_ACTIVE', true)
-                ->whereIn('ID', $setItem['UF_PRODUCTS'])
-                ->setLimit($countItems)
-                ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
+                $res = $setItemsEntity::query()
+                    ->where('UF_ACTIVE', true)
+                    ->whereIn('ID', $setItem['UF_PRODUCTS'])
+                    ->setLimit($countItems)
+                    ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
 //                ->addSelect('ID')
 //                ->addSelect('UF_ACTIVE')
-                ->exec();
-            if($res->getSelectedRowsCount() === 0){
-                continue;
-            }
-            $result = [
+                    ->exec();
+                if ($res->getSelectedRowsCount() === 0) {
+                    continue;
+                }
+                $result = [
 //                'ID'  => $setItem['ID'],
 //                'ACTIVE'  => $setItem['UF_ACTIVE'],
-                'NAME'  => $setItem['UF_NAME'],
-                'COUNT_ITEMS'  => $countItems,
-                'PRODUCTS' => [],
-            ];
-            while ($item = $res->fetch()) {
-                $itemFields = [
+                    'NAME'        => $setItem['UF_NAME'],
+                    'COUNT_ITEMS' => $countItems,
+                    'PRODUCTS'    => [],
+                ];
+                while ($item = $res->fetch()) {
+                    $itemFields = [
 //                    'ID' => $item['ID'],
 //                    'ACTIVE' => $item['UF_ACTIVE'],
-                    'PRODUCT' => null,
-                    'PRODUCT_ID' => $item['UF_PRODUCT'],
-                    'QUANTITY' => $item['UF_QUANTITY']
-                ];
-                if ($offerId === (int)$item['UF_PRODUCT']) {
-                    $itemFields['PRODUCT'] = $this;
-                    $result['PRODUCTS'] = [$item['UF_PRODUCT'] => $itemFields] + $result['PRODUCTS'];
-                } else {
-                    $result['PRODUCTS'][$item['UF_PRODUCT']] = $itemFields;
+                        'PRODUCT'    => null,
+                        'PRODUCT_ID' => $item['UF_PRODUCT'],
+                        'QUANTITY'   => $item['UF_QUANTITY']
+                    ];
+                    if ($offerId === (int)$item['UF_PRODUCT']) {
+                        $itemFields['PRODUCT'] = $this;
+                        $result['PRODUCTS'] = [$item['UF_PRODUCT'] => $itemFields] + $result['PRODUCTS'];
+                    } else {
+                        $result['PRODUCTS'][$item['UF_PRODUCT']] = $itemFields;
+                    }
+                    $productIds[] = $item['UF_PRODUCT'];
                 }
-                $productIds[] = $item['UF_PRODUCT'];
+                $breakBundle = true;
+                $hasItems = true;
+            }
+            if(!$hasItems){
+                continue;
             }
             $break = true;
         }
