@@ -20,9 +20,11 @@ class FacetDelete20180515163325 extends SprintMigrationBase {
         $catalogIblockId = IblockUtils::getIblockId(IblockType::CATALOG,IblockCode::PRODUCTS);
         Manager::deleteIndex($catalogIblockId);
         Manager::markAsInvalid($catalogIblockId);
+        Manager::dropIfExists($catalogIblockId);
 
         $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG,IblockCode::OFFERS);
         Manager::deleteIndex($offerIblockId);
         Manager::markAsInvalid($offerIblockId);
+        Manager::dropIfExists($offerIblockId);
     }
 }
