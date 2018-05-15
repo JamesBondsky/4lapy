@@ -38,10 +38,10 @@ class Event implements ServiceHandlerInterface
     {
         static::$eventManager = $eventManager;
 
-        self::initHandler('StoreOnBeforeAdd', 'updateStoreRegionD7');
-        self::initHandler('StoreOnBeforeUpdate', 'updateStoreRegionD7');
-        static::initHandler('OnBeforeCatalogStoreAdd', 'addStoreRegion', true);
-        static::initHandler('OnBeforeCatalogStoreUpdate', 'updateStoreRegion', true);
+//        self::initHandler('StoreOnBeforeAdd', 'updateStoreRegionD7');
+//        self::initHandler('StoreOnBeforeUpdate', 'updateStoreRegionD7');
+//        static::initHandler('OnBeforeCatalogStoreAdd', 'addStoreRegion', true);
+//        static::initHandler('OnBeforeCatalogStoreUpdate', 'updateStoreRegion', true);
     }
 
     /**
