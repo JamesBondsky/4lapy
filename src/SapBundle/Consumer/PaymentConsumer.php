@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -22,6 +26,11 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private $paymentService;
 
+    /**
+     * PaymentConsumer constructor.
+     *
+     * @param PaymentService $paymentService
+     */
     public function __construct(PaymentService $paymentService)
     {
         $this->paymentService = $paymentService;
@@ -32,8 +41,8 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @param $paymentInfo
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function consume($paymentInfo): bool
     {
@@ -50,7 +59,7 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
         } catch (\Exception $e) {
             $success = false;
 
-            $this->log()->critical(sprintf('Ошибка обработки задания на оплату: %s', $e->getMessage()));
+            $this->log()->critical(\sprintf('Ошибка обработки задания на оплату: %s', $e->getMessage()));
         }
 
         return $success;

@@ -14,23 +14,34 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Delivery\Services\Table as DeliveryTable;
+use Bitrix\Sale\Internals\PaymentTable;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
-use FourPaws\External\SmsService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
+use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
+use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -61,8 +72,8 @@ class FastOrderController extends Controller
     private $basketService;
     /** @var BasketViewService */
     private $basketViewService;
-    /** @var SmsService */
-    private $smsService;
+    /** @var StoreService  */
+    private $storeService;
 
     /**
      * OrderController constructor.
@@ -70,10 +81,10 @@ class FastOrderController extends Controller
      * @param OrderService                 $orderService
      * @param UserAuthorizationInterface   $userAuthProvider
      * @param CurrentUserProviderInterface $currentUserProvider
+     * @param UserCitySelectInterface      $cityUserProvider
      * @param AjaxMess                     $ajaxMess
      * @param BasketService                $basketService
      * @param BasketViewService            $basketViewService
-     * @param SmsService                   $smsService
      */
     public function __construct(
         OrderService $orderService,
@@ -82,7 +93,7 @@ class FastOrderController extends Controller
         AjaxMess $ajaxMess,
         BasketService $basketService,
         BasketViewService $basketViewService,
-        SmsService $smsService
+        StoreService $storeService
     ) {
         $this->orderService = $orderService;
         $this->userAuthProvider = $userAuthProvider;
@@ -90,7 +101,7 @@ class FastOrderController extends Controller
         $this->ajaxMess = $ajaxMess;
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
-        $this->smsService = $smsService;
+        $this->storeService = $storeService;
     }
 
     /**
@@ -102,25 +113,31 @@ class FastOrderController extends Controller
     public function loadAction(Request $request): JsonResponse
     {
         $basketData = [];
+        $addData = [];
         $requestType = $request->get('type', 'basket');
         if ($requestType === 'card') {
-            $basketController = new BasketController($this->basketService, $this->basketViewService);
+            /** add to basket
+             * @see \FourPaws\SaleBundle\AjaxController\BasketController
+             */
+            $offerId = (int)$request->get('offerId', 0);
+            if ($offerId === 0) {
+                $offerId = (int)$request->get('offerid', 0);
+            }
+            $quantity = (int)$request->get('quantity', 1);
+
             try {
-                $response = $basketController->addAction($request);
-                if ($response->isOk()) {
-                    if ($response instanceof JsonErrorResponse) {
-                        return $response;
-                    }
-                    $basketData = json_decode($response->getContent());
-                } else {
-                    return $this->ajaxMess->getSystemError();
-                }
+                $this->basketService->addOfferToBasket($offerId, $quantity);
+                $addData = [
+                    'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+                ];
+
+            } catch (BaseExceptionInterface $e) {
+                return $this->ajaxMess->getSystemError();
             } catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
             }
-
         }
         global $APPLICATION;
         ob_start();
@@ -136,8 +153,8 @@ class FastOrderController extends Controller
         );
         $html = ob_get_clean();
         $data = ['html' => $html];
-        if (!empty($basketData->data->miniBasket)) {
-            $data['miniBasket'] = $basketData->data->miniBasket;
+        if (!empty($addData['miniBasket'])) {
+            $data['miniBasket'] = $addData['miniBasket'];
         }
         return JsonSuccessResponse::createWithData('подгружено', $data);
     }
@@ -151,12 +168,31 @@ class FastOrderController extends Controller
     public function createAction(Request $request): JsonResponse
     {
         $orderStorage = new OrderStorage();
-        $phone = $request->get('phone', '');
+        try {
+            $phone = PhoneHelper::normalizePhone($request->get('phone', ''));
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        }
         $name = $request->get('name', '');
 
-        $orderStorage->setPhone($phone)
-                     ->setName($name)
-                     ->setFuserId($this->currentUserProvider->getCurrentFUserId());
+        $currentStore = null;
+        $stores = $this->storeService->getStoresByCurrentLocation();
+        if(!$stores->isEmpty()) {
+            /** @var Store $currentStore */
+            $currentStore = $stores->first();
+        }
+
+        $orderStorage
+            ->setSplit(false)
+            ->setFastOrder(true) // быстрый заказ теперь определяется через storage
+            ->setPhone($phone)
+            ->setName($name)
+            ->setFuserId($this->currentUserProvider->getCurrentFUserId())
+            /** оплата наличными при доставке ставим всегда */
+            ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID'])
+            ->setDeliveryId(DeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'])
+            ->setDeliveryPlaceCode($currentStore->getCode())
+        ;
 
         if ($this->userAuthProvider->isAuthorized()) {
             try {
@@ -165,21 +201,16 @@ class FastOrderController extends Controller
                 $orderStorage->setUserId($user->getId());
             } catch (NotAuthorizedException $e) {
                 /** никогда не сработает */
-            }
-            catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error('Ошибка параметров - ' . $e->getMessage());
             }
         }
 
         try {
-            $order = $this->orderService->createOrder($orderStorage, true, true);
+            [$order, $selectedDelivery] = $this->orderService->initOrder($orderStorage, null, null);
+            $this->orderService->saveOrder($order, $orderStorage, $selectedDelivery);
             if ($order instanceof Order && $order->getId() > 0) {
-                if (isset($_SESSION['NEW_USER']) && !empty($_SESSION['NEW_USER'])) {
-                    $this->smsService->sendSms('Ваш логин: ' . $_SESSION['NEW_USER']['LOGIN'] . '. Ваш пароль: ' . $_SESSION['NEW_USER']['PASSWORD'],
-                        $_SESSION['NEW_USER']['LOGIN']);
-                    unset($_SESSION['NEW_USER']);
-                }
                 if ($request->get('type', 'basket') === 'card') {
                     ob_start();
                     require_once App::getDocumentRoot()
@@ -199,6 +230,8 @@ class FastOrderController extends Controller
             $logger = LoggerFactory::create('params');
             $logger->error('Ошибка параметров - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
+        } catch (DeliveryNotAvailableException $e) {
+            return $this->ajaxMess->getOrderCreateError('Доставка выбранных позиций в вашем регионе недоступна, пожалуйста попробуйте заказать другие товары или дождитесь появления данных товаров в вашем регионе');
         } catch (OrderCreateException $e) {
             return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
         } catch (NotImplementedException|NotSupportedException|ObjectNotFoundException|\Exception $e) {

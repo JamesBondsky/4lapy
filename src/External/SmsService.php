@@ -15,6 +15,7 @@ use FourPaws\External\SmsTraffic\Exception\SmsTrafficApiException;
 use FourPaws\External\SmsTraffic\Sms\IndividualSms;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\LogDoc\SmsLogDoc;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -103,7 +104,7 @@ class SmsService implements LoggerAwareInterface
                 throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
             }
         } catch (SmsSendErrorException $e) {
-            $this->logger->error(sprintf('Sms send error: %s.', $e->getMessage()));
+            $this->logger->error(\sprintf('Sms send error: %s.', $e->getMessage()));
         }
     }
 
@@ -117,8 +118,8 @@ class SmsService implements LoggerAwareInterface
     protected function clearPhone(string $phone): string
     {
         try {
-            $formatedPhone = PhoneHelper::normalizePhone($phone);
-            $phone = '7' . $formatedPhone;
+            $formattedPhone = PhoneHelper::normalizePhone($phone);
+            $phone = '7' . $formattedPhone;
 
             if (\mb_strlen($phone) === 11) {
                 return $phone;
@@ -126,7 +127,7 @@ class SmsService implements LoggerAwareInterface
         } catch (WrongPhoneNumberException $e) {
         }
 
-        throw new SmsSendErrorException(sprintf('Неверный формат номера телефона (%s)', $phone));
+        throw new SmsSendErrorException(\sprintf('Неверный формат номера телефона (%s)', $phone));
     }
 
     /**
@@ -137,5 +138,43 @@ class SmsService implements LoggerAwareInterface
     protected function buildQueueTime(string $time): string
     {
         return (new \DateTime($time))->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Проверка метки, что уведомление уже отправлено
+     *
+     * @param string $smsEventName
+     * @param string $smsEventKey
+     * @return bool
+     */
+    public function isAlreadySent(string $smsEventName, string $smsEventKey): bool
+    {
+        $result = false;
+        $smsDocLog = new SmsLogDoc();
+        $doc = $smsDocLog->get($smsEventName, $smsEventKey);
+        if ($doc) {
+            $result = true;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Сохранение метки, что уведомление уже отправлено
+     *
+     * @param string $smsEventName
+     * @param string $smsEventKey
+     * @return bool
+     */
+    public function markAlreadySent(string $smsEventName, string $smsEventKey)
+    {
+        $result = false;
+        $smsDocLog = new SmsLogDoc();
+        $res = $smsDocLog->add($smsEventName, $smsEventKey);
+        if ($res && $res->isSuccess()) {
+            $result = true;
+        }
+
+        return $result;
     }
 }

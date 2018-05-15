@@ -71,7 +71,7 @@ class AjaxMess
     public function getSystemError(): JsonResponse
     {
         return $this->getJsonError('systemError',
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта');
+            'Извините! Произошла непредвиденная ошибка. Мы уже работаем над её решением.');
     }
 
     /**
@@ -102,27 +102,33 @@ class AjaxMess
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getNotFoundConfirmedCodeException(): JsonResponse
+    public function getNotFoundConfirmedCodeException(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('notFoundConfirmCode', 'Код подтверждения не найден');
+        return $this->getJsonError('notFoundConfirmCode', 'Код подтверждения не найден', $additionalData);
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getExpiredConfirmCodeException(): JsonResponse
+    public function getExpiredConfirmCodeException(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('expiredConfirmCode', 'Срок действия кода подтверждения истек');
+        return $this->getJsonError('expiredConfirmCode', 'Срок действия кода подтверждения истек', $additionalData);
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getWrongConfirmCode(): JsonResponse
+    public function getWrongConfirmCode(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('wrongConfirmCode', 'Код подтверждения не соответствует');
+        return $this->getJsonError('wrongConfirmCode', 'Код подтверждения не соответствует', $additionalData);
     }
 
     /**
@@ -192,7 +198,7 @@ class AjaxMess
     public function getNotActiveUserError(): JsonResponse
     {
         return $this->getJsonError('notActiveUser',
-            'Учетная запись есть на сайте, но она не активна, пожалуйста обратитесь к администрации сайта');
+            'Учетная запись есть на сайте, но она не активна, пожалуйста, обратитесь к администрации сайта');
     }
 
     /**
@@ -304,11 +310,13 @@ class AjaxMess
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getWrongPasswordError(): JsonResponse
+    public function getWrongPasswordError(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль');
+        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль',$additionalData);
     }
 
     /**
@@ -338,9 +346,25 @@ class AjaxMess
     /**
      * @return JsonResponse
      */
+    public function getWrongCardNumber(): JsonResponse
+    {
+        return $this->getJsonError('wrongCardNumber', 'Номер карты неверный');
+    }
+
+    /**
+     * @return JsonResponse
+     */
     public function getCardNotValidError(): JsonResponse
     {
         return $this->getJsonError('cardNotValid', 'Карта не валидна');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getCardNotFoundError(): JsonResponse
+    {
+        return $this->getJsonError('cardNotFound', 'Карта не найдена');
     }
 
     /**
@@ -368,20 +392,22 @@ class AjaxMess
      */
     public function getFileTypeError(array $valid_types): JsonResponse
     {
-        return $this->getJsonError('filetTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
+        return $this->getJsonError('fileTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
     }
 
     /**
      * @param string $code
      * @param string $mes
      *
+     * @param array  $additionalData
+     *
      * @return JsonResponse
      */
-    private function getJsonError(string $code, string $mes): JsonResponse
+    private function getJsonError(string $code, string $mes, array $additionalData = []): JsonResponse
     {
         return JsonErrorResponse::createWithData(
             $mes,
-            ['errors' => [$code => $mes]]
+            array_merge(['errors' => [$code => $mes]], $additionalData)
         );
     }
 }

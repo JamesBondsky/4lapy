@@ -12,13 +12,14 @@ use FourPaws\App\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
-use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
@@ -34,8 +35,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Event implements ServiceHandlerInterface
 {
-    const GROUP_ADMIN = 1;
-    const GROUP_TECHNICAL_USERS = 8;
+    public const GROUP_ADMIN = 1;
+    public const GROUP_TECHNICAL_USERS = 8;
     /**
      * @var EventManager
      */
@@ -66,6 +67,9 @@ class Event implements ServiceHandlerInterface
 
         /** обновляем логин если он равняется телефону или email */
         self::initHandler('OnBeforeUserUpdate', 'replaceLoginOnUpdate');
+
+        /** очистка кеша пользователя */
+        self::initHandler('OnAfterUserUpdate', 'clearUserCache');
     }
 
     /**
@@ -73,7 +77,7 @@ class Event implements ServiceHandlerInterface
      * @param string $method
      * @param string $module
      */
-    public static function initHandler(string $eventName, string $method, string $module = 'main')
+    public static function initHandler(string $eventName, string $method, string $module = 'main'): void
     {
         self::$eventManager->addEventHandler(
             $module,
@@ -85,7 +89,7 @@ class Event implements ServiceHandlerInterface
         );
     }
 
-    public static function checkPhoneFormat(array &$fields)
+    public static function checkPhoneFormat(array &$fields): void
     {
         if ($fields['PERSONAL_PHONE'] ?? '') {
             try {
@@ -116,7 +120,7 @@ class Event implements ServiceHandlerInterface
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public static function replaceLogin(array $fields)
+    public static function replaceLogin(array $fields): void
     {
         global $APPLICATION;
         $userService = Application::getInstance()->getContainer()->get(UserRegistrationProviderInterface::class);
@@ -130,7 +134,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @param array $auth
      */
-    public static function deleteBasicAuth(&$auth)
+    public static function deleteBasicAuth(&$auth): void
     {
         if (\is_array($auth) && isset($auth['basic'])) {
             unset($auth['basic']);
@@ -140,7 +144,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @param $fields
      */
-    public static function preventAuthorizationOnRegister(&$fields)
+    public static function preventAuthorizationOnRegister(&$fields): void
     {
         $fields['ACTIVE'] = 'N';
     }
@@ -150,7 +154,7 @@ class Event implements ServiceHandlerInterface
      *
      * @throws \RuntimeException
      */
-    public static function sendEmail($fields)
+    public static function sendEmail($fields): void
     {
         if ($_SESSION['SEND_REGISTER_EMAIL'] && (int)$fields['USER_ID'] > 0 && !empty($fields['EMAIL'])) {
             /** отправка письма о регистрации */
@@ -180,6 +184,7 @@ class Event implements ServiceHandlerInterface
      * @param $fields
      *
      * @return bool
+     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
@@ -188,39 +193,33 @@ class Event implements ServiceHandlerInterface
      */
     public static function updateManzana($fields): bool
     {
-        if ($_SESSION['MANZANA_UPDATE']) {
+        if(!isset($_SESSION['NOT_MANZANA_UPDATE'])){
+            $_SESSION['NOT_MANZANA_UPDATE'] = false;
+        }
+        if (!$_SESSION['NOT_MANZANA_UPDATE']) {
             try {
                 $container = App::getInstance()->getContainer();
             } catch (ApplicationCreateException $e) {
                 /** если вызывается эта ошибка вероятно умерло все */
+                return false;
             }
-            unset($_SESSION['MANZANA_UPDATE']);
-            $client = null;
+            unset($_SESSION['NOT_MANZANA_UPDATE']);
 
             $userService = $container->get(CurrentUserProviderInterface::class);
             $user = $userService->getUserRepository()->find((int)$fields['ID']);
-            if (!($user instanceof User)) {
+            if ($user === null) {
                 return false;
             }
 
-            try {
-                $manzanaService = $container->get('manzana.service');
-                $client = new Client();
-                if (!empty($user->getManzanaNormalizePersonalPhone())) {
-                    $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
-                    $client->contactId = $contactId;
-                }
-                unset($_SESSION['IS_REGISTER']);
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
-            }
+            $manzanaService = $container->get('manzana.service');
 
-            if ($client instanceof Client && $user instanceof User) {
-                /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
-                $userService->setClientPersonalDataByCurUser($client, $user);
+            /** contactId получим в очереди */
+            $client = new Client();
 
-                $manzanaService->updateContactAsync($client);
-            }
+            /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
+            $userService->setClientPersonalDataByCurUser($client, $user);
+
+            $manzanaService->updateContactAsync($client);
         }
         return true;
     }
@@ -233,7 +232,7 @@ class Event implements ServiceHandlerInterface
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      */
-    public static function replaceLoginOnUpdate(&$fields)
+    public static function replaceLoginOnUpdate(&$fields): void
     {
         $notReplacedGroups= [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
@@ -270,5 +269,15 @@ class Event implements ServiceHandlerInterface
                 /** если вызывается эта ошибка вероятно умерло все */
             }
         }
+    }
+
+    /**
+     * @param $arFields
+     */
+    public function clearUserCache($arFields): void
+    {
+        TaggedCacheHelper::clearManagedCache([
+            'user:' . $arFields['ID'],
+        ]);
     }
 }

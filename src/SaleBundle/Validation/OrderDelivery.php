@@ -33,6 +33,16 @@ class OrderDelivery extends Constraint
      */
     public $deliveryPlaceCodeMessage = 'Выберите пункт самовывоза';
 
+    /**
+     * @var string
+     */
+    public $deliveryDateExpiredMessage = 'Время сессии истекло. Вы будете перенаправлены на шаг выбора доставки';
+
+    /**
+     * @var string
+     */
+    public $orderSplitMessage = 'Разделение заказа невозможно';
+
     public function getTargets()
     {
         return self::CLASS_CONSTRAINT;

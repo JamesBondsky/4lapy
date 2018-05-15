@@ -6,6 +6,7 @@
 
 namespace FourPaws\BitrixOrm\Utils;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
@@ -34,8 +35,6 @@ class EntityConstructor
         $entity_data_class .= 'Table';
         
         if (class_exists($entity_data_class)) {
-            // rebuild if it's already exists
-            //Entity\Base::destroy($entity_data_class);
             return $entity_data_class;
         }
         
@@ -44,7 +43,7 @@ class EntityConstructor
 				{
 					public static function getTableName()
 					{
-						return ' . $tableName . ';
+						return ' . var_export($tableName, true) . ';
 					}
 
 					public static function getMap()
@@ -55,7 +54,7 @@ class EntityConstructor
 			';
         
         eval($eval);
-        
+
         return $entity_data_class;
     }
     

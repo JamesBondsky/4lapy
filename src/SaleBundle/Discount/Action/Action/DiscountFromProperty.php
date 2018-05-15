@@ -142,6 +142,7 @@ TEMPL;
      * @param $arParams
      *
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      * @return array
      */
     public static function GetControlShow($arParams): array
@@ -151,7 +152,7 @@ TEMPL;
             'controlId' => static::GetControlID(),
             'group' => true,
             'label' => 'Установить цену из свойства',
-            'defaultText' => 'BT_SALE_ACT_GROUP_BASKET_DEF_TEXT',
+            'defaultText' => '',
             'showIn' => static::GetShowIn($arParams['SHOW_IN_GROUPS']),
             'visual' => static::GetVisual(),
             'control' => [
@@ -166,7 +167,7 @@ TEMPL;
             ],
             'mess' => [
                 'ADD_CONTROL' => 'Добавить условие',
-                'SELECT_CONTROL' => 'Выберете условие'
+                'SELECT_CONTROL' => 'Выберите условие'
             ]
         ];
     }
@@ -175,6 +176,7 @@ TEMPL;
      *
      *
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      * @return array
      */
     public static function GetAtoms(): array
@@ -189,6 +191,7 @@ TEMPL;
      * @param bool $boolEx
      *
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      * @return array
      */
     public static function GetAtomsEx($strControlID = false, $boolEx = false): array

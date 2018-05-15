@@ -19,7 +19,7 @@ class CategoriesCest
      * @throws \Exception
      * @dataprovider goodCategoryProvider
      */
-    public function testGoodCategory(\ApiTester $apiTester, Example $example)
+    public function testGoodCategory(\ApiTester $apiTester, Example $example): void
     {
         $token = $apiTester->createToken();
 
@@ -51,11 +51,9 @@ class CategoriesCest
             'child'     => 'array:!empty',
             'has_child' => 'boolean',
         ], '$.data.categories[0]');
-
-        $apiTester->deleteToken($token);
     }
 
-    public function goodCategoryProvider(): array
+    protected function goodCategoryProvider(): array
     {
         return [
             [
@@ -76,7 +74,11 @@ class CategoriesCest
         ];
     }
 
-    public function testBadCategory(\ApiTester $apiTester)
+    /**
+     * @param \ApiTester $apiTester
+     * @throws \Exception
+     */
+    public function testBadCategory(\ApiTester $apiTester): void
     {
         $token = $apiTester->createToken();
 
@@ -103,7 +105,5 @@ class CategoriesCest
                 ],
             ],
         ]);
-
-        $apiTester->deleteToken($token);
     }
 }

@@ -6,6 +6,7 @@
 
 namespace FourPaws\StoreBundle\Repository;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
@@ -47,6 +48,19 @@ class StoreRepository extends BaseRepository
         $query = StoreTable::query();
 
         $allKeys = array_unique(array_merge(array_keys($orderBy), array_keys($criteria)));
+        /** одноуровеневая проверка логики и вставка ключей */
+        if (\in_array(0, $allKeys, true)) {
+            unset($allKeys[\array_search(0, $allKeys, true)]);
+            foreach ($criteria as $key => $criterion) {
+                if (\is_array($criterion)) {
+                    /** @noinspection SlowArrayOperationsInLoopInspection */
+                    $allKeys = array_merge($allKeys, array_keys($criterion));
+                    unset($allKeys[\array_search('LOGIC', $allKeys, true)]);
+                }
+            }
+        }
+        $allKeys = array_unique($allKeys);
+
         $haveDistance = false;
         $haveLocation = false;
         $haveMetro = false;
@@ -59,23 +73,23 @@ class StoreRepository extends BaseRepository
                     new ExpressionField(
                         'DISTANCE',
                         static::RADIUS_EARTH_KM . '*2*ASIN('
-                            . 'SQRT('
-                                . 'POWER('
-                                    . 'SIN('
-                                        ."(%1\$s - ABS(" . $explode[1] . ')) '
-                                        . '* PI()/180 / 2'
-                                    . ')'
-                                    . ', 2'
-                                . ') '
-                                ."+COS(%1\$s * PI()/180) "
-                                . '*COS(ABS(' . $explode[1] . ') * PI()/180) '
-                                . '*POWER('
-                                    . 'SIN('
-                                        ."(%2\$s - " . $explode[2] . ') * PI()/180 / 2'
-                                    . ')'
-                                    . ', 2'
-                                . ')'
-                            . ')'
+                        . 'SQRT('
+                        . 'POWER('
+                        . 'SIN('
+                        . "(%1\$s - ABS(" . $explode[1] . ')) '
+                        . '* PI()/180 / 2'
+                        . ')'
+                        . ', 2'
+                        . ') '
+                        . "+COS(%1\$s * PI()/180) "
+                        . '*COS(ABS(' . $explode[1] . ') * PI()/180) '
+                        . '*POWER('
+                        . 'SIN('
+                        . "(%2\$s - " . $explode[2] . ') * PI()/180 / 2'
+                        . ')'
+                        . ', 2'
+                        . ')'
+                        . ')'
                         . ')',
                         ['GPS_N', 'GPS_S']
                     )
@@ -103,7 +117,7 @@ class StoreRepository extends BaseRepository
                 $query->registerRuntimeField(
                     new ReferenceField(
                         'METRO',
-                        LocationTable::getEntity(),
+                        HLBlockFactory::createTableObject('MetroStations')::getEntity(),
                         ['=this.UF_METRO' => 'ref.ID']
                     )
                 );

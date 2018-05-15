@@ -87,6 +87,7 @@ class BaseRepository
         }
 
         $data = $this->arrayTransformer->toArray($this->entity, SerializationContext::create()->setGroups(['create']));
+
         $this->fixFileData($data);
 
         $res = $this->dataManager::add(
@@ -148,6 +149,7 @@ class BaseRepository
         }
 
         $data = $this->arrayTransformer->toArray($this->entity, SerializationContext::create()->setGroups(['update']));
+
         $this->fixFileData($data);
 
         $res = $this->dataManager::update(
@@ -196,9 +198,10 @@ class BaseRepository
      * ]
      *
      * @param array|DataManager $params
-     *
      * @return ArrayCollection
      * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      */
     public function findBy($params): ArrayCollection
     {
@@ -284,10 +287,11 @@ class BaseRepository
 
     /**
      * @param int $id
-     *
      * @return BaseEntity
-     * @throws ObjectPropertyException
      * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      */
     public function findById(int $id): BaseEntity
     {
@@ -301,13 +305,14 @@ class BaseRepository
 
     /**
      * @param array $filter
-     *
-     * @throws ObjectPropertyException
      * @return int
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      */
     public function getCount(array $filter = []): int
     {
-        $query = $this->dataManager::query()->setCacheTtl(360000);
+        $query = $this->dataManager::query();
         $query->countTotal(true);
         if (!empty($filter)) {
             $query->setFilter($filter);
@@ -326,6 +331,14 @@ class BaseRepository
         $this->dataManager = $dataManager;
 
         return $this;
+    }
+
+    /**
+     * @return null|DataManager
+     */
+    public function getDataManager()
+    {
+        return $this->dataManager;
     }
 
     /**
@@ -488,8 +501,13 @@ class BaseRepository
         $fileList = $this->getFileList();
         if (!empty($fileList)) {
             foreach ($fileList as $code => $file) {
-                if (\array_key_exists($code, $data) && (int)$data[$code] === 1) {
-                    $data[$code] = $file;
+                if (\array_key_exists($code, $data)){
+                    if((int)$data[$code] === 1) {
+                        $data[$code] = $file;
+                    } elseif($file === 'skip') {
+                        /** если прпоуск - удаляем чтобы не обновилась */
+                        unset($data[$code]);
+                    }
                 }
             }
         }

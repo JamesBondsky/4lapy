@@ -6,12 +6,15 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
@@ -19,8 +22,10 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
+use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -28,16 +33,26 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\JmsSerializerHelper;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
+use JMS\Serializer\DeserializationContext;
+use JMS\SerializerBundle\Templating\SerializerHelper;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -234,19 +249,18 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var int
-     */
-    protected $PROPERTY_BY_REQUEST = 0;
-
-    /**
      * Цена по акции - простая акция из SAP
      *
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PRICE_ACTION = 0;
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COND_FOR_ACTION = '';
 
@@ -254,6 +268,8 @@ class Offer extends IblockElement
      * Размер скидки на товар - простая акция из SAP
      *
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COND_VALUE = 0;
 
@@ -267,8 +283,16 @@ class Offer extends IblockElement
 
     /**
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getOldPrice", setter="withOldPrice")
      */
     protected $oldPrice = 0;
+
+    /**
+     * @var bool
+     */
+    protected $isByRequest;
 
     /**
      * @Type("string")
@@ -340,11 +364,29 @@ class Offer extends IblockElement
     protected $stocks;
 
     /**
+     * @var StockCollection
+     */
+    protected $allStocks;
+
+    /**
      * @var bool
      */
     protected $isCounted = false;
 
+    /**
+     * @var int
+     */
+    protected $quantity;
+
+    /**
+     * @var int
+     */
+    protected $deliverableQuantity;
+
     protected $bonus = 0;
+
+    /** @var ShareCollection */
+    protected $share;
 
     public function __construct(array $fields = [])
     {
@@ -826,15 +868,25 @@ class Offer extends IblockElement
 
     /**
      * @return bool
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
      */
     public function isByRequest(): bool
     {
-        return (bool)$this->PROPERTY_BY_REQUEST;
+        if (null === $this->isByRequest) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $stores = $storeService->getSupplierStores();
+            $this->isByRequest = !$this->getAllStocks()->filterByStores($stores)->isEmpty();
+        }
+
+        return $this->isByRequest;
     }
 
     public function withByRequest(bool $byRequest)
     {
-        $this->PROPERTY_BY_REQUEST = $byRequest;
+        $this->isByRequest = $byRequest;
 
         return $this;
     }
@@ -849,13 +901,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
     public function getPrice(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->price;
     }
@@ -1012,13 +1061,10 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      */
     public function getOldPrice(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->oldPrice;
     }
@@ -1033,62 +1079,62 @@ class Offer extends IblockElement
 
     /**
      * @return float
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
      */
     public function getDiscount(): float
     {
-        $this->checkOptimalPrice();
+        $this->checkOptimalPriceTmp();
 
         return $this->discount;
     }
 
     /**
-     * @param float $percent
-     * @param int   $quantity
+     * @param int $percent
+     * @param int $quantity
      *
      * @return float
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
-    public function getBonuses(float $percent = 3, int $quantity = 1): float
+    public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if ((int)$this->bonus === 0 && $percent > 0) {
-            $this->bonus = round($this->getPrice() * $quantity * $percent / 100, 2);
+        if (!$this->bonus) {
+            $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
         }
 
         return $this->bonus;
     }
 
+
     /**
-     * @param float|int $percent
-     * @param int       $quantity
+     * @param int $percent
+     * @param int $quantity
+     * @param int $precision
      *
      * @return string
      */
-    public function getBonusFormattedText($percent = 3, int $quantity = 1): string
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1, int $precision = 2): string
     {
-        if(!\is_float($percent) && !\is_int($percent)){
-            $percent = 3;
-        }
         $bonusText = '';
-        try {
-            $bonus = $this->getBonuses($percent, $quantity);
-        } catch (\Exception $e) {
-            $bonus = 0;
+
+        $bonus = $this->getBonusCount($percent, $quantity);
+
+        if ($bonus <= 0) {
+            return $bonusText;
         }
-        if ($bonus > 0) {
-            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
-            $ost = $bonus - floor($bonus) * 100;
-            ob_start(); ?>
-            + <?= WordHelper::numberFormat($bonus) ?>
-            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonus),
-                ['бонус', 'бонуса', 'бонусов']) ?>
-            <?php $bonusText = ob_get_clean();
+
+        if($precision > 0 ){
+            $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
+            $floorBonus = \floor($bonus);
         }
-        return $bonusText;
+        else{
+            $floorBonus = $bonus = \floor($bonus);
+        }
+
+        $div = ($bonus - $floorBonus) * 100;
+
+        return \sprintf(
+            '+ %s %s',
+            WordHelper::numberFormat($bonus, $precision),
+            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
+        );
     }
 
     /**
@@ -1097,7 +1143,11 @@ class Offer extends IblockElement
     public function getLink(): string
     {
         if (!$this->link) {
-            $this->link = sprintf('%s?offer=%s', $this->getProduct()->getDetailPageUrl(), $this->getId());
+            $this->link = \sprintf(
+                '%s?offer=%s',
+                $this->getProduct()->getDetailPageUrl(),
+                $this->getId()
+            );
         }
 
         return $this->link;
@@ -1145,34 +1195,91 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ArgumentException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
+     *
+     *
      * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @return int
      */
     public function getQuantity(): int
     {
-        return $this->getStocks()->getTotalAmount();
+        if (null === $this->quantity) {
+            $this->quantity = $this->getStocks()->getTotalAmount();
+        }
+
+        return $this->quantity;
     }
 
     /**
-     * @throws ArgumentException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
+     * Максимальное доступное для доставки количество товара в текущем местоположении
+     * @todo заменить getQuantity() на этот метод после оптимизации расчета доставок
+     *
+     * @return int
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getDeliverableQuantity(): int
+    {
+        if (null === $this->deliverableQuantity) {
+            $this->deliverableQuantity = $this->getAvailableAmount();
+        }
+
+        return $this->deliverableQuantity;
+    }
+
+    /**
      * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     */
+    public function getAllStocks(): StockCollection
+    {
+        if (!$this->allStocks) {
+            /** @var StockService $stockService */
+            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+            $this->withAllStocks($stockService->getStocksByOffer($this));
+        }
+
+        return $this->allStocks;
+    }
+
+    /**
+     * @param StockCollection $allStocks
+     *
+     * @return Offer
+     */
+    public function withAllStocks(StockCollection $allStocks): Offer
+    {
+        $this->allStocks = $allStocks;
+
+        return $this;
+    }
+
+    /**
      * @return StockCollection
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
     public function getStocks(): StockCollection
     {
         if (!$this->stocks) {
             /** @var StoreService $storeService */
             $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $allStocks = $storeService->getStocksByOffer($this);
-            $stores = $storeService->getByCurrentLocation();
-            $this->withStocks($allStocks->filterByStores($stores));
+            if ($this->isByRequest()) {
+                $stores = $storeService->getSupplierStores();
+            } else {
+                $stores = $storeService->getStoresByCurrentLocation();
+            }
+            $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
 
         return $this->stocks;
@@ -1206,6 +1313,9 @@ class Offer extends IblockElement
         return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
     }
 
+    /**
+     * @return bool
+     */
     public function hasAction(): bool
     {
         /**
@@ -1239,6 +1349,85 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return bool
+     */
+    public function isShare(): bool
+    {
+        return !$this->getShare()->isEmpty();
+    }
+
+    /**
+     * @return ShareCollection
+     */
+    public function getShare(): ShareCollection
+    {
+        if ($this->share === null) {
+            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter([
+                'ACTIVE'            => 'Y',
+                'ACTIVE_DATE'       => 'Y',
+                'PROPERTY_PRODUCTS' => $this->getXmlId(),
+            ])->withSelect([
+                'ID',
+                'NAME',
+                'IBLOCK_ID',
+                'PREVIEW_TEXT',
+                'DATE_ACTIVE_FROM',
+                'DATE_ACTIVE_TO',
+                'PROPERTY_LABEL'
+            ])->exec();
+        }
+        return $this->share;
+    }
+
+    /**
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return bool
+     */
+    public function isAvailable(): bool
+    {
+        return $this->isActive() &&
+            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable()) &&
+            ($this->getQuantity() > 0);
+    }
+
+    /**
+     * @todo не использовать этот метод для расчета скидочных цен
+     */
+    protected function checkOptimalPriceTmp(): void
+    {
+        if ($this->isCounted) {
+            return;
+        }
+
+        /**
+         * В эластике price индексируется с уже посчитанной скидкой,
+         * поэтому проводить расчеты ни к чемуу
+         */
+        if ($this->oldPrice) {
+            return;
+        }
+
+        $price = $this->price;
+        $oldPrice = $this->price;
+
+        if ($this->isSimpleSaleAction()) {
+            $price = (float)$this->PROPERTY_PRICE_ACTION;
+        } elseif ($this->isSimpleDiscountAction()) {
+            $price *= (100 - $this->PROPERTY_COND_VALUE) / 100;
+        }
+
+        $this->withPrice($price)
+            ->withOldPrice($oldPrice)
+            ->withDiscount(round(100 * $oldPrice / $price));
+        $this->isCounted = true;
+    }
+
+    /**
+     * @todo использовать этот метод для расчета скидочных цен
+     *
      * Check and set optimal price, discount, old price with bitrix discount
      *
      * @throws LoaderException
@@ -1249,6 +1438,13 @@ class Offer extends IblockElement
     {
         if ($this->isCounted) {
             return;
+        }
+
+        $needEnable = false;
+
+        if (Manager::isExtendDiscountEnabled()) {
+            $needEnable = true;
+            Manager::disableExtendsDiscount();
         }
 
         global $USER;
@@ -1288,6 +1484,155 @@ class Offer extends IblockElement
             }
         }
 
+        if ($needEnable) {
+            Manager::enableExtendsDiscount();
+        }
+
         $this->isCounted = true;
+    }
+
+    /**
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @return int
+     */
+    protected function getAvailableAmount(): int
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveries = $deliveryService->getByLocation();
+        $max = 0;
+        foreach ($deliveries as $delivery) {
+            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
+            if ($delivery->isSuccess()) {
+                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
+                $max = $max > $availableAmount ? $max : $availableAmount;
+            }
+        }
+
+        return $max;
+    }
+
+    /**
+     * @return Bundle|null
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function getBundle(): ?Bundle
+    {
+        $break = false;
+        $offerId = $this->getId();
+        $result = null;
+        $setItemsEntity = HLBlockFactory::createTableObject('BundleItems');
+        $resBundleItems = $setItemsEntity::query()
+            ->where('UF_ACTIVE', true)
+            ->where('UF_PRODUCT', $offerId)
+            ->setSelect(['ID'])
+            ->exec();
+        while($break === false){
+            $bundleItem = $resBundleItems->fetch();
+            if(!$bundleItem){
+                $break = true;
+                continue;
+            }
+            $setEntity = HLBlockFactory::createTableObject('Bundle');
+            $resBundle = $setEntity::query()
+                ->where('UF_ACTIVE', true)
+                ->where('UF_PRODUCTS', $bundleItem['ID'])
+                ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
+//                ->addSelect('UF_ACTIVE')
+//                ->addSelect('ID')
+                ->exec();
+
+
+            if($resBundle->getSelectedRowsCount() === 0){
+                continue;
+            }
+            $breakBundle = false;
+            $hasItems = false;
+            while ($breakBundle === false) {
+                $setItem = $resBundle->fetch();
+                if(!$setItem){
+                    $breakBundle = true;
+                    continue;
+                }
+                $countItems = 2;
+                if ($setItem['UF_COUNT_ITEMS']) {
+                    $enumField = (new UserFieldEnumService())->getEnumValueEntity((int)$setItem['UF_COUNT_ITEMS']);
+                    $countItems = (int)$enumField->getValue();
+                }
+
+                $res = $setItemsEntity::query()
+                    ->where('UF_ACTIVE', true)
+                    ->whereIn('ID', $setItem['UF_PRODUCTS'])
+                    ->setLimit($countItems)
+                    ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
+//                ->addSelect('ID')
+//                ->addSelect('UF_ACTIVE')
+                    ->exec();
+                if ($res->getSelectedRowsCount() === 0) {
+                    continue;
+                }
+                $result = [
+//                'ID'  => $setItem['ID'],
+//                'ACTIVE'  => $setItem['UF_ACTIVE'],
+                    'NAME'        => $setItem['UF_NAME'],
+                    'COUNT_ITEMS' => $countItems,
+                    'PRODUCTS'    => [],
+                ];
+                while ($item = $res->fetch()) {
+                    $itemFields = [
+//                    'ID' => $item['ID'],
+//                    'ACTIVE' => $item['UF_ACTIVE'],
+                        'PRODUCT'    => null,
+                        'PRODUCT_ID' => $item['UF_PRODUCT'],
+                        'QUANTITY'   => $item['UF_QUANTITY']
+                    ];
+                    if ($offerId === (int)$item['UF_PRODUCT']) {
+                        $itemFields['PRODUCT'] = $this;
+                        $result['PRODUCTS'] = [$item['UF_PRODUCT'] => $itemFields] + $result['PRODUCTS'];
+                    } else {
+                        $result['PRODUCTS'][$item['UF_PRODUCT']] = $itemFields;
+                    }
+                    $productIds[] = $item['UF_PRODUCT'];
+                }
+                $breakBundle = true;
+                $hasItems = true;
+            }
+            if(!$hasItems){
+                continue;
+            }
+            $break = true;
+        }
+        if($result !== null){
+            $serializer = Application::getInstance()->getContainer()->get(\JMS\Serializer\SerializerInterface::class);
+            $result = $serializer->fromArray($result, Bundle::class, DeserializationContext::create()->setGroups(['read']));
+            if(!empty($productIds)){
+                $offerCollection = (new OfferQuery())->withFilter(['ID'=>$productIds])->exec();
+                /** @var Offer $offer */
+                foreach ($offerCollection as $offer) {
+                    /** @var BundleItem $product */
+                    foreach ($result->getProducts() as &$product) {
+                        if($product->getOfferId() === $offer->getId()){
+                            $product->setOffer($offer);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $result;
     }
 }

@@ -13,14 +13,24 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests}'
+        exclude: '../../{Entity,Tests,EventController}'
     store.service:
         class: FourPaws\StoreBundle\Service\StoreService
         public: true
-    store.deliveryschedule.service:
+    FourPaws\StoreBundle\Service\StockService:
+            class: FourPaws\StoreBundle\Service\StockService
+            public: true
+    FourPaws\StoreBundle\Service\DeliveryScheduleService:
         class: FourPaws\StoreBundle\Service\DeliveryScheduleService
+        public: true
+    FourPaws\StoreBundle\Service\ScheduleResultService:
+        class: FourPaws\StoreBundle\Service\ScheduleResultService
         public: true
     FourPaws\StoreBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true
         tags: ['controller.service_arguments']
+
+    FourPaws\StoreBundle\Serialization\:
+        resource: '../../Serialization/*'
+        tags: ['jms_serializer.subscribing_handler']

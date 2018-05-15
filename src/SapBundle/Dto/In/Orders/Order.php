@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Orders;
 
 use Doctrine\Common\Collections\Collection;
@@ -110,7 +114,8 @@ class Order
      * 3    (08:00 – 12:00);
      * 4    (12:00 – 16:00);
      * 5    (16:00 – 20:00);
-     * 6    (20:00 – 24:00).
+     * 6    (20:00 – 24:00);
+     * 7    (15:00 – 21:00);
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("AgreedDeliveryDate")
@@ -655,7 +660,7 @@ class Order
     }
     
     /**
-     * @return DeliveryAddress|null
+     * @return null|DeliveryAddress
      */
     public function getDeliveryAddress(): ?DeliveryAddress
     {
@@ -663,7 +668,7 @@ class Order
     }
     
     /**
-     * @param DeliveryAddress|null $deliveryAddress
+     * @param null|DeliveryAddress $deliveryAddress
      *
      * @return Order
      */

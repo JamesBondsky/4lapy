@@ -11,12 +11,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
-use Bitrix\Main\Data\TaggedCache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -105,13 +104,19 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $cache = $instance->getCache();
 
         /** @todo здесь тоже можно делать обновление динамически, так как это влияет только на товары */
-        $this->currentUserProvider->refreshUserDiscount($user);
+        $this->currentUserProvider->refreshUserBonusPercent($user);
 
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getPath())) {
+            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $cachePath)) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($cachePath);
+            }
             try {
                 $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);
             } catch (NotAuthorizedException $e) {
@@ -121,11 +126,11 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
                 return null;
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
-                $tagCache->registerTag(sprintf('order_%s', $user->getId()));
+            if ($tagCache !== null) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:bonus:'. $user->getId(),
+                    'order:'. $user->getId(),
+                ], $tagCache);
                 $tagCache->endTagCache();
             }
 
@@ -141,17 +146,13 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             'sum'         => $bonus->getSum(),
             'paidByBonus' => $bonus->getCredit(),
             'realDiscount' => $bonus->getRealDiscount(),
-        ], $this->getPath())) {
-            $this->includeComponentTemplate();
+        ], $cachePath)) {
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:bonus:'. $user->getId(),
+                'order:'. $user->getId(),
+            ]);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
-                $tagCache->registerTag(sprintf('order_%s', $user->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $user->getId()));
-                $tagCache->endTagCache();
-            }
+            $this->includeComponentTemplate();
         }
 
         return true;

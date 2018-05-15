@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\Out\Orders;
 
 use JMS\Serializer\Annotation as Serializer;
@@ -11,7 +15,7 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class OrderOffer
 {
-    const DEFAULT_PROVIDER_POINT = 'DC01';
+    public const DEFAULT_PROVIDER_POINT = 'DC01';
 
     /**
      * Содержит номер позиции торгового предложения в заказе
@@ -99,12 +103,13 @@ class OrderOffer
      * Начислять ли бонусы по позиции товара
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("bool")
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("signcharge")
      *
      * @var bool
      */
-    protected $chargeBonus = false;
+    protected $chargeBonus = 0;
+
     /**
      * @return int
      */
@@ -121,6 +126,7 @@ class OrderOffer
     public function setPosition(int $position): OrderOffer
     {
         $this->position = $position;
+
         return $this;
     }
     
@@ -140,6 +146,7 @@ class OrderOffer
     public function setOfferXmlId(string $offerXmlId): OrderOffer
     {
         $this->offerXmlId = $offerXmlId;
+
         return $this;
     }
     
@@ -159,6 +166,7 @@ class OrderOffer
     public function setQuantity(int $quantity): OrderOffer
     {
         $this->quantity = $quantity;
+
         return $this;
     }
     
@@ -178,6 +186,7 @@ class OrderOffer
     public function setUnitOfMeasureCode(string $unitOfMeasureCode): OrderOffer
     {
         $this->unitOfMeasureCode = $unitOfMeasureCode;
+
         return $this;
     }
     
@@ -197,6 +206,7 @@ class OrderOffer
     public function setDeliveryFromPoint(string $deliveryFromPoint): OrderOffer
     {
         $this->deliveryFromPoint = $deliveryFromPoint;
+
         return $this;
     }
     
@@ -216,6 +226,7 @@ class OrderOffer
     public function setDeliveryShipmentPoint(string $deliveryShipmentPoint): OrderOffer
     {
         $this->deliveryShipmentPoint = $deliveryShipmentPoint;
+
         return $this;
     }
     
@@ -235,6 +246,7 @@ class OrderOffer
     public function setUnitPrice(float $unitPrice): OrderOffer
     {
         $this->unitPrice = $unitPrice;
+
         return $this;
     }
     
@@ -243,7 +255,7 @@ class OrderOffer
      */
     public function isChargeBonus(): bool
     {
-        return $this->chargeBonus;
+        return $this->chargeBonus === 1;
     }
     
     /**
@@ -253,7 +265,8 @@ class OrderOffer
      */
     public function setChargeBonus(bool $chargeBonus): OrderOffer
     {
-        $this->chargeBonus = $chargeBonus;
+        $this->chargeBonus = $chargeBonus === true ? 1 : 0;
+
         return $this;
     }
 }

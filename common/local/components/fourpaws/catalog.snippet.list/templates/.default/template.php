@@ -18,7 +18,7 @@ if (0 === $component->getProductCollection()->count()) {
     return;
 } ?>
 <div class="b-container">
-    <section class="b-common-section">
+    <section class="b-common-section" data-url="/ajax/catalog/product-info/">
         <div class="b-common-section__title-box b-common-section__title-box--sale">
             <h2 class="b-title b-title--sale"><?= $arParams['TITLE'] ?></h2>
             <?/**
@@ -35,14 +35,12 @@ if (0 === $component->getProductCollection()->count()) {
         </div>
         <div class="b-common-section__content b-common-section__content--sale js-popular-product">
             <?php foreach ($component->getProductCollection() as $product) {
-                /**
-                 * @todo исключать по фильтру офферы, не относящиеся к распродаже
-                 */
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.element.snippet',
                     'vertical',
                     [
                         'PRODUCT' => $product,
+                        'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? []
                     ],
                     $component,
                     [

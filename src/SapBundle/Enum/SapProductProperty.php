@@ -1,10 +1,16 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Enum;
 
 /**
  * Class ProductProperty
+ *
  * @package FourPaws\SapBundle\Enum
+ *
  * Название свойств в САПе
  */
 final class SapProductProperty
@@ -15,115 +21,115 @@ final class SapProductProperty
      * Система должна объединить торговые предложения с одинаковым значением поля в составной товар.
      * Число десятичных знаков после запятой – 2
      */
-    const PACKING_COMBINATION = 'PACKING_COMBINATION';
+    public const PACKING_COMBINATION = 'PACKING_COMBINATION';
 
     /**
      * Содержит назначение товара для типа питомца.
      */
-    const FOR_WHO = 'FOR_WHO';
+    public const FOR_WHO = 'FOR_WHO';
 
     /**
      * Содержит название торговой марки.
      */
-    const TRADE_NAME = 'TRADE_NAME';
+    public const TRADE_NAME = 'TRADE_NAME';
 
     /**
      * Содержит имя и фамилию категорийного менеджера
      */
-    const MANAGER_OF_CATEGORY = 'MANAGER_OF_CATEGORY';
+    public const MANAGER_OF_CATEGORY = 'MANAGER_OF_CATEGORY';
 
     /**
      * Содержит материал изготовления.
      * Единственный выбор из справочника «Материал».
      */
-    const MANUFACTURE_MATERIAL = 'MANUFACTURE_MATERIAL';
+    public const MANUFACTURE_MATERIAL = 'MANUFACTURE_MATERIAL';
 
     /**
      * Содержит информацию о компании-производителе.
      * Единственный выбор из справочника значений.
      */
-    const MAKER = 'MAKER';
+    public const MAKER = 'MAKER';
 
     /**
      * Содержит размер питомца.
      * Единственный выбор из значений справочника «Размер питомца».
      */
-    const SIZE_OF_THE_ANIMAL_BIRD = 'SIZE_OF_THE_ANIMAL_BIRD';
+    public const SIZE_OF_THE_ANIMAL_BIRD = 'SIZE_OF_THE_ANIMAL_BIRD';
 
     /**
      * Содержит название сезона.
      * Единственный выбор из справочника значений
      */
-    const SEASON_CLOTHES = 'SEASON_CLOTHES';
+    public const SEASON_CLOTHES = 'SEASON_CLOTHES';
 
     /**
      * Содержит назначение товара.
      * Единственный выбор из справочника значений.
      */
-    const PURPOSE = 'PURPOSE';
+    public const PURPOSE = 'PURPOSE';
 
     /**
      * Содержит принадлежность к категории SAP.
      */
-    const CATEGORY = 'CATEGORY';
+    public const CATEGORY = 'CATEGORY';
 
     /**
      * Содержит вес упаковки.
      * Единственный выбор из справочника значений.
      * @internal
      */
-    const WEIGHT_CAPACITY_PACKING = 'WEIGHT_CAPACITY_PACKING';
+    public const WEIGHT_CAPACITY_PACKING = 'WEIGHT_CAPACITY_PACKING';
 
     /**
      * Содержит возраст питомца.
      * Единственный выбор значений из справочника «Возраст питомца»
      */
-    const ANIMALS_AGE = 'ANIMALS_AGE';
+    public const ANIMALS_AGE = 'ANIMALS_AGE';
 
     /**
      * Содержит форму выпуска.
      * Единственный выбор из справочника значений.
      */
-    const PRODUCT_FORM = 'PRODUCT_FORM';
+    public const PRODUCT_FORM = 'PRODUCT_FORM';
 
     /**
      * Вид живого товара
      */
-    const KIND_OF_ANIMAL = 'KIND_OF_ANIMAL';
+    public const KIND_OF_ANIMAL = 'KIND_OF_ANIMAL';
 
     /**
      * Содержит фармакологическую группу ветеринарного препарата.
      * Единственный выбор значений из справочника «Фармакологическая группа».
      */
-    const PHARMA_GROUP = 'PHARMA_GROUP';
+    public const PHARMA_GROUP = 'PHARMA_GROUP';
 
     /**
      * Содержит специальные показания корма.
      * Единственный выбор значений из справочника «Специальные показания».
      */
-    const FEED_SPECIFICATION = 'FEED_SPECIFICATION';
+    public const FEED_SPECIFICATION = 'FEED_SPECIFICATION';
 
     /**
      * Содержит вкус корма.
      * Множественный выбор значений из справочника «Вкус».
      */
-    const FLAVOUR = 'FLAVOUR ';
+    public const FLAVOUR = 'FLAVOUR';
 
     /**
      * Содержит особенности ингредиентов.
      */
-    const FEATURES_OF_INGREDIENTS = 'FEATURES_OF_INGREDIENTS';
+    public const FEATURES_OF_INGREDIENTS = 'FEATURES_OF_INGREDIENTS';
 
     /**
      * Содержит породу питомца.
      * Единственный выбор из значений справочника «Порода».
      */
-    const BREED_OF_ANIMAL = 'BREED_OF_ANIMAL';
+    public const BREED_OF_ANIMAL = 'BREED_OF_ANIMAL';
 
     /**
      * Содержит пол питомца.
      */
-    const GENDER_OF_ANIMAL = 'GENDER_OF_ANIMAL';
+    public const GENDER_OF_ANIMAL = 'GENDER_OF_ANIMAL';
 
     /**
      * Содержит консистенцию корма.
@@ -131,7 +137,7 @@ final class SapProductProperty
      * 00000001 – «Сухой»;
      * 00000002 – «Влажный».
      */
-    const CONSISTENCE = 'CONSISTENCE';
+    public const CONSISTENCE = 'CONSISTENCE';
 
     /**
      * Содержит индикатор принадлежности товара к собственной торговой марке.
@@ -139,7 +145,7 @@ final class SapProductProperty
      * 00000001 – «Да»;
      * 00000002 – «Нет».
      */
-    const STM = 'STM';
+    public const STM = 'STM';
 
     /**
      * Содержит индикатор необходимости лицензии на товар.
@@ -147,7 +153,7 @@ final class SapProductProperty
      * 00000001 – «Да»;
      * 00000002 – «Нет».
      */
-    const LICENSE = 'LICENSE';
+    public const LICENSE = 'LICENSE';
 
     /**
      * Содержит индикатор необходимости хранения товара в холодильнике.
@@ -155,7 +161,7 @@ final class SapProductProperty
      * 000001 – «Да»;
      * 000002 – «Нет».
      */
-    const LOW_TEMPERATURE = 'LOW_TEMPERATURE';
+    public const LOW_TEMPERATURE = 'LOW_TEMPERATURE';
 
     /**
      * Содержит индикатор принадлежности товара к еде.
@@ -163,7 +169,7 @@ final class SapProductProperty
      * 00000001 – «Да»;
      * 00000002 – «Нет».
      */
-    const FOOD = 'FOOD';
+    public const FOOD = 'FOOD';
 
     /**
      * Содержит индикатор необходимости хранения товара в холодильнике.
@@ -171,7 +177,7 @@ final class SapProductProperty
      * 110000001 – «Да»;
      * 110000002 – «Нет».
      */
-    const TRANSPORT_ONLY_REFRIGERATOR = 'TRANSPORT_ONLY_REFRIGERATOR';
+    public const TRANSPORT_ONLY_REFRIGERATOR = 'TRANSPORT_ONLY_REFRIGERATOR';
 
     /**
      * Содержит индикатор ограниченности области доставки.
@@ -179,5 +185,5 @@ final class SapProductProperty
      * 990000001 – «Да»;
      * 990000002 – «Нет».
      */
-    const DC_SPECIAL_AREA_STORAGE = 'DC_SPECIAL_AREA_STORAGE';
+    public const DC_SPECIAL_AREA_STORAGE = 'DC_SPECIAL_AREA_STORAGE';
 }

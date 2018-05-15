@@ -13,7 +13,7 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests}'
+        exclude: '../../{Entity,Tests,EventController}'
 
     address.service:
         class: FourPaws\PersonalBundle\Service\AddressService
@@ -33,6 +33,14 @@ services:
 
     order.service:
         class: FourPaws\PersonalBundle\Service\OrderService
+        public: true
+
+    order_subscribe.service:
+        class: FourPaws\PersonalBundle\Service\OrderSubscribeService
+        public: true
+
+    order_subscribe_history.service:
+        class: FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService
         public: true
 
     FourPaws\PersonalBundle\AjaxController\:

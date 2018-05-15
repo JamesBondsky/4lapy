@@ -7,22 +7,29 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
-use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
 
 class NotificationService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     /**
      * @var OrderService
@@ -50,12 +57,19 @@ class NotificationService implements LoggerAwareInterface
     protected $emailService;
 
     /**
+     * Для предотвращения зацикливания отправки писем
+     *
+     * @var bool
+     */
+    protected static $isSending = false;
+
+    /**
      * NotificationService constructor.
      * @param OrderService $orderService
      * @param SmsService $smsService
      * @param StoreService $storeService
      * @param ExpertsenderService $emailService
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function __construct(
         OrderService $orderService,
@@ -80,28 +94,50 @@ class NotificationService implements LoggerAwareInterface
             );
         }
 
-        $this->setLogger(LoggerFactory::create('sale_notification'));
+        $this->withLogName('sale_notification');
     }
 
     /**
      * @param Order $order
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
      */
     public function sendNewOrderMessage(Order $order): void
     {
-        try {
-            $this->orderService->getOnlinePayment($order);
-
+        if ($this->orderService->isSubscribe($order)) {
+            // Для заказов, созданных по подписке, свои триггеры
+            $this->sendOrderSubscribeOrderNewMessage($order);
             return;
-        } catch (NotFoundException $e) {
-            // заказ не должен быть с оплатой "онлайн"
         }
 
+        if (static::$isSending) {
+            return;
+        }
+
+        /**
+         * Заказ не должен быть с оплатой "онлайн"
+         */
+        if ($this->orderService->isOnlinePayment($order)) {
+            return;
+        }
+
+        if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
+            return;
+        }
+
+        static::$isSending = true;
+
+        $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->logMessage($order, $transactionId);
+            if ($transactionId) {
+                $this->logMessage($order, $transactionId);
+            }
         } catch (ExpertsenderServiceException $e) {
-            $this->logger->error($e->getMessage());
+            $this->log()->error($e->getMessage());
         }
 
         $smsTemplate = null;
@@ -126,32 +162,55 @@ class NotificationService implements LoggerAwareInterface
         if ($smsTemplate) {
             $this->sendSms($smsTemplate, $parameters, true);
         }
+
+        $this->sendNewUserSms($parameters);
+        static::$isSending = false;
     }
 
     /**
      * @param Order $order
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws ApplicationCreateException
+     * @throws SystemException
      */
     public function sendOrderPaymentMessage(Order $order): void
     {
-        try {
-            $payment = $this->orderService->getOnlinePayment($order);
-        } catch (NotFoundException $e) {
+        if (static::$isSending) {
             return;
         }
 
-        if (!$payment->isPaid()) {
+        /**
+         * Заказ должен быть с оплатой "онлайн"
+         */
+        if (!$this->orderService->isOnlinePayment($order)) {
             return;
         }
 
+        if (!$this->orderService->getOrderPayment($order)->isPaid()) {
+            return;
+        }
+
+        if ($this->getOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT') === BitrixUtils::BX_BOOL_TRUE) {
+            return;
+        }
+
+        static::$isSending = true;
+
+        $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
         try {
             $transactionId = $this->emailService->sendOrderNewEmail($order);
-            $this->logMessage($order, $transactionId);
+            if ($transactionId) {
+                $this->logMessage($order, $transactionId);
+            }
         } catch (ExpertsenderServiceException $e) {
-            $this->logger->error($e->getMessage());
+            $this->log()->error($e->getMessage());
         }
         $parameters = $this->getOrderData($order);
         $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
+        $this->sendNewUserSms($parameters);
+        static::$isSending = false;
     }
 
     /**
@@ -159,9 +218,15 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendOrderCancelMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+
         if (!$order->isCanceled()) {
             return;
         }
+
+        static::$isSending = true;
 
         $parameters = $this->getOrderData($order);
 
@@ -169,18 +234,28 @@ class NotificationService implements LoggerAwareInterface
             'FourPawsSaleBundle:Sms:order.canceled.html.php',
             $parameters
         );
+        static::$isSending = false;
     }
 
     /**
      * @param Order $order
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      */
     public function sendOrderStatusMessage(Order $order): void
     {
+        if (static::$isSending) {
+            return;
+        }
+
         if ($order->isCanceled()) {
             return;
         }
+
+        static::$isSending = true;
 
         $status = $order->getField('STATUS_ID');
         $parameters = $this->getOrderData($order);
@@ -211,19 +286,17 @@ class NotificationService implements LoggerAwareInterface
                 break;
         }
 
-        if ($sendCompleteEmail && $this->orderService->getOrderPropertyByCode(
-                $order,
-                'COMPLETE_MESSAGE_SENT'
-            )->getValue() !== BitrixUtils::BX_BOOL_TRUE
+        if ($sendCompleteEmail &&
+            $this->getOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT') !== BitrixUtils::BX_BOOL_TRUE
         ) {
             try {
-                if ($transactionId = $this->emailService->sendOrderCompleteEmail($order)) {
-                    $this->orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
-                    $order->save();
+                $transactionId = $this->emailService->sendOrderCompleteEmail($order);
+                $this->setOrderMessageFlag($order, 'COMPLETE_MESSAGE_SENT');
+                if ($transactionId) {
+                    $this->logMessage($order, $transactionId);
                 }
-                $this->logMessage($order, $transactionId);
             } catch (ExpertsenderServiceException $e) {
-                $this->logger->error($e->getMessage());
+                $this->log()->error($e->getMessage());
             }
         }
 
@@ -233,6 +306,8 @@ class NotificationService implements LoggerAwareInterface
                 $parameters
             );
         }
+
+        static::$isSending = false;
     }
 
     /**
@@ -287,20 +362,35 @@ class NotificationService implements LoggerAwareInterface
             $result['deliveryCode'] = $this->orderService->getOrderDeliveryCode($order);
 
             if ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
-                $shop = $this->storeService->getByXmlId(
+                $shop = $this->storeService->getStoreByXmlId(
                     $properties['DELIVERY_PLACE_CODE']
                 );
                 $result['shop'] = [
                     'address' => $shop->getAddress(),
-                    'schedule' => $shop->getSchedule(),
+                    'schedule' => $shop->getScheduleString(),
                 ];
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            return [];
+            $this->log()->error($e->getMessage());
+            $result = [];
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $parameters
+     */
+    protected function sendNewUserSms(array $parameters): void
+    {
+        if (!isset($_SESSION['NEW_USER']) || empty($_SESSION['NEW_USER'])) {
+            return;
+        }
+
+        $parameters['login'] = $_SESSION['NEW_USER']['LOGIN'];
+        $parameters['password'] = $_SESSION['NEW_USER']['PASSWORD'];
+        $this->sendSms('FourPawsSaleBundle:Sms:order.new.user.html.php', $parameters, true);
+        unset($_SESSION['NEW_USER']);
     }
 
     /**
@@ -311,7 +401,7 @@ class NotificationService implements LoggerAwareInterface
     {
         $email = $this->orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue();
 
-        $this->logger->notice(
+        $this->log()->notice(
             sprintf(
                 'message %s for order %s sent successfully to %s',
                 $transactionId,
@@ -319,5 +409,161 @@ class NotificationService implements LoggerAwareInterface
                 $email
             )
         );
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @return string
+     */
+    protected function getOrderMessageFlag(Order $order, string $code): string
+    {
+        $propValue = $this->orderService->getOrderPropertyByCode(
+            $order,
+                $code
+        )->getValue();
+
+        return ($propValue === BitrixUtils::BX_BOOL_TRUE) ? $propValue : BitrixUtils::BX_BOOL_FALSE;
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     */
+    protected function setOrderMessageFlag(Order $order, string $code): void
+    {
+        $this->orderService->setOrderPropertyByCode($order, $code, 'Y');
+        try {
+            $order->save();
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to update order property: %s', $e->getMessage()), [
+                'property' => $code,
+                'order' => $order->getId()
+            ]);
+        }
+    }
+
+    /**
+     * @param Order $order
+     * @return string
+     */
+    protected function getOrderPhone(Order $order): string
+    {
+        $value = '';
+        try {
+            $propValue = $this->orderService->getOrderPropertyByCode($order, 'PHONE');
+            $value = trim($propValue->getValue());
+        } catch (\Exception $e) {
+            // просто вернем пустую строку
+        }
+
+        return $value;
+    }
+
+    /**
+     * Отправка уведомления об автоматической отмене подписки (админам)
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws \Exception
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function sendAutoUnsubscribeOrderMessage(OrderSubscribe $orderSubscribe): void
+    {
+        $order = $orderSubscribe->getOrder()->getBitrixOrder();
+        $subscribeDateCreate = $orderSubscribe->getDateCreate();
+        $user = $orderSubscribe->getUser();
+        // 30.03.2018: Канал уведомления (email или sms), триггер и текст ожидаем от 4 Лап.
+        // 06.04.2018: Просто отправка письма, без ES, средствами системы
+        $fields = [
+            'ORDER_ID' => $order->getId(),
+            'ACCOUNT_NUMBER' => $order->getField('ACCOUNT_NUMBER'),
+            'SUBSCRIBE_ID' => $orderSubscribe->getId(),
+            'SUBSCRIBE_DATE' => $subscribeDateCreate ? $subscribeDateCreate->format('d.m.Y') : '',
+            'USER_ID' => $order->getUserId(),
+            'USER_NAME' => $user->getName(),
+            'USER_FULL_NAME' => $user->getFullName(),
+            'USER_EMAIL' => $user->getEmail(),
+        ];
+
+        \CEvent::SendImmediate(
+            '4PAWS_ORDER_SUBSCRIBE_AUTO_UNSUBSCRIBE',
+            's1',
+            $fields
+        );
+    }
+
+    /**
+     * Оформлена подписка на доставку
+     *
+     * @param OrderSubscribe $orderSubscribe
+     */
+    public function sendOrderSubscribedMessage(OrderSubscribe $orderSubscribe): void
+    {
+        try {
+            $this->emailService->sendOrderSubscribedEmail($orderSubscribe);
+        } catch (\Exception $exception) {
+            $this->log()->error($exception->getMessage());
+        }
+    }
+
+    /**
+     * Информация о предстоящем заказе по подписке (только что созданном)
+     *
+     * @param Order $order
+     */
+    public function sendOrderSubscribeOrderNewMessage(Order $order): void
+    {
+        try {
+            $this->emailService->sendOrderSubscribeOrderNewEmail($order);
+        } catch (\Exception $exception) {
+            $this->log()->error($exception->getMessage());
+        }
+    }
+
+    /**
+     * Информация о предстоящей доставке заказа по подписке (за N дней до доставки)
+     *
+     * @param OrderSubscribeCopyParams $copyParams
+     */
+    public function sendOrderSubscribeUpcomingDeliveryMessage(OrderSubscribeCopyParams $copyParams): void
+    {
+        try {
+            $deliveryDate = $copyParams->getDeliveryDate();
+            // дата доставки заказа с учетом уже возможно созданного заказа
+            $realDeliveryDate = $copyParams->getRealDeliveryDate();
+
+            $smsEventName = 'orderSubscribeUpcomingDelivery';
+            $smsEventKey = $copyParams->getOriginOrderId();
+            $smsEventKey .= '~'.$deliveryDate->format('d.m.Y');
+            $smsEventKey .= '~'.$realDeliveryDate->format('d.m.Y');
+            if (!$this->smsService->isAlreadySent($smsEventName, $smsEventKey)) {
+                $parameters = [];
+                $parameters['phone'] = '';
+                $parameters['periodDays'] = $copyParams->getOrderSubscribeService()->getDeliveryDateUpcomingDays(
+                    $realDeliveryDate,
+                    $copyParams->getCurrentDate()
+                );
+                if ($parameters['periodDays'] >= 0) {
+                    $copyOrder = $copyParams->getCopyOrder();
+                    if ($copyOrder) {
+                        $parameters['phone'] = $this->getOrderPhone($copyOrder);
+                    }
+                    if ($parameters['phone'] === '') {
+                        $parameters['phone'] = $copyParams->getOrderSubscribe()->getUser()->getPersonalPhone();
+                    }
+
+                    $smsTemplate = 'FourPawsSaleBundle:Sms:order.subscribe.upcoming.delivery.html.php';
+                    $this->sendSms($smsTemplate, $parameters);
+                    $this->smsService->markAlreadySent($smsEventName, $smsEventKey);
+                }
+            }
+        } catch (\Exception $exception) {
+            $this->log()->error($exception->getMessage());
+        }
     }
 }

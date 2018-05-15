@@ -1,10 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
-
 
 /**
  * Class BonusBuyShare
@@ -13,6 +16,9 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class BonusBuyShare
 {
+    public const ACT_MODIFY = 'MODI';
+    public const ACT_DELETE = 'DELE';
+
     /**
      * Код региона
      *
@@ -109,12 +115,12 @@ class BonusBuyShare
      * Purchase_Item не учитывается
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\SerializedName("RM_NR")
+     * @Serializer\SerializedName("FLDVAL")
      * @Serializer\Type("float")
      *
      * @var string
      */
-    protected $amount = '';
+    protected $minPriceSum = '';
 
     /**
      * Содержит тип механики акции. Варианты значений:
@@ -146,20 +152,20 @@ class BonusBuyShare
     /**
      * Группа данных о предпосылке акции
      *
+     * @Serializer\XmlList(inline=true, entry="PURCHASE_HEAD")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyFrom>")
-     * @Serializer\SerializedName("PURCHASE_HEAD")
      *
-     * @var Collection|BonusBuyFrom[]
+     * @var BonusBuyFrom[]|Collection
      */
     protected $bonusBuyFrom;
 
     /**
      * Группа данных о подарках (элементы, на которые действуют акции)
      *
+     * @Serializer\XmlList(inline=true, entry="BONUS_HEAD")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyTo>")
-     * @Serializer\SerializedName("BONUS_HEAD")
      *
-     * @var Collection|BonusBuyTo[]
+     * @var BonusBuyTo[]|Collection
      */
     protected $bonusBuyTo;
 
@@ -299,18 +305,19 @@ class BonusBuyShare
     /**
      * @return string
      */
-    public function getAmount(): string
+    public function getMinPriceSum(): string
     {
-        return $this->amount;
+        return $this->minPriceSum;
     }
 
     /**
-     * @param string $amount
+     * @param string $minPriceSum
+     *
      * @return BonusBuyShare
      */
-    public function setAmount(string $amount): BonusBuyShare
+    public function setMinPriceSum(string $minPriceSum): BonusBuyShare
     {
-        $this->amount = $amount;
+        $this->minPriceSum = $minPriceSum;
 
         return $this;
     }
@@ -354,7 +361,7 @@ class BonusBuyShare
     }
 
     /**
-     * @return Collection|BonusBuyTo[]
+     * @return BonusBuyTo[]|Collection
      */
     public function getBonusBuyTo()
     {
@@ -362,7 +369,7 @@ class BonusBuyShare
     }
 
     /**
-     * @param Collection|BonusBuyTo[] $bonusBuyTo
+     * @param BonusBuyTo[]|Collection $bonusBuyTo
      *
      * @return BonusBuyShare
      */
@@ -374,7 +381,7 @@ class BonusBuyShare
     }
 
     /**
-     * @return Collection|BonusBuyFrom[]
+     * @return BonusBuyFrom[]|Collection
      */
     public function getBonusBuyFrom()
     {
@@ -382,7 +389,7 @@ class BonusBuyShare
     }
 
     /**
-     * @param Collection|BonusBuyFrom[] $bonusBuyFrom
+     * @param BonusBuyFrom[]|Collection $bonusBuyFrom
      *
      * @return BonusBuyShare
      */
@@ -391,5 +398,13 @@ class BonusBuyShare
         $this->bonusBuyTo = $bonusBuyFrom;
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDelete(): bool
+    {
+        return $this->getAct() === self::ACT_DELETE;
     }
 }

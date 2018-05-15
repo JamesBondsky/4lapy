@@ -2,15 +2,11 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Manzana\Model\Client;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Repository\UserRepository;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Interface CurrentUserProviderInterface
@@ -22,9 +18,9 @@ interface CurrentUserProviderInterface
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @return User
+     * @return User|null
      */
-    public function getCurrentUser(): User;
+    public function getCurrentUser(): ?User;
 
     /**
      * @throws NotAuthorizedException
@@ -36,19 +32,6 @@ interface CurrentUserProviderInterface
      * @return UserRepository
      */
     public function getUserRepository(): UserRepository;
-
-    /**
-     * @param Client    $client
-     * @param null|User $user
-     *
-     * @throws NotAuthorizedException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     */
-    public function setClientPersonalDataByCurUser(&$client, User $user = null);
 
     /**
      * @return int
@@ -63,28 +46,4 @@ interface CurrentUserProviderInterface
      * @return array
      */
     public function getUserGroups(int $id = 0): array;
-
-    /**
-     * @return int
-     */
-    public function getDiscount(): int;
-
-    /**
-     * @return int
-     */
-    public function getCurrentUserDiscount(): int;
-
-    /**
-     * @param User $user
-     *
-     * @return int
-     */
-    public function getUserDiscount(User $user): int;
-
-    /**
-     * @param User|null $user
-     *
-     * @return bool
-     */
-    public function refreshUserDiscount(?User $user = null): bool;
 }

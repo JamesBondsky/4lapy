@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\Base\Orders;
 
 use JMS\Serializer\Annotation as Serializer;
@@ -155,7 +159,7 @@ class DeliveryAddress
      * @var string
      */
     protected $deliveryPointCode = '';
-    
+
     /**
      * @return string
      */
@@ -163,7 +167,7 @@ class DeliveryAddress
     {
         return $this->countryCode;
     }
-    
+
     /**
      * @param string $countryCode
      *
@@ -172,9 +176,10 @@ class DeliveryAddress
     public function setCountryCode(string $countryCode): DeliveryAddress
     {
         $this->countryCode = $countryCode;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -182,7 +187,7 @@ class DeliveryAddress
     {
         return $this->regionCode;
     }
-    
+
     /**
      * @param string $regionCode
      *
@@ -191,9 +196,10 @@ class DeliveryAddress
     public function setRegionCode(string $regionCode): DeliveryAddress
     {
         $this->regionCode = $regionCode;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -201,7 +207,7 @@ class DeliveryAddress
     {
         return $this->postCode;
     }
-    
+
     /**
      * @param string $postCode
      *
@@ -210,9 +216,10 @@ class DeliveryAddress
     public function setPostCode(string $postCode): DeliveryAddress
     {
         $this->postCode = $postCode;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -220,7 +227,7 @@ class DeliveryAddress
     {
         return $this->cityName;
     }
-    
+
     /**
      * @param string $cityName
      *
@@ -229,9 +236,10 @@ class DeliveryAddress
     public function setCityName(string $cityName): DeliveryAddress
     {
         $this->cityName = $cityName;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -239,7 +247,7 @@ class DeliveryAddress
     {
         return $this->streetName;
     }
-    
+
     /**
      * @param string $streetName
      *
@@ -248,9 +256,10 @@ class DeliveryAddress
     public function setStreetName(string $streetName): DeliveryAddress
     {
         $this->streetName = $streetName;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -258,7 +267,7 @@ class DeliveryAddress
     {
         return $this->streetPrefix;
     }
-    
+
     /**
      * @param string $streetPrefix
      *
@@ -267,9 +276,10 @@ class DeliveryAddress
     public function setStreetPrefix(string $streetPrefix): DeliveryAddress
     {
         $this->streetPrefix = $streetPrefix;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -277,7 +287,7 @@ class DeliveryAddress
     {
         return $this->house;
     }
-    
+
     /**
      * @param string $house
      *
@@ -286,9 +296,10 @@ class DeliveryAddress
     public function setHouse(string $house): DeliveryAddress
     {
         $this->house = $house;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -296,7 +307,7 @@ class DeliveryAddress
     {
         return $this->housing;
     }
-    
+
     /**
      * @param string $housing
      *
@@ -305,9 +316,10 @@ class DeliveryAddress
     public function setHousing(string $housing): DeliveryAddress
     {
         $this->housing = $housing;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -315,7 +327,7 @@ class DeliveryAddress
     {
         return $this->building;
     }
-    
+
     /**
      * @param string $building
      *
@@ -324,9 +336,10 @@ class DeliveryAddress
     public function setBuilding(string $building): DeliveryAddress
     {
         $this->building = $building;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -334,7 +347,7 @@ class DeliveryAddress
     {
         return $this->ownerShip;
     }
-    
+
     /**
      * @param string $ownerShip
      *
@@ -343,9 +356,10 @@ class DeliveryAddress
     public function setOwnerShip(string $ownerShip): DeliveryAddress
     {
         $this->ownerShip = $ownerShip;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -353,7 +367,7 @@ class DeliveryAddress
     {
         return $this->floor;
     }
-    
+
     /**
      * @param string $floor
      *
@@ -362,9 +376,10 @@ class DeliveryAddress
     public function setFloor(string $floor): DeliveryAddress
     {
         $this->floor = $floor;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -372,7 +387,7 @@ class DeliveryAddress
     {
         return $this->roomNumber;
     }
-    
+
     /**
      * @param string $roomNumber
      *
@@ -381,9 +396,10 @@ class DeliveryAddress
     public function setRoomNumber(string $roomNumber): DeliveryAddress
     {
         $this->roomNumber = $roomNumber;
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -391,7 +407,7 @@ class DeliveryAddress
     {
         return $this->deliveryPointCode;
     }
-    
+
     /**
      * @param string $deliveryPointCode
      *
@@ -400,6 +416,30 @@ class DeliveryAddress
     public function setDeliveryPointCode(string $deliveryPointCode): DeliveryAddress
     {
         $this->deliveryPointCode = $deliveryPointCode;
+
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return \implode(
+            ', ',
+            \array_filter(
+                [
+                    $this->cityName,
+                    ($this->streetPrefix ? $this->streetPrefix . ' ' : '') . $this->streetName,
+                    $this->house ? 'д. ' . $this->house : '',
+                    $this->housing ? 'к. ' . $this->housing : '',
+                    $this->building ? 'стр. ' . $this->building : '',
+                    $this->ownerShip ? 'владение ' . $this->ownerShip : '',
+                    $this->floor ? 'этаж ' . $this->floor : '',
+                    $this->roomNumber,
+                    $this->deliveryPointCode,
+                ]
+            )
+        );
     }
 }

@@ -4,9 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Sale\BasketBase;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -24,8 +24,12 @@ $deliveryService = Application::getInstance()->getContainer()->get('delivery.ser
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-/** @var CalculationResult $selectedDelivery */
+/** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
+$deliveryPrice = $selectedDelivery->getPrice();
+if (!empty($arResult['SPLIT_RESULT'])) {
+    $deliveryPrice = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getPrice();
+}
 
 /** @var BasketBase $basket */
 $basket = $arResult['BASKET'];
@@ -36,24 +40,25 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
 $selectedPayment = null;
 /** @var array $payments */
 $payments = $arResult['PAYMENTS'];
+$selectedPayment = current(array_filter($payments, function ($item) {
+    return $item['CODE'] === OrderService::PAYMENT_CASH_OR_CARD;
+}));
+
 foreach ($payments as $i => $payment) {
     if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
-       unset($payments[$i]);
+        unset($payments[$i]);
     }
     if ((int)$payment['ID'] === $storage->getPaymentId()) {
         $selectedPayment = $payment;
     }
 }
+if (!$selectedPayment) {
+    $selectedPayment = current($payments);
+}
 
-/**
- * @todo фикс цены. Нужен до тех пор, пока не реализовано разделение заказов
- */
-$basketPrice = $basket->getPrice();
-if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
-    $basketPrice = $deliveryService->getStockResultByDelivery($selectedDelivery)
-        ->filterByStore($arResult['SELECTED_SHOP'])
-        ->getAvailable()
-        ->getPrice();
+$basketPrice = $selectedDelivery->getStockResult()->getPrice();
+if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
+    $basketPrice = $arResult['PARTIAL_PICKUP']->getStockResult()->getPrice();
 }
 
 /** @var User $user */
@@ -108,11 +113,6 @@ $user = $arResult['USER'];
                             $i = 0;
                             $max = count($payments);
                             foreach ($payments as $payment) {
-                                if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
-                                    $displayName = 'Наличными или картой при получении';
-                                } else {
-                                    $displayName = $payment['NAME'];
-                                }
                                 $labelClass = $i % 2 !== 0
                                     ? ' b-choice-recovery__label--right'
                                     : ' b-choice-recovery__label--left';
@@ -126,51 +126,79 @@ $user = $arResult['USER'];
                                        name="pay-type"
                                        data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
                                        value="<?= $payment['ID'] ?>"
-                                    <?= (int)$payment['ID'] === $storage->getPaymentId() ? 'checked="checked"' : '' ?>/>
+                                    <?= (int)$payment['ID'] === (int)$selectedPayment['ID'] ? 'checked="checked"' : '' ?>/>
                                 <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
-                                    <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
+                                    <span class="b-choice-recovery__main-text"><?= $payment['NAME'] ?></span>
                                 </label>
                                 <?php
                                 $i++;
                             } ?>
                         </div>
                     </form>
-                    <form class="b-order-contacts__form b-order-contacts__form--points js-form-validation success-valid"
-                          action="/">
-                        <?php if ($user && $user->getDiscountCardNumber()) {
-                            if ($arResult['MAX_BONUS_SUM']) {
-                                $active = $storage->getBonus() > 0;
-                                ?>
-                                <label class="b-order-contacts__label" for="point-pay">
-                                    <b>Оплатить часть заказа бонусными баллами </b>
-                                    (до <?= $arResult['MAX_BONUS_SUM'] ?>)
-                                </label>
-                                <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
-                                    <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
-                                           id="point-pay"
-                                           type="text"
-                                           maxlength="5"
-                                           size="5"
-                                           value="<?= $storage->getBonus() ?>">
-                                    <div class="b-error">
-                                        <span class="js-message"></span>
-                                    </div>
-                                    <a class="b-input__close-points js-pointspay-close<?= $active ? ' active' : '' ?>"
-                                       href="javascript:void(0)"
-                                       title=""
-                                        <?= $active ? 'style="display:inline"' : '' ?>>
-                                    </a>
+                    <?php if ($user && $user->getDiscountCardNumber()) {
+                        if ($arResult['MAX_BONUS_SUM']) {
+                            $active = $storage->getBonus() > 0;
+                            ?>
+                            <label class="b-order-contacts__label" for="point-pay">
+                                <b>Оплатить часть заказа бонусными баллами </b>
+                                (до <?= $arResult['MAX_BONUS_SUM'] ?>)
+                            </label>
+                            <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
+                                <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
+                                       id="point-pay"
+                                       type="text"
+                                       maxlength="5"
+                                       size="5"
+                                       data-max-value="<?= $arResult['MAX_BONUS_SUM'] ?>"
+                                       value="<?= min($storage->getBonus(), $arResult['MAX_BONUS_SUM']) ?>">
+                                <div class="b-error">
+                                    <span class="js-message"></span>
                                 </div>
-                                <button class="b-button b-button--order-line js-pointspay-button<?= $active ? ' hide' : '' ?>"
-                                    <?= $active ? 'style="display:none"' : '' ?>>
-                                    Подтвердить
-                                </button>
-                            <?php } ?>
-                        <?php } else { ?>
-                            <?php /* @todo форма ввода номера бонусной карты - верстки нет */ ?>
+                                <a class="b-input__close-points js-pointspay-close<?= $active ? ' active' : '' ?>"
+                                   href="javascript:void(0)"
+                                   title=""
+                                    <?= $active ? 'style="display:inline"' : '' ?>>
+                                </a>
+                            </div>
+                            <button class="b-button b-button--order-line js-pointspay-button<?= $active ? ' hide' : '' ?>"
+                                <?= $active ? 'style="display:none"' : '' ?>>
+                                Подтвердить
+                            </button>
                         <?php } ?>
-                    </form>
+                    <?php } else { ?>
+                        <div class="b-new-bonus-card_block">
+                            <div class="b-new-bonus-card--step1<?= $storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
+                                <div class="b-new-bonus-card">
+                                    <p class="js-new-bonus-card">Укажите бонусную карту</p><span>Для зачисления баллов</span>
+                                </div>
+                            </div>
+                            <div class="b-new-bonus-card--step2 hidden">
+                                <span class="title">Номер бонусной карты</span>
+                                <span class="js-new-card-cancel"></span>
+                                <form class="b-account-bonus-card__form js-form-validation js-offers-query success-valid"
+                                      data-url="<?= $arResult['URL']['BONUS_CARD_VALIDATION'] ?>" method="post">
+                                    <div class="b-order-contacts__link b-order-contacts__link--hidden js-number-input">
+                                        <div class="b-input b-input--account-bonus js-offers">
+                                            <input class="b-input__input-field b-input__input-field--account-bonus js-offers ok"
+                                                   value="<?= $storage->getDiscountCardNumber() ?>"
+                                                   type="text" id="bonus" placeholder="" name="text" data-url="">
+                                            <div class="b-error b-error--ok">
+                                                <span class="js-message">Поле верно заполнено</span>
+                                            </div>
+                                        </div>
+                                        <button class="b-order-contacts__button">Привязать</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="b-new-bonus-card--step3 <?= !$storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
+                                <div class="b-new-bonus-card--info">
+                                    <p>Бонусная карта для зачисления баллов: <span><?= $storage->getDiscountCardNumber() ?></span></p>
+                                    <span class="js-another-bonus-card">Указать другую карту</span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
                 </article>
             </div>
             <hr class="b-hr b-hr--order-step-3">
@@ -185,7 +213,8 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3"
+                                 data-cost="<?= $basketPrice ?>">
                                 <?= CurrencyHelper::formatPrice($basketPrice, false) ?>
                             </div>
                         </li>
@@ -197,24 +226,25 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3"
+                                 data-cost="<?= $deliveryPrice ?>">
+                                <?= CurrencyHelper::formatPrice($deliveryPrice, false) ?>
                             </div>
                         </li>
                         <?php if ($storage->getBonus()) { ?>
-                            <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
-                                <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
-                                    <div class="b-order-list__clipped-text">
-                                        <div class="b-order-list__text-backed">
-                                            Оплачено бонусами
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                    <?= CurrencyHelper::formatPrice($storage->getBonus(), false) ?>
-                                </div>
-                            </li>
-                        <?php } ?>
+                                <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3 b-order-list__pointspay">
+                                        <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
+                                           <div class="b-order-list__clipped-text">
+                                                   <div class="b-order-list__text-backed">
+                                                           Оплачено бонусами
+                                                       </div>
+                                               </div>
+                                       </div>
+                                   <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                           <?= CurrencyHelper::formatPrice(max($storage->getBonus(), $arResult['MAX_BONUS_SUM']), false) ?>
+                                       </div>
+                               </li>
+                       <?php } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">
@@ -225,7 +255,7 @@ $user = $arResult['USER'];
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
                                 <?= CurrencyHelper::formatPrice(
-                                    $basketPrice - $storage->getBonus() + $selectedDelivery->getPrice()
+                                    $basketPrice - $storage->getBonus() + $deliveryPrice
                                 ) ?>
                             </div>
                         </li>

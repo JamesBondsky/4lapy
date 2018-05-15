@@ -1,7 +1,7 @@
 <?php
-
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\Helpers\WordHelper;
+use FourPaws\Components\BasketComponent;
+/** @global BasketComponent $component */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -29,7 +29,7 @@ if(\is_array($offers) && !empty($offers)){
         $id = $explode[0];
         $quantity=(int)$explode[1];
         /** @var Offer $offer */
-        $bonus = $offer->getBonusFormattedText($userDiscount, $quantity);
+        $bonus = $offer->getBonusFormattedText($userDiscount, $quantity, 0);
         if(!empty($bonus)){?>
             <script type="text/javascript">
                 $(function(){

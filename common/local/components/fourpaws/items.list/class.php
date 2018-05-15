@@ -15,6 +15,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
+use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
 use Bitrix\Main\Data\Cache;
@@ -22,25 +24,26 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CItemsListComponent extends CBitrixComponent
 {
     protected $externalFilter = [];
-    
+
     protected $navParams;
-    
+
     protected $pagerParameters;
-    
+
     /**
      * {@inheritdoc}
      */
-    public function onPrepareComponentParams($params) : array
+    public function onPrepareComponentParams($params): array
     {
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 36000000;
         }
-        
+
         if (is_array($params['IBLOCK_ID'])) {
             foreach ($params['IBLOCK_ID'] as $key => $id) {
                 if (!is_numeric($id) || (int)$id <= 0) {
@@ -52,8 +55,9 @@ class CItemsListComponent extends CBitrixComponent
         }
         if (empty($params['IBLOCK_ID'])) {
             /**Получение инфоблоков если не установлены*/
-            
-            $cache = Cache::createInstance();
+
+            $cache = Application::getInstance()->getCache();
+            $cachePath = $this->getCachePath() ?: $this->getPath();
             if ($cache->initCache(
                 $params['CACHE_TIME'],
                 serialize(
@@ -62,9 +66,9 @@ class CItemsListComponent extends CBitrixComponent
                         'TYPE'        => 'full_iblocks',
                     ]
                 ),
-                'items_list'
+                $cachePath
             )) {
-                $vars                = $cache->getVars();
+                $vars = $cache->getVars();
                 $params['IBLOCK_ID'] = $vars['IBLOCK_ID'];
             } elseif ($cache->startDataCache()) {
                 try {
@@ -81,12 +85,12 @@ class CItemsListComponent extends CBitrixComponent
                     }
                 } catch (ArgumentException $e) {
                 }
-                
+
                 $cache->endDataCache(['IBLOCK_ID' => $params['IBLOCK_ID']]);
             }
         }
         $params['SET_LAST_MODIFIED'] = $params['SET_LAST_MODIFIED'] === 'Y';
-        
+
         $params['SORT_BY1'] = trim($params['SORT_BY1']);
         if (strlen($params['SORT_BY1']) <= 0) {
             $params['SORT_BY1'] = 'ACTIVE_FROM';
@@ -94,16 +98,16 @@ class CItemsListComponent extends CBitrixComponent
         if (!preg_match('/^(asc|desc|nulls)(,asc|,desc|,nulls){0,1}$/i', $params['SORT_ORDER1'])) {
             $params['SORT_ORDER1'] = 'DESC';
         }
-        
+
         if (strlen($params['SORT_BY2']) <= 0) {
             $params['SORT_BY2'] = 'SORT';
         }
         if (!preg_match('/^(asc|desc|nulls)(,asc|,desc|,nulls){0,1}$/i', $params['SORT_ORDER2'])) {
             $params['SORT_ORDER2'] = 'ASC';
         }
-        
+
         $params['CHECK_DATES'] = $params['CHECK_DATES'] !== 'N';
-        
+
         if (!is_array($params['FIELD_CODE'])) {
             $params['FIELD_CODE'] = [];
         }
@@ -112,7 +116,7 @@ class CItemsListComponent extends CBitrixComponent
                 unset($params['FIELD_CODE'][$key]);
             }
         }
-        
+
         if (!is_array($params['PROPERTY_CODE'])) {
             $params['PROPERTY_CODE'] = [];
         }
@@ -121,33 +125,33 @@ class CItemsListComponent extends CBitrixComponent
                 unset($params['PROPERTY_CODE'][$key]);
             }
         }
-        
+
         $params['NEWS_COUNT'] = (int)$params['NEWS_COUNT'];
         if ($params['NEWS_COUNT'] <= 0) {
             $params['NEWS_COUNT'] = 20;
         }
-        
+
         $params['CACHE_FILTER'] = $params['CACHE_FILTER'] === 'Y';
-        
+
         $params['ACTIVE_DATE_FORMAT'] = trim($params['ACTIVE_DATE_FORMAT']);
         if (strlen($params['ACTIVE_DATE_FORMAT']) <= 0) {
             $params['ACTIVE_DATE_FORMAT'] = Date::getFormat();
         }
         $params['PREVIEW_TRUNCATE_LEN'] = (int)$params['PREVIEW_TRUNCATE_LEN'];
-        
-        $params['DISPLAY_TOP_PAGER']               = $params['DISPLAY_TOP_PAGER'] === 'Y';
-        $params['DISPLAY_BOTTOM_PAGER']            = $params['DISPLAY_BOTTOM_PAGER'] !== 'N';
-        $params['PAGER_TITLE']                     = trim($params['PAGER_TITLE']);
-        $params['PAGER_SHOW_ALWAYS']               = $params['PAGER_SHOW_ALWAYS'] === 'Y';
-        $params['PAGER_TEMPLATE']                  = trim($params['PAGER_TEMPLATE']);
-        $params['PAGER_DESC_NUMBERING']            = $params['PAGER_DESC_NUMBERING'] === 'Y';
+
+        $params['DISPLAY_TOP_PAGER'] = $params['DISPLAY_TOP_PAGER'] === 'Y';
+        $params['DISPLAY_BOTTOM_PAGER'] = $params['DISPLAY_BOTTOM_PAGER'] !== 'N';
+        $params['PAGER_TITLE'] = trim($params['PAGER_TITLE']);
+        $params['PAGER_SHOW_ALWAYS'] = $params['PAGER_SHOW_ALWAYS'] === 'Y';
+        $params['PAGER_TEMPLATE'] = trim($params['PAGER_TEMPLATE']);
+        $params['PAGER_DESC_NUMBERING'] = $params['PAGER_DESC_NUMBERING'] === 'Y';
         $params['PAGER_DESC_NUMBERING_CACHE_TIME'] = (int)$params['PAGER_DESC_NUMBERING_CACHE_TIME'];
-        $params['PAGER_SHOW_ALL']                  = $params['PAGER_SHOW_ALL'] === 'Y';
-        $params['CHECK_PERMISSIONS']               = $params['CHECK_PERMISSIONS'] !== 'N';
-        
+        $params['PAGER_SHOW_ALL'] = $params['PAGER_SHOW_ALL'] === 'Y';
+        $params['CHECK_PERMISSIONS'] = $params['CHECK_PERMISSIONS'] !== 'N';
+
         return $params;
     }
-    
+
     /**
      * {@inheritdoc}
      * @throws LoaderException
@@ -155,19 +159,18 @@ class CItemsListComponent extends CBitrixComponent
     public function executeComponent()
     {
         global $USER, $APPLICATION;
-        
+
         $this->setFrameMode(true);
-        
-        $this->arResult['IBLOCK_ID']      = $this->arParams['IBLOCK_ID'];
+
+        $this->arResult['IBLOCK_ID'] = $this->arParams['IBLOCK_ID'];
         $this->arResult['IBLOCK_TYPE_ID'] = $this->arParams['IBLOCK_TYPE'];
-        
+
         $this->setFilter();
         list($this->navParams, $navigation, $this->pagerParameters) = $this->setPageParams();
-        
+
         $userHaveAccess = $this->checkPermission($USER);
-        
+
         if ($this->startResultCache(
-            
             $this->arParams['CACHE_TIME'],
             [
                 $this->arParams['CACHE_GROUPS'] === 'N' ? false : $USER->GetGroups(),
@@ -175,27 +178,37 @@ class CItemsListComponent extends CBitrixComponent
                 $navigation,
                 $this->externalFilter,
                 $this->pagerParameters,
-                'IBLOCK_ID'=>$this->arParams['IBLOCK_ID'],
-                'IBLOCK_TYPE'=>$this->arParams['IBLOCK_TYPE']
             ]
-        
+
         )) {
             $res = $this->checkModule();
             if (!$res) {
                 return $res;
             }
-            
+
             $this->arResult = [];
-            
+
             $this->setIblocks();
-            
+
             $this->arResult['USER_HAVE_ACCESS'] = $userHaveAccess;
-            
+
             $this->setItems();
-            
+
+            $tags = ['items:list'];
+            if (\is_array($this->arParams['IBLOCK_ID'])) {
+                foreach ($this->arParams['IBLOCK_ID'] as $iblockId) {
+                    $tags['items:list:' . $iblockId];
+                    $tags['iblock_id_' . $iblockId];
+                }
+            } else {
+                $tags['items:list:' . $this->arParams['IBLOCK_ID']];
+                $tags['iblock_id_' . $this->arParams['IBLOCK_ID']];
+            }
+            TaggedCacheHelper::addManagedCacheTags($tags);
+
             $this->includeComponentTemplate();
         }
-        
+
         if (isset($this->arResult['ID'])) {
             if ($USER->IsAuthorized() && $APPLICATION->GetShowIncludeAreas() && Loader::includeModule('iblock')) {
                 $buttons = CIBlock::GetPanelButtons(
@@ -204,7 +217,7 @@ class CItemsListComponent extends CBitrixComponent
                     0,
                     ['SECTION_BUTTONS' => false]
                 );
-                
+
                 /** @noinspection NotOptimalIfConditionsInspection */
                 if ($APPLICATION->GetShowIncludeAreas()) {
                     $this->addIncludeAreaIcons(
@@ -215,19 +228,19 @@ class CItemsListComponent extends CBitrixComponent
                     );
                 }
             }
-            
+
             $this->setTemplateCachedData($this->arResult['NAV_CACHED_DATA']);
-            
+
             if ($this->arParams['SET_LAST_MODIFIED'] && $this->arResult['ITEMS_TIMESTAMP_X']) {
                 Context::getCurrent()->getResponse()->setLastModified($this->arResult['ITEMS_TIMESTAMP_X']);
             }
-            
+
             return $this->arResult['ELEMENTS'];
         }
-        
+
         return true;
     }
-    
+
     protected function setFilter()
     {
         if (strlen($this->arParams['FILTER_NAME']) <= 0
@@ -242,16 +255,16 @@ class CItemsListComponent extends CBitrixComponent
                 $this->externalFilter = [];
             }
         }
-        
+
         if (!$this->arParams['CACHE_FILTER'] && count($this->externalFilter) > 0) {
             $this->arParams['CACHE_TIME'] = 0;
         }
     }
-    
+
     /**
      * @return array
      */
-    protected function setPageParams() : array
+    protected function setPageParams(): array
     {
         if ($this->arParams['DISPLAY_TOP_PAGER'] || $this->arParams['DISPLAY_BOTTOM_PAGER']) {
             $navParams = [
@@ -259,19 +272,19 @@ class CItemsListComponent extends CBitrixComponent
                 'bDescPageNumbering' => $this->arParams['PAGER_DESC_NUMBERING'],
                 'bShowAll'           => $this->arParams['PAGER_SHOW_ALL'],
             ];
-            
+
             $navigation = CDBResult::GetNavParams($navParams);
             if ($navigation['PAGEN'] === 0 && $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'] > 0) {
                 $this->arParams['CACHE_TIME'] = $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'];
             }
         } else {
-            $navParams  = [
+            $navParams = [
                 'nTopCount'          => $this->arParams['NEWS_COUNT'],
                 'bDescPageNumbering' => $this->arParams['PAGER_DESC_NUMBERING'],
             ];
             $navigation = false;
         }
-        
+
         if (empty($this->arParams['PAGER_PARAMS_NAME'])
             || !preg_match(
                 '/^[A-Za-z_][A-Za-z01-9_]*$/',
@@ -284,26 +297,26 @@ class CItemsListComponent extends CBitrixComponent
                 $pagerParameters = [];
             }
         }
-        
+
         return [
             $navParams,
             $navigation,
             $pagerParameters,
         ];
     }
-    
+
     /**
      * @param $USER
      *
      * @return bool
      */
-    protected function checkPermission($USER) : bool
+    protected function checkPermission($USER): bool
     {
         $this->arParams['USE_PERMISSIONS'] = $this->arParams['USE_PERMISSIONS'] === 'Y';
         if (!is_array($this->arParams['GROUP_PERMISSIONS'])) {
             $this->arParams['GROUP_PERMISSIONS'] = [1];
         }
-        
+
         $userHaveAccess = !$this->arParams['USE_PERMISSIONS'];
         if ($this->arParams['USE_PERMISSIONS'] && isset($GLOBALS['USER']) && is_object($GLOBALS['USER'])) {
             $userGroup = $USER->GetUserGroupArray();
@@ -316,26 +329,26 @@ class CItemsListComponent extends CBitrixComponent
                 }
             }
         }
-        
+
         return $userHaveAccess;
     }
-    
+
     /**
      * @throws LoaderException
      * @return bool
      */
-    protected function checkModule() : bool
+    protected function checkModule(): bool
     {
         if (!Loader::includeModule('iblock')) {
             $this->abortResultCache();
             ShowError(GetMessage('IBLOCK_MODULE_NOT_INSTALLED'));
-            
+
             return false;
         }
-        
+
         return true;
     }
-    
+
     protected function setIblocks()
     {
         try {
@@ -352,20 +365,20 @@ class CItemsListComponent extends CBitrixComponent
                 ],
                 'filter' => ['ID' => $this->arParams['IBLOCK_ID']],
             ];
-            $res    = IblockTable::getList($params);
+            $res = IblockTable::getList($params);
             while ($item = $res->fetch()) {
                 $template = '';
                 if (array_key_exists('LIST_PAGE_URL', $item)) {
                     $template = $item['LIST_PAGE_URL'];
                 }
-                
+
                 if (!empty($template)) {
                     $resTmp = [
                         'IBLOCK_ID'          => $item['ID'],
                         'IBLOCK_CODE'        => $item['CODE'],
                         'IBLOCK_EXTERNAL_ID' => $item['XML_ID'],
                     ];
-                    
+
                     $item['LIST_PAGE_URL_FORMATED'] = CIBlock::ReplaceDetailUrl($template, $resTmp, true);
                 }
                 $this->arResult['IBLOCKS'][$item['ID']] = $item;
@@ -373,16 +386,16 @@ class CItemsListComponent extends CBitrixComponent
         } catch (ArgumentException $e) {
         }
     }
-    
+
     protected function setItems()
     {
         list($select, $filter, $sort, $getProperty) = $this->prepareGetListParams();
-        
-        $obParser                   = new CTextParser;
-        $this->arResult['ITEMS']    = [];
+
+        $obParser = new CTextParser;
+        $this->arResult['ITEMS'] = [];
         $this->arResult['ELEMENTS'] = [];
-        
-        $rsElement     = CIBlockElement::GetList(
+
+        $rsElement = CIBlockElement::GetList(
             $sort,
             array_merge($filter, $this->externalFilter),
             false,
@@ -395,8 +408,8 @@ class CItemsListComponent extends CBitrixComponent
             if (empty($listPageUrlEl)) {
                 $listPageUrlEl = $item['~LIST_PAGE_URL'];
             }
-            
-            $buttons             = CIBlock::GetPanelButtons(
+
+            $buttons = CIBlock::GetPanelButtons(
                 $item['IBLOCK_ID'],
                 $item['ID'],
                 0,
@@ -405,14 +418,14 @@ class CItemsListComponent extends CBitrixComponent
                     'SESSID'          => false,
                 ]
             );
-            $item['EDIT_LINK']   = $buttons['edit']['edit_element']['ACTION_URL'];
+            $item['EDIT_LINK'] = $buttons['edit']['edit_element']['ACTION_URL'];
             $item['DELETE_LINK'] = $buttons['edit']['delete_element']['ACTION_URL'];
-            
+
             if ($this->arParams['PREVIEW_TRUNCATE_LEN'] > 0) {
                 $item['PREVIEW_TEXT'] =
                     $obParser->html_cut($item['PREVIEW_TEXT'], $this->arParams['PREVIEW_TRUNCATE_LEN']);
             }
-            
+
             if (strlen($item['ACTIVE_FROM']) > 0) {
                 $item['DISPLAY_ACTIVE_FROM'] = CIBlockFormatProperties::DateFormat(
                     $this->arParams['ACTIVE_DATE_FORMAT'],
@@ -424,10 +437,10 @@ class CItemsListComponent extends CBitrixComponent
             } else {
                 $item['DISPLAY_ACTIVE_FROM'] = '';
             }
-            
-            $ipropValues              = new ElementValues($item['IBLOCK_ID'], $item['ID']);
+
+            $ipropValues = new ElementValues($item['IBLOCK_ID'], $item['ID']);
             $item['IPROPERTY_VALUES'] = $ipropValues->getValues();
-            
+
             Tools::getFieldImageData(
                 $item,
                 [
@@ -436,7 +449,7 @@ class CItemsListComponent extends CBitrixComponent
                 ],
                 Tools::IPROPERTY_ENTITY_ELEMENT
             );
-            
+
             $item['FIELDS'] = [];
             if (is_array($this->arParams['FIELD_CODE']) && !empty($this->arParams['FIELD_CODE'])) {
                 foreach ($this->arParams['FIELD_CODE'] as $code) {
@@ -445,7 +458,7 @@ class CItemsListComponent extends CBitrixComponent
                     }
                 }
             }
-            
+
             if ($getProperty) {
                 $item['PROPERTIES'] = $obElement->GetProperties();
             }
@@ -464,7 +477,7 @@ class CItemsListComponent extends CBitrixComponent
                     }
                 }
             }
-            
+
             if ($this->arParams['SET_LAST_MODIFIED']) {
                 $time = DateTime::createFromUserTime($item['TIMESTAMP_X']);
                 /** @noinspection PhpUndefinedMethodInspection */
@@ -473,41 +486,41 @@ class CItemsListComponent extends CBitrixComponent
                     $this->arResult['ITEMS_TIMESTAMP_X'] = $time;
                 }
             }
-            
-            $this->arResult['ITEMS'][]    = $item;
+
+            $this->arResult['ITEMS'][] = $item;
             $this->arResult['ELEMENTS'][] = $item['ID'];
         }
-        
+
         $navComponentParameters = [];
         if ($this->arParams['PAGER_BASE_LINK_ENABLE'] === 'Y') {
             $pagerBaseLink = trim($this->arParams['PAGER_BASE_LINK']);
             if ($pagerBaseLink === '') {
                 $pagerBaseLink = $listPageUrlEl;
             }
-            
+
             if ($this->pagerParameters && isset($this->pagerParameters['BASE_LINK'])) {
                 $pagerBaseLink = $this->pagerParameters['BASE_LINK'];
                 unset($this->pagerParameters['BASE_LINK']);
             }
-            
+
             $navComponentParameters['BASE_LINK'] =
                 CHTTP::urlAddParams($pagerBaseLink, $this->pagerParameters, ['encode' => true]);
         }
-        
-        $this->arResult['NAV_STRING']      = $rsElement->GetPageNavStringEx(
-            
+
+        $this->arResult['NAV_STRING'] = $rsElement->GetPageNavStringEx(
+
             $navComponentObject,
             $this->arParams['PAGER_TITLE'],
             $this->arParams['PAGER_TEMPLATE'],
             $this->arParams['PAGER_SHOW_ALWAYS'],
             $this,
             $navComponentParameters
-        
+
         );
         $this->arResult['NAV_CACHED_DATA'] = null;
-        $this->arResult['NAV_RESULT']      = $rsElement;
-        $this->arResult['NAV_PARAM']       = $navComponentParameters;
-        
+        $this->arResult['NAV_RESULT'] = $rsElement;
+        $this->arResult['NAV_PARAM'] = $navComponentParameters;
+
         $this->setResultCacheKeys(
             [
                 'IBLOCK_TYPE_ID',
@@ -519,13 +532,13 @@ class CItemsListComponent extends CBitrixComponent
             ]
         );
     }
-    
+
     /**
      * @return array|bool
      */
     protected function prepareGetListParams()
     {
-        $select      = array_merge(
+        $select = array_merge(
             $this->arParams['FIELD_CODE'],
             [
                 'ID',
@@ -553,20 +566,20 @@ class CItemsListComponent extends CBitrixComponent
             'ACTIVE'            => 'Y',
             'CHECK_PERMISSIONS' => $this->arParams['CHECK_PERMISSIONS'] ? 'Y' : 'N',
         ];
-        
+
         if ($this->arParams['CHECK_DATES']) {
             $filter['ACTIVE_DATE'] = 'Y';
         }
-        
+
         $filter['INCLUDE_SUBSECTIONS'] = 'Y';
-        $sort                          = [
+        $sort = [
             $this->arParams['SORT_BY1'] => $this->arParams['SORT_ORDER1'],
             $this->arParams['SORT_BY2'] => $this->arParams['SORT_ORDER2'],
         ];
         if (!array_key_exists('ID', $sort)) {
             $sort['ID'] = 'DESC';
         }
-        
+
         return [
             $select,
             $filter,

@@ -31,6 +31,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Cheque;
 use FourPaws\External\Manzana\Model\ChequeItem;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -146,7 +147,8 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $this->arResult['PRODUCTS'] = [];
         $this->arResult['OFFERS']   = [];
         //кешируем выборку из манзаны и базы с первичной обработкой на 15 минут
-        $cache = Cache::createInstance();
+        $cache = $instance->getCache();
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache(
             $this->arParams['MANZANA_CACHE_TIME'],
             serialize(
@@ -155,7 +157,8 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                     'COUNT_ITEMS'          => $this->arParams['COUNT_ITEMS'],
                     'LIMIT_MANZANA_CHEQUE' => $this->arParams['LIMIT_MANZANA_CHEQUE'],
                 ]
-            )
+            ),
+            $cachePath
         )) {
             $vars              = $cache->getVars(); // достаем переменные из кеша
             $this->sortItems   = $vars['sortItems'];
@@ -163,6 +166,11 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             $offerIds          = $vars['offerIds'];
             $this->allProducts = $vars['allProducts'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($cachePath);
+            }
             //получение данных из манзаны
             list($xmlIds, $allItems) = $this->getXmlIdsByManzana();
             //получение товаров с сайта по XML_ID
@@ -208,11 +216,12 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                 }
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('top_%s', $userId));
-                $tagCache->registerTag(sprintf('order_%s', $userId));
+            if ($tagCache !== null) {
+                TaggedCacheHelper::addManagedCacheTags([
+                    'personal:top',
+                    'personal:top:'. $userId,
+                    'order:'. $userId
+                ], $tagCache);
                 $tagCache->endTagCache();
             }
             
@@ -229,12 +238,12 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         //кешируем вывод
         if ($this->startResultCache(
             $this->arParams['CACHE_TIME'],
-            
             [
                 'USER_ID' => $userId,
                 'TYPE'    => 'PERSONAL_TOP',
                 'IDS'     => array_keys($this->sortItems),
-            ]
+            ],
+            $cachePath
         )) {
             //сортировка по цене
             Collection::sortByColumn(
@@ -267,16 +276,14 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             if(empty($this->arResult['PRODUCTS'])){
                 $page = 'notItems';
             }
-            $this->includeComponentTemplate($page);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('top_%s', $userId));
-                $tagCache->registerTag(sprintf('order_%s', $userId));
-                $tagCache->registerTag(sprintf('user_%s', $userId));
-                $tagCache->endTagCache();
-            }
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:top',
+                'personal:top:'. $userId,
+                'order:'. $userId
+            ]);
+
+            $this->includeComponentTemplate($page);
         }
         
         return true;

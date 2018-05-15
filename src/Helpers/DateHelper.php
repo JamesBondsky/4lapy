@@ -17,17 +17,20 @@ use DateTime as NormalDateTime;
 class DateHelper
 {
     /** именительный падеж */
-    const NOMINATIVE = 'Nominative';
+    public const NOMINATIVE = 'Nominative';
     
     /** родительный падеж */
-    const GENITIVE = 'Genitive';
+    public const GENITIVE = 'Genitive';
     
     /** именительный падеж короткий*/
-    const SHORT_NOMINATIVE = 'ShortNominative';
+    public const SHORT_NOMINATIVE = 'ShortNominative';
     
     /** родительный падеж короткий */
-    const SHORT_GENITIVE = 'ShortGenitive';
-    
+    public const SHORT_GENITIVE = 'ShortGenitive';
+
+    /** дательный падеж множ. число */
+    const DATIVE_PLURAL = 'DativePlural';
+
     /**Месяца в родительном падеже*/
     private static $monthGenitive = [
         '#1#'  => 'Января',
@@ -102,7 +105,18 @@ class DateHelper
         '#6#' => 'Суббота',
         '#7#' => 'Воскресенье',
     ];
-    
+
+    /** дни недели в множ. числе дат. падеже */
+    private static $dayOfWeekDativePlural = [
+        '#1#' => 'Понедельникам',
+        '#2#' => 'Вторникам',
+        '#3#' => 'Средам',
+        '#4#' => 'Четвергам',
+        '#5#' => 'Пятницам',
+        '#6#' => 'Субботам',
+        '#7#' => 'Воскресеньям',
+    ];
+
     /**краткие дни недели*/
     private static $dayOfWeekShortNominative = [
         '#1#' => 'пн',
@@ -119,11 +133,13 @@ class DateHelper
      *
      * @param string $case
      *
+     * @param bool $lower
+     *
      * @return string
      */
-    public static function replaceRuMonth(string $date, string $case = 'Nominative') : string
+    public static function replaceRuMonth(string $date, string $case = 'Nominative', bool $lower = false) : string
     {
-        return static::replaceStringByArray(
+        $res = static::replaceStringByArray(
             [
                 'date'    => $date,
                 'case'    => $case,
@@ -131,6 +147,11 @@ class DateHelper
                 'pattern' => '|#\d{1,2}#|',
             ]
         );
+        if($lower){
+            $res = ToLower($res);
+        }
+
+        return $res;
     }
     
     private static function replaceStringByArray(array $params)
@@ -173,5 +194,69 @@ class DateHelper
     public static function convertToDateTime(DateTime $bxDatetime): NormalDateTime
     {
         return (new NormalDateTime())->setTimestamp($bxDatetime->getTimestamp());
+    }
+
+    /**
+     * Враппер для FormatDate. Доп. возможности
+     *  - ll - отображение для недели в винительном падеже (в пятницу, в субботу)
+     *  - XX - 'Сегодня', 'Завтра'
+     * @param string $dateFormat
+     * @param int $timestamp
+     *
+     * @return string
+     */
+    public static function formatDate(string $dateFormat, int $timestamp)
+    {
+        $date = (new \DateTime)->setTimestamp($timestamp);
+        if (false !== mb_strpos($dateFormat, 'll')) {
+            $str = null;
+            switch ($date->format('w')) {
+                case 0:
+                    $str = 'в воскресенье';
+                    break;
+                case 1:
+                    $str = 'в понедельник';
+                    break;
+                case 2:
+                    $str = 'во вторник';
+                    break;
+                case 3:
+                    $str = 'в среду';
+                    break;
+                case 4:
+                    $str = 'в четверг';
+                    break;
+                case 5:
+                    $str = 'в пятницу';
+                    break;
+                case 6:
+                    $str = 'в субботу';
+                    break;
+            }
+            if (null !== $str) {
+                $dateFormat = str_replace('ll', $str, $dateFormat);
+            }
+        }
+        if (false !== mb_strpos($dateFormat, 'XX')) {
+            $tmpDate = clone $date;
+            $currentDate = new \DateTime();
+            $tmpDate->setTime(0,0,0,0);
+            $currentDate->setTime(0,0,0,0);
+
+            $diff = $tmpDate->diff($currentDate)->days;
+            switch (true) {
+                case $diff === 0:
+                    $str = 'Сегодня';
+                    break;
+                case $diff === 1:
+                    $str = 'Завтра';
+                    break;
+                default:
+                    $str = $date->format('d.m.Y');
+            }
+            $dateFormat = str_replace('XX', $str, $dateFormat);
+        }
+
+        return FormatDate($dateFormat, $timestamp);
     }
 }

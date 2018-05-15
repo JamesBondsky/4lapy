@@ -1,11 +1,16 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\DeliverySchedule;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
 use Exception;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\ManualDayItem;
@@ -17,6 +22,7 @@ use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
 use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\ValidationException;
 use FourPaws\StoreBundle\Repository\DeliveryScheduleRepository;
+use FourPaws\StoreBundle\Service\DeliveryScheduleService as BaseService;
 use JMS\Serializer\Serializer;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
@@ -30,7 +36,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    const CACHE_TAG = 'delivery_schedule';
+    public const CACHE_TAG = 'delivery_schedule';
     /**
      * @var DeliveryScheduleRepository
      */
@@ -39,29 +45,42 @@ class DeliveryScheduleService implements LoggerAwareInterface
      * @var Serializer
      */
     private $serializer;
+    /**
+     * @var BaseService
+     */
+    private $baseService;
 
     /**
      * DeliveryScheduleService constructor.
      *
      * @param DeliveryScheduleRepository $repository
+     * @param BaseService $baseService
      * @param Serializer $serializer
      */
-    public function __construct(DeliveryScheduleRepository $repository, Serializer $serializer)
+    public function __construct(DeliveryScheduleRepository $repository, BaseService $baseService, Serializer $serializer)
     {
         $this->repository = $repository;
         $this->serializer = $serializer;
+        $this->baseService = $baseService;
     }
 
     /**
      * @param DeliverySchedule $schedule
      *
+     * @throws NotFoundScheduleException
      * @return DeliveryScheduleEntity
      *
-     * @throws NotFoundScheduleException
      */
     public function findSchedule(DeliverySchedule $schedule): DeliveryScheduleEntity
     {
-        $scheduleEntity = $this->repository->findBy(['=UF_XML_ID' => $schedule->getXmlId()])->first();
+        try {
+            $scheduleEntity = $this->repository->findBy(['=UF_XML_ID' => $schedule->getXmlId()])->first();
+        } catch (SystemException $e) {
+            /**
+             * Обработка ниже. Всё сводится к отсутствию расписания.
+             */
+            $scheduleEntity = null;
+        }
 
         if (!$scheduleEntity) {
             throw new NotFoundScheduleException(
@@ -80,6 +99,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
      *
      * @throws RuntimeException
      * @throws Exception
+     * @throws ApplicationCreateException
      */
     public function processSchedule(DeliverySchedule $schedule): void
     {
@@ -101,10 +121,10 @@ class DeliveryScheduleService implements LoggerAwareInterface
     /**
      * @param DeliverySchedule $schedule
      *
-     * @return bool
-     *
      * @throws RuntimeException
      * @throws Exception
+     * @return bool
+     *
      */
     public function tryDeleteSchedule(DeliverySchedule $schedule): bool
     {
@@ -136,8 +156,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
      * @throws Exception
      * @throws RuntimeException
      * @throws SystemException
+     * @throws ApplicationCreateException
      */
-    public function processSchedules(DeliverySchedules $deliverySchedules)
+    public function processSchedules(DeliverySchedules $deliverySchedules): void
     {
         foreach ($deliverySchedules->getSchedules() as $schedule) {
             $this->processSchedule($schedule);
@@ -146,20 +167,19 @@ class DeliveryScheduleService implements LoggerAwareInterface
         $this->clearCache();
     }
 
-    /**
-     * @throws SystemException
-     */
-    public function clearCache()
+    public function clearCache(): void
     {
-        $cache = Application::getInstance()->getTaggedCache();
-
-        $cache->clearByTag(self::CACHE_TAG);
+        TaggedCacheHelper::clearManagedCache([
+            self::CACHE_TAG,
+        ]);
     }
 
     /**
      * @param DeliverySchedule $schedule
      *
      * @return DeliveryScheduleEntity
+     *
+     * @throws ApplicationCreateException
      */
     private function transformDtoToEntity(DeliverySchedule $schedule): DeliveryScheduleEntity
     {
@@ -168,14 +188,14 @@ class DeliveryScheduleService implements LoggerAwareInterface
         $entity->setXmlId($schedule->getXmlId())
             ->setSenderCode($schedule->getSenderCode())
             ->setReceiverCode($schedule->getRecipientCode())
-            ->setType($schedule->getScheduleType())
-        ->setName(
-            \sprintf(
-                'График поставки из %s в %s',
-                $schedule->getSenderCode(),
-                $schedule->getRecipientCode()
-            )
-        );
+            ->setType($this->baseService->getTypeIdByCode($schedule->getScheduleType()))
+            ->setName(
+                \sprintf(
+                    'График поставки из %s в %s',
+                    $schedule->getSenderCode(),
+                    $schedule->getRecipientCode()
+                )
+            );
 
         if ($schedule->getDateFrom()) {
             $entity->setActiveFrom($schedule->getDateFrom());
@@ -189,9 +209,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         if ($weekDays->count()) {
             $days = $this->serializer->toArray($weekDays->first());
-            $days = \array_filter(\array_values($days), function ($k, $v) {
+            $days = \array_keys(\array_filter(\array_values($days), function ($k, $v) {
                 return $k && $v;
-            }, \ARRAY_FILTER_USE_BOTH);
+            }, \ARRAY_FILTER_USE_BOTH));
 
             $entity->setDaysOfWeek($days);
 

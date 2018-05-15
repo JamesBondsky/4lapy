@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -13,9 +17,17 @@ use FourPaws\SapBundle\Dto\In\Offers\PropertyValue;
 use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
 use FourPaws\SapBundle\Exception\LogicException;
+use FourPaws\SapBundle\Exception\NotFoundDataManagerException;
+use FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 
+/**
+ * Class ReferenceService
+ *
+ * @package FourPaws\SapBundle\Service
+ */
 class ReferenceService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -29,6 +41,12 @@ class ReferenceService implements LoggerAwareInterface
      */
     private $slugify;
 
+    /**
+     * ReferenceService constructor.
+     *
+     * @param SapReferenceStorage $referenceStorage
+     * @param SlugifyInterface $slugify
+     */
     public function __construct(SapReferenceStorage $referenceStorage, SlugifyInterface $slugify)
     {
         $this->referenceStorage = $referenceStorage;
@@ -40,19 +58,21 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $xmlId
      * @param string $name
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws RuntimeException
+     * @throws NotFoundReferenceRepositoryException
+     * @throws LogicException
+     * @throws CantCreateReferenceItem
+     * @throws NotFoundDataManagerException
      * @return HlbReferenceItem
      */
     public function getOrCreate(string $propertyCode, string $xmlId, string $name): HlbReferenceItem
     {
         $result = $this->get($propertyCode, $xmlId);
+
         if (!$result) {
             $result = $this->create($propertyCode, $xmlId, $name);
         }
+
         if (!$result) {
             throw new LogicException('For some reason created item was not get from dataManager');
         }
@@ -64,13 +84,13 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $propertyCode
      * @param string $xmlId
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws RuntimeException
+     * @throws NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
-    public function get(string $propertyCode, string $xmlId)
+    public function get(string $propertyCode, string $xmlId): ?HlbReferenceItem
     {
-        return $this->referenceStorage->findByXmlId($propertyCode, $xmlId);
+        return $this->referenceStorage->findByXmlId($propertyCode, $xmlId) ?: null;
     }
 
     /**
@@ -78,12 +98,12 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $xmlId
      * @param string $name
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws RuntimeException
+     * @throws CantCreateReferenceItem
+     * @throws NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
-    public function create(string $propertyCode, string $xmlId, string $name)
+    public function create(string $propertyCode, string $xmlId, string $name): ?HlbReferenceItem
     {
         $item = new HlbReferenceItem();
         $item
@@ -96,7 +116,7 @@ class ReferenceService implements LoggerAwareInterface
 
         if ($addResult->isSuccess()) {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $this->log()->debug(
+            $this->log()->info(
                 sprintf('Создано значение справочника для свойства %s: %s', $propertyCode, $xmlId),
                 $item->toArray()
             );
@@ -108,11 +128,11 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Property $property
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws RuntimeException
+     * @throws NotFoundReferenceRepositoryException
+     * @throws NotFoundDataManagerException
+     * @throws LogicException
+     * @throws CantCreateReferenceItem
      * @return Collection|HlbReferenceItem[]
      */
     public function getPropertyValueHlbElement(Property $property): Collection
@@ -131,13 +151,13 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Material $material
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws RuntimeException
+     * @throws NotFoundReferenceRepositoryException
+     * @throws NotFoundDataManagerException
+     * @throws LogicException
+     * @throws CantCreateReferenceItem
      */
-    public function fillFromMaterial(Material $material)
+    public function fillFromMaterial(Material $material): void
     {
         foreach ($material->getProperties()->getProperties() as $property) {
             if ($this->referenceStorage->getReferenceRepositoryRegistry()->has($property->getCode())) {
@@ -161,15 +181,15 @@ class ReferenceService implements LoggerAwareInterface
     }
 
     /**
-     * @param string   $code
+     * @param string $code
      * @param Material $material
-     * @param bool     $multiple
+     * @param bool $multiple
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws NotFoundReferenceRepositoryException
+     * @throws NotFoundDataManagerException
+     * @throws LogicException
+     * @throws RuntimeException
+     * @throws CantCreateReferenceItem
      * @return array|string
      */
     public function getPropertyBitrixValue(string $code, Material $material, bool $multiple = false)
@@ -201,8 +221,8 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $propertyCode
      * @param string $name
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws RuntimeException
+     * @throws NotFoundReferenceRepositoryException
      * @return string
      */
     protected function getUniqueCode(string $propertyCode, string $name): string

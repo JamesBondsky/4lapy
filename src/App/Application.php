@@ -1,8 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\App;
 
 use Bitrix\Main\Entity\DataManager;
+use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
@@ -14,25 +19,19 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class Application
+ *
+ * @package FourPaws\App
+ */
 class Application extends AppKernel
 {
-    /**
-     * Папка для кеширования
-     */
-    const BITRIX_CACHE_DIR = '/local/cache';
-
-    /**
-     * Папка с включаемыми областями
-     */
-    const INCLUDES_DIR = '/includes';
-
     /**
      * @var MarkupBuild
      */
     private static $markupBuild;
-
     /**
-     * @var \FourPaws\App\Application
+     * @var Application
      */
     private static $instance;
 
@@ -51,7 +50,7 @@ class Application extends AppKernel
 
             $markupBuildItem = $cache->getItem('markup_build');
 
-            /** @noinspection PhpUndefinedMethodInspection */
+            /** @noinspection PhpUn\definedMethodInspection */
             if (!$markupBuildItem->isHit() || !Env::isProd()) {
                 $markupBuild = new MarkupBuild();
 
@@ -72,12 +71,12 @@ class Application extends AppKernel
                     $jsonFileLoader->load('versions.json');
                 }
 
-                /** @noinspection PhpUndefinedMethodInspection */
+                /** @noinspection PhpUn\definedMethodInspection */
                 $markupBuildItem->set($markupBuild);
                 $cache->save($markupBuildItem);
             }
 
-            /** @noinspection PhpUndefinedMethodInspection */
+            /** @noinspection PhpUn\definedMethodInspection */
             self::$markupBuild = $markupBuildItem->get();
         }
 
@@ -87,12 +86,12 @@ class Application extends AppKernel
     /**
      * Handle current request
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @throws Exceptions\ApplicationCreateException
-     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
-    public static function handleRequest(Request $request)
+    public static function handleRequest(Request $request): void
     {
         $instance = static::getInstance();
         $response = $instance->handle($request);
@@ -101,8 +100,8 @@ class Application extends AppKernel
     }
 
     /**
-     * @throws Exceptions\ApplicationCreateException
-     * @return \FourPaws\App\Application
+     * @throws ApplicationCreateException
+     * @return Application
      *
      */
     public static function getInstance(): Application
@@ -131,12 +130,14 @@ class Application extends AppKernel
         return self::getDocumentRoot() . $path;
     }
 
-    public static function includeBitrix()
+    /**
+     * Включаем битрикс
+     */
+    public static function includeBitrix(): void
     {
-        defined('NO_KEEP_STATISTIC') || define('NO_KEEP_STATISTIC', 'Y');
-        defined('NOT_CHECK_PERMISSIONS') || define('NOT_CHECK_PERMISSIONS', true);
-        defined('NO_AGENT_CHECK') || define('NO_AGENT_CHECK', true);
-        defined('PUBLIC_AJAX_MODE') || define('PUBLIC_AJAX_MODE', true);
+        \defined('NO_KEEP_STATISTIC') || \define('NO_KEEP_STATISTIC', 'Y');
+        \defined('NOT_CHECK_PERMISSIONS') || \define('NOT_CHECK_PERMISSIONS', true);
+        \defined('PUBLIC_AJAX_MODE') || \define('PUBLIC_AJAX_MODE', true);
 
         if (empty($_SERVER['DOCUMENT_ROOT'])) {
             $_SERVER['DOCUMENT_ROOT'] = self::getDocumentRoot();
@@ -153,20 +154,23 @@ class Application extends AppKernel
      *
      * @param string $hlblockServiceName
      *
-     * @return DataManager
      * @throws ServiceNotFoundException
      * @throws RuntimeException
-     * @throws Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
+     * @return DataManager
      */
     public static function getHlBlockDataManager(string $hlblockServiceName): DataManager
     {
         $dataManager = self::getInstance()->getContainer()->get($hlblockServiceName);
 
+        /** Если это метод для HL-сущностей, то правильней проверять все же \Bitrix\Highloadblock\DataManager */
         if (!($dataManager instanceof DataManager)) {
-            throw new RuntimeException(sprintf('Сервис %s не является %s',
+            throw new RuntimeException(sprintf(
+                'Сервис %s не является %s',
                 $hlblockServiceName,
-                DataManager::class));
+                DataManager::class
+            ));
         }
 
         return $dataManager;

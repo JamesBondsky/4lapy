@@ -1,14 +1,18 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class FilterListRequest
+class FilterListRequest implements GetRequest, SimpleUnserializeRequest
 {
     /**
-     * @Assert\GreaterThanOrEqual("0")
+     * @Assert\GreaterThan("0")
      * @Assert\Type("integer")
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("id")

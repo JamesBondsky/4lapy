@@ -6,6 +6,7 @@
 
 namespace FourPaws\External\Manzana\Consumer;
 
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -28,13 +29,18 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             /** @var Client $contact */
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
 
-            if (null === $contact || (!$contact->phone && !$contact->contactId)) {
+            if (null === $contact || (empty($contact->phone) && empty($contact->contactId))) {
                 throw new ContactUpdateException('Неожиданное сообщение');
             }
 
-            if (!$contact->contactId) {
+            if (empty($contact->contactId)) {
                 try {
-                    $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+                    if(!empty($contact->phone)) {
+                        $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+                    } else {
+                        throw new ContactUpdateException('Неожиданное сообщение');
+                    }
+                    /** иначе создание пользователя */
                 } catch (ManzanaServiceContactSearchNullException $e) {
                     /**
                      * Создание пользователя
@@ -43,19 +49,32 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             }
 
             $contact = $this->manzanaService->updateContact($contact);
-            $this->manzanaService->updateUserCardByClient($contact);
+            /** скипаем если нет телефона - ибо не найден пользователя для привзяки,
+             * так же скипаем если нет маназановского id
+             */
+            if(!empty($contact->phone) && !empty($contact->contactId)) {
+                $this->manzanaService->updateUserCardByClient($contact);
+            }
         } catch (ContactUpdateException $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',
                 $e->getMessage()
             ));
-        } catch (ManzanaServiceException $e) {
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
             $this->log()->error(sprintf(
-                'Manzana error: %s',
+                'Too many user`s found: %s',
                 $e->getMessage()
             ));
+            /** не перезапускаем очередь */
+        } catch (ManzanaServiceException $e) {
+            $this->log()->error(sprintf(
+                'Manzana contact consumer error: %s, message: %s',
+                $e->getMessage(),
+                $message->getBody()
+            ));
 
-            return false;
+            sleep(30);
+            $this->manzanaService->updateContactAsync($contact);
         }
 
         return true;

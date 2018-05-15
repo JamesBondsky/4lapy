@@ -34,7 +34,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                     } elseif ($fieldSid === 'phone') {
                         $type = 'tel';
                     } ?>
-                    <div class="b-input-line b-input-line--feedback-page">
+                    <div class="b-input-line b-input-line--feedback-page js-form-field-block-<?=$fieldSid?>">
                         <div class="b-input-line__label-wrapper">
                             <label class="b-input-line__label"
                                    for="feedback-<?= $fieldSid ?>"><?= $question['CAPTION'] ?></label>
@@ -133,6 +133,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
             <?php try {
                 echo App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();
             } catch (ApplicationCreateException $e) {
+                /** ошибка - капчу не вывести */
             } ?>
         </div>
         <?php

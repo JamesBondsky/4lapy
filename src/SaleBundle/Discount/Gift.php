@@ -1,14 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 18.01.2018
- * Time: 21:08
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
 
 namespace FourPaws\SaleBundle\Discount;
-
 
 use Bitrix\Sale\Discount;
 use Bitrix\Sale\Discount\Actions;
@@ -16,17 +8,14 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\OrderDiscountManager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 
-
 /**
  * Class Gift
  * @package FourPaws\SaleBundle\Discount
- * @todo переместить в соотвествующую папку и неймспейс
+ * @todo    переместить в соотвествующую папку и неймспейс
  */
-class Gift extends \CSaleActionGiftCtrlGroup
+class Gift extends \CSaleActionCtrlAction
 {
     /**
-     *
-     *
      * @return array
      */
     public static function GetControlDescr(): array
@@ -34,20 +23,13 @@ class Gift extends \CSaleActionGiftCtrlGroup
         $controlDescr = parent::GetControlDescr();
         $controlDescr['FORCED_SHOW_LIST'] = [
             'GifterElement',
-            'CondBsktAmtBaseGroup'
+            'ADV:BasketFilterBasePriceRatio',
         ];
         $controlDescr['SORT'] = 300;
-//        $controlDescr['ENTITY'] = 'ELEMENT_PROPERTY';
-//        $controlDescr['FIELD'] = 'PROPERTY_6_VALUE';
-//        $controlDescr['FIELD_TABLE'] = '3:6';
-//        $controlDescr['MODULE_ENTITY'] = 'catalog';
-
         return $controlDescr;
     }
 
     /**
-     *
-     *
      * @return array|string
      */
     public static function GetControlID(): string
@@ -56,43 +38,31 @@ class Gift extends \CSaleActionGiftCtrlGroup
     }
 
     /**
-     *
-     *
      * @param $arParams
      *
      * @return array
      */
     public static function GetControlShow($arParams): array
     {
+        $arAtoms = static::GetAtomsEx();
         $description = parent::GetControlShow($arParams);
-//        $arAtoms = static::GetAtomsEx();
-//        dump($description, $arAtoms);
         $description['label'] = 'Предоставить выбор подарка';
         $description['containsOneAction'] = false;
         $description['mess'] = [
-            'ADD_CONTROL' => 'Добавить условие',
-            'SELECT_CONTROL' => 'Выбрать условие'
+            'ADD_CONTROL'    => 'Добавить условие',
+            'SELECT_CONTROL' => 'Выбрать условие',
         ];
-//        $description['defaultText'] = 'Список подарков';
-//        $description['control'] = [
-//            'Предоствить',
-//            $arAtoms['count'],
-//            'подарков из списка',
-//            $arAtoms['list'],
-//            $arAtoms['All'],
-//            $arAtoms['True']
-//        ];
-//        $description['group'] = 'Y' === static::IsGroup();
-//        dump($description);
+        $description['control'] = [
+            'предоставить подарок',
+            $arAtoms['Count_operator'],
+        ];
         return $description;
     }
 
     /**
-     *
-     *
-     * @param $arOneCondition
-     * @param $arParams
-     * @param $arControl
+     * @param            $arOneCondition
+     * @param            $arParams
+     * @param            $arControl
      * @param array|bool $arSubs
      *
      * @return array|bool|string
@@ -100,6 +70,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
     public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false)
     {
         $result = '$applyCount = 0; $originalOrder = $arOrder;';
+
 
         if (null !== $arSubs && \is_array($arSubs) && !empty($arSubs) && implode('', $arSubs)) {
             $subs = [];
@@ -110,7 +81,11 @@ class Gift extends \CSaleActionGiftCtrlGroup
                 } else {
                     // функция для фильтрации корзины и определения сколько подарков выдавать.
                     // todo если функций несколько, то вычислить пересечение результатов фильтрации и минимальное количество выполений фильтра (но пока она одна)
-                    $result .= '$applyCount = ' . $elem;
+                    $countOperator = '';
+                    if ($arOneCondition['Count_operator'] === 'once') {
+                        $countOperator = '(int)(bool)';
+                    }
+                    $result .= '$applyCount = ' . $countOperator . $elem;
                 }
             }
             $subs = \json_encode($subs);
@@ -122,12 +97,10 @@ class Gift extends \CSaleActionGiftCtrlGroup
 
 
     /**
-     *
-     *
-     * @param $order
-     * @param $params
+     * @param               $order
+     * @param               $params
      * @param Discount|null $callerObject
-     * @param int $applyCount
+     * @param int           $applyCount
      *
      */
     public static function applyGift(
@@ -136,10 +109,11 @@ class Gift extends \CSaleActionGiftCtrlGroup
         /** @noinspection PhpUnusedParameterInspection */
         Discount $callerObject = null,
         int $applyCount
-    ) {
+    )
+    {
         $applyBasket = null;
         $actionDescription = null;
-        if (!empty($order['BASKET_ITEMS']) and \is_array($order['BASKET_ITEMS'])) {
+        if (!empty($order['BASKET_ITEMS']) && \is_array($order['BASKET_ITEMS']) && $applyCount) {
             if (!empty($params) && ($params = json_decode($params, true)) && \is_array($params)) {
                 foreach ($params as &$param) {
                     $param['count'] *= $applyCount;
@@ -148,8 +122,8 @@ class Gift extends \CSaleActionGiftCtrlGroup
                 $params['discountType'] = 'GIFT';
             }
             $actionDescription = [
-                'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
-                'ACTION_DESCRIPTION' => json_encode($params),
+                'ACTION_TYPE'        => OrderDiscountManager::DESCR_TYPE_SIMPLE,
+                'ACTION_DESCRIPTION' => \json_encode($params),
             ];
             Actions::increaseApplyCounter();
             Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
@@ -158,7 +132,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
             $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
         }
 
-        if (!$applyBasket and !$actionDescription) {
+        if (!$applyBasket || !$actionDescription) {
             return;
         }
 
@@ -166,26 +140,37 @@ class Gift extends \CSaleActionGiftCtrlGroup
             $rowActionDescription = $actionDescription;
             $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
-//            /** @var BasketItem $ifItem */
-//            if($basket && $ifItem = $basket->getItemByBasketCode($basketRow['ID'])) {
-//                dump($ifItem->getField('NAME'), $ifItem->getQuantity());
-//            }
         }
-
-        // пытаемся получить корзину, чтобы добавить подарков
-        /** @noinspection NullPointerExceptionInspection */
-//        if (
-//            \is_object($callerObject)
-//            && $callerObject instanceof Discount
-//            && $basket = $callerObject->getOrder()->getBasket() && false
-//        ) {
-//
-//        }
     }
 
     /**
+     * @param $arParams
      *
-     *
+     * @return array|string
+     */
+    public static function GetConditionShow($arParams)
+    {
+        $result = false;
+        if (isset($arParams['ID']) && $arParams['ID'] === static::GetControlID()) {
+            $arControl = [
+                'ID'    => $arParams['ID'],
+                'ATOMS' => static::GetAtomsEx(false, true),
+            ];
+            $result = static::CheckAtoms($arParams['DATA'], $arParams, $arControl, true);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public static function GetAtoms(): array
+    {
+        return static::GetAtomsEx();
+    }
+
+    /**
      * @param bool $strControlID
      * @param bool $boolEx
      *
@@ -193,39 +178,30 @@ class Gift extends \CSaleActionGiftCtrlGroup
      */
     public static function GetAtomsEx($strControlID = false, $boolEx = false): array
     {
-//        $res = parent::GetAtomsEx($strControlID, $boolEx);
-//        dump($res);
-        $boolEx = (bool)$boolEx;
+        $boolEx = (true === $boolEx);
+
         $arAtomList = [
-            'count' => [
-                'JS' => [
-                    'id' => 'count',
-                    'name' => 'count',
-                    'type' => 'input',
-                    'defaultValue' => 1,
+            'Count_operator' => [
+                'JS'   => [
+                    'id'           => 'Count_operator',
+                    'name'         => 'Count_operator',
+                    'type'         => 'select',
+                    'values'       => [
+                        'condition_count' => 'столько, сколько выполняется условие',
+                        'once'            => 'один раз',
+                    ],
+                    'defaultText'  => 'столько, сколько выполняется условие',
+                    'defaultValue' => 'condition_count',
+                    'first_option' => '...',
                 ],
                 'ATOM' => [
-                    'ID' => 'count',
-                    'FIELD_TYPE' => 'int',
-                    'MULTIPLE' => 'N',
-                    'VALIDATE' => ''
-                ]
-            ],
-            'list' => [
-                'JS' => [
-                    'id' => 'list',
-                    'name' => 'list',
-                    'type' => 'input',
-                    'defaultValue' => '',
+                    'ID'           => 'Count_operator',
+                    'FIELD_TYPE'   => 'string',
+                    'FIELD_LENGTH' => 255,
+                    'MULTIPLE'     => 'N',
+                    'VALIDATE'     => 'list',
                 ],
-                'ATOM' => [
-                    'ID' => 'list',
-                    'FIELD_TYPE' => 'string',
-                    'MULTIPLE' => 'N',
-                    'VALIDATE' => ''
-                ]
             ],
-            // todo Добавить настройку "сколько раз применять акцию"
         ];
 
         if (!$boolEx) {
@@ -235,15 +211,13 @@ class Gift extends \CSaleActionGiftCtrlGroup
             unset($arOneAtom);
         }
 
-        return parent::GetAtomsEx($strControlID, $boolEx);
+        return $arAtomList;
     }
 
 
     /**
-     *
-     *
      * @param Order|null $order
-     * @param int|null $discountId
+     * @param int|null   $discountId
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
@@ -252,9 +226,10 @@ class Gift extends \CSaleActionGiftCtrlGroup
     public static function getPossibleGiftGroups(Order $order = null, int $discountId = null): array
     {
         if ($order instanceof Order) {
-            /** @var \Bitrix\Sale\Discount $discount */
+            /** @var Discount $discount */
             $discount = $order->getDiscount();
             $result = self::parseApplyResult($discount->getApplyResult(true));
+
             if ($discountId && isset($result[$discountId])) {
                 $result = [$discountId => $result[$discountId]];
             } elseif ($discountId) {
@@ -263,14 +238,13 @@ class Gift extends \CSaleActionGiftCtrlGroup
         } else {
             throw new InvalidArgumentException('Не передан заказ');
         }
+
         return $result;
     }
 
     /**
-     *
-     *
      * @param Order|null $order
-     * @param int|null $discountId
+     * @param int|null   $discountId
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
@@ -289,15 +263,13 @@ class Gift extends \CSaleActionGiftCtrlGroup
                     }
                 }
             }
-            $ids = array_flip(array_flip(array_filter($ids)));
+            $ids = \array_flip(\array_flip(\array_filter($ids)));
         }
 
         return $ids;
     }
 
     /**
-     *
-     *
      * @param array|null $applyResult
      *
      * @return array
@@ -308,8 +280,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
         if (\is_array($applyResult) && $applyResult && \is_array($applyResult['DISCOUNT_LIST'])) {
             foreach ($applyResult['DISCOUNT_LIST'] as $discount) {
                 if (
-                    ($data = json_decode($discount['ACTIONS_DESCR']['BASKET'], true))
-                    //&& \is_iterable($data)
+                    ($data = \json_decode($discount['ACTIONS_DESCR']['BASKET'], true))
                     && \is_array($data)
                     && isset($data['discountType'])
                     && $data['discountType'] === 'GIFT'
@@ -317,12 +288,14 @@ class Gift extends \CSaleActionGiftCtrlGroup
                     foreach ($data as $k => $elem) {
                         if (\is_int($k) && isset($elem['count']) && $elem['count'] > 0) {
                             $elem['discountId'] = (int)$discount['REAL_DISCOUNT_ID'];
+                            $elem['name'] = $discount['NAME'];
                             $result[$discount['REAL_DISCOUNT_ID']][] = $elem;
                         }
                     }
                 }
             }
         }
+
         return $result;
     }
 }

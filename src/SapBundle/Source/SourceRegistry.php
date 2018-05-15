@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Source;
 
 use FourPaws\SapBundle\Exception\UnexpectedValueException;
@@ -7,9 +11,14 @@ use FourPaws\SapBundle\Model\SourceCollection;
 use Generator;
 use InvalidArgumentException;
 
+/**
+ * Class SourceRegistry
+ *
+ * @package FourPaws\SapBundle\Source
+ */
 class SourceRegistry implements SourceRegistryInterface
 {
-    protected $collection;
+    public $collection;
 
     /**
      * SourceRegistry constructor.

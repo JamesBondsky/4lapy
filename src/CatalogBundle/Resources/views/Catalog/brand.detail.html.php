@@ -31,7 +31,7 @@ if (!$isAjax) {
 global $APPLICATION;
 if (!$isAjax) { ?>
     <div class="b-container">
-        <? /** информация о бренде */ ?>
+        <?php /** информация о бренде */ ?>
         <?php $APPLICATION->IncludeComponent(
             'bitrix:news.detail',
             'fp.17.0.brand',
@@ -186,6 +186,7 @@ if (!$isAjax) { ?>
             [
                 'catalogRequest'      => $catalogRequest,
                 'productSearchResult' => $productSearchResult,
+                'brand' => $catalogRequest->getBrand()->getCode(),
             ]
         ) ?>
     </div>

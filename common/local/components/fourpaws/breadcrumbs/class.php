@@ -3,6 +3,8 @@
 namespace FourPaws\Components;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
+use FourPaws\App\MainTemplate;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\IblockSection;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
@@ -31,6 +33,12 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
 
         $params['IBLOCK_SECTION'] = $params['IBLOCK_SECTION'] instanceof IblockSection ? $params['IBLOCK_SECTION'] : null;
         $params['IBLOCK_ELEMENT'] = $params['IBLOCK_ELEMENT'] instanceof IblockElement ? $params['IBLOCK_ELEMENT'] : null;
+
+        /**
+         * @var MainTemplate $template
+         */
+        $template = MainTemplate::getInstance(Application::getInstance()->getContext());
+        $params['IS_CATALOG'] = $template->isCatalog();
 
         return parent::onPrepareComponentParams($params);
     }

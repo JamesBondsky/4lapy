@@ -1,16 +1,22 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\PersonalBundle\Repository;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
@@ -21,6 +27,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Repository\BaseRepository;
+use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -82,16 +89,19 @@ class OrderRepository extends BaseRepository
      *      'countTotal'=>bool
      * ]
      *
-     * @return ArrayCollection|Order[]
      * @throws ArgumentException
+     * @return ArrayCollection|Order[]
      */
     public function getUserOrders(array $params = []): ArrayCollection
     {
         if (!isset($params['filter']['USER_ID'])) {
             $params['filter']['USER_ID'] = $this->curUserService->getCurrentUserId();
         }
-        $params['runtime'][] = new ReferenceField('STATUS_MAIN', StatusTable::getEntity(),
-            Join::on('this.STATUS_ID', 'ref.ID'));
+        $params['runtime'][] = new ReferenceField(
+            'STATUS_MAIN',
+            StatusTable::getEntity(),
+            Join::on('this.STATUS_ID', 'ref.ID')
+        );
         $params['order'] = ['STATUS_MAIN.SORT' => 'asc', 'DATE_INSERT' => 'desc'];
         $params['setKey'] = 'ID';
         return $this->findBy($params);
@@ -100,7 +110,6 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $orderId
      *
-     * @return array
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @throws EmptyEntityClass
@@ -108,32 +117,57 @@ class OrderRepository extends BaseRepository
      * @throws ArgumentException
      * @throws IblockNotFoundException
      * @throws \Exception
+     * @return array
      */
     public function getOrderItems(int $orderId): array
     {
         $queryCacheTtl = 360000;
-        $iblockId = IblockUtils::getIblockId(IblockType::CATALOG,
-            IblockCode::OFFERS);
-        $productIblockId = IblockUtils::getIblockId(IblockType::CATALOG,
-            IblockCode::PRODUCTS);
+        $iblockId = IblockUtils::getIblockId(
+            IblockType::CATALOG,
+            IblockCode::OFFERS
+        );
+        $productIblockId = IblockUtils::getIblockId(
+            IblockType::CATALOG,
+            IblockCode::PRODUCTS
+        );
 
-        $volumePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'VOLUME_REFERENCE')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $sizePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'CLOTHING_SIZE')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $cml2LinkPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'CML2_LINK')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $imgPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'IMG')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        /**
+         * получаем свойства для обращения к свойствам и кешируем запросы на долгое время, ибо меняться будет крайне редко
+         */
+        $volumePropId = PropertyTable::query()
+                            ->where('IBLOCK_ID', $iblockId)
+                            ->whereIn('CODE', 'VOLUME_REFERENCE')
+                            ->setCacheTtl($queryCacheTtl)
+                            ->setSelect(['ID'])
+                            ->exec()
+                            ->fetch()['ID'];
 
-        $brandPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where('CODE',
-            'BRAND')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
-        $flavourPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where('CODE',
-            'FLAVOUR')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $sizePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
+            'CODE',
+            'CLOTHING_SIZE'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $cml2LinkPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
+            'CODE',
+            'CML2_LINK'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $imgPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where(
+            'CODE',
+            'IMG'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+
+        $brandPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where(
+            'CODE',
+            'BRAND'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $flavourPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where(
+            'CODE',
+            'FLAVOUR'
+        )->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
         $basketRes = BasketTable::query()
             ->setSelect([
                 '*',
                 'SUMMARY_PRICE',
+                'DETAIL_PAGE_URL',
 
                 'PROPERTY_IMG'    => 'OFFER_PROPS.PROPERTY_' . $imgPropId,
                 'PROPERTY_VOLUME' => 'OFFER_PROPS.PROPERTY_' . $volumePropId,
@@ -143,19 +177,25 @@ class OrderRepository extends BaseRepository
                 'PROPERTY_FLAVOUR' => 'PRODUCT_PROPS.PROPERTY_' . $flavourPropId,
             ])
             ->where('ORDER_ID', $orderId)
-            ->registerRuntimeField(new ReferenceField('OFFER_PROPS',
+            ->registerRuntimeField(new ReferenceField(
+                'OFFER_PROPS',
                 IblockPropEntityConstructor::getDataClass($iblockId)::getEntity(),
-                Join::on('this.PRODUCT_ID', 'ref.IBLOCK_ELEMENT_ID')))
-            ->registerRuntimeField(new ReferenceField('PRODUCT_PROPS',
+                Join::on('this.PRODUCT_ID', 'ref.IBLOCK_ELEMENT_ID')
+            ))
+            ->registerRuntimeField(new ReferenceField(
+                'PRODUCT_PROPS',
                 IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
-                Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')))
-            ->setCacheTtl($queryCacheTtl)
+                Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
+            ))
             ->exec();
         $result = new ArrayCollection();
         $items = [];
         $allWeight = 0;
         $allSum = 0;
         while ($item = $basketRes->fetch()) {
+            /**
+             * @var array $item
+             */
             if (!isset($items[$item['PRODUCT_ID']])) {
                 if (empty($item['PROPERTY_SELECTED'])) {
                     if (!empty($item['PROPERTY_SIZE'])) {
@@ -188,6 +228,24 @@ class OrderRepository extends BaseRepository
                         $item['PROPERTY_SELECTED'] = WordHelper::showWeight((float)$item['WEIGHT']);
                         $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
                     }
+
+                    /** установка фалага акции для товара, кешировать не надо - в компоненте кешируется вывод, больше нигде не используется
+                     * @todo вынести из цикла и делать 1 запрос на получение по заказу*/
+                    if(strpos($item['PRODUCT_XML_ID'], '#') !== false){
+                        $explode = explode('#',$item['PRODUCT_XML_ID']);
+                        $xmlId = end($explode);
+                    }
+                    else{
+                        $xmlId = $item['PRODUCT_XML_ID'];
+                    }
+                    $shares = (new IblockElementQuery())->withOrder(['SORT'=>'ASC','ACTIVE_FROM'=>'DESC'])->withFilter([
+                        'IBLOCK_ID'         => IblockUtils::getIblockId(IblockType::PUBLICATION,
+                            IblockCode::SHARES),
+                        'ACTIVE'            => 'Y',
+                        'ACTIVE_DATE'       => 'Y',
+                        'PROPERTY_PRODUCTS' => $xmlId,
+                    ])->withNav(['nTopCount'=>1])->exec();
+                    $item['HAVE_STOCK'] = $shares->isEmpty() ? 'N' : 'Y';
                 }
 
                 unset($item['PROPERTY_SIZE'], $item['PROPERTY_VOLUME']);
@@ -233,6 +291,9 @@ class OrderRepository extends BaseRepository
                 }
 
                 $allWeight += (float)$item['WEIGHT'] * (float)$item['QUANTITY'];
+                if((float)$item['SUMMARY_PRICE'] <= 0){
+                    $item['SUMMARY_PRICE'] = $item['PRICE']*$item['QUANTITY'];
+                }
                 $allSum += (float)$item['SUMMARY_PRICE'];
                 $key = !empty($item['PRODUCT_XML_ID']) ? $item['PRODUCT_XML_ID'] : '';
                 if (\mb_strlen($key) <= 1) {
@@ -243,7 +304,9 @@ class OrderRepository extends BaseRepository
         }
         if ($basketRes->getSelectedRowsCount() > 0) {
             $result = new ArrayCollection($this->dataToEntity(
-                $items, sprintf('array<string, %s>', OrderItem::class)));
+                $items,
+                sprintf('array<string, %s>', OrderItem::class)
+            ));
         }
         return [$result, $allWeight, $allSum];
     }
@@ -251,8 +314,8 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $paySystemId
      *
-     * @return OrderPayment|BaseEntity
      * @throws EmptyEntityClass
+     * @return BaseEntity|OrderPayment
      */
     public function getPayment(int $paySystemId): OrderPayment
     {
@@ -268,7 +331,8 @@ class OrderRepository extends BaseRepository
         if (\is_array($payment)) {
             return $this->dataToEntity(
                 $payment,
-                OrderPayment::class);
+                OrderPayment::class
+            );
         }
         return new OrderPayment();
     }
@@ -276,8 +340,8 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $orderId
      *
-     * @return OrderDelivery|BaseEntity
      * @throws EmptyEntityClass
+     * @return BaseEntity|OrderDelivery
      */
     public function getDelivery(int $orderId): OrderDelivery
     {
@@ -293,11 +357,13 @@ class OrderRepository extends BaseRepository
                 'PRICE_DELIVERY',
                 'DEDUCTED',
                 'DATE_DEDUCTED',
+                'ORDER_ID',
             ])->exec()->fetch();
         if (\is_array($shipment)) {
             return $this->dataToEntity(
                 $shipment,
-                OrderDelivery::class);
+                OrderDelivery::class
+            );
         }
 
         return new OrderDelivery();
@@ -306,8 +372,8 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $orderId
      *
-     * @return ArrayCollection|OrderProp[]
      * @throws EmptyEntityClass
+     * @return ArrayCollection|OrderProp[]
      */
     public function getOrderProps(int $orderId): ArrayCollection
     {
@@ -327,7 +393,8 @@ class OrderRepository extends BaseRepository
         if (!empty($props)) {
             return new ArrayCollection($this->dataToEntity(
                 $props,
-                sprintf('array<string, %s>', OrderProp::class)));
+                sprintf('array<string, %s>', OrderProp::class)
+            ));
         }
 
         return new ArrayCollection();

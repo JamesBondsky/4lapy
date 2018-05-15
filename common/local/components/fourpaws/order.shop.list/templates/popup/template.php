@@ -26,7 +26,11 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-close-popup"
                        href="javascript:void(0);">Выберите пункт самовывоза</a>
                     <h4 class="b-availability__header b-availability__header--desktop">
-                        Наши магазины
+                        <?php if ($arResult['DELIVERY_CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
+                            Наши магазины
+                        <?php } else { ?>
+                            Пункты выдачи
+                        <?php } ?>
                         <span class="b-availability__header-amount js-orders-shop-count">(всего 0)</span>
                     </h4>
                     <h4 class="b-availability__header b-availability__header--tablet active">Выберите пункт самовывоза
@@ -51,6 +55,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                     <?php if ($arResult['DELIVERY_CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
                         <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
                             <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
+                                <?php /*
                                 <div class="b-checkbox b-checkbox--stores b-checkbox--order">
                                     <input class="b-checkbox__input"
                                            type="checkbox"
@@ -64,6 +69,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                                     </span>
                                     </label>
                                 </div>
+                                */ ?>
                                 <div class="b-checkbox b-checkbox--stores b-checkbox--order">
                                     <input class="b-checkbox__input"
                                            type="checkbox"

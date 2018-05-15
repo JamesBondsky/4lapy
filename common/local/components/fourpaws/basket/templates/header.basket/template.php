@@ -9,7 +9,6 @@
  * @var array $arResult
  * @var array $arParams
  * @var Basket $basket
- * @var UserAccount $userAccount
  */
 
 use Bitrix\Sale\Basket;
@@ -17,11 +16,9 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\SaleBundle\Entity\UserAccount;
 use FourPaws\UserBundle\Entity\User;
 
 $user = $arResult['USER'];
-$userAccount = $arResult['USER_ACCOUNT'];
 
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
@@ -85,7 +82,9 @@ if (true !== $arParams['IS_AJAX']) {
                                     <?= $basketItem->getField('NAME') ?>
                                 </a>
                             </div>
-                            <span class="b-cart-item__weight"><?= WordHelper::showWeight($basketItem->getWeight() * $basketItem->getQuantity(), true) ?></span>
+                            <?php if($basketItem->getQuantity() > 0 && $basketItem->getWeight() > 0) {?>
+                                <span class="b-cart-item__weight"><?= WordHelper::showWeight($basketItem->getWeight() * $basketItem->getQuantity(), true) ?></span>
+                            <?php } ?>
                             <span class="b-cart-item__amount">(<?= $basketItem->getQuantity() ?> шт.)</span>
                         </div>
                     </div>

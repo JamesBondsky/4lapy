@@ -1,14 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 15.01.2018
- * Time: 16:38
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
- */
 
 namespace FourPaws\SaleBundle\Service;
 
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 
 /**
  * Class BasketViewService
@@ -41,21 +35,21 @@ class BasketViewService
         global $APPLICATION;
 
         \ob_start();
-
+        Manager::disableExtendsDiscount();
         $APPLICATION->IncludeComponent(
             'fourpaws:basket',
             'header.basket',
             [
-                'COMPONENT_TEMPLATE'   => 'header.basket',
-                'PATH_TO_BASKET'       => '/cart/',
-                'PATH_TO_ORDER'        => '/order/make/',
-                'MINI_BASKET'        => true,
-                'IS_AJAX'              => $isAjax,
+                'COMPONENT_TEMPLATE' => 'header.basket',
+                'PATH_TO_BASKET' => '/cart/',
+                'PATH_TO_ORDER' => '/sale/order/',
+                'MINI_BASKET' => true,
+                'IS_AJAX' => $isAjax,
             ],
             false,
             ['HIDE_ICONS' => 'Y']
         );
-
+        Manager::enableExtendsDiscount();
         return \ob_get_clean();
     }
 
@@ -74,7 +68,7 @@ class BasketViewService
             'fourpaws:fast.order',
             '',
             [
-                'TYPE'    => 'innerForm',
+                'TYPE' => 'innerForm',
                 'IS_AJAX' => $isAjax,
             ],
             null,
@@ -102,7 +96,7 @@ class BasketViewService
             '',
             [
                 'IS_AJAX' => $isAjax,
-                'BASKET'  => $this->basketService->getBasket(),
+                'BASKET' => $this->basketService->getBasket(),
             ],
             false,
             ['HIDE_ICONS' => 'Y']

@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use JMS\Serializer\Annotation as Serializer;
@@ -100,6 +101,13 @@ class OrderItem extends BaseEntity
      * @Serializer\Groups(groups={"read"})
      */
     protected $brand = '';
+
+    /** @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("DETAIL_PAGE_URL")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $detailPageUrl = '';
 
     /**
      * @return string
@@ -305,9 +313,9 @@ class OrderItem extends BaseEntity
         if (!empty($image)){
             if(is_numeric($image)) {
                 try {
-                    $path = ResizeImageDecorator::createFromPrimary($image)
-                        ->setResizeHeight(120)
-                        ->setResizeWidth(80);
+                    $path = CropImageDecorator::createFromPrimary($image)
+                        ->setCropWidth(80)
+                        ->setCropHeight(145);
                 } catch (FileNotFoundException $e) {
                 }
             }else{
@@ -316,9 +324,9 @@ class OrderItem extends BaseEntity
                 if(\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])){
                     $image = current($unserializeImage['VALUE']);
                     try {
-                        $path = ResizeImageDecorator::createFromPrimary($image)
-                            ->setResizeHeight(120)
-                            ->setResizeWidth(80);
+                        $path = CropImageDecorator::createFromPrimary($image)
+                            ->setCropWidth(80)
+                            ->setCropHeight(145);
                     } catch (FileNotFoundException $e) {
                     }
                 }
@@ -376,5 +384,21 @@ class OrderItem extends BaseEntity
     public function setFlavour(string $flavour): void
     {
         $this->flavour = $flavour;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDetailPageUrl(): string
+    {
+        return $this->detailPageUrl ?? '';
+    }
+
+    /**
+     * @param string $detailPageUrl
+     */
+    public function setDetailPageUrl(string $detailPageUrl): void
+    {
+        $this->detailPageUrl = $detailPageUrl;
     }
 }

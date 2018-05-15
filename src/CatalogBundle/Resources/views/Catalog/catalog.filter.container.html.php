@@ -81,7 +81,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterCollection->getVisibleFilters(),
+                    'filters' => $filterCollection->getFiltersToShow(),
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -94,7 +94,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </a>
     </div>
 </aside>
-<main class="b-catalog__main" role="main">
+<main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
         <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
            href="javascript:void(0);"
@@ -112,7 +112,9 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'LEFT_MARGIN'  => $category->getLeftMargin(),
                     'RIGHT_MARGIN' => $category->getRightMargin(),
                     'DEPTH_LEVEL'  => $category->getDepthLevel(),
-                ], false, ['HIDE_ICONS' => 'Y']
+                ],
+                false,
+                ['HIDE_ICONS' => 'Y']
             ); ?>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
@@ -127,17 +129,18 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getVisibleFilters() as $filter) {
-                        if (!$filter->hasAvailableVariants()) {
-                            continue;
-                        }
+                    foreach ($filterCollection->getIterator() as $filter) {
                         if (!($filter instanceof ActionsFilter)) {
                             continue;
                         }
-                        ?>
+                        if (!$filter->hasAvailableVariants()) {
+                            continue;
+                        }
+                         ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
+                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
+                            ?>
                                     <li class="b-filter-link-list__item">
                                         <label class="b-filter-link-list__label">
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -153,10 +156,12 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                             </a>
                                         </label>
                                     </li>
-                                <?php } ?>
+                                <?php
+                        } ?>
                             </ul>
                         </span>
-                    <?php } ?>
+                    <?php
+                    } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
                     <a class="b-link b-link--type active js-link-type-normal" href="javascript:void(0);" title="">
@@ -175,7 +180,10 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </div>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
-        <?php foreach ($productSearchResult->getProductCollection() as $product) {
+        <?php $i = 0;
+        foreach ($productSearchResult->getProductCollection() as $product) {
+            $i++;
+
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
@@ -183,6 +191,23 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 null,
                 ['HIDE_ICONS' => 'Y']
             );
+
+            if ($catalogRequest->getCategory()->isLanding() && !empty($catalogRequest->getCategory()->getUfLandingBanner())) {
+                if ($i === 3) {
+                    ?>
+                    <div class="b-fleas-protection-banner b-tablet">
+                        <?=htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner())?>
+                    </div>
+                <?php
+                }
+                if ($i === 4) {
+                    ?>
+                    <div class="b-fleas-protection-banner">
+                        <?=htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner())?>
+                    </div>
+                <?php
+                }
+            }
         } ?>
     </div>
     <div class="b-line b-line--catalog-filter"></div>

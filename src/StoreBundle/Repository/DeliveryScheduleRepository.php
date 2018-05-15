@@ -1,12 +1,24 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\StoreBundle\Repository;
 
+use Bitrix\Catalog\StoreTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -39,6 +51,64 @@ class DeliveryScheduleRepository extends BaseRepository
         $this->dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.deliveryschedule');
 
         parent::__construct($arrayTransformer, $validator);
+    }
+
+    /**
+     * @param string $xmlId
+     * @throws NotFoundException
+     * @return DeliverySchedule
+     */
+    public function findByXmlId(string $xmlId): DeliverySchedule
+    {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        $result = $this->findBy(['UF_XML_ID' => $xmlId], [], 1)->first();
+        if (!$result) {
+            throw new NotFoundException(sprintf('Schedule with xmlId %s not found', $xmlId));
+        }
+        return $result;
+    }
+
+    /**
+     * @param Store $receiver
+     * @param StoreCollection $senders
+     * @return DeliveryScheduleCollection
+     */
+    public function findByReceiver(
+        Store $receiver,
+        StoreCollection $senders = null
+    ): DeliveryScheduleCollection {
+        $filter = ['=UF_RECEIVER' => $receiver->getXmlId()];
+        if ($senders && !$senders->isEmpty()) {
+            $filter['=UF_SENDER'] = [];
+            /** @var Store $sender */
+            foreach ($senders as $sender) {
+                $filter['=UF_SENDER'][] = $sender->getXmlId();
+            }
+        }
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->findBy($filter);
+    }
+
+    /**
+     * @param Store $sender
+     * @param StoreCollection $receivers
+     * @return DeliveryScheduleCollection
+     */
+    public function findBySender(
+        Store $sender,
+        StoreCollection $receivers = null
+    ): DeliveryScheduleCollection {
+        $filter = ['=UF_SENDER' => $sender->getXmlId()];
+        if ($receivers && !$receivers->isEmpty()) {
+            $filter['=UF_RECEIVER'] = [];
+            /** @var Store $sender */
+            foreach ($receivers as $receiver) {
+                $filter['=UF_RECEIVER'][] = $receiver->getXmlId();
+            }
+        }
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->findBy($filter);
     }
 
     /**
@@ -78,6 +148,36 @@ class DeliveryScheduleRepository extends BaseRepository
      */
     protected function getDefaultFilter(): array
     {
-        return [];
+        return [
+            '!UF_TYPE' => false,
+            'SENDER_STORE.ACTIVE' => 'Y',
+            'RECEIVER_STORE.ACTIVE' => 'Y'
+        ];
+    }
+
+    /**
+     * @param Query $query
+     *
+     * @throws ArgumentException
+     * @throws SystemException
+     * @return Query
+     */
+    protected function modifyQuery(Query $query): Query
+    {
+        $query->registerRuntimeField(
+            new ReferenceField(
+                'SENDER_STORE',
+                StoreTable::class,
+                ['=this.UF_SENDER' => 'ref.XML_ID'],
+                ['join_type' => 'INNER'])
+        )->registerRuntimeField(
+            new ReferenceField(
+                'RECEIVER_STORE',
+                StoreTable::class,
+                ['=this.UF_RECEIVER' => 'ref.XML_ID'],
+                ['join_type' => 'INNER'])
+        );
+
+        return parent::modifyQuery($query);
     }
 }

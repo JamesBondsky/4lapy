@@ -85,9 +85,11 @@ class Pet extends BaseEntity
      */
     protected $gender;
 
-    protected $stringType   = '';
-
     protected $stringGender = '';
+
+    protected $codeGender = '';
+
+    protected $stringType   = '';
 
     protected $codeType     = '';
 
@@ -96,7 +98,7 @@ class Pet extends BaseEntity
      */
     public function getName() : string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
 
     /**
@@ -116,7 +118,7 @@ class Pet extends BaseEntity
      */
     public function getUserId() : int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
 
     /**
@@ -238,7 +240,7 @@ class Pet extends BaseEntity
      */
     public function getType() : int
     {
-        return $this->type;
+        return $this->type ?? 0;
     }
 
     /**
@@ -269,7 +271,7 @@ class Pet extends BaseEntity
             }
         }
 
-        return $this->codeType;
+        return $this->codeType ?? '';
     }
 
     /**
@@ -277,7 +279,7 @@ class Pet extends BaseEntity
      */
     public function getBreed() : string
     {
-        return $this->breed;
+        return $this->breed ?? '';
     }
 
     /**
@@ -350,9 +352,9 @@ class Pet extends BaseEntity
     }
 
     /**
-     * @return Date
+     * @return Date|null
      */
-    public function getBirthday() : Date
+    public function getBirthday() : ?Date
     {
         if (!($this->birthday instanceof Date)) {
             return null;
@@ -389,7 +391,7 @@ class Pet extends BaseEntity
             $this->setStringGender($this->getGender());
         }
 
-        return $this->stringGender;
+        return $this->stringGender ?? '';
     }
 
     /**
@@ -398,7 +400,9 @@ class Pet extends BaseEntity
     protected function setStringGender(int $gender)
     {
         $userFieldEnum      = new \CUserFieldEnum();
-        $this->stringGender = $userFieldEnum->GetList([], ['ID' => $gender])->Fetch()['VALUE'];
+        $item = $userFieldEnum->GetList([], ['ID' => $gender])->Fetch();
+        $this->stringGender = $item['VALUE'];
+        $this->setCodeGender($item['XML_ID']);
     }
 
     /**
@@ -406,7 +410,7 @@ class Pet extends BaseEntity
      */
     public function getGender() : int
     {
-        return $this->gender;
+        return $this->gender ?? 0;
     }
 
     /**
@@ -422,5 +426,24 @@ class Pet extends BaseEntity
         }
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCodeGender(): string
+    {
+        if(empty($this->codeGender)){
+            $this->setStringGender($this->getGender());
+        }
+        return $this->codeGender;
+    }
+
+    /**
+     * @param string $codeGender
+     */
+    public function setCodeGender(string $codeGender): void
+    {
+        $this->codeGender = $codeGender;
     }
 }

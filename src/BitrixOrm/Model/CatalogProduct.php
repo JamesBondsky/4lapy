@@ -101,7 +101,7 @@ class CatalogProduct
      *
      * @var int
      */
-    protected $measureId = 0;
+    protected $measureId = 5;
 
     /**
      * @return int
@@ -119,6 +119,7 @@ class CatalogProduct
     public function setId(int $id): CatalogProduct
     {
         $this->id = $id;
+
         return $this;
     }
 
@@ -138,6 +139,7 @@ class CatalogProduct
     public function setWeight(float $weight): CatalogProduct
     {
         $this->weight = $weight;
+
         return $this;
     }
 
@@ -157,6 +159,7 @@ class CatalogProduct
     public function setHeight(float $height): CatalogProduct
     {
         $this->height = $height;
+
         return $this;
     }
 
@@ -176,6 +179,7 @@ class CatalogProduct
     public function setWidth(float $width): CatalogProduct
     {
         $this->width = $width;
+
         return $this;
     }
 
@@ -195,6 +199,19 @@ class CatalogProduct
     public function setLength(float $length): CatalogProduct
     {
         $this->length = $length;
+
+        return $this;
+    }
+
+    /**
+     * @param int $measureId
+     *
+     * @return CatalogProduct
+     */
+    public function setMeasureId(int $measureId): CatalogProduct
+    {
+        $this->measureId = $measureId;
+
         return $this;
     }
 
@@ -220,5 +237,13 @@ class CatalogProduct
     public function getProductName(): string
     {
         return $this->productName;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMeasureId(): int
+    {
+        return $this->measureId;
     }
 }

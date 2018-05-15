@@ -7,15 +7,13 @@
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Currency\CurrencyManager;
-use Bitrix\Main\Error;
-use Bitrix\Main\Loader;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Delivery\Services\Base;
-use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -25,6 +23,8 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
@@ -65,24 +65,26 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      */
     protected $intervalService;
 
+    /**
+     * DeliveryHandlerBase constructor.
+     *
+     * @param $initParams
+     *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\SystemException
+     * @throws ApplicationCreateException
+     */
     public function __construct($initParams)
     {
-        $this->locationService = Application::getInstance()->getContainer()->get('location.service');
-        $this->storeService = Application::getInstance()->getContainer()->get('store.service');
-        $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $this->userService = Application::getInstance()
-                                        ->getContainer()
-                                        ->get(UserCitySelectInterface::class);
-        $this->intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $serviceContainer = Application::getInstance()->getContainer();
+        $this->locationService = $serviceContainer->get('location.service');
+        $this->storeService = $serviceContainer->get('store.service');
+        $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->userService = $serviceContainer->get(UserCitySelectInterface::class);
+        $this->intervalService = $serviceContainer->get(IntervalService::class);
         parent::__construct($initParams);
-    }
-
-    /**
-     * @return bool
-     */
-    public static function whetherAdminExtraServicesShow()
-    {
-        return static::$whetherAdminExtraServicesShow;
     }
 
     /**
@@ -91,12 +93,14 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param string $locationCode
      * @param BasketBase $basket
      *
-     * @return bool|OfferCollection
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @return null|OfferCollection
      */
-    public static function getOffers(string $locationCode, BasketBase $basket)
+    public static function getOffers(string $locationCode, BasketBase $basket): ?OfferCollection
     {
         if ($basket->isEmpty()) {
-            return false;
+            return null;
         }
 
         $offerIds = [];
@@ -111,70 +115,55 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         }
 
         if (empty($offerIds)) {
-            return false;
+            return null;
         }
 
+        /** @noinspection PhpUnhandledExceptionInspection */
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
-        $stores = $storeService->getByLocation($locationCode);
+        $stores = $storeService->getStoresByLocation($locationCode);
         if ($stores->isEmpty()) {
-            return false;
+            return null;
         }
 
         /** @var OfferCollection $offers */
         $offers = (new OfferQuery())->withFilterParameter('ID', $offerIds)->exec();
         if ($offers->isEmpty()) {
-            return false;
+            return null;
         }
 
-        $storeService->getStocks($offers, $stores);
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            if (!$offer->isByRequest()) {
+                $offer->withStocks($offer->getAllStocks()->filterByStores($stores));
+            }
+        }
 
         return $offers;
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param BasketBase $basket
      * @param OfferCollection $offers
-     * @param StoreCollection $storesAvailable склады, где товары считается "в наличии"
-     * @param StoreCollection $storesDelay склады, с которых производится поставка на $storesAvailable
-     * @param StockResultCollection $stockResultCollection
+     * @param StoreCollection $storesAvailable
      *
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
      * @return StockResultCollection
      */
     public static function getStocks(
         BasketBase $basket,
         OfferCollection $offers,
-        StoreCollection $storesAvailable,
-        StoreCollection $storesDelay,
-        StockResultCollection $stockResultCollection = null
+        StoreCollection $storesAvailable
     ): StockResultCollection {
-        if (!$stockResultCollection) {
-            $stockResultCollection = new StockResultCollection();
-        }
-
-        /**
-         * Рассчитывается дата доставки в соответствии с графиком работы магазинов/складов
-         */
-        $pickupDate = new \DateTime();
-        if (!$storesAvailable->isEmpty()) {
-            $hour = (int)$pickupDate->format('H');
-            $totalSchedule = $storesAvailable->getTotalSchedule();
-            if ($hour < $totalSchedule['from']) {
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
-            } elseif ($hour > $totalSchedule['to']) {
-                $pickupDate->modify('+1 day');
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
-            } else {
-                $pickupDate->modify('+1 hour');
-            }
-        }
+        $stockResultCollection = new StockResultCollection();
 
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $basketItem = null;
             /** @var BasketItem $item */
             foreach ($basket as $item) {
-                if ($item->getProductId() == $offer->getId()) {
+                if ((int)$item->getProductId() === $offer->getId()) {
                     $basketItem = $item;
                     break;
                 }
@@ -182,33 +171,57 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             if (!$basketItem) {
                 continue;
             }
-            $neededAmount = $basketItem->getQuantity();
 
+            static::getStocksForItem(
+                $offer,
+                $basketItem->getQuantity(),
+                $basketItem->getPrice(),
+                $storesAvailable,
+                $stockResultCollection
+            );
+        }
+
+        return $stockResultCollection;
+    }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
+     * @param Offer $offer
+     * @param int $neededAmount
+     * @param float $price
+     * @param StoreCollection $stores
+     * @param StockResultCollection|null $stockResultCollection
+     *
+     * @return StockResultCollection
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     */
+    public static function getStocksForItem(
+        Offer $offer,
+        int $neededAmount,
+        float $price,
+        StoreCollection $stores,
+        StockResultCollection $stockResultCollection = null
+    ): StockResultCollection {
+        if (null === $stockResultCollection) {
+            $stockResultCollection = new StockResultCollection();
+        }
+
+        /** @var Store $store */
+        foreach ($stores->getIterator() as $store) {
+            $amount = $neededAmount;
             $stockResult = new StockResult();
-            $stockResult->setAmount($neededAmount)
-                        ->setOffer($offer)
-                        ->setStores($storesAvailable)
-                        ->setPrice($basketItem->getPrice());
+            $stockResult->setAmount($amount)
+                ->setOffer($offer)
+                ->setStore($store)
+                ->setPrice($price);
 
-            $stockResult->setDeliveryDate($pickupDate);
-
-            /**
-             * Если товар под заказ, то рассчитывается дата поставки на склад по графику
-             */
-            if ($offer->isByRequest()) {
-                $stockResult->setType(StockResult::TYPE_DELAYED)
-                    /* @todo расчет по графику поставок */
-                            ->setDeliveryDate((new \DateTime())->modify('+10 days'));
-                continue;
-            }
-
-            $stocks = $offer->getStocks();
-            if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
-                if ($availableAmount < $neededAmount) {
+            $stocks = $offer->getAllStocks();
+            if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
+                if ($availableAmount < $amount) {
                     $stockResult->setAmount($availableAmount);
-                    $neededAmount -= $availableAmount;
+                    $amount -= $availableAmount;
                 } else {
-                    $neededAmount = 0;
+                    $amount = 0;
                 }
                 $stockResultCollection->add($stockResult);
             }
@@ -216,26 +229,24 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             /**
              * Товар в наличии не полностью. Часть будет отложена
              */
-            if ($neededAmount) {
+            if ($amount) {
+                $storesDelay = $offer->getAllStocks()->getStores()->excludeStore($store);
                 if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
                     $delayedStockResult = clone $stockResult;
                     $delayedStockResult->setType(StockResult::TYPE_DELAYED)
-                                       ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount)
-                                       ->setDelayStores($storesDelay)
-                        /* @todo расчет по графику поставок */
-                                       ->setDeliveryDate((new \DateTime())->modify('+10 days'));
+                        ->setAmount($delayedAmount >= $amount ? $amount : $delayedAmount);
                     $stockResultCollection->add($delayedStockResult);
 
-                    $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;
+                    $amount = ($delayedAmount >= $amount) ? 0 : $amount - $delayedAmount;
                 }
 
                 /**
                  * Часть товара (или все количество) не в наличии
                  */
-                if ($neededAmount) {
+                if ($amount) {
                     $unavailableStockResult = clone $stockResult;
                     $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                                           ->setAmount($neededAmount);
+                        ->setAmount($amount);
                     $stockResultCollection->add($unavailableStockResult);
                 }
             }
@@ -245,53 +256,101 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }
 
     /**
+     * @param string $deliveryCode
+     * @param string $deliveryZone
+     * @param string $locationCode
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @return StoreCollection
+     */
+    public static function getAvailableStores(
+        string $deliveryCode,
+        string $deliveryZone,
+        string $locationCode = ''
+    ): StoreCollection {
+        $serviceContainer = Application::getInstance()->getContainer();
+        /** @var StoreService $storeService */
+        $storeService = $serviceContainer->get('store.service');
+        /** @var LocationService $locationService */
+        $locationService = $serviceContainer->get('location.service');
+        if (!$locationCode) {
+            $locationCode = $locationService->getCurrentLocation();
+        }
+
+        $result = new StoreCollection();
+        switch ($deliveryCode) {
+            case DeliveryService::DPD_DELIVERY_CODE:
+            case DeliveryService::DPD_PICKUP_CODE:
+                $result = $storeService->getStoresByLocation(
+                    $locationCode,
+                    StoreService::TYPE_STORE
+                );
+                break;
+            case DeliveryService::INNER_PICKUP_CODE:
+                $result = $storeService->getStoresByLocation(
+                    $locationCode,
+                    StoreService::TYPE_SHOP
+                );
+                break;
+            case DeliveryService::INNER_DELIVERY_CODE:
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_1:
+                        /**
+                         * условие доставки в эту зону - наличие на складе
+                         */
+                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_STORE);
+                        break;
+                    case DeliveryService::ZONE_2:
+                        /**
+                         * условие доставки в эту зону - наличие в базовом магазине
+                         */
+                        $result = $storeService->getRegionalStores($locationCode, StoreService::TYPE_ALL)
+                            ->getBaseShops();
+                        break;
+                }
+                break;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return bool
      */
-    public function isCalculatePriceImmediately()
+    public function isCalculatePriceImmediately(): bool
     {
         return static::$isCalculatePriceImmediately;
     }
 
     /**
      * @return array
+     * @throws ArgumentException
      */
-    protected function getConfigStructure()
+    protected function getConfigStructure(): array
     {
         $currency = $this->currency;
 
-        if (Loader::includeModule('currency')) {
-            $currencyList = CurrencyManager::getCurrencyList();
-            if (isset($currencyList[$this->currency])) {
-                $currency = $currencyList[$this->currency];
-            }
-            unset($currencyList);
+        $currencyList = CurrencyManager::getCurrencyList();
+        if (isset($currencyList[$this->currency])) {
+            $currency = $currencyList[$this->currency];
         }
+        unset($currencyList);
 
         $result = [
             'MAIN' => [
-                'TITLE'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN'),
+                'TITLE' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN'),
                 'DESCRIPTION' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN_DESCR'),
-                'ITEMS'       => [
+                'ITEMS' => [
                     'CURRENCY' => [
-                        'TYPE'       => 'DELIVERY_READ_ONLY',
-                        'NAME'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_CURRENCY'),
-                        'VALUE'      => $this->currency,
+                        'TYPE' => 'DELIVERY_READ_ONLY',
+                        'NAME' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_CURRENCY'),
+                        'VALUE' => $this->currency,
                         'VALUE_VIEW' => $currency,
                     ],
                 ],
             ],
         ];
-
-        return $result;
-    }
-
-    protected function calculateConcrete(Shipment $shipment)
-    {
-        $result = new CalculationResult();
-
-        if (!$this->deliveryService->getDeliveryZoneCode($shipment)) {
-            $result->addError(new Error('Не указано местоположение доставки'));
-        }
 
         return $result;
     }

@@ -66,7 +66,9 @@ abstract class IBlockElement extends IBlock
                     unset($data['CATALOG'][$k]);
                 }
             }
-            
+
+            $data['CATALOG']['AVAILABLE'] = 'Y';
+            $data['CATALOG']['VAT_INCLUDED'] = 'Y';
             $data['CATALOG']['ID'] = $id;
             
             try {

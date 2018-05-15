@@ -6,23 +6,30 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\GroupTable;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Enum\UserGroup;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
+use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -30,11 +37,13 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
+use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -48,8 +57,12 @@ class UserService implements
     UserAuthorizationInterface,
     UserRegistrationProviderInterface,
     UserCitySelectInterface,
-    UserAvatarAuthorizationInterface
+    UserAvatarAuthorizationInterface,
+    UserSearchInterface,
+    LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     public const BASE_DISCOUNT = 3;
     /**
      * @var \CAllUser|\CUser
@@ -89,6 +102,7 @@ class UserService implements
      * @param string $rawLogin
      * @param string $password
      *
+     * @throws \Exception
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
@@ -172,6 +186,7 @@ class UserService implements
      *
      * @param User $user
      *
+     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws RuntimeException
@@ -241,34 +256,29 @@ class UserService implements
     /**
      * @param string $code
      * @param string $name
-     * @param string $parentName
+     * @param string|array|null $parentName
      *
+     * @throws \Exception
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws CityNotFoundException
      * @throws NotAuthorizedException
      * @throws BitrixRuntimeException
-     * @throws SystemException
      * @return array|bool
      */
-    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = null)
     {
         $city = null;
         if ($code) {
             $city = $this->locationService->findLocationCityByCode($code);
         } else {
             /** @noinspection PassingByReferenceCorrectnessInspection */
-            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
+            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true, false));
         }
 
-        if ($city) {
-            /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
-            setcookie('user_city_id', $city['CODE'], 86400 * 30);
-
-            if ($this->isAuthorized()) {
-                $this->userRepository->updateData($this->getCurrentUserId(), ['UF_LOCATION' => $city['CODE']]);
-            }
+        if ($city && $this->isAuthorized()) {
+            $this->userRepository->updateData($this->getCurrentUserId(), ['UF_LOCATION' => $city['CODE']]);
         }
 
         return $city ?: false;
@@ -320,7 +330,7 @@ class UserService implements
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public function setClientPersonalDataByCurUser(&$client, User $user = null)
+    public function setClientPersonalDataByCurUser(Client $client, User $user = null)
     {
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
@@ -341,14 +351,15 @@ class UserService implements
         if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {
             // если e-mail и телефон подтверждены - отмечаем, что анкета актуальна и делаем карту бонусной
             // - так делалось по умолчанию на старом сайте
-            $client->setActualContact(true);
-            $client->setLoyaltyProgramContact(true);
+            $client->setActualContact();
+            $client->setLoyaltyProgramContact();
         }
     }
 
     /**
      * @param int $id
      *
+     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws NotAuthorizedException
      * @return array
@@ -370,6 +381,7 @@ class UserService implements
      *
      * @param int $id
      *
+     * @throws \Exception
      * @throws NotAuthorizedException
      * @throws AvatarSelfAuthorizationException
      * @return bool
@@ -450,6 +462,7 @@ class UserService implements
     /**
      * Возврат к авторизации под исходным пользователем
      *
+     * @throws \Exception
      * @throws NotAuthorizedException
      * @return bool
      */
@@ -481,6 +494,7 @@ class UserService implements
      * @return int
      *
      * получение либо скидки пользователя либо базовой
+     * @throws \RuntimeException
      */
     public function getDiscount(): int
     {
@@ -503,106 +517,241 @@ class UserService implements
      * @param null|UserBonus $userBonus
      *
      * @return int
+     * @throws \FourPaws\External\Exception\
+     * @throws \RuntimeException
      *
      * получение актуальной скидки пользователя(manzana)
      */
-    public function getUserDiscount(User $user, ?UserBonus $userBonus = null): int
+    public function getBonusPercent(User $user, ?UserBonus $userBonus = null): int
     {
-        if (!($userBonus instanceof UserBonus)) {
+        /**
+         * @todo вынести логи, здесь этого не должно быть
+         */
+
+        if (null === $userBonus) {
             try {
                 $userBonus = BonusService::getManzanaBonusInfo($user);
             } catch (ManzanaServiceContactSearchMoreOneException $e) {
-                $logger = LoggerFactory::create('manzana');
-                $logger->info(
-                    'Найдено больше одного пользователя в манзане по телефону ' . $user->getPersonalPhone()
+                $this->log()->info(
+                    \sprintf(
+                        'Найдено больше одного пользователя в манзане по телефону %s',
+                        $user->getPersonalPhone()
+                    )
                 );
             } catch (ManzanaServiceContactSearchNullException $e) {
-                $logger = LoggerFactory::create('manzana');
-                $logger->info('Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone());
-            } catch (ManzanaServiceException $e) {
-                $logger = LoggerFactory::create('manzana');
-                $logger->error('Ошибка манзаны - ' . $e->getMessage());
-            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                $this->log()->info(
+                    \sprintf(
+                        'Не найдено пользователей в манзане по телефону %s',
+                        $user->getPersonalPhone()
+                    )
+                );
+            } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException | ConstraintDefinitionException | InvalidIdentifierException | ManzanaServiceException $e) {
+                $this->log()->error(
+                    \sprintf(
+                        'Ошибка получения процента бонуса %s',
+                        $e->getMessage()
+                    )
+                );
             } catch (NotAuthorizedException $e) {
-                /** показываем базовую скидку если не авторизованы */
-            } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка парамеров - ' . $e->getMessage());
+                return static::BASE_DISCOUNT;
             }
         }
-        if ($userBonus instanceof UserBonus && !$userBonus->isEmpty()) {
-            return $userBonus->getRealDiscount();
-        }
-        return static::BASE_DISCOUNT;
+
+        return $userBonus && !$userBonus->isEmpty() ? $userBonus->getRealDiscount() : static::BASE_DISCOUNT;
     }
 
     /**
+     * Получение актуального бонуса текущего пользователя
+     *
      * @return int
      *
-     * получение актуальной скидки текущего пользователя(manzana)
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws \RuntimeException
      */
-    public function getCurrentUserDiscount(): int
+    public function getCurrentUserBonusPercent(): int
     {
         try {
             $curUser = $this->getCurrentUser();
-            return $this->getUserDiscount($curUser);
+
+            return $this->getBonusPercent($curUser);
         } catch (NotAuthorizedException $e) {
             /** показываем базовую скидку если не авторизованы */
-        } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка парамеров - ' . $e->getMessage());
         }
+
         return static::BASE_DISCOUNT;
     }
 
     /**
-     * @param null|User $user
+     * Обновление бонуса текущего пользователя
+     *
+     * @param null|User      $user
      * @param null|UserBonus $bonus
      *
-     * @return bool
-     *
-     * обновление скидки пользователя по данным из manzana
+     * @throws SystemException
+     * @throws \RuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
      */
-    public function refreshUserDiscount(?User $user = null, ?UserBonus $bonus=null): bool
+    public function refreshUserBonusPercent(?User $user = null, ?UserBonus $bonus = null): void
     {
         if (!$user) {
             try {
                 $user = $this->getCurrentUser();
             } catch (NotAuthorizedException $e) {
-                return false;
-            } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка парамеров - ' . $e->getMessage());
-                return false;
+                /**
+                 * Только для авторизованного
+                 */
             }
         }
 
-        if (!$user->getDiscountCardNumber()) {
-            return false;
-        }
-
-        $newDiscount = (float)$this->getUserDiscount($user, $bonus);
+        $newDiscount = (float)$this->getBonusPercent($user, $bonus);
 
         if ($user->getDiscount() !== $newDiscount) {
             try {
-                return $this->getUserRepository()->updateData($user->getId(), ['UF_DISCOUNT' => $newDiscount]);
-            } catch (SystemException $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->error('Системная ошибка - ' . $e->getMessage());
-                return false;
-            } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка парамеров - ' . $e->getMessage());
-                return false;
+                $this->getUserRepository()->updateData($user->getId(), ['UF_DISCOUNT' => $newDiscount]);
             } catch (BitrixRuntimeException $e) {
-                $logger = LoggerFactory::create('user');
-                $logger->error('update error - ' . $e->getMessage());
-                return false;
+                $this->log()->error(
+                    \sprintf(
+                        'User #%d update error: %s',
+                        $user->getId(),
+                        $e->getMessage()
+                    )
+                );
             }
         }
-        return true;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     */
+    public function refreshUserOpt(User $user): bool
+    {
+        if(empty($user->getPersonalPhone())){
+            return false;
+        }
+        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $contact = $manzanaService->getContactByUser($user);
+        $groupsList = [];
+        $groups = $user->getGroups()->toArray();
+        /** @var Group $group */
+        foreach ($groups as $group) {
+            $groupsList[$group->getCode()] = $group->getId();
+        }
+        if ($contact->isOpt() && !$user->isOpt()) {
+            /** установка оптовика */
+            $groupsList[] = GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            \CUser::SetUserGroup($user->getId(), $groupsList);
+            $this->logout();
+            $this->authorize($user->getId());
+            TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
+            return true;
+        }
+        if (!$contact->isOpt() && $user->isOpt()) {
+            /** убираем оптовика */
+            unset($groupsList[UserGroup::OPT_CODE]);
+            \CUser::SetUserGroup($user->getId(), $groupsList);
+            $this->logout();
+            $this->authorize($user->getId());
+            TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return User
+     * @throws NotFoundException
+     */
+    public function findOne(int $id): User
+    {
+        $user = $this->userRepository->find($id);
+        if (!$user instanceof User) {
+            throw new NotFoundException(sprintf('User with id %s no found', $id));
+        }
+
+        return $user;
+    }
+
+    /**
+     * @param string $phone
+     * @param string $email
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByPhoneOrEmail(string $phone, string $email): User
+    {
+        $user = null;
+        try {
+            $user = $this->findOneByPhone($phone);
+        } catch (NotFoundException $e) {
+        }
+
+        if (!$user) {
+            try {
+                $user = $this->findOneByEmail($email);
+            } catch (NotFoundException $e) {
+            }
+        }
+
+        if (!$user) {
+            throw new NotFoundException(sprintf(
+                'No users found with phone %s and email %s',
+                $phone,
+                $email
+            ));
+        }
+
+        return $user;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByEmail(string $email): User
+    {
+        $users = $this->userRepository->findOneByEmail($email);
+        if (empty($users)) {
+            throw new NotFoundException(sprintf('No users found with email %s', $email));
+        }
+
+        return current($users);
+    }
+
+    /**
+     * @param string $phone
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByPhone(string $phone): User
+    {
+        $users = $this->userRepository->findOneByPhone($phone);
+        if (empty($users)) {
+            throw new NotFoundException(sprintf('No users found with phone %s', $phone));
+        }
+
+        return current($users);
     }
 
     /**

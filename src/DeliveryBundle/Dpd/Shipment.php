@@ -8,8 +8,10 @@ namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Loader;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Dpd\Lib\Calculator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use Ipolh\DPD\API\User;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Shipment
@@ -84,11 +86,28 @@ class Shipment extends \Ipolh\DPD\Shipment
         );
     }
 
+    /**
+     * Возвращает объем отправки, м3
+     *
+     * @return float
+     */
+    public function getVolume()
+    {
+        $volume = $this->dimensions['WIDTH'] * $this->dimensions['HEIGHT'] * $this->dimensions['LENGTH'];
+
+        return round($volume / 1000000, 3) ?: 0.001;
+    }
+
     public function isPaymentOnDelivery()
     {
         /**
          * У пунктов самовывоза DPD должна быть возможность оплаты на месте
          */
         return true;
+    }
+
+    public function calculator()
+    {
+        return new Calculator($this, $this->api);
     }
 }

@@ -43,12 +43,6 @@ use FourPaws\Decorators\SvgDecorator;
                 </div>
             </div>
             <div class="b-input-line b-input-line--myself">
-                <div class="b-input-line__label-wrapper"><span class="b-input-line__label">Можно забрать {{pickup}}, кроме</span>
-                    <ol class="b-input-line__text-list">{{parts_delayed_html}}
-                    </ol>
-                </div>
-            </div>
-            <div class="b-input-line b-input-line--myself">
                 <div class="b-input-line__label-wrapper">
                     <span class="b-input-line__label">Полный заказ будет доступен</span>
                 </div>
@@ -64,13 +58,13 @@ use FourPaws\Decorators\SvgDecorator;
                         <span class="b-icon b-icon--icon-cash">
                             <?= new SvgDecorator('icon-cash', 16, 12) ?>
                         </span>
-                        наличными
+                        <span class="b-input-line_pay-type--name">наличными</span>
                     </span>
                     <span class="b-input-line__pay-type">
                         <span class="b-icon b-icon--icon-bank">
                             <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
                         </span>
-                        банковской картой
+                        <span class="b-input-line_pay-type--name">банковской картой</span>
                     </span>
                 </div>
             </div>

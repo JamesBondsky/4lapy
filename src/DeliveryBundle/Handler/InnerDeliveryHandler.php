@@ -6,36 +6,61 @@
 
 namespace FourPaws\DeliveryBundle\Handler;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 
 class InnerDeliveryHandler extends DeliveryHandlerBase
 {
     protected $code = '4lapy_delivery';
 
+    /**
+     * InnerDeliveryHandler constructor.
+     * @param array $initParams
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     */
     public function __construct(array $initParams)
     {
         parent::__construct($initParams);
     }
 
-    public static function getClassTitle()
+    /**
+     * @return string
+     */
+    public static function getClassTitle(): string
     {
         return 'Доставка "Четыре лапы"';
     }
 
-    public static function getClassDescription()
+    /**
+     * @return string
+     */
+    public static function getClassDescription(): string
     {
         return 'Обработчик собственной доставки "Четыре лапы"';
     }
 
-    public function isCompatible(Shipment $shipment)
+    /**
+     * @param Shipment $shipment
+     * @return bool
+     */
+    public function isCompatible(Shipment $shipment): bool
     {
         if (!parent::isCompatible($shipment)) {
             return false;
@@ -44,20 +69,25 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         return true;
     }
 
+    /**
+     * @param Shipment $shipment
+     * @return IntervalCollection
+     * @throws SystemException
+     */
     public function getIntervals(Shipment $shipment): IntervalCollection
     {
         $result = new IntervalCollection();
 
-        $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment);
+        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment);
 
         $config = $this->getConfig();
         $intervalConfig = $config['MAIN']['ITEMS']['INTERVALS']['VALUE'];
+        /** @var array $intervalGroup */
         foreach ($intervalConfig as $intervalGroup) {
             if ($intervalGroup['ZONE_CODE'] !== $deliveryZone) {
                 continue;
             }
 
-            $intervalGroup['RULES'];
             foreach ($intervalGroup['INTERVALS'] as $intervalIndex => $interval) {
                 $ruleCollection = new IntervalRuleCollection();
                 foreach ($interval['RULES'] as $type => $values) {
@@ -77,7 +107,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
                     }
 
                     $ruleCollection = new IntervalRuleCollection(
-                        array_merge(
+                        \array_merge(
                             $ruleCollection->toArray(),
                             $this->intervalService->createRules($type, $ruleData)->toArray()
                         )
@@ -86,8 +116,8 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
                 $result->add(
                     (new Interval())->setFrom($interval['FROM'])
-                                    ->setTo($interval['TO'])
-                                    ->setRules($ruleCollection)
+                        ->setTo($interval['TO'])
+                        ->setRules($ruleCollection)
                 );
             }
         }
@@ -95,23 +125,31 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         return $result;
     }
 
-    protected function calculateConcrete(Shipment $shipment)
+    /**
+     * @param Shipment $shipment
+     *
+     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws NotFoundException
+     * @return CalculationResult
+     */
+    protected function calculateConcrete(Shipment $shipment): CalculationResult
     {
-        $result = parent::calculateConcrete($shipment);
-        if (!$result->isSuccess()) {
-            return $result;
-        }
+        $result = new CalculationResult();
 
+        /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $data = [];
-        $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
+        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, false);
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        $data = [];
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
-                $data['FREE_FROM'] = $this->config['FREE_FROM'][$deliveryZone];
+                $data['FREE_FROM'] = (int)$this->config['FREE_FROM'][$deliveryZone];
                 if ($basket->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
                 }
@@ -119,77 +157,38 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         } else {
             $result->addError(new Error('Не задана стоимость доставки'));
         }
+        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, true);
         $data['INTERVALS'] = $this->getIntervals($shipment);
-        $data['DELIVERY_ZONE'] = $this->deliveryService->getDeliveryZoneCode($shipment);
-
-        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+            $result->setData($data);
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
-
-            if ($this->canDeliverToday()) {
-                $result->setPeriodFrom(0);
-            } else {
-                $result->setPeriodFrom(1);
-            }
-            $result->setData($data);
-
             return $result;
         }
 
-        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
-            case DeliveryService::ZONE_1:
-                /**
-                 * условие доставки в эту зону - наличие на складе
-                 */
-                $availableStores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_STORE);
-                $delayStores = new StoreCollection();
-                break;
-            case DeliveryService::ZONE_2:
-                /**
-                 * условие доставки в эту зону - наличие в базовом магазине
-                 * условие отложенной доставки в эту зону - наличие на складе
-                 */
-                $stores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
-                $availableStores = $stores->getBaseShops();
-                $delayStores = $stores->getStores();
-                break;
-            default:
-                $result->addError(new Error('Доставка не работает для этой зоны'));
-
-                return $result;
+        $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
+        if ($availableStores->isEmpty()) {
+            $result->addError(new Error('Не найдено доступных складов'));
+            return $result;
         }
 
-        $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores);
+        $stockResult = static::getStocks($basket, $offers, $availableStores);
+
         $data['STOCK_RESULT'] = $stockResult;
         $result->setData($data);
-
-        if (!$stockResult->getUnavailable()->isEmpty()) {
-            $result->addError(new Error('Присутствуют товары не в наличии'));
-
-            return $result;
+        if ($stockResult->getOrderable()->isEmpty()) {
+            $result->addError(new Error('Отсутствуют товары в наличии'));
         }
-
-        if (!$stockResult->getDelayed()->isEmpty()) {
-            $result->setPeriodFrom($stockResult->getDeliveryDate()->diff(new \DateTime())->days);
-        } else {
-            if ($this->canDeliverToday()) {
-                $result->setPeriodFrom(0);
-            } else {
-                $result->setPeriodFrom(1);
-            }
-        }
-
-        /**
-         * Для выбора возможной даты доставки в оформлении заказа. По ТЗ +10 дней
-         */
-        $result->setPeriodTo($result->getPeriodFrom() + 10);
 
         return $result;
     }
 
-    protected function getConfigStructure()
+    /**
+     * @throws ArgumentException
+     * @return array
+     */
+    protected function getConfigStructure(): array
     {
         $result = parent::getConfigStructure();
 
@@ -199,43 +198,38 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $result['MAIN']['DESCRIPTION'] = 'Настройки интервалов';
 
         $result['MAIN']['ITEMS']['INTERVALS'] = [
-            'TYPE'    => 'DELIVERY_INTERVALS',
-            'NAME'    => 'Интервалы доставок',
+            'TYPE' => 'DELIVERY_INTERVALS',
+            'NAME' => 'Интервалы доставок',
             'DEFAULT' => [],
-            'ZONES'   => $zones,
+            'ZONES' => $zones,
         ];
 
         $result['PRICES'] = [
-            'TITLE'       => 'Стоимости доставок по зонам',
+            'TITLE' => 'Стоимости доставок по зонам',
             'DESCRIPTION' => 'Стоимости доставок по зонам',
-            'ITEMS'       => [],
+            'ITEMS' => [],
         ];
 
         $result['FREE_FROM'] = [
-            'TITLE'       => 'Пороги бесплатной доставки по зонам',
+            'TITLE' => 'Пороги бесплатной доставки по зонам',
             'DESCRIPTION' => 'Пороги бесплатной доставки по зонам',
-            'ITEMS'       => [],
+            'ITEMS' => [],
         ];
 
         foreach ($zones as $code => $zone) {
             $result['PRICES']['ITEMS'][$code] = [
-                'TYPE'    => 'NUMBER',
-                'NAME'    => 'Зона ' . $zone['NAME'],
+                'TYPE' => 'NUMBER',
+                'NAME' => 'Зона ' . $zone['NAME'],
                 'DEFAULT' => 0,
             ];
 
             $result['FREE_FROM']['ITEMS'][$code] = [
-                'TYPE'    => 'NUMBER',
-                'NAME'    => 'Зона ' . $zone['NAME'],
+                'TYPE' => 'NUMBER',
+                'NAME' => 'Зона ' . $zone['NAME'],
                 'DEFAULT' => 0,
             ];
         }
 
         return $result;
-    }
-
-    protected function canDeliverToday()
-    {
-        return date('H') < 14;
     }
 }

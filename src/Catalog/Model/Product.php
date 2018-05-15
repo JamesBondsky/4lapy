@@ -18,6 +18,7 @@ use FourPaws\BitrixOrm\Type\TextContent;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
 use JMS\Serializer\Annotation\Accessor;
@@ -25,16 +26,20 @@ use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/**
+ * Class Product
+ *
+ * @package FourPaws\Catalog\Model
+ */
 class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
     use HitMetaInfoAwareTrait;
 
-    const AVAILABILITY_DELIVERY = 'delivery';
-
-    const AVAILABILITY_PICKUP = 'pickup';
-
-    const AVAILABILITY_BY_REQUEST = 'byRequest';
+    public const AVAILABILITY_DELIVERY = 'd';
+    public const AVAILABILITY_PICKUP = 'p';
+    public const AVAILABILITY_BY_REQUEST = 'r';
 
     /**
      * @var bool
@@ -256,17 +261,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     //TODO Изображения
     protected $PROPERTY_IMG = [];
 
-    /**
-     * @var string[]
-     * @Type("array")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_LABEL = [];
-
-    /**
-     * @var HlbReferenceItemCollection
-     */
-    protected $label;
 
     /**
      * @var bool
@@ -511,27 +505,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var TextContent
      */
     protected $specifications;
-    
+
     /**
      * @var array
      */
     protected $PROPERTY_COMPOSITION = [];
-    
+
     /**
      * @var TextContent
      */
     protected $composition;
-    
+
     /**
      * @var array
      */
     protected $PROPERTY_NORMS_OF_USE = [];
-    
+
     /**
      * @var TextContent
      */
     protected $normsOfUse;
-    
+
     /**
      * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Offer>")
@@ -567,7 +561,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @var array
      * @Type("array<string>")
-     * @Accessor(getter="getDeliveryAvailability")
+     * @Accessor(getter="getFullDeliveryAvailabilityForFilter")
      * @Groups({"elastic"})
      */
     protected $deliveryAvailability;
@@ -576,14 +570,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var string
      */
     protected $PROPERTY_PACKING_COMBINATION = '';
-    
+
     /**
      * @var string
      * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
-    
+
     /**
      * @var bool
      * @Type("bool")
@@ -598,6 +592,16 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
 
+    /**
+     * @var array
+     */
+    protected $fullDeliveryAvailability;
+
+    /**
+     * BitrixArrayItemBase constructor.
+     *
+     * @param array $fields
+     */
     public function __construct(array $fields = [])
     {
         $fields['PROPERTY_SPECIFICATIONS_VALUE'] = $fields['~PROPERTY_SPECIFICATIONS_VALUE'] ?? [
@@ -620,7 +624,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withBrandId(int $id)
+    public function withBrandId(int $id): self
     {
         $this->PROPERTY_BRAND = $id;
 
@@ -674,7 +678,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withBrand(Brand $brand)
+    public function withBrand(Brand $brand): self
     {
         $this->brand = $brand;
         $this->PROPERTY_BRAND = $brand;
@@ -706,7 +710,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withForWhoXmlIds(array $xmlIds = [])
+    public function withForWhoXmlIds(array $xmlIds = []): self
     {
         $this->PROPERTY_FOR_WHO = $xmlIds;
         $this->forWho = null;
@@ -754,10 +758,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPetSizeXmlIds(array $xmlIds)
+    public function withPetSizeXmlIds(array $xmlIds): self
     {
         $this->petSize = null;
         $this->PROPERTY_PET_SIZE = $xmlIds;
+
         return $this;
     }
 
@@ -771,7 +776,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getCategory()
+    public function getCategory(): ?HlbReferenceItem
     {
         if ((null === $this->category) && $this->PROPERTY_CATEGORY) {
             $this->category = ReferenceUtils::getReference(
@@ -797,7 +802,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withSapCategoryXmlId(string $xmlId)
+    public function withSapCategoryXmlId(string $xmlId): self
     {
         $this->category = null;
         $this->PROPERTY_CATEGORY = $xmlId;
@@ -810,7 +815,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getPurpose()
+    public function getPurpose(): ?HlbReferenceItem
     {
         if ((null === $this->purpose) && $this->PROPERTY_PURPOSE) {
             $this->purpose = ReferenceUtils::getReference(
@@ -836,7 +841,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPurposeXmlId(string $xmlId)
+    public function withPurposeXmlId(string $xmlId): self
     {
         $this->purpose = null;
         $this->PROPERTY_PURPOSE = $xmlId;
@@ -875,7 +880,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPetAgeXmlIds(array $xmlIds)
+    public function withPetAgeXmlIds(array $xmlIds): self
     {
         $this->petAge = null;
         $this->PROPERTY_PET_AGE = $xmlIds;
@@ -915,7 +920,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPetAgeAdditionalXmlIds(array $xmlIds)
+    public function withPetAgeAdditionalXmlIds(array $xmlIds): self
     {
         $this->petAgeAdditional = null;
         $this->PROPERTY_PET_AGE_ADDITIONAL = $xmlIds;
@@ -928,7 +933,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getPetBreed()
+    public function getPetBreed(): ?HlbReferenceItem
     {
         if ((null === $this->petBreed) && $this->getPetBreedXmlId()) {
             $this->petBreed = ReferenceUtils::getReference(
@@ -954,7 +959,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPetBreedXmlId(string $xmlId)
+    public function withPetBreedXmlId(string $xmlId): self
     {
         $this->petBreed = null;
         $this->PROPERTY_PET_BREED = $xmlId;
@@ -967,7 +972,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getPetGender()
+    public function getPetGender(): ?HlbReferenceItem
     {
         if ((null === $this->petGender) && $this->getPetGenderXmlId()) {
             $this->petGender = ReferenceUtils::getReference(
@@ -993,54 +998,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPetGenderXmlId(string $xmlId)
+    public function withPetGenderXmlId(string $xmlId): self
     {
         $this->petGender = null;
         $this->PROPERTY_PET_GENDER = $xmlId;
-        return $this;
-    }
-
-    /**
-     * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItemCollection
-     */
-    public function getLabels(): HlbReferenceItemCollection
-    {
-        if (null === $this->label) {
-            $this->label = ReferenceUtils::getReferenceMulti(
-                Application::getHlBlockDataManager('bx.hlblock.label'),
-                $this->getLabelsXmlId()
-            );
-            /*
-             * TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
-             */
-
-            //TODO Сделать, чтобы это была отдельная коллекция объектов "Шильдик", а не просто элемент справочника.
-        }
-
-        return $this->label;
-    }
-
-    /**
-     * @return array|string[]
-     */
-    public function getLabelsXmlId(): array
-    {
-        $this->PROPERTY_LABEL = $this->PROPERTY_LABEL ?: [];
-        return $this->PROPERTY_LABEL;
-    }
-
-    /**
-     * @param array $xmlIds
-     *
-     * @return $this
-     */
-    public function withLabelsXmlIds(array $xmlIds)
-    {
-        $this->label = null;
-        $this->PROPERTY_LABEL = $xmlIds;
         return $this;
     }
 
@@ -1049,7 +1010,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      */
-    public function isSTM(): bool
+    public function isStm(): bool
     {
         return (bool)$this->PROPERTY_STM;
     }
@@ -1059,9 +1020,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withSTM(bool $isSTM = true)
+    public function withStm(bool $isSTM = true): self
     {
         $this->PROPERTY_STM = $isSTM;
+
         return $this;
     }
 
@@ -1071,7 +1033,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getCountry()
+    public function getCountry(): ?HlbReferenceItem
     {
         if ((null === $this->country) && $this->PROPERTY_COUNTRY) {
             $this->country = ReferenceUtils::getReference(
@@ -1089,6 +1051,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getCountryXmlId(): string
     {
         $this->PROPERTY_COUNTRY = $this->PROPERTY_COUNTRY ?: '';
+
         return $this->PROPERTY_COUNTRY;
     }
 
@@ -1097,10 +1060,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withCountryXmlId(string $xmlId)
+    public function withCountryXmlId(string $xmlId): self
     {
         $this->country = null;
         $this->PROPERTY_COUNTRY = $xmlId;
+
         return $this;
     }
 
@@ -1136,10 +1100,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withTradeNameXmlIds(array $xmlIds)
+    public function withTradeNameXmlIds(array $xmlIds): self
     {
         $this->tradeName = null;
         $this->PROPERTY_TRADE_NAME = $xmlIds;
+
         return $this;
     }
 
@@ -1167,6 +1132,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getMakersXmlIds(): array
     {
         $this->PROPERTY_MAKER = $this->PROPERTY_MAKER ?: [];
+
         return $this->PROPERTY_MAKER;
     }
 
@@ -1175,17 +1141,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withMakersXmlIds(array $xmlIds)
+    public function withMakersXmlIds(array $xmlIds): self
     {
         $this->maker = null;
         $this->PROPERTY_MAKER = $xmlIds;
+
         return $this;
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     *
      * @return HlbReferenceItemCollection
      */
     public function getManagersOfCategory(): HlbReferenceItemCollection
@@ -1206,6 +1175,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getManagersOfCategoryXmlIds(): array
     {
         $this->PROPERTY_MANAGER_OF_CATEGORY = $this->PROPERTY_MANAGER_OF_CATEGORY ?: [];
+
         return $this->PROPERTY_MANAGER_OF_CATEGORY;
     }
 
@@ -1214,17 +1184,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withManagersOfCategoryXmlIds(array $xmlIds)
+    public function withManagersOfCategoryXmlIds(array $xmlIds): self
     {
         $this->managerOfCategory = null;
         $this->PROPERTY_MANAGER_OF_CATEGORY = $xmlIds;
+
         return $this;
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     *
      * @return HlbReferenceItemCollection
      */
     public function getManufactureMaterials(): HlbReferenceItemCollection
@@ -1245,6 +1218,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getManufactureMaterialsXmlIds(): array
     {
         $this->PROPERTY_MANUFACTURE_MATERIAL = $this->PROPERTY_MANUFACTURE_MATERIAL ?: [];
+
         return $this->PROPERTY_MANUFACTURE_MATERIAL;
     }
 
@@ -1253,7 +1227,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withManufactureMaterialsXmlIds(array $xmlIds)
+    public function withManufactureMaterialsXmlIds(array $xmlIds): self
     {
         $this->manufactureMaterial = null;
         $this->PROPERTY_MANUFACTURE_MATERIAL = $xmlIds;
@@ -1261,9 +1235,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     *
      * @return HlbReferenceItemCollection
      */
     public function getClothesSeasons(): HlbReferenceItemCollection
@@ -1284,6 +1260,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getClothesSeasonsXmlIds(): array
     {
         $this->PROPERTY_SEASON_CLOTHES = $this->PROPERTY_SEASON_CLOTHES ?: [];
+
         return $this->PROPERTY_SEASON_CLOTHES;
     }
 
@@ -1292,10 +1269,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withClothesSeasonsXmlIds(array $xmlIds)
+    public function withClothesSeasonsXmlIds(array $xmlIds): self
     {
         $this->seasonClothes = null;
         $this->PROPERTY_SEASON_CLOTHES = $xmlIds;
+
         return $this;
     }
 
@@ -1314,9 +1292,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withLicenseRequired(bool $licenseRequired = true)
+    public function withLicenseRequired(bool $licenseRequired = false): self
     {
         $this->PROPERTY_LICENSE = $licenseRequired;
+
         return $this;
     }
 
@@ -1335,19 +1314,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withLowTemperatureRequired($isLowTemperature = true)
+    public function withLowTemperatureRequired($isLowTemperature = false): self
     {
         $this->PROPERTY_LOW_TEMPERATURE = $isLowTemperature;
+
         return $this;
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     *
      * @return null|HlbReferenceItem
      */
-    public function getPetType()
+    public function getPetType(): ?HlbReferenceItem
     {
         if ((null === $this->petType) && $this->PROPERTY_PET_TYPE) {
             $this->petType = ReferenceUtils::getReference(
@@ -1365,6 +1347,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getPetTypeXmlId(): string
     {
         $this->PROPERTY_PET_TYPE = $this->PROPERTY_PET_TYPE ?: '';
+
         return $this->PROPERTY_PET_TYPE;
     }
 
@@ -1373,10 +1356,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPetTypeXmlId(string $xmlId)
+    public function withPetTypeXmlId(string $xmlId): self
     {
         $this->petType = null;
         $this->PROPERTY_PET_TYPE = $xmlId;
+
         return $this;
     }
 
@@ -1386,7 +1370,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getPharmaGroup()
+    public function getPharmaGroup(): ?HlbReferenceItem
     {
         if ((null === $this->pharmaGroup) && $this->getPharmaGroupXmlId()) {
             $this->pharmaGroup = ReferenceUtils::getReference(
@@ -1404,6 +1388,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getPharmaGroupXmlId(): string
     {
         $this->PROPERTY_PHARMA_GROUP = $this->PROPERTY_PHARMA_GROUP ?: '';
+
         return $this->PROPERTY_PHARMA_GROUP;
     }
 
@@ -1412,10 +1397,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withPharmaGroupXmlId(string $xmlId)
+    public function withPharmaGroupXmlId(string $xmlId): self
     {
         $this->pharmaGroup = null;
         $this->PROPERTY_PHARMA_GROUP = $xmlId;
+
         return $this;
     }
 
@@ -1431,7 +1417,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getFeedSpecification()
+    public function getFeedSpecification(): ?HlbReferenceItem
     {
         if ((null === $this->feedSpecification) && $this->getFeedSpecificationXmlId()) {
             $this->feedSpecification = ReferenceUtils::getReference(
@@ -1450,6 +1436,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getFeedSpecificationXmlId(): string
     {
         $this->PROPERTY_FEED_SPECIFICATION = $this->PROPERTY_FEED_SPECIFICATION ?: '';
+
         return $this->PROPERTY_FEED_SPECIFICATION;
     }
 
@@ -1458,10 +1445,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withFeedSpecificationXmlId(string $xmlId)
+    public function withFeedSpecificationXmlId(string $xmlId): self
     {
         $this->feedSpecification = null;
         $this->PROPERTY_FEED_SPECIFICATION = $xmlId;
+
         return $this;
     }
 
@@ -1480,9 +1468,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withIsFood(bool $isFood = true)
+    public function withIsFood(bool $isFood = true): self
     {
         $this->PROPERTY_FOOD = $isFood;
+
         return $this;
     }
 
@@ -1492,7 +1481,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getConsistence()
+    public function getConsistence(): ?HlbReferenceItem
     {
         if ((null === $this->consistence) && $this->getConsistenceXmlId()) {
             $this->consistence = ReferenceUtils::getReference(
@@ -1518,7 +1507,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withConsistenceXmlId(string $xmlId)
+    public function withConsistenceXmlId(string $xmlId): self
     {
         $this->consistence = null;
         $this->PROPERTY_CONSISTENCE = $xmlId;
@@ -1549,6 +1538,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getFlavourXmlIds(): array
     {
         $this->PROPERTY_FLAVOUR = $this->PROPERTY_FLAVOUR ?: [];
+
         return $this->PROPERTY_FLAVOUR;
     }
 
@@ -1557,10 +1547,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withFlavourXmlIds(array $xmlIds)
+    public function withFlavourXmlIds(array $xmlIds): self
     {
         $this->flavour = null;
         $this->PROPERTY_FLAVOUR = $xmlIds;
+
         return $this;
     }
 
@@ -1590,6 +1581,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getFeaturesOfIngredientsXmlIds(): array
     {
         $this->PROPERTY_FEATURES_OF_INGREDIENTS = $this->PROPERTY_FEATURES_OF_INGREDIENTS ?: [];
+
         return $this->PROPERTY_FEATURES_OF_INGREDIENTS;
     }
 
@@ -1598,10 +1590,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withFeaturesOfIngredientsXmlIds(array $xmlIds)
+    public function withFeaturesOfIngredientsXmlIds(array $xmlIds): self
     {
         $this->featuresOfIngredients = null;
         $this->PROPERTY_FEATURES_OF_INGREDIENTS = $xmlIds;
+
         return $this;
     }
 
@@ -1631,6 +1624,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getProductFormsXmlIds(): array
     {
         $this->PROPERTY_PRODUCT_FORM = $this->PROPERTY_PRODUCT_FORM ?: [];
+
         return $this->PROPERTY_PRODUCT_FORM;
     }
 
@@ -1639,10 +1633,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return $this
      */
-    public function withProductFormsXmlIds(array $xmlIds)
+    public function withProductFormsXmlIds(array $xmlIds): self
     {
         $this->productForm = null;
         $this->PROPERTY_PRODUCT_FORM = $xmlIds;
+
         return $this;
     }
 
@@ -1654,7 +1649,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getTypesOfParasites()
+    public function getTypesOfParasites(): ?HlbReferenceItemCollection
     {
         if (null === $this->typeOfParasite) {
             $this->typeOfParasite = ReferenceUtils::getReferenceMulti(
@@ -1671,7 +1666,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getYmlName() : string
+    public function getYmlName(): string
     {
         return $this->PROPERTY_YML_NAME;
     }
@@ -1681,7 +1676,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getSalesNotes() : string
+    public function getSalesNotes(): string
     {
         return $this->PROPERTY_SALES_NOTES;
     }
@@ -1693,7 +1688,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getGroupId() : string
+    public function getGroupId(): string
     {
         return $this->PROPERTY_GROUP;
     }
@@ -1705,7 +1700,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getGroupName() : string
+    public function getGroupName(): string
     {
         return $this->PROPERTY_GROUP_NAME;
     }
@@ -1715,7 +1710,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      */
-    public function isProducedByHolderRequest() : bool
+    public function isProducedByHolderRequest(): bool
     {
         return (bool)(int)$this->PROPERTY_PRODUCED_BY_HOLDER;
     }
@@ -1725,40 +1720,49 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return TextContent
      */
-    public function getSpecifications() : TextContent
+    public function getSpecifications(): TextContent
     {
         if (!($this->specifications instanceof TextContent)) {
+            if (empty($this->PROPERTY_SPECIFICATIONS)) {
+                $this->PROPERTY_SPECIFICATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+            }
             $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
         }
 
         return $this->specifications;
     }
-    
+
     /**
      * Возвращает состав товара.
      *
      * @return TextContent
      */
-    public function getComposition() : TextContent
+    public function getComposition(): TextContent
     {
         if (!($this->composition instanceof TextContent)) {
+            if (empty($this->PROPERTY_COMPOSITION)) {
+                $this->PROPERTY_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+            }
             $this->composition = new TextContent($this->PROPERTY_COMPOSITION);
         }
-        
+
         return $this->composition;
     }
-    
+
     /**
      * Возвращает нормы.
      *
      * @return TextContent
      */
-    public function getNormsOfUse() : TextContent
+    public function getNormsOfUse(): TextContent
     {
         if (!($this->normsOfUse instanceof TextContent)) {
+            if (empty($this->PROPERTY_NORMS_OF_USE)) {
+                $this->PROPERTY_NORMS_OF_USE = ['TYPE' => 'text', 'TEXT' => ''];
+            }
             $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE);
         }
-        
+
         return $this->normsOfUse;
     }
 
@@ -1767,7 +1771,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string[]
      */
-    public function getSuggest()
+    public function getSuggest(): array
     {
         if (null === $this->suggest) {
             $fullName = $this->getName();
@@ -1787,7 +1791,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $suggest = array_filter(
                 $suggest,
                 function ($token) {
-                    return trim($token) != '' && \strlen($token) >= 3;
+                    return \trim($token) !== '' && \strlen($token) >= 3;
                 }
             );
 
@@ -1799,47 +1803,52 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->suggest = array_values(array_unique($suggest));
         }
 
-        return $this->suggest;
+        return $this->suggest ?? [];
     }
 
     /**
      * Проверяет, под заказ данный товар или нет
      *
      * @return bool
+     *
+     * @throws ApplicationCreateException
      */
     public function isByRequest(): bool
     {
-        $result = true;
+        $result = false;
         /** @var Offer $offer */
         foreach ($this->getOffers() as $offer) {
-            $result &= $offer->isByRequest();
+            $result |= $offer->isByRequest();
         }
 
         return $result;
     }
-    
+
     /**
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
-     * @return Collection|Offer[]
+     * @param bool $skipZeroPrice
+     * @param bool $reload
+     * @param array $additionalFilter
+     * @return Collection
      */
-    public function getOffers(): Collection
+    public function getOffers($skipZeroPrice = true, bool $reload = false, array $additionalFilter = []): Collection
     {
-        if (null === $this->offers) {
-            $this->offers = new ArrayCollection(
-                array_values(
-                    (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                        ->withOrder(['CATALOG_WEIGHT' => 'ASC'])
-                        ->exec()
-                        ->toArray()
-                )
-            );
-    
+        if (null === $this->offers || $reload) {
+            $offerQuery =  (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                ->withOrder(['CATALOG_WEIGHT' => 'ASC']);
+            if(!empty($additionalFilter)){
+                foreach ($additionalFilter as $key => $value) {
+                    $offerQuery->withFilterParameter($key, $value);
+                }
+            }
+            $offers = new ArrayCollection(array_values($offerQuery->exec()->toArray()));
+
             /**
              * @var Offer $offer
              */
-            foreach ($this->offers as $offer) {
+            foreach ($offers as $i => $offer) {
                 try {
                     $offer->setProduct($this);
                 } catch (\InvalidArgumentException $e) {
@@ -1847,12 +1856,18 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                      * Никогда не должна возникнуть такая ситуация
                      */
                 }
+                if ($skipZeroPrice && !$offer->getPrice()) {
+                    unset($offers[$i]);
+                    continue;
+                }
             }
+
+            $this->offers = $offers;
         }
 
         return $this->offers;
     }
-    
+
     /**
      * @param array|ArrayCollection $offers
      */
@@ -1862,6 +1877,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $offers = new ArrayCollection($offers);
         }
         $this->offers = $offers;
+    }
+
+    public function addOffer($offer)
+    {
+        if (!($this->offers instanceof ArrayCollection)) {
+            $this->offers = new ArrayCollection();
+        }
+        $this->offers->add($offer);
     }
 
     /**
@@ -1885,45 +1908,94 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return array
-     */
-    public function getActions()
-    {
-        // @todo возвращать коллекцию акций, когда они будут реализованы
-        return [];
-    }
-
-    /**
      * @return bool
      */
     public function hasActions(): bool
     {
-        return !empty($this->getActions());
-    }
-
-    /**
-     * @return array
-     */
-    public function getDeliveryAvailability(): array
-    {
-        // @todo учитывать региональные ограничения
-        $result = [self::AVAILABILITY_PICKUP];
-        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator())) {
-            $result[] = self::AVAILABILITY_DELIVERY;
-        }
-        if ($this->isByRequest()) {
-            $result[] = self::AVAILABILITY_BY_REQUEST;
+        $result = false;
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            $result |= $offer->getOldPrice() > $offer->getPrice();
         }
 
         return $result;
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @return array
+     */
+    public function getFullDeliveryAvailability(): array
+    {
+        if (null === $this->fullDeliveryAvailability) {
+            $isByRequest = $this->isByRequest();
+
+            $canDeliver = !($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator()
+                || $this->isDeliveryAreaRestrict());
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $zones = array_keys($deliveryService->getAllZones());
+            foreach ($zones as $zone) {
+                $result = [];
+                foreach ($deliveryService->getByZone($zone) as $deliveryCode) {
+                    switch (true) {
+                        case $canDeliver && \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
+                            $result[] = static::AVAILABILITY_DELIVERY;
+                            break;
+                        case $deliveryCode === DeliveryService::INNER_PICKUP_CODE:
+                        case $canDeliver && $deliveryCode === DeliveryService::DPD_PICKUP_CODE:
+                            $result[] = static::AVAILABILITY_PICKUP;
+                            break;
+                    }
+                }
+                if ($isByRequest && !empty($result)) {
+                    $result[] = static::AVAILABILITY_BY_REQUEST;
+                }
+                $this->fullDeliveryAvailability[$zone] = $result;
+            }
+        }
+
+        return $this->fullDeliveryAvailability;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @return array
+     */
+    public function getFullDeliveryAvailabilityForFilter(): array
+    {
+        $result = [];
+        /**
+         * @var string $zone
+         * @var array $deliveries
+         */
+        foreach ($this->getFullDeliveryAvailability() as $zone => $deliveries) {
+            foreach ($deliveries as $delivery) {
+                $result[] = $zone . '_' . $delivery;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @return array
+     */
+    public function getDeliveryAvailability(): array
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        return $this->getFullDeliveryAvailability()[$deliveryService->getCurrentDeliveryZone()] ?? [];
+    }
+
+    /**
+     * @throws ApplicationCreateException
      * @return bool
      */
     public function isDeliveryAvailable(): bool
     {
-        return in_array(
+        return \in_array(
             self::AVAILABILITY_DELIVERY,
             $this->getDeliveryAvailability(),
             true
@@ -1931,11 +2003,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @throws ApplicationCreateException
      * @return bool
      */
     public function isPickupAvailable(): bool
     {
-        return in_array(
+        return \in_array(
             self::AVAILABILITY_PICKUP,
             $this->getDeliveryAvailability(),
             true
@@ -1979,11 +2052,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
         return $this;
     }
-    
+
     /**
      * @return string
      */
-    public function getWeightCapacityPacking() : string
+    public function getWeightCapacityPacking(): string
     {
         return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
     }

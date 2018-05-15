@@ -1,6 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\ConfirmPayment;
+
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class Item
@@ -80,6 +86,17 @@ class Item
     protected $offerName = '';
 
     /**
+     * Содержит количество единиц торгового предложения в заказе.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("Fact")
+     * @Serializer\Type("int")
+     *
+     * @var string
+     */
+    protected $quantity = 0;
+
+    /**
      * @return int
      */
     public function getOfferXmlId(): int
@@ -95,6 +112,7 @@ class Item
     public function setOfferXmlId(int $offerXmlId): Item
     {
         $this->offerXmlId = $offerXmlId;
+
         return $this;
     }
 
@@ -113,6 +131,7 @@ class Item
     public function setPrice(float $price): Item
     {
         $this->price = $price;
+
         return $this;
     }
 
@@ -131,6 +150,7 @@ class Item
     public function setSumPrice(float $sumPrice): Item
     {
         $this->sumPrice = $sumPrice;
+
         return $this;
     }
 
@@ -149,6 +169,7 @@ class Item
     public function setVatPrice(float $vatPrice): Item
     {
         $this->vatPrice = $vatPrice;
+
         return $this;
     }
 
@@ -167,6 +188,7 @@ class Item
     public function setVatRate(float $vatRate): Item
     {
         $this->vatRate = $vatRate;
+
         return $this;
     }
 
@@ -185,6 +207,27 @@ class Item
     public function setOfferName(string $offerName): Item
     {
         $this->offerName = $offerName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getQuantity(): string
+    {
+        return $this->quantity;
+    }
+
+    /**
+     * @param string $quantity
+     *
+     * @return $this
+     */
+    public function setQuantity(string $quantity): Item
+    {
+        $this->quantity = $quantity;
+
         return $this;
     }
 }

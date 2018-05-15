@@ -20,31 +20,60 @@ use JMS\Serializer\Annotation\XmlRoot;
  */
 class Referral
 {
+    public const IS_MODERATED = ['Не указано', '1'];
+    public const SUCCESS_MODERATE = ['Да', '200000'];
+    public const CANCEL_MODERATE = ['Нет', '200001'];
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("card_number")
      */
     public $cardNumber;
-    
+
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("referral_number")
      */
     public $referralNumber;
-    
+
     /**
      * @XmlElement(cdata=false)
-     * @Type("string")
+     * @Type("float")
      * @SerializedName("sum_referral_bonus")
      */
     public $sumReferralBonus;
-    
+
     /**
+     * Актуальность реферала
+     * 1 - Не указано, 2000 - Да, 2001 - Нет
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("is_questionnaire_actual")
      */
     public $isQuestionnaireActual;
+
+    /**
+     * @return bool
+     */
+    public function isModerated(): bool
+    {
+        return \in_array($this->isQuestionnaireActual, static::IS_MODERATED, true);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSuccessModerate(): bool
+    {
+        return \in_array($this->isQuestionnaireActual, static::SUCCESS_MODERATE, true);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCancelModerate(): bool
+    {
+        return \in_array($this->isQuestionnaireActual, static::CANCEL_MODERATE, true);
+    }
 }

@@ -6,27 +6,55 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\AddDaysRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use Psr\Log\LoggerAwareInterface;
 
-class IntervalService
+/**
+ * Class IntervalService
+ *
+ * @package FourPaws\DeliveryBundle\Service
+ */
+class IntervalService implements LoggerAwareInterface
 {
-    const DELIVERY_INTERVALS = [
-        '01' => '09:00-18:00',
-        '02' => '18:00-24:00',
-        '03' => '08:00-12:00',
-        '04' => '12:00-16:00',
-        '05' => '16:00-20:00',
-        '06' => '20:00-24:00',
-        '07' => '15:00-21:00',
+    use LazyLoggerAwareTrait;
+
+    public const DELIVERY_INTERVALS = [
+        '1' => '09:00-18:00',
+        '2' => '18:00-00:00',
+        '3' => '08:00-12:00',
+        '4' => '12:00-16:00',
+        '5' => '16:00-20:00',
+        '6' => '20:00-00:00',
+        '7' => '15:00-21:00',
     ];
+
+    /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
+    /**
+     * IntervalService constructor.
+     * @param DeliveryService $deliveryService
+     */
+    public function __construct(DeliveryService $deliveryService)
+    {
+        $this->deliveryService = $deliveryService;
+    }
 
     /**
      * @param string $type
      * @param array $data
-     *
      * @throws NotFoundException
      * @return BaseRule
      */
@@ -40,20 +68,60 @@ class IntervalService
                     ->setValue($data['VALUE'] ?? 0);
         }
 
-        throw new NotFoundException(sprintf('Rule type %s not found', $type));
+        throw new NotFoundException(
+            \sprintf('Rule type %s not found', $type)
+        );
     }
 
     /**
      * @param string $type
      * @param array $data
-     * @throws NotFoundException
+     *
      * @return IntervalRuleCollection
      */
     public function createRules(string $type, array $data): IntervalRuleCollection
     {
         $result = new IntervalRuleCollection();
         foreach ($data as $item) {
-            $result->add($this->createRule($type, $item));
+            try {
+                $result->add($this->createRule($type, $item));
+            } catch (NotFoundException $e) {
+                $this->logger->error('Unknown interval rule type', ['type' => $type]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param DeliveryResultInterface $delivery
+     * @throws NotFoundException
+     * @return Interval
+     */
+    public function getFirstInterval(DeliveryResultInterface $delivery): Interval
+    {
+        $result = null;
+
+        $intervals = $delivery->getIntervals();
+        if ($delivery instanceof DeliveryResultInterface) {
+            $min = null;
+
+            $tmpDelivery = clone $delivery;
+            /** @var Interval $interval */
+            foreach ($intervals as $i => $interval) {
+                $tmpDelivery->setSelectedInterval($interval);
+
+                if ((null === $min) || $min > $tmpDelivery->getIntervalOffset()) {
+                    $result = $interval;
+                    $min = $tmpDelivery->getIntervalOffset();
+                }
+            }
+        } else {
+            $result = $intervals->first();
+        }
+
+        if (!$result instanceof Interval) {
+            throw new NotFoundException('No intervals found');
         }
 
         return $result;
@@ -66,9 +134,12 @@ class IntervalService
      */
     public function getIntervalCode(string $interval): string
     {
-        $code = array_search($interval, static::DELIVERY_INTERVALS, true);
+        $code = \array_search($interval, static::DELIVERY_INTERVALS, true);
+
         if (false === $code) {
-            throw new NotFoundException(sprintf('Interval %s not found', $interval));
+            throw new NotFoundException(
+                \sprintf('Interval %s not found', $interval)
+            );
         }
 
         return $code;
@@ -81,8 +152,12 @@ class IntervalService
      */
     public function getIntervalByCode(string $code): string
     {
+        $code = trim($code, '0');
+
         if (!isset(static::DELIVERY_INTERVALS[$code])) {
-            throw new NotFoundException(sprintf('Interval with code %s not found', $code));
+            throw new NotFoundException(
+                \sprintf('Interval with code %s not found', $code)
+            );
         }
 
         return static::DELIVERY_INTERVALS[$code];

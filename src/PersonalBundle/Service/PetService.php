@@ -6,7 +6,6 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -19,6 +18,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Repository\PetRepository;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -39,13 +39,13 @@ class PetService
      * @var PetRepository
      */
     private $petRepository;
-    
+
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
-    
+
     /** @var ManzanaService $currentUser */
     private $manzanaService;
-    
+
     /**
      * PetService constructor.
      *
@@ -60,17 +60,15 @@ class PetService
         PetRepository $petRepository,
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaService $manzanaService
-    )
-    {
-        $this->petRepository  = $petRepository;
-        $this->currentUser    = $currentUserProvider;
+    ) {
+        $this->petRepository = $petRepository;
+        $this->currentUser = $currentUserProvider;
         $this->manzanaService = $manzanaService;
     }
 
     /**
      * @param array $data
      *
-     * @return bool
      * @throws EmptyEntityClass
      * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
@@ -78,42 +76,30 @@ class PetService
      * @throws InvalidIdentifierException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws ApplicationCreateException
      * @throws ValidationException
      * @throws BitrixRuntimeException
-     * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
-    public function add(array $data) : bool
+    public function add(array $data): bool
     {
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
         if (!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
+        } else {
             unset($data['UF_PHOTO']);
         }
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
         $this->petRepository->setEntity($entity);
-        $res = $this->petRepository->create();
-        if ($res) {
-            $this->updateManzanaPets();
-
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $entity->getUserId());
-            }
-        }
-        
-        return $res;
+        return $this->petRepository->create();
     }
 
     /**
+     * @param int|User $user
+     *
      * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
@@ -123,11 +109,16 @@ class PetService
      * @throws ServiceCircularReferenceException
      * @throws ObjectPropertyException
      */
-    protected function updateManzanaPets(): void
+    public function updateManzanaPets($user = null): void
     {
-        $types     = [];
+        $types = [];
 
-        $pets = $this->getCurUserPets();
+        if ($user !== null) {
+            $pets = $this->getUserPets($user);
+        } else {
+            $pets = $this->getCurUserPets();
+        }
+
         if (!$pets->isEmpty()) {
             /** @var Pet $pet */
             foreach ($pets as $pet) {
@@ -135,7 +126,6 @@ class PetService
             }
         }
 
-        $client = null;
         try {
             $contactId = $this->manzanaService->getContactIdByUser();
             $client = new Client();
@@ -145,10 +135,8 @@ class PetService
             $this->currentUser->setClientPersonalDataByCurUser($client);
         }
 
-        if ($client instanceof Client) {
-            $this->setClientPets($client, $types);
-            $this->manzanaService->updateContactAsync($client);
-        }
+        $this->setClientPets($client, $types);
+        $this->manzanaService->updateContactAsync($client);
     }
 
     /**
@@ -159,33 +147,53 @@ class PetService
      * @throws ServiceCircularReferenceException
      * @return ArrayCollection
      */
-    public function getCurUserPets() : ArrayCollection
+    public function getCurUserPets(): ArrayCollection
     {
         return $this->petRepository->findByCurUser();
     }
-    
+
+    /**
+     * @param User|int $user
+     *
+     * @throws ObjectPropertyException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @return ArrayCollection
+     */
+    public function getUserPets($user): ArrayCollection
+    {
+        return $this->petRepository->findByUser($user);
+    }
+
     /**
      * @param Client $client
      * @param array  $types
      */
     public function setClientPets(&$client, array $types): void
     {
-        /** @todo set actual types */
-        $baseTypes        = [
+        $baseTypes = [
             'ptitsy',
             'koshki',
             'sobaki',
             'ryby',
             'gryzuny',
             'ptitsy-gryzuny',
+            '90000001',
             'koshki-sobaki',
+            '3@11',
         ];
-        $client->ffBird   = \in_array('ptitsy', $types, true) || \in_array('ptitsy-gryzuny', $types, true) ? 1 : 0;
-        $client->ffCat    = \in_array('koshki', $types, true) || \in_array('koshki-sobaki', $types, true) ? 1 : 0;
-        $client->ffDog    = \in_array('sobaki', $types, true) || \in_array('koshki-sobaki', $types, true) ? 1 : 0;
-        $client->ffFish   = \in_array('ryby', $types, true) ? 1 : 0;
-        $client->ffRodent = \in_array('gryzuny', $types, true) || \in_array('ptitsy-gryzuny', $types, true) ? 1 : 0;
-        $others           = 0;
+        $client->ffBird = \in_array('ptitsy', $types, true) || \in_array('ptitsy-gryzuny', $types,
+            true) || \in_array('90000001', $types, true) ? 1 : 0;
+        $client->ffCat = \in_array('koshki', $types, true) || \in_array('koshki-sobaki', $types,
+            true) || \in_array('3@11', $types, true) ? 1 : 0;
+        $client->ffDog = \in_array('sobaki', $types, true) || \in_array('koshki-sobaki', $types,
+            true) || \in_array('3@11', $types, true) ? 1 : 0;
+        $client->ffFish = \in_array('ryby', $types, true) ? 1 : 0;
+        $client->ffRodent = \in_array('gryzuny', $types, true) || \in_array('ptitsy-gryzuny', $types,
+            true) || \in_array('90000001', $types, true) ? 1 : 0;
+        $others = 0;
         if (\is_array($types) && !empty($types)) {
             foreach ($types as $type) {
                 if (!\in_array($type, $baseTypes, true)) {
@@ -193,7 +201,6 @@ class PetService
                     break;
                 }
             }
-            
         }
         $client->ffOthers = $others;
     }
@@ -208,17 +215,23 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws ApplicationCreateException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
-     * @return bool
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
-    public function update(array $data) : bool
+    public function update(array $data): bool
     {
+        if (empty($data['UF_PHOTO_TMP'])) {
+            unset($data['UF_PHOTO']);
+            $this->petRepository->addFileList(['UF_PHOTO' => 'skip']);
+        } else {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
+        }
+
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
 
@@ -227,29 +240,11 @@ class PetService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
-        }
-        if (!empty($data['UF_PHOTO_TMP'])) {
-            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
-        }
-        else{
-            unset($data['UF_PHOTO']);
+        if ($entity->getUserId() === 0) {
+            $entity->setUserId($updateEntity->getUserId());
         }
 
-        $res = $this->petRepository->setEntity($entity)->update();
-        if ($res) {
-            $this->updateManzanaPets();
-
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $updateEntity->getUserId());
-            }
-        }
-        
-        return $res;
+        return $this->petRepository->setEntity($entity)->update();
     }
 
     /**
@@ -261,43 +256,30 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws ApplicationCreateException
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
-     * @return bool
      * @throws ObjectPropertyException
      * @throws \Exception
+     * @return bool
      */
-    public function delete(int $id) : bool
+    public function delete(int $id): bool
     {
         $deleteEntity = $this->getById($id);
         if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        $res = $this->petRepository->delete($id);
-        if ($res) {
-            $this->updateManzanaPets();
-
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('pet_' . $deleteEntity->getUserId());
-            }
-        }
-        
-        return $res;
+        return $this->petRepository->delete($id);
     }
 
     /**
      * @param int $id
      *
-     * @return Pet|BaseEntity
      * @throws ObjectPropertyException
      * @throws \Exception
      * @throws NotFoundException
+     * @return BaseEntity|Pet
      */
     public function getById(int $id): Pet
     {

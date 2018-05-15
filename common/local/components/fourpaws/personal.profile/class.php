@@ -19,12 +19,12 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -60,25 +60,26 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws ServiceNotFoundException
      * @throws SystemException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
      */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
         try {
             $container = App::getInstance()->getContainer();
-        } catch (ApplicationCreateException $e) {
-            $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+            $this->ajaxMess = $container->get('ajax.mess');
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+            try {
+                $logger = LoggerFactory::create('component');
+                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
-        $this->ajaxMess = $container->get('ajax.mess');
     }
 
     /**
@@ -101,7 +102,17 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return null;
         }
 
-        $instance = Application::getInstance();
+        try {
+            $instance = Application::getInstance();
+        } catch (SystemException $e) {
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
+            return null;
+        }
 
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
             ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
@@ -137,15 +148,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
             ];
 
-            $this->includeComponentTemplate();
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:profile:'. $curUser->getId(),
+                'user:'. $curUser->getId()
+            ]);
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
-                $tagCache->registerTag(sprintf('profile_%s', $curUser->getId()));
-                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
-                $tagCache->endTagCache();
-            }
+            $this->includeComponentTemplate();
         }
 
         return true;
@@ -162,16 +170,19 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
         try {
             $curUser = $this->currentUserProvider->getCurrentUser();
-        }
-        catch (NotAuthorizedException $e){
+        } catch (NotAuthorizedException $e) {
             return $this->ajaxMess->getNeedAuthError();
         } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
-        if($userId !== $curUser->getId()){
+        if ($userId !== $curUser->getId()) {
             return $this->ajaxMess->getSecurityError();
         }
 
@@ -184,7 +195,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $oldPhone = $request->get('oldPhone', '');
         try {
             $phone = PhoneHelper::normalizePhone($phone);
-            if(!empty($oldPhone)){
+            if (!empty($oldPhone)) {
                 $oldPhone = PhoneHelper::normalizePhone($oldPhone);
             }
         } catch (WrongPhoneNumberException $e) {
@@ -211,44 +222,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         $data = [
             'UF_PHONE_CONFIRMED' => true,
+            'PERSONAL_PHONE' => $phone
         ];
+
         try {
+            /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    /** Очистка кеша */
-                    $instance = Application::getInstance();
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('profile_' . $userId);
-                }
+                TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
 
-                try {
-                    /** @var ManzanaService $manzanaService */
-                    $manzanaService = $container->get('manzana.service');
-                    $client = null;
-                    if (empty($oldPhone)) {
-                        $client = new Client();
-                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                    } else {
-                        try {
-                            $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
-                            $client = new Client();
-                            $client->contactId = $contactId;
-                            $client->phone = $phone;
-                        } catch (ManzanaServiceException $e) {
-                            $client = new Client();
-                            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                        } catch (WrongPhoneNumberException $e) {
-                            return $this->ajaxMess->getWrongPhoneNumberException();
-                        }
-                    }
+                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
 
-                    if ($client instanceof Client) {
-                        $manzanaService->updateContactAsync($client);
-                    }
-                }
-                catch(\Exception $e){
-                    $logger = LoggerFactory::create('manzana');
-                    $logger->error('manzana error - '.$e->getMessage());
+                if (!empty($oldPhone)) {
+                    //Посылаем смс о смененном номере телефона
+                    $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
+                    $smsService = $container->get('sms.service');
+                    $smsService->sendSms($text, $oldPhone);
                 }
 
                 return JsonSuccessResponse::create('Телефон верифицирован');
@@ -282,8 +270,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             if (!$res) {
                 return $this->ajaxMess->getSmsSendErrorException();
             }
-        } catch (SmsSendErrorException $e) {
-            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (\RuntimeException|\Exception $e) {
@@ -300,6 +286,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxGet(Request $request): JsonResponse
     {
+        $userId = (int)$request->get('ID', 0);
         $phone = $request->get('phone', '');
         $step = $request->get('step', '');
         /** @noinspection PhpUnusedLocalVariableInspection */
@@ -316,7 +303,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         switch ($step) {
             case 'confirm':
-                $mess = $this->ajaxGetConfirm($phone, (int)$request->get('ID', 0));
+                $mess = $this->ajaxGetConfirm($phone, $userId);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
                 }
@@ -351,16 +338,19 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     {
         try {
             $curUser = $this->currentUserProvider->getCurrentUser();
-        }
-        catch (NotAuthorizedException $e){
+        } catch (NotAuthorizedException $e) {
             return $this->ajaxMess->getNeedAuthError();
         } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
-        if($id !== $curUser->getId()){
+        if ($id !== $curUser->getId()) {
             return $this->ajaxMess->getSecurityError();
         }
 
@@ -378,37 +368,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
         try {
             $container = App::getInstance()->getContainer();
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $user = $userRepository->find($id);
 
-            $data = ['PERSONAL_PHONE' => $phone];
-            $oldPhone = '';
-            if ($user !== null) {
-                $oldPhone = $user->getPersonalPhone();
-            }
-            if ($oldPhone !== $phone) {
-                $data['UF_PHONE_CONFIRMED'] = false;
-            }
-            $res = $userRepository->updateData($id, $data);
-            if (!$res) {
-                return $this->ajaxMess->getUpdateError();
-            }
-
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('profile_' . $id);
-            }
-
-            if (!empty($oldPhone)) {
-                //Посылаем смс о смененном номере телефона
-                $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
-                $smsService = $container->get('sms.service');
-                $smsService->sendSms($text, $oldPhone);
-            }
-
-            $mess = 'Телефон обновлен';
+            $mess = 'Начато обновление телефона';
 
             try {
                 /** @var ConfirmCodeService $confirmService */
@@ -417,22 +378,28 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 if (!$res) {
                     return $this->ajaxMess->getSmsSendErrorException();
                 }
-            } catch (SmsSendErrorException $e) {
-                return $this->ajaxMess->getSmsSendErrorException();
             } catch (WrongPhoneNumberException $e) {
                 return $this->ajaxMess->getWrongPhoneNumberException();
             } catch (\RuntimeException|\Exception $e) {
                 return $this->ajaxMess->getSystemError();
             }
         } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getUpdateError($e->getMessage());
         }
 

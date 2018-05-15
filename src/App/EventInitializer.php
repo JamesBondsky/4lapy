@@ -14,6 +14,8 @@ use FourPaws\SapBundle\Subscriber\BitrixEvents;
 use FourPaws\Search\EventHandlers as SearchEventHandlers;
 use FourPaws\UserBundle\EventController\Event as UserEvent;
 use FourPaws\UserProps\Event as UserPropLocationEvent;
+use FourPaws\PersonalBundle\EventController\Event as PersonalEvent;
+use FourPaws\StoreBundle\EventController\Event as StoreEvent;
 use Generator;
 use ReflectionException;
 use RuntimeException;
@@ -39,6 +41,8 @@ final class EventInitializer
         BitrixEvents::class,
         MobileApiUserEvent::class,
         CatalogEvent::class,
+        PersonalEvent::class,
+        StoreEvent::class
     ];
 
     /**

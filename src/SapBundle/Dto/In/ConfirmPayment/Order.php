@@ -1,8 +1,14 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\ConfirmPayment;
 
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
+
 
 /**
  * Class Order

@@ -43,26 +43,65 @@ class StoreCollection extends BaseCollection
     }
 
     /**
-     * @return array
+     * @param StoreCollection $stores
+     * @return StoreCollection
      */
-    public function getTotalSchedule(): array
+    public function excludeStores(StoreCollection $stores): StoreCollection
     {
-        /** @var Store $item */
-        $from = null;
-        $to = null;
-        foreach ($this->getIterator() as $item) {
-            $formattedSchedule = $item->getFormattedSchedule();
-            if ((null === $from) || ($formattedSchedule['from'] < $from)) {
-                $from = $formattedSchedule['from'];
+        $filter = function (
+            /** @noinspection PhpUnusedParameterInspection */
+            string $key, Store $store) use ($stores) {
+            return $stores->hasStore($store);
+        };
+        $result = new static();
+        /** @var Store $store */
+        foreach ($this->getIterator() as $store) {
+            if ($this->exists($filter)) {
+                continue;
             }
-            if ((null === $to) || ($formattedSchedule['to'] > $to)) {
-                $to = $formattedSchedule['to'];
-            }
+
+            $result[$store->getXmlId()] = $store;
         }
 
-        return [
-            'from' => $from,
-            'to'   => $to,
-        ];
+        return $result;
+    }
+
+    /**
+     * @param Store $store
+     *
+     * @return StoreCollection
+     */
+    public function excludeStore(Store $store): StoreCollection
+    {
+       return $this->filter(function (Store $existingStore) use ($store) {
+           return $existingStore->getXmlId() !== $store->getXmlId();
+       });
+    }
+
+    /**
+     * @param Store $store
+     * @return bool
+     */
+    public function hasStore(Store $store): bool
+    {
+        return !$this->filter(function (Store $currentStore) use ($store) {
+            return $currentStore->getXmlId() === $store->getXmlId();
+        })->isEmpty();
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getXmlIds(): array
+    {
+        $result = [];
+        /** @var Store $item */
+        foreach ($this->getIterator() as $item) {
+            $xmlId = $item->getXmlId();
+            $result[$xmlId] = $xmlId;
+        }
+
+        sort($result);
+        return $result;
     }
 }

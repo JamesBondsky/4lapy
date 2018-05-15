@@ -59,7 +59,7 @@ abstract class HlbItemBase implements ItemInterface, ToArrayInterface
      */
     public function getName(): string
     {
-        return $this->UF_NAME;
+        return $this->UF_NAME ?? '';
     }
 
     /**

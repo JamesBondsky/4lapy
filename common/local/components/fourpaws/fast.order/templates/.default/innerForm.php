@@ -53,13 +53,12 @@ if ($request->offsetExists('phone')) {
 ?>
 <div class="b-popup-one-click__close-bar">
     <a class="b-popup-one-click__close js-close-popup" href="javascript:void(0)" title="Закрыть"></a>
-    <h1 class="b-title b-title--one-click b-title--one-click-head">Быстрый заказ</h1>
+    <h1 class="b-title b-title--one-click b-title--one-click-head">Заказ в один клик</h1>
 </div>
 <form class="b-popup-one-click__form js-form-validation js-phone js-popup-buy-one-click"
       data-url="/ajax/sale/fast_order/create/" method="get">
     <input type="hidden" name="type" value="<?= $requestType ?>">
-    <p class="b-popup-one-click__description">Укажите ваше имя и телефон, мы вам перезвоним, чтобы уточнить и
-        оформить заказ</p>
+    <p class="b-popup-one-click__description">Укажите ваше имя и номер телефона, по которому менеджер нашего магазина свяжется с вами для уточнения деталей заказа</p>
     <div class="b-popup-one-click__input-block">
         <label class="b-popup-one-click__label" for="one-click-name">Имя</label>
         <div class="b-input b-input--recall">
@@ -90,6 +89,9 @@ if ($request->offsetExists('phone')) {
         foreach ($orderableItems as $basketItem) {
             $i++;
             $image = $component->getImage($basketItem->getProductId());
+            if($image !== null){
+                $imageSrc = $image->getSrc();
+            }
             $offer = $component->getOffer((int)$basketItem->getProductId());
             $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             <div class="b-item-shopping b-item-shopping--one-click <?= $countItems === $i ? ' b-item-shopping--last' : '' ?> js-remove-shopping">
@@ -109,7 +111,7 @@ if ($request->offsetExists('phone')) {
                 <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping b-common-item--one-click">
                 <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
                     <img class="b-common-item__image b-common-item__image--shopping-cart"
-                         src="<?= $image ?>"
+                         src="<?= $imageSrc ?>"
                          alt="<?= $basketItem->getField('NAME') ?>"
                          title="<?= $basketItem->getField('NAME') ?>"/>
                 </span>
@@ -124,10 +126,12 @@ if ($request->offsetExists('phone')) {
                                 <?= $basketItem->getField('NAME') ?>
                             </span>
                         </span>
+                        <?php if($basketItem->getWeight() > 0){ ?>
                             <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                             <span class="b-common-item__name-value">Вес: </span>
-                             <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
-                        </span>
+                                 <span class="b-common-item__name-value">Вес: </span>
+                                 <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
+                            </span>
+                        <?php } ?>
                             <?php if ($useOffer) {
                                 $color = $offer->getColor();
                                 if ($color !== null) { ?>
@@ -146,7 +150,7 @@ if ($request->offsetExists('phone')) {
                             } ?>
                         </a>
                         <?php if ($useOffer) {
-                            $bonus = $offer->getBonusFormattedText($userDiscount, $basketItem->getQuantity());
+                            $bonus = $offer->getBonusFormattedText($userDiscount, $basketItem->getQuantity(), 0);
                             if (!empty($bonus)) {?>
                                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping"><?=$bonus?></span>
                             <?php }
@@ -154,20 +158,20 @@ if ($request->offsetExists('phone')) {
                     </div>
                 </div>
                 <div class="b-item-shopping__operation b-item-shopping__operation--one-click">
-                    <?php $maxQuantity = 1000;
+                    <?php $maxQuantity = 0;
                     if ($useOffer) {
                         $maxQuantity = $offer->getQuantity();
                     } ?>
                     <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont js-no-valid">
                         <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"
-                           data-url="/ajax/sale/basket/update/"></a>
+                           data-url="/ajax/sale/basket/update/?fastOrder=y"></a>
                         <input class="b-plus-minus__count js-plus-minus-count"
                                value="<?= WordHelper::numberFormat($basketItem->getQuantity(), 0) ?>"
                                data-cont-max="<?= $maxQuantity ?>"
                                data-one-price="<?= $basketItem->getPrice() ?>"
                                data-basketid="<?= $basketItem->getId(); ?>" type="text" title=""/>
                         <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"
-                           data-url="/ajax/sale/basket/update/"></a>
+                           data-url="/ajax/sale/basket/update/?fastOrder=y"></a>
                     </div>
                     <div class="b-select b-select--shopping-cart js-no-valid">
                         <?php /** @todo mobile max quantity */
@@ -196,7 +200,7 @@ if ($request->offsetExists('phone')) {
                         <?php } ?>
                     </div>
                     <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-                       data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItem->getId(); ?>">
+                       data-url="/ajax/sale/basket/delete/?fastOrder=y" data-basketId="<?= $basketItem->getId(); ?>">
                     <span class="b-icon b-icon--delete-one-click">
                         <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
                     </span>
@@ -204,9 +208,9 @@ if ($request->offsetExists('phone')) {
                     <div class="b-item-shopping__sale-info">
                         <?php if ($basketItem->getDiscountPrice() > 0) { ?>
                             <span class="b-old-price b-old-price--inline b-old-price--crossed-out">
-                            <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?>  </span>
-                            <span class="b-ruble b-ruble--old-weight-price">₽</span>
-                        </span>
+                                <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?>  </span>
+                                <span class="b-ruble b-ruble--old-weight-price">₽</span>
+                            </span>
                         <?php } ?>
                         <span class="b-old-price b-old-price--inline">
                         <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getPrice()) ?> </span>
@@ -242,9 +246,9 @@ if ($request->offsetExists('phone')) {
         <dl class="b-popup-one-click__result">
             <dt class="b-popup-one-click__result-dt">
                 Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
-                    ['товар', 'товара', 'товаров']) ?> (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
+                    ['товар', 'товара', 'товаров']) ?> <?php if($arResult['BASKET_WEIGHT'] > 0){ ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)<?php } ?>
             </dt>
-            <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($basket->getPrice()) ?> ₽</dd>
+            <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']) ?> ₽</dd>
         </dl>
     <?php } ?>
     <div class="b-checkbox b-checkbox--one-click">

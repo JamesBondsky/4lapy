@@ -12,6 +12,7 @@ use FourPaws\SaleBundle\Validation as SaleValidation;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
+use \DateTime;
 
 /**
  * Class OrderStorage
@@ -20,6 +21,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @SaleValidation\OrderAddress(groups={"delivery","payment"})
  * @SaleValidation\OrderPaymentSystem(groups={"payment"})
  * @SaleValidation\OrderBonusPayment(groups={"payment"})
+ * @SaleValidation\OrderBonusCard(groups={"payment-card"})
  */
 class OrderStorage
 {
@@ -51,7 +53,7 @@ class OrderStorage
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("CAPTCHA_FILLED")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\IsTrue(groups={"auth","delivery","payment"})
+     * @Assert\IsTrue(groups={"auth","delivery","payment"}, message="Заполните капчу")
      */
     protected $captchaFilled = false;
 
@@ -93,7 +95,7 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_NAME")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"auth", "payment","delivery"})
+     * @Assert\NotBlank(groups={"auth", "payment","delivery"}, message="Укажите ваше имя")
      */
     protected $name = '';
 
@@ -104,7 +106,7 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_PHONE")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"auth", "payment","delivery"})
+     * @Assert\NotBlank(groups={"auth", "payment","delivery"}, message="Укажите ваш номер телефона")
      * @PhoneNumber(defaultRegion="RU",type="mobile")
      */
     protected $phone = '';
@@ -222,6 +224,44 @@ class OrderStorage
     protected $deliveryInterval = 0;
 
     /**
+     * Разделение заказов
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("ORDER_SPLIT")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $split = false;
+
+    /**
+     * Дата доставки для второго заказа (индекс выбранного значения из select'а)
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("DELIVERY_DATE2")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $secondDeliveryDate = 0;
+
+    /**
+     * Интервал доставки для второго заказа (индекс выбранного значения из select'а)
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("DELIVERY_INTERVAL2")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $secondDeliveryInterval = 0;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("USER_DESCRIPTION2")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $secondComment = '';
+
+    /**
      * Код места доставки (или код терминала DPD)
      *
      * @var string
@@ -283,14 +323,6 @@ class OrderStorage
     protected $cityCode = '';
 
     /**
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("PARTIAL_GET")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $partialGet = true;
-
-    /**
      * Сумма оплаты бонусами
      *
      * @var int
@@ -307,6 +339,21 @@ class OrderStorage
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $discountCardNumber = '';
+
+    /**
+     * @var DateTime
+     * @Serializer\Type("DateTime")
+     * @Serializer\SerializedName("CURRENT_DATE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $currentDate;
+
+    /**
+     * Бысрый заказ или нет
+     *
+     * @var bool
+     */
+    protected $fastOrder = false;
 
     /**
      * @return int
@@ -423,7 +470,7 @@ class OrderStorage
      */
     public function setComment(string $comment): OrderStorage
     {
-        $this->comment = $comment;
+        $this->comment = trim($comment);
 
         return $this;
     }
@@ -443,7 +490,7 @@ class OrderStorage
      */
     public function setName(string $name): OrderStorage
     {
-        $this->name = $name;
+        $this->name = trim($name);
 
         return $this;
     }
@@ -549,7 +596,7 @@ class OrderStorage
      */
     public function setStreet(string $street): OrderStorage
     {
-        $this->street = $street;
+        $this->street = trim($street);
 
         return $this;
     }
@@ -569,7 +616,7 @@ class OrderStorage
      */
     public function setHouse(string $house): OrderStorage
     {
-        $this->house = $house;
+        $this->house = trim($house);
 
         return $this;
     }
@@ -589,7 +636,7 @@ class OrderStorage
      */
     public function setBuilding(string $building): OrderStorage
     {
-        $this->building = $building;
+        $this->building = trim($building);
 
         return $this;
     }
@@ -609,7 +656,7 @@ class OrderStorage
      */
     public function setApartment(string $apartment): OrderStorage
     {
-        $this->apartment = $apartment;
+        $this->apartment = trim($apartment);
 
         return $this;
     }
@@ -629,7 +676,7 @@ class OrderStorage
      */
     public function setPorch(string $porch): OrderStorage
     {
-        $this->porch = $porch;
+        $this->porch = trim($porch);
 
         return $this;
     }
@@ -649,7 +696,7 @@ class OrderStorage
      */
     public function setFloor(string $floor): OrderStorage
     {
-        $this->floor = $floor;
+        $this->floor = trim($floor);
 
         return $this;
     }
@@ -695,6 +742,78 @@ class OrderStorage
     }
 
     /**
+     * @return bool
+     */
+    public function isSplit(): bool
+    {
+        return $this->split;
+    }
+
+    /**
+     * @param bool $split
+     * @return OrderStorage
+     */
+    public function setSplit(bool $split): OrderStorage
+    {
+        $this->split = $split;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSecondDeliveryDate(): int
+    {
+        return $this->secondDeliveryDate;
+    }
+
+    /**
+     * @param int $secondDeliveryDate
+     * @return OrderStorage
+     */
+    public function setSecondDeliveryDate(int $secondDeliveryDate): OrderStorage
+    {
+        $this->secondDeliveryDate = $secondDeliveryDate;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSecondDeliveryInterval(): int
+    {
+        return $this->secondDeliveryInterval;
+    }
+
+    /**
+     * @param int $secondDeliveryInterval
+     * @return OrderStorage
+     */
+    public function setSecondDeliveryInterval(int $secondDeliveryInterval): OrderStorage
+    {
+        $this->secondDeliveryInterval = $secondDeliveryInterval;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSecondComment(): string
+    {
+        return $this->secondComment;
+    }
+
+    /**
+     * @param string $secondComment
+     * @return OrderStorage
+     */
+    public function setSecondComment(string $secondComment): OrderStorage
+    {
+        $this->secondComment = $secondComment;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getDeliveryPlaceCode(): string
@@ -709,7 +828,7 @@ class OrderStorage
      */
     public function setDeliveryPlaceCode(string $deliveryPlaceCode): OrderStorage
     {
-        $this->deliveryPlaceCode = $deliveryPlaceCode;
+        $this->deliveryPlaceCode = trim($deliveryPlaceCode);
 
         return $this;
     }
@@ -729,7 +848,7 @@ class OrderStorage
      */
     public function setCommunicationWay(string $communicationWay): OrderStorage
     {
-        $this->communicationWay = $communicationWay;
+        $this->communicationWay = trim($communicationWay);
 
         return $this;
     }
@@ -749,7 +868,7 @@ class OrderStorage
      */
     public function setSourceCode(string $sourceCode): OrderStorage
     {
-        $this->sourceCode = $sourceCode;
+        $this->sourceCode = trim($sourceCode);
 
         return $this;
     }
@@ -769,7 +888,7 @@ class OrderStorage
      */
     public function setPartnerCode(string $partnerCode): OrderStorage
     {
-        $this->partnerCode = $partnerCode;
+        $this->partnerCode = trim($partnerCode);
 
         return $this;
     }
@@ -789,7 +908,7 @@ class OrderStorage
      */
     public function setCity(string $city): OrderStorage
     {
-        $this->city = $city;
+        $this->city = trim($city);
 
         return $this;
     }
@@ -809,27 +928,7 @@ class OrderStorage
      */
     public function setCityCode(string $cityCode): OrderStorage
     {
-        $this->cityCode = $cityCode;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPartialGet(): bool
-    {
-        return $this->partialGet ?? true;
-    }
-
-    /**
-     * @param bool $partialGet
-     *
-     * @return OrderStorage
-     */
-    public function setPartialGet(bool $partialGet): OrderStorage
-    {
-        $this->partialGet = $partialGet;
+        $this->cityCode = trim($cityCode);
 
         return $this;
     }
@@ -869,8 +968,49 @@ class OrderStorage
      */
     public function setDiscountCardNumber(string $discountCardNumber): OrderStorage
     {
-        $this->discountCardNumber = $discountCardNumber;
+        $this->discountCardNumber = trim($discountCardNumber);
 
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getCurrentDate(): DateTime
+    {
+        if (!$this->currentDate) {
+            $this->currentDate = new DateTime();
+        }
+
+        return $this->currentDate;
+    }
+
+    /**
+     * @param DateTime $currentDate
+     * @return OrderStorage
+     */
+    public function setCurrentDate(DateTime $currentDate): OrderStorage
+    {
+        $this->currentDate = $currentDate;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFastOrder(): bool
+    {
+        return $this->fastOrder ?? false;
+    }
+
+    /**
+     * @param bool $fastOrder
+     *
+     * @return OrderStorage
+     */
+    public function setFastOrder(bool $fastOrder): OrderStorage
+    {
+        $this->fastOrder = $fastOrder;
         return $this;
     }
 }

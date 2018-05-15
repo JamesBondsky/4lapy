@@ -51,7 +51,7 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
 
     if ($arResult['PRODUCTS']) {
         ?><div class="b-container">
-            <section class="b-common-section">
+            <section class="b-common-section" data-url="/ajax/catalog/product-info/">
                 <div class="b-common-section__title-box b-common-section__title-box--popular b-common-section__title-box--product">
                     <h2 class="b-title b-title--popular b-title--product"><?=Loc::getMessage('SIMILAR_PRODUCTS.TITLE')?></h2><?php
                 ?></div>

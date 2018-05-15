@@ -1,0 +1,6 @@
+<?
+$MESS['FOURPAWS.COMPONENTS'] = 'Компоненты fourpaws';
+$MESS['FOURPAWS.PERSONAL.GROUP_NAME'] = 'Личный кабинет';
+
+$MESS['FOURPAWS.PERSONAL_ORDER_ITEM.COMPONENT_NAME'] = 'Карточка заказа';
+$MESS['FOURPAWS.PERSONAL_ORDER_ITEM.COMPONENT_DESCRIPTION'] = 'Карточка заказа';

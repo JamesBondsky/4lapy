@@ -1,97 +1,138 @@
 <?php
-/**
- * Created by PhpStorm.
- * Date: 08.02.2018
- * Time: 18:11
- * @author      Makeev Ilya
- * @copyright   ADV/web-engineering co.
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
  */
 
 namespace FourPaws\SaleBundle\Discount\Utils;
 
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Order;
+use Exception;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\SaleBundle\Discount\Manzana;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Manager
+ *
  * @package FourPaws\SaleBundle\Discount\Utils
  */
 class Manager
 {
-    protected static $finalActionEnabled = true;
+    protected static $extendEnabled = true;
+    protected static $extendCalculated = false;
 
     /**
-     *
-     *
-     * @param Event|null $event
-     *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @param Event $event
      */
-    public static function OnAfterSaleOrderFinalAction(Event $event = null)
+    public static function OnBeforeSaleOrderFinalAction(Event $event): void
     {
-        static $execution;
-        if (!$execution && self::$finalActionEnabled) {
-            $execution = true;
-            if ($event instanceof Event) {
-                /** @var Order $order */
-                $order = $event->getParameter('ENTITY');
-                if ($order instanceof Order) {
-
-                    // Автоматически добавляем подарки
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
-                        ->getAdder()
-                        ->processOrder();
-
-                    // Удаляем подарки, акции которых не выполнились
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
-                        ->getCleaner()
-                        ->processOrder();
-                }
-            }
-            $execution = false;
+        if(!self::$extendEnabled) {
+            $event->addResult(new EventResult(EventResult::ERROR));
         }
     }
 
     /**
+     * @param null|Event $event
      *
-     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws RuntimeException
+     * @throws NotFoundException
+     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws Exception
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws ArgumentOutOfRangeException
      */
-    public static function disableProcessingFinalAction()
+    public static function OnAfterSaleOrderFinalAction(Event $event): void
     {
-        self::$finalActionEnabled = false;
+        /**
+         * @var Order $order
+         */
+        $order = $event->getParameter('ENTITY');
+        $isOrderBasketFilled = $order->getBasket()->count() > 0;
+
+        if ($isOrderBasketFilled && self::$extendEnabled && !self::$extendCalculated) {
+            self::disableExtendsDiscount();
+            $container = Application::getInstance()->getContainer();
+            $basketService = $container->get(BasketService::class);
+            $manzana = $container->get(Manzana::class);
+            $couponStorage = $container->get(CouponStorageInterface::class);
+
+            // Автоматически добавляем подарки
+            $basketService
+                ->getAdder('gift')
+                ->processOrder();
+
+            // Удаляем подарки, акции которых не выполнились
+            $basketService
+                ->getCleaner('gift')
+                ->processOrder();
+
+            $basketService
+                ->getAdder('detach')
+                ->processOrder();
+
+            $promoCode = $couponStorage->getApplicableCoupon();
+            if ($promoCode) {
+                $manzana->setPromocode($promoCode);
+            }
+
+            try {
+                $manzana->calculate($order);
+                $basketService->setPromocodeDiscount($manzana->getDiscount());
+            } catch (ManzanaPromocodeUnavailableException $e) {
+                $couponStorage->delete($promoCode);
+            }
+
+            self::enableExtendsDiscount();
+            self::$extendCalculated = true;
+        }
     }
 
     /**
-     *
-     *
+     * @return bool
      */
-    public static function enableProcessingFinalAction()
+    public static function isExtendDiscountEnabled(): bool
     {
-        self::$finalActionEnabled = true;
+        return self::$extendEnabled;
     }
 
     /**
-     *
-     *
+     * Отключаем расчет акций для предотвращения многократного применения
+     */
+    public static function disableExtendsDiscount(): void
+    {
+        self::$extendEnabled = false;
+    }
+
+
+    /**
+     * Включаем расчет акций
+     */
+    public static function enableExtendsDiscount(): void
+    {
+        self::$extendEnabled = true;
+    }
+
+    /**
      * @param Order $order
      *
      * @return array
@@ -99,7 +140,9 @@ class Manager
     public static function getExistGifts(Order $order): array
     {
         $result = [];
-        if ($basket = $order->getBasket()) {
+        $basket = $order->getBasket();
+
+        if ($basket) {
             /** @var BasketItem $basketItem */
             foreach ($basket->getBasketItems() as $basketItem) {
                 /** @var BasketPropertyItem $basketPropertyItem */
@@ -110,12 +153,14 @@ class Manager
                         $result[$basketItem->getId()]['offerId'] = (int)$basketItem->getProductId();
                         $result[$basketItem->getId()]['basketId'] = (int)$basketItem->getId();
                     }
+
                     if ($basketPropertyItem->getField('CODE') === 'IS_GIFT_SELECTED') {
                         $result[$basketItem->getId()]['selected'] = $basketPropertyItem->getField('VALUE');
                     }
                 }
             }
         }
+
         return $result;
     }
 }

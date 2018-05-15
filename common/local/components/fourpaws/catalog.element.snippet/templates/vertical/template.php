@@ -28,29 +28,14 @@ use FourPaws\Decorators\SvgDecorator;
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 
-if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
-    $currentOffer = $arParams['CURRENT_OFFER'];
-} else {
-    /**
-     * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
-     */
-    foreach ($offers as $offer) {
-        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
-            $currentOffer = $offer;
-        }
-    }
-
-    if (!$currentOffer) {
-        $currentOffer = $offers->first();
-    }
-}
+$currentOffer = $arResult['CURRENT_OFFER'];
 
 $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['ITEM_ATTR_ID']) : '';
 
 if (!$arParams['ITEM_ATTR_ID']) {
     $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
 } ?>
-    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>">
+    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>" data-productid="<?= $product->getId() ?>">
         <?= $component->getMarkService()->getMark($currentOffer) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
@@ -80,7 +65,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
             //
             //$isWeightCapacityPacking = strlen(trim($product->getWeightCapacityPacking())) ? true : false;
             $isWeightCapacityPacking = true;
-            if ($offers->count() > 1 || $isWeightCapacityPacking) {
+            if (($offers->count() > 0 || $isWeightCapacityPacking) && $product->isFood()) {
                 $isOffersPrinted = false;
                 $mainCombinationType = '';
                 if ($currentOffer->getClothingSize()) {
@@ -110,20 +95,12 @@ if (!$arParams['ITEM_ATTR_ID']) {
                                 case 'WEIGHT':
                                     $catalogProduct = $offer->getCatalogProduct();
                                     $weightGrams = $catalogProduct->getWeight();
-                                    if ($weightGrams > 1000) {
-                                        $value =
-                                            ($weightGrams / 1000) . '&nbsp;' . Loc::getMessage(
-                                                'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_KG'
-                                            );
-                                    } else {
-                                        $value =
-                                            $weightGrams . '&nbsp;' . Loc::getMessage(
-                                                'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_G'
-                                            );
+                                    if($weightGrams > 0) {
+                                        $value = \FourPaws\Helpers\WordHelper::showWeight($weightGrams);
                                     }
                                     break;
                             }
-                            if (!strlen($value)) {
+                            if (empty($value)) {
                                 continue;
                             }
                             $isOffersPrinted = true;
@@ -148,7 +125,19 @@ if (!$arParams['ITEM_ATTR_ID']) {
                 } else {
                     ob_end_clean();
                 }
-            }
+            } else { ?>
+                <div class="b-weight-container b-weight-container--list">
+                    <ul class="b-weight-container__list">
+                        <li class="b-weight-container__item">
+                            <a href="javascript:void(0)"
+                               class="b-weight-container__link js-price active-link"
+                               data-price="<?= ceil($currentOffer->getPrice()) ?>" data-offerid="<?= $currentOffer->getId() ?>"
+                               data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                               data-link="<?= $currentOffer->getLink() ?>"></a>
+                        </li>
+                    </ul>
+                </div>
+            <?php }
 
             //
             // Кнопка добавления в корзину
@@ -157,15 +146,16 @@ if (!$arParams['ITEM_ATTR_ID']) {
                  href="javascript:void(0);"
                  data-url="/ajax/sale/basket/add/"
                  data-offerid="<?= $currentOffer->getId() ?>">
-            <span class="b-common-item__wrapper-link">
-                <span class="b-cart">
-                    <span class="b-icon b-icon--cart"><?php
-                        echo new SvgDecorator('icon-cart', 16, 16);
-                        ?></span>
+                <span class="b-common-item__wrapper-link">
+                    <span class="b-cart">
+                        <span class="b-icon b-icon--cart"><?php
+                            echo new SvgDecorator('icon-cart', 16, 16);
+                            ?></span>
+                    </span>
+                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
+                    <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                 </span>
-                <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
-                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-            </span>
+                <span class="b-common-item__incart">+1</span>
             </a><?php
 
             //

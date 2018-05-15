@@ -2,10 +2,8 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
-use Bitrix\Sale\Delivery\CalculationResult;
-
 /**
- * Правило, добавляющее $value дней к дате доставке,
+ * Правило, добавляющее $value дней к дате доставки,
  * если время заказа лежит в промежутке между $from и $to
  *
  * Class AddDaysRule
@@ -100,27 +98,30 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
         return $this;
     }
 
-    public function isSuitable(CalculationResult $result): bool
+    /**
+     * @param \DateTime $date
+     *
+     * @return bool
+     */
+    public function isSuitable(\DateTime $date): bool
     {
-        /* @todo брать дату из CalculationResult */
-        $hour = (new \DateTime())->format('G');
+        $hour = $date->format('G');
 
-        return ($hour >= $this->getFrom()) && ($hour < $this->getTo());
+        $to = ($this->getTo() === 0) ? 24 : $this->getTo();
+        return ($hour >= $this->getFrom()) && ($hour < $to);
     }
 
-    public function apply(CalculationResult $result): CalculationResult
+    /**
+     * @param \DateTime  $date
+     *
+     * @return \DateTime
+     */
+    public function apply(\DateTime $date): \DateTime
     {
-        if (!$this->isSuitable($result)) {
-            return $result;
+        $result = clone $date;
+        if ($this->isSuitable($date) && ($this->getValue() > 0)) {
+            $result->modify(sprintf('+%s days', $this->getValue()));
         }
-
-        if ($this->getValue() === 0) {
-            return $result;
-        }
-
-        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
-        $result->setPeriodFrom($result->getPeriodFrom() + $this->getValue());
-        $result->setPeriodTo($result->getPeriodTo() + $this->getValue());
 
         return $result;
     }

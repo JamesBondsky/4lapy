@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\ReferenceDirectory;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -41,14 +45,14 @@ class SapReferenceStorage implements LoggerAwareInterface
     {
         return $this->findByCallable($propertyCode, function (HlbReferenceItem $hlbReferenceItem) use ($xmlId) {
             return $hlbReferenceItem->getXmlId() === $xmlId;
-        })->current();
+        })->current() ?: null;
     }
 
     public function findByCode(string $propertyCode, string $code)
     {
         return $this->findByCallable($propertyCode, function (HlbReferenceItem $hlbReferenceItem) use ($code) {
             return $hlbReferenceItem->getCode() === $code;
-        })->current();
+        })->current() ?: null;
     }
 
     /**
@@ -62,7 +66,7 @@ class SapReferenceStorage implements LoggerAwareInterface
     public function findByCallable(string $propertyCode, callable $callable)
     {
         if (!$this->collection->offsetExists($propertyCode)) {
-            $this->log()->debug(sprintf('Loading %s property', $propertyCode));
+            $this->log()->info(sprintf('Loading %s property', $propertyCode));
             $this->collection->set($propertyCode, $this->referenceRepositoryRegistry->get($propertyCode)->findBy());
         }
 
@@ -81,7 +85,7 @@ class SapReferenceStorage implements LoggerAwareInterface
      */
     public function clear(string $propertyCode)
     {
-        $this->log()->debug(sprintf('Clear %s property', $propertyCode));
+        $this->log()->info(sprintf('Clear %s property', $propertyCode));
         $this->collection->remove($propertyCode);
         return $this;
     }

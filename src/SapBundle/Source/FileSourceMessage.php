@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Source;
 
 /**
@@ -26,7 +30,7 @@ class FileSourceMessage extends SourceMessage implements FileSourceInterface
      *
      * @return $this
      */
-    public function setName(string $name)
+    public function setName(string $name): self
     {
         $this->name = $name;
         
@@ -46,7 +50,7 @@ class FileSourceMessage extends SourceMessage implements FileSourceInterface
      *
      * @return $this
      */
-    public function setDirectory(string $directory)
+    public function setDirectory(string $directory): self
     {
         $this->directory = $directory;
         

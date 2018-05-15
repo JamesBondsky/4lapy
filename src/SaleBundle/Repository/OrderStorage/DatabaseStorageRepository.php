@@ -26,9 +26,11 @@ class DatabaseStorageRepository extends StorageBaseRepository
      */
     public function save(OrderStorage $storage, string $step = OrderStorageService::AUTH_STEP): bool
     {
-        $validationResult = $this->validate($storage, $step);
-        if ($validationResult->count() > 0) {
-            throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
+        if ($step !== OrderStorageService::NOVALIDATE_STEP) {
+            $validationResult = $this->validate($storage, $step);
+            if ($validationResult->count() > 0) {
+                throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
+            }
         }
 
         $data = $this->arrayTransformer->toArray(
@@ -69,13 +71,13 @@ class DatabaseStorageRepository extends StorageBaseRepository
 
     /**
      * @param int $fuserId
-     *
      * @return OrderStorage
+     * @throws OrderStorageSaveException
      */
     public function findByFuser(int $fuserId): OrderStorage
     {
         if ($data = Table::getByPrimary($fuserId)->fetch()) {
-            $data = array_merge($data, $data['UF_DATA']);
+            $data = array_merge($data, (array)$data['UF_DATA']);
             unset($data['UF_DATA']);
             $data = $this->setInitialValues($data);
         } else {
@@ -122,7 +124,8 @@ class DatabaseStorageRepository extends StorageBaseRepository
         $result = Table::add($this->prepareData($data));
         if (!$result->isSuccess()) {
             throw new OrderStorageSaveException(
-                sprintf('Ошибка при сохранении данных по заказу: %s', implode(', ', $result->getErrorMessages()))
+                'Failed to save order storage',
+                ['messages' => $result->getErrorMessages(), 'fuserId' => $data['UF_FUSER_ID']]
             );
         }
 

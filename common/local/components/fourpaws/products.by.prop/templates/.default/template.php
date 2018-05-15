@@ -23,7 +23,7 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
     return;
 } ?>
 <div class="b-container">
-    <section class="b-common-section">
+    <section class="b-common-section" data-url="/ajax/catalog/product-info/">
         <div class="b-common-section__title-box b-common-section__title-box--sale">
             <h2 class="b-title b-title--sale"><?=$arParams['TITLE']?></h2>
         </div>
@@ -43,7 +43,7 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
     </section>
 </div>
 <?php
-if($arParams['SLIDER'] !== 'Y') {
+if($arParams['SHOW_PAGE_NAVIGATION'] && $arParams['SLIDER'] !== 'Y') {
     $APPLICATION->IncludeComponent(
         'bitrix:system.pagenavigation',
         'pagination',

@@ -20,6 +20,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -125,8 +126,14 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                         /** никогда не сработает */
                     }
                 }
-                $this->offerCollection = $this->basketService->getOfferCollection();
-                $this->arResult['BASKET'] = $this->basketService->getBasket();
+                $basket = $this->basketService->getBasket(true);
+                $this->offerCollection = $this->basketService->getOfferCollection(true);
+                // привязывать к заказу нужно для расчета скидок
+                if (null === $order = $basket->getOrder()) {
+                    $order = Order::create(SITE_ID);
+                    $order->setBasket($basket);
+                }
+                $this->arResult['BASKET'] = $basket;
                 $this->loadImages();
                 $this->calcTemplateFields();
             }
@@ -170,19 +177,6 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
 
     /**
      * @param Offer $offer
-     * @param int   $quantity
-     *
-     * @return float
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     */
-    public function getItemBonus(Offer $offer, int $quantity = 1): float
-    {
-        return $this->basketService->getItemBonus($offer, $quantity);
-    }
-
-    /**
-     * @param Offer $offer
      *
      * @param bool  $showToday
      *
@@ -216,6 +210,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $dates[0] = $showToday ? 'Сегодня' : '';
             }
         }
+
         if (!empty($dates)) {
             /** @var Date $minDate */
             $minDate = $dates[min(array_keys($dates))];
@@ -225,6 +220,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $deliveryDate = $minDate;
             }
         }
+
         return $deliveryDate;
     }
 
@@ -241,8 +237,16 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             }
             /** @var ResizeImageCollection $images */
             $images = $item->getResizeImages(110, 110);
-            $this->images[$item->getId()] = $images->first();
+            /** @var ResizeImageDecorator $image */
+            foreach ($images as $image) {
+                if(empty($image->getSrc())){
+                    continue;
+                }
+                $this->images[$item->getId()] = $image;
+                break;
+            }
         }
+        $a = 1;
     }
 
     private function calcTemplateFields(): void
@@ -252,12 +256,16 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
-        foreach ($basket->getOrderableItems() as $basketItem) {
-            $weight += (float)$basketItem->getWeight();
+        $orderableBasket = $basket->getOrderableItems();
+        foreach ($orderableBasket as $basketItem) {
             $quantity += (int)$basketItem->getQuantity();
+            $weight += (float)$basketItem->getWeight() * (int)$basketItem->getQuantity();
         }
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
+        $this->arResult['TOTAL_DISCOUNT'] = $orderableBasket->getBasePrice() - $orderableBasket->getPrice();
+        $this->arResult['TOTAL_PRICE'] = $orderableBasket->getPrice();
+        $this->arResult['TOTAL_BASE_PRICE'] = $orderableBasket->getBasePrice();
     }
 
     /**

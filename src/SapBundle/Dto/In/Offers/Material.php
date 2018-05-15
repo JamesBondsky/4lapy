@@ -20,8 +20,8 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class Material
 {
-    const DEFAULT_BASE_UNIT_OF_MEASUREMENT_CODE = 'ST';
-    const DEFAULT_BASE_UNIT_OF_MEASUREMENT_NAME = 'шт';
+    protected const DEFAULT_BASE_UNIT_OF_MEASUREMENT_CODE = 'ST';
+    protected const DEFAULT_BASE_UNIT_OF_MEASUREMENT_NAME = 'шт';
 
     /**
      * УИД торгового предложения
@@ -553,7 +553,8 @@ class Material
     }
 
     /**
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws NotFoundBasicUomException
+     *
      * @return UnitOfMeasurement
      */
     public function getBasicUnitOfMeasure(): UnitOfMeasurement
@@ -565,6 +566,7 @@ class Material
         if ($uom) {
             return $uom;
         }
+
         throw new NotFoundBasicUomException(sprintf(
             'No basic unit of measure "%s" for material "%s"',
             $this->getBasicUnitOfMeasurementCode(),
@@ -588,6 +590,7 @@ class Material
     public function setUnitsOfMeasure($unitsOfMeasure): Material
     {
         $this->unitsOfMeasure = $unitsOfMeasure;
+
         return $this;
     }
 
@@ -607,6 +610,7 @@ class Material
     public function setProperties(Properties $properties): Material
     {
         $this->properties = $properties;
+
         return $this;
     }
 }

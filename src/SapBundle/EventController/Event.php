@@ -16,6 +16,8 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\BxCollection;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\LogicException;
@@ -74,25 +76,34 @@ class Event implements ServiceHandlerInterface
     public static function consumeOrderAfterSaveOrder(BitrixEvent $event): void
     {
         /**
-         * Если заказ новый...
+         * @var Order $order
+         * @var OrderService $orderService
          */
-        if ($event->getParameter('IS_NEW')) {
-            /** @var Order $order */
-            $order = $event->getParameter('ENTITY');
-            /**
-             * ...и оплата не онлайн, отправляем в SAP
-             */
-            if (in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
-                return;
-            }
+        $order = $event->getParameter('ENTITY');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $orderService = Application::getInstance()->getContainer()->get(
+            OrderService::class
+        );
 
-            self::getConsumerRegistry()->consume($order);
+        /**
+         * Если заказ уже выгружен в SAP, оплата онлайн, или заказ создан по подписке, пропускаем
+         */
+        if (
+            self::isOrderExported($order)
+            || self::isManzanaOrder($order)
+            || $orderService->isOnlinePayment($order)
+            || $orderService->isSubscribe($order)
+        ) {
+            return;
         }
+
+        self::getConsumerRegistry()->consume($order);
     }
 
     /**
      * @param BitrixEvent $event
      *
+     * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws ArgumentNullException
      * @throws NotImplementedException
      * @throws ApplicationCreateException
@@ -116,23 +127,55 @@ class Event implements ServiceHandlerInterface
              *
              * @var ConsumerRegistry $consumerRegistry
              */
-
             $order = Order::load($payment->getOrderId());
-            self::getConsumerRegistry()->consume($order);
+
+            /** @noinspection NullPointerExceptionInspection */
+            if (!self::isOrderExported($order) && !self::isManzanaOrder($order)) {
+                self::getConsumerRegistry()->consume($order);
+            }
         }
     }
 
     /**
-     * @return ConsumerRegistry
-     *
      * @throws ApplicationCreateException
+     *
+     * @return ConsumerRegistry
      */
     public static function getConsumerRegistry(): ConsumerRegistry
     {
         try {
             return Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
         } catch (ServiceNotFoundException | ServiceCircularReferenceException $e) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             return new ConsumerRegistry();
         }
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     *
+     * @throws ObjectNotFoundException
+     */
+    private static function isOrderExported(Order $order): bool
+    {
+        $isConsumedValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED');
+
+        return null !== $isConsumedValue && $isConsumedValue->getValue() === 'Y';
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     *
+     * @throws ObjectNotFoundException
+     */
+    private static function isManzanaOrder(Order $order): bool
+    {
+        $manzanaNumberValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'MANZANA_NUMBER');
+
+        return null !== $manzanaNumberValue && (bool)$manzanaNumberValue->getValue();
     }
 }

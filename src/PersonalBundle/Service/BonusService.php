@@ -19,6 +19,7 @@ use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
@@ -138,7 +139,12 @@ class BonusService
         }
 
         /** @var Contact $contact */
-        $contact = $manzanaService->getContactByUser($user);
+        if(!empty($user->getPersonalPhone())) {
+            $contact = $manzanaService->getContactByUser($user);
+        }
+        else{
+            $contact = null;
+        }
 
         if ($contact instanceof Client && $contact->isLoyaltyProgramContact()) {
             /** @var CardByContractCards $card */
@@ -269,15 +275,11 @@ class BonusService
             }
 
             if($isChange) {
-                $this->currentUserProvider->getUserRepository()->updateData($user->getId(),
-                    ['UF_DISCOUNT_CARD' => $bonusCard]);
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard($user->getId(), $bonusCard);
 
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    /** Очистка кеша */
-                    $instance = Application::getInstance();
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('bonus_' . $user->getId());
-                }
+                TaggedCacheHelper::clearManagedCache([
+                    'personal:bonus:' . $user->getId(),
+                ]);
 
             }
 

@@ -3,45 +3,47 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 
 /**
  * @var array $arResult
  * @var array $arParams
- * @var CalculationResult $pickup
+ * @var CalculationResultInterface $pickup
  * @var
  */
 
-/** @var CalculationResult $partialPickup */
-$partialPickup = $arResult['PARTIAL_PICKUP'];
-
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-/** @var StockResultCollection $stockResult */
-$stockResult = $pickup->getData()['STOCK_RESULT'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
-$stockResultByShop = $stockResult->filterByStore($selectedShop);
-$available = $stockResultByShop->getAvailable();
-$delayed = $stockResultByShop->getDelayed();
+
+/** @var StockResultCollection $available */
+$available = $arResult['PICKUP_STOCKS_AVAILABLE'];
+/** @var StockResultCollection $delayed */
+$delayed = $arResult['PICKUP_STOCKS_DELAYED'];
 
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
-$canGetPartial = !$available->isEmpty();
-$partialGet = $storage->isPartialGet();
-
+$canGetPartial = $arResult['PARTIAL_PICKUP_AVAILABLE'];
+$canSplit = $arResult['SPLIT_PICKUP_AVAILABLE'];
+$partialGet = $storage->isSplit() && ($canGetPartial || $canSplit);
+$partialPickup = $arResult['PARTIAL_PICKUP'] ?? $pickup;
+$metro = $arResult['METRO'][$selectedShop->getMetro()];
 ?>
 
 <li class="b-radio-tab__tab js-email-recovery">
@@ -52,8 +54,12 @@ $partialGet = $storage->isPartialGet();
         <ul class="b-delivery-list">
             <li class="b-delivery-list__item b-delivery-list__item--myself">
                 <span class="b-delivery-list__link b-delivery-list__link--myself">
-                    <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--grey"></span>
-                    <?= $selectedShop->getAddress() ?>
+                    <?php if ($metro) { ?>
+                        <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--<?= $metro['BRANCH']['UF_COLOR'] ?>"></span>
+                        <?= 'м. ' . $metro['UF_NAME'] . ', ' . $selectedShop->getAddress() ?>
+                    <?php } else { ?>
+                        <?= $selectedShop->getAddress() ?>
+                    <?php } ?>
                 </span>
             </li>
         </ul>
@@ -63,32 +69,32 @@ $partialGet = $storage->isPartialGet();
             <span class="b-input-line__label">Время работы</span>
         </div>
         <div class="b-input-line__text-line b-input-line__text-line--myself">
-            <?= $selectedShop->getSchedule() ?>
+            <?= $selectedShop->getScheduleString() ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--myself">
         <div class="b-input-line__label-wrapper">
-            <span class="b-input-line__label">Оплата в магазине</span>
+            <span class="b-input-line__label">Оплата</span>
         </div>
         <div class="b-input-line__text-line">
-            <span class="b-input-line__pay-type">
-                <span class="b-icon b-icon--icon-cash">
-                    <?= new SvgDecorator('icon-cash', 16, 12) ?>
+            <?php foreach ($arResult['PICKUP_AVAILABLE_PAYMENTS'] as $payment) {
+                $icon = $payment['CODE'] === OrderService::PAYMENT_CASH ? 'icon-cash' : 'icon-bank-card'
+                ?>
+                <span class="b-input-line__pay-type">
+                    <span class="b-icon b-icon--icon-cash">
+                        <?= new SvgDecorator($icon, 16, 12) ?>
+                    </span>
+                    <span class="b-input-line_pay-type--name">
+                        <?= $payment['NAME'] ?>
+                    </span>
                 </span>
-                наличными
-            </span>
-            <span class="b-input-line__pay-type">
-                <span class="b-icon b-icon--icon-bank">
-                    <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
-                </span>
-                банковской картой
-            </span>
+            <?php } ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--partially">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--order-full">
             <span class="b-input-line__label js-parts-info">
-                <?php if (!$delayed->isEmpty() && !$available->isEmpty()) { ?>
+                <?php if ($canGetPartial || $canSplit) { ?>
                     Заказ в наличии частично
                 <?php } elseif ($available->isEmpty()) { ?>
                     Требуется ждать поставки со склада
@@ -97,7 +103,7 @@ $partialGet = $storage->isPartialGet();
                 <?php } ?>
             </span>
         </div>
-        <div class="b-radio b-radio--tablet-big" <?= $canGetPartial ? '' : 'style="display:none"' ?>>
+        <div class="b-radio b-radio--tablet-big" <?= ($canGetPartial || $canSplit) ? '' : 'style="display:none"' ?>>
             <input class="b-radio__input ok"
                    type="radio"
                    name="order-pick-time"
@@ -113,27 +119,23 @@ $partialGet = $storage->isPartialGet();
                         <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price js-price-block">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed js-my-pickup js-pickup-time">
-                                    Забрать <?= DeliveryTimeHelper::showTime(
-                                        $partialPickup,
-                                        $available->getDeliveryDate()
-                                    ) ?></div>
+                                    Забрать <?= DeliveryTimeHelper::showTime($partialPickup,
+                                        ['SHOW_TIME' => $pickup instanceof PickupResult]) ?></div>
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price js-price-block">
-                            <?= CurrencyHelper::formatPrice($available->getPrice()) ?>
+                            <?= CurrencyHelper::formatPrice($canGetPartial ? $available->getPrice() : $pickup->getStockResult()->getPrice()) ?>
                         </div>
                     </li>
                 </ul>
             </div>
-            <div class="b-radio__addition-text js-excluded-parts" <?= $delayed->isEmpty(
-            ) ? 'style="display:none"' : '' ?>>
+            <div class="b-radio__addition-text js-excluded-parts" <?= $delayed->isEmpty() ? 'style="display:none"' : '' ?>>
                 <p>За исключением:</p>
                 <ol class="js-delay-items">
                     <?php /** @var StockResult $item */ ?>
                     <?php foreach ($delayed as $item) { ?>
                         <li>
-                            <?= $item->getOffer()->getName() ?> <?= ($item->getAmount() > 1) ? ('(' . $item->getAmount(
-                                ) . ' шт)') : '' ?>
+                            <?= $item->getOffer()->getName() ?> <?= ($item->getAmount() > 1) ? ('(' . $item->getAmount() . ' шт)') : '' ?>
                         </li>
                     <?php } ?>
                 </ol>
@@ -159,17 +161,14 @@ $partialGet = $storage->isPartialGet();
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--myself js-full-price js-price-block">
-                            <?= CurrencyHelper::formatPrice($stockResultByShop->getPrice()) ?>
+                            <?= CurrencyHelper::formatPrice($pickup->getStockResult()->getPrice()) ?>
                         </div>
                     </li>
                 </ul>
             </div>
             <div class="b-radio__addition-text">
                 <p class="js-pickup_full js-pickup-time">
-                    <?= DeliveryTimeHelper::showTime(
-                        $pickup,
-                        $stockResultByShop->getDeliveryDate()
-                    ) ?>
+                    <?= DeliveryTimeHelper::showTime($pickup) ?>
                 </p>
             </div>
         </div>

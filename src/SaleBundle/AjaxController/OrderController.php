@@ -11,9 +11,15 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\ManzanaService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -53,6 +59,16 @@ class OrderController extends Controller
     private $storeService;
 
     /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
+
+    /**
+     * @var ManzanaService
+     */
+    private $manzanaService;
+
+    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -68,28 +84,37 @@ class OrderController extends Controller
      * OrderController constructor.
      *
      * @param OrderService $orderService
+     * @param StoreService $storeService
+     * @param DeliveryService $deliveryService
      * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ReCaptchaService $recaptcha
+     * @param ManzanaService $manzanaService
      */
     public function __construct(
         OrderService $orderService,
         StoreService $storeService,
+        DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
-        ReCaptchaService $recaptcha
+        ReCaptchaService $recaptcha,
+        ManzanaService $manzanaService
     ) {
         $this->orderService = $orderService;
         $this->storeService = $storeService;
+        $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
+        $this->manzanaService = $manzanaService;
     }
 
     /**
      * @Route("/store-search/", methods={"GET"})
      * @param Request $request
-     *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return JsonResponse
      */
     public function storeSearchAction(Request $request): JsonResponse
@@ -103,17 +128,91 @@ class OrderController extends Controller
             $shopListClass->getStores(
                 [
                     'filter' => $this->storeService->getFilterByRequest($request),
-                    'order'  => $this->storeService->getOrderByRequest($request),
+                    'order' => $this->storeService->getOrderByRequest($request),
                 ]
             )
         );
     }
 
     /**
+     * @Route("/delivery-intervals/", methods={"POST"})
+     * @param Request $request
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @return JsonResponse
+     */
+    public function deliveryIntervalsAction(Request $request): JsonResponse
+    {
+        $result = [];
+        $date = (int)$request->get('deliveryDate', 0);
+        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+        $delivery = null;
+        foreach ($deliveries as $deliveryItem) {
+            if (!$this->deliveryService->isDelivery($deliveryItem)) {
+                continue;
+            }
+
+            $delivery = $deliveryItem;
+        }
+
+        if (null === $delivery) {
+            return JsonSuccessResponse::createWithData(
+                '',
+                $result
+            );
+        }
+
+        /** @var DeliveryResultInterface $delivery */
+        $delivery->setDateOffset($date);
+        $intervals = $delivery->getAvailableIntervals($date);
+
+        /** @var Interval $interval */
+        foreach ($intervals as $i => $interval) {
+            $result[] = [
+                'name' => (string)$interval,
+                'value' => $i+1,
+            ];
+        }
+
+        return JsonSuccessResponse::createWithData(
+            '',
+            $result
+        );
+    }
+
+    /**
+     * @Route("/validate/bonus-card", methods={"POST"})
+     * @param Request $request
+     *
+     * @throws OrderStorageSaveException
+     * @return JsonResponse
+     */
+    public function validateBonusCardAction(Request $request): JsonResponse
+    {
+        $storage = $this->orderStorageService->getStorage();
+        $validationErrors = $this->fillStorage($storage, $request, OrderStorageService::PAYMENT_STEP_CARD);
+
+        if (!empty($validationErrors)) {
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => false]
+            );
+        }
+
+        return JsonSuccessResponse::create(
+            '',
+            200,
+            []
+        );
+    }
+
+    /**
      * @Route("/validate/auth", methods={"POST"})
-     *
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     *
+     * @param Request $request
+     * @throws \Bitrix\Main\SystemException
+     * @return JsonResponse
      * @return \FourPaws\App\Response\JsonResponse
      */
     public function validateAuthAction(Request $request): JsonResponse
@@ -158,7 +257,12 @@ class OrderController extends Controller
 
         $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => false]
+            );
         }
 
         return JsonSuccessResponse::create(
@@ -172,9 +276,15 @@ class OrderController extends Controller
     /**
      * @Route("/validate/payment", methods={"POST"})
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @return JsonResponse
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
@@ -190,13 +300,13 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         }
 
         try {
             $order = $this->orderService->createOrder($storage);
-        } catch (OrderCreateException $e) {
+        } catch (OrderCreateException|OrderSplitException $e) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
@@ -210,12 +320,13 @@ class OrderController extends Controller
             if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
                 $url->setPath('/sale/payment/');
                 $url->addParams(['ORDER_ID' => $order->getId()]);
+                if (!$this->orderService->hasRelatedOrder($order)) {
+                    $url->addParams(['PAY' => 'Y']);
+                }
             }
         }
 
-        if (!$this->userAuthProvider->isAuthorized()) {
-            $url->addParams(['HASH' => $order->getHash()]);
-        }
+        $url->addParams(['HASH' => $order->getHash()]);
 
         return JsonSuccessResponse::create(
             '',

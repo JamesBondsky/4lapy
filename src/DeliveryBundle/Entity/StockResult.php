@@ -3,40 +3,20 @@
 namespace FourPaws\DeliveryBundle\Entity;
 
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\StoreBundle\Collection\StoreCollection;
-use \DateTime;
+use FourPaws\StoreBundle\Entity\Store;
 
 class StockResult
 {
-    const TYPE_AVAILABLE = 'available';
+    public const TYPE_AVAILABLE = 'available';
 
-    const TYPE_DELAYED = 'delayed';
+    public const TYPE_DELAYED = 'delayed';
 
-    const TYPE_UNAVAILABLE = 'unavailable';
+    public const TYPE_UNAVAILABLE = 'unavailable';
 
     /**
      * @var int
      */
     protected $amount;
-
-    /**
-     * @var Offer
-     */
-    protected $offer;
-
-    /**
-     * Склады, откуда будет осуществляться доставка/самовывоз
-     *
-     * @var StoreCollection
-     */
-    protected $stores;
-
-    /**
-     * Склады, откуда будет поставка на $stores
-     *
-     * @var StoreCollection
-     */
-    protected $delayStores;
 
     /**
      * @var float
@@ -49,9 +29,16 @@ class StockResult
     protected $type = self::TYPE_AVAILABLE;
 
     /**
-     * @var null|DateTime
+     * @var Offer
      */
-    protected $deliveryDate;
+    protected $offer;
+
+    /**
+     * Склады, откуда будет осуществляться доставка/самовывоз
+     *
+     * @var Store
+     */
+    protected $store;
 
     /**
      * @return int
@@ -94,25 +81,21 @@ class StockResult
     }
 
     /**
-     * @return StoreCollection
+     * @return Store
      */
-    public function getStores(): StoreCollection
+    public function getStore(): Store
     {
-        if (!$this->stores) {
-            $this->stores = new StoreCollection();
-        }
-
-        return $this->stores;
+        return $this->store;
     }
 
     /**
-     * @param StoreCollection $stores
+     * @param Store $stores
      *
      * @return StockResult
      */
-    public function setStores(StoreCollection $stores): StockResult
+    public function setStore(Store $stores): StockResult
     {
-        $this->stores = $stores;
+        $this->store = $stores;
 
         return $this;
     }
@@ -138,26 +121,6 @@ class StockResult
     }
 
     /**
-     * @return DateTime
-     */
-    public function getDeliveryDate(): DateTime
-    {
-        return $this->deliveryDate;
-    }
-
-    /**
-     * @param DateTime $deliveryDate
-     *
-     * @return StockResult
-     */
-    public function setDeliveryDate(DateTime $deliveryDate): StockResult
-    {
-        $this->deliveryDate = $deliveryDate;
-
-        return $this;
-    }
-
-    /**
      * @return float
      */
     public function getPrice(): float
@@ -173,30 +136,6 @@ class StockResult
     public function setPrice(float $price): StockResult
     {
         $this->price = $price;
-
-        return $this;
-    }
-
-    /**
-     * @return StoreCollection
-     */
-    public function getDelayStores(): StoreCollection
-    {
-        if (!$this->delayStores) {
-            $this->delayStores = new StoreCollection();
-        }
-
-        return $this->delayStores;
-    }
-
-    /**
-     * @param StoreCollection $delayStores
-     *
-     * @return StockResult
-     */
-    public function setDelayStores(StoreCollection $delayStores): StockResult
-    {
-        $this->delayStores = $delayStores;
 
         return $this;
     }

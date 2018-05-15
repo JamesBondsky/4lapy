@@ -23,7 +23,8 @@ if ($_SESSION['FEEDBACK_SUCCESS'] === 'Y') {
             <?= new SvgDecorator('icon-check-color', 25, 25) ?>
         </span>
         </div>
-        <p class="b-feedback-page__text-thanks">Спасибо за отзыв, мы обязательно свяжемся с вами!</p>
+        <p class="b-feedback-page__text-thanks">Спасибо за Ваш отзыв. Мы внимательно ознакомимся с ним и свяжемся с Вами в ближайшее время!</p>
+        <p><a href="/catalog/">в каталог</a></p>
     </div>
     <?php
     unset($_SESSION['FEEDBACK_SUCCESS']);

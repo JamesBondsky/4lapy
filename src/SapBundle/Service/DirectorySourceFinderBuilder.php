@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service;
 
 use InvalidArgumentException;
@@ -7,6 +11,11 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
+/**
+ * Class DirectorySourceFinderBuilder
+ *
+ * @package FourPaws\SapBundle\Service
+ */
 class DirectorySourceFinderBuilder
 {
     private $fileSystem;
@@ -19,8 +28,8 @@ class DirectorySourceFinderBuilder
      *
      * @throws InvalidArgumentException
      *
-     * @return Finder
      * @throws IOException
+     * @return Finder
      */
     public function build(string $nameMask, string $path, string $fileType = 'xml'): Finder
     {
@@ -55,7 +64,7 @@ class DirectorySourceFinderBuilder
      *
      * @throws IOException
      */
-    public function checkPath(string $path)
+    public function checkPath(string $path): void
     {
         if (!$this->fileSystem->exists($path)) {
             $this->fileSystem->mkdir($path, '0775');

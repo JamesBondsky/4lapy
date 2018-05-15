@@ -1,10 +1,10 @@
 <?php
 /**
- * @var Request $request
+ * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var PhpEngine                             $view
+ * @var CMain                                 $APPLICATION
  */
 
 use Bitrix\Main\Grid\Declension;
@@ -45,13 +45,16 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
                 [
-                    'category' => $category,
+                    'category'   => $category,
+                    'brand' => $brand,
+                    'isBrand'=>true
                 ]
             ) ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterCollection->getVisibleFilters()
+                    'filters' => $filterCollection->getFiltersToShow(),
+                    'isBrand'=>true
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -63,7 +66,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </a>
     </div>
 </aside>
-<main class="b-catalog__main" role="main">
+<main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
         <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
            href="javascript:void(0);"
@@ -76,28 +79,26 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <div class="b-line b-line--sort-desktop"></div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар',
+                            ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts()
+                            'sorts' => $catalogRequest->getSorts(),
                         ]
                     ) ?>
                     <?php
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getVisibleFilters() as $filter) {
-                        if (!$filter->hasAvailableVariants()) {
-                            continue;
-                        }
+                    foreach ($filterCollection->getFiltersToShow() as $filter) {
                         if (!($filter instanceof ActionsFilter)) {
                             continue;
-                        }
-                        ?>
+                        } ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
+                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
+                                    ?>
                                     <li class="b-filter-link-list__item">
                                         <label class="b-filter-link-list__label">
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -113,10 +114,12 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                             </a>
                                         </label>
                                     </li>
-                                <?php } ?>
+                                    <?php
+                                } ?>
                             </ul>
                         </span>
-                    <?php } ?>
+                        <?php
+                    } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
                     <a class="b-link b-link--type active js-link-type-normal"
@@ -157,11 +160,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE' => '',
-            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS' => false,
+            'NAV_TITLE'      => '',
+            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE' => 'Y'
+            'AJAX_MODE'      => 'Y',
         ],
         null,
         [

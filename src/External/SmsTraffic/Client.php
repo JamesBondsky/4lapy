@@ -5,7 +5,6 @@ namespace FourPaws\External\SmsTraffic;
 use Exception;
 use FourPaws\External\SmsTraffic\Exception\ParsingException;
 use FourPaws\External\SmsTraffic\Exception\SendingException;
-use FourPaws\External\SmsTraffic\Exception\SmsSendErrorException;
 use FourPaws\External\SmsTraffic\Exception\TransportException;
 use FourPaws\External\SmsTraffic\Sms\AbstractSms;
 use FourPaws\External\SmsTraffic\Transport\GuzzleHttpTransport;
@@ -22,26 +21,26 @@ class Client
      * API Url by default
      */
     const DEFAULT_API_URL = 'http://sds.smstraffic.ru/smartdelivery-in/multi.php';
-    
+
     /**
      * Reserved API Url
      */
     const RESERVE_API_URL = 'http://91.238.120.150/smartdelivery-in/multi.php';
-    
+
     /**
      * Sms Traffic Login
      *
      * @var string
      */
     protected $login;
-    
+
     /**
      * Sms Traffic Password
      *
      * @var string
      */
     protected $password;
-    
+
     /**
      * Route
      *
@@ -50,50 +49,50 @@ class Client
      * @var string
      */
     protected $route = 'viber(90)-sms';
-    
+
     /**
      * Message sender
      *
      * @var string
      */
     protected $originator = '4lapy';
-    
+
     /**
      * Sms Traffic URL
      *
      * @var string
      */
     protected $apiUrl = self::DEFAULT_API_URL;
-    
+
     /**
      * @var TransportInterface
      */
     protected $transport;
-    
+
     /**
      * @var callable
      */
     protected $preRequestCallback;
-    
+
     /**
      * @var callable
      */
     protected $postRequestCallback;
-    
+
     /**
      * Client constructor.
      *
-     * @param string      $login      Sms Traffic login
-     * @param string      $password   Sms Traffic Password
+     * @param string $login Sms Traffic login
+     * @param string $password Sms Traffic Password
      * @param string|null $originator Sms sender
      */
     public function __construct($login, $password, $originator = null)
     {
-        $this->login      = $login;
-        $this->password   = $password;
+        $this->login = $login;
+        $this->password = $password;
         $this->originator = $originator;
     }
-    
+
     /**
      * Sends message
      *
@@ -105,46 +104,43 @@ class Client
      * @throws SendingException
      * @throws TransportException
      */
-    public function send(AbstractSms $sms) : array
+    public function send(AbstractSms $sms): array
     {
         if (!$this->transport instanceof TransportInterface) {
             $this->transport = new GuzzleHttpTransport();
         }
-        
-        $params                             = $sms->getParameters();
-        $params[$sms::PARAMETER_LOGIN]      = $this->login;
-        $params[$sms::PARAMETER_PASSWORD]   = $this->password;
+
+        $params = $sms->getParameters();
+        $params[$sms::PARAMETER_LOGIN] = $this->login;
+        $params[$sms::PARAMETER_PASSWORD] = $this->password;
         $params[$sms::PARAMETER_ORIGINATOR] = $this->originator;
-        $params[$sms::PARAMETER_ROUTE]      = $this->route;
-        
+        $params[$sms::PARAMETER_ROUTE] = $this->route;
+
         try {
-            if (is_callable($this->preRequestCallback)) {
-                call_user_func_array($this->preRequestCallback,
-                                     [
-                                         $params,
-                                         $this->apiUrl,
-                                     ]);
+            if (\is_callable($this->preRequestCallback)) {
+                \call_user_func($this->preRequestCallback,
+                    $params,
+                    $this->apiUrl);
             }
-            
+
             $result = $this->transport->doRequest($this->apiUrl, $params);
         } catch (Exception $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }
 
         $ret = $this->parseSendingResult($result);
-        
-        if (is_callable($this->postRequestCallback)) {
-            call_user_func_array($this->postRequestCallback,
-                                 [
-                                     $ret,
-                                     $params,
-                                     $this->apiUrl,
-                                 ]);
+
+        if (\is_callable($this->postRequestCallback)) {
+            \call_user_func($this->postRequestCallback,
+                $ret,
+                $params,
+                $this->apiUrl
+            );
         }
-        
+
         return $ret;
     }
-    
+
     /**
      * @param TransportInterface $transport
      *
@@ -153,10 +149,10 @@ class Client
     public function setTransport(TransportInterface $transport)
     {
         $this->transport = $transport;
-        
+
         return $this;
     }
-    
+
     /**
      * @param string $route
      *
@@ -165,10 +161,10 @@ class Client
     public function setRoute(string $route)
     {
         $this->route = $route;
-        
+
         return $this;
     }
-    
+
     /**
      * @param string $apiUrl
      *
@@ -177,10 +173,10 @@ class Client
     public function setApiUrl($apiUrl)
     {
         $this->apiUrl = $apiUrl;
-        
+
         return $this;
     }
-    
+
     /**
      * Set callback function perform before API http request
      *
@@ -194,7 +190,7 @@ class Client
 
         return $this;
     }
-    
+
     /**
      * Set callback function perform after API http request
      *
@@ -205,10 +201,10 @@ class Client
     public function setPostRequestCallback(callable $postRequestCallback)
     {
         $this->postRequestCallback = $postRequestCallback;
-        
+
         return $this;
     }
-    
+
     /**
      * Parses sending result
      *
@@ -218,10 +214,10 @@ class Client
      * @throws ParsingException
      * @throws SendingException
      */
-    protected function parseSendingResult($result) : array
+    protected function parseSendingResult($result): array
     {
-        $xml            = simplexml_load_string($result);
-        $ret            = json_decode(json_encode($xml), true);
+        $xml = \simplexml_load_string($result);
+        $ret = \json_decode(\json_encode($xml), true);
         $requiredFields = [
             'result',
             'code',
@@ -235,14 +231,14 @@ class Client
             $message = empty($ret['description']) ? 'Unknown Error' : $ret['description'];
             throw (new SendingException($message, (int)$ret['code']))->setAnswer($result);
         }
-        
+
         return $ret;
     }
 
     /**
      * @param string $login
      */
-    public function setLogin(string $login)
+    public function setLogin(string $login): void
     {
         $this->login = $login;
     }
@@ -250,7 +246,7 @@ class Client
     /**
      * @param string $password
      */
-    public function setPassword(string $password)
+    public function setPassword(string $password): void
     {
         $this->password = $password;
     }

@@ -1,17 +1,24 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
+use Bitrix\Iblock\ElementTable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use JMS\Serializer\Annotation as Serializer;
-
 
 /**
  * Class BonusBuyFrom
  *
  * @package FourPaws\SapBundle\Dto\In\Shares
  */
-class BonusBuyFrom
+class BonusBuyFrom extends BonusBuyGroupBase
 {
     /**
      * Содержит вид предпосылки. Тип поля – единственный выбор из значений:
@@ -53,10 +60,10 @@ class BonusBuyFrom
     /**
      * Группа данных о позиции предпосылки акции
      *
+     * @Serializer\XmlList(inline=true, entry="PURCHASE_ITEM")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyFromItem>")
-     * @Serializer\SerializedName("PURCHASE_ITEM")
      *
-     * @var Collection|BonusBuyFromItem[]
+     * @var BonusBuyFromItem[]|Collection
      */
     protected $bonusBuyFromItems;
 
@@ -121,11 +128,11 @@ class BonusBuyFrom
     }
 
     /**
-     * @return Collection|BonusBuyFromItem[]
+     * @return BonusBuyFromItem[]|Collection
      */
     public function getBonusBuyFromItems(): Collection
     {
-        return $this->bonusBuyFromItems->filter(function ($key, $item) {
+        return $this->bonusBuyFromItems->filter(function ($item) {
             /**
              * @var $item BonusBuyFromItem
              */
@@ -139,8 +146,9 @@ class BonusBuyFrom
      *
      * @return int
      */
-    public function getGroupQuantity(): int {
-        $item = $this->bonusBuyFromItems->filter(function ($key, $item) {
+    public function getGroupQuantity(): int
+    {
+        $item = $this->bonusBuyFromItems->filter(function ($item) {
             /**
              * @var $item BonusBuyFromItem
              */
@@ -154,7 +162,7 @@ class BonusBuyFrom
     }
 
     /**
-     * @param Collection|BonusBuyFromItem[] $bonusBuyFromItems
+     * @param BonusBuyFromItem[]|Collection $bonusBuyFromItems
      *
      * @return BonusBuyFrom
      */
@@ -163,5 +171,31 @@ class BonusBuyFrom
         $this->bonusBuyFromItems = $bonusBuyFromItems;
 
         return $this;
+    }
+
+
+    /**
+     * Возвращает массив XML_ID, пришедших в импорте
+     *
+     * @return ArrayCollection
+     */
+    public function getProductXmlIds(): ArrayCollection
+    {
+        /**
+         * больше одного, так как в первом содержится количество элементов
+         */
+        if (!empty($this->bonusBuyFromItems) && $this->bonusBuyFromItems->count() > 1) {
+            /** @var ArrayCollection $result */
+            $result = $this->bonusBuyFromItems->map(function (BonusBuyFromItem $item) {
+                return $item->getOfferId();
+            });
+
+            $result = $result->filter(
+                function ($e) {
+                    return (bool)$e;
+                }
+            );
+        }
+        return $result ?? new ArrayCollection();
     }
 }

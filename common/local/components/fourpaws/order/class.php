@@ -9,72 +9,84 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Sale\Order;
+use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\ManzanaPosService;
-use FourPaws\External\Manzana\Exception\ExecuteException;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\UserAccountService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
 {
-    const DEFAULT_TEMPLATES_404 = [
-        OrderStorageService::AUTH_STEP     => 'index.php',
+    protected const DEFAULT_TEMPLATES_404 = [
+        OrderStorageService::AUTH_STEP => 'index.php',
         OrderStorageService::DELIVERY_STEP => 'delivery/',
-        OrderStorageService::PAYMENT_STEP  => 'payment/',
+        OrderStorageService::PAYMENT_STEP => 'payment/',
         OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#',
     ];
 
     /** @var string */
     protected $currentStep;
-
     /** @var OrderService */
     protected $orderService;
-
     /** @var OrderStorageService */
     protected $orderStorageService;
-
     /** @var DeliveryService */
     protected $deliveryService;
-
     /** @var StoreService */
     protected $storeService;
-
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
-
     /** @var UserCitySelectInterface */
     protected $userCityProvider;
-
     /** @var BasketService $basketService */
     protected $basketService;
-
     /** @var UserAccountService */
     protected $userAccountService;
-
-    /** @var ManzanaPosService */
-    protected $manzanaPosService;
-
-    /** @var LoggerInterface  */
+    /** @var LoggerInterface */
     protected $logger;
+    /** @var LocationService */
+    protected $locationService;
 
+    /**
+     * FourPawsOrderComponent constructor.
+     *
+     * @param $component
+     *
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     */
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -87,7 +99,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->userCityProvider = $serviceContainer->get(UserCitySelectInterface::class);
         $this->basketService = $serviceContainer->get(BasketService::class);
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
-        $this->manzanaPosService = $serviceContainer->get('manzana.pos.service');
+        $this->locationService = $serviceContainer->get('location.service');
         $this->logger = LoggerFactory::create('component_order');
 
         parent::__construct($component);
@@ -124,7 +136,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->includeComponentTemplate($componentPage);
         } catch (\Exception $e) {
             try {
-                $this->logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $this->logger->error(sprintf('Component execute error: %s: %s', \get_class($e), $e->getMessage()), [
+                    'trace' => $e->getTrace()
+                ]);
             } catch (\RuntimeException $e) {
             }
         }
@@ -132,20 +146,37 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
     /**
      * @throws Exception
-     * @return $this
+     * @throws OrderCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws ApplicationCreateException
      */
-    protected function prepareResult()
+    protected function prepareResult(): void
     {
         if ($this->currentStep === OrderStorageService::COMPLETE_STEP) {
-            return $this;
+            return;
         }
 
         if (!$storage = $this->orderStorageService->getStorage()) {
             throw new OrderCreateException('Failed to initialize storage');
         }
 
+        $date = new \DateTime();
+        if (($this->currentStep === OrderStorageService::DELIVERY_STEP) &&
+            (abs(
+                $storage->getCurrentDate()->getTimestamp() - $date->getTimestamp()
+            ) > OrderDeliveryValidator::MAX_DATE_DIFF)
+        ) {
+            $storage->setCurrentDate($date);
+            $this->orderStorageService->updateStorage($storage, OrderStorageService::NOVALIDATE_STEP);
+        }
+
         try {
-            $order = $this->orderService->createOrder($storage, false);
+            $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {
             LocalRedirect('/cart');
         }
@@ -154,9 +185,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $basket = $order->getBasket()->getOrderableItems();
 
         $this->arResult['URL'] = [
-            'AUTH'     => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
+            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
             'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP],
-            'PAYMENT'  => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
+            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
         ];
 
         /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
@@ -164,9 +195,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
         $routeCollection = $router->getRouteCollection();
         $routes = [
-            'AUTH_VALIDATION'     => 'fourpaws_sale_ajax_order_validateauth',
+            'AUTH_VALIDATION' => 'fourpaws_sale_ajax_order_validateauth',
             'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
-            'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
+            'PAYMENT_VALIDATION' => 'fourpaws_sale_ajax_order_validatepayment',
+            'BONUS_CARD_VALIDATION' => 'fourpaws_sale_ajax_order_validatebonuscard',
+            'DELIVERY_INTERVALS' => 'fourpaws_sale_ajax_order_deliveryintervals',
         ];
         foreach ($routes as $key => $name) {
             /** @noinspection NullPointerExceptionInspection */
@@ -184,8 +217,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
         $payments = null;
-        $deliveries = $this->orderService->getDeliveries();
-        $this->getPickupData($deliveries, $storage);
 
         $user = null;
         try {
@@ -193,7 +224,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
         } catch (NotAuthorizedException $e) {
         }
 
+        $deliveries = $this->orderStorageService->getDeliveries($storage);
+        $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
+            $this->getPickupData($deliveries, $storage);
+
             $addresses = null;
             if ($storage->getUserId()) {
                 /** @var AddressService $addressService */
@@ -203,18 +238,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $delivery = null;
             $pickup = null;
-            $selectedDelivery = null;
-            $selectedDeliveryId = $storage->getDeliveryId();
             foreach ($deliveries as $calculationResult) {
-                $deliveryId = $calculationResult->getData()['DELIVERY_ID'];
-                if (!$selectedDeliveryId) {
-                    $selectedDeliveryId = $deliveryId;
-                }
-
-                if ($selectedDeliveryId === (int)$deliveryId) {
-                    $selectedDelivery = $calculationResult;
-                }
-
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
                 } elseif ($this->deliveryService->isDelivery($calculationResult)) {
@@ -222,71 +246,61 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
-            if (!$selectedDelivery) {
-                $selectedDelivery = reset($deliveries);
-                $selectedDeliveryId = (int)$selectedDelivery->getData()['DELIVERY_ID'];
+            try {
+                if (null !== $delivery) {
+                    $this->splitOrder($delivery, $storage);
+                }
+            } catch (OrderSplitException $e) {
+                // проверяется на этапе валидации $storage
             }
 
             $this->arResult['PICKUP'] = $pickup;
             $this->arResult['DELIVERY'] = $delivery;
             $this->arResult['ADDRESSES'] = $addresses;
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
-            $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
         } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
-            $deliveries = $this->orderService->getDeliveries();
+            $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
-            $selectedDelivery = null;
-            /** @var CalculationResult $delivery */
-            foreach ($deliveries as $delivery) {
-                if ((int)$delivery->getData()['DELIVERY_ID'] !== $storage->getDeliveryId()) {
-                    continue;
+
+            try {
+                if ($storage->isSplit()) {
+                    $this->splitOrder($selectedDelivery, $storage);
                 }
-
-                $selectedDelivery = $delivery;
+            } catch (OrderSplitException $e) {
+                $this->logger->error(sprintf('failed to split order: %s', $e->getMessage()));
             }
 
-            if (!$selectedDelivery) {
-                LocalRedirect(
-                    $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP]
-                );
-            }
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
 
             $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
-                try {
-                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
-                        $basket,
-                        $user->getDiscountCardNumber()
-                    );
-                    $chequeRequest->setPaidByBonus($basket->getPrice());
-
-                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = $cheque->getAvailablePayment();
-                } catch (ExecuteException $e) {
-                    /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
-                    $this->logger->error($e->getMessage());
+                $basketForRequest = $basket;
+                if ($storage->isSplit() && $this->orderStorageService->canGetPartial($selectedDelivery)) {
+                    /** @var Order $order1 */
+                    $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
+                    $basketForRequest = $order1->getBasket();
                 }
+
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basketForRequest);
             }
         }
 
+        $this->arResult['BASKET'] = $basket;
         $this->arResult['USER'] = $user;
         $this->arResult['PAYMENTS'] = $payments;
         $this->arResult['SELECTED_CITY'] = $selectedCity;
+        $this->arResult['DADATA_CONSTRAINTS'] = $this->locationService->getDadataJsonFromLocationArray($selectedCity);
 
         $this->arResult['METRO'] = $this->storeService->getMetroInfo();
-        $this->arResult['BASKET'] = $basket;
         $this->arResult['STORAGE'] = $storage;
         $this->arResult['STEP'] = $this->currentStep;
-
-        return $this;
     }
 
     /**
-     * @param CalculationResult[] $deliveries
+     * @param CalculationResultInterface[] $deliveries
      * @param OrderStorage $storage
      */
-    protected function getPickupData(array $deliveries, OrderStorage $storage)
+    protected function getPickupData(array $deliveries, OrderStorage $storage): void
     {
         $pickup = null;
         foreach ($deliveries as $calculationResult) {
@@ -295,52 +309,74 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
         }
 
-        if (!$pickup) {
-            return;
-        }
-
-        $partialPickup = clone $pickup;
-        /** @var StockResultCollection $stockResult */
-        $stockResult = $this->deliveryService->getStockResultByDelivery($pickup);
-        $selectedShopCode = $storage->getDeliveryPlaceCode();
-
-        /**
-         * @hotfix
-         *
-         * @todo реализовать обработку
-         */
-        try {
-            $shops = $stockResult->getStores(false);
-        } catch (NotFoundException $e) {
-            $shops = new StoreCollection();
-        }
-
-        $selectedShop = null;
-        if (!$selectedShopCode || !isset($shops[$selectedShopCode])) {
-            /** @var Store $shop */
-            foreach ($shops as $shop) {
-                if ($stockResult->filterByStore($shop)->getDelayed()->isEmpty()) {
-                    $selectedShop = $shop;
-                    break;
-                }
+        if (null !== $pickup) {
+            /** @var PickupResultInterface $pickup */
+            $storage = clone $storage;
+            $selectedShopCode = $storage->getDeliveryPlaceCode();
+            $shops = $pickup->getStockResult()->getStores();
+            if ($selectedShopCode && isset($shops[$selectedShopCode])) {
+                $pickup->setSelectedShop($shops[$selectedShopCode]);
             }
 
-            if (!$selectedShop) {
-                $selectedShop = $shops->first();
+            $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedShop();
+
+            if ($pickup->getSelectedShop()->getMetro()) {
+                $this->arResult['METRO'] = $this->storeService->getMetroInfo(
+                    ['ID' => $pickup->getSelectedShop()->getMetro()]
+                );
             }
-        } else {
-            $selectedShop = $shops[$selectedShopCode];
+            $storage->setSplit(true);
+            $storage->setDeliveryId($pickup->getDeliveryId());
+            $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
+
+            [$available, $delayed] = $this->orderStorageService->splitStockResult($pickup);
+            $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
+                ? null
+                : (clone $pickup)->setStockResult($available);
+            $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderStorageService->canGetPartial($pickup);
+            $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderStorageService->canSplitOrder($pickup);
+            $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
+            $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
+            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage);
         }
+    }
 
-        if ($this->deliveryService->isInnerPickup($pickup)) {
-            $deliveryDate = $stockResult->getDeliveryDate();
-            $partialDeliveryDate = $stockResult->getAvailable()->getDeliveryDate();
-
-            DeliveryTimeHelper::updateDeliveryDate($pickup, $deliveryDate);
-            DeliveryTimeHelper::updateDeliveryDate($partialPickup, $partialDeliveryDate);
-        }
-
-        $this->arResult['SELECTED_SHOP'] = $selectedShop;
-        $this->arResult['PARTIAL_PICKUP'] = $partialPickup;
+    /**
+     * @param CalculationResultInterface $delivery
+     * @param OrderStorage $storage
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotAvailableException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderCreateException
+     * @throws OrderSplitException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws LoaderException
+     * @throws BitrixProxyException
+     */
+    protected function splitOrder(CalculationResultInterface $delivery, OrderStorage $storage): void
+    {
+        $tmpStorage = clone $storage;
+        $tmpStorage->setDeliveryId($delivery->getDeliveryId());
+        [$splitResult1, $splitResult2] = $this->orderService->splitOrder($tmpStorage);
+        $this->arResult['SPLIT_RESULT'] = [
+            '1' => [
+                'ORDER' => $splitResult1->getOrder(),
+                'STORAGE' => $splitResult1->getOrderStorage(),
+                'DELIVERY' => $splitResult1->getDelivery()
+            ],
+            '2' => [
+                'ORDER' => $splitResult2->getOrder(),
+                'STORAGE' => $splitResult2->getOrderStorage(),
+                'DELIVERY' => $splitResult2->getDelivery()
+            ]
+        ];
     }
 }

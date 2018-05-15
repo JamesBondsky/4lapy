@@ -7,7 +7,6 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -19,8 +18,10 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\Entity\Address as LocationAddress;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Repository\AddressRepository;
+use FourPaws\PersonalBundle\Repository\OldAddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -38,7 +39,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class AddressService
 {
     /**
-     * @var AddressRepository
+     * @var OldAddressRepository
      */
     private $addressRepository;
 
@@ -48,25 +49,39 @@ class AddressService
     /**
      * AddressService constructor.
      *
-     * @param AddressRepository $addressRepository
-     *
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     * @param OldAddressRepository         $addressRepository
+     * @param CurrentUserProviderInterface $currentUserProvider
      */
-    public function __construct(AddressRepository $addressRepository)
+    public function __construct(OldAddressRepository $addressRepository, CurrentUserProviderInterface $currentUserProvider)
     {
         $this->addressRepository = $addressRepository;
-        $this->currentUser = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        $this->currentUser = $currentUserProvider;
+    }
+
+    /**
+     * @param LocationAddress $locationAddress
+     *
+     * @return Address
+     */
+    public function createFromLocation(LocationAddress $locationAddress): Address
+    {
+        return (new Address())->setCity($locationAddress->getCity())
+            ->setCityLocation($locationAddress->getLocation())
+            ->setStreet($locationAddress->getStreet())
+            ->setHouse($locationAddress->getHouse())
+            ->setHousing($locationAddress->getHousing())
+            ->setEntrance($locationAddress->getEntrance())
+            ->setFloor($locationAddress->getFloor())
+            ->setFlat($locationAddress->getFlat());
     }
 
     /**
      * @param int    $userId
      * @param string $locationCode
      *
-     * @return ArrayCollection|Address[]
      * @throws ObjectPropertyException
      * @throws NotAuthorizedException
+     * @return Address[]|ArrayCollection
      */
     public function getAddressesByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {
@@ -76,9 +91,9 @@ class AddressService
     /**
      * @param int $id
      *
-     * @return BaseEntity|Address
      * @throws ObjectPropertyException
      * @throws NotFoundException
+     * @return Address|BaseEntity
      */
     public function getById(int $id): Address
     {
@@ -113,7 +128,6 @@ class AddressService
     /**
      * @param Address $address
      *
-     * @return bool
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @throws ServiceNotFoundException
@@ -124,6 +138,7 @@ class AddressService
      * @throws ConstraintDefinitionException
      * @throws ApplicationCreateException
      * @throws \Exception
+     * @return bool
      */
     public function add(Address $address): bool
     {
@@ -147,12 +162,9 @@ class AddressService
                 /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress($address);
             }
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $address->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' . $address->getUserId(),
+            ]);
         }
 
         return $res;
@@ -226,6 +238,10 @@ class AddressService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
+        if($entity->getUserId() === 0){
+            $entity->setUserId($updateEntity->getUserId());
+        }
+
         if ($entity->isMain()) {
             $this->disableMainItem();
         }
@@ -238,12 +254,9 @@ class AddressService
                 /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress($entity);
             }
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $updateEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' .$updateEntity->getUserId(),
+            ]);
         }
 
         return $res;
@@ -279,12 +292,9 @@ class AddressService
                 /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress(new Address());
             }
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                /** Очистка кеша */
-                $instance = Application::getInstance();
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->clearByTag('address_' . $deleteEntity->getUserId());
-            }
+            TaggedCacheHelper::clearManagedCache([
+                'personal:address:' .$deleteEntity->getUserId(),
+            ]);
         }
         return $res;
     }

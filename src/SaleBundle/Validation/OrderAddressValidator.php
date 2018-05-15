@@ -8,6 +8,7 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -15,18 +16,18 @@ use Symfony\Component\Validator\ConstraintValidator;
 class OrderAddressValidator extends ConstraintValidator
 {
     /**
-     * @var OrderService
+     * @var OrderStorageService
      */
-    protected $orderService;
+    protected $orderStorageService;
 
     /**
      * @var CurrentUserProviderInterface
      */
     protected $currentUserProvider;
 
-    public function __construct(OrderService $orderService, CurrentUserProviderInterface $currentUserProvider)
+    public function __construct(OrderStorageService $orderStorageService, CurrentUserProviderInterface $currentUserProvider)
     {
-        $this->orderService = $orderService;
+        $this->orderStorageService = $orderStorageService;
         $this->currentUserProvider = $currentUserProvider;
     }
 
@@ -54,10 +55,10 @@ class OrderAddressValidator extends ConstraintValidator
          * Проверка, что выбрана доступная доставка
          * Если выбрана недоступная - не проверяем
          */
-        $deliveryMethods = $this->orderService->getDeliveries();
+        $deliveryMethods = $this->orderStorageService->getDeliveries($entity);
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
-            if ($deliveryId === (int)$deliveryMethod->getData()['DELIVERY_ID']) {
+            if ($deliveryId === $deliveryMethod->getDeliveryId()) {
                 $delivery = $deliveryMethod;
                 break;
             }

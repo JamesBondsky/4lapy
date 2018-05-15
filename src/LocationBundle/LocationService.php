@@ -8,24 +8,38 @@ namespace FourPaws\LocationBundle;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\GroupLocationTable;
+use Bitrix\Sale\Location\LocationTable;
+use Bitrix\Sale\Location\Name\LocationTable as NameLocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
+use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\App\Application;
-use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\DaDataService;
+use FourPaws\External\Exception\DaDataExecuteException;
+use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Enum\CitiesSectionCode;
+use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -39,21 +53,69 @@ use WebArch\BitrixCache\BitrixCache;
  */
 class LocationService
 {
+    use LazyLoggerAwareTrait;
+
     public const TYPE_CITY = 'CITY';
 
     public const TYPE_VILLAGE = 'VILLAGE';
 
+    public const TYPE_SUBREGION = 'SUBREGION';
+
+    public const TYPE_REGION = 'REGION';
+
     public const LOCATION_CODE_MOSCOW = '0000073738';
+
+    public const LOCATION_CODE_MOSCOW_REGION = '0000028025';
 
     public const DEFAULT_REGION_CODE = 'IR77';
 
     public const REGION_SERVICE_CODE = 'REGION';
 
     /**
-     * LocationService constructor.
+     * @var DaDataService
      */
-    public function __construct()
+    protected $daDataService;
+
+    /** @var array */
+    private $locationsByCode = [];
+
+    /**
+     * LocationService constructor.
+     *
+     * @param DaDataService $daDataService
+     */
+    public function __construct(DaDataService $daDataService)
     {
+        $this->daDataService = $daDataService;
+    }
+
+    /**
+     * @param string $cityCode
+     *
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public static function getRegion(string $cityCode): int
+    {
+        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect([
+            'ID',
+            'REGION_ID',
+            'PARENT_ID',
+            'TYPE_CODE' => 'TYPE.CODE',
+            'PARENTS_PARENT_ID' => 'PARENTS.ID',
+            'PARENTS_PARENT_TYPE_CODE' => 'PARENTS.TYPE.CODE',
+        ])->setCacheTtl(360000)->exec()->fetchAll();
+        foreach ($locList as $locItem) {
+            if ($locItem['TYPE_CODE'] === 'REGION') {
+                return $locItem['ID'];
+            }
+            if ($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION') {
+                return $locItem['PARENTS_PARENT_ID'];
+            }
+        }
+        return 0;
     }
 
     /**
@@ -61,10 +123,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
      * @throws Exception
      * @return string
      */
@@ -91,7 +153,7 @@ class LocationService
             /** @noinspection OffsetOperationsInspection */
             $filter = [
                 'LOCATION.CODE' => $location['CODE'],
-                'SERVICE.CODE'  => self::REGION_SERVICE_CODE,
+                'SERVICE.CODE' => self::REGION_SERVICE_CODE,
             ];
 
             /** @noinspection OffsetOperationsInspection */
@@ -128,7 +190,6 @@ class LocationService
      * @throws IblockNotFoundException
      * @throws Exception
      * @return array
-     * @throws ArgumentException
      */
     public function getAvailableCities(): array
     {
@@ -151,7 +212,7 @@ class LocationService
                 }
 
                 $storeCodes = [];
-                $stores = $storeService->getByLocation(
+                $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
                 );
@@ -161,8 +222,8 @@ class LocationService
                 }
 
                 $result[CitiesSectionCode::POPULAR][] = [
-                    'NAME'  => $element['NAME'],
-                    'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
+                    'NAME' => $element['NAME'],
+                    'CODE' => $element['PROPERTY_LOCATION_VALUE'],
                     'SHOPS' => $storeCodes,
                 ];
             }
@@ -177,7 +238,7 @@ class LocationService
                 }
 
                 $storeCodes = [];
-                $stores = $storeService->getByLocation(
+                $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
                 );
@@ -187,8 +248,8 @@ class LocationService
                 }
 
                 $result[CitiesSectionCode::MOSCOW_REGION][] = [
-                    'NAME'  => $element['NAME'],
-                    'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
+                    'NAME' => $element['NAME'],
+                    'CODE' => $element['PROPERTY_LOCATION_VALUE'],
                     'SHOPS' => $storeCodes,
                 ];
             }
@@ -200,42 +261,43 @@ class LocationService
             ->withId(__METHOD__)
             ->withIblockTag(IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES))
             ->resultOf($getAvailableCities);
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * Поиск местоположения по названию
      *
      * @param string $query
-     * @param int    $limit
-     * @param bool   $exact
-     * @param array  $additionalFilter
+     * @param int $limit
+     * @param bool $exact
+     * @param array $additionalFilter
      *
      * @throws CityNotFoundException
-     * @throws Exception
      * @return array
+     * @deprecated
      */
     public function findLocation(
         string $query,
         int $limit = null,
         bool $exact = false,
         array $additionalFilter = []
-    ): array {
+    ): array
+    {
         $findLocation = function () use ($query, $limit, $exact, $additionalFilter) {
-            if (empty($query)) {
-                throw new CityNotFoundException('Город не найден');
+            $filter = [];
+            if ($query) {
+                $filter = [
+                    'NAME.LANGUAGE_ID' => LANGUAGE_ID,
+                    'PHRASE' => $query,
+                ];
+
+                if ($exact) {
+                    $filter['NAME.NAME'] = $query;
+                }
             }
 
-            $filter = [
-                'NAME.LANGUAGE_ID' => LANGUAGE_ID,
-                'PHRASE'           => $query,
-            ];
-
-            if ($exact) {
-                $filter['NAME.NAME'] = $query;
-            }
 
             if (!empty($additionalFilter)) {
-                $filter = array_merge($filter, $additionalFilter);
+                $filter = \array_merge($filter, $additionalFilter);
             }
 
             // Bitrix не ищет по массиву TYPE_ID
@@ -261,9 +323,13 @@ class LocationService
             return $result;
         };
 
-        $result = (new BitrixCache())
-            ->withId($query . \json_encode($additionalFilter) . $limit . (int)$exact)
-            ->resultOf($findLocation);
+        try {
+            $result = (new BitrixCache())
+                ->withId($query . \json_encode($additionalFilter) . $limit . (int)$exact)
+                ->resultOf($findLocation);
+        } catch (\Exception $e) {
+            $result = $findLocation();
+        }
 
         if (empty($result)) {
             throw new CityNotFoundException('Город не найден');
@@ -273,120 +339,281 @@ class LocationService
     }
 
     /**
+     * Поиск местоположения по названию
+     *
+     * @param Query|array $queryParams
+     * @param int $limit
+     * @param bool $needPath
+     *
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function findLocationNew(
+        $queryParams,
+        int $limit = 0,
+        bool $needPath = true
+    ): array
+    {
+        $cacheFinder = function () use ($queryParams, $limit, $needPath) {
+            if (!($queryParams instanceof Query)) {
+                /** сразу в селект не добалять позиции с join - получать их позже - для скорости
+                 * поиск по коду и только по названию без родителя будет быстрее */
+                $query = LocationTable::query()->setFilter($queryParams)->setSelect([
+                    'ID',
+                    'CODE',
+                    'DEPTH_LEVEL',
+                    'LEFT_MARGIN',
+                    'RIGHT_MARGIN',
+                    'TYPE_ID',
+                ]);
+            } else {
+                $query = $queryParams;
+            }
+            if ($limit > 0) {
+                $query->setLimit($limit);
+            }
+            $res = $query->exec();
+            $locations = [];
+            $typeList = [];
+            while ($item = $res->fetch()) {
+                $typeList[$item['TYPE_ID']][] = $item['ID'];
+                /** для получения родетелей от запроса в цикле не уйти -
+                 * если делать в основ запросе- то запрос буде слишком тяжелый,
+                 * так как стандартно идет подключение через left_join
+                 * в подзапросе уже используем поля с join так как выборка маленькая
+                 */
+                $parentList = [];
+                /** очень долгий запрос на получение родителей */
+                if ($needPath) {
+                    $parentRes = LocationTable::query()
+                        ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
+                        ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
+                        ->where('RIGHT_MARGIN', '>', $item['RIGHT_MARGIN'])
+                        ->setSelect([
+                            'ID',
+                            'CODE',
+                            'DISPLAY' => 'NAME.NAME',
+                            '_TYPE_ID' => 'TYPE.ID',
+                            '_TYPE_CODE' => 'TYPE.CODE',
+                            '_TYPE_NAME' => 'TYPE.NAME.NAME',
+                        ])->exec();
+                    while ($parentItem = $parentRes->fetch()) {
+                        $parentItem['NAME'] = $parentItem['DISPLAY'];
+                        unset($parentItem['DISPLAY']);
+                        $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
+                        $parentList[] = $parentItem;
+                    }
+                    $item['PATH'] = $parentList;
+                }
+                $locations[$item['ID']] = $item;
+            }
+            if (!empty($locations)) {
+                $locationIds = array_keys($locations);
+                $res = NameLocationTable::query()->setSelect([
+                    'NAME',
+                    'LOCATION_ID',
+                ])->setFilter(['=LOCATION_ID' => $locationIds])->exec();
+                while ($item = $res->fetch()) {
+                    $locations[$item['LOCATION_ID']]['NAME'] = $item['NAME'];
+                }
+                $res = TypeTable::query()->setSelect([
+                    'ID',
+                    'CODE',
+                    'DISPLAY' => 'NAME.NAME',
+                ])->setFilter(['=ID' => array_keys($typeList)])->exec();
+                while ($item = $res->fetch()) {
+                    if (\is_array($typeList[$item['ID']])) {
+                        foreach ($typeList[$item['ID']] as $itemId) {
+                            $locations[$itemId]['TYPE'] = [
+                                'ID' => $item['ID'],
+                                'CODE' => $item['CODE'],
+                                'NAME' => $item['DISPLAY'],
+                            ];
+                        }
+                    }
+                }
+            } else {
+                return [];
+            }
+            return $locations;
+        };
+        try {
+            return (new BitrixCache())
+                ->withTag('location_finder')
+                ->withTime(360000)
+                ->withId(__METHOD__ . serialize($queryParams))
+                ->resultOf($cacheFinder);
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get location: %s', $e->getMessage()), [
+                'queryParams' => var_export($queryParams, true),
+            ]);
+            return [];
+        }
+    }
+
+    /**
      * Поиск местоположения по коду
      *
      * @param string $code
-     * @param array  $additionalFilter
      *
-     * @throws Exception
-     * @return array|false
+     * @return array
+     * @throws ArgumentException
+     * @throws CityNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function findLocationByCode(string $code, array $additionalFilter = []): array
+    public function findLocationByCode(string $code): array
     {
-        $findLocation = function () use ($code, $additionalFilter) {
-            $filter = ['CODE' => $code];
-            if (!empty($additionalFilter) && \is_array($additionalFilter)) {
-                $filter = array_merge($filter, $additionalFilter);
+        if (!isset($this->locationsByCode[$code])) {
+            $this->locationsByCode[$code] = reset($this->findLocationNew(['=CODE' => $code]));
+            if(\is_bool($this->locationsByCode[$code])){
+                $this->locationsByCode[$code] = [];
             }
-            $locations = $this->findWithLocationSearchComponent($filter, 1);
-            return reset($locations);
-        };
-
-        try {
-            return (new BitrixCache())
-                ->withId(
-                    __METHOD__ . \json_encode(
-                        [
-                            'code'   => $code,
-                            'filter' => $additionalFilter,
-                        ]
-                    )
-                )
-                ->resultOf($findLocation);
-        } catch (Exception $e) {
-            return $findLocation();
         }
-    }
+        return $this->locationsByCode[$code] ?? [];
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * Поиск местоположений с типом "город" и "деревня" по названию
      *
-     * @param string   $query
-     * @param string   $parentName
+     * @param string $query
+     * @param string|array|null $parentName
      * @param null|int $limit
-     * @param bool     $exact
+     * @param bool $exact
+     * @param bool $exactRegion
      *
-     * @throws CityNotFoundException
-     * @throws Exception
      * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function findLocationCity(
         string $query,
-        string $parentName = '',
+        $parentName = null,
         int $limit = null,
-        bool $exact = false
-    ): array {
+        bool $exact = false,
+        bool $exactRegion = false
+    ): array
+    {
+        $prefix = $exact ? '=' : '?';
+        $prefixRegion = $exactRegion ? '=' : '?';
+        /** NAME_UPPER в индексе */
         $filter = [
-            'TYPE_ID' => \array_values(
-                $this->getTypeIdsByCodes(
-                    [
-                        static::TYPE_CITY,
-                        static::TYPE_VILLAGE,
-                    ]
-                )
-            ),
+            $prefix . 'NAME.NAME_UPPER' => ToUpper($query),
+            'TYPE.CODE' => [
+                static::TYPE_CITY,
+                static::TYPE_VILLAGE,
+            ],
         ];
+        if ($parentName !== null && !empty($parentName)) {
+            if (\is_array($parentName)) {
+                if (\count($parentName) > 1) {
+                    /** @todo доработать при необходимости по нескольким родителям поиск */
+                    $parentFilter = ['LOGIC' => 'AND'];
+                    foreach ($parentName as $typeCode => $name) {
+                        $filterItem = [
+                            $prefixRegion . 'PARENTS.NAME.NAME_UPPER' => ToUpper($name),
+                            '=PARENTS.TYPE.CODE' => ToUpper($typeCode)
+                        ];
+                        $filter[] = $filterItem;
+                    }
+                    $filter[] = $parentFilter;
+                } else {
+                    $filter[$prefixRegion . 'PARENTS.NAME.NAME_UPPER'] = ToUpper(current($parentName));
+                    $filter['=PARENTS.TYPE.CODE'] = ToUpper(key($parentName));
+                }
 
-        // можно было бы сначала найти PARENT_ID по $parentName,
-        // но так мы получим результат одним запросом
-        if ($parentName) {
-            $exact = false;
-            $query = $parentName . ' ' . $query;
+            } else {
+                $filter[$prefixRegion . 'PARENTS.NAME.NAME_UPPER'] = ToUpper($parentName);
+                $filter['=PARENTS.TYPE.CODE'] = 'REGION';
+            }
         }
-
-        return $this->findLocation(
-            $query,
-            $limit,
-            $exact,
-            $filter
-        );
+        return $this->findLocationNew($filter, $limit);
     }
 
     /**
-     * Поиск местоположений с типом "город" или "деревня" по коду
+     * Поиск местоположений по коду
      *
      * @param string $code
      *
-     * @throws Exception
-     * @throws CityNotFoundException
      * @return array
+     * @throws CityNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function findLocationCityByCode(string $code): array
     {
         if ($code) {
-            $typeIds = \array_values(
-                $this->getTypeIdsByCodes(
-                    [
-                        static::TYPE_CITY,
-                        static::TYPE_VILLAGE,
-                    ]
-                )
-            );
-            return $this->findLocationByCode(
-                $code,
-                [
-                    'TYPE_ID' => $typeIds,
-                ]
-            );
+            if (!isset($this->locationsByCode[$code])) {
+                $this->locationsByCode[$code] = reset($this->findLocationNew([
+                    '=CODE' => $code,
+                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
+                ]));
+            }
+            if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {
+                return $this->locationsByCode[$code];
+            }
         }
 
         throw new CityNotFoundException('Город не найден');
     }
 
     /**
+     * @param string $cityCode
+     *
+     * @return array
+     */
+    public function findLocationRegion(string $cityCode): array
+    {
+        $result = [];
+        try {
+            $data = $this->findLocationCityByCode($cityCode);
+            $path = $data['PATH'];
+
+            foreach ($path as $pathItem) {
+                if (($pathItem['CODE'] === static::LOCATION_CODE_MOSCOW) ||
+                    ($pathItem['TYPE']['CODE'] === static::TYPE_REGION)
+                ) {
+                    $result = $pathItem;
+                    break;
+                }
+            }
+        } catch (CityNotFoundException $e) {
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $cityCode
+     *
+     * @return array
+     */
+    public function findLocationSubRegion(string $cityCode): array
+    {
+        $result = [];
+        try {
+            $data = $this->findLocationCityByCode($cityCode);
+            $path = $data['PATH'];
+
+            foreach ($path as $pathItem) {
+                if ($pathItem['TYPE']['CODE'] === static::TYPE_SUBREGION) {
+                    $result = $pathItem;
+                    break;
+                }
+            }
+        } catch (CityNotFoundException $e) {
+        }
+
+        return $result;
+    }
+
+    /**
      * Возвращает дефолтное местоположение
      *
-     * @throws Exception
      * @return array
      */
     public function getDefaultLocation(): array
@@ -404,11 +631,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws Exception
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
      * @return string
      */
     public function getCurrentLocation(): string
@@ -431,7 +657,6 @@ class LocationService
      * @param bool $withLocations если true, то в каждой группе содержать ключ LOCATIONS,
      *                            содержащий массив кодов местоположений этой группы
      *
-     * @throws Exception
      * @return array
      */
     public function getLocationGroups($withLocations = true): array
@@ -452,7 +677,7 @@ class LocationService
             while ($group = $groups->fetch()) {
                 /** @noinspection OffsetOperationsInspection */
                 $item = [
-                    'ID'   => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_ID'],
+                    'ID' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_ID'],
                     'CODE' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE'],
                     'NAME' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_NAME_NAME'],
                 ];
@@ -474,9 +699,16 @@ class LocationService
             return $result;
         };
 
-        return (new BitrixCache())
-            ->withId(__METHOD__ . (int)$withLocations)
-            ->resultOf($getGroups);
+        try {
+            return (new BitrixCache())
+                ->withId(__METHOD__ . (int)$withLocations)
+                ->resultOf($getGroups);
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get location groups: %s', $e->getMessage()), [
+                'withLocations' => (int)$withLocations,
+            ]);
+            return [];
+        }
     }
 
     /**
@@ -484,10 +716,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @return null|City
      */
-    public function getDefaultCity()
+    public function getDefaultCity(): ?City
     {
         $citiesTable = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
 
@@ -503,10 +735,10 @@ class LocationService
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @return null|\FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface
+     * @throws ApplicationCreateException
+     * @return null|City
      */
-    public function getCity($locationCode)
+    public function getCity($locationCode): ?City
     {
         try {
             return City::createFromLocation($locationCode);
@@ -519,15 +751,15 @@ class LocationService
      * Получение эл-та из HL-блока,
      * привязанного к выбранному городу пользователя
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @return null|ActiveReadModelInterface
+     * @throws ApplicationCreateException
+     * @return null|City
      */
-    public function getCurrentCity(): ?ActiveReadModelInterface
+    public function getCurrentCity(): ?City
     {
         if (($locationCode = $this->getCurrentLocation()) && ($city = $this->getCity($locationCode))) {
             return $city;
@@ -537,9 +769,64 @@ class LocationService
     }
 
     /**
+     * Валидация адреса
+     *
+     * @param Address $address
+     *
+     * @return bool
+     */
+    public function validateAddress(Address $address): bool
+    {
+        try {
+            $address->setValid($this->daDataService->validateAddress((string)$address));
+        } catch (DaDataExecuteException $e) {
+            $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
+                'address' => (string)$address,
+            ]);
+        }
+
+        return $address->isValid();
+    }
+
+    /**
+     * @param string $address
+     * @param string $locationCode
+     *
+     * @throws AddressSplitException
+     * @return Address
+     */
+    public function splitAddress(string $address, string $locationCode = ''): Address
+    {
+        try {
+            $dadataLocation = $this->daDataService->splitAddress($address);
+
+            if (!$locationCode) {
+                $locationCode = (new DaDataLocationAdapter())->convert($dadataLocation)->getCode();
+            }
+
+            $result = new Address();
+            $result->setLocation($locationCode)
+                ->setCity($dadataLocation->getCity())
+                ->setValid($this->daDataService->isValidAddress($dadataLocation))
+                ->setStreet($dadataLocation->getStreetWithType())
+                ->setHouse($dadataLocation->getHouse())
+                ->setFlat($dadataLocation->getFlat())
+                ->setZipCode($dadataLocation->getPostalCode());
+
+        } catch (DaDataExecuteException $e) {
+            $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
+                'address' => $address
+            ]);
+
+            throw new AddressSplitException($e->getMessage(), $e->getCode());
+        }
+
+        return $result;
+    }
+
+    /**
      * @param array $typeCodes
      *
-     * @throws Exception
      * @return array
      */
     protected function getTypeIdsByCodes(array $typeCodes): array
@@ -549,7 +836,6 @@ class LocationService
     }
 
     /**
-     * @throws Exception
      * @return array
      */
     protected function getTypeIds(): array
@@ -572,9 +858,51 @@ class LocationService
             return $result;
         };
 
-        return (new BitrixCache())
-            ->withId(__METHOD__)
-            ->resultOf($getTypeIds);
+        try {
+            return (new BitrixCache())
+                ->withId(__METHOD__)
+                ->resultOf($getTypeIds);
+        } catch (\Exception $e) {
+            return $getTypeIds();
+        }
+    }
+
+    /**
+     * @param array $fields
+     * @param string $code
+     *
+     * @param array $excludeWords
+     *
+     * @return array
+     */
+    private function stringArrayToArray(array &$fields, string $code, array $excludeWords = []): array
+    {
+        $list = [];
+        foreach ($fields as $key => $value) {
+            if (strpos($key, $code . '_') !== false) {
+                if (!empty($excludeWords)) {
+                    foreach ($excludeWords as $excludeWord) {
+                        if (strpos($key, $excludeWord) !== false) {
+                            continue(2);
+                        }
+                    }
+                }
+                $explode = explode('_', $key);
+                $add = false;
+                $implode = [];
+                foreach ($explode as $explodeVal) {
+                    if ($add) {
+                        $implode[] = $explodeVal;
+                    }
+                    if ($explodeVal === $code) {
+                        $add = true;
+                    }
+                }
+                $list[implode('_', $implode)] = $value;
+                unset($fields[$key]);
+            }
+        }
+        return $list;
     }
 
     /**
@@ -586,8 +914,9 @@ class LocationService
      *
      * @throws Exception
      * @return array
+     * @deprecated
      */
-    private function findWithLocationSearchComponent($filter, $limit)
+    private function findWithLocationSearchComponent($filter, $limit): array
     {
         $result = [];
 
@@ -595,22 +924,24 @@ class LocationService
 
         $data = CBitrixLocationSelectorSearchComponent::processSearchRequestV2(
             [
-                'select'      => [
+                'select' => [
                     'CODE',
-                    'VALUE'   => 'ID',
+                    'VALUE' => 'ID',
                     'DISPLAY' => 'NAME.NAME',
                     'TYPE_ID',
                 ],
-                'filter'      => $filter,
+                'filter' => $filter,
                 'additionals' => ['PATH'],
-                'PAGE_SIZE'   => $limit,
-                'PAGE'        => 0,
+                'PAGE_SIZE' => $limit,
+                'PAGE' => 0,
             ]
         );
 
         $types = array_flip($this->getTypeIds());
+        /** @var array $item */
         foreach ($data['ITEMS'] as $item) {
             $path = [];
+            /** @var string $pathId */
             foreach ($item['PATH'] as $pathId) {
                 if (!isset($data['ETC']['PATH_ITEMS'][$pathId])) {
                     continue;
@@ -619,9 +950,11 @@ class LocationService
                 $path[] = [
                     'NAME' => $pathItem['DISPLAY'],
                     'CODE' => $pathItem['CODE'],
+                    'TYPE' => $types[$pathItem['TYPE_ID']],
                 ];
             }
             $result[] = [
+                'ID' => $item['VALUE'],
                 'CODE' => $item['CODE'],
                 'NAME' => $item['DISPLAY'],
                 'TYPE' => $types[$item['TYPE_ID']],
@@ -630,5 +963,15 @@ class LocationService
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $location
+     *
+     * @return string
+     */
+    public function getDadataJsonFromLocationArray(array $location): string
+    {
+        return \json_encode((new DaDataLocationAdapter())->convertLocationArrayToDadataArray($location), JSON_OBJECT_AS_ARRAY);
     }
 }

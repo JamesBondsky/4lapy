@@ -27,7 +27,8 @@ abstract class Base
     }
 
     /**
-     * @param mixed $id
+     * @param int $id
+     * @return $this
      */
     public function setId(int $id)
     {

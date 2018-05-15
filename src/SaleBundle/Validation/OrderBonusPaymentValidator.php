@@ -67,7 +67,7 @@ class OrderBonusPaymentValidator extends ConstraintValidator
             return;
         }
 
-        $maxValue = $this->orderStorageService->getMaxBonusesForPayment($entity);
+        $maxValue = $this->basketService->getMaxBonusesForPayment();
         if ($entity->getBonus() > $maxValue) {
             $this->context->addViolation($constraint->wrongValueMessage);
         }

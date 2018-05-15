@@ -27,8 +27,8 @@ $items = $arResult['ITEMS'];
                      data-breed="<?= $pet->getBreed() ?>"
                      data-data="<?php $birthday = $pet->getBirthday();
                      echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
-                     data-male="<?= $pet->getGender() === 'M' ? 1 : 0 ?>"
-                     data-female="<?= $pet->getGender() === 'F' ? 1 : 0 ?>"
+                     data-male="<?= $pet->getCodeGender() === 'M' ? 1 : 0 ?>"
+                     data-female="<?= $pet->getCodeGender() === 'F' ? 1 : 0 ?>"
                      data-id="<?= $pet->getId() ?>">
                     <div class="b-account-border-block__content b-account-border-block__content--pet js-parent-cont">
                         <div class="b-account-border-block__image-wrap">

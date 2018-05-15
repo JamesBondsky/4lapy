@@ -19,7 +19,7 @@ $aMenuLinks = [
         '/personal/subscribe/',
         [],
         ['icon' => 'icon-delivery-menu'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$USER->IsAuthorized()",
     ],
     [
         'Мои питомцы',

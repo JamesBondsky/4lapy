@@ -6,6 +6,9 @@
 
 namespace FourPaws\AppBundle\Serialization;
 
+use FourPaws\AppBundle\DeserializationVisitor\CsvDeserializationVisitor;
+use FourPaws\AppBundle\SerializationVisitor\CsvSerializationVisitor;
+use FourPaws\MobileApiBundle\SerializationVisitor\BlankSerializationVisitor;
 use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
@@ -23,10 +26,10 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         return [
             [
-                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
-                'format'    => 'xml',
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
                 'type'      => 'manzana_date_time_short',
-                'method'    => 'deserializeXml',
+                'method'    => 'serializeJson',
             ],
             [
                 'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
@@ -35,56 +38,30 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
                 'method'    => 'serializeXml',
             ],
             [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'manzana_date_time_short',
+                'method'    => 'serializeCsv',
+            ],
+            [
                 'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
                 'format'    => 'json',
                 'type'      => 'manzana_date_time_short',
                 'method'    => 'deserializeJson',
             ],
             [
-                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
-                'format'    => 'json',
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'xml',
                 'type'      => 'manzana_date_time_short',
-                'method'    => 'serializeJson',
+                'method'    => 'deserializeXml',
+            ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'csv',
+                'type'      => 'manzana_date_time_short',
+                'method'    => 'deserializeCsv',
             ],
         ];
-    }
-
-    /** @noinspection MoreThanThreeArgumentsInspection */
-    /**
-     * @param XmlSerializationVisitor                  $visitor
-     * @param                                          $data
-     * @param array                                    $type
-     * @param Context                                  $context
-     *
-     * @return mixed
-     */
-    public function serializeXml(XmlSerializationVisitor $visitor, $data, array $type, Context $context)
-    {
-        /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
-        }
-        
-        return $data->format('Y-m-d\TH:i:s.u');
-    }
-
-    /** @noinspection MoreThanThreeArgumentsInspection */
-    /**
-     * @param XmlDeSerializationVisitor                    $visitor
-     * @param                                            $data
-     * @param array                                      $type
-     * @param Context                                    $context
-     *
-     * @return mixed
-     */
-    public function deserializeXml(XmlDeSerializationVisitor $visitor, $data, array $type, Context $context)
-    {
-        /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
-        }
-        
-        return $data;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -100,7 +77,57 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         /** format Y-m-d\TH:i:s.u */
         if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return '';
+            }
+        }
+
+        return $data->format('Y-m-d\TH:i:s.u');
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
+     * @param XmlSerializationVisitor                  $visitor
+     * @param                                          $data
+     * @param array                                    $type
+     * @param Context                                  $context
+     *
+     * @return mixed
+     */
+    public function serializeXml(XmlSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        /** format Y-m-d\TH:i:s.u */
+        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return '';
+            }
+        }
+
+        return $data->format('Y-m-d\TH:i:s.u');
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
+     * @param CsvSerializationVisitor                  $visitor
+     * @param                                          $data
+     * @param array                                    $type
+     * @param Context                                  $context
+     *
+     * @return mixed
+     */
+    public function serializeCsv(CsvSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        /** format Y-m-d\TH:i:s.u */
+        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return '';
+            }
         }
 
         return $data->format('Y-m-d\TH:i:s.u');
@@ -119,7 +146,57 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     {
         /** format Y-m-d\TH:i:s.u */
         if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            $data = new \DateTimeImmutable($data);
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return $data;
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
+     * @param XmlDeSerializationVisitor                    $visitor
+     * @param                                            $data
+     * @param array                                      $type
+     * @param Context                                    $context
+     *
+     * @return mixed
+     */
+    public function deserializeXml(XmlDeSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        /** format Y-m-d\TH:i:s.u */
+        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return $data;
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
+     * @param CsvDeSerializationVisitor                    $visitor
+     * @param                                            $data
+     * @param array                                      $type
+     * @param Context                                    $context
+     *
+     * @return mixed
+     */
+    public function deserializeCsv(CsvDeSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        /** format Y-m-d\TH:i:s.u */
+        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
+            try {
+                $data = new \DateTimeImmutable($data);
+            } catch (\Exception $e) {
+                return null;
+            }
         }
 
         return $data;

@@ -1,8 +1,16 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
+use Bitrix\Iblock\ElementTable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -10,7 +18,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\SapBundle\Dto\In\Shares
  */
-class BonusBuyTo
+class BonusBuyTo extends BonusBuyGroupBase
 {
     /**
      * Содержит количество единиц подарка.
@@ -20,9 +28,9 @@ class BonusBuyTo
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("FG_QUAN")
-     * @Serializer\Type("string")
+     * @Serializer\Type("int")
      *
-     * @var string
+     * @var int
      */
     protected $quantity = '';
 
@@ -43,35 +51,36 @@ class BonusBuyTo
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("KOND_PER")
-     * @Serializer\Type("sap_bool")
+     * @Serializer\Type("float")
      *
-     * @var bool
+     * @var float
      */
-    protected $percent = false;
+    protected $percent = 0.0;
 
     /**
      * Группа данных о единице подарка
      *
+     * @Serializer\XmlList(inline=true, entry="BONUS_ITEM")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyToItem>")
-     * @Serializer\SerializedName("BONUS_ITEM")
      *
-     * @var Collection|BonusBuyToItem[]
+     * @var BonusBuyToItem[]|Collection
      */
     protected $bonusBuyTotems;
 
     /**
-     * @return string
+     * @return int
      */
-    public function getQuantity(): string
+    public function getQuantity(): int
     {
         return $this->quantity;
     }
 
     /**
-     * @param string $quantity
+     * @param int $quantity
+     *
      * @return BonusBuyTo
      */
-    public function setQuantity(string $quantity): BonusBuyTo
+    public function setQuantity(int $quantity): BonusBuyTo
     {
         $this->quantity = $quantity;
         return $this;
@@ -87,27 +96,30 @@ class BonusBuyTo
 
     /**
      * @param string $sign
+     *
      * @return BonusBuyTo
      */
     public function setSign(string $sign): BonusBuyTo
     {
         $this->sign = $sign;
+
         return $this;
     }
 
     /**
-     * @return bool
+     * @return float
      */
-    public function isPercent(): bool
+    public function getPercent(): float
     {
         return $this->percent;
     }
 
     /**
-     * @param bool $percent
+     * @param float $percent
+     *
      * @return BonusBuyTo
      */
-    public function setPercent(bool $percent): BonusBuyTo
+    public function setPercent(float $percent): BonusBuyTo
     {
         $this->percent = $percent;
 
@@ -115,7 +127,7 @@ class BonusBuyTo
     }
 
     /**
-     * @return Collection|BonusBuyToItem[]
+     * @return BonusBuyToItem[]|Collection
      */
     public function getBonusBuyTotems(): Collection
     {
@@ -123,7 +135,7 @@ class BonusBuyTo
     }
 
     /**
-     * @param Collection|BonusBuyToItem[] $bonusBuyTotems
+     * @param BonusBuyToItem[]|Collection $bonusBuyTotems
      *
      * @return BonusBuyTo
      */
@@ -132,5 +144,26 @@ class BonusBuyTo
         $this->bonusBuyTotems = $bonusBuyTotems;
 
         return $this;
+    }
+
+    /**
+     * Возвращает массив XML_ID, пришедших в импорте
+     *
+     * @return ArrayCollection
+     */
+    public function getProductXmlIds(): ArrayCollection
+    {
+        if (!empty($this->bonusBuyTotems) && $this->bonusBuyTotems->count() >= 1) {
+
+            $result = $this->bonusBuyTotems->map(function (BonusBuyToItem $item) {
+                return $item->getOfferId();
+            });
+            $result = $result->filter(
+                function ($e) {
+                    return (bool)$e;
+                }
+            );
+        }
+        return $result ?? new ArrayCollection();
     }
 }
