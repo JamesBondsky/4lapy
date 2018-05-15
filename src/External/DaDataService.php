@@ -6,13 +6,12 @@
 namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Dadata\Client as DaDataClient;
 use Dadata\Response\Address as AddressResponse;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Input\DadataLocation;
+use FourPaws\External\Dadata\DadataClient;
 use FourPaws\External\Exception\DaDataExecuteException;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 
 /**
  * Class DaDataService
@@ -91,8 +90,8 @@ class DaDataService
         $params = [
             'query'      => $region . ' ',
             'locations'  => [
-                'region' => $region,
-                'city_type_full'=>'город',
+                'region'         => $region,
+                'city_type_full' => 'город',
             ],
             'count'      => 20,
             'from_bound' => [
@@ -103,7 +102,7 @@ class DaDataService
                 'value' => 'city',
             ],
         ];
-        return $this->getAddresses($params);
+        return $this->client->getAddresses($params);
     }
 
     /**
@@ -118,7 +117,7 @@ class DaDataService
             'query'      => $region . ' ',
             'locations'  => [
                 'region_fias_id' => $fiasCode,
-                'city_type_full'=>'город',
+                'city_type_full' => 'город',
             ],
             'count'      => 20,
             'from_bound' => [
@@ -129,7 +128,7 @@ class DaDataService
                 'value' => 'city',
             ],
         ];
-        return $this->getAddresses($params);
+        return $this->client->getAddresses($params);
     }
 
     /**
@@ -155,7 +154,7 @@ class DaDataService
 //                'value' => 'city',
             ],
         ];
-        return $this->getAddresses($params);
+        return $this->client->getAddresses($params);
     }
 
     /**
@@ -176,7 +175,7 @@ class DaDataService
                     $capitalCities[] = $data;
                 }
             }
-            if(!empty($capitalCities)) {
+            if (!empty($capitalCities)) {
                 $capitalCity = current($capitalCities);
             }
         }
@@ -201,7 +200,7 @@ class DaDataService
                     $capitalCities[] = $data;
                 }
             }
-            if(!empty($capitalCities)) {
+            if (!empty($capitalCities)) {
                 $capitalCity = current($capitalCities);
             }
         }
@@ -225,45 +224,11 @@ class DaDataService
                     $capitalCities[] = $data;
                 }
             }
-            if(!empty($capitalCities)) {
+            if (!empty($capitalCities)) {
                 $capitalCity = current($capitalCities);
             }
         }
         return $capitalCity;
-    }
-
-    /**
-     * @param array $params
-     *
-     * @return array
-     */
-    protected function getAddresses(array $params): array
-    {
-        $suggestions = [];
-        $guzzleClient = new Client();
-        try {
-            $options = [
-                'connect_timeout' => 10,
-                'timeout'         => 10,
-                'debug'           => false,
-                'allow_redirects' => false,
-                'headers'         => [
-                    'Content-Type'  => 'application/json',
-                    'Accept'        => 'application/json',
-                    'Authorization' => 'Token ' . $this->token,
-                    'X-Secret'      => $this->secret,
-                ],
-                'json'            => $params,
-            ];
-            $response = $guzzleClient->request('POST',
-                'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', $options);
-            if ($response->getStatusCode() === 200) {
-                $suggestions = json_decode($response->getBody()->getContents(), true)['suggestions'];
-            }
-        } catch (GuzzleException $e) {
-            $this->log->error('Ошибка запроса - ' . $e->getMessage());
-        }
-        return $suggestions;
     }
 
     /**
