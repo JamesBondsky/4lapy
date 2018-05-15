@@ -1532,21 +1532,26 @@ class Offer extends IblockElement
      */
     public function getBundle(): ?Bundle
     {
+        $break = false;
         $offerId = $this->getId();
         $result = null;
         $setItemsEntity = HLBlockFactory::createTableObject('BundleItems');
-        $item = $setItemsEntity::query()
+        $resBundleItems = $setItemsEntity::query()
             ->where('UF_ACTIVE', true)
             ->where('UF_PRODUCT', $offerId)
             ->setLimit(1)
             ->setSelect(['ID'])
-            ->exec()
-            ->fetch();
-        if (!empty($item)) {
+            ->exec();
+        while($break === false){
+            $bundleItem = $resBundleItems->fetch();
+            if(!$bundleItem){
+                $break = true;
+                continue;
+            }
             $setEntity = HLBlockFactory::createTableObject('Bundle');
             $setItem = $setEntity::query()
                 ->where('UF_ACTIVE', true)
-                ->where('UF_PRODUCTS', $item['ID'])
+                ->where('UF_PRODUCTS', $bundleItem['ID'])
                 ->setLimit(1)
                 ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
 //                ->addSelect('UF_ACTIVE')
@@ -1554,19 +1559,15 @@ class Offer extends IblockElement
                 ->exec()
                 ->fetch();
 
+            if(!\is_array($setItem) || empty($setItem)){
+                continue;
+            }
             $countItems = 2;
             if($setItem['UF_COUNT_ITEMS']) {
                 $enumField = (new UserFieldEnumService())->getEnumValueEntity($setItem['UF_COUNT_ITEMS']);
                 $countItems = $enumField->getValue();
             }
 
-            $result = [
-//                'ID'  => $setItem['ID'],
-//                'ACTIVE'  => $setItem['UF_ACTIVE'],
-                'NAME'  => $setItem['UF_NAME'],
-                'COUNT_ITEMS'  => $countItems,
-                'PRODUCTS' => [],
-            ];
             $res = $setItemsEntity::query()
                 ->where('UF_ACTIVE', true)
                 ->whereIn('ID', $setItem['UF_PRODUCTS'])
@@ -1575,6 +1576,16 @@ class Offer extends IblockElement
 //                ->addSelect('ID')
 //                ->addSelect('UF_ACTIVE')
                 ->exec();
+            if($res->getSelectedRowsCount() === 0){
+                continue;
+            }
+            $result = [
+//                'ID'  => $setItem['ID'],
+//                'ACTIVE'  => $setItem['UF_ACTIVE'],
+                'NAME'  => $setItem['UF_NAME'],
+                'COUNT_ITEMS'  => $countItems,
+                'PRODUCTS' => [],
+            ];
             while ($item = $res->fetch()) {
                 $itemFields = [
 //                    'ID' => $item['ID'],
@@ -1591,6 +1602,7 @@ class Offer extends IblockElement
                 }
                 $productIds[] = $item['UF_PRODUCT'];
             }
+            $break = true;
         }
         if($result !== null){
             $serializer = Application::getInstance()->getContainer()->get(\JMS\Serializer\SerializerInterface::class);
