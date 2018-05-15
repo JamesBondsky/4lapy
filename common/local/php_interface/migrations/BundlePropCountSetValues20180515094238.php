@@ -13,25 +13,27 @@ class BundlePropCountSetValues20180515094238 extends SprintMigrationBase {
     public function up(){
         $obUserField = new \CUserTypeEntity;
 
-        $hlPetId = HighloadHelper::getIdByName('Bundle');
+        $hlBundleId = HighloadHelper::getIdByName('Bundle');
 
-        $fieldGenderId = $obUserField::GetList(
+        $fieldCountItemsId = $obUserField::GetList(
             [],
             [
                 'FIELD_NAME' => 'UF_COUNT_ITEMS',
-                'ENTITY_ID'  => 'HLBLOCK_' . $hlPetId,
+                'ENTITY_ID'  => 'HLBLOCK_' . $hlBundleId,
             ]
         )->Fetch()['ID'];
 
         $obEnum = new \CUserFieldEnum;
         $obEnum->SetEnumValues(
-            $fieldGenderId,
+            $fieldCountItemsId,
             [
                 'n0' => [
                     'VALUE'  => '2',
+                    'XML_ID'  => '2',
                 ],
                 'n1' => [
-                    'VALUE'  => '2',
+                    'VALUE'  => '3',
+                    'XML_ID'  => '3',
                 ],
             ]
         );
