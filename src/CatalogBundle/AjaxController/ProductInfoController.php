@@ -245,28 +245,31 @@ class ProductInfoController extends Controller
             /** @var Product $product */
             /** добавляем офферы чтобы е было запроса по всем офферам */
             foreach ($offerCollection as &$offer) {
-                $product =& $products[$offer->getCml2Link()];
+                $product = $products[$offer->getCml2Link()];
                 $product->addOffer($offer);
                 $offer->setProduct($product);
             }
             unset($product, $offer);
-            $getResponseItem = function (Product $product, Offer $offer) {
-                $price = ceil($offer->getPrice());
-                $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
-                $responseItem = [
-                    'available' => $offer->isAvailable(),
-                    'byRequest' => $offer->isByRequest(),
-                    'price'     => $price,
-                    'oldPrice'  => $oldPrice,
-                    'pickup'    => false,
-                ];
-                if ($responseItem['available']) {
-                    $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
-                }
-                return $responseItem;
-            };
+
             foreach ($offerCollection as $offer) {
                 $product = $products[$offer->getCml2Link()];
+
+                $getResponseItem = function () use ($product, $offer) {
+                    $price = ceil($offer->getPrice());
+                    $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
+                    $responseItem = [
+                        'available' => $offer->isAvailable(),
+                        'byRequest' => $offer->isByRequest(),
+                        'price'     => $price,
+                        'oldPrice'  => $oldPrice,
+                        'pickup'    => false,
+                    ];
+                    if ($responseItem['available']) {
+                        $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
+                    }
+                    return $responseItem;
+                };
+
                 $bitrixCache = new BitrixCache();
                 $bitrixCache
                     ->withId(__METHOD__ . '_product_' . $offer->getCml2Link() . '_offer_' . $offer->getId() . '_location_' . $location);
@@ -275,7 +278,7 @@ class ProductInfoController extends Controller
                 $bitrixCache->withTag('catalog:offer:' . $offer->getId());
                 $bitrixCache->withTag('iblock:item:' . $offer->getId());
                 $bitrixCache->withTime(24*60*60);//кешируем на сутки
-                $responseItem = $bitrixCache->resultOf($getResponseItem($product, $offer));
+                $responseItem = $bitrixCache->resultOf($getResponseItem);
 
                 $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
 
