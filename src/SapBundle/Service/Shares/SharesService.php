@@ -211,7 +211,71 @@ class SharesService implements LoggerAwareInterface
             throw new InvalidArgumentException($e->getMessage());
         }
 
-        if ($type === 'Z006') {
+        if ($type === 'Z005') {
+            try {
+                $countOperator = $promo->isApplyOnce() ? 'once' : 'condition_count';
+                $logic = $share->getLogic();
+            } /** @noinspection PhpUndefinedClassInspection */
+            catch (\TypeError $e) {
+                throw new InvalidArgumentException($e->getMessage());
+            }
+
+            if($share->getBonusBuyTo()->count() !== 1 && $share->getBonusBuyFrom()->count() > 0) {
+                throw new InvalidArgumentException(
+                    'У z005 должна быть одна группа подарков и как минимум одна группа предпосылок'
+                );
+            }
+            /** @var BonusBuyTo $itemsTo */
+            $itemsTo = $share->getBonusBuyTo()->first();
+            $productsTo = $itemsTo->getProductIds()->toArray();
+            if(empty($productsTo)) {
+                throw new InvalidArgumentException('У z005 должны быть подарки на сайте');
+            }
+            $giftsCount = $itemsTo->getQuantity();
+
+            $actions = [
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => [
+                    'All' => 'AND',
+                ],
+                'CHILDREN' => [
+                    [
+                        'CLASS_ID' => 'ADV:Gift',
+                        'DATA' => [
+                            'Count_operator' => $countOperator,
+                            'count' => $giftsCount,
+                            'list' => $productsTo,
+                            'All' => $logic,
+                        ],
+                        'CHILDREN' => [],
+                    ],
+                ],
+            ];
+            foreach ($share->getBonusBuyFrom() as $bonusBuyFrom) {
+                $countCondition = $bonusBuyFrom->getGroupQuantity();
+                $productsFrom = $bonusBuyFrom->getProductIds()->toArray();
+                if (empty($productsFrom)) {
+                    throw new InvalidArgumentException('У z005 у каждой группы должны быть товары на сайте');
+                }
+                $actions['CHILDREN'][0]['CHILDREN'][] = [
+                    'CLASS_ID' => 'ADV:BasketFilterQuantityRatio',
+                    'DATA' => [
+                        'All' => 'AND',
+                        'Value' => $countCondition,
+                    ],
+                    'CHILDREN' => [
+                        [
+                            'CLASS_ID' => 'CondIBElement',
+                            'DATA' => [
+                                'logic' => 'Equal',
+                                'value' => $productsFrom,
+                            ],
+                        ],
+                    ],
+                ];
+            }
+
+        } elseif ($type === 'Z006') {
             if ($share->getBonusBuyTo()->count() !== 1 || $share->getBonusBuyFrom()->count() !== 1) {
                 throw new InvalidArgumentException('У акций типа Z006 должна быть только одна группа элементов');
             }
@@ -225,7 +289,7 @@ class SharesService implements LoggerAwareInterface
              * @var BonusBuyTo $itemsTo
              */
             $itemsTo = $share->getBonusBuyTo()->first();
-            if(1 > $discountPercent = $itemsTo->getPercent()) {
+            if (1 > $discountPercent = $itemsTo->getPercent()) {
                 throw new InvalidArgumentException('Не передан процент скидки');
             }
             $products = $itemsTo->getProductIds()->toArray();
@@ -313,16 +377,12 @@ class SharesService implements LoggerAwareInterface
                     [
                         'CLASS_ID' => 'ADV:Gift',
                         'DATA' => [
-                            'Count_operator' => $countOperator
+                            'Count_operator' => $countOperator,
+                            'count' => $giftsCount,
+                            'list' => $productsTo,
+                            'All' => 'AND',
                         ],
                         'CHILDREN' => [
-                            [
-                                'CLASS_ID' => 'GifterElement',
-                                'DATA' => [
-                                    'count' => $giftsCount,
-                                    'list' => $productsTo
-                                ]
-                            ],
                             [
                                 'CLASS_ID' => 'ADV:BasketFilterBasePriceRatio',
                                 'DATA' => [
@@ -364,7 +424,7 @@ class SharesService implements LoggerAwareInterface
             }
             /** @var BonusBuyTo $itemsTo */
             $itemsTo = $share->getBonusBuyTo()->first();
-            if(1 > $discountPercent = $itemsTo->getPercent()) {
+            if (1 > $discountPercent = $itemsTo->getPercent()) {
                 throw new InvalidArgumentException('Не передан процент скидки');
             }
 
@@ -471,7 +531,7 @@ class SharesService implements LoggerAwareInterface
                 $groups[] = $bonusBuyFrom->getProductIds()->toArray();
             }
             $groups = array_filter($groups);
-            if(!empty($groups)) {
+            if (!empty($groups)) {
                 $jsonGroupSet = json_encode($groups);
             }
         }
