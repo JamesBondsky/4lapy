@@ -7,6 +7,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Internals\BasketTable;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -20,6 +21,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -172,13 +174,12 @@ class ProductInfoController extends Controller
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws \Exception
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @global \CMain            $APPLICATION
      *
-     * @throws \Exception
-     * @throws \Exception
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
@@ -198,10 +199,16 @@ class ProductInfoController extends Controller
             $cartItems[(int)$basketItem['PRODUCT_ID']] = (float)$basketItem['QUANTITY'];
         }
 
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $location = $locationService->getCurrentLocation();
+
         if (!$this->validator->validate($productListRequest)->count()) {
             /** @var ProductSearchResult $result */
             /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
             $productIds = $productListRequest->getProductIds();
+            /** исправляем проблему с сортировкой */
+            sort($productIds, SORT_NUMERIC);
             $getProducts = function () use ($productIds) {
                 $productCollection = (new ProductQuery())->withFilter(['=ID' => $productIds])->exec();
                 /** @var Product $product */
@@ -217,14 +224,16 @@ class ProductInfoController extends Controller
                 return $products;
             };
 
-            $bitrixCache = new BitrixCache();
-            $bitrixCache
-                ->withId(__METHOD__ . '_product_' . implode('-', $productIds));
-            foreach ($productIds as $productId) {
-                $bitrixCache->withTag('catalog:product:' . $productId);
-                $bitrixCache->withTag('iblock:item:' . $productId);
-            }
-            $products = $bitrixCache->resultOf($getProducts);
+            /** не кешируем выборку, если будет свободная оператива в memcache можно кешануть на день */
+//            $bitrixCache = new BitrixCache();
+//            $bitrixCache
+//                ->withId(__METHOD__ . '_location_' . '_product_' . implode('-', $productIds).'_location_'.$location);
+//            foreach ($productIds as $productId) {
+//                $bitrixCache->withTag('catalog:product:' . $productId);
+//                $bitrixCache->withTag('iblock:item:' . $productId);
+//            }
+//            $products = $bitrixCache->resultOf($getProducts);
+            $products = $getProducts();
 
             /** кешировать нельзя так как мы не знаем id для сброса кеша */
             $offerCollection = (new OfferQuery())->withFilter([
@@ -233,11 +242,19 @@ class ProductInfoController extends Controller
             ])->exec();
 
             /** @var Offer $offer */
-            foreach ($offerCollection as $offer) {
-                /** @var Product $product */
+            /** @var Product $product */
+            /** добавляем офферы чтобы е было запроса по всем офферам */
+            foreach ($offerCollection as &$offer) {
                 $product = $products[$offer->getCml2Link()];
+                $product->addOffer($offer);
+                $offer->setProduct($product);
+            }
+            unset($product, $offer);
+
+            foreach ($offerCollection as $offer) {
+                $product = $products[$offer->getCml2Link()];
+
                 $getResponseItem = function () use ($product, $offer) {
-                    $offer->setProduct($product);
                     $price = ceil($offer->getPrice());
                     $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
                     $responseItem = [
@@ -252,13 +269,15 @@ class ProductInfoController extends Controller
                     }
                     return $responseItem;
                 };
+
                 $bitrixCache = new BitrixCache();
                 $bitrixCache
-                    ->withId(__METHOD__ . '_product_' . $product->getId());
+                    ->withId(__METHOD__ . '_product_' . $offer->getCml2Link() . '_offer_' . $offer->getId() . '_location_' . $location);
                 $bitrixCache->withTag('catalog:product:' . $product->getId());
                 $bitrixCache->withTag('iblock:item:' . $product->getId());
                 $bitrixCache->withTag('catalog:offer:' . $offer->getId());
                 $bitrixCache->withTag('iblock:item:' . $offer->getId());
+                $bitrixCache->withTime(24*60*60);//кешируем на сутки
                 $responseItem = $bitrixCache->resultOf($getResponseItem);
 
                 $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
@@ -282,7 +301,10 @@ class ProductInfoController extends Controller
     {
         $currentOffer = null;
         $offerId = (int)$request->get('offer', 0);
-        $productId = (int)$request->get('product', 0);
+
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $location = $locationService->getCurrentLocation();
 
         $getResponse = function () use ($offerId) {
             $response = [
@@ -311,14 +333,11 @@ class ProductInfoController extends Controller
 
         $bitrixCache = new BitrixCache();
         $bitrixCache
-            ->withId(__METHOD__ . '_offer_' . $offerId . '_product_' . $productId);
+            ->withId('offer_' . $offerId . '_location_' . $location);
         if ($offerId > 0) {
             $bitrixCache->withTag('catalog:offer:' . $offerId);
             $bitrixCache->withTag('iblock:item:' . $offerId);
-        }
-        if ($productId > 0) {
-            $bitrixCache->withTag('catalog:product:' . $productId)
-                ->withTag('iblock:item:' . $productId);
+            $bitrixCache->withTime(24*60*60);//кешируем на сутки
         }
         $response = $bitrixCache->resultOf($getResponse);
 
@@ -340,7 +359,10 @@ class ProductInfoController extends Controller
 
         $currentOffer = null;
         $requestedOfferId = (int)$request->get('offer', 0);
-        $productId = (int)$request->get('product', 0);
+
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $location = $locationService->getCurrentLocation();
 
         $getCurrentOffer = function () use ($requestedOfferId) {
             $currentOffer = null;
@@ -357,15 +379,12 @@ class ProductInfoController extends Controller
 
         $bitrixCache = new BitrixCache();
         $bitrixCache
-            ->withId(__METHOD__ . '_offer_' . $requestedOfferId . '_product_' . $productId);
+            ->withId('offer_' . $requestedOfferId . '_location_' . $location);
         if ($requestedOfferId > 0) {
             $bitrixCache->withTag('catalog:offer:' . $requestedOfferId);
             $bitrixCache->withTag('iblock:item:' . $requestedOfferId);
         }
-        if ($productId > 0) {
-            $bitrixCache->withTag('catalog:product:' . $productId)
-                ->withTag('iblock:item:' . $productId);
-        }
+        $bitrixCache->withTime(24*60*60);//кешируем на сутки
         /** @var OfferCollection $offerCollection */
         $currentOffer = $bitrixCache->resultOf($getCurrentOffer)['result'];
         if ($currentOffer) {

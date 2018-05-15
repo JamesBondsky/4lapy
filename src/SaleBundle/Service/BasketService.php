@@ -187,10 +187,18 @@ class BasketService implements LoggerAwareInterface
         if (null === $basketItem) {
             throw new NotFoundException('Не найден элемент корзины');
         }
-
         $result = $basketItem->delete();
         if (!$result->isSuccess()) {
-            throw new BitrixProxyException($result);
+            // проверяем не специально ли было запорото
+            $found = false;
+            foreach ($result->getErrors() as $error) {
+                if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
+                    $found = true;
+                }
+            }
+            if (!$found) {
+                throw new BitrixProxyException($result);
+            }
         }
 
         return BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
@@ -246,10 +254,12 @@ class BasketService implements LoggerAwareInterface
      * @throws Exception
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     *
      * @return array
      */
     public function getGiftGroupOfferCollection(?int $discountId = null): array
     {
+        //todo эээ так можно или нельзя? определись, чувак)
         if (!$discountId || $discountId < 0) {
             throw new InvalidArgumentException('Отсутствует идентификатор скидки');
         }
