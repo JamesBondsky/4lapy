@@ -1539,7 +1539,6 @@ class Offer extends IblockElement
         $resBundleItems = $setItemsEntity::query()
             ->where('UF_ACTIVE', true)
             ->where('UF_PRODUCT', $offerId)
-            ->setLimit(1)
             ->setSelect(['ID'])
             ->exec();
         while($break === false){
