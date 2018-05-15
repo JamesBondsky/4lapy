@@ -1570,7 +1570,7 @@ class Offer extends IblockElement
             $res = $setItemsEntity::query()
                 ->where('UF_ACTIVE', true)
                 ->whereIn('ID', $setItem['UF_PRODUCTS'])
-                ->setLimit($setItem['UF_COUNT_ITEMS'])
+                ->setLimit($countItems)
                 ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
 //                ->addSelect('ID')
 //                ->addSelect('UF_ACTIVE')
