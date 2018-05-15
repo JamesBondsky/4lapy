@@ -224,7 +224,7 @@ class ProductInfoController extends Controller
                 return $products;
             };
 
-            /** не кешируем выборку */
+            /** не кешируем выборку, если будет свободная оператива в memcache можно кешануть на день */
 //            $bitrixCache = new BitrixCache();
 //            $bitrixCache
 //                ->withId(__METHOD__ . '_location_' . '_product_' . implode('-', $productIds).'_location_'.$location);
@@ -250,23 +250,23 @@ class ProductInfoController extends Controller
                 $offer->setProduct($product);
             }
             unset($product, $offer);
+            $getResponseItem = function (Product $product, Offer $offer) {
+                $price = ceil($offer->getPrice());
+                $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
+                $responseItem = [
+                    'available' => $offer->isAvailable(),
+                    'byRequest' => $offer->isByRequest(),
+                    'price'     => $price,
+                    'oldPrice'  => $oldPrice,
+                    'pickup'    => false,
+                ];
+                if ($responseItem['available']) {
+                    $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
+                }
+                return $responseItem;
+            };
             foreach ($offerCollection as $offer) {
                 $product = $products[$offer->getCml2Link()];
-                $getResponseItem = function () use ($product, $offer) {
-                    $price = ceil($offer->getPrice());
-                    $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
-                    $responseItem = [
-                        'available' => $offer->isAvailable(),
-                        'byRequest' => $offer->isByRequest(),
-                        'price'     => $price,
-                        'oldPrice'  => $oldPrice,
-                        'pickup'    => false,
-                    ];
-                    if ($responseItem['available']) {
-                        $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
-                    }
-                    return $responseItem;
-                };
                 $bitrixCache = new BitrixCache();
                 $bitrixCache
                     ->withId(__METHOD__ . '_product_' . $offer->getCml2Link() . '_offer_' . $offer->getId() . '_location_' . $location);
@@ -274,7 +274,8 @@ class ProductInfoController extends Controller
                 $bitrixCache->withTag('iblock:item:' . $product->getId());
                 $bitrixCache->withTag('catalog:offer:' . $offer->getId());
                 $bitrixCache->withTag('iblock:item:' . $offer->getId());
-                $responseItem = $bitrixCache->resultOf($getResponseItem);
+                $bitrixCache->withTime(24*60*60);//кешируем на сутки
+                $responseItem = $bitrixCache->resultOf($getResponseItem($product, $offer));
 
                 $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
 
@@ -297,7 +298,6 @@ class ProductInfoController extends Controller
     {
         $currentOffer = null;
         $offerId = (int)$request->get('offer', 0);
-        $productId = (int)$request->get('product', 0);
 
         /** @var LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
@@ -330,14 +330,11 @@ class ProductInfoController extends Controller
 
         $bitrixCache = new BitrixCache();
         $bitrixCache
-            ->withId(__METHOD__ . '_offer_' . $offerId . '_product_' . $productId . '_location_' . $location);
+            ->withId('offer_' . $offerId . '_location_' . $location);
         if ($offerId > 0) {
             $bitrixCache->withTag('catalog:offer:' . $offerId);
             $bitrixCache->withTag('iblock:item:' . $offerId);
-        }
-        if ($productId > 0) {
-            $bitrixCache->withTag('catalog:product:' . $productId)
-                ->withTag('iblock:item:' . $productId);
+            $bitrixCache->withTime(24*60*60);//кешируем на сутки
         }
         $response = $bitrixCache->resultOf($getResponse);
 
@@ -359,7 +356,6 @@ class ProductInfoController extends Controller
 
         $currentOffer = null;
         $requestedOfferId = (int)$request->get('offer', 0);
-        $productId = (int)$request->get('product', 0);
 
         /** @var LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
@@ -380,15 +376,12 @@ class ProductInfoController extends Controller
 
         $bitrixCache = new BitrixCache();
         $bitrixCache
-            ->withId(__METHOD__ . '_offer_' . $requestedOfferId . '_product_' . $productId . '_location_' . $location);
+            ->withId('offer_' . $requestedOfferId . '_location_' . $location);
         if ($requestedOfferId > 0) {
             $bitrixCache->withTag('catalog:offer:' . $requestedOfferId);
             $bitrixCache->withTag('iblock:item:' . $requestedOfferId);
         }
-        if ($productId > 0) {
-            $bitrixCache->withTag('catalog:product:' . $productId)
-                ->withTag('iblock:item:' . $productId);
-        }
+        $bitrixCache->withTime(24*60*60);//кешируем на сутки
         /** @var OfferCollection $offerCollection */
         $currentOffer = $bitrixCache->resultOf($getCurrentOffer)['result'];
         if ($currentOffer) {
