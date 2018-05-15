@@ -242,11 +242,17 @@ class ProductInfoController extends Controller
             ])->exec();
 
             /** @var Offer $offer */
+            /** @var Product $product */
+            /** добавляем офферы чтобы е было запроса по всем офферам */
+            foreach ($offerCollection as &$offer) {
+                $product =& $products[$offer->getCml2Link()];
+                $product->addOffer($offer);
+                $offer->setProduct($product);
+            }
+            unset($product, $offer);
             foreach ($offerCollection as $offer) {
-                /** @var Product $product */
                 $product = $products[$offer->getCml2Link()];
                 $getResponseItem = function () use ($product, $offer) {
-                    $offer->setProduct($product);
                     $price = ceil($offer->getPrice());
                     $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
                     $responseItem = [
@@ -263,9 +269,9 @@ class ProductInfoController extends Controller
                 };
                 $bitrixCache = new BitrixCache();
                 $bitrixCache
-                    ->withId(__METHOD__ . '_product_'. $offer->getCml2Link().'_offer_' . $offer->getId().'_location_'.$location);
-//                $bitrixCache->withTag('catalog:product:' . $product->getId());
-//                $bitrixCache->withTag('iblock:item:' . $product->getId());
+                    ->withId(__METHOD__ . '_product_' . $offer->getCml2Link() . '_offer_' . $offer->getId() . '_location_' . $location);
+                $bitrixCache->withTag('catalog:product:' . $product->getId());
+                $bitrixCache->withTag('iblock:item:' . $product->getId());
                 $bitrixCache->withTag('catalog:offer:' . $offer->getId());
                 $bitrixCache->withTag('iblock:item:' . $offer->getId());
                 $responseItem = $bitrixCache->resultOf($getResponseItem);
@@ -324,7 +330,7 @@ class ProductInfoController extends Controller
 
         $bitrixCache = new BitrixCache();
         $bitrixCache
-            ->withId(__METHOD__ . '_offer_' . $offerId . '_product_' . $productId.'_location_'.$location);
+            ->withId(__METHOD__ . '_offer_' . $offerId . '_product_' . $productId . '_location_' . $location);
         if ($offerId > 0) {
             $bitrixCache->withTag('catalog:offer:' . $offerId);
             $bitrixCache->withTag('iblock:item:' . $offerId);
@@ -374,7 +380,7 @@ class ProductInfoController extends Controller
 
         $bitrixCache = new BitrixCache();
         $bitrixCache
-            ->withId(__METHOD__ . '_offer_' . $requestedOfferId . '_product_' . $productId.'_location_'.$location);
+            ->withId(__METHOD__ . '_offer_' . $requestedOfferId . '_product_' . $productId . '_location_' . $location);
         if ($requestedOfferId > 0) {
             $bitrixCache->withTag('catalog:offer:' . $requestedOfferId);
             $bitrixCache->withTag('iblock:item:' . $requestedOfferId);

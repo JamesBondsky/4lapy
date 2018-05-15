@@ -1879,6 +1879,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $this->offers = $offers;
     }
 
+    public function addOffer($offer)
+    {
+        if (!($this->offers instanceof ArrayCollection)) {
+            $this->offers = new ArrayCollection();
+        }
+        $this->offers->add($offer);
+    }
+
     /**
      * @return string
      */
