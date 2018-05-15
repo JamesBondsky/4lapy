@@ -1554,13 +1554,17 @@ class Offer extends IblockElement
                 ->exec()
                 ->fetch();
 
-            $enumField = (new UserFieldEnumService())->getEnumValueEntity($setItem['UF_COUNT_ITEMS']);
+            $countItems = 2;
+            if($setItem['UF_COUNT_ITEMS']) {
+                $enumField = (new UserFieldEnumService())->getEnumValueEntity($setItem['UF_COUNT_ITEMS']);
+                $countItems = $enumField->getValue();
+            }
 
             $result = [
 //                'ID'  => $setItem['ID'],
 //                'ACTIVE'  => $setItem['UF_ACTIVE'],
                 'NAME'  => $setItem['UF_NAME'],
-                'COUNT_ITEMS'  => $enumField->getValue(),
+                'COUNT_ITEMS'  => $countItems,
                 'PRODUCTS' => [],
             ];
             $res = $setItemsEntity::query()
