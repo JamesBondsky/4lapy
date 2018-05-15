@@ -838,8 +838,8 @@ class LocationService
             $result = ExternalTable::query()
                 ->setSelect(['XML_ID'])
                 ->setFilter([
-                    'SERVICE.CODE' => static::KLADR_SERVICE_CODE,
-                    'LOCATION.CODE' => $locationCode
+                    '=SERVICE.CODE' => static::KLADR_SERVICE_CODE,
+                    '=LOCATION.CODE' => $locationCode
                 ])
                 ->registerRuntimeField(
                     new ReferenceField(

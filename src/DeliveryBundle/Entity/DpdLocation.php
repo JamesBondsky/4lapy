@@ -5,72 +5,94 @@
 
 namespace FourPaws\DeliveryBundle\Entity;
 
+use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
+
 class DpdLocation
 {
     /**
      * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("ID")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @Assert\NotBlank(groups={"read","update","delete"})
+     * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
+     * @Assert\Blank(groups={"create"})
      */
-    public $id;
+    public $id = 0;
 
     /**
      * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("CITY_ID")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
-    public $dpdId;
+    public $dpdId = 0;
 
     /**
      * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("CITY_CODE")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
-    public $kladr;
+    public $kladr = '';
 
     /**
      * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("CITY_NAME")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
-    public $prefix;
+    public $name = '';
 
     /**
      * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("REGION_CODE")
      */
-    public $name;
+    public $regionCode = '';
 
     /**
      * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("REGION_NAME")
      */
-    public $code;
+    public $regionName = '';
 
     /**
      * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("COUNTRY_NAME")
      */
-    public $areaName;
+    public $countryName = '';
 
     /**
      * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("COUNTRY_CODE")
      */
-    public $regionCode;
-
-    /**
-     * @var string
-     */
-    public $regionName;
-
-    /**
-     * @var string
-     */
-    public $countryName;
-
-    /**
-     * @var string
-     */
-    public $countryCode;
+    public $countryCode = '';
 
     /**
      * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("LOCATION_ID")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
-    public $locationId;
+    public $locationId = 0;
 
     /**
      * @var bool
+     * @Serializer\Type("bitrix_bool")
+     * @Serializer\SerializedName("IS_CASH_PAY")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
-    public $isCashPay;
+    public $isCashPay = false;
 
     /**
      * @return int
@@ -129,24 +151,6 @@ class DpdLocation
     /**
      * @return string
      */
-    public function getPrefix(): string
-    {
-        return $this->prefix;
-    }
-
-    /**
-     * @param string $prefix
-     * @return DpdLocation
-     */
-    public function setPrefix(string $prefix): DpdLocation
-    {
-        $this->prefix = $prefix;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
@@ -159,42 +163,6 @@ class DpdLocation
     public function setName(string $name): DpdLocation
     {
         $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCode(): string
-    {
-        return $this->code;
-    }
-
-    /**
-     * @param string $code
-     * @return DpdLocation
-     */
-    public function setCode(string $code): DpdLocation
-    {
-        $this->code = $code;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getAreaName(): string
-    {
-        return $this->areaName;
-    }
-
-    /**
-     * @param string $areaName
-     * @return DpdLocation
-     */
-    public function setAreaName(string $areaName): DpdLocation
-    {
-        $this->areaName = $areaName;
         return $this;
     }
 
