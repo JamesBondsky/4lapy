@@ -6,10 +6,18 @@
 
 namespace FourPaws\DeliveryBundle\Dpd;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Dpd\Lib\Calculator;
+use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\DpdLocationService;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 
@@ -113,23 +121,34 @@ class Shipment extends \Ipolh\DPD\Shipment
 
     /**
      * @param $locationCode
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws LocationNotFoundException
+     * @throws CityNotFoundException
+     * @return array
      */
     protected function getDpdLocation($locationCode)
     {
         /** @var LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
+        /** @var DpdLocationService $dpdLocationService */
+        $dpdLocationService = Application::getInstance()->getContainer()->get(DpdLocationService::class);
         $location = $locationService->findLocationCityByCode($locationCode);
+        $dpdLocation = $dpdLocationService->getOneByLocationId($location['ID']);
 
         return [
-            'ID'           => $location['ID'],
+            'ID'           => $dpdLocation->getId(),
             'CODE'         => $locationCode,
-            'COUNTRY_CODE' => 'RU',
-            'REGION_CODE'  => '',
-            'REGION_NAME'  => '',
-            'CITY_ID'      => '',
-            'CITY_CODE'    => substr($locationService->getLocationKladrCode($locationCode), 0, 10),
-            'CITY_NAME'    => $location['NAME'],
-            'IS_CASH_PAY'  => 'Y',
+            'COUNTRY_CODE' => $dpdLocation->getCountryCode(),
+            'REGION_CODE'  => $dpdLocation->getRegionCode(),
+            'REGION_NAME'  => $dpdLocation->getRegionName(),
+            'CITY_ID'      => $dpdLocation->getDpdId(),
+            'CITY_CODE'    => $dpdLocation->getKladr(),
+            'CITY_NAME'    => $dpdLocation->getName(),
+            'IS_CASH_PAY'  => $dpdLocation->isCashPay() ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
         ];
     }
 }

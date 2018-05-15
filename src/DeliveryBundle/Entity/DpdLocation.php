@@ -19,7 +19,7 @@ class DpdLocation
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
      * @Assert\Blank(groups={"create"})
      */
-    public $id = 0;
+    public $id;
 
     /**
      * @var int
@@ -90,7 +90,6 @@ class DpdLocation
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("IS_CASH_PAY")
      * @Serializer\Groups(groups={"create", "read","update","delete"})
-     * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
     public $isCashPay = false;
 
@@ -99,7 +98,7 @@ class DpdLocation
      */
     public function getId(): int
     {
-        return $this->id;
+        return $this->id ?? 0;
     }
 
     /**

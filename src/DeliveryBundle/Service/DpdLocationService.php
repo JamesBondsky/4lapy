@@ -71,6 +71,22 @@ class DpdLocationService
     }
 
     /**
+     * @param int $locationId
+     * @return DpdLocation
+     * @throws LocationNotFoundException
+     */
+    public function getOneByLocationId(int $locationId): DpdLocation
+    {
+        $result = $this->repository->findBy(['LOCATION_ID' => $locationId])->first();
+
+        if (!$result instanceof DpdLocation) {
+            throw new LocationNotFoundException(sprintf('Dpd location with location id %s not found', $locationId));
+        }
+
+        return $result;
+    }
+
+    /**
      * @param DpdLocation $location
      * @return bool
      */
