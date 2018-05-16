@@ -174,6 +174,9 @@ class BasketController extends Controller implements LoggerAwareInterface
         }
         /** @noinspection UnSafeIsSetOverArrayInspection */
         if (!isset($response)) {
+            // @todo костыль - иначе в миникорзине не будет картинки нового товара
+            $this->basketService->getOfferCollection(true);
+
             $data = [
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
@@ -232,6 +235,9 @@ class BasketController extends Controller implements LoggerAwareInterface
         }
         /** @noinspection UnSafeIsSetOverArrayInspection */
         if(!isset($response)) {
+            // @todo костыль - иначе в миникорзине не будет картинки нового товара
+            $this->basketService->getOfferCollection(true);
+
             $data = [
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
@@ -288,6 +294,51 @@ class BasketController extends Controller implements LoggerAwareInterface
         if (null === $result) {
             $result = JsonErrorResponse::create(
                 'Промокод не существует или не применим к вашей корзине',
+                200,
+                [],
+                ['reload' => false]
+            );
+        }
+        return $result;
+    }
+
+    /**
+     * @Route("/promo/delete/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws RuntimeException
+     */
+    public function deletePromoCodeAction(Request $request): JsonResponse
+    {
+        $promoCode = $request->get('promoCodeId');
+        $result = null;
+
+        try {
+            $promoCode = \htmlspecialchars($promoCode);
+
+            $this->couponStorage->delete($promoCode);
+            $this->couponStorage->clear();
+
+            $result = JsonSuccessResponse::createWithData(
+                'Промокод удален',
+                [],
+                200,
+                ['reload' => true]
+            );
+        } catch (Exception $e) {
+            $this->log()->error(
+                \sprintf(
+                    'Promo code apply exception: %s', // в английском "промокод" пишется в два слова
+                    $e->getMessage()
+                )
+            );
+        }
+
+        if (null === $result) {
+            $result = JsonErrorResponse::create(
+                'Промокод не найден',
                 200,
                 [],
                 ['reload' => false]

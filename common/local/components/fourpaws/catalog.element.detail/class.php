@@ -21,6 +21,7 @@ use CBitrixComponent;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\MediaEnum;
+use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
@@ -112,13 +113,17 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             parent::executeComponent();
 
             /** @var Product $product */
-            $product = $this->getProduct($this->arParams['CODE']);
-            $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
-
+            try {
+                $product = $this->getProduct($this->arParams['CODE']);
+            } catch (CatalogProductNotFoundException $e) {
+                $product = false;
+            }
             if (!$product) {
                 $this->abortResultCache();
                 Tools::process404([], true, true, true);
             }
+
+            $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
 
             $sectionId = (int)current($product->getSectionsIdList());
 
@@ -192,13 +197,17 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      * @param string $code
      *
      * @return Product
+     * @throws CatalogProductNotFoundException
      */
     protected function getProduct(string $code): Product
     {
-        return (new ProductQuery())
+        $res = (new ProductQuery())
             ->withFilterParameter('CODE', $code)
-            ->exec()
-            ->first();
+            ->exec();
+        if($res->count() === 0){
+            throw new CatalogProductNotFoundException('Товар по коду не найден');
+        }
+        return $res->first();
     }
 
     /**
