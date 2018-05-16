@@ -109,7 +109,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public function getTimestampByItem(array $item) : string
     {
-        return $item[$this->getTimestamp()];
+        return $item[$this->getTimestamp()] ?? '';
     }
     
     /**

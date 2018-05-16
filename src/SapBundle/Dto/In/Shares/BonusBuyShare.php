@@ -194,6 +194,7 @@ class BonusBuyShare
 
     /**
      * @param string $region
+     *
      * @return BonusBuyShare
      */
     public function setRegion(string $region): BonusBuyShare
@@ -213,6 +214,7 @@ class BonusBuyShare
 
     /**
      * @param string $shareNumber
+     *
      * @return BonusBuyShare
      */
     public function setShareNumber(string $shareNumber): BonusBuyShare
@@ -232,6 +234,7 @@ class BonusBuyShare
 
     /**
      * @param string $description
+     *
      * @return BonusBuyShare
      */
     public function setDescription(string $description): BonusBuyShare
@@ -251,6 +254,7 @@ class BonusBuyShare
 
     /**
      * @param \DateTime $activationDate
+     *
      * @return BonusBuyShare
      */
     public function setActivationDate(\DateTime $activationDate): BonusBuyShare
@@ -270,6 +274,7 @@ class BonusBuyShare
 
     /**
      * @param \DateTime $endDate
+     *
      * @return BonusBuyShare
      */
     public function setEndDate(\DateTime $endDate): BonusBuyShare
@@ -289,6 +294,7 @@ class BonusBuyShare
 
     /**
      * @param string $conditionType
+     *
      * @return BonusBuyShare
      */
     public function setConditionType(string $conditionType): BonusBuyShare
@@ -308,6 +314,7 @@ class BonusBuyShare
 
     /**
      * @param string $act
+     *
      * @return BonusBuyShare
      */
     public function setAct(string $act): BonusBuyShare
@@ -347,6 +354,7 @@ class BonusBuyShare
 
     /**
      * @param string $type
+     *
      * @return BonusBuyShare
      */
     public function setType(string $type): BonusBuyShare
@@ -366,6 +374,7 @@ class BonusBuyShare
 
     /**
      * @param string $mark
+     *
      * @return BonusBuyShare
      */
     public function setMark(string $mark): BonusBuyShare
@@ -443,12 +452,13 @@ class BonusBuyShare
     }
 
     /**
-     *
+     * - С – комбинированная покупка, логическое «И»
+     * - М – мультиупаковка, логическое «ИЛИ»
      *
      * @return string
      */
     public function getLogic(): string
     {
-        return $this->getCateg() === 'C'? 'OR' : 'AND';
+        return $this->getCateg() === 'M' ? 'OR' : 'AND';
     }
 }

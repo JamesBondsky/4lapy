@@ -56,7 +56,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             while (++$i <= $arResult['EMPTY_SLOTS']) {
                 ?>
                 <div class="b-advice__sign b-advice__sign--plus"></div>
-                <div class="b-advice__item blank js-advice-item" data-index="<?= $i; ?>">
+                <div class="b-advice__item blank js-advice-item" data-index="<?= $i; ?>" data-price="0">
                     <div class="b-advice__image-wrapper">
                     </div>
                     <span class="b-advice__block"><span class="b-advice__product-link"><span

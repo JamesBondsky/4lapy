@@ -259,9 +259,14 @@ class DeliveryService implements LoggerAwareInterface
                 ->withId(__METHOD__ . $zone)
                 ->resultOf($getServiceCodes)['result'];
         } catch (\Exception $e) {
-            $this->log()->error(sprintf('failed to get deliveries by zone: %s', $e->getMessage()), [
-                'zone' => $zone,
-            ]);
+            $this->log()->error(
+                sprintf(
+                    'failed to get deliveries by zone: %s: %s',
+                    \get_class($e),
+                    $e->getMessage()
+                ),
+                ['zone' => $zone]
+            );
         }
 
         return $result;

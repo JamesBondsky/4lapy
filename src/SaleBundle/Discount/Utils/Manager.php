@@ -63,13 +63,17 @@ class Manager
      */
     public static function OnAfterSaleOrderFinalAction(Event $event): void
     {
+        if (!self::isExtendDiscountEnabled()) {
+            return;
+        }
+
         /**
          * @var Order $order
          */
         $order = $event->getParameter('ENTITY');
-        $isOrderBasketFilled = $order->getBasket()->count() > 0;
+        $isOrderBasketFilled = $order->getBasket() && $order->getBasket()->count() > 0;
 
-        if ($isOrderBasketFilled && self::$extendEnabled && !self::$extendCalculated) {
+        if ($isOrderBasketFilled && !self::$extendCalculated) {
             self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);

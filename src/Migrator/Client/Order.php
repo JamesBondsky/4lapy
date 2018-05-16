@@ -9,7 +9,7 @@ namespace FourPaws\Migrator\Client;
  */
 class Order extends ClientAbstract
 {
-    const ENTITY_NAME = 'order';
-    
-    const API_PATH    = '/order/list/';
+    public const ENTITY_NAME = 'order';
+
+    public const API_PATH    = '/order/list/';
 }
