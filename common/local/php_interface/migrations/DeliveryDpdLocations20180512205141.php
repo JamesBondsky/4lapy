@@ -78,7 +78,7 @@ class DeliveryDpdLocations20180512205141 extends SprintMigrationBase
                     [
                         'LOCATION_ID' => $codeToId[$locationCode],
                         'SERVICE_ID'  => $externalServiceId,
-                        'XML_ID'      => $kladrCode,
+                        'XML_ID'      => substr($kladrCode, 0, 11),
                     ]
                 );
             }

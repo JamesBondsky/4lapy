@@ -15,7 +15,6 @@ use Bitrix\Sale\Location\ExternalTable;
 use FourPaws\DeliveryBundle\Dpd\Lib\User;
 use FourPaws\DeliveryBundle\Entity\DpdLocation;
 use FourPaws\DeliveryBundle\Exception\FileNotFoundException;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DpdLocationService;
 use FourPaws\LocationBundle\LocationService;
 use FtpClient\FtpClient;
@@ -33,7 +32,11 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
 
     protected const COUNTRIES = ['RU'];
 
+    protected const DEFAULT_STEP_SIZE = 1000;
+
     protected const OPT_FILE_PATH = 'file';
+
+    protected const OPT_STEP_SIZE = 'size';
     /**
      * @var array
      */
@@ -103,6 +106,12 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
                 'f',
                 InputOption::VALUE_OPTIONAL,
                 'path to .csv file'
+            )
+            ->addOption(
+                static::OPT_STEP_SIZE,
+                's',
+                InputOption::VALUE_OPTIONAL,
+                sprintf('step size (default - %s)', static::DEFAULT_STEP_SIZE)
             );
     }
 
@@ -115,9 +124,14 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
 
         try {
             $filePath = $input->getOption(static::OPT_FILE_PATH);
+            $needRemoveFile = false;
+            $stepSize = ($input->getOption(static::OPT_STEP_SIZE) > 0)
+                ? $input->getOption(static::OPT_STEP_SIZE)
+                : static::DEFAULT_STEP_SIZE;
 
             /** Если не передан путь к файлу - качаем с ftp */
             if (!$filePath) {
+                $needRemoveFile = true;
                 try {
                     $ftp = new FtpClient();
                     $ftp->connect($this->ftpConfig['host'])
@@ -147,6 +161,7 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
                 } catch (FtpException $e) {
                     $this->log()->error(sprintf('ftp error : %s', $e->getMessage()));
                 }
+                $this->log()->info(sprintf('downloaded file to %s', $filePath));
             }
 
             if (!file_exists($filePath)) {
@@ -181,15 +196,15 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
                 [, , $region] = $matches;
 
                 $items[$dpdId] = [
-                    $kladrCode,
-                    $dpdId,
-                    $name,
-                    $region,
-                    $country,
-                    $countryCode,
+                    'kladrCode'   => $kladrCode,
+                    'dpdId'       => $dpdId,
+                    'name'        => iconv('windows-1251', 'UTF-8', $name),
+                    'region'      => iconv('windows-1251', 'UTF-8', $region),
+                    'country'     => iconv('windows-1251', 'UTF-8', $country),
+                    'countryCode' => $countryCode,
                 ];
 
-                if (++$i > 500) {
+                if (++$i >= $stepSize) {
                     $i = 0;
                     $this->processItems($items);
                     $items = [];
@@ -209,6 +224,11 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
                 'kladrCodes' => $this->notFound,
             ]);
         }
+
+        if ($needRemoveFile) {
+            unlink($filePath);
+        }
+
         $this->log()->info(
             sprintf(
                 'Task finished, time: %ss. Created: %s, updated: %s',
@@ -231,75 +251,86 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
             return;
         }
 
-        $kladrCodes = array_column($items, 0);
-        $locations = $this->getLocationsByKladrCodes($kladrCodes);
+        $kladrCodes = array_column($items, 'kladrCode');
+        $locationIds = $this->getLocationsByKladrCodes($kladrCodes);
 
         foreach ($items as $item) {
-            [
-                $kladrCode,
-                $dpdId,
-                $name,
-                $region,
-                $country,
-                $countryCode,
-            ] = $item;
-
-            if (!$locations[$kladrCode]) {
-                $this->notFound[] = $kladrCode;
+            if (!$locationIds[$item['kladrCode']]) {
+                $this->notFound[] = $item['kladrCode'];
                 continue;
             }
 
-            try {
-                $dpdLocation = $this->dpdLocationService->getOneByDpdId($dpdId);
-            } catch (NotFoundException $e) {
-                $dpdLocation = (new DpdLocation())->setDpdId($dpdId);
+            $currentLocationIds = $locationIds[$item['kladrCode']];
+            $dpdLocations = $this->dpdLocationService->getByDpdId($item['dpdId']);
+
+            /** @var DpdLocation $dpdLocation */
+            foreach ($dpdLocations as $dpdLocation) {
+                if (!isset($currentLocationIds[$dpdLocation->getLocationId()])) {
+                    continue;
+                }
+
+                $dpdLocation
+                    ->setKladr($item['kladrCode'])
+                    ->setName(trim($item['name']))
+                    ->setRegionName(trim($item['region']))
+                    ->setCountryName(trim($item['country']))
+                    ->setCountryCode($item['countryCode'])
+                    ->setIsCashPay(isset($this->citiesCashPay[$item['dpdId']]));
+
+                if (!$this->dpdLocationService->save($dpdLocation)) {
+                    $this->log()->warning('failed to save location', [
+                        'id'    => $dpdLocation->getId(),
+                        'dpdId' => $dpdLocation->getDpdId(),
+                    ]);
+                } else {
+                    $this->updated++;
+                }
+
+                unset($currentLocationIds[$dpdLocation->getLocationId()]);
             }
 
-            $dpdLocation
-                ->setKladr($kladrCode)
-                ->setName(trim($name))
-                ->setRegionName(trim($region))
-                ->setCountryName(trim($country))
-                ->setCountryCode($countryCode)
-                ->setIsCashPay(isset($this->citiesCashPay[$dpdId]))
-                ->setLocationId($locations[$kladrCode]);
+            if (empty($currentLocationIds)) {
+                continue;
+            }
 
-            $isCreate = $dpdLocation->getId();
-            if (!$this->dpdLocationService->save($dpdLocation)) {
-                $this->log()->warning('failed to save location', [
-                    'id'    => $dpdLocation->getId(),
-                    'dpdId' => $dpdLocation->getDpdId(),
-                ]);
-            } else {
-                $isCreate ? $this->created++ : $this->updated++;
+            foreach ($currentLocationIds as $locationId) {
+                $dpdLocation = (new DpdLocation())
+                    ->setDpdId($item['dpdId'])
+                    ->setKladr($item['kladrCode'])
+                    ->setName(trim($item['name']))
+                    ->setRegionName(trim($item['region']))
+                    ->setCountryName(trim($item['country']))
+                    ->setCountryCode($item['countryCode'])
+                    ->setIsCashPay(isset($this->citiesCashPay[$item['dpdId']]))
+                    ->setLocationId($locationId);
+
+                if (!$this->dpdLocationService->save($dpdLocation)) {
+                    $this->log()->warning('failed to save location', [
+                        'id'    => $dpdLocation->getId(),
+                        'dpdId' => $dpdLocation->getDpdId(),
+                    ]);
+                } else {
+                    $this->created++;
+                }
             }
         }
     }
 
     /**
      * @param string[] $codes
-     * @param bool     $exact
      * @return string[]
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    protected function getLocationsByKladrCodes(array $codes, bool $exact = false): array
+    protected function getLocationsByKladrCodes(array $codes): array
     {
-        $filter = ['SERVICE.CODE' => LocationService::KLADR_SERVICE_CODE];
-
-        if ($exact) {
-            $filter['=XML_ID'] = $codes;
-        } else {
-            $codes = array_map(function ($el) {
-                return $el . '%';
-            }, $codes);
-            $filter['XML_ID'] = $codes;
-        }
-
         $results = ExternalTable::query()
             ->setSelect(['LOCATION_ID', 'XML_ID'])
-            ->setFilter($filter)
+            ->setFilter([
+                'SERVICE.CODE' => LocationService::KLADR_SERVICE_CODE,
+                '=XML_ID'      => $codes,
+            ])
             ->registerRuntimeField(
                 new ReferenceField(
                     'SERVICE',
@@ -307,11 +338,11 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
                     ['=this.SERVICE_ID' => 'ref.ID']
                 )
             )
-            ->exec();
+            ->exec()->fetchAll();
 
         $result = [];
-        while ($res = $results->fetch()) {
-            $result[substr($res['XML_ID'], 0, 11)] = $res['LOCATION_ID'];
+        foreach ($results as $res) {
+            $result[$res['XML_ID']][$res['LOCATION_ID']] = $res['LOCATION_ID'];
         }
 
         return $result;

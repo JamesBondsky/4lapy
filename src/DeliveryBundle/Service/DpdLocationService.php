@@ -5,6 +5,7 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
+use Doctrine\Common\Collections\Collection;
 use FourPaws\DeliveryBundle\Entity\DpdLocation;
 use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Repository\DpdLocationRepository;
@@ -99,4 +100,15 @@ class DpdLocationService
         }
         return $result;
     }
+
+    /**
+     * @param int $dpdId
+     *
+     * @return Collection
+     */
+    public function getByDpdId(int $dpdId): Collection
+    {
+        return $this->repository->findBy(['CITY_ID' => $dpdId]);
+    }
+
 }
