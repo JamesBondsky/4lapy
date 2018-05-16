@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array                      $arResult
  * @var Basket                     $basket
  * @var CalculationResultInterface $selectedDelivery
+ * @var FourPawsOrderComponent     $component
  */
 
 use Bitrix\Sale\Basket;
@@ -16,36 +17,12 @@ use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-
-function getOrderItemData(StockResultCollection $stockResultCollection)
-{
-    $itemData = [];
-    $totalWeight = 0;
-    /** @var StockResult $item */
-    foreach ($stockResultCollection->getIterator() as $item) {
-        $weight = $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
-        $itemData[] = [
-            'name'     => $item->getOffer()->getName(),
-            'quantity' => $item->getAmount(),
-            'price'    => $item->getPrice() * $item->getAmount(),
-            'weight'   => $weight,
-        ];
-
-        $totalWeight += $weight;
-    }
-
-    return [
-        $itemData,
-        $totalWeight,
-    ];
-}
 
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
@@ -86,16 +63,16 @@ if (null !== $pickup) {
     if ($available->isEmpty()) {
         $available = $stockResult->getDelayed();
         $availableQuantity = $available->getAmount();
-        [$availableItems, $availableWeight] = getOrderItemData($available);
+        [$availableItems, $availableWeight] = $component->getOrderItemData($available);
         $availablePrice = $available->getPrice();
     } else {
         $availableQuantity = $available->getAmount();
-        [$availableItems, $availableWeight] = getOrderItemData($available);
+        [$availableItems, $availableWeight] = $component->getOrderItemData($available);
         $availablePrice = $available->getPrice();
 
         $delayed = $stockResult->getDelayed();
         $delayedQuantity = $delayed->getAmount();
-        [$delayedItems, $delayedWeight] = getOrderItemData($delayed);
+        [$delayedItems, $delayedWeight] = $component->getOrderItemData($delayed);
         $delayedPrice = $delayed->getPrice();
 
         if (!$delayed->isEmpty()) {
@@ -110,7 +87,7 @@ if (null !== $delivery) {
     $deliveryResult = $delivery->getStockResult();
     $deliveryOrderableResult = $deliveryResult->getOrderable();
     $deliveryOrderableQuantity = $deliveryResult->getAmount();
-    [$deliveryOrderableItems, $deliveryOrderableWeight] = getOrderItemData($deliveryResult);
+    [$deliveryOrderableItems, $deliveryOrderableWeight] = $component->getOrderItemData($deliveryResult);
     $deliveryOrderablePrice = $deliveryResult->getPrice();
 
     $isSplit = $storage->isSplit() && !empty($arResult['SPLIT_RESULT']);
@@ -121,17 +98,17 @@ if (null !== $delivery) {
         $deliveryResult2 = $arResult['SPLIT_RESULT']['2']['DELIVERY']->getStockResult();
 
         $deliveryResult1Quantity = $deliveryResult1->getAmount();
-        [$deliveryResult1Items, $deliveryResult1Weight] = getOrderItemData($deliveryResult1);
+        [$deliveryResult1Items, $deliveryResult1Weight] = $component->getOrderItemData($deliveryResult1);
         $deliveryResult1Price = $deliveryResult1->getPrice();
 
         $deliveryResult2Quantity = $deliveryResult2->getAmount();
-        [$deliveryResult2Items, $deliveryResult2Weight] = getOrderItemData($deliveryResult2);
+        [$deliveryResult2Items, $deliveryResult2Weight] = $component->getOrderItemData($deliveryResult2);
         $deliveryResult2Price = $deliveryResult2->getPrice();
     }
 
     $deliveryUnavailableResult = $deliveryResult->getUnavailable();
     $deliveryUnavailableQuantity = $deliveryUnavailableResult->getAmount();
-    [$deliveryUnavailableItems, $deliveryUnavailableWeight] = getOrderItemData($deliveryUnavailableResult);
+    [$deliveryUnavailableItems, $deliveryUnavailableWeight] = $component->getOrderItemData($deliveryUnavailableResult);
     $deliveryUnavailablePrice = $deliveryUnavailableResult->getPrice();
     ?>
     <?php /* отображается на 2 шаге, когда выбрана курьерская доставка */ ?>
