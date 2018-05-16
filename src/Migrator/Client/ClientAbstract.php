@@ -3,16 +3,26 @@
 namespace FourPaws\Migrator\Client;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Circle\RestClientBundle\Services\RestClient;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Migrator\Entity\EntityTable;
 use FourPaws\Migrator\Provider\ProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Class ClientAbstract
+ *
+ * @package FourPaws\Migrator\Client
+ */
 abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
@@ -20,25 +30,18 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     /**
      * @todo move it to settings
      */
-    const BASE_PATH   = 'http://old4lapy.e.adv.ru/migrate';
-    
-    const API_PATH    = '';
-    
-    const ENTITY_NAME = '';
+    public const BASE_PATH   = 'http://old4lapy.e.adv.ru/migrate';
+    public const API_PATH    = '';
+    public const ENTITY_NAME = '';
     
     /**
      * @var RestClient
      */
     protected $client;
-    
     protected $options;
-    
     protected $limit;
-    
     protected $force;
-    
     protected $provider;
-    
     protected $token = '';
     
     /**
@@ -48,11 +51,12 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     {
         return $this->token;
     }
-    
+
     /**
      * Set token from options
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws InvalidArgumentException
      */
     private function setToken()
     {
@@ -69,15 +73,16 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     {
         return $this->logger;
     }
-    
+
     /**
      * ClientAbstract constructor.
      *
-     * @param \FourPaws\Migrator\Provider\ProviderInterface $provider
-     * @param array                                         $options
+     * @param ProviderInterface $provider
+     * @param array $options
      *
-     * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
     public function __construct(ProviderInterface $provider, array $options = [])
     {
@@ -91,7 +96,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     }
     
     /**
-     * @return \FourPaws\Migrator\Provider\ProviderInterface
+     * @return ProviderInterface
      */
     public function getProvider() : ProviderInterface
     {
@@ -113,11 +118,12 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
             return false;
         }
     }
-    
+
     /**
      * Set client from DI
      *
-     * \@throws \RuntimeException
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
      */
     protected function setClient()
     {
@@ -129,7 +135,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         try {
             $this->client = $container->get('circle.restclient');
         } catch (\Exception $e) {
-            throw new \RuntimeException('What`s happened');
+            throw new RuntimeException('What`s happened');
         }
     }
     
@@ -164,17 +170,20 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         if (!$this->force) {
             $options['timestamp'] = $this->getLastTimestamp();
         }
-        
+
         return $client->get($this->getBaseUrl($options));
     }
-    
+
     /**
      * @return int
+     *
+     * @throws SystemException
+     * @throws ArgumentException
      */
     public function getLastTimestamp() : int
     {
         /**
-         * @var \Bitrix\Main\Type\DateTime $timestamp
+         * @var array $timestamp
          */
         $timestamp = EntityTable::getByPrimary(static::ENTITY_NAME, ['select' => ['TIMESTAMP']])->fetch();
         

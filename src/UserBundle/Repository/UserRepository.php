@@ -6,8 +6,6 @@
 
 namespace FourPaws\UserBundle\Repository;
 
-use Bitrix\Main\Application;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\UserTable;
@@ -125,7 +123,7 @@ class UserRepository
         $this->checkIdentifier($id);
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
 
-        return reset($result);
+        return \reset($result) ?: null;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */

@@ -8,6 +8,11 @@ namespace FourPaws\UserBundle\Service;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\NotFoundException;
 
+/**
+ * Interface UserSearchInterface
+ * 
+ * @package FourPaws\UserBundle\Service
+ */
 interface UserSearchInterface
 {
     /**
