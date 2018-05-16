@@ -334,7 +334,6 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      *
-     * @throws \Exception
      * @throws NotFoundException
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
@@ -373,15 +372,18 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      * @param bool $withInner
+     * @param bool $filter
      *
-     * @throws \Exception
-     * @throws NotFoundException
+     * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotFoundException
      * @throws NotImplementedException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return array
      */
-    public function getAvailablePayments(OrderStorage $storage, $withInner = false): array
+    public function getAvailablePayments(OrderStorage $storage, $withInner = false, $filter = true): array
     {
         $paymentCollection = $this->getPayments($storage);
 
@@ -395,11 +397,51 @@ class OrderStorageService
             $payments = PaySystemManager::getListWithRestrictions($payment);
         }
 
+        /**
+         * Если выбран самовывоз DPD и терминал, то оставляем только доступные в этом терминале способы оплаты
+         */
+        if ($storage->getDeliveryPlaceCode() && $storage->getDeliveryId()) {
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
+            if ($this->deliveryService->isDpdPickupCode($deliveryCode) &&
+                $terminal = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode())
+            ) {
+                foreach ($payments as $id => $payment) {
+                    $delete = false;
+                    switch ($payment['CODE']) {
+                        case OrderService::PAYMENT_CASH_OR_CARD:
+                            $delete = !$terminal->hasCardPayment();
+                            break;
+                        case OrderService::PAYMENT_CASH:
+                            $delete = !$terminal->hasCashPayment();
+                            break;
+                    }
+
+                    if ($delete) {
+                        unset($payments[$id]);
+                    }
+                }
+            }
+        }
+
         if (!$withInner) {
             $innerPaySystemId = (int)PaySystemManager::getInnerPaySystemId();
             /** @var Payment $payment */
             foreach ($payments as $id => $payment) {
                 if ($innerPaySystemId === $id) {
+                    unset($payments[$id]);
+                    break;
+                }
+            }
+        }
+
+        /**
+         * Если есть оплата "наличными или картой", удаляем оплату "наличными"
+         */
+        if ($filter && !empty(\array_filter($payments, function ($item) {
+            return $item['CODE'] === OrderService::PAYMENT_CASH_OR_CARD;
+        }))) {
+            foreach ($payments as $id => $payment) {
+                if ($payment['CODE'] === OrderService::PAYMENT_CASH) {
                     unset($payments[$id]);
                     break;
                 }

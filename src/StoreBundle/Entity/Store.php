@@ -224,7 +224,16 @@ class Store extends Base
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $region = '';
+    protected $subregion = '';
+
+    /**
+     * @var array
+     * @Serializer\SerializedName("UF_REGION")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Type("array_or_false<string>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $region = [];
 
     /**
      * @var int
@@ -787,9 +796,29 @@ class Store extends Base
     /**
      * @return string
      */
-    public function getRegion(): string
+    public function getSubRegion(): string
     {
-        return $this->region ?? '';
+        return $this->subregion;
+    }
+
+    /**
+     * @param string $subregion
+     *
+     * @return Store
+     */
+    public function setSubRegion(string $subregion): Store
+    {
+        $this->subregion = $subregion;
+
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getRegion(): array
+    {
+        return $this->region ?? [];
     }
 
     /**
@@ -1078,91 +1107,5 @@ class Store extends Base
         }
 
         return $tmpDate;
-    }
-
-    /**
-     * @return string
-     */
-    public function serialize(): string
-    {
-        return serialize([
-            $this->id,
-            $this->active,
-            $this->title,
-            $this->address,
-            $this->description,
-            $this->latitude,
-            $this->longitude,
-            $this->imageId,
-            $this->locationId,
-            $this->dateModify,
-            $this->dateCreate,
-            $this->userId,
-            $this->dateCreate,
-            $this->schedule,
-            $this->phone,
-            $this->xmlId,
-            $this->sort,
-            $this->email,
-            $this->issuingCenter,
-            $this->shippingCenter,
-            $this->siteId,
-            $this->code,
-            $this->isShop,
-            $this->location,
-            $this->region,
-            $this->metro,
-            $this->services,
-            $this->yandexShopId,
-            $this->isBase,
-            $this->isSupplier,
-            $this->deliveryTime,
-            $this->shipmentTill11,
-            $this->shipmentTill13,
-            $this->shipmentTill18
-        ]);
-    }
-
-    /**
-     * @param string $serialized
-     */
-    public function unserialize($serialized): void
-    {
-        [
-            $this->id,
-            $this->active,
-            $this->title,
-            $this->address,
-            $this->description,
-            $this->latitude,
-            $this->longitude,
-            $this->imageId,
-            $this->locationId,
-            $this->dateModify,
-            $this->dateCreate,
-            $this->userId,
-            $this->dateCreate,
-            $this->schedule,
-            $this->phone,
-            $this->xmlId,
-            $this->sort,
-            $this->email,
-            $this->issuingCenter,
-            $this->shippingCenter,
-            $this->siteId,
-            $this->code,
-            $this->isShop,
-            $this->location,
-            $this->region,
-            $this->metro,
-            $this->services,
-            $this->yandexShopId,
-            $this->isBase,
-            $this->isSupplier,
-            $this->deliveryTime,
-            $this->shipmentTill11,
-            $this->shipmentTill13,
-            $this->shipmentTill18
-        ] = unserialize($serialized, ['allowed_classes' => true]);
     }
 }

@@ -15,17 +15,15 @@ use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
+$propertyValues = $basketItem->getPropertyCollection()->getPropertyValues();
+$basketItemId = $basketItem->getId();
+
 /** у отделнных скидками строчек нет айди, поэтому берем айди той строчки от которой отделили */
-if (!$basketItemId = $basketItem->getId()) {
-    if (
-        ($propertyValues = $basketItem->getPropertyCollection()->getPropertyValues())
-        && isset($propertyValues['DETACH_FROM'])
-    ) {
-        $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
-    }
+if (!$basketItemId && $propertyValues['DETACH_FROM']) {
+    $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
 }
 
-$promoLink = $component->getPromoLink($basketItem);
+$promoLinks = $component->getPromoLink($basketItem);
 $image = $component->getImage($basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = $basketItem->getBasePrice() !== $basketItem->getPrice();
@@ -37,8 +35,10 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
     $templateData['OFFERS'][$offer->getId() . '_' . $basketItem->getQuantity()] = $offer;
 } ?>
 <div class="b-item-shopping js-remove-shopping">
-    <?php if (\is_array($promoLink) && !empty($promoLink)) {
-        foreach ($promoLink as $oneLink) { ?>
+    <?php
+    if (\is_iterable($promoLinks)) {
+        foreach ($promoLinks as $oneLink) {
+            ?>
             <div class="b-gift-order b-gift-order--shopping js-open-gift">
                 <div class="b-gift-order__info">
                     <span class="b-gift-order__text">Товар участвует в акции
@@ -73,12 +73,15 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <?= $basketItem->getField('NAME') ?>
                 </span>
             </span>
-                <?php if ($basketItem->getWeight() > 0) { ?>
+                <?php
+                if ($basketItem->getWeight() > 0) {
+                    ?>
                     <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
                         <span class="b-common-item__name-value">Вес: </span>
                         <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
                     </span>
-                <?php }
+                    <?php
+                }
 
                 if ($useOffer) {
                     $color = $offer->getColor();
@@ -97,7 +100,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <?php }
                 } ?>
             </a>
-            <?php if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) { ?>
+            <?php if ($propertyValues['HAS_BONUS']['VALUE'] && $useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?= $offer->getId() ?>">
                     <?php if ($arParams['IS_AJAX']) {
                         echo $offer->getBonusFormattedText((int)$userDiscount, $basketItem->getQuantity(), 0);
@@ -107,8 +110,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         </div>
     </div>
     <div class="b-item-shopping__operation<?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
-        <?php $maxQuantity = 1000;
-
+        <?php
+        $maxQuantity = 1000;
         if ($useOffer) {
             $maxQuantity = $offer->getQuantity();
         }
@@ -183,12 +186,24 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <span class="b-old-price__old"><?= $basketItem->getQuantity() ?> </span>
                     <span class="b-ruble b-ruble--old-weight-price">шт</span>
                 </span>
-                <?php if ($isDiscounted) { ?>
+                <?php
+                if ($isDiscounted) {
+                    $informationText = 'Товар со скидкой';
+                    $descriptions = $component->getPromoLink($basketItem, true);
+                    if (\count($descriptions) === 1) {
+                        $informationText = 'Скидка: <br>';
+                    } elseif (\count($descriptions) > 1) {
+                        $informationText = 'Скидки: <br>';
+                    }
+                    foreach ($descriptions as $description) {
+                        $informationText .= $description['name'] . '<br>';
+                    }
+                    ?>
                     <a class="b-information-link js-popover-information-open js-popover-information-open"
                        href="javascript:void(0);" title="">
                         <span class="b-information-link__icon">i</span>
                         <div class="b-popover-information js-popover-information">
-                            На Ваш телефон будет отправлено сообщение с информацией
+                            <?= $informationText; ?>
                         </div>
                     </a>
                 <?php } ?>

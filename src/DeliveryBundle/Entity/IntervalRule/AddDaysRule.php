@@ -2,12 +2,6 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
-use Bitrix\Main\ArgumentException;
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
-
 /**
  * Правило, добавляющее $value дней к дате доставки,
  * если время заказа лежит в промежутке между $from и $to
@@ -105,42 +99,29 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
     }
 
     /**
-     * @param CalculationResultInterface $result
+     * @param \DateTime $date
      *
-     * @throws ArgumentException
-     * @throws ApplicationCreateException
-     * @throws NotFoundException
-     * @throws StoreNotFoundException
      * @return bool
      */
-    public function isSuitable(CalculationResultInterface $result): bool
+    public function isSuitable(\DateTime $date): bool
     {
-        $hour = $result->getDeliveryDate()->format('G');
+        $hour = $date->format('G');
 
         $to = ($this->getTo() === 0) ? 24 : $this->getTo();
         return ($hour >= $this->getFrom()) && ($hour < $to);
     }
 
     /**
-     * @param CalculationResultInterface $result
+     * @param \DateTime  $date
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws NotFoundException
-     * @throws StoreNotFoundException
-     * @return CalculationResultInterface
+     * @return \DateTime
      */
-    public function apply(CalculationResultInterface $result): CalculationResultInterface
+    public function apply(\DateTime $date): \DateTime
     {
-        if (!$this->isSuitable($result)) {
-            return $result;
+        $result = clone $date;
+        if ($this->isSuitable($date) && ($this->getValue() > 0)) {
+            $result->modify(sprintf('+%s days', $this->getValue()));
         }
-
-        if ($this->getValue() === 0) {
-            return $result;
-        }
-
-        $result->getDeliveryDate()->modify(sprintf('+%s days', $this->getValue()));
 
         return $result;
     }

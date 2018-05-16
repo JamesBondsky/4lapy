@@ -7,6 +7,8 @@ declare(strict_types=1);
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Grid\Declension;
 use Bitrix\Main\LoaderException;
@@ -73,7 +75,8 @@ class BasketController extends Controller implements LoggerAwareInterface
         BasketViewService $basketViewService,
         Manzana $manzana,
         CouponStorageInterface $couponStorage
-    ) {
+    )
+    {
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
         $this->manzana = $manzana;
@@ -85,9 +88,12 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws ArgumentNullException
+     * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws LoaderException
      * @throws RuntimeException
+     * @throws Exception
      *
      * @return JsonResponse
      */
@@ -102,6 +108,8 @@ class BasketController extends Controller implements LoggerAwareInterface
         try {
 
             $this->basketService->addOfferToBasket($offerId, $quantity);
+            // @todo костыль - иначе в миникорзине не будет картинки нового товара
+            $this->basketService->getOfferCollection(true);
             $data = [
                 'remainQuantity' => 10,
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
@@ -131,9 +139,13 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws ArgumentNullException
+     * @throws Exception
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
+     *
      * @return JsonResponse
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ObjectNotFoundException
      */
     public function bulkAddAction(Request $request): JsonResponse
     {
@@ -161,12 +173,76 @@ class BasketController extends Controller implements LoggerAwareInterface
             }
         }
         /** @noinspection UnSafeIsSetOverArrayInspection */
-        if(!isset($response)) {
+        if (!isset($response)) {
+            // @todo костыль - иначе в миникорзине не будет картинки нового товара
+            $this->basketService->getOfferCollection(true);
+
             $data = [
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
             $response = JsonSuccessResponse::createWithData(
                 'Набор добавлен в корзину',
+                $data,
+                200,
+                ['reload' => false]
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/bulkAddBundle/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @throws ArgumentNullException
+     * @throws ArgumentException
+     * @throws Exception
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
+     *
+     * @return JsonResponse
+     */
+    public function bulkAddBundleAction(Request $request): JsonResponse
+    {
+        $offers = (array)$request->get('offerId', []);
+
+        if (empty($offers)) {
+            $response = JsonErrorResponse::createWithData(
+                'Не переданы товары',
+                [],
+                200,
+                ['reload' => true]
+            );
+        } else {
+            foreach ($offers as $offer) {
+                $explode = explode('_', $offer);
+                $offerId=(int)$explode[0];
+                $quantity = (int)$explode[1];
+
+                try {
+                    $this->basketService->addOfferToBasket($offerId, $quantity);
+                } catch (BaseExceptionInterface $e) {
+                    $response = JsonErrorResponse::createWithData(
+                        $e->getMessage(),
+                        [],
+                        200,
+                        ['reload' => false]
+                    );
+                }
+            }
+        }
+        /** @noinspection UnSafeIsSetOverArrayInspection */
+        if(!isset($response)) {
+            // @todo костыль - иначе в миникорзине не будет картинки нового товара
+            $this->basketService->getOfferCollection(true);
+
+            $data = [
+                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+            ];
+            $response = JsonSuccessResponse::createWithData(
+                'Комплект добавлен в корзину',
                 $data,
                 200,
                 ['reload' => false]
@@ -206,7 +282,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             /**
              * Возвращаем ответ
              */
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log()->error(
                 \sprintf(
                     'Promo code apply exception: %s', // в английском "промокод" пишется в два слова
@@ -215,9 +291,54 @@ class BasketController extends Controller implements LoggerAwareInterface
             );
         }
 
-        if (!isset($result)) {
+        if (null === $result) {
             $result = JsonErrorResponse::create(
                 'Промокод не существует или не применим к вашей корзине',
+                200,
+                [],
+                ['reload' => false]
+            );
+        }
+        return $result;
+    }
+
+    /**
+     * @Route("/promo/delete/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws RuntimeException
+     */
+    public function deletePromoCodeAction(Request $request): JsonResponse
+    {
+        $promoCode = $request->get('promoCodeId');
+        $result = null;
+
+        try {
+            $promoCode = \htmlspecialchars($promoCode);
+
+            $this->couponStorage->delete($promoCode);
+            $this->couponStorage->clear();
+
+            $result = JsonSuccessResponse::createWithData(
+                'Промокод удален',
+                [],
+                200,
+                ['reload' => true]
+            );
+        } catch (Exception $e) {
+            $this->log()->error(
+                \sprintf(
+                    'Promo code apply exception: %s', // в английском "промокод" пишется в два слова
+                    $e->getMessage()
+                )
+            );
+        }
+
+        if (null === $result) {
+            $result = JsonErrorResponse::create(
+                'Промокод не найден',
                 200,
                 [],
                 ['reload' => false]
@@ -234,32 +355,28 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @throws Exception
      * @throws ObjectNotFoundException
      *
-     * @return JsonErrorResponse|JsonResponse
+     * @return JsonErrorResponse | JsonResponse
      */
     public function deleteAction(Request $request)
     {
         $basketId = (int)$request->get('basketId', 0);
+        $isFastOrder = $request->get('fastOrder', 'n') === 'y';
+
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
                 'basket' => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml(true)
+                'fastOrder' => $isFastOrder ? $this->basketViewService->getFastOrderHtml(true) : '',
             ];
+
             $response = JsonSuccessResponse::createWithData(
                 '',
                 $data,
                 200,
-                ['reload' => false]
+                ['reload' => $this->basketService->getBasket()->count() === 0]
             );
-        } catch (NotFoundException $e) {
-            $response = JsonErrorResponse::create(
-                $e->getMessage(),
-                200,
-                [],
-                ['reload' => true]
-            );
-        } catch (BaseExceptionInterface $e) {
+        } catch (NotFoundException | BaseExceptionInterface $e) {
             $response = JsonErrorResponse::create(
                 $e->getMessage(),
                 200,
@@ -267,6 +384,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                 ['reload' => true]
             );
         }
+
         return $response;
     }
 
@@ -275,20 +393,20 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
-     * @throws ArgumentOutOfRangeException
-     * @throws Exception
-     *
-     * @return JsonErrorResponse|JsonResponse
+     * @return JsonErrorResponse | JsonResponse
      */
     public function updateAction(Request $request)
     {
-        $items = $request->get('items', []);
-        /** fix для быстрого заказа */
-        if (empty($items)) {
-            $items[] = ['basketId' => $request->get('basketId'), 'quantity' => $request->get('quantity', 1)];
-        }
         /** @noinspection BadExceptionsProcessingInspection */
         try {
+            $items = $request->get('items', []);
+            $isFastOrder = $request->get('fastOrder', 'n') === 'y';
+
+            /** fix для быстрого заказа */
+            if (empty($items)) {
+                $items[] = ['basketId' => $request->get('basketId'), 'quantity' => $request->get('quantity', 1)];
+            }
+
             if (!\is_array($items)) {
                 throw new InvalidArgumentException('Wrong basket parameters');
             }
@@ -301,10 +419,11 @@ class BasketController extends Controller implements LoggerAwareInterface
                 // todo изменять только то что нужно изменять
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
+
             $data = [
                 'basket' => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml(true),
+                'fastOrder' => $isFastOrder ? $this->basketViewService->getFastOrderHtml(true) : '',
             ];
 
             $response = JsonSuccessResponse::createWithData(
@@ -313,15 +432,15 @@ class BasketController extends Controller implements LoggerAwareInterface
                 200,
                 ['reload' => false]
             );
-
-        } catch (BaseExceptionInterface $e) {
+        } catch (BaseExceptionInterface | ArgumentOutOfRangeException | Exception $e) {
             $response = JsonErrorResponse::create(
                 $e->getMessage(),
                 200,
                 [],
-                ['reload' => true]
+                ['reload' => false]
             );
         }
+
         return $response;
     }
 
@@ -440,7 +559,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                     'basket' => $this->basketViewService->getBasketHtml(true)
                 ],
                 200,
-                ['reload' => false]
+                ['reload' => true] // todo разобраться почему это нужно на stage
             );
         }
 
@@ -452,6 +571,8 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws Exception
      * @throws ObjectNotFoundException
@@ -493,7 +614,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                     'basket' => $this->basketViewService->getBasketHtml(true)
                 ],
                 200,
-                ['reload' => false]
+                ['reload' => true] // todo разобраться зачем это на стейдж
             );
         }
 

@@ -287,7 +287,11 @@ class ProfileController extends Controller
 //            }
             try {
                 /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
-                $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
+                $updateData = $userRepository->prepareData($data);
+                if(empty($data['PERSONAL_BIRTHDAY'])){
+                    $updateData['PERSONAL_BIRTHDAY'] = '';
+                }
+                $res = $userRepository->updateData($user->getId(), $updateData);
                 if (!$res) {
                     return $this->ajaxMess->getUpdateError();
                 }
@@ -304,23 +308,14 @@ class ProfileController extends Controller
             }
 
             $isSend = false;
-            if (!$curUser->hasEmail() || $curUser->allowedEASend()) {
-                if ($user->getEmail() !== $curUser->getEmail()) {
-                    try {
-                        $expertSenderService = $container->get('expertsender.service');
-                        $expertSenderService->sendChangeEmail($curUser, $user);
-                        $isSend = true;
-                    } catch (ExpertsenderServiceException $e) {
-                        $logger = LoggerFactory::create('expertsender');
-                        $logger->error('expertsender error:' . $e->getMessage());
-                    }
-                }
-            } else {
+            if ($user->hasEmail() && $user->getEmail() !== $curUser->getEmail()) {
                 try {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->sendChangeEmail($curUser, $user);
+                    $isSend = true;
+                } catch (ExpertsenderServiceException $e) {
                     $logger = LoggerFactory::create('expertsender');
-                    $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
-                } catch (\RuntimeException $e) {
-                    /** оч. плохо - логи мы не получим */
+                    $logger->error('expertsender error:' . $e->getMessage());
                 }
             }
 
@@ -338,11 +333,14 @@ class ProfileController extends Controller
                 $curBirthday = $user->getBirthday();
                 if ($curBirthday instanceof Date) {
                     $birthday = DateHelper::replaceRuMonth($curBirthday->format('d #n# Y'), DateHelper::GENITIVE);
+                    $birthdayFormatted = DateHelper::replaceRuMonth($curBirthday->format('d.m.Y'), DateHelper::GENITIVE);
                 } else {
                     $birthday = '';
+                    $birthdayFormatted = '';
                 }
             } catch (EmptyDateException $e) {
                 $birthday = '';
+                $birthdayFormatted = '';
             }
 
             return JsonSuccessResponse::createWithData(
@@ -352,6 +350,10 @@ class ProfileController extends Controller
                     'fio'      => $user->getFullName(),
                     'gender'   => $user->getGenderText(),
                     'birthday' => $birthday,
+                    'birthdayFormatted' => $birthdayFormatted,
+                    'firstName' => $user->getName(),
+                    'lastName' => $user->getLastName(),
+                    'patronymic' => $user->getSecondName(),
                 ]
             );
         } catch (BitrixRuntimeException $e) {

@@ -9,6 +9,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -127,6 +128,8 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         } else {
             BitrixApplication::getConnection()->rollbackTransaction();
         }
+
+        TaggedCacheHelper::clearManagedCache(['catalog:store:schedule:results']);
 
         $this->log()->info(
             sprintf(

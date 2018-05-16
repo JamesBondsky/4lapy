@@ -37,6 +37,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
@@ -57,6 +58,7 @@ class UserService implements
     UserRegistrationProviderInterface,
     UserCitySelectInterface,
     UserAvatarAuthorizationInterface,
+    UserSearchInterface,
     LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -254,7 +256,7 @@ class UserService implements
     /**
      * @param string $code
      * @param string $name
-     * @param string $parentName
+     * @param string|array|null $parentName
      *
      * @throws \Exception
      * @throws ValidationException
@@ -265,14 +267,14 @@ class UserService implements
      * @throws BitrixRuntimeException
      * @return array|bool
      */
-    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = null)
     {
         $city = null;
         if ($code) {
             $city = $this->locationService->findLocationCityByCode($code);
         } else {
             /** @noinspection PassingByReferenceCorrectnessInspection */
-            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
+            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true, false));
         }
 
         if ($city && $this->isAuthorized()) {
@@ -669,6 +671,87 @@ class UserService implements
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return User
+     * @throws NotFoundException
+     */
+    public function findOne(int $id): User
+    {
+        $user = $this->userRepository->find($id);
+        if (!$user instanceof User) {
+            throw new NotFoundException(sprintf('User with id %s no found', $id));
+        }
+
+        return $user;
+    }
+
+    /**
+     * @param string $phone
+     * @param string $email
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByPhoneOrEmail(string $phone, string $email): User
+    {
+        $user = null;
+        try {
+            $user = $this->findOneByPhone($phone);
+        } catch (NotFoundException $e) {
+        }
+
+        if (!$user) {
+            try {
+                $user = $this->findOneByEmail($email);
+            } catch (NotFoundException $e) {
+            }
+        }
+
+        if (!$user) {
+            throw new NotFoundException(sprintf(
+                'No users found with phone %s and email %s',
+                $phone,
+                $email
+            ));
+        }
+
+        return $user;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByEmail(string $email): User
+    {
+        $users = $this->userRepository->findOneByEmail($email);
+        if (empty($users)) {
+            throw new NotFoundException(sprintf('No users found with email %s', $email));
+        }
+
+        return current($users);
+    }
+
+    /**
+     * @param string $phone
+     *
+     * @throws NotFoundException
+     * @return User
+     */
+    public function findOneByPhone(string $phone): User
+    {
+        $users = $this->userRepository->findOneByPhone($phone);
+        if (empty($users)) {
+            throw new NotFoundException(sprintf('No users found with phone %s', $phone));
+        }
+
+        return current($users);
     }
 
     /**

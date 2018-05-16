@@ -6,12 +6,15 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
@@ -19,6 +22,7 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
@@ -31,9 +35,11 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\JmsSerializerHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
@@ -45,6 +51,8 @@ use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
+use JMS\Serializer\DeserializationContext;
+use JMS\SerializerBundle\Templating\SerializerHelper;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -860,6 +868,8 @@ class Offer extends IblockElement
 
     /**
      * @return bool
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      */
     public function isByRequest(): bool
@@ -1225,6 +1235,7 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      */
@@ -1253,6 +1264,8 @@ class Offer extends IblockElement
 
     /**
      * @return StockCollection
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      */
@@ -1479,6 +1492,8 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws LoaderException
@@ -1503,5 +1518,121 @@ class Offer extends IblockElement
         }
 
         return $max;
+    }
+
+    /**
+     * @return Bundle|null
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function getBundle(): ?Bundle
+    {
+        $break = false;
+        $offerId = $this->getId();
+        $result = null;
+        $setItemsEntity = HLBlockFactory::createTableObject('BundleItems');
+        $resBundleItems = $setItemsEntity::query()
+            ->where('UF_ACTIVE', true)
+            ->where('UF_PRODUCT', $offerId)
+            ->setSelect(['ID'])
+            ->exec();
+        while($break === false){
+            $bundleItem = $resBundleItems->fetch();
+            if(!$bundleItem){
+                $break = true;
+                continue;
+            }
+            $setEntity = HLBlockFactory::createTableObject('Bundle');
+            $resBundle = $setEntity::query()
+                ->where('UF_ACTIVE', true)
+                ->where('UF_PRODUCTS', $bundleItem['ID'])
+                ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
+//                ->addSelect('UF_ACTIVE')
+//                ->addSelect('ID')
+                ->exec();
+
+
+            if($resBundle->getSelectedRowsCount() === 0){
+                continue;
+            }
+            $breakBundle = false;
+            $hasItems = false;
+            while ($breakBundle === false) {
+                $setItem = $resBundle->fetch();
+                if(!$setItem){
+                    $breakBundle = true;
+                    continue;
+                }
+                $countItems = 2;
+                if ($setItem['UF_COUNT_ITEMS']) {
+                    $enumField = (new UserFieldEnumService())->getEnumValueEntity((int)$setItem['UF_COUNT_ITEMS']);
+                    $countItems = (int)$enumField->getValue();
+                }
+
+                $res = $setItemsEntity::query()
+                    ->where('UF_ACTIVE', true)
+                    ->whereIn('ID', $setItem['UF_PRODUCTS'])
+                    ->setLimit($countItems)
+                    ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
+//                ->addSelect('ID')
+//                ->addSelect('UF_ACTIVE')
+                    ->exec();
+                if ($res->getSelectedRowsCount() === 0) {
+                    continue;
+                }
+                $result = [
+//                'ID'  => $setItem['ID'],
+//                'ACTIVE'  => $setItem['UF_ACTIVE'],
+                    'NAME'        => $setItem['UF_NAME'],
+                    'COUNT_ITEMS' => $countItems,
+                    'PRODUCTS'    => [],
+                ];
+                while ($item = $res->fetch()) {
+                    $itemFields = [
+//                    'ID' => $item['ID'],
+//                    'ACTIVE' => $item['UF_ACTIVE'],
+                        'PRODUCT'    => null,
+                        'PRODUCT_ID' => $item['UF_PRODUCT'],
+                        'QUANTITY'   => $item['UF_QUANTITY']
+                    ];
+                    if ($offerId === (int)$item['UF_PRODUCT']) {
+                        $itemFields['PRODUCT'] = $this;
+                        $result['PRODUCTS'] = [$item['UF_PRODUCT'] => $itemFields] + $result['PRODUCTS'];
+                    } else {
+                        $result['PRODUCTS'][$item['UF_PRODUCT']] = $itemFields;
+                    }
+                    $productIds[] = $item['UF_PRODUCT'];
+                }
+                $breakBundle = true;
+                $hasItems = true;
+            }
+            if(!$hasItems){
+                continue;
+            }
+            $break = true;
+        }
+        if($result !== null){
+            $serializer = Application::getInstance()->getContainer()->get(\JMS\Serializer\SerializerInterface::class);
+            $result = $serializer->fromArray($result, Bundle::class, DeserializationContext::create()->setGroups(['read']));
+            if(!empty($productIds)){
+                $offerCollection = (new OfferQuery())->withFilter(['ID'=>$productIds])->exec();
+                /** @var Offer $offer */
+                foreach ($offerCollection as $offer) {
+                    /** @var BundleItem $product */
+                    foreach ($result->getProducts() as &$product) {
+                        if($product->getOfferId() === $offer->getId()){
+                            $product->setOffer($offer);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $result;
     }
 }

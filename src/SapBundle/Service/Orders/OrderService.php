@@ -39,6 +39,8 @@ use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -119,6 +121,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @var StatusService
      */
     private $statusService;
+    /**
+     * @var BasketService
+     */
+    private $basketService;
 
     /**
      * OrderService constructor.
@@ -131,6 +137,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param UserRepository $userRepository
      * @param IntervalService $intervalService
      * @param StatusService $statusService
+     * @param BasketService $basketService
      */
     public function __construct(
         BaseOrderService $baseOrderService,
@@ -140,7 +147,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         Filesystem $filesystem,
         UserRepository $userRepository,
         IntervalService $intervalService,
-        StatusService $statusService
+        StatusService $statusService,
+        BasketService $basketService
     )
     {
         $this->baseOrderService = $baseOrderService;
@@ -152,6 +160,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->statusService = $statusService;
 
         $this->setFilesystem($filesystem);
+        $this->basketService = $basketService;
     }
 
     /**
@@ -221,7 +230,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
             ->setClientComment($order->getField('USER_DESCRIPTION') ?? '')
             ->setOrderSource($orderSource)
-            ->setBonusCard($orderUser->getDiscountCardNumber());
+            ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'));
 
         if (Env::isStage()) {
             $orderDto
@@ -426,13 +435,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
+        $deliveryAddress = $this->getDeliveryAddress($order, $deliveryPoint);
+
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
             ->setDeliveryTimeInterval($interval)
-            ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
-            ->setDeliveryAddressOrPoint($deliveryPoint)
+            ->setDeliveryAddress($deliveryAddress)
+            ->setDeliveryAddressOrPoint($deliveryAddress->__toString())
             ->setContractorCode($deliveryTypeCode === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
 
         if ($deliveryDate) {
@@ -443,6 +454,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param OrderDtoOut $orderDto
      * @param Order $order
+     *
+     * @throws NotFoundOrderShipmentException
      */
     private function populateOrderDtoProducts(OrderDtoOut $orderDto, Order $order)
     {
@@ -460,6 +473,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 list(, $xmlId) = \explode('#', $xmlId);
             }
 
+            try {
+                $chargeBonus = $this->basketService->isItemWithBonusAwarding($basketItem, $order);
+            } catch (InvalidArgumentException $e) {
+                $chargeBonus = true;
+            }
+
             $offer = (new OrderOffer())
                 ->setPosition($position)
                 ->setOfferXmlId($xmlId)
@@ -469,19 +488,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                  * Только штуки
                  */
                 ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
-                /**
-                 * @todo
-                 */
-                ->setChargeBonus(true)
-                ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'));
-
-            if ($orderDto->getDeliveryType() !== SapOrder::DELIVERY_TYPE_CONTRACTOR) {
-                $offer->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
-            }
+                ->setChargeBonus($chargeBonus)
+                ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
+                ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
             $collection->add($offer);
             $position++;
         }
+
+        $this->addBasketDeliveryItem($order, $collection);
 
         $orderDto->setProducts($collection);
     }
@@ -534,9 +549,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             );
         }
 
-        $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
-        $deliveryId = $shipment->getDeliveryId();
-        $deliveryZone = $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId);
+        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+        $deliveryZone = $this->getDeliveryZone($order);
 
         if (
             $deliveryZone === DeliveryService::ZONE_2
@@ -545,7 +559,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             return SapOrder::DELIVERY_TYPE_ROUTE;
         }
 
-        switch ($shipment->getDelivery()->getCode()) {
+        $isFastOrder = $this->getPropertyValueByCode($order, 'IS_FAST_ORDER') === 'Y';
+        $code = $isFastOrder ? '' : $shipment->getDelivery()->getCode();
+
+        switch ($code) {
             case DeliveryService::INNER_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
@@ -793,6 +810,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     {
         $itemId = 0;
         $element = [];
+        $xmlId = \ltrim($externalItem->getOfferXmlId(), '0');
+
+        if (\strpos($xmlId, 2) === 0) {
+            /**
+             * Если артикул начинается с 2, то это доставка (или какая-либо ещё услуга), мы её не добавляем
+             */
+            return;
+        }
 
         try {
             /**
@@ -801,7 +826,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $element = (new Query(ElementTable::class))
                 ->setFilter([
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'XML_ID' => \ltrim($externalItem->getOfferXmlId(), '0'),
+                    'XML_ID' => $xmlId,
                 ])
                 ->setLimit(1)
                 ->setSelect(['XML_ID', 'ID', 'NAME'])
@@ -897,7 +922,75 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      *
      * @return string
      */
-    private function getBasketPropertyValueByCode(BasketItem $item, string $code): string {
+    private function getBasketPropertyValueByCode(BasketItem $item, string $code): string
+    {
         return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
+    }
+
+    /**
+     * @param Order $order
+     * @param ArrayCollection $collection
+     *
+     * @throws NotFoundOrderShipmentException
+     */
+    private function addBasketDeliveryItem(Order $order, ArrayCollection $collection): void
+    {
+        $deliveryPrice = $order->getDeliveryPrice();
+
+        if ($deliveryPrice > 0) {
+            $deliveryZone = $this->getDeliveryZone($order);
+
+            switch ($deliveryZone) {
+                case DeliveryService::ZONE_1:
+                    $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
+                    break;
+                case DeliveryService::ZONE_2:
+                    $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
+                    break;
+                case DeliveryService::ZONE_3:
+                    $xmlId = SapOrder::DELIVERY_ZONE_3_ARTICLE;
+                    break;
+                case DeliveryService::ZONE_4:
+                default:
+                    $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
+                    break;
+            }
+
+            $offer = (new OrderOffer())
+                ->setPosition($collection->count() + 1)
+                ->setOfferXmlId($xmlId)
+                ->setUnitPrice($deliveryPrice)
+                ->setQuantity(1)
+                ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
+                ->setChargeBonus(false)
+                ->setDeliveryShipmentPoint('');
+            $collection->add($offer);
+        }
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return string
+     *
+     * @throws NotFoundOrderShipmentException
+     */
+    private function getDeliveryZone(Order $order): string
+    {
+        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+
+        if (null === $shipment) {
+            throw new NotFoundOrderShipmentException(
+                \sprintf(
+                    'Отгрузка для заказа #%s не найдена',
+                    $order->getId()
+                )
+            );
+        }
+
+        $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
+        $deliveryId = $shipment->getDeliveryId();
+
+        return $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId) ?? '';
     }
 }

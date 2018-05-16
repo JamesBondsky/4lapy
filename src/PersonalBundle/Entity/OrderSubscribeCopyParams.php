@@ -15,11 +15,13 @@ class OrderSubscribeCopyParams
 {
     /** @var OrderSubscribe $orderSubscribe */
     protected $orderSubscribe;
-    /** @var \DateTime $deliveryDate */
+    /** @var \DateTimeImmutable $deliveryDate */
     private $deliveryDate;
-    /** @var \DateTime $currentDate */
+    /** @var \DateTimeImmutable $realDeliveryDate */
+    private $realDeliveryDate;
+    /** @var \DateTimeImmutable $currentDate */
     private $currentDate;
-    /** @var \DateTime $dateForOrderCreate */
+    /** @var \DateTimeImmutable $dateForOrderCreate */
     private $dateForOrderCreate;
     /** @var int $copyOrderId */
     private $copyOrderId;
@@ -45,10 +47,10 @@ class OrderSubscribeCopyParams
     }
 
     /**
-     * @return OrderSubscribeService|object
+     * @return OrderSubscribeService
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function getOrderSubscribeService(): OrderSubscribeService
+    public function getOrderSubscribeService(): OrderSubscribeService
     {
         /** @var OrderSubscribeService $orderSubscribeService */
         $orderSubscribeService = Application::getInstance()->getContainer()->get(
@@ -56,6 +58,20 @@ class OrderSubscribeCopyParams
         );
 
         return $orderSubscribeService;
+    }
+
+    /**
+     * @return OrderSubscribeHistoryService
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getOrderSubscribeHistoryService(): OrderSubscribeHistoryService
+    {
+        /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+        $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get(
+            'order_subscribe_history.service'
+        );
+
+        return $orderSubscribeHistoryService;
     }
 
     /**
@@ -167,41 +183,49 @@ class OrderSubscribeCopyParams
         $this->doCopyOrder();
         $this->getOrderCopyHelper()->doFinalAction();
 
+        $this->realDeliveryDate = null;
+
         return $this->getOrderCopyHelper()->save();
     }
 
     /**
-     * @param string|\DateTime $currentDate
+     * Устанавливает текущую дату.
+     * Текущее время может повлиять на определение кол-ва дней доставки, поэтому его игнорировать нельзя
+     *
+     * @param string|\DateTimeInterface $currentDate
      * @return OrderSubscribeCopyParams
      * @throws InvalidArgumentException
      */
     public function setCurrentDate($currentDate): self
     {
-        // принудительное приведение к требуемому формату - время нам здесь не нужно
         $currentDate = $currentDate ?: '';
         if (is_string($currentDate)) {
-            $dateValue = (new \DateTime($currentDate))->format('d.m.Y');
-        } elseif ($currentDate instanceof \DateTime) {
-            $dateValue = $currentDate->format('d.m.Y');
+            $this->currentDate = new \DateTimeImmutable($currentDate);
+        } elseif ($currentDate instanceof \DateTimeInterface) {
+            $this->currentDate = new \DateTimeImmutable(
+                $currentDate->format('d.m.Y H:i:s')
+            );
         } else {
             throw new InvalidArgumentException('Дата задана некорректно');
         }
-        $this->currentDate = new \DateTime($dateValue);
+
         // дата доставки зависит от текущей даты, обнуляем ее
         $this->deliveryDate = null;
+        $this->dateForOrderCreate = null;
+        $this->realDeliveryDate = null;
 
         return $this;
     }
 
     /**
-     * Возвращает текущую дату
+     * Возвращает текущую дату.
      *
-     * @return \DateTime
+     * @return \DateTimeImmutable
      */
-    public function getCurrentDate(): \DateTime
+    public function getCurrentDate(): \DateTimeImmutable
     {
         if (!$this->currentDate) {
-            $this->currentDate = new \DateTime();
+            $this->currentDate = new \DateTimeImmutable();
         }
 
         return $this->currentDate;
@@ -216,43 +240,100 @@ class OrderSubscribeCopyParams
     }
 
     /**
-     * @param string|\DateTime $deliveryDate
+     * Устанавливает очередную дату, на которую необходимо доставить заказ по подписке.
+     *
+     * @param string|\DateTimeInterface $deliveryDate
      * @return OrderSubscribeCopyParams
      * @throws InvalidArgumentException
      */
     public function setDeliveryDate($deliveryDate): self
     {
-        // принудительное приведение к требуемому формату - время нам здесь не нужно
+        // Принудительное приведение к требуемому формату - время нам здесь не нужно
+        // Принимаем, что ровно в 00:00:00 указанного дня заказ уже должен быть готов к выдаче клиенту.
         $deliveryDate = $deliveryDate ?: '';
         if (is_string($deliveryDate)) {
             $dateValue = (new \DateTime($deliveryDate))->format('d.m.Y');
-        } elseif ($deliveryDate instanceof \DateTime) {
+        } elseif ($deliveryDate instanceof \DateTimeInterface) {
             $dateValue = $deliveryDate->format('d.m.Y');
         } else {
             throw new InvalidArgumentException('Дата задана некорректно');
         }
-        $this->deliveryDate = new \DateTime($dateValue);
+        $this->deliveryDate = new \DateTimeImmutable($dateValue);
+
+        // от даты доставки зависит дата создания заказа
+        $this->dateForOrderCreate = null;
+        $this->realDeliveryDate = null;
 
         return $this;
     }
 
     /**
-     * Следующая дата, на которую необходимо доставить заказ по подписке
+     * Рассчитывает и возвращает очередную дату, на которую необходимо доставить заказ по подписке.
+     * Если текущий день (getCurrentDate()) совпадает с расчетной очередной датой,
+     * то вплоть до 23:59:59 он будет считаться очередной датой.
      *
-     * @return \DateTime
+     * @return \DateTimeImmutable
      * @throws \Exception
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\PersonalBundle\Exception\RuntimeException
      */
-    public function getDeliveryDate(): \DateTime
+    public function getDeliveryDate(): \DateTimeImmutable
     {
         if (!$this->deliveryDate) {
-            $this->deliveryDate = $this->getOrderSubscribe()->getNextDeliveryDate(
-                $this->getCurrentDate()
+            $this->setDeliveryDate(
+                $this->getOrderSubscribe()->getNextDeliveryDate(
+                    $this->getCurrentDate()
+                )
             );
         }
 
         return $this->deliveryDate;
+    }
+
+    /**
+     * Возвращает дату доставки заказа с учетом уже возможно созданного заказа для даты из getDeliveryDate()
+     *
+     * @param bool $refresh
+     * @return \DateTimeImmutable
+     * @throws RuntimeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getRealDeliveryDate(bool $refresh = false): \DateTimeImmutable
+    {
+        if (!$this->realDeliveryDate || $refresh) {
+            // Получим дату доставки из свойства уже созданного заказа (если таковой есть).
+            // Например, операторы после созвона могли изменить дату.
+            $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+            $orderId = $orderSubscribeHistoryService->getCreatedOrderId(
+                $this->getOriginOrderId(),
+                $this->getDeliveryDate()
+            );
+            if ($orderId > 0) {
+                $order = \Bitrix\Sale\Order::load($orderId);
+                if ($order) {
+                    /** @var \FourPaws\SaleBundle\Service\OrderService $orderService */
+                    $orderService = Application::getInstance()->getContainer()->get(
+                        \FourPaws\SaleBundle\Service\OrderService::class
+                    );
+                    $value = $orderService->getOrderDeliveryDate($order);
+                    if ($value) {
+                        $this->realDeliveryDate = new \DateTimeImmutable($value->format('d.m.Y'));
+                    }
+                }
+            }
+            // если заказа еще нет или не удалось получить для него дату доставки, то вернем очередную
+            if (!$this->realDeliveryDate) {
+                $this->realDeliveryDate = $this->getDeliveryDate();
+            }
+        }
+
+        return $this->realDeliveryDate;
     }
 
     /**
@@ -274,16 +355,13 @@ class OrderSubscribeCopyParams
     public function getCopyOrderId(): int
     {
         if (!$this->copyOrderId) {
-            /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
-            $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get(
-                'order_subscribe_history.service'
-            );
+            $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
             // Система должна создавать заказ по подписке автоматически с учетом условий подписки на
             // доставку путем копирования заказа:
             // − Исходного заказа, если создается первый заказ по подписке;
             // − Предыдущего заказа по подписке, если создается не первый заказ по подписке.
             $originOrderId = $this->getOriginOrderId();
-            $this->copyOrderId = $orderSubscribeHistoryService->getLastCopyOrderId($originOrderId);
+            $this->copyOrderId = $orderSubscribeHistoryService->getLastCreatedOrderId($originOrderId);
             if ($this->copyOrderId <= 0) {
                 $this->copyOrderId = $originOrderId;
             }
@@ -313,12 +391,7 @@ class OrderSubscribeCopyParams
     public function getCopyOrderDeliveryCalculationResult(): BaseResult
     {
         if (!$this->copyOrderDeliveryCalculationResult) {
-            $copyOrderId = $this->getCopyOrderId();
-            if ($copyOrderId == $this->getOriginOrderId()) {
-                $bitrixOrder = $this->getOrderSubscribe()->getOrder()->getBitrixOrder();
-            } else {
-                $bitrixOrder = \Bitrix\Sale\Order::load($copyOrderId);
-            }
+            $bitrixOrder = $this->getCopyOrder();
             if (!$bitrixOrder) {
                 throw new BitrixOrderNotFoundException('Копируемый заказ не найден');
             }
@@ -333,6 +406,32 @@ class OrderSubscribeCopyParams
         }
 
         return $this->copyOrderDeliveryCalculationResult;
+    }
+
+    /**
+     * Возвращает заказ, который будет копироваться
+     *
+     * @return \Bitrix\Sale\Order
+     * @throws BitrixOrderNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function getCopyOrder(): \Bitrix\Sale\Order
+    {
+        $bitrixOrder = null;
+        $copyOrderId = $this->getCopyOrderId();
+        if ($copyOrderId == $this->getOriginOrderId()) {
+            $bitrixOrder = $this->getOrderSubscribe()->getOrder()->getBitrixOrder();
+        } else {
+            $bitrixOrder = \Bitrix\Sale\Order::load($copyOrderId);
+        }
+
+        return $bitrixOrder;
     }
 
     /**
@@ -376,7 +475,7 @@ class OrderSubscribeCopyParams
      * Дата определяется в контексте нового заказа.
      * Расчетная дата может быть меньше текущей.
      *
-     * @return \DateTime
+     * @return \DateTimeImmutable
      * @throws BitrixOrderNotFoundException
      * @throws RuntimeException
      * @throws \Bitrix\Main\ArgumentException
@@ -389,7 +488,7 @@ class OrderSubscribeCopyParams
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getDateForOrderCreate(): \DateTime
+    public function getDateForOrderCreate(): \DateTimeImmutable
     {
         if (!$this->dateForOrderCreate) {
             $calculationResult = $this->getNewOrderDeliveryCalculationResult();
@@ -402,5 +501,25 @@ class OrderSubscribeCopyParams
         }
 
         return $this->dateForOrderCreate;
+    }
+
+    /**
+     * @return bool
+     * @throws RuntimeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function isCurrentDeliveryDateOrderAlreadyCreated(): bool
+    {
+        $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+        $result = $orderSubscribeHistoryService->wasOrderCreated(
+            $this->getOriginOrderId(),
+            $this->getDeliveryDate()
+        );
+
+        return $result;
     }
 }

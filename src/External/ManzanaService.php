@@ -225,8 +225,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function updateContact(Client $contact): Client
     {
+        $data = $this->serializer->toArray($contact);
+        /** на обновление это поле ненужно */
+        if(isset($data['HasChildrenCode'])) {
+            unset($data['HasChildrenCode']);
+        }
         /** @noinspection PhpUndefinedMethodInspection */
-        $bag = new ParameterBag($this->serializer->toArray($contact), ['ff_bird', 'ff_cat', 'ff_dog', 'ff_fish', 'ff_rodent', 'ff_others']);
+        $bag = new ParameterBag($data, ['ff_bird', 'ff_cat', 'ff_dog', 'ff_fish', 'ff_rodent', 'ff_others']);
 
         try {
             $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
@@ -538,14 +543,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Card
      *
-     * @throws \Exception
      * @throws ManzanaServiceException
      * @throws CardNotFoundException
      */
     public function searchCardByNumber(string $cardNumber): Card
     {
         $card = null;
-        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        $bag = new ParameterBag(['cardnumber' => $this->prepareCardNumber($cardNumber)]);
 
         try {
             $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
@@ -820,6 +824,30 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
+    }
+
+    /**
+     * @param User $user
+     * @param string $cardNumber
+     *
+     * @throws ApplicationCreateException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     */
+    public function addUserBonusCard(User $user, string $cardNumber): void
+    {
+        $cardNumber = $this->prepareCardNumber($cardNumber);
+        $existingContact = $this->getContactByUser($user);
+        $contact = new Client();
+        $contact->cardnumber = $cardNumber;
+        $contact->contactId = $existingContact->contactId;
+        $this->updateContact($contact);
+        $this->userRepository->updateDiscountCard(
+            $user->getId(),
+            $cardNumber
+        );
     }
 
     /**

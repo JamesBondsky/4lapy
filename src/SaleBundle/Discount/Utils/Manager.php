@@ -8,6 +8,7 @@ namespace FourPaws\SaleBundle\Discount\Utils;
 
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
@@ -37,6 +38,16 @@ class Manager
     protected static $extendCalculated = false;
 
     /**
+     * @param Event $event
+     */
+    public static function OnBeforeSaleOrderFinalAction(Event $event): void
+    {
+        if(!self::$extendEnabled) {
+            $event->addResult(new EventResult(EventResult::ERROR));
+        }
+    }
+
+    /**
      * @param null|Event $event
      *
      * @throws ServiceNotFoundException
@@ -52,7 +63,13 @@ class Manager
      */
     public static function OnAfterSaleOrderFinalAction(Event $event): void
     {
-        if (self::$extendEnabled && !self::$extendCalculated) {
+        /**
+         * @var Order $order
+         */
+        $order = $event->getParameter('ENTITY');
+        $isOrderBasketFilled = $order->getBasket()->count() > 0;
+
+        if ($isOrderBasketFilled && self::$extendEnabled && !self::$extendCalculated) {
             self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
@@ -79,13 +96,13 @@ class Manager
             }
 
             try {
-                $manzana->calculate();
+                $manzana->calculate($order);
                 $basketService->setPromocodeDiscount($manzana->getDiscount());
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $couponStorage->delete($promoCode);
             }
 
-            self::enableExtendsDiscount(); // че за кек? перенес ниже. Да и вообще все так банально
+            self::enableExtendsDiscount();
             self::$extendCalculated = true;
         }
     }

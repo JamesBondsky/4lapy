@@ -116,22 +116,6 @@ class Calculator extends DPD
                 $order['LOCATION_FROM'],
                 $basket
             )) {
-                $deliveryErrors = [];
-                /** @var Offer $offer */
-                foreach ($offers as $offer) {
-                    if (!$offer->getProduct()->isDeliveryAvailable()) {
-                        $deliveryErrors[] = sprintf('Доставка товара %s недоступна', $offer->getId());
-                    }
-                }
-                if (!empty($deliveryErrors)) {
-                    $result = [
-                        'RESULT' => 'ERROR',
-                        'TEXT' => implode(', ', $deliveryErrors),
-                    ];
-
-                    return $result;
-                }
-
                 $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable);
                 if ($stockResult->getOrderable()->isEmpty()) {
                     $result = [

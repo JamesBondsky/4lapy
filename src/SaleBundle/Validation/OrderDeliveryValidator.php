@@ -11,7 +11,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -71,7 +71,7 @@ class OrderDeliveryValidator extends ConstraintValidator
             return;
         }
 
-        $checkDate = function (int $dateIndex, int $intervalIndex, CalculationResultInterface $delivery) use (
+        $checkDate = function (int $dateIndex, int $intervalIndex, DeliveryResultInterface $delivery) use (
             $constraint
         ) {
             $delivery = clone $delivery;
@@ -138,6 +138,7 @@ class OrderDeliveryValidator extends ConstraintValidator
          * Если выбран самовывоз, проверим, что выбран магазин или терминал DPD
          */
         if ($this->deliveryService->isDelivery($delivery)) {
+            /** @var DeliveryResultInterface $delivery */
             $checkDate($entity->getDeliveryDate(), $entity->getDeliveryInterval(), $delivery);
             if ($entity->isSplit()) {
                 $checkDate($entity->getSecondDeliveryDate(), $entity->getSecondDeliveryInterval(), $delivery);

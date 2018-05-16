@@ -12,6 +12,8 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
@@ -64,6 +66,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $params['DELIVERY_CODES'] = [];
         }
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -74,7 +79,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             parent::executeComponent();
             $this->prepareResult();
 
-            $this->includeComponentTemplate();
+            if ($this->startResultCache()) {
+                $this->includeComponentTemplate();
+            }
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
@@ -106,7 +113,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $allDeliveryCodes = array_intersect($allDeliveryCodes, $this->arParams['DELIVERY_CODES']);
         }
 
-        /** @var CalculationResultInterface[] $defaultDeliveryResult */
+        /** @var CalculationResultInterface[] $defaultResult */
         $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
         $defaultDeliveryResult = $this->getDelivery($defaultResult);
         $defaultPickupResult = $this->getPickup($defaultResult);
@@ -118,7 +125,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $currentPickupResult = $defaultPickupResult;
             $currentCity = $defaultCity;
         } else {
-            /** @var CalculationResultInterface[] $currentDeliveryResult */
+            /** @var CalculationResultInterface[] $currentResult */
             $currentResult = $this->getDeliveries($currentLocation['CODE'], $allDeliveryCodes);
             $currentDeliveryResult = $this->getDelivery($currentResult);
             $currentPickupResult = $this->getPickup($currentResult);
@@ -202,6 +209,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             ];
         }
 
+        $this->arParams['NOT_AVAILABLE'] = false;
+        $this->arParams['CACHE_TYPE'] = 'N';
+
         return $this;
     }
 
@@ -219,9 +229,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     /**
      * @param CalculationResultInterface[] $deliveries
      *
-     * @return null|CalculationResultInterface
+     * @return null|DeliveryResultInterface
      */
-    protected function getDelivery($deliveries)
+    protected function getDelivery($deliveries): ?DeliveryResultInterface
     {
         if (empty($deliveries)) {
             return null;
@@ -234,15 +244,15 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             }
         );
 
-        return reset($filtered);
+        return reset($filtered) ?: null;
     }
 
     /**
      * @param CalculationResultInterface[] $deliveries
      *
-     * @return null|CalculationResultInterface
+     * @return null|PickupResultInterface
      */
-    protected function getPickup($deliveries)
+    protected function getPickup($deliveries): ?PickupResultInterface
     {
         if (empty($deliveries)) {
             return null;
@@ -255,7 +265,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             }
         );
 
-        return reset($filtered);
+        return reset($filtered) ?: null;
     }
 
     /**

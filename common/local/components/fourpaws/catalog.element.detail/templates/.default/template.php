@@ -1,12 +1,12 @@
 <?php
 /**
- * @var CBitrixComponentTemplate      $this
- * @var CMain                         $APPLICATION
- * @var array                         $arParams
- * @var array                         $arResult
+ * @var CBitrixComponentTemplate $this
+ * @var CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  * @var CatalogElementDetailComponent $component
- * @var Product                       $product
- * @var Offer                         $currentOffer
+ * @var Product $product
+ * @var Offer $currentOffer
  */
 
 use FourPaws\App\Application;
@@ -319,11 +319,12 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
         <div class="b-counter-basket">
             <div class="b-plus-minus b-plus-minus--half-mobile js-buy1click-ps js-plus-minus-cont">
                 <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
-                <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"/>
+                <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"
+                       data-cont-max="<?=$currentOffer->getQuantity()?>" data-one-price="<?=$currentOffer->getPrice()?>" />
                 <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a>
                 <span class="b-plus-minus__by-line">Количество</span>
             </div>
-            <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1)) {
+            <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1) && $currentOffer->getQuantity() >= $currentOffer->getMultiplicity()) {
                 ?>
                 <a class="b-counter-basket__add-set js-add-set" href="javascript:void(0)" title=""
                    data-count="<?= $currentOffer->getMultiplicity() ?>">
@@ -340,12 +341,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>
-            <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
-               title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
-               data-offerId="<?= $currentOffer->getId() ?>" data-type="card">
-                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
-            </a>
-            <hr class="b-counter-basket__hr"/>
+            <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
+                <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
+                   title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
+                   data-offerId="<?= $currentOffer->getId() ?>" data-type="card">
+                    <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
+                </a>
+            <?php } ?>
+            <hr class="b-counter-basket__hr">
             <?php if ($currentOffer->isShare()) {
                 /** @var IblockElement $share */
                 foreach ($currentOffer->getShare() as $share) {

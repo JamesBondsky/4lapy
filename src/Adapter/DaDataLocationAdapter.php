@@ -9,7 +9,6 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\StoreBundle\Service\StoreService;
 
 /**
  * Class DaDataLocationAdapter
@@ -18,6 +17,49 @@ use FourPaws\StoreBundle\Service\StoreService;
  */
 class DaDataLocationAdapter extends BaseAdapter
 {
+    public const TYPE_MAP = [
+        'COUNTRY'          => false,
+        'COUNTRY_DISTRICT' => false,
+        'REGION'           => 'region',
+        'SUBREGION'        => false,
+        'CITY'             => 'city',
+        'VILLAGE'          => 'settlement',
+        'STREET'           => false,
+    ];
+
+    public const EXCLUDE_REGION_TYPE = [
+        'REGION'  => [
+            'край',
+            'область',
+            'автономная область',
+            'автономный округ',
+            'республика',
+        ],
+        'VILLAGE' => [
+            'село',
+            'посёлок',
+            'посёлок городского типа',
+            'хутор',
+            'аул',
+            'деревня',
+        ],
+    ];
+
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
+     * DaDataLocationAdapter constructor.
+     */
+    public function __construct()
+    {
+        $this->locationService = Application::getInstance()->getContainer()->get('location.service');
+
+        parent::__construct();
+    }
+
     /**
      * @param DadataLocation $entity
      *
@@ -28,10 +70,8 @@ class DaDataLocationAdapter extends BaseAdapter
         /** @var DadataLocation $entity */
         $bitrixLocation = new BitrixLocation();
 
-        /** @var LocationService $locationService */
         try {
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $country = !empty($entity->getCountry()) ? $entity->getCountry() : '';
+            /** пока доставка в одной стране - убираем поиск по стране */
             $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
             if (empty($city)) {
                 $city = $entity->getSettlement();
@@ -39,31 +79,48 @@ class DaDataLocationAdapter extends BaseAdapter
                 if ($entity->getSettlementType() === 'рп') {
                     $type = 'рабочий посёлок';
                 }
-                $fullCity = $entity->getSettlement() . ' ' . $type;
+                $fullCity = $city . ' ' . $type;
             }
-            $region = !empty($entity->getRegion()) && $city !== $entity->getRegion() ? ' ' . str_replace('/', '',
-                    $entity->getRegion()) : '';
-            /** из-за того что битрикс не сортирует по релевантности получаем количество адресов больше чем надо
-             * и щем в нем нужный нам адрес - количество для поиска надо подобрать, на 100 работает
-             */
-            $cities = $locationService->findLocationCity($city, $country . $region, 100, true);
-            $countCities = \count($cities);
-            if ($countCities > 1) {
-                foreach ($cities as $bitrixCity) {
-                    if ($bitrixCity['NAME'] === $fullCity) {
-                        $selectedCity = $bitrixCity;
+
+            $fullRegion = '';
+            $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? sprintf(str_replace('/',
+                '%s',
+                $entity->getRegion()), '(', ')') : '');
+            if (!empty($region)) {
+                $continue = true;
+                /** если регион это город федерального значения то не юзаем префикс */
+                if(\in_array(ToLower($region), ['москва','санкт-петербург', 'севастополь'])){
+                    $continue = false;
+                }
+                if($continue) {
+                    $regionType = trim($entity->getRegionTypeFull());
+                    $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
+                    if ($entity->getRegionType() === 'Респ' && !\in_array($region, $regionExcluded, true)) {
+                        $fullRegion = $regionType . ' ' . $region;
+                    } else {
+                        $fullRegion = $region . ' ' . $regionType;
+                    }
+                }
+            }
+            $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
+            if (!empty($cities)) {
+                $selectedCity = reset($cities);
+            } else {
+                $selectedCity['NAME'] = $city;
+            }
+
+            /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
+            if (!empty($selectedCity['PATH'])) {
+                foreach ($selectedCity['PATH'] as $pathItem) {
+                    if (ToUpper($pathItem['TYPE']['CODE']) === 'REGION') {
+                        $selectedCity['REGION_ID'] = $pathItem['ID'];
+                        $selectedCity['REGION_CODE'] = $pathItem['CODE'];
                         break;
                     }
                 }
             }
-            if (!isset($selectedCity)) {
-                $selectedCity = reset($cities);
-            }
 
-            /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
-            $selectedCity['REGION_ID'] = StoreService::getRegion($selectedCity['CODE']);
-
-            $selectedCity['REGION'] = $entity->getRegion();
+            $selectedCity['REGION'] = $region;
             $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
 
         } catch (CityNotFoundException $e) {
@@ -74,6 +131,7 @@ class DaDataLocationAdapter extends BaseAdapter
             $logger = LoggerFactory::create('system');
             $logger->error('системная ошибка загрузки сервисов');
         }
+
         return $bitrixLocation;
     }
 
@@ -86,6 +144,43 @@ class DaDataLocationAdapter extends BaseAdapter
     {
         /** @var DadataLocation $entity */
         $entity = $this->convertDataToEntity($data, DadataLocation::class);
+
         return $this->convert($entity);
+    }
+
+    /**
+     * @param array $location
+     *
+     * @return array
+     */
+    public function convertLocationArrayToDadataArray(array $location): array
+    {
+        $result = \array_filter($this->expandLocation($location), function ($item) {
+            return $this::TYPE_MAP[$item['TYPE']['CODE']];
+        });
+
+        return \array_reduce($result, function ($array, $item) {
+            if (self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']]) {
+                $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']], '',
+                    \strtolower($item['NAME'])));
+            }
+
+            return \array_merge($array, [
+                $this::TYPE_MAP[$item['TYPE']['CODE']] => $item['NAME'],
+            ]);
+        }, []);
+    }
+
+    /**
+     * @param array $location
+     *
+     * @return array
+     */
+    protected function expandLocation(array $location): array
+    {
+        $path = $location['PATH'];
+        unset($location['PATH']);
+
+        return \array_merge([$location], $path);
     }
 }

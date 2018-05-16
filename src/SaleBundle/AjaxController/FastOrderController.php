@@ -14,6 +14,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Delivery\Services\Table as DeliveryTable;
 use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
@@ -33,11 +34,14 @@ use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -68,6 +72,8 @@ class FastOrderController extends Controller
     private $basketService;
     /** @var BasketViewService */
     private $basketViewService;
+    /** @var StoreService  */
+    private $storeService;
 
     /**
      * OrderController constructor.
@@ -75,6 +81,7 @@ class FastOrderController extends Controller
      * @param OrderService                 $orderService
      * @param UserAuthorizationInterface   $userAuthProvider
      * @param CurrentUserProviderInterface $currentUserProvider
+     * @param UserCitySelectInterface      $cityUserProvider
      * @param AjaxMess                     $ajaxMess
      * @param BasketService                $basketService
      * @param BasketViewService            $basketViewService
@@ -85,7 +92,8 @@ class FastOrderController extends Controller
         CurrentUserProviderInterface $currentUserProvider,
         AjaxMess $ajaxMess,
         BasketService $basketService,
-        BasketViewService $basketViewService
+        BasketViewService $basketViewService,
+        StoreService $storeService
     ) {
         $this->orderService = $orderService;
         $this->userAuthProvider = $userAuthProvider;
@@ -93,6 +101,7 @@ class FastOrderController extends Controller
         $this->ajaxMess = $ajaxMess;
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
+        $this->storeService = $storeService;
     }
 
     /**
@@ -166,11 +175,24 @@ class FastOrderController extends Controller
         }
         $name = $request->get('name', '');
 
-        $orderStorage->setPhone($phone)
+        $currentStore = null;
+        $stores = $this->storeService->getStoresByCurrentLocation();
+        if(!$stores->isEmpty()) {
+            /** @var Store $currentStore */
+            $currentStore = $stores->first();
+        }
+
+        $orderStorage
+            ->setSplit(false)
+            ->setFastOrder(true) // быстрый заказ теперь определяется через storage
+            ->setPhone($phone)
             ->setName($name)
             ->setFuserId($this->currentUserProvider->getCurrentFUserId())
             /** оплата наличными при доставке ставим всегда */
-            ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID']);
+            ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID'])
+            ->setDeliveryId(DeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'])
+            ->setDeliveryPlaceCode($currentStore->getCode())
+        ;
 
         if ($this->userAuthProvider->isAuthorized()) {
             try {
@@ -186,8 +208,8 @@ class FastOrderController extends Controller
         }
 
         try {
-            $order = $this->orderService->initOrder($orderStorage, null, null, true);
-            $this->orderService->saveOrder($order, $orderStorage, null, true);
+            [$order, $selectedDelivery] = $this->orderService->initOrder($orderStorage, null, null);
+            $this->orderService->saveOrder($order, $orderStorage, $selectedDelivery);
             if ($order instanceof Order && $order->getId() > 0) {
                 if ($request->get('type', 'basket') === 'card') {
                     ob_start();

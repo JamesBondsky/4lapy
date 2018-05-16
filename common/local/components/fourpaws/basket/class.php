@@ -17,6 +17,7 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\PriceMaths;
 use CBitrixComponent;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -26,12 +27,12 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
@@ -152,6 +153,7 @@ class BasketComponent extends CBitrixComponent
             $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
             $this->calcTemplateFields();
             $this->checkSelectedGifts();
+            $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
         }
 
         $this->loadImages();
@@ -243,21 +245,21 @@ class BasketComponent extends CBitrixComponent
                 continue;
             }
 
-            if ((null === $delivery) ||
-                !(clone $delivery)->setStockResult(
-                    $this->getDeliveryService()->getStockResultForOffer(
-                        $offer,
-                        $delivery,
-                        (int)$basketItem->getQuantity(),
-                        $basketItem->getPrice()
-                    )
-                )->isSuccess()
-            ) {
-                $this->arResult['ONLY_PICKUP'][] = $offer->getId();
-            }
-
             if ($basketItem->isDelay()) {
                 $notAllowedItems->add($basketItem);
+            } else {
+                if ((null === $delivery) ||
+                    !(clone $delivery)->setStockResult(
+                        $this->getDeliveryService()->getStockResultForOffer(
+                            $offer,
+                            $delivery,
+                            (int)$basketItem->getQuantity(),
+                            $basketItem->getPrice()
+                        )
+                    )->isSuccess()
+                ) {
+                    $this->arResult['ONLY_PICKUP'][] = $offer->getId();
+                }
             }
 
             if ($offer->isByRequest()) {
@@ -339,6 +341,11 @@ class BasketComponent extends CBitrixComponent
         }
     }
 
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
     private function calcTemplateFields(): void
     {
         $weight = $quantity = $basePrice = $price = 0;
@@ -351,13 +358,15 @@ class BasketComponent extends CBitrixComponent
             $itemQuantity = (int)$basketItem->getQuantity();
             $weight += (float)$basketItem->getWeight() * $itemQuantity;
             $quantity += $itemQuantity;
-            $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
-            $price += (float)$basketItem->getPrice() * $itemQuantity;
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
+                $price += (float)$basketItem->getPrice() * $itemQuantity;
+            }
         }
 
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
-        $this->arResult['TOTAL_DISCOUNT'] = $basePrice - $price;
+        $this->arResult['TOTAL_DISCOUNT'] = PriceMaths::roundPrecision($basePrice - $price);
         $this->arResult['TOTAL_PRICE'] = $price;
         $this->arResult['TOTAL_BASE_PRICE'] = $basePrice;
     }
@@ -416,11 +425,13 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
+     *
      * @param BasketItem $basketItem
+     * @param bool $onlyApplied
      *
      * @return array
      */
-    public function getPromoLink(BasketItem $basketItem): array
+    public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
         $result = [];
         /**
@@ -428,11 +439,22 @@ class BasketComponent extends CBitrixComponent
          * @var Order $order
          */
         $applyResult = $this->arResult['DISCOUNT_RESULT'];
-        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getId()];
+        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
+        if (!$basketDiscounts) {
+            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
+            foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
+                if ($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
+                    $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
+                }
+            }
+        }
 
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
+                    continue;
+                }
                 if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
                     $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
                 }
@@ -450,7 +472,7 @@ class BasketComponent extends CBitrixComponent
     private function setCoupon(): void
     {
         $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
-        $this->arResult['COUPON_DISCOUNT'] = $this->basketService->getPromocodeDiscount();
+        $this->arResult['COUPON_DISCOUNT'] = !empty($this->arResult['COUPON']) ? $this->basketService->getPromocodeDiscount() : 0;
     }
 
     /**

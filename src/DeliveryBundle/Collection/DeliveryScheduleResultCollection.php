@@ -6,8 +6,8 @@
 namespace FourPaws\DeliveryBundle\Collection;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -15,24 +15,29 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 class DeliveryScheduleResultCollection extends ArrayCollection
 {
     /**
+     * @param \DateTime $from
+     *
      * @throws NotFoundException
-     * @return DeliveryScheduleResult|null
+     * @return DeliveryScheduleResultCollection|null
      */
-    public function getFastest(): ?DeliveryScheduleResultCollection
+    public function getFastest(\DateTime $from): ?DeliveryScheduleResultCollection
     {
-        $collections = $this->splitByLastSenders();
+        $collections = $this->splitByLastSenders($from);
 
         usort(
             $collections,
-            function (DeliveryScheduleResultCollection $collection1, DeliveryScheduleResultCollection $collection2) {
+            function (
+                DeliveryScheduleResultCollection $collection1,
+                DeliveryScheduleResultCollection $collection2
+            ) use ($from) {
                 $price1 = $collection1->getPrice();
                 $price2 = $collection2->getPrice();
                 if ($price1 !== $price2) {
                     return $price2 <=> $price1;
                 }
 
-                $date1 = $collection1->getDays();
-                $date2 = $collection1->getDays();
+                $date1 = $collection1->getDays($from);
+                $date2 = $collection1->getDays($from);
                 return $date1 <=> $date2;
             }
         );
@@ -95,15 +100,17 @@ class DeliveryScheduleResultCollection extends ArrayCollection
     }
 
     /**
+     * @param $from
+     *
      * @return int
      */
-    public function getDays(): int
+    public function getDays(\DateTime $from): int
     {
         $days = [0];
 
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $days[] = $item->getScheduleResult()->getDays();
+            $days[] = $item->getScheduleResult()->getDays($from);
         }
 
         return max($days);
@@ -117,7 +124,7 @@ class DeliveryScheduleResultCollection extends ArrayCollection
         $price = 0;
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $price += $item->getOffer()->getPrice() * $item->getAmount();
+            $price += $item->getPrice();
         }
 
         return $price;
@@ -125,44 +132,90 @@ class DeliveryScheduleResultCollection extends ArrayCollection
 
     /**
      * @param Offer $offer
-     *
-     * @return DeliveryScheduleResultCollection
+     * @return int
      */
-    public function filterByOffer(Offer $offer): DeliveryScheduleResultCollection
+    public function getAmountByOffer(Offer $offer): int
     {
-        return $this->filterByOfferId($offer->getId());
+        $total = 0;
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            $total += $item->getAmountByOffer($offer);
+        }
+
+        return $total;
     }
 
     /**
-     * @param int $offerId
-     *
-     * @return DeliveryScheduleResultCollection
+     * @param Offer          $offer
+     * @param \DateTime|null $for
+     * @return DeliveryScheduleResult|null
      */
-    public function filterByOfferId(int $offerId): DeliveryScheduleResultCollection
+    public function getByOffer(Offer $offer, ?\DateTime $for = null): ?DeliveryScheduleResult
     {
-        return $this->filter(function (DeliveryScheduleResult $result) use ($offerId) {
-            return $result->getOffer()->getId() === $offerId;
-        });
+        return $this->getByOfferId($offer->getId(), $for);
     }
 
     /**
+     * @param int            $offerId
+     * @param \DateTime|null $for
+     * @return DeliveryScheduleResult|null
+     */
+    public function getByOfferId(int $offerId, ?\DateTime $for = null): ?DeliveryScheduleResult
+    {
+        $results = [];
+        $for = $for ?: new \DateTime();
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            $hasOffer = !$item->getStockResults()->filterByOfferId($offerId)->isEmpty();
+            if ($hasOffer) {
+                $days = $item->getScheduleResult()->getDays($for);
+                $results[$days] = $item;
+            }
+        }
+
+        krsort($results);
+
+        return !empty($results) ? reset($results) : null;
+    }
+
+    /**
+     * @param \DateTime $from
      * @return array
      * @throws NotFoundException
      */
-    protected function splitByLastSenders(): array
+    protected function splitByLastSenders(\DateTime $from): array
     {
-        $result = [];
+        /** @var DeliveryScheduleResultCollection[] $result */
+        $results = [];
+
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $lastSender = $item->getScheduleResult()->getLastSender();
+            $xmlId = $item->getScheduleResult()->getLastSender()->getXmlId();
+            /** @var DeliveryScheduleResultCollection $res */
+            $result = $results[$xmlId] ?? new static();
 
-            if (null === $result[$lastSender->getXmlId()]) {
-                $result[$lastSender->getXmlId()] = new static();
+            /** @var Offer $offer */
+            foreach ($item->getStockResults()->getOffers() as $offer) {
+                $offerId = $offer->getId();
+                $resultByOffer = $result[$offerId];
+                if (null === $resultByOffer) {
+                    $result[$offerId] = $item;
+                } else {
+                    if ($item->getAmountByOffer($offer) > $resultByOffer->getAmountByOffer($offer)) {
+                        $result[$offerId] = $item;
+                    } else {
+                        /** @var DeliveryScheduleResult $resultByOffer */
+                        $days = $resultByOffer->getScheduleResult()->getDays($from);
+                        if ($days > $item->getScheduleResult()->getDays($from)) {
+                            $result[$offerId] = $item;
+                        }
+                    }
+                }
             }
 
-            $result[$lastSender->getXmlId()]->add($item);
+            $results[$xmlId] = $result;
         }
 
-        return $result;
+        return $results;
     }
 }

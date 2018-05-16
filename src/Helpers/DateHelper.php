@@ -238,11 +238,17 @@ class DateHelper
             }
         }
         if (false !== mb_strpos($dateFormat, 'XX')) {
-            switch ($date->diff(new \DateTime())->days) {
-                case 0:
+            $tmpDate = clone $date;
+            $currentDate = new \DateTime();
+            $tmpDate->setTime(0,0,0,0);
+            $currentDate->setTime(0,0,0,0);
+
+            $diff = $tmpDate->diff($currentDate)->days;
+            switch (true) {
+                case $diff === 0:
                     $str = 'Сегодня';
                     break;
-                case 1:
+                case $diff === 1:
                     $str = 'Завтра';
                     break;
                 default:

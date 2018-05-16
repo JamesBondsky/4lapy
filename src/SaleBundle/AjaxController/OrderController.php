@@ -11,6 +11,7 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\ManzanaService;
@@ -161,6 +162,7 @@ class OrderController extends Controller
             );
         }
 
+        /** @var DeliveryResultInterface $delivery */
         $delivery->setDateOffset($date);
         $intervals = $delivery->getAvailableIntervals($date);
 

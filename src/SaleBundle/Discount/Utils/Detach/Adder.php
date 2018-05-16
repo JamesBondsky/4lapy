@@ -27,7 +27,12 @@ use FourPaws\SaleBundle\Exception\RuntimeException;
  */
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
+    public static $skippedDiscountsFakeIds = [];
+
+
     /**
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws RuntimeException
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
@@ -46,12 +51,11 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         if (!$discountBase = $this->order->getDiscount()) {
             return;
         }
-
         $applyResult = $discountBase->getApplyResult(true);
         $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
-            foreach ($applyResult['RESULT']['BASKET'] as $basketId => $discounts) {
+            foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
                 if (is_iterable($discounts)) {
                     foreach ($discounts as $discount) {
                         if (
@@ -68,16 +72,23 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             $percent = (int)$params['params']['discount_value'];
 
                             /** @var BasketItem $basketItem */
-                            if ($applyCount && null !== $basketItem = $this->order->getBasket()->getItemById($basketId)) {
+                            if (
+                                $applyCount
+                                && null !== $basketItem = $this->order->getBasket()->getItemByBasketCode($basketCode)
+                            ) {
                                 if ((int)$basketItem->getQuantity() > $applyCount) {
                                     //Детачим
-                                    $basketItem->setField('QUANTITY', $basketItem->getQuantity() - $applyCount);
+                                    $price = (100 - $percent) * $basketItem->getPrice() / 100;
+                                    $basketItem->setField('QUANTITY', $applyCount);
+                                    $basketItem->setField('PRICE', $price);
+                                    $basketItem->setField('DISCOUNT_PRICE', $basketItem->getBasePrice() - $price);
+                                    $basketItem->setField('CUSTOM_PRICE', 'Y');
                                     $fields = [
                                         'PROPS' => [
                                             [
                                                 'NAME' => 'Отделено от элемента корзины',
                                                 'CODE' => 'DETACH_FROM',
-                                                'VALUE' => $basketId,
+                                                'VALUE' => $basketCode,
                                                 'SORT' => 100,
                                             ],
                                             [
@@ -93,16 +104,10 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                      */
                                     $newBasketItem = $this->basketService->addOfferToBasket(
                                         $basketItem->getProductId(),
-                                        $applyCount,
+                                        $basketItem->getQuantity() - $applyCount,
                                         $fields,
                                         false
                                     );
-                                    /** @noinspection PhpInternalEntityUsedInspection */
-                                    $newBasketItem->setFieldsNoDemand([
-                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
-                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
-                                        'CUSTOM_PRICE' => 'Y'
-                                    ]);
                                 } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
                                     //Просто проставляем поля
                                     /** @noinspection PhpInternalEntityUsedInspection */
@@ -121,10 +126,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             }
         }
     }
-
-    /**
-     * @todo Обновить дискаунт резалт
-     */
 
     /**
      * Возвращает массив фэйков айдишников скидок, которые не нужно применять,
@@ -172,9 +173,12 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         }
 
         if (!empty($conflicts)) {
-            $conflicts = \array_map(function ($e) {
-                return \array_flip(\array_flip($e));
-            }, $conflicts);
+            $conflicts = \array_map(
+                function ($e) {
+                    return \array_flip(\array_flip($e));
+                },
+                $conflicts
+            );
         }
 
         // теперь узнаем какую скидку в рублях дает каждая из конфликтных акций
@@ -203,23 +207,35 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             }
         }
 
-        if (!empty($promoDiscounts)) {
-            $beastDiscount = \array_search(\max($promoDiscounts), $promoDiscounts, true);
-            /** @var $beastDiscount int */
-            $result = $conflicts[$beastDiscount];
-        }
+        /**
+         * @todo вероятны баги при множественном пересечении. Сейчас мы не применяем акции, которые мешают максимальной,
+         * но могут быть же и другие пересекающиеся акции
+         */
 
+        if (!empty($promoDiscounts)) {
+            $bestDiscount = \array_search(\max($promoDiscounts), $promoDiscounts, true);
+            /** @var $bestDiscount int */
+            $result = $conflicts[$bestDiscount];
+        }
+        self::setSkippedDiscountsFakeIds($result);
         return $result;
     }
 
     /**
-     * Удаляет переданные скидки из дискаун ресалта и обновляет его
-     *
-     * @param array $fakeDiscountsIds
-     *
+     * @return array
      */
-    public function purifyDiscountResult(array $fakeDiscountsIds): void
+    public static function getSkippedDiscountsFakeIds(): array
     {
+        return self::$skippedDiscountsFakeIds;
+    }
 
+    /**
+     * @param array $skippedDiscountsFakeIds
+     */
+    public static function setSkippedDiscountsFakeIds(array $skippedDiscountsFakeIds): void
+    {
+        self::$skippedDiscountsFakeIds = array_flip(array_flip(array_merge(
+            $skippedDiscountsFakeIds, self::$skippedDiscountsFakeIds
+        )));
     }
 }

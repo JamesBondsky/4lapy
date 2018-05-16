@@ -7,6 +7,7 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -32,17 +33,15 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
     protected $initialPeriod = 0;
 
     /**
+     * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
+     * @throws SystemException
      */
-    public function doCalculateDeliveryDate(): void
+    public function getDeliveryDate(): \DateTime
     {
-        parent::doCalculateDeliveryDate();
-
-        if ($this->getInitialPeriod() > 0) {
-            $this->deliveryDate->modify(sprintf('+%s days', $this->getInitialPeriod()));
-        }
+        return (clone parent::getDeliveryDate())->modify(sprintf('+%s days', $this->getInitialPeriod()));
     }
 
     /**
@@ -101,6 +100,7 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
+     * @throws SystemException
      */
     public function isSuccess($internalCall = false)
     {
@@ -121,7 +121,6 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      */
     public function setInitialPeriod(int $initialPeriod): DpdPickupResult
     {
-        $this->resetResult();
         $this->initialPeriod = $initialPeriod;
         return $this;
     }
@@ -131,6 +130,7 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws NotFoundException
+     * @throws SystemException
      */
     public function getPeriodTo(): int
     {
@@ -145,6 +145,6 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      */
     protected function checkIsDeliverable(Offer $offer): bool
     {
-        return $offer->getProduct()->isDeliveryAvailable();
+        return parent::checkIsDeliverable($offer) && $offer->getProduct()->isDeliveryAvailable();
     }
 }

@@ -140,7 +140,7 @@ if ($order) {
     $possibleDeliveryDateMax = null;
     if ($possibleDeliveryDateMin !== null) {
         $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
-        $possibleDeliveryDateMax->add((new \DateInterval('P2M')));
+        $possibleDeliveryDateMax->add((new \DateInterval('P3M')));
         // выбранная дата при подписке, либо дата по умолчанию
         $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : $possibleDeliveryDateMin->format('d.m.Y');
     } else {
@@ -150,6 +150,7 @@ if ($order) {
     // LP03-465
     //$paymentName = $order->getPayment()->getName();
     $paymentName = 'наличными или картой при получении';
+
     ?>
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section"
              data-popup="<?= $attrPopupId ?>">
@@ -264,8 +265,12 @@ if ($order) {
                             <?= (new SvgDecorator('icon-delivery-dollar', 18, 14)) ?>
                         </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
-                            <p><?= $order->getDelivery()->getDeliveryName() . ', по адресу:' ?></p>
-                            <p><?= $order->getStore()->getAddress() ?></p>
+                            <p><?= $order->getDelivery()->getDeliveryName() . ($arResult['deliveryAddress'] ? ', по адресу:' : '') ?></p>
+                            <?php
+                            if ($arResult['deliveryAddress']) {
+                                echo '<p>'.$arResult['deliveryAddress'].'</p>';
+                            }
+                            ?>
                         </div>
                     </li>
                     <li class="b-registration__item-delivery">

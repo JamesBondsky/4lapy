@@ -12,8 +12,6 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\Adapter\DaDataLocationAdapter;
@@ -29,7 +27,6 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -103,39 +100,11 @@ class StoreService implements LoggerAwareInterface
         $this->setLogger(LoggerFactory::create('StoreService'));
     }
 
-    /**
-     * @param $cityCode
-     *
-     * @return int
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
-    public static function getRegion($cityCode): int
-    {
-        $locList = LocationTable::query()->setFilter(['=CODE' => $cityCode])->setSelect([
-            'ID',
-            'REGION_ID',
-            'PARENT_ID',
-            'TYPE_CODE'                => 'TYPE.CODE',
-            'PARENTS_PARENT_ID'        => 'PARENTS.ID',
-            'PARENTS_PARENT_TYPE_CODE' => 'PARENTS.TYPE.CODE',
-        ])->setCacheTtl(360000)->exec()->fetchAll();
-        foreach ($locList as $locItem) {
-            if ($locItem['TYPE_CODE'] === 'REGION') {
-                return $locItem['ID'];
-            }
-            if ($locItem['PARENTS_PARENT_TYPE_CODE'] === 'REGION') {
-                return $locItem['PARENTS_PARENT_ID'];
-            }
-        }
-        return 0;
-    }
 
     /**
      * @param string $type
-     * @param array $filter
-     * @param array $order
+     * @param array  $filter
+     * @param array  $order
      *
      * @return StoreCollection
      * @throws ArgumentException
@@ -274,6 +243,17 @@ class StoreService implements LoggerAwareInterface
             );
             $stores = new StoreCollection();
         }
+
+        /**
+         * Ищем склады района и региона
+         */
+        if (!$strict && $stores->isEmpty()) {
+            $stores = $this->getSubRegionalStores($locationCode, $type);
+            if ($stores->isEmpty()) {
+                $stores = $this->getRegionalStores($locationCode, $type);
+            }
+        }
+
         /**
          * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
          */
@@ -287,6 +267,38 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $stores;
+    }
+
+    /**
+     * @param string $locationCode
+     * @param string $type
+     *
+     * @return StoreCollection
+     */
+    public function getSubRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
+    {
+        if ($subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE']) {
+            $getStores = function () use ($type, $subregionCode) {
+                return ['result' => $this->getStores($type, ['UF_SUBREGION' => $subregionCode])];
+            };
+
+            try {
+                $result = (new BitrixCache())->withId(__METHOD__ . $subregionCode . $type)->resultOf($getStores);
+
+                /** @var StoreCollection $stores */
+                $stores = $result['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf(
+                        'failed to get stores for location: %s',
+                        $e->getMessage()
+                    ),
+                    ['location' => $locationCode, 'type' => $type]
+                );
+            }
+        }
+
+        return $stores ?? new StoreCollection();
     }
 
     /**
@@ -429,6 +441,11 @@ class StoreService implements LoggerAwareInterface
         if (!isset($params['storesAlways'])) {
             $params['storesAlways'] = false;
         }
+
+        /** отсееваем магазины без названия и без местоположения */
+        $params['filter']['!ADDRESS'] = ['', null];
+        $params['filter']['!UF_LOCATION'] = ['', null];
+
         $loc = $params['filter']['UF_LOCATION'];
         if ($params['storesAlways'] && isset($params['filter']['UF_LOCATION'])) {
             /** city */
@@ -442,9 +459,9 @@ class StoreService implements LoggerAwareInterface
                     $dadataLocationAdapter = new DaDataLocationAdapter();
                     /** @var BitrixLocation $bitrixLocation */
                     $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
-                    $regionId = static::getRegion($bitrixLocation->getRegionId());
+                    $regionId = LocationService::getRegion($bitrixLocation->getRegionId());
                 } else {
-                    $regionId = static::getRegion($code);
+                    $regionId = LocationService::getRegion($code);
                 }
                 if ($regionId > 0) {
                     $locRegion = $regionId;
@@ -809,15 +826,14 @@ class StoreService implements LoggerAwareInterface
     {
         if (!$this->pickupDelivery) {
             $selectedOffer = null;
-            if($offer !== null){
+            if ($offer !== null) {
                 $selectedOffer = $offer;
-            }
-            else{
-                if(!empty($this->offers)) {
+            } else {
+                if (!empty($this->offers)) {
                     $selectedOffer = reset($this->offers);
                 }
             }
-            if($selectedOffer !== null) {
+            if ($selectedOffer !== null) {
                 $deliveries = $this->deliveryService->getByProduct($selectedOffer);
 
                 foreach ($deliveries as $delivery) {

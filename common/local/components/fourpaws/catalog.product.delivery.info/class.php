@@ -62,11 +62,14 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
 
         $params['OFFER'] = $params['OFFER'] instanceof Offer ? $params['OFFER'] : null;
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
+
         return parent::onPrepareComponentParams($params);
     }
 
     /**
-     * @return $this|void
+     * @return $this|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
@@ -78,15 +81,35 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         if (!$this->arParams['OFFER']) {
             throw new \InvalidArgumentException('Invalid component parameters');
         }
-        parent::prepareResult();
+        /** @var Offer $currentOffer */
+        $currentOffer = $this->arParams['OFFER'];
+        $this->arParams['OFFER_ID'] = $currentOffer->getId();
+        $this->arParams['IS_AVAILABLE'] = $currentOffer->isAvailable();
+        $this->arParams['BY_REQUEST'] = $currentOffer->isByRequest();
+        if($this->arParams['IS_AVAILABLE']) {
+            parent::prepareResult();
 
-        if (isset($this->arResult['CURRENT']['PICKUP']) &&
-            $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
-        ) {
-            $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
-                $this->arResult['CURRENT']['PICKUP']['RESULT']
-            );
+            if (isset($this->arResult['CURRENT']['PICKUP']) &&
+                $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
+            ) {
+                $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
+                    $this->arResult['CURRENT']['PICKUP']['RESULT']
+                );
+            }
+            if($this->arResult['CURRENT']['PICKUP'] || $this->arResult['CURRENT']['DELIVERY']){
+                $this->arParams['CACHE_TIME'] = 0;
+                $this->arParams['CACHE_TYPE'] = 'N';
+                return $this;
+            }
+
+            $this->arParams['CACHE_TIME'] = 360000;
+            $this->arParams['CACHE_TYPE'] = 'A';
+            return null;
         }
+        $this->arParams['CACHE_TIME'] = 360000;
+        $this->arParams['CACHE_TYPE'] = 'A';
+
+        return null;
     }
 
     /**

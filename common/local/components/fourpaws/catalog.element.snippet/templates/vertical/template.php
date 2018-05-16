@@ -146,15 +146,16 @@ if (!$arParams['ITEM_ATTR_ID']) {
                  href="javascript:void(0);"
                  data-url="/ajax/sale/basket/add/"
                  data-offerid="<?= $currentOffer->getId() ?>">
-            <span class="b-common-item__wrapper-link">
-                <span class="b-cart">
-                    <span class="b-icon b-icon--cart"><?php
-                        echo new SvgDecorator('icon-cart', 16, 16);
-                        ?></span>
+                <span class="b-common-item__wrapper-link">
+                    <span class="b-cart">
+                        <span class="b-icon b-icon--cart"><?php
+                            echo new SvgDecorator('icon-cart', 16, 16);
+                            ?></span>
+                    </span>
+                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
+                    <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                 </span>
-                <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
-                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-            </span>
+                <span class="b-common-item__incart">+1</span>
             </a><?php
 
             //

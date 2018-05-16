@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *
  * @package FourPaws\StoreBundle\Entity
  */
-class DeliverySchedule extends Base
+class DeliverySchedule extends Base implements \Serializable
 {
     /**
      * Еженедельный

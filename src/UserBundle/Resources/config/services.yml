@@ -31,6 +31,10 @@ services:
         class: FourPaws\UserBundle\Service\UserService
         public: true
 
+    FourPaws\UserBundle\Service\UserSearchInterface:
+        class: FourPaws\UserBundle\Service\UserService
+        public: true
+
     FourPaws\UserBundle\Service\ConfirmCodeInterface:
         class: FourPaws\UserBundle\Service\ConfirmCodeService
         public: true

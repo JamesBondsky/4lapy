@@ -26,6 +26,10 @@ $storage = $arResult['STORAGE'];
 
 /** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
+$deliveryPrice = $selectedDelivery->getPrice();
+if (!empty($arResult['SPLIT_RESULT'])) {
+    $deliveryPrice = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getPrice();
+}
 
 /** @var BasketBase $basket */
 $basket = $arResult['BASKET'];
@@ -37,7 +41,7 @@ $selectedPayment = null;
 /** @var array $payments */
 $payments = $arResult['PAYMENTS'];
 $selectedPayment = current(array_filter($payments, function ($item) {
-    return $item['CODE'] === OrderService::PAYMENT_CASH;
+    return $item['CODE'] === OrderService::PAYMENT_CASH_OR_CARD;
 }));
 
 foreach ($payments as $i => $payment) {
@@ -106,11 +110,6 @@ $user = $arResult['USER'];
                             $i = 0;
                             $max = count($payments);
                             foreach ($payments as $payment) {
-                                if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
-                                    $displayName = 'Наличными или картой при получении';
-                                } else {
-                                    $displayName = $payment['NAME'];
-                                }
                                 $labelClass = $i % 2 !== 0
                                     ? ' b-choice-recovery__label--right'
                                     : ' b-choice-recovery__label--left';
@@ -127,7 +126,7 @@ $user = $arResult['USER'];
                                     <?= (int)$payment['ID'] === (int)$selectedPayment['ID'] ? 'checked="checked"' : '' ?>/>
                                 <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
-                                    <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
+                                    <span class="b-choice-recovery__main-text"><?= $payment['NAME'] ?></span>
                                 </label>
                                 <?php
                                 $i++;
@@ -149,7 +148,7 @@ $user = $arResult['USER'];
                                        maxlength="5"
                                        size="5"
                                        data-max-value="<?= $arResult['MAX_BONUS_SUM'] ?>"
-                                       value="<?= $storage->getBonus() ?>">
+                                       value="<?= min($storage->getBonus(), $arResult['MAX_BONUS_SUM']) ?>">
                                 <div class="b-error">
                                     <span class="js-message"></span>
                                 </div>
@@ -225,24 +224,24 @@ $user = $arResult['USER'];
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3"
-                                 data-cost="<?= $selectedDelivery->getPrice() ?>">
-                                <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
+                                 data-cost="<?= $deliveryPrice ?>">
+                                <?= CurrencyHelper::formatPrice($deliveryPrice, false) ?>
                             </div>
                         </li>
                         <?php if ($storage->getBonus()) { ?>
-                            <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
-                                <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
-                                    <div class="b-order-list__clipped-text">
-                                        <div class="b-order-list__text-backed">
-                                            Оплачено бонусами
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                    <?= CurrencyHelper::formatPrice($storage->getBonus(), false) ?>
-                                </div>
-                            </li>
-                        <?php } ?>
+                                <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3 b-order-list__pointspay">
+                                        <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
+                                           <div class="b-order-list__clipped-text">
+                                                   <div class="b-order-list__text-backed">
+                                                           Оплачено бонусами
+                                                       </div>
+                                               </div>
+                                       </div>
+                                   <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                           <?= CurrencyHelper::formatPrice(max($storage->getBonus(), $arResult['MAX_BONUS_SUM']), false) ?>
+                                       </div>
+                               </li>
+                       <?php } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">
@@ -253,7 +252,7 @@ $user = $arResult['USER'];
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
                                 <?= CurrencyHelper::formatPrice(
-                                    $basketPrice - $storage->getBonus() + $selectedDelivery->getPrice()
+                                    $basketPrice - $storage->getBonus() + $deliveryPrice
                                 ) ?>
                             </div>
                         </li>

@@ -13,8 +13,10 @@ use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class ScheduleResult extends Base
+class ScheduleResult extends Base implements \Serializable
 {
+    public const RESULT_ERROR  = -1;
+
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -71,11 +73,38 @@ class ScheduleResult extends Base
     /**
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("UF_DAYS")
+     * @Serializer\SerializedName("UF_DAYS_11")
      * @Serializer\Groups(groups={"create", "read","update","delete"})
      * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
-    protected $days;
+    protected $days11 = -1;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DAYS_13")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $days13 = -1;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DAYS_18")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $days18 = -1;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DAYS_24")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $days24 = -1;
 
     /**
      * @var StoreService
@@ -261,20 +290,116 @@ class ScheduleResult extends Base
     /**
      * @return int
      */
-    public function getDays(): int
+    public function getDays11(): int
     {
-        return $this->days;
+        return $this->days11 ?? static::RESULT_ERROR;
     }
 
     /**
-     * @param int $days
+     * @param int $days11
      *
      * @return ScheduleResult
      */
-    public function setDays(int $days): ScheduleResult
+    public function setDays11(int $days11): ScheduleResult
     {
-        $this->days = $days;
+        $this->days11 = $days11;
         return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDays13(): int
+    {
+        return $this->days13 ?? static::RESULT_ERROR;
+    }
+
+    /**
+     * @param int $days13
+     *
+     * @return ScheduleResult
+     */
+    public function setDays13(int $days13): ScheduleResult
+    {
+        $this->days13 = $days13;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDays18(): int
+    {
+        return $this->days18 ?? static::RESULT_ERROR;
+    }
+
+    /**
+     * @param int $days18
+     *
+     * @return ScheduleResult
+     */
+    public function setDays18(int $days18): ScheduleResult
+    {
+        $this->days18 = $days18;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDays24(): int
+    {
+        return $this->days24 ?? static::RESULT_ERROR;
+    }
+
+    /**
+     * @param int $days24
+     *
+     * @return ScheduleResult
+     */
+    public function setDays24(int $days24): ScheduleResult
+    {
+        $this->days24 = $days24;
+        return $this;
+    }
+
+    /**
+     * @param \DateTime $for
+     *
+     * @return int
+     */
+    public function getDays(\DateTime $for): int
+    {
+        $h = (int)$for->format('G');
+        $result = static::RESULT_ERROR;
+        switch (true) {
+            /** @noinspection PhpMissingBreakStatementInspection */
+            case ($h < 11):
+                $result = $this->getDays11();
+            /** @noinspection PhpMissingBreakStatementInspection */
+            case ($h < 13):
+                /** @noinspection SuspiciousAssignmentsInspection */
+                $result = ($result === static::RESULT_ERROR) ? $this->getDays13() : $result;
+            /** @noinspection PhpMissingBreakStatementInspection */
+            case ($h < 18):
+                /** @noinspection SuspiciousAssignmentsInspection */
+                $result = ($result === static::RESULT_ERROR) ? $this->getDays18() : $result;
+            default:
+                /** @noinspection SuspiciousAssignmentsInspection */
+                $result = ($result === static::RESULT_ERROR) ? $this->getDays24() : $result;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getLastSender(): Store
+    {
+        $keys = array_reverse($this->getRoute()->getKeys());
+        return $this->getRoute()->get($keys[1]);
     }
 
     /**
@@ -287,18 +412,11 @@ class ScheduleResult extends Base
             $this->receiverCode,
             $this->senderCode,
             $this->routeCodes,
-            $this->days
+            $this->days11,
+            $this->days13,
+            $this->days18,
+            $this->days24
         ]);
-    }
-
-    /**
-     * @return Store
-     * @throws NotFoundException
-     */
-    public function getLastSender(): Store
-    {
-        $keys = array_reverse($this->getRoute()->getKeys());
-        return $this->getRoute()->get($keys[1]);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -314,7 +432,10 @@ class ScheduleResult extends Base
             $this->receiverCode,
             $this->senderCode,
             $this->routeCodes,
-            $this->days
+            $this->days11,
+            $this->days13,
+            $this->days18,
+            $this->days24
         ] = \unserialize($serialized, ['allowed_classes' => true]);
 
         $this->__construct();

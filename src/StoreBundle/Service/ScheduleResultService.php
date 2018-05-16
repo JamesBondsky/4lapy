@@ -5,6 +5,7 @@
 
 namespace FourPaws\StoreBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -20,9 +21,13 @@ use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\ValidationException;
 use FourPaws\StoreBundle\Repository\ScheduleResultRepository;
+use Psr\Log\LoggerAwareInterface;
+use WebArch\BitrixCache\BitrixCache;
 
-class ScheduleResultService
+class ScheduleResultService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     public const MAX_TRANSITION_COUNT = 1;
 
     /**
@@ -43,15 +48,16 @@ class ScheduleResultService
     /**
      * ScheduleResultService constructor.
      *
-     * @param DeliveryScheduleService $deliveryScheduleService
-     * @param StoreService $storeService
+     * @param DeliveryScheduleService  $deliveryScheduleService
+     * @param StoreService             $storeService
      * @param ScheduleResultRepository $repository
      */
     public function __construct(
         DeliveryScheduleService $deliveryScheduleService,
         StoreService $storeService,
         ScheduleResultRepository $repository
-    ) {
+    )
+    {
         $this->deliveryScheduleService = $deliveryScheduleService;
         $this->storeService = $storeService;
         $this->repository = $repository;
@@ -64,7 +70,6 @@ class ScheduleResultService
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws NotFoundException
-     * @throws ObjectPropertyException
      * @throws SystemException
      * @throws BitrixRuntimeException
      * @throws ValidationException
@@ -96,12 +101,9 @@ class ScheduleResultService
     /**
      * @param Store $sender
      *
-     * @throws ArgumentException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      * @return int
      */
     public function deleteResultsForSender(Store $sender): int
@@ -137,7 +139,7 @@ class ScheduleResultService
      * @throws BitrixRuntimeException
      * @throws ValidationException
      */
-    public function createResult(ScheduleResult $result)
+    public function createResult(ScheduleResult $result): bool
     {
         return $this->repository->create($result);
     }
@@ -150,7 +152,7 @@ class ScheduleResultService
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      */
-    public function deleteResult(ScheduleResult $result)
+    public function deleteResult(ScheduleResult $result): bool
     {
         return $this->repository->delete($result->getId());
     }
@@ -175,26 +177,52 @@ class ScheduleResultService
      * @param Store $sender
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findResultsBySender(Store $sender): ScheduleResultCollection
     {
-        return $this->repository->findBySender($sender);
+        $getResults = function () use ($sender) {
+            return ['result' => $this->repository->findBySender($sender)];
+        };
+
+        $result = null;
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $sender->getXmlId())
+                          ->withTag('catalog:store:schedule:results')
+                          ->resultOf($getResults)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['sender' => $sender->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
     }
 
     /**
      * @param Store $receiver
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findResultsByReceiver(Store $receiver): ScheduleResultCollection
     {
-        return $this->repository->findByReceiver($receiver);
+        $getResults = function () use ($receiver) {
+            return ['result' => $this->repository->findByReceiver($receiver)];
+        };
+
+        $result = null;
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $receiver->getXmlId())
+                          ->withTag('catalog:store:schedule:results')
+                          ->resultOf($getResults)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['receiver' => $receiver->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
     }
 
     /**
@@ -202,18 +230,31 @@ class ScheduleResultService
      * @param Store $receiver
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findResultsBySenderAndReceiver(Store $sender, Store $receiver): ScheduleResultCollection
     {
-        return $this->repository->findBySenderAndReceiver($sender, $receiver);
+        $getResults = function () use ($sender, $receiver) {
+            return ['result' => $this->repository->findBySenderAndReceiver($sender, $receiver)];
+        };
+
+        $result = null;
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $sender->getXmlId() . '_' . $receiver->getXmlId())
+                          ->withTag('catalog:store:schedule:results')
+                          ->resultOf($getResults)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['receiver' => $receiver->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
     }
 
     /**
      * @param \DateTime $date
-     * @param int|null $transitionCount
+     * @param int|null  $transitionCount
      *
      * @throws ArgumentException
      * @throws NotFoundException
@@ -223,7 +264,8 @@ class ScheduleResultService
     public function calculateForAll(
         \DateTime $date,
         ?int $transitionCount = null
-    ): ScheduleResultCollection {
+    ): ScheduleResultCollection
+    {
         $result = [];
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
 
@@ -241,9 +283,9 @@ class ScheduleResultService
     }
 
     /**
-     * @param Store $sender
+     * @param Store     $sender
      * @param \DateTime $date
-     * @param int|null $transitionCount
+     * @param int|null  $transitionCount
      *
      * @return ScheduleResultCollection
      * @throws ApplicationCreateException
@@ -254,7 +296,8 @@ class ScheduleResultService
         Store $sender,
         \DateTime $date,
         ?int $transitionCount = null
-    ): ScheduleResultCollection {
+    ): ScheduleResultCollection
+    {
         if (null === $transitionCount) {
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
@@ -280,10 +323,10 @@ class ScheduleResultService
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store $sender
-     * @param Store $receiver
+     * @param Store          $sender
+     * @param Store          $receiver
      * @param \DateTime|null $from
-     * @param int $maxTransitions
+     * @param int            $maxTransitions
      *
      * @throws ArgumentException
      * @throws NotFoundException
@@ -295,15 +338,26 @@ class ScheduleResultService
         Store $receiver,
         ?\DateTime $from = null,
         int $maxTransitions = self::MAX_TRANSITION_COUNT
-    ): ScheduleResultCollection {
-        return $this->doCalculateScheduleDate($sender, $receiver, $from, $maxTransitions);
+    ): ScheduleResultCollection
+    {
+        if (null === $from) {
+            $from = new \DateTime();
+        }
+        $dates = [
+            11 => (clone $from)->setTime(10, 0, 0, 0),
+            13 => (clone $from)->setTime(12, 0, 0, 0),
+            18 => (clone $from)->setTime(17, 0, 0, 0),
+            24 => (clone $from)->setTime(23, 0, 0, 0),
+        ];
+
+        return $this->doCalculateScheduleDate($sender, $receiver, $dates, $maxTransitions);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store $sender
-     * @param Store $receiver
-     * @param \DateTime|null $from
-     * @param int $maxTransitions
+     * @param Store                $sender
+     * @param Store                $receiver
+     * @param \DateTime[]          $dates
+     * @param int                  $maxTransitions
      * @param StoreCollection|null $route
      *
      * @throws ArgumentException
@@ -314,36 +368,46 @@ class ScheduleResultService
     protected function doCalculateScheduleDate(
         Store $sender,
         Store $receiver,
-        ?\DateTime $from = null,
+        array $dates,
         int $maxTransitions = self::MAX_TRANSITION_COUNT,
         ?StoreCollection $route = null
-    ): ScheduleResultCollection {
-        $from = $from instanceof \DateTime ? clone $from : new \DateTime();
-
+    ): ScheduleResultCollection
+    {
         static $transitionCount = 0;
-        static $startDate;
+        static $startDates;
         if ($transitionCount === 0) {
-            $startDate = $from;
+            foreach ($dates as $hour => $date) {
+                $startDates[$hour] = clone $date;
+            }
         }
 
         $result = new ScheduleResultCollection();
 
         if ($transitionCount < $maxTransitions) {
-            $from = $from instanceof \DateTime ? clone $from : new \DateTime();
+            $from = [];
+            foreach ($dates as $hour => $date) {
+                $from[$hour] = clone $date;
+            }
 
+            $modifier = 0;
             if ($sender->isSupplier()) {
                 if ($transitionCount === 0) {
                     $maxTransitions++;
                 }
+
                 /**
                  * Для товаров под заказ добавляем два дня к дате доставки
                  */
-                $from->modify('+2 days');
-            } else {
-                /**
-                 * Для обычных товаров добавляем один день к дате доставки
-                 */
-                $from->modify('+1 day');
+                $modifier = 2;
+            }
+
+            /**
+             * Добавляем один день к дате доставки
+             */
+            $modifier++;
+
+            foreach ($from as $date) {
+                $date->modify(sprintf('+%s days', $modifier));
             }
 
             if (null === $route) {
@@ -356,20 +420,54 @@ class ScheduleResultService
                 /**
                  * Поиск даты поставки
                  */
-                $nextDelivery = $schedule->getNextDelivery($from);
-                if (null === $nextDelivery) {
-                    continue;
+                $nextDeliveries = [];
+                foreach ($from as $hour => $date) {
+                    /**
+                     * Дата отгрузки со склада
+                     */
+                    $shipmentDate = $schedule->getReceiver()->getShipmentDate($date);
+
+                    $nextDelivery = $schedule->getNextDelivery($shipmentDate);
+
+                    if (null !== $nextDelivery) {
+                        $nextDeliveries[$hour] = $nextDelivery;
+                    }
                 }
 
+                if (empty($nextDeliveries)) {
+                    continue;
+                }
                 /**
                  * Найдена конечная точка
                  */
                 if ($schedule->getReceiver()->getXmlId() === $receiver->getXmlId()) {
                     $route[$receiver->getXmlId()] = $receiver;
-                    $result->add((new ScheduleResult())->setDays($nextDelivery->diff($startDate)->days)
+
+                    $res = (new ScheduleResult())
                         ->setSender($route->first())
                         ->setReceiver($schedule->getReceiver())
-                        ->setRoute($route));
+                        ->setRoute($route);
+
+                    /**
+                     * @var int $hour
+                     * @var \DateTime $date
+                     */
+                    foreach ($nextDeliveries as $hour => $date) {
+                        $days = $date->diff($startDates[$hour])->days;
+                        $setter = 'setDays' . $hour;
+                        if (!method_exists($res, $setter)) {
+                            $this->log()->error(sprintf(
+                                'method %s not found in %s',
+                                $setter,
+                                \get_class($res)
+                            ));
+                            continue;
+                        }
+
+                        $res->$setter($days);
+                    }
+
+                    $result->add($res);
                     continue;
                 }
 
@@ -377,7 +475,7 @@ class ScheduleResultService
                 $results = $this->doCalculateScheduleDate(
                     $schedule->getReceiver(),
                     $receiver,
-                    $nextDelivery,
+                    $nextDeliveries,
                     $maxTransitions,
                     $route
                 );

@@ -102,9 +102,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
         /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $storesAll = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_ALL);
-        $shops = $storesAll->getShops();
-
         $shopCode = null;
         /** @noinspection PhpInternalEntityUsedInspection */
         /* @var PropertyValue $prop */
@@ -135,20 +132,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
-            return $result;
-        }
-
-        $hasDelivery = true;
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            if (!$offer->getProduct()->isPickupAvailable()) {
-                $result->addError(new Error(
-                    sprintf('Самовывоз товара %s недоступен', $offer->getId())
-                ));
-                $hasDelivery = false;
-            }
-        }
-        if (!$hasDelivery) {
             return $result;
         }
 

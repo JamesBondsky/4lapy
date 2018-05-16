@@ -126,8 +126,8 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                         /** никогда не сработает */
                     }
                 }
-                $basket = $this->basketService->getBasket();
-                $this->offerCollection = $this->basketService->getOfferCollection();
+                $basket = $this->basketService->getBasket(true);
+                $this->offerCollection = $this->basketService->getOfferCollection(true);
                 // привязывать к заказу нужно для расчета скидок
                 if (null === $order = $basket->getOrder()) {
                     $order = Order::create(SITE_ID);
@@ -237,8 +237,16 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             }
             /** @var ResizeImageCollection $images */
             $images = $item->getResizeImages(110, 110);
-            $this->images[$item->getId()] = $images->first();
+            /** @var ResizeImageDecorator $image */
+            foreach ($images as $image) {
+                if(empty($image->getSrc())){
+                    continue;
+                }
+                $this->images[$item->getId()] = $image;
+                break;
+            }
         }
+        $a = 1;
     }
 
     private function calcTemplateFields(): void
@@ -251,7 +259,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         $orderableBasket = $basket->getOrderableItems();
         foreach ($orderableBasket as $basketItem) {
             $quantity += (int)$basketItem->getQuantity();
-            $weight += (float)$basketItem->getWeight() * $quantity;
+            $weight += (float)$basketItem->getWeight() * (int)$basketItem->getQuantity();
         }
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;

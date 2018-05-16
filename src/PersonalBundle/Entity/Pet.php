@@ -85,9 +85,11 @@ class Pet extends BaseEntity
      */
     protected $gender;
 
-    protected $stringType   = '';
-
     protected $stringGender = '';
+
+    protected $codeGender = '';
+
+    protected $stringType   = '';
 
     protected $codeType     = '';
 
@@ -398,7 +400,9 @@ class Pet extends BaseEntity
     protected function setStringGender(int $gender)
     {
         $userFieldEnum      = new \CUserFieldEnum();
-        $this->stringGender = $userFieldEnum->GetList([], ['ID' => $gender])->Fetch()['VALUE'];
+        $item = $userFieldEnum->GetList([], ['ID' => $gender])->Fetch();
+        $this->stringGender = $item['VALUE'];
+        $this->setCodeGender($item['XML_ID']);
     }
 
     /**
@@ -422,5 +426,24 @@ class Pet extends BaseEntity
         }
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCodeGender(): string
+    {
+        if(empty($this->codeGender)){
+            $this->setStringGender($this->getGender());
+        }
+        return $this->codeGender;
+    }
+
+    /**
+     * @param string $codeGender
+     */
+    public function setCodeGender(string $codeGender): void
+    {
+        $this->codeGender = $codeGender;
     }
 }

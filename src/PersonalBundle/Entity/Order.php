@@ -4,6 +4,10 @@ namespace FourPaws\PersonalBundle\Entity;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
@@ -20,8 +24,10 @@ use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreBundleNotFoundException;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -155,13 +161,13 @@ class Order extends BaseEntity
     protected $manzana = false;
 
     /** @var float */
-    protected $allWeight = 0;
+    protected $allWeight ;
 
     /** @var Store */
     protected $store;
 
     /** @var float */
-    protected $itemsSum = 0;
+    protected $itemsSum;
 
     /** @var OrderPayment */
     protected $payment;
@@ -189,6 +195,15 @@ class Order extends BaseEntity
 
     /** @var bool */
     protected $newManzana = false;
+
+    /** @var string */
+    protected $deliveryAddress;
+
+    /** @var float|null */
+    protected $bonusPay;
+
+    /** @var array|null */
+    protected $allPayments;
 
     /**
      * @return string
@@ -516,6 +531,11 @@ class Order extends BaseEntity
 
     /**
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
      * @throws ServiceNotFoundException
      * @throws \RuntimeException
      * @throws ServiceCircularReferenceException
@@ -574,28 +594,50 @@ class Order extends BaseEntity
         $this->manzana = $manzana;
     }
 
+    /**
+     * @return string
+     */
     public function getPayPrefixText(): string
     {
         return $this->isPayed() ? 'Оплачено' : 'Итого к оплате';
     }
 
+    /**
+     * @return string
+     */
     public function getFormatedDateInsert(): string
     {
         return DateHelper::replaceRuMonth($this->getDateInsert()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
 
+    /**
+     * @return string
+     */
     public function getFormatedDateStatus(): string
     {
         return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
 
-    public function getFormatedPrice()
+    /**
+     * @return string
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectNotFoundException
+     */
+    public function getFormatedPrice(): string
     {
-        return number_format(round($this->getPrice(), 2), 2, '.', ' ');
+        return number_format(round($this->getPrice() - $this->getBonusPay(), 2), 2, '.', ' ');
     }
 
     /**
      * @return float
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      * @throws IblockNotFoundException
@@ -605,7 +647,7 @@ class Order extends BaseEntity
      */
     public function getAllWeight(): float
     {
-        if (!isset($this->allWeight) && $this->getId()) {
+        if ($this->allWeight === null && $this->getId()) {
             $orderItems = $this->getOrderItems();
             $this->allWeight = (float)$orderItems[1];
         }
@@ -627,6 +669,9 @@ class Order extends BaseEntity
 
     /**
      * @return float
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      * @throws IblockNotFoundException
@@ -643,6 +688,9 @@ class Order extends BaseEntity
 
     /**
      * @return float
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      * @throws IblockNotFoundException
@@ -652,7 +700,7 @@ class Order extends BaseEntity
      */
     public function getItemsSum(): float
     {
-        if (!isset($this->itemsSum) && $this->getId()) {
+        if ($this->itemsSum === null && $this->getId()) {
             $orderItems = $this->getOrderItems();
             $this->itemsSum = (float)$orderItems[2];
         }
@@ -670,6 +718,9 @@ class Order extends BaseEntity
 
     /**
      * @return string
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws EmptyEntityClass
@@ -684,8 +735,17 @@ class Order extends BaseEntity
 
     /**
      * @return OrderPayment
+     * @throws NotFoundException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @throws EmptyEntityClass
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectNotFoundException
      */
     public function getPayment(): OrderPayment
     {
@@ -711,40 +771,72 @@ class Order extends BaseEntity
 
     /**
      * @return int|null
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectNotFoundException
      */
     public function getPaymentIdByPayments(): ?int
     {
-        if($this->getId() > 0) {
-            $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
-            $bitrixOrder = $orderService->getOrderById($this->getId());
-            $innerSystemId = (int)PaySystemActionTable::query()
-                ->where('CODE', 'inner')
-                ->setCacheTtl(360000)
-                ->setLimit(1)
-                ->setSelect([
-                    'ID',
-                ])->exec()->fetch()['ID'];
+        if ($this->getId() > 0) {
             /** @var Payment $payment */
-            foreach ($bitrixOrder->getPaymentCollection()->getIterator() as $payment) {
-                $paySystemId = (int)$payment->getPaymentSystemId();
-                if ($payment->isInner() || $paySystemId === $innerSystemId) {
+            foreach ($this->getAllPayments() as $payment) {
+                if ($payment->isInner()) {
                     continue;
                 }
-                return $paySystemId;
+                return (int)$payment->getPaymentSystemId();
             }
         }
         return null;
     }
 
     /**
+     * @return array
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
+    public function getAllPayments(): array
+    {
+        if ($this->allPayments === null) {
+            $this->setAllPayments();
+        }
+        return $this->allPayments;
+    }
+
+    /**
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
+    public function setAllPayments(): void
+    {
+        $this->allPayments = [];
+        if ($this->getId() > 0) {
+            $bitrixOrder = $this->getOrderService()->getOrderById($this->getId());
+            /** @var Payment $payment */
+            foreach ($bitrixOrder->getPaymentCollection()->getIterator() as $payment) {
+                $this->allPayments[] = $payment;
+            }
+        }
+    }
+
+    /**
      * @return OrderDelivery
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      */
@@ -767,8 +859,11 @@ class Order extends BaseEntity
 
     /**
      * @return string
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
+     * @throws ObjectException
      */
     public function getDateDelivery(): string
     {
@@ -792,6 +887,8 @@ class Order extends BaseEntity
 
     /**
      * @return ArrayCollection
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      */
@@ -814,9 +911,12 @@ class Order extends BaseEntity
 
     /**
      * @return Store|null
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws EmptyEntityClass
      * @throws ApplicationCreateException
      * @throws \Exception
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws StoreBundleNotFoundException
      */
     public function getStore(): ?Store
     {
@@ -915,6 +1015,8 @@ class Order extends BaseEntity
      * @param string $propCode
      *
      * @return mixed
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      */
@@ -928,8 +1030,8 @@ class Order extends BaseEntity
     /**
      * @return \Bitrix\Sale\Order
      * @throws BitrixOrderNotFoundException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\NotImplementedException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
      */
     public function getBitrixOrder(): \Bitrix\Sale\Order
     {
@@ -954,6 +1056,8 @@ class Order extends BaseEntity
 
     /**
      * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      */
@@ -966,6 +1070,8 @@ class Order extends BaseEntity
      * @param string $code
      *
      * @return OrderProp|null
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      */
@@ -991,7 +1097,77 @@ class Order extends BaseEntity
     }
 
     /**
+     * @return float
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectNotFoundException
+     */
+    public function getBonusPay(): float
+    {
+        if ($this->bonusPay === null) {
+            $bonusPay = (float)0;
+            /** @var Payment $payment */
+            foreach ($this->getAllPayments() as $payment) {
+                if ($payment->isInner()) {
+                    $bonusPay = $payment->getSum();
+                    break;
+                }
+            }
+            $this->setBonusPay($bonusPay);
+        }
+        return $this->bonusPay ?? (float)0;
+    }
+
+    /**
+     * @param float $bonusPay
+     */
+    public function setBonusPay(float $bonusPay): void
+    {
+        $this->bonusPay = $bonusPay;
+    }
+
+    /**
+     * @return string
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectNotFoundException
+     */
+    public function getBonusPayFormatted(): string
+    {
+        return $this->getBonusPay() > 0 ? number_format(round($this->getBonusPay(), 2), 2, '.', ' ') : '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryAddress(): string
+    {
+        if (!isset($this->deliveryAddress)) {
+            try {
+                $this->deliveryAddress = $this->getOrderService()->getOrderDeliveryAddress(
+                    $this->getBitrixOrder()
+                );
+            } catch (\Exception $exception) {
+                $this->deliveryAddress = '';
+            }
+        }
+
+        return $this->deliveryAddress;
+    }
+
+    /**
      * @return array
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
      * @throws IblockNotFoundException
@@ -1019,9 +1195,18 @@ class Order extends BaseEntity
     private function getPersonalOrderService(): OrderService
     {
         $appCont = Application::getInstance()->getContainer();
-        /** @var OrderService $service */
-        $service = $appCont->get('order.service');
+        return $appCont->get('order.service');
+    }
 
-        return $service;
+    /**
+     * @return SaleOrderService
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     */
+    private function getOrderService(): SaleOrderService
+    {
+        $appCont = Application::getInstance()->getContainer();
+        return $appCont->get(SaleOrderService::class);
     }
 }

@@ -25,6 +25,8 @@ use RuntimeException;
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     /**
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws NotFoundException
      * @throws RuntimeException
      * @throws InvalidArgumentException
@@ -69,7 +71,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         }
                     }
                     if (!empty($offerId)) {
-                        $this->addGift($offerId, $group['count'], $group['discountId']);
+                        $this->addGift($offerId, $group['count'], $group['discountId'], $OfferCollection->count() === 1);
                     }
                 }
             }
@@ -82,10 +84,13 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * @param int $discountId
      * @param bool $selected
      *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
      * @throws LoaderException
      * @throws ObjectNotFoundException
+     * @throws Exception
      */
     protected function addGift(int $offerId, int $quantity, int $discountId, bool $selected = false)
     {
@@ -176,6 +181,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * @param int $offerId
      * @param int $discountId
      *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws LoaderException
      * @throws ObjectNotFoundException
      * @throws RuntimeException
