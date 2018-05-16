@@ -14,6 +14,7 @@ use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Dpd\Lib\Calculator;
+use FourPaws\DeliveryBundle\Entity\DpdLocation;
 use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\DpdLocationService;
@@ -126,7 +127,6 @@ class Shipment extends \Ipolh\DPD\Shipment
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws ApplicationCreateException
-     * @throws LocationNotFoundException
      * @throws CityNotFoundException
      * @return array
      */
@@ -137,7 +137,11 @@ class Shipment extends \Ipolh\DPD\Shipment
         /** @var DpdLocationService $dpdLocationService */
         $dpdLocationService = Application::getInstance()->getContainer()->get(DpdLocationService::class);
         $location = $locationService->findLocationCityByCode($locationCode);
-        $dpdLocation = $dpdLocationService->getOneByLocationId($location['ID']);
+        try {
+            $dpdLocation = $dpdLocationService->getOneByLocationId($location['ID']);
+        } catch (LocationNotFoundException $e) {
+            $dpdLocation = new DpdLocation();
+        }
 
         return [
             'ID'           => $dpdLocation->getId(),

@@ -254,6 +254,7 @@ class DpdLocationsImport extends Command implements LoggerAwareInterface
         $kladrCodes = array_column($items, 'kladrCode');
         $locationIds = $this->getLocationsByKladrCodes($kladrCodes);
 
+        /** @todo починить запись COUNTRY_CODE, COUNTRY_NAME, REGION_CODE, REGION_NAME при сохранении сущности */
         foreach ($items as $item) {
             if (!$locationIds[$item['kladrCode']]) {
                 $this->notFound[] = $item['kladrCode'];
