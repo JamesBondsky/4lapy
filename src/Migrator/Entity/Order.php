@@ -253,6 +253,8 @@ class Order extends AbstractEntity
 
         if (null === $basket) {
             $basket = Basket::create(SITE_ID);
+        } else {
+            $basket->clearCollection();
         }
 
         $userId = $order->getUserId();
