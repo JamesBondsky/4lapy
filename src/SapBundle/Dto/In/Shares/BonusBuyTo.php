@@ -6,11 +6,8 @@
 
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
-use Bitrix\Iblock\ElementTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -56,6 +53,17 @@ class BonusBuyTo extends BonusBuyGroupBase
      * @var float
      */
     protected $percent = 0.0;
+
+    /**
+     * Содержит абсолютную скидку.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("KOND_VAL")
+     * @Serializer\Type("float")
+     *
+     * @var float
+     */
+    protected $absolute = 0.0;
 
     /**
      * Группа данных о единице подарка
@@ -123,6 +131,25 @@ class BonusBuyTo extends BonusBuyGroupBase
     {
         $this->percent = $percent;
 
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getAbsolute(): float
+    {
+        return $this->absolute;
+    }
+
+    /**
+     * @param float $absolute
+     *
+     * @return BonusBuyTo
+     */
+    public function setAbsolute(float $absolute): BonusBuyTo
+    {
+        $this->absolute = $absolute;
         return $this;
     }
 
