@@ -10,11 +10,11 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
- * Class Order
+ * Class Debit
  *
  * @package FourPaws\SapBundle\Dto\In
  */
-class Order
+class Debit
 {
     /**
      * Номер заказа SAP
@@ -112,9 +112,10 @@ class Order
 
     /**
      * @param int $sapOrderId
+     *
      * @return $this
      */
-    public function setSapOrderId(int $sapOrderId): Order
+    public function setSapOrderId(int $sapOrderId): Debit
     {
         $this->sapOrderId = $sapOrderId;
         return $this;
@@ -130,9 +131,10 @@ class Order
 
     /**
      * @param int $bitrixOrderId
-     * @return Order
+     *
+     * @return Debit
      */
-    public function setBitrixOrderId(int $bitrixOrderId): Order
+    public function setBitrixOrderId(int $bitrixOrderId): Debit
     {
         $this->bitrixOrderId = $bitrixOrderId;
         return $this;
@@ -148,9 +150,10 @@ class Order
 
     /**
      * @param string $payType
-     * @return Order
+     *
+     * @return Debit
      */
-    public function setPayType(string $payType): Order
+    public function setPayType(string $payType): Debit
     {
         $this->payType = $payType;
         return $this;
@@ -166,9 +169,10 @@ class Order
 
     /**
      * @param string $payTypeText
-     * @return Order
+     *
+     * @return Debit
      */
-    public function setPayTypeText(string $payTypeText): Order
+    public function setPayTypeText(string $payTypeText): Debit
     {
         $this->payTypeText = $payTypeText;
         return $this;
@@ -184,9 +188,10 @@ class Order
 
     /**
      * @param float $sumTotal
-     * @return Order
+     *
+     * @return Debit
      */
-    public function setSumTotal(float $sumTotal): Order
+    public function setSumTotal(float $sumTotal): Debit
     {
         $this->sumTotal = $sumTotal;
         return $this;
@@ -202,9 +207,10 @@ class Order
 
     /**
      * @param float $sumPayed
-     * @return Order
+     *
+     * @return Debit
      */
-    public function setSumPayed(float $sumPayed): Order
+    public function setSumPayed(float $sumPayed): Debit
     {
         $this->sumPayed = $sumPayed;
         return $this;
@@ -220,9 +226,10 @@ class Order
 
     /**
      * @param Collection|Item[] $items
-     * @return Order
+     *
+     * @return Debit
      */
-    public function setItems(Collection $items): Order
+    public function setItems(Collection $items): Debit
     {
         $this->items = $items;
         return $this;

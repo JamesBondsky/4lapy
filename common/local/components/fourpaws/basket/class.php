@@ -472,7 +472,7 @@ class BasketComponent extends CBitrixComponent
     private function setCoupon(): void
     {
         $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
-        $this->arResult['COUPON_DISCOUNT'] = $this->basketService->getPromocodeDiscount();
+        $this->arResult['COUPON_DISCOUNT'] = !empty($this->arResult['COUPON']) ? $this->basketService->getPromocodeDiscount() : 0;
     }
 
     /**
