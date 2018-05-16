@@ -70,10 +70,12 @@ $bundle = $arResult['BUNDLE']; ?>
                 </div>
                 <div class="b-advice__cost-wrapper">
                 <span class="b-advice__total-price">
-                    <span class="b-advice__old-price js-advice-oldprice" <?=$arResult['SUM'] >= $arResult['OLD_SUM'] && $arResult['OLD_SUM'] > 0 ? 'style="display:none;"' : ''?>>
-                        <span class="js-value"><?=$arResult['OLD_SUM']?></span>
-                        <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
-                    </span>
+                    <?php if( $arResult['OLD_SUM'] > 0 && $arResult['OLD_SUM'] > $arResult['SUM']){ ?>
+                        <span class="b-advice__old-price js-advice-oldprice">
+                            <span class="js-value"><?=$arResult['OLD_SUM']?></span>
+                            <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
+                        </span>
+                    <?php } ?>
                     <span class="b-advice__new-price js-advice-newprice">
                         <span class="js-value"><?= $arResult['SUM']; ?></span>
                         <span class="b-ruble b-ruble--total">₽</span>
