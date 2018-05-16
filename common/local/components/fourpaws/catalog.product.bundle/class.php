@@ -12,19 +12,22 @@ namespace FourPaws\Components;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use CBitrixComponent;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Bundle;
 use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 
 /**
- * Class CatalogDetailSet
+ * Class CatalogDetailBundle
  * @package FourPaws\Components
  */
-class CatalogDetailSet extends CBitrixComponent
+class CatalogDetailBundle extends CBitrixComponent
 {
 
     protected $userService;
@@ -34,9 +37,9 @@ class CatalogDetailSet extends CBitrixComponent
      *
      * @param CBitrixComponent|null $component
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -46,6 +49,9 @@ class CatalogDetailSet extends CBitrixComponent
         $this->userService = $container->get(CurrentUserProviderInterface::class);
     }
 
+    /**
+     * @return bool|mixed|null
+     */
     public function executeComponent()
     {
         /** @var Offer $currentOffer */
@@ -65,7 +71,10 @@ class CatalogDetailSet extends CBitrixComponent
         return true;
     }
 
-    protected function loadTemplateFields()
+    /**
+     *
+     */
+    protected function loadTemplateFields(): void
     {
         $this->arResult['SUM'] = 0;
         $this->arResult['OLD_SUM'] = 0;
@@ -78,8 +87,8 @@ class CatalogDetailSet extends CBitrixComponent
             $percent = $this->userService->getCurrentUserBonusPercent();
             foreach ($products as $item) {
                 $offer = $item->getOffer();
-                $this->arResult['SUM'] += $offer->getPrice();
-                $this->arResult['OLD_SUM'] += $offer->getOldPrice();
+                $this->arResult['SUM'] += $offer->getPrice()*$item->getQuantity();
+                $this->arResult['OLD_SUM'] += $offer->getOldPrice()*$item->getQuantity();
                 $this->arResult['BONUS'] += $offer->getBonusCount($percent, $item->getQuantity());
             }
             $this->arResult['BONUS_FORMATTED'] = $this->formattedBonus($this->arResult['BONUS']);

@@ -7,20 +7,24 @@
  * @copyright   ADV/web-engineering co.
  */
 
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use FourPaws\Catalog\Model\Bundle;
+use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-/** @var \FourPaws\Catalog\Model\Bundle $bundle */
+/** @var Bundle $bundle */
 $bundle = $arResult['BUNDLE']; ?>
 <div class="b-advice">
     <?php if (!empty($bundle->getName())){ ?>
         <h2 class="b-title b-title--advice"><?=$bundle->getName() ?></h2>
     <?php } ?>
         <div class="b-advice__list">
-            <?php /** @var \FourPaws\Catalog\Model\BundleItem $product */
+            <?php /** @var BundleItem $product */
             $i = -1;
             foreach ($bundle->getProducts() as $product) {
                 $i++;
@@ -30,7 +34,7 @@ $bundle = $arResult['BUNDLE']; ?>
                     <div class="b-advice__item js-advice-item"
                          data-offerid="<?= $offer->getId().'_'.$product->getQuantity(); ?>">
                 <span class="b-advice__image-wrapper">
-                    <?php /** @var \FourPaws\BitrixOrm\Model\ResizeImageDecorator $image */
+                    <?php /** @var ResizeImageDecorator $image */
                     $image = $offer->getResizeImages(140, 140)->first(); ?>
                     <img
                             class="b-advice__image"
@@ -50,14 +54,24 @@ $bundle = $arResult['BUNDLE']; ?>
                     <span class="b-advice__info">
                         <?php $weight = $offer->getCatalogProduct()->getWeight();
                         if($weight > 0){ ?>
-                            <span class="b-advice__weight"><?= \FourPaws\Helpers\WordHelper::showWeight($weight)?></span>
+                            <span class="b-advice__weight"><?= WordHelper::showWeight($weight)?></span>
+                        <?php }
+                        $oldPrice = $offer->getOldPrice();
+                        $price = $offer->getPrice();
+                        if($oldPrice > 0 && $oldPrice > $price){?>
+                            <span class="b-advice__old-price">
+                                <span class="js-value"><?=$oldPrice?></span>
+                                <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
+                            </span>
+                            <?php /** делаем перевод на новую строку далее ибо не помещается - по красоте поправить верстку*/?>
+                            <br/>
                         <?php } ?>
                         <span class="b-advice__cost">
-                            <?= $offer->getPrice(); ?>
-                            <span class="b-ruble b-ruble--advice">₽</span></span>
-                            <span> x <?=$product->getQuantity()?></span>
+                            <?= $price; ?>
+                            <span class="b-ruble b-ruble--advice">₽</span>
+                        </span>
+                        <span> x <?=$product->getQuantity()?></span>
                     </span>
-                </span>
                     </div>
                 </div>
             <?php } ?>
@@ -66,10 +80,12 @@ $bundle = $arResult['BUNDLE']; ?>
                 </div>
                 <div class="b-advice__cost-wrapper">
                 <span class="b-advice__total-price">
-                    <span class="b-advice__old-price js-advice-oldprice" <?=$arResult['SUM'] >= $arResult['OLD_SUM'] && $arResult['OLD_SUM'] > 0 ? 'style="display:none;"' : ''?>>
-                        <span class="js-value"><?=$arResult['OLD_SUM']?></span>
-                        <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
-                    </span>
+                    <?php if( $arResult['OLD_SUM'] > 0 && $arResult['OLD_SUM'] > $arResult['SUM']){ ?>
+                        <span class="b-advice__old-price js-advice-oldprice">
+                            <span class="js-value"><?=$arResult['OLD_SUM']?></span>
+                            <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
+                        </span>
+                    <?php } ?>
                     <span class="b-advice__new-price js-advice-newprice">
                         <span class="js-value"><?= $arResult['SUM']; ?></span>
                         <span class="b-ruble b-ruble--total">₽</span>
