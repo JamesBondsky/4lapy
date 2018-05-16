@@ -220,16 +220,16 @@ class SharesService implements LoggerAwareInterface
                 throw new InvalidArgumentException($e->getMessage());
             }
 
-            if($share->getBonusBuyTo()->count() !== 1 && $share->getBonusBuyFrom()->count() > 0) {
+            if ($share->getBonusBuyTo()->count() !== 1 && $share->getBonusBuyFrom()->count() > 0) {
                 throw new InvalidArgumentException(
-                    'У z005 должна быть одна группа подарков и как минимум одна группа предпосылок'
+                    'У Z005 должна быть одна группа подарков и как минимум одна группа предпосылок'
                 );
             }
             /** @var BonusBuyTo $itemsTo */
             $itemsTo = $share->getBonusBuyTo()->first();
             $productsTo = $itemsTo->getProductIds()->toArray();
-            if(empty($productsTo)) {
-                throw new InvalidArgumentException('У z005 должны быть подарки на сайте');
+            if (empty($productsTo)) {
+                throw new InvalidArgumentException('У Z005 должны быть подарки на сайте');
             }
             $giftsCount = $itemsTo->getQuantity();
 
@@ -255,7 +255,7 @@ class SharesService implements LoggerAwareInterface
                 $countCondition = $bonusBuyFrom->getGroupQuantity();
                 $productsFrom = $bonusBuyFrom->getProductIds()->toArray();
                 if (empty($productsFrom)) {
-                    throw new InvalidArgumentException('У z005 у каждой группы должны быть товары на сайте');
+                    throw new InvalidArgumentException('У Z005 у каждой группы должны быть товары на сайте');
                 }
                 $actions['CHILDREN'][0]['CHILDREN'][] = [
                     'CLASS_ID' => 'ADV:BasketFilterQuantityRatio',
@@ -314,6 +314,7 @@ class SharesService implements LoggerAwareInterface
                     [
                         'CLASS_ID' => 'ADV:DetachedRowDiscount',
                         'DATA' => [
+                            'Type' => 'percent',
                             'Filtration_operator' => $filtrationOperator,
                             'Count_operator' => $countOperator,
                             'All' => 'AND',
@@ -437,6 +438,7 @@ class SharesService implements LoggerAwareInterface
                     [
                         'CLASS_ID' => 'ADV:DetachedRowDiscount',
                         'DATA' => [
+                            'Type' => 'percent',
                             'Filtration_operator' => 'separate',
                             'Count_operator' => $countOperator,
                             'All' => 'AND',
@@ -474,6 +476,80 @@ class SharesService implements LoggerAwareInterface
                     ],
                 ];
             }
+        } elseif (
+            $type === 'Z011'
+            &&
+            $share->getBonusBuyFrom()->count() === 1
+        ) {
+            /** @var BonusBuyTo $itemsTo */
+            $itemsTo = $share->getBonusBuyTo()->first();
+            if (0.1 < $discountValue = $itemsTo->getAbsolute()) {
+                $discountType = 'absolute';
+            } elseif (0.1 < $discountValue = $itemsTo->getPercent()) {
+                $discountType = 'percent';
+            } else {
+                throw new InvalidArgumentException('Не передана величина скидки');
+            }
+            /**
+             * @var BonusBuyFrom $itemsFrom
+             */
+            $itemsFrom = $share->getBonusBuyFrom()->first();
+            $countCondition = $itemsFrom->getGroupQuantity();
+            $products = $itemsFrom->getProductIds()->toArray();
+
+            $actions = [
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => [
+                    'All' => 'AND',
+                ],
+                'CHILDREN' => [
+                    [
+                        'CLASS_ID' => 'ADV:DetachedRowDiscount',
+                        'DATA' => [
+                            'Type' => $discountType,
+                            'Filtration_operator' => 'union',
+                            'Count_operator' => 'max',
+                            'All' => 'AND',
+                            'Additional_JSON' => false,
+                            'Value' => $discountValue,
+                        ],
+                        'CHILDREN' => [
+                            [
+                                'CLASS_ID' => 'ADV:BasketFilterQuantityMore',
+                                'DATA' => [
+                                    'All' => 'AND',
+                                    'Value' => 0.0,
+                                ],
+                                'CHILDREN' => [
+                                    [
+                                        'CLASS_ID' => 'CondIBElement',
+                                        'DATA' => [
+                                            'logic' => 'Equal',
+                                            'value' => $products,
+                                        ],
+                                    ],
+                                ],
+                            ],
+                            [
+                                'CLASS_ID' => 'ADV:BasketFilterQuantityMore',
+                                'DATA' => [
+                                    'All' => 'AND',
+                                    'Value' => $countCondition,
+                                ],
+                                'CHILDREN' => [
+                                    [
+                                        'CLASS_ID' => 'CondIBElement',
+                                        'DATA' => [
+                                            'logic' => 'Equal',
+                                            'value' => $products,
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ];
         } else {
             throw new \FourPaws\SapBundle\Exception\RuntimeException('TODO');
         }
