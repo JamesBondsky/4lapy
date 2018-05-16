@@ -23,6 +23,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -89,6 +90,9 @@ class Event implements ServiceHandlerInterface
         );
     }
 
+    /**
+     * @param array $fields
+     */
     public static function checkPhoneFormat(array &$fields): void
     {
         if ($fields['PERSONAL_PHONE'] ?? '') {
@@ -238,8 +242,9 @@ class Event implements ServiceHandlerInterface
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
                 $container = App::getInstance()->getContainer();
-                $userService = $container->get(CurrentUserProviderInterface::class);
+                $userService = $container->get(UserSearchInterface::class);
                 $user = $userService->getUserRepository()->find((int)$fields['ID']);
+
                 if ($user instanceof User && $user->getActive()) {
                     foreach($notReplacedGroups as $groupId){
                         foreach ($user->getGroups() as $group) {

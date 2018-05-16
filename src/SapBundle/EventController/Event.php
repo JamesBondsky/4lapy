@@ -38,6 +38,16 @@ class Event implements ServiceHandlerInterface
      * @var EventManager
      */
     protected static $eventManager;
+    protected static $isEventsDisable = false;
+
+    public static function disableEvents(): void {
+        self::$isEventsDisable = true;
+    }
+
+    public static function enableEvents(): void {
+        self::$isEventsDisable = false;
+    }
+
 
     /**
      * @param EventManager $eventManager
@@ -75,6 +85,10 @@ class Event implements ServiceHandlerInterface
      */
     public static function consumeOrderAfterSaveOrder(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         /**
          * @var Order $order
          * @var OrderService $orderService
@@ -112,6 +126,10 @@ class Event implements ServiceHandlerInterface
      */
     public static function consumeOrderAfterSavePayment(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         /** @var Payment $payment */
         $oldFields = $event->getParameter('VALUES');
         $payment = $event->getParameter('ENTITY');
