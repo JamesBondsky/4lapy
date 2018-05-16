@@ -2,7 +2,7 @@
 
 /**
  * @global BasketComponent $component
- * @global \CMain $APPLICATION
+ * @global \CMain          $APPLICATION
  */
 
 use Bitrix\Sale\Basket;
@@ -80,7 +80,7 @@ if ($arParams['IS_AJAX']) {
                         if ($group['list'] instanceof OfferCollection) {
                             $giftCanBeRefused = $group['list']->count() > 1;
                         } elseif (\is_array($group['list'])) {
-                            $giftCanBeRefused =  count($group['list']) > 1;
+                            $giftCanBeRefused = count($group['list']) > 1;
                         }
                         ?>
                         <div class="b-gift-order">
@@ -267,18 +267,26 @@ if ($arParams['IS_AJAX']) {
                                 </span>
                                 <span class="b-ruble">₽</span>
                             </div>
+                            <a class="b-information-order__delete-promocode js-promo-code-del"
+                               href="javascript:void(0)" title="Сбросить промокод"
+                               data-url="/ajax/sale/basket/promo/delete/" data-promocode-id="<?= $arResult['COUPON'] ?>">
+                                <span class="b-icon b-icon--delete-promocode">
+                                    <?= new SvgDecorator('filter-change', 8, 8) ?>
+                                </span>
+                            </a>
                         </div>
+                    <?php } else { ?>
+                        <form class="b-information-order__form-promo js-form-validation js-promo-code-add" method="post"
+                              data-url="/ajax/sale/basket/promo/apply/">
+                            <div class="b-input b-input--form-promo">
+                                <input class="b-input__input-field b-input__input-field--form-promo" type="text"
+                                       id="promocode-delivery" placeholder="Промо-код" name="text"
+                                       value="<?= $arResult['COUPON'] ?>"/>
+                                <div class="b-error"><span class="js-message"></span></div>
+                            </div>
+                            <button class="b-button b-button--form-promo">Применить</button>
+                        </form>
                     <?php } ?>
-                    <form class="b-information-order__form-promo js-form-validation js-promo-code-add" method="post"
-                          data-url="/ajax/sale/basket/promo/apply/">
-                        <div class="b-input b-input--form-promo">
-                            <input class="b-input__input-field b-input__input-field--form-promo" type="text"
-                                   id="promocode-delivery" placeholder="Промо-код" name="text"
-                                   value="<?= $arResult['COUPON'] ?>"/>
-                            <div class="b-error"><span class="js-message"></span></div>
-                        </div>
-                        <button class="b-button b-button--form-promo">Применить</button>
-                    </form>
                     <div class="b-information-order__order b-information-order__order--total">
                         <div class="b-information-order__order-price">Итого без учета доставки</div>
                         <div class="b-price b-price--information-order b-price--total-price">
@@ -326,13 +334,13 @@ if ($arParams['IS_AJAX']) {
             $APPLICATION->IncludeFile('blocks/components/followup_products.php',
                 [
                     'WRAP_CONTAINER_BLOCK' => 'N',
-                    'SHOW_TOP_LINE' => 'Y',
-                    'POSTCROSS_IDS' => array_unique($productsIds),
+                    'SHOW_TOP_LINE'        => 'Y',
+                    'POSTCROSS_IDS'        => array_unique($productsIds),
                 ],
                 [
                     'SHOW_BORDER' => false,
-                    'NAME' => 'Блок выгодной покупки',
-                    'MODE' => 'php',
+                    'NAME'        => 'Блок выгодной покупки',
+                    'MODE'        => 'php',
                 ]);
         }
 
@@ -342,14 +350,14 @@ if ($arParams['IS_AJAX']) {
         $APPLICATION->IncludeFile('blocks/components/viewed_products.php',
             [
                 'WRAP_CONTAINER_BLOCK' => 'N',
-                'WRAP_SECTION_BLOCK' => 'Y',
-                'SHOW_TOP_LINE' => 'Y',
-                'SHOW_BOTTOM_LINE' => 'N',
+                'WRAP_SECTION_BLOCK'   => 'Y',
+                'SHOW_TOP_LINE'        => 'Y',
+                'SHOW_BOTTOM_LINE'     => 'N',
             ],
             [
                 'SHOW_BORDER' => false,
-                'NAME' => 'Блок просмотренных товаров',
-                'MODE' => 'php',
+                'NAME'        => 'Блок просмотренных товаров',
+                'MODE'        => 'php',
             ]);
         ?></div>
 <?php
