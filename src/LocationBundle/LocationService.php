@@ -11,8 +11,10 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Location\ExternalServiceTable;
 use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\LocationTable;
@@ -70,6 +72,8 @@ class LocationService
     public const DEFAULT_REGION_CODE = 'IR77';
 
     public const REGION_SERVICE_CODE = 'REGION';
+
+    public const KLADR_SERVICE_CODE = 'KLADR';
 
     /**
      * @var DaDataService
@@ -819,6 +823,52 @@ class LocationService
             ]);
 
             throw new AddressSplitException($e->getMessage(), $e->getCode());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $locationCode
+     * @return string
+     */
+    public function getLocationKladrCode(string $locationCode): string
+    {
+        $getCode = function () use ($locationCode) {
+            $result = ExternalTable::query()
+                ->setSelect(['XML_ID'])
+                ->setFilter([
+                    '=SERVICE.CODE' => static::KLADR_SERVICE_CODE,
+                    '=LOCATION.CODE' => $locationCode
+                ])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'SERVICE',
+                        ExternalServiceTable::getEntity(),
+                        ['=this.SERVICE_ID' => 'ref.ID']
+                    )
+                )
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'LOCATION',
+                        LocationTable::getEntity(),
+                        ['=this.LOCATION_ID' => 'ref.ID']
+                    )
+                )
+                ->exec()
+                ->fetch();
+            return ['result' => $result['XML_ID'] ?: ''];
+        };
+
+        $result = '';
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $locationCode)
+                ->resultOf($getCode)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get location kladr code: %s: %s', \get_class($e), $e->getMessage()),
+                ['location' => $locationCode]
+            );
         }
 
         return $result;
