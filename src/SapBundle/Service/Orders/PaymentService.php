@@ -44,7 +44,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 {
     use LazyLoggerAwareTrait, SapOutFile;
 
-    private const MODULE_PROVIDER_CODE = 'sberbank.ecom';
+    private const MODULE_PROVIDER_CODE = 'sb erbank.ecom';
     private const OPTION_FISCALIZATION_CODE = 'FISCALIZATION';
 
     /**

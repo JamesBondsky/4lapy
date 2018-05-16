@@ -27,14 +27,14 @@ class Sberbank
      *
      * @var string
      */
-    private const test_url = \TEST_URL;
+    private const test_url = \API_TEST_URL;
 
     /**
      * АДРЕС БОЕВОГО ШЛЮЗА
      *
      * @var string
      */
-    private const prod_url = \PROD_URL;
+    private const prod_url = \API_PROD_URL;
 
     private const SUCCESS_CODE = 0;
 
@@ -146,6 +146,7 @@ class Sberbank
             $client = new HttpClient([
                 'waitResponse' => true,
             ]);
+
             $client->setHeader('CMS', 'Bitrix');
             $client->setHeader('Module-Version', \VERSION);
             $response = $client->post($url . $method, $data);
@@ -268,5 +269,33 @@ class Sberbank
         }
 
         return true;
+    }
+
+    /**
+     * @param $orderId
+     *
+     * @return array
+     *
+     * @throws ArgumentException
+     */
+    public function getOrderStatusByOrderId($orderId): array
+    {
+        $data = ['orderId' => $orderId];
+
+        return $this->gatewayQuery('getOrderStatusExtended.do', $data);
+    }
+
+    /**
+     * @param $orderNumber
+     *
+     * @return array
+     *
+     * @throws ArgumentException
+     */
+    public function getOrderStatusByOrderNumber($orderNumber): array
+    {
+        $data = ['orderNumber' => $orderNumber];
+
+        return $this->gatewayQuery('getOrderStatusExtended.do', $data);
     }
 }
