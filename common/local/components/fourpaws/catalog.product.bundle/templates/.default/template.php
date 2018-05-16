@@ -55,13 +55,23 @@ $bundle = $arResult['BUNDLE']; ?>
                         <?php $weight = $offer->getCatalogProduct()->getWeight();
                         if($weight > 0){ ?>
                             <span class="b-advice__weight"><?= WordHelper::showWeight($weight)?></span>
+                        <?php }
+                        $oldPrice = $offer->getOldPrice();
+                        $price = $offer->getPrice();
+                        if($oldPrice > 0 && $oldPrice > $price){?>
+                            <span class="b-advice__old-price">
+                                <span class="js-value"><?=$oldPrice?></span>
+                                <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
+                            </span>
+                            <?php /** делаем перевод на новую строку далее ибо не помещается - по красоте поправить верстку*/?>
+                            <br/>
                         <?php } ?>
                         <span class="b-advice__cost">
-                            <?= $offer->getPrice(); ?>
-                            <span class="b-ruble b-ruble--advice">₽</span></span>
-                            <span> x <?=$product->getQuantity()?></span>
+                            <?= $price; ?>
+                            <span class="b-ruble b-ruble--advice">₽</span>
+                        </span>
+                        <span> x <?=$product->getQuantity()?></span>
                     </span>
-                </span>
                     </div>
                 </div>
             <?php } ?>
