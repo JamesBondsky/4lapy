@@ -98,6 +98,21 @@ class BonusBuyShare
     /**
      * Содержит индикатор изменения действия акции. Тип поля – единственный выбор из значений:
      *
+     * - С – комбинированная покупка, логическое «И»
+     * - М – мультиупаковка, логическое «ИЛИ»
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("CATEG")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $categ = '';
+
+
+    /**
+     * Содержит логический оператор связи предпосылок акции.
+     *
      * - MODI – модификация, значение по умолчанию;
      * - DELE – удаление. При выбранном значении акция должна быть удалена.
      *
@@ -406,5 +421,34 @@ class BonusBuyShare
     public function isDelete(): bool
     {
         return $this->getAct() === self::ACT_DELETE;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCateg(): string
+    {
+        return $this->categ;
+    }
+
+    /**
+     * @param string $categ
+     *
+     * @return BonusBuyShare
+     */
+    public function setCateg(string $categ): BonusBuyShare
+    {
+        $this->categ = $categ;
+        return $this;
+    }
+
+    /**
+     *
+     *
+     * @return string
+     */
+    public function getLogic(): string
+    {
+        return $this->getCateg() === 'C'? 'OR' : 'AND';
     }
 }
