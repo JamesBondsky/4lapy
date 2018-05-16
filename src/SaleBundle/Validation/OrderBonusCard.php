@@ -12,7 +12,7 @@ class OrderBonusCard extends Constraint
     /**
      * @var string
      */
-    public $cardNotValidMessage = 'Карта не валидна';
+    public $cardNotValidMessage = 'Карта не привязывается';
 
     public $cardAlreadyExistsMessage = 'Карта уже привязана';
 
