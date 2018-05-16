@@ -467,8 +467,14 @@ class OrderStorageService
     public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
         if (null === $this->deliveries || $reload) {
+            $basket = $this->basketService->getBasket();
+            if (null === $basket->getOrder()) {
+                $order = Order::create(SITE_ID);
+                $order->setBasket($basket);
+            }
+
             $this->deliveries = $this->deliveryService->getByBasket(
-                $this->basketService->getBasket(),
+                $basket,
                 '',
                 [],
                 $storage->getCurrentDate()
