@@ -214,8 +214,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ];
                 }
 
-
-
                 if ($canGetPartial) {
                     $price = $available->isEmpty() ?
                         $fullResult->getStockResult()->getPrice() :

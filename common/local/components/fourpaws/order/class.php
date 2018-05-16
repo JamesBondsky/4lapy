@@ -20,8 +20,10 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
+use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
@@ -381,6 +383,32 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 'STORAGE' => $splitResult2->getOrderStorage(),
                 'DELIVERY' => $splitResult2->getDelivery()
             ]
+        ];
+    }
+
+    /**
+     * @param StockResultCollection $stockResultCollection
+     * @return array
+     */
+    public function getOrderItemData(StockResultCollection $stockResultCollection): array
+    {
+        $itemData = [];
+        $totalWeight = 0;
+        /** @var StockResult $item */
+        foreach ($stockResultCollection->getIterator() as $item) {
+            $weight = $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
+            $offerId = $item->getOffer()->getId();
+            $itemData[$offerId]['name'] = $item->getOffer()->getName();
+            $itemData[$offerId]['quantity'] += $item->getAmount();
+            $itemData[$offerId]['price'] += $item->getPrice() * $item->getAmount();
+            $itemData[$offerId]['weight'] += $weight;
+
+            $totalWeight += $weight;
+        }
+
+        return [
+            $itemData,
+            $totalWeight,
         ];
     }
 }
