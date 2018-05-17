@@ -281,6 +281,8 @@ class Order extends AbstractEntity
             $productId = $product['ID'] ?: -1;
 
             $rawBasket['USER_ID'] = $userId;
+            $rawBasket['PRODUCT_ID'] = $productId;
+
             $rawBasket = $this->prepareBasketData($rawBasket);
 
             $item = BasketItem::create($basket, $rawBasket['MODULE'], $productId);
