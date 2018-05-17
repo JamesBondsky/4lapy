@@ -319,7 +319,7 @@ class SharesService implements LoggerAwareInterface
                             'Count_operator' => $countOperator,
                             'All' => 'AND',
                             'Value' => $discountPercent,
-                            'Additional_JSON' => false,
+                            'Multiplier' => 1,
                         ],
                         'CHILDREN' => [
                             [
@@ -442,8 +442,8 @@ class SharesService implements LoggerAwareInterface
                             'Filtration_operator' => 'separate',
                             'Count_operator' => $countOperator,
                             'All' => 'AND',
-                            'Additional_JSON' => false,
                             'Value' => $discountPercent,
+                            'Multiplier' => 1,
                         ],
                         'CHILDREN' => [],
                     ],
@@ -510,8 +510,8 @@ class SharesService implements LoggerAwareInterface
                             'Filtration_operator' => 'union',
                             'Count_operator' => 'max',
                             'All' => 'AND',
-                            'Additional_JSON' => false,
                             'Value' => $discountValue,
+                            'Multiplier' => 1,
                         ],
                         'CHILDREN' => [
                             [

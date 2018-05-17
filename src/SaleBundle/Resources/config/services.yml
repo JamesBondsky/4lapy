@@ -19,6 +19,10 @@ services:
         class: FourPaws\SaleBundle\Service\BasketService
         public: true
 
+    FourPaws\SaleBundle\Service\BasketRulesService:
+        class: FourPaws\SaleBundle\Service\BasketRulesService
+        public: true
+
     FourPaws\SaleBundle\Service\BasketViewService:
         public: true
         arguments: ['@FourPaws\SaleBundle\Service\BasketService']

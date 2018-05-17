@@ -9,6 +9,7 @@
 
 namespace FourPaws\SapBundle\Repository;
 
+use Bitrix\Main\DB\Result;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\UpdateResult;
@@ -137,7 +138,41 @@ class BasketRulesRepository
             'select' => self::DEFAULT_SELECT,
         ]);
 
-        if ($elem = $res->fetch()) {
+        return $this->fetchDiscountTableResult($res)->current();
+    }
+
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @return \Generator
+     */
+    public function getAll(): \Generator
+    {
+        $result = null;
+        $res = DiscountTable::getList([
+            'select' => self::DEFAULT_SELECT,
+        ]);
+
+        yield from $this->fetchDiscountTableResult($res);
+    }
+
+    /**
+     *
+     *
+     * @param Result $result
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @return \Generator
+     */
+    protected function fetchDiscountTableResult(Result $result): \Generator
+    {
+        $notYielded = false;
+        while ($elem = $result->fetch()) {
             $discountGroupRes = DiscountGroupTable::getList([
                 'filter' => ['=DISCOUNT_ID' => $elem['ID']],
                 'select' => ['GROUP_ID']
@@ -149,8 +184,12 @@ class BasketRulesRepository
             $elem['CONDITIONS'] = unserialize($elem['CONDITIONS']);
             /** @noinspection UnserializeExploitsInspection */
             $elem['ACTIONS'] = unserialize($elem['ACTIONS']);
-            $result = $this->serializer->fromArray($elem, BasketRule::class);
+            $basketRule = $this->serializer->fromArray($elem, BasketRule::class);
+            yield $basketRule;
+            $notYielded = false;
         }
-        return $result;
+        if($notYielded) {
+            yield;
+        }
     }
 }
