@@ -50,7 +50,7 @@ class BasketRulesService
 use FourPaws\SaleBundle\Service\BasketRulesService;
 use FourPaws\App\Application as PawsApplication;
 
-$repo = PawsApplication::getInstance()
+PawsApplication::getInstance()
 ->getContainer()
 ->get(BasketRulesService::class)
 ->resaveAll();
