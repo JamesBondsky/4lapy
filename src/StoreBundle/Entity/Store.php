@@ -219,7 +219,7 @@ class Store extends Base
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_REGION")
+     * @Serializer\SerializedName("UF_SUBREGION")
      * @Serializer\SkipWhenEmpty()
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
