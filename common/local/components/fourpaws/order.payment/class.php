@@ -124,6 +124,7 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
 
         if ($this->arParams['PAY'] === BitrixUtils::BX_BOOL_TRUE) {
             $service = PaySystemManager::getObjectById($paymentItem->getPaymentSystemId());
+
             if ($service) {
                 $context = BitrixApp::getInstance()->getContext();
 
@@ -133,6 +134,7 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
                         $paymentItem,
                         $context->getRequest()
                     );
+
                     if ($result->isSuccess()) {
                         $this->arResult['IS_SUCCESS'] = 'Y';
                     } else {

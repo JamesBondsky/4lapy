@@ -1,6 +1,4 @@
-<?php
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
@@ -33,17 +31,14 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/
 /** @noinspection PhpDeprecationInspection */
 $paySystemAction = new CSalePaySystemAction();
 
-$testMode = $paySystemAction->GetParamValue('TEST_MODE') === 'Y';
-$twoStage = $paySystemAction->GetParamValue('TWO_STAGE') === 'Y';
+$test_mode = $paySystemAction->GetParamValue('TEST_MODE') === 'Y';
+$two_stage = $paySystemAction->GetParamValue('TWO_STAGE') === 'Y';
 $logging = $paySystemAction->GetParamValue('LOGGING') === 'Y';
+$password = $paySystemAction->GetParamValue('PASSWORD');
+$user_name = $paySystemAction->GetParamValue('USER_NAME');
 
-$rbs = new RBS(
-    $paySystemAction->GetParamValue('USER_NAME'),
-    $paySystemAction->GetParamValue('PASSWORD'),
-    $twoStage,
-    $testMode,
-    $logging
-);
+/** @noinspection PhpMethodParametersCountMismatchInspection */
+$rbs = new RBS(\compact('test_mode', 'two_stage', 'logging', 'user_name', 'password'));
 
 /** @noinspection PhpUnhandledExceptionInspection */
 $app = Application::getInstance();
@@ -80,6 +75,7 @@ $returnUrl = '/sale/payment/result.php?ORDER_ID=' . $order->getId();
 $returnUrl .= '&HASH=' . $order->getHash();
 
 $fiscalization = COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
+/** @noinspection UnserializeExploitsInspection */
 $fiscalization = unserialize($fiscalization, []);
 
 /* Фискализация */
