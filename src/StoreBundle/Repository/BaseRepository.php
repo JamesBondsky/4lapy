@@ -171,7 +171,6 @@ abstract class BaseRepository implements RepositoryInterface
     /**
      * @param BaseEntity $entity
      *
-     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ValidationException
@@ -185,16 +184,23 @@ abstract class BaseRepository implements RepositoryInterface
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to update');
         }
-        $result = $this->table::update(
-            $entity->getId(),
-            $this->arrayTransformer->toArray($entity, SerializationContext::create()->setGroups(['update']))
-        );
 
-        if ($result->isSuccess()) {
-            return true;
+        try {
+            $result = $this->table::update(
+                $entity->getId(),
+                $this->arrayTransformer->toArray($entity, SerializationContext::create()->setGroups(['update']))
+            );
+
+            if ($result->isSuccess()) {
+                return true;
+            }
+
+            $error = $result->getErrorMessages();
+        } catch (\Exception $e) {
+            $error = $e->getMessage();
         }
 
-        throw new BitrixRuntimeException($result->getErrorMessages());
+        throw new BitrixRuntimeException($error);
     }
 
     /**
