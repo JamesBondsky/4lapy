@@ -306,11 +306,8 @@ class ProductInfoController extends Controller
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         $location = $locationService->getCurrentLocation();
 
-        $getResponse = function () use ($offerId) {
-            $response = [
-                'products' => [],
-            ];
-
+        $getCurrentOffer = function () use ($offerId) {
+            $currentOffer = null;
             if ($offerId > 0) {
                 $offerCollection = (new OfferQuery())->withFilter([
                     '=ID' => $offerId,
@@ -319,16 +316,7 @@ class ProductInfoController extends Controller
                     $currentOffer = $offerCollection->first();
                 }
             }
-
-            /** @var Offer $offer */
-            /** @var Offer $currentOffer */
-            if ($currentOffer !== null) {
-                $response['products'][$currentOffer->getCml2Link()][$currentOffer->getId()] = [
-                    'available' => $currentOffer->isAvailable(),
-                ];
-            }
-
-            return $response;
+            return $currentOffer;
         };
 
         $bitrixCache = new BitrixCache();
@@ -337,9 +325,43 @@ class ProductInfoController extends Controller
         if ($offerId > 0) {
             $bitrixCache->withTag('catalog:offer:' . $offerId);
             $bitrixCache->withTag('iblock:item:' . $offerId);
-            $bitrixCache->withTime(24*60*60);//кешируем на сутки
         }
-        $response = $bitrixCache->resultOf($getResponse);
+        $bitrixCache->withTime(24*60*60);//кешируем на сутки
+        /** @var OfferCollection $offerCollection */
+        $currentOffer = $bitrixCache->resultOf($getCurrentOffer)['result'];
+
+
+        if ($currentOffer !== null) {
+            $getResponse = function () use ($currentOffer) {
+                $response = [
+                    'products' => [],
+                ];
+
+                /** @var Offer $offer */
+                /** @var Offer $currentOffer */
+                if ($currentOffer !== null) {
+                    $response['products'][$currentOffer->getCml2Link()][$currentOffer->getId()] = [
+                        'available' => $currentOffer->isAvailable(),
+                    ];
+                }
+
+                return $response;
+            };
+
+            $bitrixCache = new BitrixCache();
+            $bitrixCache
+                ->withId('available_response_offer_' . $offerId . '_location_' . $location);
+            if ($offerId > 0) {
+                $bitrixCache->withTag('catalog:offer:' . $offerId);
+                $bitrixCache->withTag('iblock:item:' . $offerId);
+                $bitrixCache->withTime(24*60*60);//кешируем на сутки
+            }
+            $response = $bitrixCache->resultOf($getResponse);
+        } else {
+            $response = [
+                'products' => [],
+            ];
+        }
 
         return JsonSuccessResponse::createWithData('', $response);
     }

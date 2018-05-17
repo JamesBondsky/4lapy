@@ -18,9 +18,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
-use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Model\Client;
-use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -42,6 +39,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 {
     /**
@@ -146,11 +144,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 ) : '',
                 'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
+                'ADDRESS'         => $curUser->getAddress(),
             ];
 
             TaggedCacheHelper::addManagedCacheTags([
-                'personal:profile:'. $curUser->getId(),
-                'user:'. $curUser->getId()
+                'personal:profile:' . $curUser->getId(),
+                'user:' . $curUser->getId(),
             ]);
 
             $this->includeComponentTemplate();
@@ -222,7 +221,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         $data = [
             'UF_PHONE_CONFIRMED' => true,
-            'PERSONAL_PHONE' => $phone
+            'PERSONAL_PHONE'     => $phone,
         ];
 
         try {
