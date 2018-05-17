@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Sale\Order;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\Helpers\PhoneHelper;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\StoreBundle\Entity\Store;
 
 /**
@@ -20,13 +22,13 @@ $order = $arResult['ORDER'];
 /** @var Order $relatedOrder */
 $relatedOrder = $arResult['RELATED_ORDER'];
 $bonusCount = $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] + $arResult['RELATED_ORDER_PROPERTIES']['BONUS_COUNT'];
-if($bonusCount > 0) {
+if ($bonusCount > 0) {
     $bonusCount = floor($bonusCount);//округляем до целого
 }
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
-        Спасибо!
+        <?= $arResult['ORDER_PROPERTIES']['NAME'] ?>, спасибо за заказ!
     </h1>
     <div class="b-order">
         <?php /*
@@ -47,31 +49,49 @@ if($bonusCount > 0) {
                         'бонусных балла',
                         'бонусных баллов'
                     ))->get($bonusCount) ?>.
-                    Узнать, <a class="b-link b-link--inherit b-link--orange"
-                               href="/customer/bonus-program/"
-                               title="как получить и потратить баллы.">
-                        как получить и потратить баллы.</a>
+                    <a class="b-link b-link--inherit b-link--orange"
+                       href="/customer/bonus-program/"
+                       title="как получить и потратить баллы.">
+                        Узнать, как получить и потратить баллы.
+                    </a>
                 </p>
             </div>
         <?php } ?>
         <hr class="b-hr b-hr--order b-hr--top-line"/>
         <div class="b-order__block b-order__block--no-border">
             <div class="b-order__content b-order__content--no-border b-order__content--step-five">
-                <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $order->getId() ?>
-                    оформлен</h2>
-                <?php if ($arResult['ORDER_PROPERTIES']['EMAIL']) {
-                    ?>
+                <h2 class="b-title b-title--order-heading b-title--block">
+                    Заказ № <?= $order->getId() ?> оформлен
+                </h2>
+                <div class="b-order__text-block">
+                    <?php if ($arResult['ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_SMS) { ?>
+                        <p>
+                            Вся информация о заказе будет отправлена на ваш
+                            номер <?= PhoneHelper::formatPhone($arResult['ORDER_PROPERTIES']['PHONE']) ?>
+                        </p>
+                    <?php } else { ?>
+                        <p>
+                            В самое ближайшее время с вами свяжется менеджер для уточнения деталей заказа
+                        </p>
+                    <?php } ?>
+                    <?php if ($arResult['ORDER_PROPERTIES']['EMAIL']) { ?>
+                        <p>
+                            Вся информация о доставке также отправлена на вашу
+                            почту: <?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?>
+                        </p>
+                    <?php } ?>
+                </div>
+                <?php if ($arResult['ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) { ?>
+                    <h2 class="b-title b-title--order-heading b-title--block">Как оплатить заказ</h2>
                     <div class="b-order__text-block">
-                        <p><?= $arResult['ORDER_PROPERTIES']['NAME'] ?>, мы отправили письмо на адрес
-                            <a class="b-link b-link--blue-bold"
-                               href="mailto:<?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?>"
-                               title=""><?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?>
-                            </a>
-                            со всеми подробностями заказа.
+                        <p>
+                            Оплата должна быть осуществлена в течение одной сессии (около 20 минут). В случае, если
+                            данное условие не будет выполнено, способ оплаты будет автоматически изменен на постоплату.
+                            К сожалению, ваш заказ не был оплачен. Попробуйте повторить попытку или свяжитесь с
+                            оператором по номеру <?= tplvar('phone_main') ?>.
                         </p>
                     </div>
-                    <?php
-                } ?>
+                <?php } ?>
                 <h2 class="b-title b-title--order-heading b-title--block">Как получить заказ</h2>
                 <div class="b-order__text-block">
                     <?php if ($arResult['ORDER_DELIVERY']['IS_DPD_PICKUP']) {
@@ -163,6 +183,17 @@ if($bonusCount > 0) {
                         </p>
                         <p>Условия оплаты и доставки совпадают с заказом выше.</p>
                     </div>
+                    <?php if ($arResult['RELATED_ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) { ?>
+                        <h2 class="b-title b-title--order-heading b-title--block">Как оплатить заказ</h2>
+                        <div class="b-order__text-block">
+                            <p>
+                                Оплата должна быть осуществлена в течение одной сессии (около 20 минут). В случае, если
+                                данное условие не будет выполнено, способ оплаты будет автоматически изменен на постоплату.
+                                К сожалению, ваш заказ не был оплачен. Попробуйте повторить попытку или свяжитесь с
+                                оператором по номеру <?= tplvar('phone_main') ?>.
+                            </p>
+                        </div>
+                    <?php } ?>
                     <h2 class="b-title b-title--order-heading b-title--block">Как получить заказ</h2>
                     <?php if ($arResult['ORDER_DELIVERY']['IS_PICKUP']) { ?>
                         <div class="b-order__text-block">
@@ -180,7 +211,8 @@ if($bonusCount > 0) {
                             </p>
                             <?php if (!$arResult['ORDER_DELIVERY']['IS_DPD_DELIVERY']) { ?>
                                 <p>
-                                    <b>Время доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
+                                    <b>Время
+                                        доставки: </b><?= $arResult['RELATED_ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?>
                                 </p>
                             <?php } ?>
                         </div>
@@ -194,19 +226,32 @@ if($bonusCount > 0) {
                         <ul class="b-order__text-list">
                             <li class="b-order__text-item">отслеживать статус заказа;</li>
                             <li class="b-order__text-item">повторять заказы в 1 клик;</li>
-                            <li class="b-order__text-item">управлять адресами доставки.</li>
+                            <li class="b-order__text-item">управлять адресами доставки;</li>
+                            <li class="b-order__text-item">узнать баланс вашей бонусной карты.</li>
                         </ul>
                         <?php
                     } ?>
-                    <p>Перейти в
-                        <a class="b-link b-link--inherit b-link--orange <?=$arResult['IS_AUTH'] ? '' : ' js-open-popup'?>" <?=$arResult['IS_AUTH'] ? ' href="/personal/index.php"' : ' data-popup-id="authorization" href="javascript:void(0)"'?> title="личный кабинет">личный
+                    <p>
+                        Перейти в
+                        <a class="b-link b-link--inherit b-link--orange <?= $arResult['IS_AUTH'] ? '' : ' js-open-popup' ?>" <?= $arResult['IS_AUTH'] ? ' href="/personal/index.php"' : ' data-popup-id="authorization" href="javascript:void(0)"' ?>
+                           title="личный кабинет">личный
                             кабинет</a>.
                     </p>
-                    <p>Перейти на
-                        <a class="b-link b-link--inherit b-link--orange" href="/" title="">главную страницу</a>.
+                    <p>
+                        Что-то забыли? Вы можете добавить товары к заказу -
+                        <a class="b-link b-link--inherit b-link--orange" href="/" title="">продолжить покупки</a>.
                     </p>
+                    <p>Если у вас остались вопросы, свяжитесь с нами по номеру <?= tplvar('phone_main') ?></p>
+                    <?php $APPLICATION->IncludeFile(
+                        'blocks/components/social_share.php',
+                        [],
+                        [
+                            'SHOW_BORDER' => false,
+                            'NAME'        => 'Блок Рассказать в соцсетях',
+                            'MODE'        => 'php',
+                        ]
+                    );?>
                 </div>
-
             </div>
         </div>
     </div>
