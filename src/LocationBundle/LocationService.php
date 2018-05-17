@@ -575,14 +575,18 @@ class LocationService
         $result = [];
         try {
             $data = $this->findLocationCityByCode($cityCode);
-            $path = $data['PATH'];
+            if ($cityCode === static::LOCATION_CODE_MOSCOW) {
+                $result = $data;
+            } else {
+                $path = $data['PATH'];
 
-            foreach ($path as $pathItem) {
-                if (($pathItem['CODE'] === static::LOCATION_CODE_MOSCOW) ||
-                    ($pathItem['TYPE']['CODE'] === static::TYPE_REGION)
-                ) {
-                    $result = $pathItem;
-                    break;
+                foreach ($path as $pathItem) {
+                    if (($pathItem['CODE'] === static::LOCATION_CODE_MOSCOW) ||
+                        ($pathItem['TYPE']['CODE'] === static::TYPE_REGION)
+                    ) {
+                        $result = $pathItem;
+                        break;
+                    }
                 }
             }
         } catch (CityNotFoundException $e) {
