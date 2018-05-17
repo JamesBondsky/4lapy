@@ -188,6 +188,7 @@ class BasketRulesRepository
             yield $basketRule;
             $notYielded = false;
         }
+        //чтобы всегда возвращался исключительно генератор
         if($notYielded) {
             yield;
         }
