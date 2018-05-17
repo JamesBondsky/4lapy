@@ -49,7 +49,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-account-data__value">
                 <div class="b-account-data__text js-profile-email">
-                    <a href="mailto:<?= $arResult['CUR_USER']['EMAIL'] ?>"><?= $arResult['CUR_USER']['EMAIL'] ?: str_repeat('&nbsp;', 42) ?></a>
+                    <a href="mailto:<?= $arResult['CUR_USER']['EMAIL'] ?>"><?= $arResult['CUR_USER']['EMAIL'] ?: str_repeat('&nbsp;',
+                            42) ?></a>
                 </div>
                 <span class="b-icon b-icon--account-profile<?= $arResult['CUR_USER']['EMAIL_CONFIRMED'] ? ' active' : '' ?>">
                     <?= new SvgDecorator('icon-check-account', 21, 17) ?>
@@ -68,6 +69,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
         </div>
+        <?php if (!empty($arResult['CUR_USER']['ADDRESS'])) { ?>
+            <div class="b-account-data">
+                <div class="b-account-data__title">
+                    Адрес доставки
+                </div>
+                <div class="b-account-data__value">
+                    <div class="b-account-data__text js-profile-date">
+                        <?= $arResult['CUR_USER']['ADDRESS'] ?>
+                    </div>
+                </div>
+            </div>
+        <?php } ?>
     </div>
     <div class="js-hidden-block"
          style="display: none;"

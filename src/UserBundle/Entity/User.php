@@ -333,6 +333,15 @@ class User implements UserInterface
      */
     protected $esSubscribed = false;
 
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_ADDRESS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $address = '';
+
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -1281,7 +1290,7 @@ class User implements UserInterface
         $groups = $this->getGroups()->toArray();
         /** @var Group $group */
         foreach ($groups as $group) {
-            if($group->getCode() === 'opt'){
+            if ($group->getCode() === 'opt') {
                 return true;
             }
         }
@@ -1302,5 +1311,21 @@ class User implements UserInterface
     public function setEsSubscribed(bool $esSubscribed): void
     {
         $this->esSubscribed = $esSubscribed;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAddress(): string
+    {
+        return $this->address ?? '';
+    }
+
+    /**
+     * @param string $address
+     */
+    public function setAddress(string $address): void
+    {
+        $this->address = $address;
     }
 }
