@@ -5,6 +5,11 @@ namespace FourPaws\AppBundle\Service;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 
+/**
+ * Class AjaxMess
+ *
+ * @package FourPaws\AppBundle\Service
+ */
 class AjaxMess
 {
     /**
@@ -356,7 +361,7 @@ class AjaxMess
      */
     public function getCardNotValidError(): JsonResponse
     {
-        return $this->getJsonError('cardNotValid', 'Карта не валидна');
+        return $this->getJsonError('cardNotValid', 'Карта не привязывается');
     }
 
     /**
