@@ -4,17 +4,9 @@ namespace FourPaws\Migrator\Client;
 
 use Bitrix\Main\LoaderException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Migrator\Entity\Catalog as CatalogEntity;
-use FourPaws\Migrator\Entity\Delivery as DeliveryEntity;
 use FourPaws\Migrator\Entity\Order as OrderEntity;
-use FourPaws\Migrator\Entity\OrderProperty as OrderPropertyEntity;
-use FourPaws\Migrator\Entity\Status as StatusEntity;
 use FourPaws\Migrator\IblockNotFoundException;
-use FourPaws\Migrator\Provider\Catalog as CatalogProvider;
-use FourPaws\Migrator\Provider\Delivery as DeliveryProvider;
 use FourPaws\Migrator\Provider\Order as OrderProvider;
-use FourPaws\Migrator\Provider\OrderProperty as OrderPropertyProvider;
-use FourPaws\Migrator\Provider\Status as StatusProvider;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
@@ -36,12 +28,16 @@ class SalePull extends ClientPullAbstract
      */
     public function getBaseClientList(): array
     {
+        /**
+         * Remove consistence
+         */
+
         return [
-            new Status(new StatusProvider(new StatusEntity(Status::ENTITY_NAME)), ['force' => true]),
+            /* new Status(new StatusProvider(new StatusEntity(Status::ENTITY_NAME)), ['force' => true]),
             new Delivery(new DeliveryProvider(new DeliveryEntity(Delivery::ENTITY_NAME))),
             new OrderProperty(new OrderPropertyProvider(new OrderPropertyEntity(OrderProperty::ENTITY_NAME))),
             new Catalog(new CatalogProvider(new CatalogEntity(Catalog::ENTITY_NAME)), ['force' => true]),
-            new UserPull(['force' => true]),
+            new UserPull(['force' => true]), */
         ];
     }
 

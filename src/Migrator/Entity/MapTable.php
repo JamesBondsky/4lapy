@@ -84,7 +84,7 @@ class MapTable extends DataManager
      *
      * @return string
      *
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws ArgumentException
      */
     public static function getInternalIdByExternalId(string $external, string $entity) : string
@@ -102,24 +102,30 @@ class MapTable extends DataManager
 
         return $result ? (string)$result['INTERNAL_ID'] : '';
     }
-    
+
     /**
      * @param string $internal
      * @param string $entity
      *
      * @return string
      *
+     * @throws SystemException
      * @throws ArgumentException
      */
     public static function getExternalIdByInternalId(string $internal, string $entity) : string
     {
-        return (string)self::getList([
-                                         'filter' => [
-                                             'INTERNAL_ID' => $internal,
-                                             'ENTITY'      => $entity,
-                                         ],
-                                         'select' => ['EXTERNAL_ID'],
-                                     ])->fetch()['EXTERNAL_ID'];
+        /**
+         * @var array $result
+         */
+        $result = self::getList([
+            'filter' => [
+                'INTERNAL_ID' => $internal,
+                'ENTITY'      => $entity,
+            ],
+            'select' => ['EXTERNAL_ID'],
+        ])->fetch();
+
+        return $result ? (string)$result['EXTERNAL_ID'] : '';
     }
     
     /**
