@@ -8,6 +8,7 @@ use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Entity\Query;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\IblockNotFoundException;
 use FourPaws\Migrator\Utils;
 
@@ -115,6 +116,24 @@ class Catalog extends IBlockElement
      */
     public function addItem(string $primary, array $data) : AddResult
     {
+        /**
+         * @var array $product
+         */
+        $product = (new Query(ElementTable::class))
+            ->setSelect(['ID'])
+            ->setLimit(1)
+            ->setFilter(['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS), 'XML_ID' => $data['XML_ID']])
+            ->exec()
+            ->fetch();
+
+        $primary = $product['ID'];
+        $result = parent::updateItem($primary, $data);
+        return new AddResult($result->getResult(), $result->getInternalId());
+
+        throw new AddException(\sprintf('IBlock %s element product #%s update error: element is not found',
+            $this->getIblockId(),
+            $primary));
+
         $mainProductResult = null;
         
         if ($this->isMainProduct($data)) {
