@@ -2,14 +2,19 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
@@ -21,7 +26,8 @@ use Bitrix\Sale\PaySystem\Manager;
 use Bitrix\Sale\Shipment;
 use ErrorException;
 use Exception;
-use FourPaws\Migrator\Client\Catalog;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Migrator\Client\Delivery;
 use FourPaws\Migrator\Client\OrderProperty;
 use FourPaws\Migrator\Client\User;
@@ -238,6 +244,8 @@ class Order extends AbstractEntity
      *
      * @return SaleOrder
      *
+     * @throws ObjectPropertyException
+     * @throws IblockNotFoundException
      * @throws SystemException
      * @throws ArgumentException
      * @throws NotSupportedException
@@ -260,7 +268,17 @@ class Order extends AbstractEntity
         $userId = $order->getUserId();
 
         foreach ($rawBasketList as $rawBasket) {
-            $productId = MapTable::getInternalIdByExternalId($rawBasket['PRODUCT_ID'], Catalog::ENTITY_NAME);
+            /**
+             * @var array $product
+             */
+            $product = (new Query(ElementTable::class))
+                ->setSelect(['ID'])
+                ->setLimit(1)
+                ->setFilter(['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS), 'XML_ID' => $rawBasket['PRODUCT_XML_ID']])
+                ->exec()
+                ->fetch();
+
+            $productId = $product['ID'] ?: -1;
 
             $rawBasket['USER_ID'] = $userId;
             $rawBasket = $this->prepareBasketData($rawBasket);
