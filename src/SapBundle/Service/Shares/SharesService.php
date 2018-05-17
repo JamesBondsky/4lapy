@@ -275,9 +275,15 @@ class SharesService implements LoggerAwareInterface
                 ];
             }
 
-        } elseif ($type === 'Z006') {
-            if ($share->getBonusBuyTo()->count() !== 1 || $share->getBonusBuyFrom()->count() !== 1) {
-                throw new InvalidArgumentException('У акций типа Z006 должна быть только одна группа элементов');
+        } elseif (
+            $type === 'Z006'
+            &&
+            $share->getBonusBuyFrom()->count() === 1
+        ) {
+            if ($share->getBonusBuyTo()->count() !== 1) {
+                throw new InvalidArgumentException(
+                    'У Z006 должна быть только одна группа элементов на которые действует скидка'
+                );
             }
             try {
                 $countOperator = $promo->isApplyOnce() ? 'single' : 'min';
@@ -319,7 +325,7 @@ class SharesService implements LoggerAwareInterface
                             'Count_operator' => $countOperator,
                             'All' => 'AND',
                             'Value' => $discountPercent,
-                            'Additional_JSON' => false,
+                            'Multiplier' => 1,
                         ],
                         'CHILDREN' => [
                             [
@@ -343,6 +349,117 @@ class SharesService implements LoggerAwareInterface
                 ]
             ];
 
+        } elseif (
+            $type === 'Z006'
+            &&
+            $share->getBonusBuyFrom()->count() > 1
+        ) {
+            if ($share->getBonusBuyTo()->count() !== 1) {
+                throw new InvalidArgumentException(
+                    'У Z006 должна быть только одна группа элементов на которые действует скидка'
+                );
+            }
+            try {
+                $logic = $share->getLogic();
+                $countOperator = $logic === 'AND' ? 'min' : 'array_sum';
+                $countOperator = $promo->isApplyOnce() ? 'single' : $countOperator;
+            } /** @noinspection PhpUndefinedClassInspection */
+            catch (\TypeError $e) {
+                throw new InvalidArgumentException($e->getMessage());
+            }
+            /**
+             * @var BonusBuyTo $itemsTo
+             */
+            $itemsTo = $share->getBonusBuyTo()->first();
+            if (1 > $discountPercent = $itemsTo->getPercent()) {
+                throw new InvalidArgumentException('Не передан процент скидки');
+            }
+            $products = $itemsTo->getProductIds()->toArray();
+            if (!$products) {
+                throw new InvalidArgumentException('Не переданы скидочные товары');
+            }
+            $multiplier = $itemsTo->getQuantity();
+
+            $filtrationOperator = 'only_first';
+
+            $actions = [
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => [
+                    'All' => 'AND'
+                ],
+                'CHILDREN' => [
+                    [
+                        'CLASS_ID' => 'ADV:DetachedRowDiscount',
+                        'DATA' => [
+                            'Type' => 'percent',
+                            'Filtration_operator' => $filtrationOperator,
+                            'Count_operator' => $countOperator,
+                            'All' => 'AND',
+                            'Value' => $discountPercent,
+                            'Multiplier' => $multiplier,
+                        ],
+                        'CHILDREN' => []
+                    ]
+                ]
+            ];
+
+            /**
+             * @var BonusBuyFrom $itemsFrom
+             */
+            $notFound = true;
+            $countCondition = 1;
+            $skipConditionOffset = 0;
+            foreach ($share->getBonusBuyFrom() as $k => $itemsFrom) {
+                if (ArrayHelper::arraysEquals($products, $itemsFrom->getProductIds()->toArray())) {
+                    $notFound = false;
+                    $countCondition = $itemsFrom->getGroupQuantity();
+                    $skipConditionOffset = $k;
+                }
+            }
+            if ($notFound) {
+                throw new InvalidArgumentException(
+                    'У US-A41 должна быть одна группа предпосылок равная группе товаров со скидкой'
+                );
+            }
+
+            $actions['CHILDREN'][0]['CHILDREN'][] = [
+                'CLASS_ID' => 'ADV:BasketFilterQuantityRatio',
+                'DATA' => [
+                    'All' => 'AND',
+                    'Value' => $countCondition,
+                ],
+                'CHILDREN' => [
+                    [
+                        'CLASS_ID' => 'CondIBElement',
+                        'DATA' => [
+                            'logic' => 'Equal',
+                            'value' => $products
+                        ]
+                    ]
+                ]
+            ];
+
+            foreach ($share->getBonusBuyFrom() as $k => $itemsFrom) {
+                if ($k === $skipConditionOffset) {
+                    continue;
+                }
+                $actions['CHILDREN'][0]['CHILDREN'][] = [
+                    'CLASS_ID' => 'ADV:BasketFilterQuantityRatio',
+                    'DATA' => [
+                        'All' => 'AND',
+                        'Value' => $itemsFrom->getGroupQuantity(),
+                    ],
+                    'CHILDREN' => [
+                        [
+                            'CLASS_ID' => 'CondIBElement',
+                            'DATA' => [
+                                'logic' => 'Equal',
+                                'value' => $itemsFrom->getProductIds()->toArray()
+                            ]
+                        ]
+                    ]
+                ];
+            }
         } elseif ($type === 'Z008') {
 
             try {
@@ -442,8 +559,8 @@ class SharesService implements LoggerAwareInterface
                             'Filtration_operator' => 'separate',
                             'Count_operator' => $countOperator,
                             'All' => 'AND',
-                            'Additional_JSON' => false,
                             'Value' => $discountPercent,
+                            'Multiplier' => 1,
                         ],
                         'CHILDREN' => [],
                     ],
@@ -510,8 +627,8 @@ class SharesService implements LoggerAwareInterface
                             'Filtration_operator' => 'union',
                             'Count_operator' => 'max',
                             'All' => 'AND',
-                            'Additional_JSON' => false,
                             'Value' => $discountValue,
+                            'Multiplier' => 1,
                         ],
                         'CHILDREN' => [
                             [
