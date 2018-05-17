@@ -544,7 +544,9 @@ class OrderStorageService
          * Для самовывоза DPD разделения заказов нет
          */
         if (!$delivery instanceof DpdPickupResult) {
-            if (!($this->deliveryService->isDelivery($delivery) && $delivery->getStockResult()->getOrderable()->getByRequest()->isEmpty())) {
+            if (!($this->deliveryService->isDelivery($delivery) &&
+                $delivery->getStockResult()->getOrderable()->getByRequest()->isEmpty())
+            ) {
                 [$available, $delayed] = $this->splitStockResult($delivery);
 
                 $result = !$available->isEmpty() && !$delayed->isEmpty();
