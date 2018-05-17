@@ -57,9 +57,6 @@ if (!$selectedPayment) {
 }
 
 $basketPrice = $selectedDelivery->getStockResult()->getPrice();
-if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
-    $basketPrice = $arResult['PARTIAL_PICKUP']->getStockResult()->getPrice();
-}
 
 /** @var User $user */
 $user = $arResult['USER'];

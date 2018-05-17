@@ -361,7 +361,8 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $order->setBasket($basket);
+        /** @noinspection PhpParamsInspection */
+        $order->setBasket($basket->getOrderableItems());
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
         }
@@ -587,6 +588,7 @@ class OrderService implements LoggerAwareInterface
             $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
             $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
             $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
+            $this->setOrderPropertyByCode($order, 'IS_FAST_ORDER', 'Y');
             return [$order, $selectedDelivery];
         }
         return $order;
@@ -784,7 +786,7 @@ class OrderService implements LoggerAwareInterface
          * Заполнение складов довоза товара для элементов корзины
          */
         $shipmentResults = $selectedDelivery->getShipmentResults();
-        $shipmentDays = [];
+        $shipmentDays = ['DC01' => 0];
         /** @var BasketItem $item */
         foreach ($order->getBasket()->getOrderableItems() as $item) {
             $shipmentPlaceCode = 'DC01';
@@ -792,7 +794,7 @@ class OrderService implements LoggerAwareInterface
             if ($shipmentResults &&
                 ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
             ) {
-                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode();
+                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
                 $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
                 if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                     $shipmentDays[$shipmentPlaceCode] = $days;
@@ -929,12 +931,17 @@ class OrderService implements LoggerAwareInterface
             [$delivery->getDeliveryCode()],
             $storage1->getCurrentDate()
         );
-        if (!$tmpDelivery = reset($tmpDeliveries)) {
+        if (!$delivery1 = reset($tmpDeliveries)) {
             throw new OrderSplitException('Cannot split order');
         }
 
-        $order1 = $this->initOrder($storage1, $basket1, $tmpDelivery);
-        $order2 = $this->initOrder($storage2, $basket2);
+        $delivery2 = (clone $delivery)->setStockResult($delayed);
+        if (!$delivery2->isSuccess()) {
+            throw new OrderSplitException('Cannot split order');
+        }
+
+        $order1 = $this->initOrder($storage1, $basket1, $delivery1);
+        $order2 = $this->initOrder($storage2, $basket2, $delivery2);
 
         /**
          * У второго заказа (содержащего товары под заказ) доставка бесплатная
@@ -956,10 +963,10 @@ class OrderService implements LoggerAwareInterface
         return [
             (new OrderSplitResult())->setOrderStorage($storage1)
                 ->setOrder($order1)
-                ->setDelivery($tmpDelivery),
+                ->setDelivery($delivery1),
             (new OrderSplitResult())->setOrderStorage($storage2)
                 ->setOrder($order2)
-                ->setDelivery($delivery),
+                ->setDelivery($delivery2),
         ];
     }
 
@@ -1008,6 +1015,15 @@ class OrderService implements LoggerAwareInterface
             $storage1 = $splitResult1->getOrderStorage();
             $order2 = $splitResult2->getOrder();
             $storage2 = $splitResult2->getOrderStorage();
+            $basket = $this->basketService->getBasket();
+
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                if (!$basketItem->isDelay()) {
+                    $basketItem->delete();
+                }
+            }
+            $basket->save();
 
             $this->saveOrder($order, $storage1, $splitResult1->getDelivery());
             /**
@@ -1039,11 +1055,20 @@ class OrderService implements LoggerAwareInterface
                         'relatedOrder' => $order2->getId(),
                     ]);
                 }
-            }
+            } else {
+                $basket2 = $order2->getBasket();
+                /** @var BasketItem $basketItem */
+                foreach ($basket2 as $basketItem) {
+                    $basketItem->setFieldNoDemand('DELAY', BitrixUtils::BX_BOOL_TRUE);
 
-            $basket = $this->basketService->getBasket();
-            $basket->clearCollection();
-            $basket->save();
+                    $this->basketService->setBasketItemPropertyValue(
+                        $basketItem,
+                        'IS_TEMPORARY',
+                        BitrixUtils::BX_BOOL_TRUE
+                    );
+                }
+                $basket2->save();
+            }
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);

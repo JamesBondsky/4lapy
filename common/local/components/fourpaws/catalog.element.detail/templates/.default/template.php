@@ -319,11 +319,12 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
         <div class="b-counter-basket">
             <div class="b-plus-minus b-plus-minus--half-mobile js-buy1click-ps js-plus-minus-cont">
                 <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
-                <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"/>
+                <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"
+                       data-cont-max="<?=$currentOffer->getQuantity()?>" data-one-price="<?=$currentOffer->getPrice()?>" />
                 <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a>
                 <span class="b-plus-minus__by-line">Количество</span>
             </div>
-            <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1)) {
+            <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1) && $currentOffer->getQuantity() >= $currentOffer->getMultiplicity()) {
                 ?>
                 <a class="b-counter-basket__add-set js-add-set" href="javascript:void(0)" title=""
                    data-count="<?= $currentOffer->getMultiplicity() ?>">

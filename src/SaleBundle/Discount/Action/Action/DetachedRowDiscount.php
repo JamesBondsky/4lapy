@@ -84,13 +84,14 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
         $description['control'] = [
             'Предоставить скидку',
             $arAtoms['Value'],
-            '% результаты фильтрации',
+            $arAtoms['Type'],
+            'результаты фильтрации',
             $arAtoms['Filtration_operator'],
             'количество применений',
             $arAtoms['Count_operator'],
             $arAtoms['All'],
-            'выполнены. доп JSON',
-            $arAtoms['Additional_JSON'],
+            'множитель',
+            $arAtoms['Multiplier'],
         ];
 
         return $description;
@@ -142,15 +143,52 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                     'VALIDATE' => ['>', 0]
                 ]
             ],
+            'Multiplier' => [
+                'JS' => [
+                    'id' => 'Multiplier',
+                    'name' => 'Multiplier',
+                    'type' => 'input',
+                    'defaultText' => 1,
+                    'defaultValue' => 1,
+                ],
+                'ATOM' => [
+                    'ID' => 'Multiplier',
+                    'FIELD_TYPE' => 'int',
+                    'MULTIPLE' => 'N',
+                    'VALIDATE' => ['>', 0]
+                ]
+            ],
+            'Type' => [
+                'JS' => [
+                    'id' => 'Type',
+                    'name' => 'Type',
+                    'type' => 'select',
+                    'values' => [
+                        'percent' => '%',
+                        'absolute' => 'RUB',
+                    ],
+                    'defaultText' => '%',
+                    'defaultValue' => 'percent',
+                    'first_option' => '...'
+                ],
+                'ATOM' => [
+                    'ID' => 'Type',
+                    'FIELD_TYPE' => 'string',
+                    'FIELD_LENGTH' => 255,
+                    'MULTIPLE' => 'N',
+                    'VALIDATE' => 'list'
+                ]
+            ],
             'Filtration_operator' => [
                 'JS' => [
                     'id' => 'Filtration_operator',
                     'name' => 'Filtration_operator',
                     'type' => 'select',
                     'values' => [
-                        'separate' => 'обработать по отдельности', //+
+                        'separate' => 'обработать по отдельности',
+                        'only_first' => 'только первый',
                         'union' => 'объединение',
-                        'intersect' => 'пересечение',
+                        //'intersect' => 'пересечение', //todo
                     ],
                     'defaultText' => 'обработать по отдельности',
                     'defaultValue' => 'separate',
@@ -170,9 +208,9 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                     'name' => 'Count_operator',
                     'type' => 'select',
                     'values' => [
-                        'min' => 'минимальное значение', //+
+                        'min' => 'минимальное значение',
                         'max' => 'максимальное значение',
-                        'sum' => 'сумма',
+                        'array_sum' => 'сумма',
                         'single' => 'одно',
                     ],
                     'defaultText' => 'минимальное значение',
@@ -208,19 +246,6 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                     'VALIDATE' => 'list'
                 ]
             ],
-            'Additional_JSON' => [
-                'JS' => [
-                    'id' => 'Additional_JSON',
-                    'name' => 'Additional_JSON',
-                    'type' => 'input'
-                ],
-                'ATOM' => [
-                    'ID' => 'Additional_JSON',
-                    'FIELD_TYPE' => 'string',
-                    'MULTIPLE' => 'N',
-                    'VALIDATE' => ''
-                ]
-            ],
         ];
 
         if (!$boolEx) {
@@ -244,6 +269,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
     }
 
     /**
+     * Черт ногу сломит. Есть мнение что стоит генерировать что-то типа self::check($arOneCondition)
      *
      * @param $arOneCondition
      * @param $arParams
@@ -252,7 +278,6 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
      *
      * @return string
      */
-
     public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false): string
     {
         $result = '';
@@ -261,12 +286,17 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
          * @todo обработать все варианты параметров
          */
         if (
-            \in_array($arOneCondition['Filtration_operator'], ['separate', 'union'], true)
-            && \in_array($arOneCondition['Count_operator'], ['min', 'max', 'single'], true)
+            \in_array($arOneCondition['Filtration_operator'], ['separate', 'union', 'only_first'], true)
+            && \in_array($arOneCondition['Count_operator'], ['min', 'max', 'single', 'array_sum'], true)
             && \is_array($arSubs) && \count($arSubs) >= 1
         ) {
             if ($arOneCondition['Count_operator'] === 'single') {
-                $arOneCondition['Count_operator'] = '(int)(bool)min';
+                $countOperator = '(int)(bool)array_sum';
+                if ($arOneCondition['All'] === 'AND') {
+                    $countOperator = '(int)(bool)min';
+                }
+            } else {
+                $countOperator = $arOneCondition['Count_operator'];
             }
             $result = '$counts = []; $i = 0; $originalOrder = ' . $arParams['ORDER'] . ';' . PHP_EOL;
             foreach ($arSubs as $sub) {
@@ -274,7 +304,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 $result .= '$counts[$i++][\'res\'] = ' . $arParams['ORDER'] . ';' . PHP_EOL;
                 $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
             }
-            $result .= '$applyCount = ' . $arOneCondition['Count_operator'] . '(array_column($counts, \'cnt\'));' . PHP_EOL;
+            $result .= '$applyCount = ' . $countOperator . '(array_column($counts, \'cnt\'));' . PHP_EOL;
 
             if ($arOneCondition['All'] === 'AND') {
                 $result .= '$minCount = min(array_column($counts, \'cnt\'));' . PHP_EOL;
@@ -287,7 +317,12 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
             $result .= 'foreach($counts as $k => $elem) {' . PHP_EOL;
             $result .= '    ' . $arParams['ORDER'] . ' = $elem[\'res\'];' . PHP_EOL;
             $result .= '    ' . static::class . '::apply(' . $arParams['ORDER'] . ', ';
-            $result .= var_export($arOneCondition['Value'], true) . ', $applyCount);' . PHP_EOL;
+            $result .= var_export($arOneCondition['Value'], true) . ', ';
+            $result .= var_export($arOneCondition['Type'] === 'percent', true) . ', ';
+            $result .= '$applyCount * (int)' . var_export($arOneCondition['Multiplier'], true) . ');' . PHP_EOL;
+            if ($arOneCondition['Filtration_operator'] === 'only_first') {
+                $result .= 'break;' . PHP_EOL;
+            }
             $result .= '}' . PHP_EOL;
             $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
         }
@@ -319,10 +354,10 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
      *
      * @param array $order
      * @param float $discountValue
+     * @param bool $percent
      * @param int $applyCount
-     *
      */
-    public static function apply(array $order, float $discountValue, int $applyCount)
+    public static function apply(array $order, float $discountValue, bool $percent, int $applyCount)
     {
 
         $applyBasket = null;
@@ -333,7 +368,11 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
                 'ACTION_DESCRIPTION' => json_encode([
                     'discountType' => 'DETACH',
-                    'params' => ['discount_value' => $discountValue, 'apply_count' => $applyCount]
+                    'params' => [
+                        'discount_value' => $discountValue,
+                        'percent' => $percent,
+                        'apply_count' => $applyCount
+                    ]
                 ]),
             ];
             Actions::increaseApplyCounter();
@@ -360,7 +399,11 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
                 'ACTION_DESCRIPTION' => json_encode([
                     'discountType' => 'DETACH',
-                    'params' => ['discount_value' => $discountValue, 'apply_count' => $detachQuantity]
+                    'params' => [
+                        'discount_value' => $discountValue,
+                        'percent' => $percent,
+                        'apply_count' => $detachQuantity
+                    ]
                 ]),
                 'BASKET_CODE' => $basketRow['ID'],
             ];

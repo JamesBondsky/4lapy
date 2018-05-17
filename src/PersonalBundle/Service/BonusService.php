@@ -7,9 +7,9 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -32,7 +32,6 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use FourPaws\App\Application as App;
 
 /**
  * Class BonusService
@@ -232,7 +231,7 @@ class BonusService
 
         $validCardResult = $this->manzanaService->validateCardByNumberRaw($bonusCard);
         if (!$validCardResult->isValid) {
-            throw new CardNotValidException('карта не валидна');
+            throw new CardNotValidException('Карта не привязывается');
         }
 
         $bonusCardId = $validCardResult->cardId;

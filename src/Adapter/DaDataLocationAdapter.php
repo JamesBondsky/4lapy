@@ -87,12 +87,19 @@ class DaDataLocationAdapter extends BaseAdapter
                 '%s',
                 $entity->getRegion()), '(', ')') : '');
             if (!empty($region)) {
-                $regionType = trim($entity->getRegionTypeFull());
-                $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
-                if ($entity->getRegionType() === 'Респ' && !\in_array($region, $regionExcluded, true)) {
-                    $fullRegion = $regionType . ' ' . $region;
-                } else {
-                    $fullRegion = $region . ' ' . $regionType;
+                $continue = true;
+                /** если регион это город федерального значения то не юзаем префикс */
+                if(\in_array(ToLower($region), ['москва','санкт-петербург', 'севастополь'])){
+                    $continue = false;
+                }
+                if($continue) {
+                    $regionType = trim($entity->getRegionTypeFull());
+                    $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
+                    if ($entity->getRegionType() === 'Респ' && !\in_array($region, $regionExcluded, true)) {
+                        $fullRegion = $regionType . ' ' . $region;
+                    } else {
+                        $fullRegion = $region . ' ' . $regionType;
+                    }
                 }
             }
             $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
@@ -158,7 +165,7 @@ class DaDataLocationAdapter extends BaseAdapter
                     \strtolower($item['NAME'])));
             }
 
-            return array_merge($array, [
+            return \array_merge($array, [
                 $this::TYPE_MAP[$item['TYPE']['CODE']] => $item['NAME'],
             ]);
         }, []);

@@ -103,8 +103,8 @@ class StoreService implements LoggerAwareInterface
 
     /**
      * @param string $type
-     * @param array $filter
-     * @param array $order
+     * @param array  $filter
+     * @param array  $order
      *
      * @return StoreCollection
      * @throws ArgumentException
@@ -135,7 +135,10 @@ class StoreService implements LoggerAwareInterface
         };
 
         try {
-            $store = (new BitrixCache())->withId(__METHOD__ . $id)->resultOf($getStore)['result'];
+            $store = (new BitrixCache())
+                         ->withId(__METHOD__ . $id)
+                         ->withTag('catalog:store')
+                         ->resultOf($getStore)['result'];
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf('failed to get store with id %s: %s', $id, $e->getMessage())
@@ -174,7 +177,10 @@ class StoreService implements LoggerAwareInterface
 
             $store = null;
             try {
-                $store = (new BitrixCache())->withId(__METHOD__ . $xmlId)->resultOf($getStore)['result'];
+                $store = (new BitrixCache())
+                             ->withId(__METHOD__ . $xmlId)
+                             ->withTag('catalog:store')
+                             ->resultOf($getStore)['result'];
             } catch (\Exception $e) {
                 $this->logger->error(
                     sprintf('failed to get store by xmlId: %s: %s', \get_class($e), $e->getMessage()),
@@ -229,7 +235,10 @@ class StoreService implements LoggerAwareInterface
         };
 
         try {
-            $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
+            $result = (new BitrixCache())
+                ->withId(__METHOD__ . $locationCode . $type)
+                ->withTag('catalog:store')
+                ->resultOf($getStores);
 
             /** @var StoreCollection $stores */
             $stores = $result['result'];
@@ -272,6 +281,7 @@ class StoreService implements LoggerAwareInterface
     /**
      * @param string $locationCode
      * @param string $type
+     *
      * @return StoreCollection
      */
     public function getSubRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
@@ -282,7 +292,10 @@ class StoreService implements LoggerAwareInterface
             };
 
             try {
-                $result = (new BitrixCache())->withId(__METHOD__ . $subregionCode . $type)->resultOf($getStores);
+                $result = (new BitrixCache())
+                    ->withId(__METHOD__ . $subregionCode . $type)
+                    ->withTag('catalog:store')
+                    ->resultOf($getStores);
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
@@ -314,7 +327,10 @@ class StoreService implements LoggerAwareInterface
             };
 
             try {
-                $result = (new BitrixCache())->withId(__METHOD__ . $regionCode . $type)->resultOf($getStores);
+                $result = (new BitrixCache())
+                    ->withId(__METHOD__ . $regionCode . $type)
+                    ->withTag('catalog:store')
+                    ->resultOf($getStores);
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
@@ -346,7 +362,10 @@ class StoreService implements LoggerAwareInterface
         };
 
         try {
-            $result = (new BitrixCache())->withId(__METHOD__)->resultOf($getStores)['result'];
+            $result = (new BitrixCache())
+                          ->withId(__METHOD__)
+                          ->withTag('catalog:store')
+                          ->resultOf($getStores)['result'];
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf('failed to get supplier stores: %s', $e->getMessage())
@@ -401,6 +420,33 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
+     * @param Store $store
+     *
+     * @return bool
+     */
+    public function saveStore(Store $store): bool
+    {
+        $result = false;
+        try {
+            if ($store->getId()) {
+                $result = $this->storeRepository->update($store);
+            } else {
+                $result = $this->storeRepository->create($store);
+            }
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf('failed to save store: %s: %s', \get_class($e), $e->getMessage()),
+                [
+                    'id' => $store->getId(),
+                    'xmlId' => $store->getXmlId()
+                ]
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * @param array $filter
      * @param array $select
      *
@@ -440,6 +486,11 @@ class StoreService implements LoggerAwareInterface
         if (!isset($params['storesAlways'])) {
             $params['storesAlways'] = false;
         }
+
+        /** отсееваем магазины без названия и без местоположения */
+        $params['filter']['!ADDRESS'] = ['', null];
+        $params['filter']['!UF_LOCATION'] = ['', null];
+
         $loc = $params['filter']['UF_LOCATION'];
         if ($params['storesAlways'] && isset($params['filter']['UF_LOCATION'])) {
             /** city */
@@ -820,15 +871,14 @@ class StoreService implements LoggerAwareInterface
     {
         if (!$this->pickupDelivery) {
             $selectedOffer = null;
-            if($offer !== null){
+            if ($offer !== null) {
                 $selectedOffer = $offer;
-            }
-            else{
-                if(!empty($this->offers)) {
+            } else {
+                if (!empty($this->offers)) {
                     $selectedOffer = reset($this->offers);
                 }
             }
-            if($selectedOffer !== null) {
+            if ($selectedOffer !== null) {
                 $deliveries = $this->deliveryService->getByProduct($selectedOffer);
 
                 foreach ($deliveries as $delivery) {

@@ -19,7 +19,7 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateProductException;
  */
 abstract class IBlockElement extends IBlock
 {
-    const PROPERTY_PREFIX = 'PROPERTY_';
+    public const PROPERTY_PREFIX = 'PROPERTY_';
     
     /**
      * @param string $primary

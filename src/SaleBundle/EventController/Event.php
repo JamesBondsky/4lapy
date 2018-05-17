@@ -46,6 +46,15 @@ class Event implements ServiceHandlerInterface
      * @var EventManager
      */
     protected static $eventManager;
+    protected static $isEventsDisable = false;
+
+    public static function disableEvents(): void {
+        self::$isEventsDisable = true;
+    }
+
+    public static function enableEvents(): void {
+        self::$isEventsDisable = false;
+    }
 
     /**
      * @param EventManager $eventManager
@@ -60,7 +69,6 @@ class Event implements ServiceHandlerInterface
 
         /** Инициализация кастомных правил работы с корзиной */
         self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
-        self::initHandler('OnCondSaleActionsControlBuildList', [Gifter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
@@ -145,6 +153,10 @@ class Event implements ServiceHandlerInterface
      */
     public static function sendNewOrderMessage(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         $entity = $event->getParameter('ENTITY');
 
         if ($entity instanceof Order) {
@@ -190,6 +202,10 @@ class Event implements ServiceHandlerInterface
      */
     public static function sendOrderPaymentMessage(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         /** @var Payment $payment */
         $order = $event->getParameter('ENTITY');
 
@@ -218,6 +234,10 @@ class Event implements ServiceHandlerInterface
      */
     public static function sendOrderCancelMessage(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
 
@@ -249,6 +269,10 @@ class Event implements ServiceHandlerInterface
      */
     public static function sendOrderStatusMessage(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
 
@@ -271,8 +295,12 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      */
-    public function clearOrderCache(BitrixEvent $event): void
+    public static function clearOrderCache(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
 

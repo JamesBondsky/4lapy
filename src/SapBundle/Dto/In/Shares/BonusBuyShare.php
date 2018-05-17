@@ -98,6 +98,21 @@ class BonusBuyShare
     /**
      * Содержит индикатор изменения действия акции. Тип поля – единственный выбор из значений:
      *
+     * - С – комбинированная покупка, логическое «И»
+     * - М – мультиупаковка, логическое «ИЛИ»
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("CATEG")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $categ = '';
+
+
+    /**
+     * Содержит логический оператор связи предпосылок акции.
+     *
      * - MODI – модификация, значение по умолчанию;
      * - DELE – удаление. При выбранном значении акция должна быть удалена.
      *
@@ -179,6 +194,7 @@ class BonusBuyShare
 
     /**
      * @param string $region
+     *
      * @return BonusBuyShare
      */
     public function setRegion(string $region): BonusBuyShare
@@ -198,6 +214,7 @@ class BonusBuyShare
 
     /**
      * @param string $shareNumber
+     *
      * @return BonusBuyShare
      */
     public function setShareNumber(string $shareNumber): BonusBuyShare
@@ -217,6 +234,7 @@ class BonusBuyShare
 
     /**
      * @param string $description
+     *
      * @return BonusBuyShare
      */
     public function setDescription(string $description): BonusBuyShare
@@ -236,6 +254,7 @@ class BonusBuyShare
 
     /**
      * @param \DateTime $activationDate
+     *
      * @return BonusBuyShare
      */
     public function setActivationDate(\DateTime $activationDate): BonusBuyShare
@@ -255,6 +274,7 @@ class BonusBuyShare
 
     /**
      * @param \DateTime $endDate
+     *
      * @return BonusBuyShare
      */
     public function setEndDate(\DateTime $endDate): BonusBuyShare
@@ -274,6 +294,7 @@ class BonusBuyShare
 
     /**
      * @param string $conditionType
+     *
      * @return BonusBuyShare
      */
     public function setConditionType(string $conditionType): BonusBuyShare
@@ -293,6 +314,7 @@ class BonusBuyShare
 
     /**
      * @param string $act
+     *
      * @return BonusBuyShare
      */
     public function setAct(string $act): BonusBuyShare
@@ -332,6 +354,7 @@ class BonusBuyShare
 
     /**
      * @param string $type
+     *
      * @return BonusBuyShare
      */
     public function setType(string $type): BonusBuyShare
@@ -351,6 +374,7 @@ class BonusBuyShare
 
     /**
      * @param string $mark
+     *
      * @return BonusBuyShare
      */
     public function setMark(string $mark): BonusBuyShare
@@ -406,5 +430,35 @@ class BonusBuyShare
     public function isDelete(): bool
     {
         return $this->getAct() === self::ACT_DELETE;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCateg(): string
+    {
+        return $this->categ;
+    }
+
+    /**
+     * @param string $categ
+     *
+     * @return BonusBuyShare
+     */
+    public function setCateg(string $categ): BonusBuyShare
+    {
+        $this->categ = $categ;
+        return $this;
+    }
+
+    /**
+     * - С – комбинированная покупка, логическое «И»
+     * - М – мультиупаковка, логическое «ИЛИ»
+     *
+     * @return string
+     */
+    public function getLogic(): string
+    {
+        return $this->getCateg() === 'M' ? 'OR' : 'AND';
     }
 }

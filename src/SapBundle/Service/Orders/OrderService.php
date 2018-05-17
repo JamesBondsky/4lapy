@@ -39,6 +39,8 @@ use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -119,6 +121,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @var StatusService
      */
     private $statusService;
+    /**
+     * @var BasketService
+     */
+    private $basketService;
 
     /**
      * OrderService constructor.
@@ -131,6 +137,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param UserRepository $userRepository
      * @param IntervalService $intervalService
      * @param StatusService $statusService
+     * @param BasketService $basketService
      */
     public function __construct(
         BaseOrderService $baseOrderService,
@@ -140,7 +147,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         Filesystem $filesystem,
         UserRepository $userRepository,
         IntervalService $intervalService,
-        StatusService $statusService
+        StatusService $statusService,
+        BasketService $basketService
     )
     {
         $this->baseOrderService = $baseOrderService;
@@ -152,6 +160,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->statusService = $statusService;
 
         $this->setFilesystem($filesystem);
+        $this->basketService = $basketService;
     }
 
     /**
@@ -464,6 +473,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 list(, $xmlId) = \explode('#', $xmlId);
             }
 
+            try {
+                $chargeBonus = $this->basketService->isItemWithBonusAwarding($basketItem, $order);
+            } catch (InvalidArgumentException $e) {
+                $chargeBonus = true;
+            }
+
             $offer = (new OrderOffer())
                 ->setPosition($position)
                 ->setOfferXmlId($xmlId)
@@ -473,10 +488,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                  * Только штуки
                  */
                 ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
-                /**
-                 * @todo
-                 */
-                ->setChargeBonus(true)
+                ->setChargeBonus($chargeBonus)
                 ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
@@ -547,7 +559,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             return SapOrder::DELIVERY_TYPE_ROUTE;
         }
 
-        switch ($shipment->getDelivery()->getCode()) {
+        $isFastOrder = $this->getPropertyValueByCode($order, 'IS_FAST_ORDER') === 'Y';
+        $code = $isFastOrder ? '' : $shipment->getDelivery()->getCode();
+
+        switch ($code) {
             case DeliveryService::INNER_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:

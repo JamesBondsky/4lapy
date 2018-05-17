@@ -1532,61 +1532,89 @@ class Offer extends IblockElement
      */
     public function getBundle(): ?Bundle
     {
+        $break = false;
         $offerId = $this->getId();
         $result = null;
         $setItemsEntity = HLBlockFactory::createTableObject('BundleItems');
-        $item = $setItemsEntity::query()
+        $resBundleItems = $setItemsEntity::query()
             ->where('UF_ACTIVE', true)
             ->where('UF_PRODUCT', $offerId)
-            ->setLimit(1)
             ->setSelect(['ID'])
-            ->exec()
-            ->fetch();
-        if (!empty($item)) {
+            ->exec();
+        while($break === false){
+            $bundleItem = $resBundleItems->fetch();
+            if(!$bundleItem){
+                $break = true;
+                continue;
+            }
             $setEntity = HLBlockFactory::createTableObject('Bundle');
-            $setItem = $setEntity::query()
+            $resBundle = $setEntity::query()
                 ->where('UF_ACTIVE', true)
-                ->where('UF_PRODUCTS', $item['ID'])
-                ->setLimit(1)
+                ->where('UF_PRODUCTS', $bundleItem['ID'])
                 ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
 //                ->addSelect('UF_ACTIVE')
 //                ->addSelect('ID')
-                ->exec()
-                ->fetch();
+                ->exec();
 
-            $enumField = (new UserFieldEnumService())->getEnumValueEntity($setItem['UF_COUNT_ITEMS']);
 
-            $result = [
-//                'ID'  => $setItem['ID'],
-//                'ACTIVE'  => $setItem['UF_ACTIVE'],
-                'NAME'  => $setItem['UF_NAME'],
-                'COUNT_ITEMS'  => $enumField->getValue(),
-                'PRODUCTS' => [],
-            ];
-            $res = $setItemsEntity::query()
-                ->where('UF_ACTIVE', true)
-                ->whereIn('ID', $setItem['UF_PRODUCTS'])
-                ->setLimit($setItem['UF_COUNT_ITEMS'])
-                ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
+            if($resBundle->getSelectedRowsCount() === 0){
+                continue;
+            }
+            $breakBundle = false;
+            $hasItems = false;
+            while ($breakBundle === false) {
+                $setItem = $resBundle->fetch();
+                if(!$setItem){
+                    $breakBundle = true;
+                    continue;
+                }
+                $countItems = 2;
+                if ($setItem['UF_COUNT_ITEMS']) {
+                    $enumField = (new UserFieldEnumService())->getEnumValueEntity((int)$setItem['UF_COUNT_ITEMS']);
+                    $countItems = (int)$enumField->getValue();
+                }
+
+                $res = $setItemsEntity::query()
+                    ->where('UF_ACTIVE', true)
+                    ->whereIn('ID', $setItem['UF_PRODUCTS'])
+                    ->setLimit($countItems)
+                    ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
 //                ->addSelect('ID')
 //                ->addSelect('UF_ACTIVE')
-                ->exec();
-            while ($item = $res->fetch()) {
-                $itemFields = [
+                    ->exec();
+                if ($res->getSelectedRowsCount() === 0) {
+                    continue;
+                }
+                $result = [
+//                'ID'  => $setItem['ID'],
+//                'ACTIVE'  => $setItem['UF_ACTIVE'],
+                    'NAME'        => $setItem['UF_NAME'],
+                    'COUNT_ITEMS' => $countItems,
+                    'PRODUCTS'    => [],
+                ];
+                while ($item = $res->fetch()) {
+                    $itemFields = [
 //                    'ID' => $item['ID'],
 //                    'ACTIVE' => $item['UF_ACTIVE'],
-                    'PRODUCT' => null,
-                    'PRODUCT_ID' => $item['UF_PRODUCT'],
-                    'QUANTITY' => $item['UF_QUANTITY']
-                ];
-                if ($offerId === (int)$item['UF_PRODUCT']) {
-                    $itemFields['PRODUCT'] = $this;
-                    $result['PRODUCTS'] = [$item['UF_PRODUCT'] => $itemFields] + $result['PRODUCTS'];
-                } else {
-                    $result['PRODUCTS'][$item['UF_PRODUCT']] = $itemFields;
+                        'PRODUCT'    => null,
+                        'PRODUCT_ID' => $item['UF_PRODUCT'],
+                        'QUANTITY'   => $item['UF_QUANTITY']
+                    ];
+                    if ($offerId === (int)$item['UF_PRODUCT']) {
+                        $itemFields['PRODUCT'] = $this;
+                        $result['PRODUCTS'] = [$item['UF_PRODUCT'] => $itemFields] + $result['PRODUCTS'];
+                    } else {
+                        $result['PRODUCTS'][$item['UF_PRODUCT']] = $itemFields;
+                    }
+                    $productIds[] = $item['UF_PRODUCT'];
                 }
-                $productIds[] = $item['UF_PRODUCT'];
+                $breakBundle = true;
+                $hasItems = true;
             }
+            if(!$hasItems){
+                continue;
+            }
+            $break = true;
         }
         if($result !== null){
             $serializer = Application::getInstance()->getContainer()->get(\JMS\Serializer\SerializerInterface::class);

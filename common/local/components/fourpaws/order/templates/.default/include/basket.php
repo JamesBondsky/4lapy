@@ -4,19 +4,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @var array $arParams
- * @var array $arResult
- * @var Basket $basket
+ * @var array                      $arParams
+ * @var array                      $arResult
+ * @var Basket                     $basket
  * @var CalculationResultInterface $selectedDelivery
+ * @var FourPawsOrderComponent     $component
  */
 
 use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -59,134 +59,161 @@ if (null !== $pickup) {
     $stockResult = $pickup->getStockResult();
 
     $available = $stockResult->getAvailable();
-    $availableWeight = 0;
-    $availablePrice = 0;
     // если нет доступных товаров, частичного получения не будет
     if ($available->isEmpty()) {
         $available = $stockResult->getDelayed();
         $availableQuantity = $available->getAmount();
-        foreach ($available as $item) {
-            $availableItems[] = [
-                'name' => $item->getOffer()->getName(),
-                'quantity' => $item->getAmount(),
-                'price' => $item->getPrice(),
-            ];
-
-            $availablePrice += $item->getPrice() * $item->getAmount();
-            $availableWeight += $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
-        }
+        [$availableItems, $availableWeight] = $component->getOrderItemData($available);
+        $availablePrice = $available->getPrice();
     } else {
         $availableQuantity = $available->getAmount();
-        $availableItems = [];
-        /** @var StockResult $item */
-        foreach ($available as $item) {
-            $availableItems[] = [
-                'name' => $item->getOffer()->getName(),
-                'quantity' => $item->getAmount(),
-                'price' => $item->getPrice(),
-            ];
-
-            $availablePrice += $item->getPrice() * $item->getAmount();
-            $availableWeight += $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
-        }
+        [$availableItems, $availableWeight] = $component->getOrderItemData($available);
+        $availablePrice = $available->getPrice();
 
         $delayed = $stockResult->getDelayed();
-        $delayedWeight = 0;
-        $delayedPrice = 0;
         $delayedQuantity = $delayed->getAmount();
-        $delayedItems = [];
-        /** @var StockResult $item */
-        foreach ($delayed as $item) {
-            $delayedItems[] = [
-                'name' => $item->getOffer()->getName(),
-                'quantity' => $item->getAmount(),
-                'price' => $item->getPrice(),
-            ];
-
-            $delayedPrice += $item->getPrice() * $item->getAmount();
-            $delayedWeight += $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
-        }
+        [$delayedItems, $delayedWeight] = $component->getOrderItemData($delayed);
+        $delayedPrice = $delayed->getPrice();
 
         if (!$delayed->isEmpty()) {
             $showDelayedItems = true;
         }
     }
 }
+
+$productsDeclension = new Declension('товар', 'товара', 'товаров');
+
 if (null !== $delivery) {
     $deliveryResult = $delivery->getStockResult();
     $deliveryOrderableResult = $deliveryResult->getOrderable();
-    $deliveryOrderableQuantity = $deliveryOrderableResult->getAmount();
-    $deliveryOrderablePrice = $deliveryOrderableResult->getPrice();
-    $deliveryOrderableWeight = 0;
-    $deliveryOrderableItems = [];
-    foreach ($deliveryOrderableResult->getIterator() as $item) {
-        $offer = $item->getOffer();
-        $offerId = $item->getOffer()->getId();
-        $deliveryOrderableItems[$offerId]['quantity'] += $item->getAmount();
-        $deliveryOrderableItems[$offerId]['name'] = $offer->getName();
-        $deliveryOrderableItems[$offerId]['weight'] += $offer->getCatalogProduct()->getWeight() * $item->getAmount();
-        $deliveryOrderableItems[$offerId]['price'] += $item->getPrice() * $item->getAmount();
-        $deliveryOrderableWeight += $offer->getCatalogProduct()->getWeight() * $item->getAmount();
+    $deliveryOrderableQuantity = $deliveryResult->getAmount();
+    [$deliveryOrderableItems, $deliveryOrderableWeight] = $component->getOrderItemData($deliveryResult);
+    $deliveryOrderablePrice = $deliveryResult->getPrice();
+
+    $isSplit = $storage->isSplit() && !empty($arResult['SPLIT_RESULT']);
+    if (!empty($arResult['SPLIT_RESULT'])) {
+        /** @var StockResultCollection $deliveryResult1 */
+        $deliveryResult1 = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getStockResult();
+        /** @var StockResultCollection $deliveryResult2 */
+        $deliveryResult2 = $arResult['SPLIT_RESULT']['2']['DELIVERY']->getStockResult();
+
+        $deliveryResult1Quantity = $deliveryResult1->getAmount();
+        [$deliveryResult1Items, $deliveryResult1Weight] = $component->getOrderItemData($deliveryResult1);
+        $deliveryResult1Price = $deliveryResult1->getPrice();
+
+        $deliveryResult2Quantity = $deliveryResult2->getAmount();
+        [$deliveryResult2Items, $deliveryResult2Weight] = $component->getOrderItemData($deliveryResult2);
+        $deliveryResult2Price = $deliveryResult2->getPrice();
     }
 
     $deliveryUnavailableResult = $deliveryResult->getUnavailable();
     $deliveryUnavailableQuantity = $deliveryUnavailableResult->getAmount();
-    $deliveryUnavailablePrice = $deliveryUnavailableResult->getPrice(false);
-    $deliveryUnavailableWeight = 0;
-    $deliveryUnavailableItems = [];
-    foreach ($deliveryUnavailableResult->getIterator() as $item) {
-        $offer = $item->getOffer();
-        $offerId = $item->getOffer()->getId();
-        $deliveryUnavailableItems[$offerId]['quantity'] += $item->getAmount();
-        $deliveryUnavailableItems[$offerId]['name'] = $offer->getName();
-        $deliveryUnavailableItems[$offerId]['weight'] += $offer->getCatalogProduct()->getWeight() * $item->getAmount();
-        $deliveryUnavailableItems[$offerId]['price'] += $item->getPrice() * $item->getAmount();
-        $deliveryUnavailableWeight += $offer->getCatalogProduct()->getWeight() * $item->getAmount();
-    }
+    [$deliveryUnavailableItems, $deliveryUnavailableWeight] = $component->getOrderItemData($deliveryUnavailableResult);
+    $deliveryUnavailablePrice = $deliveryUnavailableResult->getPrice();
     ?>
     <?php /* отображается на 2 шаге, когда выбрана курьерская доставка */ ?>
     <aside class="b-order__list js-list-orders-static" <?= !$showPickupContainer ? '' : 'style="display:none"' ?>>
-        <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
-        <span class="js-mobile-title-order">Заказ: <?= $deliveryOrderableQuantity ?> <?= (new Declension(
-                'товар',
-                'товара',
-                'товаров'
-            ))->get(
-                $deliveryOrderableQuantity
-            ) ?>
-            (<?= WordHelper::showWeight($deliveryOrderableWeight, true) ?>) на сумму <?= CurrencyHelper::formatPrice(
-                $deliveryOrderablePrice,
-                false
-            ) ?>
-        </h4>
-        <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile">
-            <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о заказе</a>
-            <ul class="b-order-list__list js-order-list-block">
-                <?php foreach ($deliveryOrderableItems as $item) { ?>
-                    <li class="b-order-list__item b-order-list__item--aside js-full-list">
-                        <div class="b-order-list__order-text b-order-list__order-text--aside js-full-list">
-                            <div class="b-order-list__clipped-text">
-                                <div class="b-order-list__text-backed">
-                                    <?= $item['name'] ?>
-                                    <?php if ($item['quantity'] > 1) { ?>
-                                        (<?= $item['quantity'] ?> шт)
-                                    <?php } ?>
+        <div class="one-delivery__block<?= $isSplit ? '' : ' active' ?>">
+            <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
+                <span class="js-mobile-title-order">Заказ: <?= $deliveryOrderableQuantity ?> <?= $productsDeclension->get($deliveryOrderableQuantity) ?>
+                </span>
+                (<?= WordHelper::showWeight($deliveryOrderableWeight, true) ?>) на
+                сумму <?= CurrencyHelper::formatPrice(
+                    $deliveryOrderablePrice,
+                    false
+                ) ?>
+            </h4>
+            <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile">
+                <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
+                    заказе</a>
+                <ul class="b-order-list__list js-order-list-block">
+                    <?php foreach ($deliveryOrderableItems as $item) { ?>
+                        <li class="b-order-list__item b-order-list__item--aside js-full-list">
+                            <div class="b-order-list__order-text b-order-list__order-text--aside js-full-list">
+                                <div class="b-order-list__clipped-text">
+                                    <div class="b-order-list__text-backed">
+                                        <?= $item['name'] ?>
+                                        <?php if ($item['quantity'] > 1) { ?>
+                                            (<?= $item['quantity'] ?> шт)
+                                        <?php } ?>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="b-order-list__order-value b-order-list__order-value--aside js-full-list">
-                            <?= CurrencyHelper::formatPrice($item['price']) ?>
-                        </div>
-                    </li>
-                <?php } ?>
-            </ul>
+                            <div class="b-order-list__order-value b-order-list__order-value--aside js-full-list">
+                                <?= CurrencyHelper::formatPrice($item['price']) ?>
+                            </div>
+                        </li>
+                    <?php } ?>
+                </ul>
+            </div>
         </div>
+        <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
+            <div class="two-deliveries__block<?= !$isSplit ? '' : ' active' ?>">
+                <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
+                    <span class="js-mobile-title-order">Заказ №1: <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
+                    (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
+                    сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price) ?>
+                </h4>
+                <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile js-popup-mobile--aside js-full-list">
+                    <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
+                        заказе</a>
+                    <ul class="b-order-list__list js-order-list-block">
+                        <?php foreach ($deliveryResult1Items as $item) { ?>
+                            <li class="b-order-list__item b-order-list__item--aside js-full-list">
+                                <div class="b-order-list__order-text b-order-list__order-text--aside">
+                                    <div class="b-order-list__clipped-text">
+                                        <div class="b-order-list__text-backed">
+                                            <?= $item['name'] ?>
+                                            <?php if ($item['quantity'] > 1) { ?>
+                                                (<?= $item['quantity'] ?> шт)
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-order-list__order-value b-order-list__order-value--aside">
+                                    <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                </div>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+
+                <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
+                    <span class="js-mobile-title-order">Заказ №2: <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
+                    (<?= WordHelper::showWeight($deliveryResult2Weight, true) ?>) на
+                    сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price) ?>
+                </h4>
+                <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile js-popup-mobile--aside js-full-list">
+                    <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
+                        заказе</a>
+                    <ul class="b-order-list__list js-order-list-block">
+                        <?php foreach ($deliveryResult2Items as $item) { ?>
+                            <li class="b-order-list__item b-order-list__item--aside js-full-list">
+                                <div class="b-order-list__order-text b-order-list__order-text--aside">
+                                    <div class="b-order-list__clipped-text">
+                                        <div class="b-order-list__text-backed">
+                                            <?= $item['name'] ?>
+                                            <?php if ($item['quantity'] > 1) { ?>
+                                                (<?= $item['quantity'] ?> шт)
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-order-list__order-value b-order-list__order-value--aside">
+                                    <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                </div>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+            </div>
+        <?php } ?>
         <h4 class="b-title b-title--order-list js-parts-list-title"
             <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
             <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
-            <?= (new Declension('товар', 'товара', 'товаров'))->get(
-                $deliveryUnavailableQuantity
-            ) ?> (<?= WordHelper::showWeight($deliveryUnavailableWeight, true) ?>) на сумму <?= CurrencyHelper::formatPrice(
+            <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
+            (<?= WordHelper::showWeight($deliveryUnavailableWeight, true) ?>) на
+            сумму <?= CurrencyHelper::formatPrice(
                 $deliveryUnavailablePrice,
                 false
             ) ?>
@@ -232,9 +259,7 @@ if (null !== $delivery) {
 <?php /* отображается на 2 шаге, когда выбран самовывоз */ ?>
 <aside class="b-order__list js-list-orders-cont" <?= $showPickupContainer ? '' : 'style="display:none"' ?>>
     <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
-        Заказ: <?= $availableQuantity ?> <?= (new Declension('товар', 'товара', 'товаров'))->get(
-            $availableQuantity
-        ) ?>
+        Заказ: <?= $availableQuantity ?> <?= $productsDeclension->get($availableQuantity) ?>
         (<?= WordHelper::showWeight($availableWeight, true) ?>) на сумму <?= CurrencyHelper::formatPrice(
             $availablePrice,
             false
@@ -257,7 +282,7 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value">
-                        <?= CurrencyHelper::formatPrice($item['price'] * $item['quantity']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price']) ?>
                     </div>
                 </li>
             <?php } ?>
@@ -266,9 +291,8 @@ if (null !== $delivery) {
     <h4 class="b-title b-title--order-list js-parts-list-title"
         <?= !$showDelayedItems ? 'style="display:none"' : '' ?>>
         <span class="js-mobile-title-order">Останется в корзине: <?= $delayedQuantity ?></span>
-        <?= (new Declension('товар', 'товара', 'товаров'))->get(
-            $delayedQuantity
-        ) ?> (<?= WordHelper::showWeight($delayedWeight, true) ?>) на сумму <?= CurrencyHelper::formatPrice(
+        <?= $productsDeclension->get($delayedQuantity) ?> (<?= WordHelper::showWeight($delayedWeight, true) ?>) на
+        сумму <?= CurrencyHelper::formatPrice(
             $delayedPrice,
             false
         ) ?>
@@ -291,7 +315,7 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--aside">
-                        <?= CurrencyHelper::formatPrice($item['price'] * $item['quantity']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price']) ?>
                     </div>
                 </li>
             <?php } ?>
