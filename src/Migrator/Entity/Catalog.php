@@ -2,7 +2,13 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\SectionTable;
+use Bitrix\Main\Entity\Query;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\IblockNotFoundException;
 use FourPaws\Migrator\Utils;
 
@@ -13,14 +19,17 @@ use FourPaws\Migrator\Utils;
  */
 class Catalog extends IBlockElement
 {
-    const UNSORTED_SECTION_CODE = 'unsorted';
-    
-    const PROPERTY_SKU_LIST_KEY = 'GOODS_AND_SIZES';
-    
-    const IS_MAIN_PRODUCT_KEY   = 'ALPHA_PRODUCT';
+    public const UNSORTED_SECTION_CODE = 'unsorted';
+
+    public const PROPERTY_SKU_LIST_KEY = 'GOODS_AND_SIZES';
+
+    public const IS_MAIN_PRODUCT_KEY   = 'ALPHA_PRODUCT';
     
     private $catalogId = 0;
-    
+
+    /**
+     * @return array
+     */
     public function setDefaults() : array
     {
         return [];
@@ -107,6 +116,24 @@ class Catalog extends IBlockElement
      */
     public function addItem(string $primary, array $data) : AddResult
     {
+        /**
+         * @var array $product
+         */
+        $product = (new Query(ElementTable::class))
+            ->setSelect(['ID'])
+            ->setLimit(1)
+            ->setFilter(['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS), 'XML_ID' => $data['XML_ID']])
+            ->exec()
+            ->fetch();
+
+        $primary = $product['ID'];
+        $result = parent::updateItem($primary, $data);
+        return new AddResult($result->getResult(), $result->getInternalId());
+
+        throw new AddException(\sprintf('IBlock %s element product #%s update error: element is not found',
+            $this->getIblockId(),
+            $primary));
+
         $mainProductResult = null;
         
         if ($this->isMainProduct($data)) {
@@ -124,11 +151,12 @@ class Catalog extends IBlockElement
         
         return $result;
     }
-    
+
     /**
      * @param string $primary
-     * @param array  $data
+     * @param array $data
      *
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
      * @throws \Bitrix\Main\ArgumentException
@@ -155,14 +183,13 @@ class Catalog extends IBlockElement
                                    'TIMESTAMP_X'        => null,
                                    'MODIFIED_BY'        => null,
                                    'CODE'               => null,
-                                   'XML_ID'             => null,
                                    'TAGS'               => null,
                                    'SHOW_COUNTER'       => null,
                                    'SHOW_COUNTER_START' => null,
                                    'DETAIL_PICTURE'     => null,
                                ]);
         
-        if ($this->isMainProduct($data)) {
+        if (false && $this->isMainProduct($data)) {
             /**
              * @TODO переписать на один запрос
              */
@@ -187,12 +214,23 @@ class Catalog extends IBlockElement
             $mainProductResult                    = parent::updateItem($mainProductId, $mainProductData);
             $data['PROPERTY_VALUES']['CML2_LINK'] = $mainProductResult->getInternalId();
         }
-        
+
+        /**
+         * @var array $product
+         */
+        $product = (new Query(ElementTable::class))
+            ->setSelect(['ID'])
+            ->setLimit(1)
+            ->setFilter(['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS), 'XML_ID' => $data['XML_ID']])
+            ->exec()
+            ->fetch();
+
+        $primary = $product['ID'];
         $result = parent::updateItem($primary, $data);
         
-        if ($mainProductId) {
+        /* if ($mainProductId) {
             $this->addSku($mainProductId, $this->getSkuListFromData($data));
-        }
+        } */
         
         return $result;
     }
