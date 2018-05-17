@@ -127,7 +127,7 @@ class Catalog extends IBlockElement
             ->fetch();
 
         $primary = $product['ID'];
-        $result = parent::updateItem($primary, $data);
+        $result = $this->updateItem($primary, $data);
         return new AddResult($result->getResult(), $result->getInternalId());
 
         throw new AddException(\sprintf('IBlock %s element product #%s update error: element is not found',
