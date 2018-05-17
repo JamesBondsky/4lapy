@@ -6,7 +6,6 @@ namespace FourPaws\PersonalBundle\Entity;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
-use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
 class OrderItem extends BaseEntity
@@ -215,7 +214,7 @@ class OrderItem extends BaseEntity
     /**
      * @param float $weight
      */
-    public function setWeight(float $weight)
+    public function setWeight(float $weight): void
     {
         $this->weight = $weight;
     }
@@ -231,7 +230,7 @@ class OrderItem extends BaseEntity
     /**
      * @param string $article
      */
-    public function setArticle(string $article)
+    public function setArticle(string $article): void
     {
         $this->article = $article;
     }
@@ -247,7 +246,7 @@ class OrderItem extends BaseEntity
     /**
      * @param string $offerSelectedProp
      */
-    public function setOfferSelectedProp(string $offerSelectedProp)
+    public function setOfferSelectedProp(string $offerSelectedProp): void
     {
         $this->offerSelectedProp = $offerSelectedProp;
     }
@@ -263,7 +262,7 @@ class OrderItem extends BaseEntity
     /**
      * @param bool $haveStock
      */
-    public function setHaveStock(bool $haveStock)
+    public function setHaveStock(bool $haveStock): void
     {
         $this->haveStock = $haveStock;
     }
@@ -319,8 +318,8 @@ class OrderItem extends BaseEntity
                 } catch (FileNotFoundException $e) {
                 }
             }else{
-                /** установка второго аргумента все ломает */
-                $unserializeImage = unserialize($image);
+                /** @noinspection UnserializeExploitsInspection */
+                $unserializeImage = \unserialize($image);
                 if(\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])){
                     $image = current($unserializeImage['VALUE']);
                     try {
@@ -365,7 +364,7 @@ class OrderItem extends BaseEntity
     /**
      * @param string $offerSelectedPropName
      */
-    public function setOfferSelectedPropName(string $offerSelectedPropName)
+    public function setOfferSelectedPropName(string $offerSelectedPropName): void
     {
         $this->offerSelectedPropName = $offerSelectedPropName;
     }
@@ -375,7 +374,7 @@ class OrderItem extends BaseEntity
      */
     public function getFlavour(): string
     {
-        return $this->flavour;
+        return $this->flavour ?? '';
     }
 
     /**
