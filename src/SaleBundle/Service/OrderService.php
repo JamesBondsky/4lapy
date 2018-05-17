@@ -361,7 +361,8 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $order->setBasket($basket);
+        /** @noinspection PhpParamsInspection */
+        $order->setBasket($basket->getOrderableItems());
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
         }
@@ -785,7 +786,7 @@ class OrderService implements LoggerAwareInterface
          * Заполнение складов довоза товара для элементов корзины
          */
         $shipmentResults = $selectedDelivery->getShipmentResults();
-        $shipmentDays = [];
+        $shipmentDays = ['DC01' => 0];
         /** @var BasketItem $item */
         foreach ($order->getBasket()->getOrderableItems() as $item) {
             $shipmentPlaceCode = 'DC01';
