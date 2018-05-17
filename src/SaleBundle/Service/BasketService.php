@@ -75,7 +75,8 @@ class BasketService implements LoggerAwareInterface
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaPosService $manzanaPosService
-    ) {
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
     }
@@ -103,7 +104,8 @@ class BasketService implements LoggerAwareInterface
         array $rewriteFields = [],
         bool $save = true,
         ?Basket $basket = null
-    ): BasketItem {
+    ): BasketItem
+    {
         if ($offerId < 1) {
             throw new InvalidArgumentException('Неверный ID товара');
         }
@@ -352,7 +354,6 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     *
      * @throws InvalidArgumentException
      *
      * @return OfferCollection
@@ -744,29 +745,27 @@ class BasketService implements LoggerAwareInterface
             $settings = $applyResult['FULL_DISCOUNT_LIST'][$id]['ACTIONS']['CHILDREN'];
 
             if (
-                !(
-                    \count($settings) === 1
-                    &&
-                    ($settings = \current($settings))
-                    &&
-                    $settings['CLASS_ID'] === 'ActSaleBsktGrp'
-                    &&
-                    ($settings = \array_values($settings['CHILDREN']))
-                    &&
-                    \count($settings) === 2
-                    &&
+                \count($settings) === 1
+                &&
+                ($settings = \current($settings))
+                &&
+                $settings['CLASS_ID'] === 'ActSaleBsktGrp'
+                &&
+                ($settings = \array_values($settings['CHILDREN']))
+                &&
+                \count($settings) === 2
+                &&
+                (
                     (
-                        (
-                            0 === \strpos($settings[0]['CLASS_ID'], 'BasketQuantity')
-                            &&
-                            0 === \strpos($settings[1]['CLASS_ID'], 'CondIBProp')
-                        )
-                        ||
-                        (
-                            0 === \strpos($settings[1]['CLASS_ID'], 'BasketQuantity')
-                            &&
-                            0 === \strpos($settings[0]['CLASS_ID'], 'CondIBProp')
-                        )
+                        0 === \strpos($settings[0]['CLASS_ID'], 'BasketQuantity')
+                        &&
+                        0 === \strpos($settings[1]['CLASS_ID'], 'CondIBProp')
+                    )
+                    ||
+                    (
+                        0 === \strpos($settings[1]['CLASS_ID'], 'BasketQuantity')
+                        &&
+                        0 === \strpos($settings[0]['CLASS_ID'], 'CondIBProp')
                     )
                 )
             ) {
@@ -789,7 +788,8 @@ class BasketService implements LoggerAwareInterface
         string $code,
         string $value,
         string $name = ''
-    ): void {
+    ): void
+    {
         try {
             $found = false;
             /** @var BasketPropertyItem $property */
