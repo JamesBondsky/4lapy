@@ -34,7 +34,7 @@ class BasketRulesService
     }
 
     /**
-     * пересохраняет все скидки
+     * пересохраняет все скидки ./bin/symfony_console f:s:d:r
      *
      * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
      * @throws \FourPaws\SapBundle\Exception\BitrixEntityProxyException
@@ -44,19 +44,6 @@ class BasketRulesService
      */
     public function resaveAll(): void
     {
-        /**
-         * ПАСТА
-
-use FourPaws\SaleBundle\Service\BasketRulesService;
-use FourPaws\App\Application as PawsApplication;
-
-PawsApplication::getInstance()
-->getContainer()
-->get(BasketRulesService::class)
-->resaveAll();
-
-         *
-         */
         foreach($this->basketRulesRepository->getAll() as $basketRule) {
             $this->basketRulesRepository->update($basketRule);
         }
