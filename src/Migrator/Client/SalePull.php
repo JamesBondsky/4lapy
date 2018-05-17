@@ -2,6 +2,7 @@
 
 namespace FourPaws\Migrator\Client;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Migrator\Entity\Order as OrderEntity;
@@ -44,6 +45,7 @@ class SalePull extends ClientPullAbstract
     /**
      * @return array
      *
+     * @throws ArgumentException
      * @throws LoaderException
      * @throws InvalidArgumentException
      * @throws RuntimeException
