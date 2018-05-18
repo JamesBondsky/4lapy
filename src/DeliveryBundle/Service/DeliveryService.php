@@ -204,6 +204,7 @@ class DeliveryService implements LoggerAwareInterface
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $locationCode)
+                ->withTag('location:groups')
                 ->resultOf($getDeliveries);
             $deliveries = $result['result'];
         } catch (\Exception $e) {
@@ -257,6 +258,7 @@ class DeliveryService implements LoggerAwareInterface
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $zone)
+                ->withTag('location:groups')
                 ->resultOf($getServiceCodes)['result'];
         } catch (\Exception $e) {
             $this->log()->error(
@@ -529,6 +531,7 @@ class DeliveryService implements LoggerAwareInterface
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $deliveryId)
+                ->withTag('location:groups')
                 ->resultOf($getZones);
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get available zones: %s', $e->getMessage()), [

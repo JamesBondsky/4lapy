@@ -710,6 +710,7 @@ class LocationService
         try {
             return (new BitrixCache())
                 ->withId(__METHOD__ . (int)$withLocations)
+                ->withTag('location:groups')
                 ->resultOf($getGroups);
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get location groups: %s', $e->getMessage()), [
