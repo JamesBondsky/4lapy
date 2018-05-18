@@ -9,6 +9,7 @@ namespace FourPaws\AppBundle\Command;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Internals\OrderTable;
+use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
@@ -26,6 +27,10 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     protected const TIME_TO_PAY = 1200; // 20 minutes
+
+    protected const MAX_TIME = 86400; // 1 day
+
+    protected const OPT_MAX_TIME = 'max';
 
     protected const OPT_TIME = 'time';
 
@@ -61,6 +66,12 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
                 't',
                 InputOption::VALUE_OPTIONAL,
                 'Time in seconds before online payment changed to cash'
+            )
+            ->addOption(
+                self::OPT_MAX_TIME,
+                'm',
+                InputOption::VALUE_OPTIONAL,
+                'Maximum difference between order create date and current date'
             );
     }
 
@@ -70,19 +81,33 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $time = $input->getOption(self::OPT_TIME) ?: static::TIME_TO_PAY;
+        $maxTime = $input->getOption(self::OPT_MAX_TIME) ?: static::MAX_TIME;
 
         $date = new \DateTime();
         $date->setTimestamp(time() - $time);
+        $maxDate = new \DateTime();
+        $maxDate->setTimestamp(time() - $maxTime);
         $orders = OrderTable::query()->setSelect(['ID'])
             ->setFilter([
-                '<DATE_INSERT' => $date->format('d.m.Y H:i:s'),
-                'PAYED' => 'N',
-                'PAYMENT_SYSTEM.CODE' => OrderService::PAYMENT_ONLINE
+                '<DATE_INSERT'        => $date->format('d.m.Y H:i:s'),
+                '>DATE_INSERT'        => $maxDate->format('d.m.Y H:i:s'),
+                '=PAYMENT_SYSTEM.CODE' => OrderService::PAYMENT_ONLINE,
+                '=STATUS_ID'           => [OrderService::STATUS_NEW_COURIER, OrderService::STATUS_NEW_PICKUP],
+                '!CANCELED'           => 'Y',
+                '!PAYMENT.PAID'       => 'Y',
             ])->registerRuntimeField(
                 new ReferenceField(
                     'PAYMENT_SYSTEM',
                     PaySystemActionTable::class,
                     ['=this.PAY_SYSTEM_ID' => 'ref.ID'],
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'PAYMENT',
+                    PaymentTable::class,
+                    ['=this.ID' => 'ref.ORDER_ID', '=this.PAY_SYSTEM_ID' => 'ref.PAY_SYSTEM_ID'],
                     ['join_type' => 'INNER']
                 )
             )->exec();
