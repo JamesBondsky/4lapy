@@ -102,6 +102,7 @@ class PaymentService
         $arCheck = null;
         $itemMap = [];
 
+        $cartItems = [];
         /** @var \Bitrix\Sale\BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
             $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
@@ -114,7 +115,7 @@ class PaymentService
 
             $amount += $itemAmount * $basketItem->getQuantity(); //Для фискализации общая сумма берется путем суммирования округленных позиций.
 
-            $fiscal['orderBundle']['cartItems']['items'][] = [
+            $cartItems[] = [
                 'positionId' => ++$itemsCnt,
                 'name' => $basketItem->getField('NAME'),
                 'quantity' => [
@@ -132,8 +133,9 @@ class PaymentService
             $itemMap[(int)\preg_replace('~^(.*#)~', '', $basketItem->getField('PRODUCT_XML_ID'))] = $basketItem->getProductId();
         }
 
+        $delivery = null;
         if ($order->getDeliveryPrice() > 0) {
-            $fiscal['orderBundle']['cartItems']['items'][] = [
+            $delivery = [
                 'positionId' => $itemsCnt + 1,
                 'name' => Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE'),
                 'quantity' => [
@@ -147,28 +149,55 @@ class PaymentService
                     'taxType' => 0,
                 ],
             ];
-
-            $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
         }
 
         $innerPayment = $order->getPaymentCollection()->getInnerPayment();
         if ($innerPayment && $innerPayment->isPaid()) {
-            $fiscal['orderBundle']['cartItems']['items'][] = [
-                'positionId' => $itemsCnt + 2,
-                'name' => 'Оплачено баллами',
-                'quantity' => [
-                    'value' => 1,
-                    'measure' => Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT'),
-                ],
-                'itemAmount' => -1 * $innerPayment->getSum() * 100,
-                'itemCode' => $order->getId() . '_BONUS_PAID',
-                'itemPrice' => -1 * $innerPayment->getSum() * 100,
-                'tax' => [
-                    'taxType' => 0,
-                ],
-            ];
-            $amount -= $innerPayment->getSum() * 100;
+            $bonusSum = $innerPayment->getSum() * 100;
+            $diff = $amount - $bonusSum;
+
+            $correction = 0;
+            foreach ($cartItems as $i => $item) {
+                $cartItems[$i]['itemPrice'] = floor($item['itemPrice'] * ($diff / $amount));
+                $oldAmount = $cartItems[$i]['itemAmount'];
+                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
+                $correction += $oldAmount - $cartItems[$i]['itemAmount'];
+            }
+
+            /**
+             * распределяем погрешность по товарам
+             */
+            $correction = $bonusSum - $correction;
+            foreach ($cartItems as $i => $item) {
+                if ((int)$correction === 0) {
+                    break;
+                }
+                $quantity = $cartItems[$i]['quantity']['value'];
+
+                $oldAmount = $cartItems[$i]['itemAmount'];
+                $cartItems[$i]['itemPrice'] = floor(
+                    $item['itemAmount'] * ($item['itemAmount'] - $correction) / $item['itemAmount'] / $quantity
+                );
+                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
+                $correction -= $oldAmount - $cartItems[$i]['itemAmount'];
+            }
+
+            /** погрешность все равно может не стать равной 0  */
+            $amount += $correction;
+
+            $amount -= $bonusSum;
         }
+
+        if ($delivery) {
+            $cartItems[] = $delivery;
+            $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
+        }
+        $s = 0;
+        foreach ($cartItems as $i) {
+            $s += $i['itemAmount'];
+        }
+
+        $fiscal['orderBundle']['cartItems']['items'] = $cartItems;
 
         return \compact('amount', 'fiscal', 'itemMap');
     }
