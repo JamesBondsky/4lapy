@@ -90,6 +90,15 @@ class Calculator extends DPD
             $deliveryId
         );
 
+        if (!$deliveryZone) {
+            $result = [
+                'RESULT' => 'ERROR',
+                'TEXT' => 'Не определена зона доставки',
+            ];
+
+            return $result;
+        }
+
         /**
          * Если есть склады в данном городе, то доставка DPD выполняется с этих складов. Иначе - с Москвы
          */
