@@ -15,9 +15,6 @@ if (!$sberbankOrderId = $_REQUEST['orderId']) {
 
 $order = \Bitrix\Sale\Order::load($orderId);
 
-/** @noinspection PhpDeprecationInspection */
-$paysystem = new CSalePaySystemAction();
-$paysystem->InitParamArrays(null, $orderId);
 /**
  * Подключение файла настроек
  */
@@ -33,24 +30,15 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/
 $testMode = false;
 $twoStage = false;
 $logging = false;
-
-if ($paysystem->GetParamValue('TEST_MODE') === 'Y') {
-    $testMode = true;
-}
-if ($paysystem->GetParamValue('TWO_STAGE') === 'Y') {
-    $twoStage = true;
-}
-if ($paysystem->GetParamValue('LOGGING') === 'Y') {
-    $logging = true;
-}
-
-$rbs = new RBS(
-    $paysystem->GetParamValue('USER_NAME'),
-    $paysystem->GetParamValue('PASSWORD'),
-    $twoStage,
-    $testMode,
-    $logging
-);
+$paySystemAction = new CSalePaySystemAction();
+$paySystemAction->InitParamArrays(null, $orderId);
+$test_mode = $paySystemAction->GetParamValue('TEST_MODE') === 'Y';
+$two_stage = $paySystemAction->GetParamValue('TWO_STAGE') === 'Y';
+$logging = $paySystemAction->GetParamValue('LOGGING') === 'Y';
+$password = $paySystemAction->GetParamValue('PASSWORD');
+$user_name = $paySystemAction->GetParamValue('USER_NAME');
+/** @noinspection PhpMethodParametersCountMismatchInspection */
+$rbs = new RBS(\compact('test_mode', 'two_stage', 'logging', 'user_name', 'password'));
 
 $response = $rbs->get_order_status_by_orderId($sberbankOrderId);
 $isSuccess = false;
