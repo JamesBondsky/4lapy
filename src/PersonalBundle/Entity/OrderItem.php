@@ -21,6 +21,13 @@ class OrderItem extends BaseEntity
 
     /** @var string
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("PRODUCT_ID")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $productId = '';
+
+    /** @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("NAME")
      * @Serializer\Groups(groups={"read","update", "create"})
      */
@@ -238,6 +245,14 @@ class OrderItem extends BaseEntity
     }
 
     /**
+     * @return bool
+     */
+    public function hasArticle(): bool
+    {
+        return !empty($this->getArticle());
+    }
+
+    /**
      * @return string
      */
     public function getOfferSelectedProp(): string
@@ -392,7 +407,18 @@ class OrderItem extends BaseEntity
      */
     public function getDetailPageUrl(): string
     {
-        if (!empty($this->detailPageUrl) && !preg_match('/^\/catalog\/.*\.html\?offer=.*/i', $this->detailPageUrl)) {
+        /**
+         * @todo оптимизировать - перегружаться будет всегда при запросе если пустая строка - малый перегруз - но перегруз
+         */
+        if (($this->hasArticle() || $this->hasProductId())
+            && (
+                !$this->hasDetailPageUrl(true)
+                || (
+                    $this->hasDetailPageUrl(true)
+                    && !preg_match('/^\/catalog\/.*\.html\?offer2=.*/i', $this->detailPageUrl)
+                )
+            )
+        ) {
             $this->reloadPageUrl();
         }
         return $this->detailPageUrl ?? '';
@@ -406,10 +432,57 @@ class OrderItem extends BaseEntity
         $this->detailPageUrl = $detailPageUrl;
     }
 
+    /**
+     * @param bool $inner
+     *
+     * @return bool
+     */
+    public function hasDetailPageUrl(bool $inner = false): bool
+    {
+        if($inner) {
+            $detailPageUrl = $this->detailPageUrl;
+        } else {
+            $detailPageUrl = $this->getDetailPageUrl();
+        }
+        return !empty($detailPageUrl);
+    }
+
     public function reloadPageUrl(): void
     {
-        /** @var Offer $offer */
-        $offer = (new OfferQuery())->withFilter(['XML_ID' =>$this->getArticle()])->exec()->first();
-        $this->setDetailPageUrl($offer->getLink());
+        $filter = [];
+        if ($this->hasArticle()) {
+            $filter = ['=XML_ID' => $this->getArticle()];
+        } elseif ($this->hasProductId()) {
+            $filter = ['=ID' => $this->getProductId()];
+        }
+        if (!empty($filter)) {
+            $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
+            /** @var Offer $offer */
+            $this->setDetailPageUrl($offer->getLink());
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductId(): string
+    {
+        return $this->productId ?? '';
+    }
+
+    /**
+     * @param string $productId
+     */
+    public function setProductId(string $productId): void
+    {
+        $this->productId = $productId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasProductId(): bool
+    {
+        return !empty($this->getProductId());
     }
 }
