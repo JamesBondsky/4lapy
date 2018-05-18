@@ -169,7 +169,11 @@ class OrderRepository extends BaseRepository
                 'SUMMARY_PRICE',
                 'DETAIL_PAGE_URL',
 
-                'PROPERTY_IMG'    => 'OFFER_PROPS.PROPERTY_' . $imgPropId,
+                'OFFER_IMG'    => 'OFFER.DETAIL_PICTURE',
+                'PROPERTY_OFFER_IMG'    => 'OFFER_PROPS.PROPERTY_' . $imgPropId,//множественно
+//                'PROPERTY_PRODUCT_IMG'    => 'PRODUCT_PROPS.PROPERTY_' . $imgPropId,//множественное
+//                'PRODUCT_IMG'    => 'PRODUCT.PREVIEW_PICTURE',
+
                 'PROPERTY_VOLUME' => 'OFFER_PROPS.PROPERTY_' . $volumePropId,
                 'PROPERTY_SIZE'   => 'OFFER_PROPS.PROPERTY_' . $sizePropId,
 
@@ -177,6 +181,11 @@ class OrderRepository extends BaseRepository
                 'PROPERTY_FLAVOUR' => 'PRODUCT_PROPS.PROPERTY_' . $flavourPropId,
             ])
             ->where('ORDER_ID', $orderId)
+            ->registerRuntimeField(new ReferenceField(
+                'OFFER',
+                ElementTable::getEntity(),
+                Join::on('this.PRODUCT_ID', 'ref.ID')
+            ))
             ->registerRuntimeField(new ReferenceField(
                 'OFFER_PROPS',
                 IblockPropEntityConstructor::getDataClass($iblockId)::getEntity(),
@@ -187,6 +196,11 @@ class OrderRepository extends BaseRepository
                 IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
                 Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
             ))
+//            ->registerRuntimeField(new ReferenceField(
+//                'PRODUCT',
+//                IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
+//                Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
+//            ))
             ->exec();
         $result = new ArrayCollection();
         $items = [];

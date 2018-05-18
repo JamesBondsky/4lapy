@@ -6,6 +6,9 @@
 
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -112,7 +115,7 @@ class OrderController extends Controller
     /**
      * @Route("/store-search/", methods={"GET"})
      * @param Request $request
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws \Exception
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return JsonResponse
@@ -211,7 +214,7 @@ class OrderController extends Controller
     /**
      * @Route("/validate/auth", methods={"POST"})
      * @param Request $request
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @return JsonResponse
      * @return \FourPaws\App\Response\JsonResponse
      */
@@ -261,7 +264,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => false]
+                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION])]
             );
         }
 
@@ -278,7 +281,7 @@ class OrderController extends Controller
      *
      * @param Request $request
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\NotImplementedException
@@ -300,7 +303,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => false]
+                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION])]
             );
         }
 
@@ -362,7 +365,7 @@ class OrderController extends Controller
         } catch (OrderStorageValidationException $e) {
             /** @var ConstraintViolation $error */
             foreach ($e->getErrors() as $i => $error) {
-                $key = $error->getPropertyPath() ?: $i;
+                $key = $error->getPropertyPath() ?: $error->getCode() ?: $i;
                 $errors[$key] = $error->getMessage();
             }
         }

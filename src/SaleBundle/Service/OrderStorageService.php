@@ -45,6 +45,8 @@ class OrderStorageService
 
     public const COMPLETE_STEP = 'complete';
 
+    public const SESSION_EXPIRED_VIOLATION = 'session-expired';
+
     /**
      * Порядок оформления заказа
      * @var array
