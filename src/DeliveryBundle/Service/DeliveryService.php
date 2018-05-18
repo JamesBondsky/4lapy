@@ -204,6 +204,7 @@ class DeliveryService implements LoggerAwareInterface
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $locationCode)
+                ->withTag('location:groups')
                 ->resultOf($getDeliveries);
             $deliveries = $result['result'];
         } catch (\Exception $e) {
@@ -257,6 +258,7 @@ class DeliveryService implements LoggerAwareInterface
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $zone)
+                ->withTag('location:groups')
                 ->resultOf($getServiceCodes)['result'];
         } catch (\Exception $e) {
             $this->log()->error(
@@ -414,7 +416,7 @@ class DeliveryService implements LoggerAwareInterface
         if ((null === $this->currentDeliveryZone) || $reload) {
             $this->currentDeliveryZone = $this->getDeliveryZoneByLocation(
                     $this->locationService->getCurrentLocation()
-                ) ?? static::ZONE_4;
+                );
         }
 
         return $this->currentDeliveryZone;
@@ -429,9 +431,9 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @param bool     $skipLocations
      * @throws ObjectNotFoundException
-     * @return null|string
+     * @return string
      */
-    public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): ?string
+    public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): string
     {
         if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
             return null;
@@ -444,9 +446,9 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param $deliveryLocation
      *
-     * @return null|string
+     * @return string
      */
-    public function getDeliveryZoneByLocation($deliveryLocation): ?string
+    public function getDeliveryZoneByLocation($deliveryLocation): string
     {
         return $this->getDeliveryZoneCode($deliveryLocation, $this->getAllZones(true));
     }
@@ -456,9 +458,9 @@ class DeliveryService implements LoggerAwareInterface
      * @param      $deliveryId
      * @param bool $skipLocations
      *
-     * @return null|string
+     * @return string
      */
-    public function getDeliveryZoneByDelivery($deliveryLocation, $deliveryId, $skipLocations = true): ?string
+    public function getDeliveryZoneByDelivery($deliveryLocation, $deliveryId, $skipLocations = true): string
     {
         $availableZones = $this->getAvailableZones($deliveryId);
         return $this->getDeliveryZoneCode($deliveryLocation, $availableZones, $skipLocations);
@@ -529,6 +531,7 @@ class DeliveryService implements LoggerAwareInterface
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $deliveryId)
+                ->withTag('location:groups')
                 ->resultOf($getZones);
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get available zones: %s', $e->getMessage()), [
@@ -926,9 +929,9 @@ class DeliveryService implements LoggerAwareInterface
      * @param array  $zones
      * @param bool   $skipLocations
      *
-     * @return null|string
+     * @return string
      */
-    protected function getDeliveryZoneCode(string $locationCode, array $zones = [], $skipLocations = true): ?string
+    protected function getDeliveryZoneCode(string $locationCode, array $zones = [], $skipLocations = true): string
     {
         $deliveryLocationPath = [$locationCode];
         if (($location = $this->locationService->findLocationByCode($locationCode)) && $location['PATH']) {
@@ -949,6 +952,6 @@ class DeliveryService implements LoggerAwareInterface
             }
         }
 
-        return $result;
+        return $result ?? static::ZONE_4;
     }
 }
