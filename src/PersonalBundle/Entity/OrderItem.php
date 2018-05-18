@@ -98,7 +98,14 @@ class OrderItem extends BaseEntity
 
     /** @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("PROPERTY_IMG")
+     * @Serializer\SerializedName("PROPERTY_OFFER_IMG")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $images = '';
+
+    /** @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("OFFER_IMG")
      * @Serializer\Groups(groups={"read"})
      */
     protected $image = '';
@@ -303,57 +310,6 @@ class OrderItem extends BaseEntity
     /**
      * @return string
      */
-    public function getImage(): string
-    {
-        return $this->image ?? '';
-    }
-
-    /**
-     * @param string $image
-     *
-     * @return OrderItem
-     */
-    public function setImage(string $image): OrderItem
-    {
-        $this->image = $image;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getImagePath(): string
-    {
-        $path = '';
-        $image = $this->getImage();
-        if (!empty($image)) {
-            if (is_numeric($image)) {
-                try {
-                    $path = CropImageDecorator::createFromPrimary($image)
-                        ->setCropWidth(80)
-                        ->setCropHeight(145);
-                } catch (FileNotFoundException $e) {
-                }
-            } else {
-                /** @noinspection UnserializeExploitsInspection */
-                $unserializeImage = \unserialize($image);
-                if (\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])) {
-                    $image = current($unserializeImage['VALUE']);
-                    try {
-                        $path = CropImageDecorator::createFromPrimary($image)
-                            ->setCropWidth(80)
-                            ->setCropHeight(145);
-                    } catch (FileNotFoundException $e) {
-                    }
-                }
-            }
-        }
-        return $path;
-    }
-
-    /**
-     * @return string
-     */
     public function getBrand(): string
     {
         return $this->brand ?? '';
@@ -439,7 +395,7 @@ class OrderItem extends BaseEntity
      */
     public function hasDetailPageUrl(bool $inner = false): bool
     {
-        if($inner) {
+        if ($inner) {
             $detailPageUrl = $this->detailPageUrl;
         } else {
             $detailPageUrl = $this->getDetailPageUrl();
@@ -484,5 +440,88 @@ class OrderItem extends BaseEntity
     public function hasProductId(): bool
     {
         return !empty($this->getProductId());
+    }
+
+    /**
+     * @return string
+     */
+    public function getImages(): string
+    {
+        return $this->images;
+    }
+
+    /**
+     * @param string $images
+     */
+    public function setImages(string $images): void
+    {
+        $this->images = $images;
+    }
+
+    /**
+     * @return string
+     */
+    public function getImage(): string
+    {
+        return $this->image ?? '';
+    }
+
+    /**
+     * @param string $image
+     *
+     * @return OrderItem
+     */
+    public function setImage(string $image): OrderItem
+    {
+        $this->image = $image;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getImagePath(): string
+    {
+        $path = '';
+        $image = $this->getImage();
+        if (!empty($image)) {
+            $path = $this->cropImage((int)$image);
+        } else {
+            $image = $this->getImages();
+            /** @noinspection UnserializeExploitsInspection */
+            $unserializeImage = \unserialize($image);
+            if(\is_array($unserializeImage)){
+                if (\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])) {
+                    foreach ($unserializeImage['VALUE'] as $imgId) {
+                        if (!empty($imgId)) {
+                            $path = $this->cropImage((int)$imgId);
+                            if (!empty($path)) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                $path = $this->cropImage((int)$image);
+            }
+        }
+        return $path;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return string
+     */
+    protected function cropImage(int $id): string
+    {
+        $path = '';
+        try {
+            $path = CropImageDecorator::createFromPrimary($id)
+                ->setCropWidth(80)
+                ->setCropHeight(145)->getSrc();
+        } catch (FileNotFoundException $e) {
+        }
+        return $path;
     }
 }
