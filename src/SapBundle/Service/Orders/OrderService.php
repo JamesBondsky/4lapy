@@ -741,7 +741,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
-            $article = \ltrim($this->basketService->getBasketItemXmlId($basketItem));
+            $article = \ltrim($this->basketService->getBasketItemXmlId($basketItem), '0');
 
             $externalItem = $externalItems->filter(
                 function ($item) use ($article) {
