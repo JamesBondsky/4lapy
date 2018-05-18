@@ -6,6 +6,8 @@ namespace FourPaws\PersonalBundle\Entity;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use JMS\Serializer\Annotation as Serializer;
 
 class OrderItem extends BaseEntity
@@ -224,7 +226,7 @@ class OrderItem extends BaseEntity
      */
     public function getArticle(): string
     {
-        return  $this->article ?? '';
+        return $this->article ?? '';
     }
 
     /**
@@ -309,18 +311,18 @@ class OrderItem extends BaseEntity
     {
         $path = '';
         $image = $this->getImage();
-        if (!empty($image)){
-            if(is_numeric($image)) {
+        if (!empty($image)) {
+            if (is_numeric($image)) {
                 try {
                     $path = CropImageDecorator::createFromPrimary($image)
                         ->setCropWidth(80)
                         ->setCropHeight(145);
                 } catch (FileNotFoundException $e) {
                 }
-            }else{
+            } else {
                 /** @noinspection UnserializeExploitsInspection */
                 $unserializeImage = \unserialize($image);
-                if(\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])){
+                if (\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])) {
                     $image = current($unserializeImage['VALUE']);
                     try {
                         $path = CropImageDecorator::createFromPrimary($image)
@@ -390,6 +392,9 @@ class OrderItem extends BaseEntity
      */
     public function getDetailPageUrl(): string
     {
+        if (!empty($this->detailPageUrl) && !preg_match('/^\/catalog\/.*\.html\?offer=.*/i', $this->detailPageUrl)) {
+            $this->reloadPageUrl();
+        }
         return $this->detailPageUrl ?? '';
     }
 
@@ -399,5 +404,12 @@ class OrderItem extends BaseEntity
     public function setDetailPageUrl(string $detailPageUrl): void
     {
         $this->detailPageUrl = $detailPageUrl;
+    }
+
+    public function reloadPageUrl(): void
+    {
+        /** @var Offer $offer */
+        $offer = (new OfferQuery())->withFilter(['XML_ID' =>$this->getArticle()])->exec()->first();
+        $this->setDetailPageUrl($offer->getLink());
     }
 }
