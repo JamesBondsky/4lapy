@@ -20,6 +20,7 @@ use FourPaws\SaleBundle\Discount\Utils\ValidateAtoms;
 class BasketFilter extends \CSaleCondCtrlBasketGroup
 {
     use ValidateAtoms;
+
     /**
      *
      *
@@ -406,8 +407,15 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
                 $clearBasket = array_filter($clearBasket, [Actions::class, 'filterBasketForAction']);
                 $clearBasket = array_filter(
                     $clearBasket,
-                    function($elem) {
-                        return $elem['DELAY'] !== 'Y' && $elem['CAN_BUY'] !== 'N';
+                    function ($elem) {
+                        return
+                            $elem['DELAY'] !== 'Y'
+                            &&
+                            $elem['CAN_BUY'] !== 'N'
+                            &&
+                            //во-первых не нужно учитывать подарки,
+                            //во вторых если подарок есть в предпосылках то он никогда не удолится
+                            !isset($elem['PROPERTIES']['IS_GIFT']);
                     }
                 );
 

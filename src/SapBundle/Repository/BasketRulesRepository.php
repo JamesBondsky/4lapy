@@ -147,6 +147,7 @@ class BasketRulesRepository
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     *
      * @return \Generator
      */
     public function getAll(): \Generator
@@ -167,6 +168,7 @@ class BasketRulesRepository
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     *
      * @return \Generator
      */
     protected function fetchDiscountTableResult(Result $result): \Generator
@@ -188,7 +190,8 @@ class BasketRulesRepository
             yield $basketRule;
             $notYielded = false;
         }
-        if($notYielded) {
+        //чтобы всегда возвращался исключительно генератор
+        if ($notYielded) {
             yield;
         }
     }

@@ -192,10 +192,6 @@ class PaymentService
             $cartItems[] = $delivery;
             $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
         }
-        $s = 0;
-        foreach ($cartItems as $i) {
-            $s += $i['itemAmount'];
-        }
 
         $fiscal['orderBundle']['cartItems']['items'] = $cartItems;
 

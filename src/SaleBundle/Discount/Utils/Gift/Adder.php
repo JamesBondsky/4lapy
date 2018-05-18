@@ -5,6 +5,7 @@ namespace FourPaws\SaleBundle\Discount\Utils\Gift;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Internals\BasketTable;
 use Exception;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
@@ -71,7 +72,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         }
                     }
                     if (!empty($offerId)) {
-                        $this->addGift($offerId, $group['count'], $group['discountId'], $OfferCollection->count() === 1);
+                        $this->addGift(
+                            $offerId, $group['count'], $group['discountId'], $OfferCollection->count() === 1
+                        );
                     }
                 }
             }
@@ -84,6 +87,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * @param int $discountId
      * @param bool $selected
      *
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentException
      * @throws InvalidArgumentException
@@ -117,8 +121,23 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 ],
             ]
         ];
-        
-        $this->basketService->addOfferToBasket($offerId, $quantity, $fields);
+
+        $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity, $fields);
+        // внутри файнал экшена мы крашим файнал экшен, который вызывается на добавлении элемента,
+        // поэтому некоторые поля не устанавливаются
+        // http://lurkmore.so/images/5/50/Yo_sobaka.jpg
+        if ($basketItem->getPrice() > 0.0001) {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $basketItem->setFields(
+                [
+                    'PRICE' => 0,
+                    'CUSTOM_PRICE' => 'Y',
+                    'NOTES' => 'Подарок',
+                ]
+            );
+            //FU BX
+            BasketTable::update($basketItem->getId(), ['PRICE' => 0.0, 'CUSTOM_PRICE' => 'Y', 'NOTES' => 'Подарок',]);
+        }
     }
 
     /**

@@ -6,6 +6,8 @@ namespace FourPaws\PersonalBundle\Entity;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use JMS\Serializer\Annotation as Serializer;
 
 class OrderItem extends BaseEntity
@@ -16,6 +18,13 @@ class OrderItem extends BaseEntity
      * @Serializer\Groups(groups={"read"})
      */
     protected $article = '';
+
+    /** @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PRODUCT_ID")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $productId = '';
 
     /** @var string
      * @Serializer\Type("string")
@@ -89,7 +98,14 @@ class OrderItem extends BaseEntity
 
     /** @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("PROPERTY_IMG")
+     * @Serializer\SerializedName("PROPERTY_OFFER_IMG")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $images = '';
+
+    /** @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("OFFER_IMG")
      * @Serializer\Groups(groups={"read"})
      */
     protected $image = '';
@@ -224,7 +240,7 @@ class OrderItem extends BaseEntity
      */
     public function getArticle(): string
     {
-        return  $this->article ?? '';
+        return $this->article ?? '';
     }
 
     /**
@@ -233,6 +249,14 @@ class OrderItem extends BaseEntity
     public function setArticle(string $article): void
     {
         $this->article = $article;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasArticle(): bool
+    {
+        return !empty($this->getArticle());
     }
 
     /**
@@ -281,57 +305,6 @@ class OrderItem extends BaseEntity
     public function getFormatedPrice(): string
     {
         return number_format($this->getPrice(), 2, '.', ' ');
-    }
-
-    /**
-     * @return string
-     */
-    public function getImage(): string
-    {
-        return $this->image ?? '';
-    }
-
-    /**
-     * @param string $image
-     *
-     * @return OrderItem
-     */
-    public function setImage(string $image): OrderItem
-    {
-        $this->image = $image;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getImagePath(): string
-    {
-        $path = '';
-        $image = $this->getImage();
-        if (!empty($image)){
-            if(is_numeric($image)) {
-                try {
-                    $path = CropImageDecorator::createFromPrimary($image)
-                        ->setCropWidth(80)
-                        ->setCropHeight(145);
-                } catch (FileNotFoundException $e) {
-                }
-            }else{
-                /** @noinspection UnserializeExploitsInspection */
-                $unserializeImage = \unserialize($image);
-                if(\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])){
-                    $image = current($unserializeImage['VALUE']);
-                    try {
-                        $path = CropImageDecorator::createFromPrimary($image)
-                            ->setCropWidth(80)
-                            ->setCropHeight(145);
-                    } catch (FileNotFoundException $e) {
-                    }
-                }
-            }
-        }
-        return $path;
     }
 
     /**
@@ -390,6 +363,20 @@ class OrderItem extends BaseEntity
      */
     public function getDetailPageUrl(): string
     {
+        /**
+         * @todo оптимизировать - перегружаться будет всегда при запросе если пустая строка - малый перегруз - но перегруз
+         */
+        if (($this->hasArticle() || $this->hasProductId())
+            && (
+                !$this->hasDetailPageUrl(true)
+                || (
+                    $this->hasDetailPageUrl(true)
+                    && !preg_match('/^\/catalog\/.*\.html\?offer2=.*/i', $this->detailPageUrl)
+                )
+            )
+        ) {
+            $this->reloadPageUrl();
+        }
         return $this->detailPageUrl ?? '';
     }
 
@@ -399,5 +386,142 @@ class OrderItem extends BaseEntity
     public function setDetailPageUrl(string $detailPageUrl): void
     {
         $this->detailPageUrl = $detailPageUrl;
+    }
+
+    /**
+     * @param bool $inner
+     *
+     * @return bool
+     */
+    public function hasDetailPageUrl(bool $inner = false): bool
+    {
+        if ($inner) {
+            $detailPageUrl = $this->detailPageUrl;
+        } else {
+            $detailPageUrl = $this->getDetailPageUrl();
+        }
+        return !empty($detailPageUrl);
+    }
+
+    public function reloadPageUrl(): void
+    {
+        $filter = [];
+        if ($this->hasArticle()) {
+            $filter = ['=XML_ID' => $this->getArticle()];
+        } elseif ($this->hasProductId()) {
+            $filter = ['=ID' => $this->getProductId()];
+        }
+        if (!empty($filter)) {
+            $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
+            /** @var Offer $offer */
+            $this->setDetailPageUrl($offer->getLink());
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductId(): string
+    {
+        return $this->productId ?? '';
+    }
+
+    /**
+     * @param string $productId
+     */
+    public function setProductId(string $productId): void
+    {
+        $this->productId = $productId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasProductId(): bool
+    {
+        return !empty($this->getProductId());
+    }
+
+    /**
+     * @return string
+     */
+    public function getImages(): string
+    {
+        return $this->images;
+    }
+
+    /**
+     * @param string $images
+     */
+    public function setImages(string $images): void
+    {
+        $this->images = $images;
+    }
+
+    /**
+     * @return string
+     */
+    public function getImage(): string
+    {
+        return $this->image ?? '';
+    }
+
+    /**
+     * @param string $image
+     *
+     * @return OrderItem
+     */
+    public function setImage(string $image): OrderItem
+    {
+        $this->image = $image;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getImagePath(): string
+    {
+        $path = '';
+        $image = $this->getImage();
+        if (!empty($image)) {
+            $path = $this->cropImage((int)$image);
+        } else {
+            $image = $this->getImages();
+            /** @noinspection UnserializeExploitsInspection */
+            $unserializeImage = \unserialize($image);
+            if(\is_array($unserializeImage)){
+                if (\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])) {
+                    foreach ($unserializeImage['VALUE'] as $imgId) {
+                        if (!empty($imgId)) {
+                            $path = $this->cropImage((int)$imgId);
+                            if (!empty($path)) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                $path = $this->cropImage((int)$image);
+            }
+        }
+        return $path;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return string
+     */
+    protected function cropImage(int $id): string
+    {
+        $path = '';
+        try {
+            $path = CropImageDecorator::createFromPrimary($id)
+                ->setCropWidth(80)
+                ->setCropHeight(145)->getSrc();
+        } catch (FileNotFoundException $e) {
+        }
+        return $path;
     }
 }

@@ -123,20 +123,22 @@ abstract class IBlockElement extends IBlock
         $cIBlockElement = new \CIBlockElement();
     
         $this->deleteFilesBeforeUpdate($primary, $data);
-    
-        foreach ($data['PROPERTY_VALUE'] as &$value) {
-            if (is_array($value) && $value['file'] === true) {
-                unset($value['file']);
-            }
+
+        foreach ($data['PROPERTY_VALUES'] as $code => $value) {
+            $cIBlockElement->SetPropertyValueCode($primary, $code, $value);
         }
-        
+
+        return new UpdateResult(true, $primary);
+
+        unset($data['PROPERTY_VALUES']);
+
         if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
             throw new UpdateException(sprintf('IBlock %s element #%s update error: %s',
                                               $this->getIblockId(),
                                               $primary,
                                               $cIBlockElement->LAST_ERROR));
         }
-        
+
         $this->setInternalKeys(['sections' => $data['SECTIONS']], $primary, $this->entity . '_section');
         
         /**
@@ -147,7 +149,7 @@ abstract class IBlockElement extends IBlock
             
             $price = $data['CATALOG']['PRICE'];
             unset($data['CATALOG']['PRICE'], $data['CATALOG']['TIMESTAMP_X']);
-            
+
             foreach ($data['CATALOG'] as $k => $v) {
                 if (strpos($k, '_ORIG') !== false) {
                     unset($data['CATALOG'][$k]);

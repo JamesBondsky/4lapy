@@ -288,7 +288,7 @@ if ($orderSubscribe) {
             <ul class="b-list-order">
                 <?php /** @var OrderItem $item */
                 foreach ($order->getItems() as $item) {
-                    if(!$order->isManzana() && !empty($item->getDetailPageUrl())){ ?>
+                    if(!$order->isManzana() && $item->hasDetailPageUrl()){ ?>
                         <a href="<?=$item->getDetailPageUrl()?>">
                     <?php } ?>
                     <li class="b-list-order__item">
