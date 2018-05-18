@@ -39,7 +39,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
         <?= $component->getMarkService()->getMark($currentOffer) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
-                <a class="b-common-item__image-link js-item-link" href="<?= $product->getDetailPageUrl() ?>">
+                <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
                     <img class="b-common-item__image js-weight-img"
                          src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                          alt="<?= $currentOffer->getName() ?>"
@@ -48,15 +48,15 @@ if (!$arParams['ITEM_ATTR_ID']) {
             <?php } ?>
         </span>
         <div class="b-common-item__info-center-block">
-            <a class="b-common-item__description-wrap js-item-link track-recommendation" href="<?= $product->getDetailPageUrl() ?>">
+            <a class="b-common-item__description-wrap js-item-link track-recommendation" href="<?= $currentOffer->getLink() ?>">
                 <span class="b-clipped-text b-clipped-text--three">
-                    <span><?php
-                        if ($product->getBrand()) {
+                    <span>
+                        <?php if ($product->getBrand()) {
                             echo '<strong>' . $product->getBrand()->getName() . '</strong>';
                             echo ' ';
                         }
-                        echo $currentOffer->getName();
-                        ?></span>
+                        echo $currentOffer->getName(); ?>
+                    </span>
                 </span>
             </a><?php
 
