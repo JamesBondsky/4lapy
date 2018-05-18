@@ -37,7 +37,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
     <?= $component->getMarkService()->getMark($currentOffer) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
-            <a class="b-common-item__image-link js-item-link" href="<?= $product->getDetailPageUrl() ?>">
+            <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
                 <img class="b-common-item__image js-weight-img"
                      src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                      alt="<?= $currentOffer->getName() ?>"
@@ -46,7 +46,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         </span>
     <?php } ?>
     <div class="b-common-item__info-center-block">
-        <a class="b-common-item__description-wrap js-item-link" href="<?= $product->getDetailPageUrl() ?>" title="">
+        <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>" title="">
             <span class="b-clipped-text b-clipped-text--three">
                 <span>
                     <?php if ($product->getBrand()) { ?>
@@ -69,7 +69,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                     'ITEMS_COUNT' => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
                     'TYPE' => 'catalog',
-                    'ITEM_LINK' => (new Uri($product->getDetailPageUrl()))->addParams(['new-review' => 'y'])->getUri(),
+                    'ITEM_LINK' => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
