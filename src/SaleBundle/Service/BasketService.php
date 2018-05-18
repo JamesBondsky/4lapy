@@ -817,4 +817,22 @@ class BasketService implements LoggerAwareInterface
             ]);
         }
     }
+
+    /**
+     * @param BasketItem $basketItem
+     * @return string
+     */
+    public function getBasketItemXmlId(BasketItem $basketItem): string
+    {
+        if (!$xmlId = $basketItem->getField('PRODUCT_XML_ID')) {
+            $xmlId = $basketItem->getPropertyCollection()->getPropertyValues()['PRODUCT.XML_ID']['VALUE'] ?? '';
+        }
+
+        if (\strpos($xmlId, '#')) {
+            /** @noinspection ShortListSyntaxCanBeUsedInspection */
+            list(, $xmlId) = \explode('#', $xmlId);
+        }
+
+        return $xmlId;
+    }
 }

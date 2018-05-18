@@ -466,13 +466,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($order->getBasket() as $basketItem) {
-            $xmlId = $basketItem->getField('PRODUCT_XML_ID');
-
-            if (\strpos($xmlId, '#')) {
-                /** @noinspection ShortListSyntaxCanBeUsedInspection */
-                list(, $xmlId) = \explode('#', $xmlId);
-            }
-
             try {
                 $chargeBonus = $this->basketService->isItemWithBonusAwarding($basketItem, $order);
             } catch (InvalidArgumentException $e) {
@@ -481,7 +474,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             $offer = (new OrderOffer())
                 ->setPosition($position)
-                ->setOfferXmlId($xmlId)
+                ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
                 ->setUnitPrice($basketItem->getPrice())
                 ->setQuantity($basketItem->getQuantity())
                 /**
@@ -748,11 +741,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
-            $article = \substr(
-                $basketItem->getField('PRODUCT_XML_ID'),
-                (\strpos($basketItem->getField('PRODUCT_XML_ID'), '#') + 1) ?: 0
-            );
-            $article = \ltrim($article, '0');
+            $article = \ltrim($this->basketService->getBasketItemXmlId($basketItem));
 
             $externalItem = $externalItems->filter(
                 function ($item) use ($article) {
