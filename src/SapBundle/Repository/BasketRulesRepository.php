@@ -91,7 +91,7 @@ class BasketRulesRepository
         $arFields = $this->serializer->toArray($basketRule);
         if (!\CSaleDiscount::Update($id, $arFields)) {
             throw new BitrixEntityProxyException(
-                (new UpdateResult())->addError(new Error('неизвестная ошибка CSaleDiscount::Update'))
+                (new UpdateResult())->addError(new Error('неизвестная ошибка CSaleDiscount::Update(' . $id . ', [])'))
             );
         }
     }
