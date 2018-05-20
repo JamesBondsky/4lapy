@@ -417,7 +417,9 @@ class OrderItem extends BaseEntity
         if (!empty($filter)) {
             $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
             /** @var Offer $offer */
-            $this->setDetailPageUrl($offer->getLink());
+            if ($offer) {
+                $this->setDetailPageUrl($offer->getLink());
+            }
         }
     }
 
