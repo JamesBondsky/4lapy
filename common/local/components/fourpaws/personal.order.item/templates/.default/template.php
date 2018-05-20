@@ -293,10 +293,12 @@ if ($orderSubscribe) {
                     <?php } ?>
                     <li class="b-list-order__item">
                         <div class="b-list-order__image-wrapper">
-                            <img class="b-list-order__image js-image-wrapper"
-                                 src="<?= $item->getImagePath() ?>" alt="<?= $item->getName() ?>"
-                                 title="<?= $item->getName() ?>"
-                                 role="presentation"/>
+                            <?php if ($item->getImagePath()) { ?>
+                                <img class="b-list-order__image js-image-wrapper"
+                                     src="<?= $item->getImagePath() ?>" alt="<?= $item->getName() ?>"
+                                     title="<?= $item->getName() ?>"
+                                     role="presentation"/>
+                            <?php } ?>
                         </div>
                         <div class="b-list-order__wrapper">
                             <div class="b-list-order__info">
@@ -338,11 +340,11 @@ if ($orderSubscribe) {
                                 </div>
                             </div>
                             <div class="b-list-order__price">
-                                <div class="b-list-order__sum b-list-order__sum--item"><?= $item->getFormatedSum() ?>
+                                <div class="b-list-order__sum b-list-order__sum--item"><?= $item->getFormattedSum() ?>
                                     <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
                                 </div>
                                 <?php if ($item->getQuantity() > 1) { ?>
-                                    <div class="b-list-order__calculation"><?= $item->getFormatedPrice() ?> ₽
+                                    <div class="b-list-order__calculation"><?= $item->getFormattedPrice() ?> ₽
                                         × <?= $item->getQuantity() ?> шт
                                     </div>
                                 <?php } ?>

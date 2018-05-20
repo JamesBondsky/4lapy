@@ -294,17 +294,17 @@ class OrderItem extends BaseEntity
     /**
      * @return string
      */
-    public function getFormatedSum(): string
+    public function getFormattedSum(): string
     {
-        return number_format($this->getSum(), 2, '.', ' ');
+        return \number_format($this->getSum(), 2, '.', ' ');
     }
 
     /**
      * @return string
      */
-    public function getFormatedPrice(): string
+    public function getFormattedPrice(): string
     {
-        return number_format($this->getPrice(), 2, '.', ' ');
+        return \number_format($this->getPrice(), 2, '.', ' ');
     }
 
     /**
@@ -400,17 +400,20 @@ class OrderItem extends BaseEntity
         } else {
             $detailPageUrl = $this->getDetailPageUrl();
         }
+
         return !empty($detailPageUrl);
     }
 
     public function reloadPageUrl(): void
     {
         $filter = [];
+
         if ($this->hasArticle()) {
             $filter = ['=XML_ID' => $this->getArticle()];
         } elseif ($this->hasProductId()) {
             $filter = ['=ID' => $this->getProductId()];
         }
+
         if (!empty($filter)) {
             $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
             /** @var Offer $offer */
@@ -447,7 +450,7 @@ class OrderItem extends BaseEntity
      */
     public function getImages(): string
     {
-        return $this->images;
+        return $this->images ?? '';
     }
 
     /**
@@ -484,6 +487,7 @@ class OrderItem extends BaseEntity
     {
         $path = '';
         $image = $this->getImage();
+
         if (!empty($image)) {
             $path = $this->cropImage((int)$image);
         } else {
@@ -505,6 +509,7 @@ class OrderItem extends BaseEntity
                 $path = $this->cropImage((int)$image);
             }
         }
+
         return $path;
     }
 
@@ -516,12 +521,14 @@ class OrderItem extends BaseEntity
     protected function cropImage(int $id): string
     {
         $path = '';
+
         try {
             $path = CropImageDecorator::createFromPrimary($id)
                 ->setCropWidth(80)
                 ->setCropHeight(145)->getSrc();
         } catch (FileNotFoundException $e) {
         }
+
         return $path;
     }
 }
