@@ -8,6 +8,11 @@ use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 use FourPaws\Migrator\Exception\MigratorException;
 
+/**
+ * Class UserGroup
+ *
+ * @package FourPaws\Migrator\Entity
+ */
 class UserGroup extends AbstractEntity
 {
     const EXCLUDED_GROUPS = [
@@ -32,7 +37,7 @@ class UserGroup extends AbstractEntity
         }
         
         $map = [
-            1 => 1,
+            1 => 8,
             2 => 2,
             6 => 6,
             7 => 6,
@@ -53,7 +58,7 @@ class UserGroup extends AbstractEntity
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      *
      * @throws Exception
      */
@@ -72,9 +77,9 @@ class UserGroup extends AbstractEntity
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\AddResult
+     * @return AddResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws AddException
      * @throws Exception
      */
     public function addItem(string $primary, array $data) : AddResult
@@ -93,9 +98,9 @@ class UserGroup extends AbstractEntity
      * @param string $primary
      * @param        $value
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws UpdateException
      * @throws Exception
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult

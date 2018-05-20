@@ -112,6 +112,7 @@ class Order extends AbstractEntity
         }
 
         $order = SaleOrder::create(SITE_ID, $userId, $data['CURRENCY']);
+        $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
         $order->doFinalAction();
         $result = $order->save();
@@ -144,6 +145,7 @@ class Order extends AbstractEntity
                 $primary));
         }
 
+        $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
         $result = $order->save();
 
