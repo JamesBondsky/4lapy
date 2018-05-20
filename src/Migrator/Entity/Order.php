@@ -86,7 +86,7 @@ class Order extends AbstractEntity
 
     /**
      * @param string $primary
-     * @param array $data
+     * @param array  $data
      *
      * @return AddResult
      *
@@ -130,7 +130,7 @@ class Order extends AbstractEntity
 
     /**
      * @param string $primary
-     * @param array $data
+     * @param array  $data
      *
      * @return UpdateResult
      *
@@ -208,7 +208,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array $rawData
+     * @param array     $rawData
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -241,7 +241,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array $rawBasketList
+     * @param array     $rawBasketList
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -302,7 +302,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array $properties
+     * @param array     $properties
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -315,6 +315,11 @@ class Order extends AbstractEntity
     {
         $propertyCollection = $order->getPropertyCollection();
         $propertyCollection->setValuesFromPost($this->preparePropertiesData($properties['PROPERTY_VALUES'] ?? []), []);
+        $propertyCollection->createItem([
+            'NAME'  => 'Заказ со старого сайта',
+            'CODE'  => 'IS_OLD_SITE_ORDER',
+            'VALUE' => 'Y',
+        ]);
 
         return $order;
     }
@@ -322,7 +327,7 @@ class Order extends AbstractEntity
     /**
      * На данный момент мы умеем работать только с простыми службами доставки
      *
-     * @param array $data
+     * @param array     $data
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -348,13 +353,13 @@ class Order extends AbstractEntity
          * @var Shipment $shipment
          */
         $fields = [
-            'DELIVERY_ID' => $deliveryId,
-            'DELIVERY_NAME' => $service->getName(),
-            'CURRENCY' => $data['CURRENCY'],
-            'PRICE_DELIVERY' => $data['PRICE_DELIVERY'],
-            'BASE_PRICE_DELIVERY' => $data['PRICE_DELIVERY'],
+            'DELIVERY_ID'           => $deliveryId,
+            'DELIVERY_NAME'         => $service->getName(),
+            'CURRENCY'              => $data['CURRENCY'],
+            'PRICE_DELIVERY'        => $data['PRICE_DELIVERY'],
+            'BASE_PRICE_DELIVERY'   => $data['PRICE_DELIVERY'],
             'CUSTOM_PRICE_DELIVERY' => 'Y',
-            'TRACKING_NUMBER' => $data['TRACKING_NUMBER'],
+            'TRACKING_NUMBER'       => $data['TRACKING_NUMBER'],
         ];
 
         if ($shipmentCollection->count() < 2) {
@@ -382,7 +387,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array $data
+     * @param array     $data
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -406,9 +411,9 @@ class Order extends AbstractEntity
         $item = $paymentCollection->count() < 1 ? $paymentCollection->createItem() : $paymentCollection[0];
 
         $item->setFields([
-            'SUM' => $order->getPrice() + $order->getDeliveryPrice(),
+            'SUM'             => $order->getPrice() + $order->getDeliveryPrice(),
             'PAY_SYSTEM_NAME' => $service->getField('NAME'),
-            'PAY_SYSTEM_ID' => $data['PAY_SYSTEM_ID'],
+            'PAY_SYSTEM_ID'   => $data['PAY_SYSTEM_ID'],
         ]);
 
         $item->setPaid($data['PAYED']);
