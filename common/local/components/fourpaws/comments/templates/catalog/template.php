@@ -106,14 +106,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
             </div>
         </div>
-        <form class="b-form-review js-form-review js-form-validation js-review-query"
+        <form class="b-form-review js-form-review js-form-validation js-review-query-catalog"
               id="commentsForm"
               data-url="/ajax/comments/catalog/add/"
               method="post">
-            <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>">
-            <input type="hidden" name="HL_ID" value="<?= $arParams['HL_ID'] ?>">
-            <input type="hidden" name="UF_OBJECT_ID" value="<?= $arParams['OBJECT_ID'] ?>">
-            <input type="hidden" name="action" value="add">
+            <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>" class="js-no-valid">
+            <input type="hidden" name="HL_ID" value="<?= $arParams['HL_ID'] ?>" class="js-no-valid">
+            <input type="hidden" name="UF_OBJECT_ID" value="<?= $arParams['OBJECT_ID'] ?>" class="js-no-valid">
+            <input type="hidden" name="action" value="add" class="js-no-valid">
             <?php /** @noinspection PhpUnhandledExceptionInspection */
             $frame = $this->createFrame()->begin(''); ?>
             <div class="b-form-review__wrapper-blocks js-comments-auth-form-<?= $uniqueCommentString ?>"
@@ -181,10 +181,12 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 </div>
                 <h4 class="b-form-review__sub-heading">Отзыв</h4>
                 <div class="b-form-review__group">
-                    <textarea class="b-form-review__textarea"
+                    <textarea class="b-form-review__textarea js-small-input-eight"
                               name="UF_TEXT"
                               required="required"
-                              placeholder="Оставьте ваш отзыв:" minlength="8" maxlength="1000"></textarea>
+                              placeholder="Оставьте ваш отзыв:"
+                              minlength="8"
+                              maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
                 <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
