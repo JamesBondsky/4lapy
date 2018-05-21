@@ -40,7 +40,7 @@ $aMenuLinks = [
         '/personal/referral/',
         [],
         [],
-        "\\in_array(\$optId, \$USER->GetUserGroupArray())"
+        "\\in_array(\$GLOBALS['optId'], \$USER->GetUserGroupArray())"
     ],
     [
         'Подписка на доставку',
