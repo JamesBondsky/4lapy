@@ -117,7 +117,7 @@ if ($orderSubscribe) {
                     } else {
                         ?>
                         <span class="b-accordion-order-item__number-order">
-                            <?= ('№ ' . $order->getId() . ' от ' . $order->getFormatedDateInsert()) ?>
+                            <?= ('№ ' . ($order->isManzana() ? $order->getManzanaId() : $order->getId()) . ' от ' . $order->getFormatedDateInsert()) ?>
                         </span>
                         <?php
                     }
