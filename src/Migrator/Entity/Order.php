@@ -86,7 +86,7 @@ class Order extends AbstractEntity
 
     /**
      * @param string $primary
-     * @param array  $data
+     * @param array $data
      *
      * @return AddResult
      *
@@ -130,7 +130,7 @@ class Order extends AbstractEntity
 
     /**
      * @param string $primary
-     * @param array  $data
+     * @param array $data
      *
      * @return UpdateResult
      *
@@ -208,7 +208,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array     $rawData
+     * @param array $rawData
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -241,7 +241,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array     $rawBasketList
+     * @param array $rawBasketList
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -302,7 +302,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array     $properties
+     * @param array $properties
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -314,12 +314,11 @@ class Order extends AbstractEntity
     protected function addPropertiesToOrder(array $properties, SaleOrder $order): SaleOrder
     {
         $propertyCollection = $order->getPropertyCollection();
-        $propertyCollection->setValuesFromPost($this->preparePropertiesData($properties['PROPERTY_VALUES'] ?? []), []);
-        $propertyCollection->createItem([
-            'NAME'  => 'Заказ со старого сайта',
-            'CODE'  => 'IS_OLD_SITE_ORDER',
-            'VALUE' => 'Y',
-        ]);
+        $properties = $this->preparePropertiesData($properties['PROPERTY_VALUES'] ?? []);
+
+        foreach ($propertyCollection as $property) {
+            $property->setValue($properties[$property->getField('ORDER_PROPS_ID')]);
+        }
 
         return $order;
     }
@@ -327,7 +326,7 @@ class Order extends AbstractEntity
     /**
      * На данный момент мы умеем работать только с простыми службами доставки
      *
-     * @param array     $data
+     * @param array $data
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -353,13 +352,13 @@ class Order extends AbstractEntity
          * @var Shipment $shipment
          */
         $fields = [
-            'DELIVERY_ID'           => $deliveryId,
-            'DELIVERY_NAME'         => $service->getName(),
-            'CURRENCY'              => $data['CURRENCY'],
-            'PRICE_DELIVERY'        => $data['PRICE_DELIVERY'],
-            'BASE_PRICE_DELIVERY'   => $data['PRICE_DELIVERY'],
+            'DELIVERY_ID' => $deliveryId,
+            'DELIVERY_NAME' => $service->getName(),
+            'CURRENCY' => $data['CURRENCY'],
+            'PRICE_DELIVERY' => $data['PRICE_DELIVERY'],
+            'BASE_PRICE_DELIVERY' => $data['PRICE_DELIVERY'],
             'CUSTOM_PRICE_DELIVERY' => 'Y',
-            'TRACKING_NUMBER'       => $data['TRACKING_NUMBER'],
+            'TRACKING_NUMBER' => $data['TRACKING_NUMBER'],
         ];
 
         if ($shipmentCollection->count() < 2) {
@@ -387,7 +386,7 @@ class Order extends AbstractEntity
     }
 
     /**
-     * @param array     $data
+     * @param array $data
      * @param SaleOrder $order
      *
      * @return SaleOrder
@@ -411,9 +410,9 @@ class Order extends AbstractEntity
         $item = $paymentCollection->count() < 1 ? $paymentCollection->createItem() : $paymentCollection[0];
 
         $item->setFields([
-            'SUM'             => $order->getPrice() + $order->getDeliveryPrice(),
+            'SUM' => $order->getPrice() + $order->getDeliveryPrice(),
             'PAY_SYSTEM_NAME' => $service->getField('NAME'),
-            'PAY_SYSTEM_ID'   => $data['PAY_SYSTEM_ID'],
+            'PAY_SYSTEM_ID' => $data['PAY_SYSTEM_ID'],
         ]);
 
         $item->setPaid($data['PAYED']);
@@ -474,7 +473,7 @@ class Order extends AbstractEntity
             return \in_array($key, $fields, true);
         };
 
-        $data = array_filter($data, $filter, ARRAY_FILTER_USE_KEY);
+        $data = \array_filter($data, $filter, ARRAY_FILTER_USE_KEY);
         $data['CUSTOM_PRICE'] = 'Y';
 
         return $data;
@@ -487,7 +486,21 @@ class Order extends AbstractEntity
      */
     protected function preparePropertiesData(array $data): array
     {
-        array_walk($data,
+        /**
+         * Магия - 998 и 999 - маппинг для свойств "Старый заказ" и "Экспортировано в САП".
+         * Ниже - 25 - ID свойства "Интервал доставки"
+         * После миграции не потребуется, так что...
+         */
+        $data[] = [
+            'ORDER_PROPS_ID' => '998',
+            'VALUE' => 'Y'
+        ];
+        $data[] = [
+            'ORDER_PROPS_ID' => '999',
+            'VALUE' => 'Y'
+        ];
+
+        \array_walk($data,
             function (&$rawProperty) {
                 $rawProperty['ORDER_PROPS_ID'] = $this->propertyMap[$rawProperty['ORDER_PROPS_ID']];
             });
@@ -495,7 +508,9 @@ class Order extends AbstractEntity
         $data = \array_combine(\array_column($data, 'ORDER_PROPS_ID'), \array_column($data, 'VALUE'));
         unset($data[null]);
 
-        $data[13] = $this->getDeliveryInterval($data[13] ?? '');
+        if ($data[25]) {
+            $data[25] = $this->getDeliveryInterval($data[25] ?? '');
+        }
 
         return $data;
     }
