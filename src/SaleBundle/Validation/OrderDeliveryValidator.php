@@ -128,12 +128,6 @@ class OrderDeliveryValidator extends ConstraintValidator
             return;
         }
 
-        if ($entity->isSplit() && !$this->orderStorageService->canSplitOrder($delivery)) {
-            $this->context->addViolation($constraint->orderSplitMessage);
-
-            return;
-        }
-
         /**
          * Если выбрана курьерская доставка, проверим, что выбрана дата доставки и интервал
          * Если выбран самовывоз, проверим, что выбран магазин или терминал DPD
@@ -141,6 +135,12 @@ class OrderDeliveryValidator extends ConstraintValidator
         if ($this->deliveryService->isDelivery($delivery)) {
             /** @var DeliveryResultInterface $delivery */
             $checkDate($entity->getDeliveryDate(), $entity->getDeliveryInterval(), $delivery);
+
+            if ($entity->isSplit() && !$this->orderStorageService->canSplitOrder($delivery)) {
+                $this->context->addViolation($constraint->orderSplitMessage);
+                return;
+            }
+
             if ($entity->isSplit()) {
                 $checkDate($entity->getSecondDeliveryDate(), $entity->getSecondDeliveryInterval(), $delivery);
             }
@@ -165,6 +165,13 @@ class OrderDeliveryValidator extends ConstraintValidator
 
                 if (!$delivery->setSelectedShop($selectedStore)->isSuccess()) {
                     $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
+                    return;
+                }
+
+                if ($entity->isSplit() &&
+                    !($this->orderStorageService->canSplitOrder($delivery) || $this->orderStorageService->canGetPartial($delivery))
+                 ) {
+                    $this->context->addViolation($constraint->orderSplitMessage);
                     return;
                 }
             } catch (DeliveryNotFoundException $e) {

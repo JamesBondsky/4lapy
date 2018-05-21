@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -23,6 +24,13 @@ class PickupResult extends BaseResult implements PickupResultInterface
     protected function doCalculateDeliveryDate(): void
     {
         parent::doCalculateDeliveryDate();
+        /**
+         * Если склад является магазином, то учитываем его график работы
+         */
+        if ($this->selectedStore && $this->selectedStore->isShop()) {
+            $this->calculateWithStoreSchedule($this->deliveryDate, $this->selectedStore);
+        }
+
         if ((null !== $this->fullstockResult) && !$this->stockResult->getUnavailable()->isEmpty()) {
             $this->addError(new Error('Присутствуют товары не в наличии'));
         }
@@ -37,6 +45,32 @@ class PickupResult extends BaseResult implements PickupResultInterface
             $this->setPeriodFrom($hours >= 1 ? $hours : 1);
             $this->setPeriodType(self::PERIOD_TYPE_HOUR);
         }
+    }
+
+    /**
+     * @param Store                 $store
+     * @param StockResultCollection $stockResult
+     *
+     * @throws ApplicationCreateException
+     * @throws StoreNotFoundException
+     * @return \DateTime
+     */
+    protected function getStoreShipmentDate(Store $store, StockResultCollection $stockResult): \DateTime
+    {
+        $date = parent::getStoreShipmentDate($store, $stockResult);
+        if ($store->isShop()) {
+            /**
+             * Добавляем "срок поставки" к дате доставки
+             * (он должен быть не менее 1 дня)
+             */
+            $modifier = $store->getDeliveryTime();
+            if ($store->getDeliveryTime() < 1) {
+                $modifier = 1;
+            }
+            $date->modify(sprintf('+%s days', $modifier));
+        }
+
+        return $date;
     }
 
     /**

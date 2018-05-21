@@ -39,11 +39,15 @@ use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
+use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
@@ -724,6 +728,21 @@ class OrderService implements LoggerAwareInterface
             $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
         );
 
+        if (!$user->getDiscountCardNumber() && !$storage->getDiscountCardNumber()) {
+            try {
+                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+                if (($card = $contact->getCards()->first()) instanceof Card) {
+                    $storage->setDiscountCardNumber($card->cardNumber);
+                }
+            } catch (WrongPhoneNumberException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+            } catch (ManzanaServiceException $e) {
+                $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
+                    'phone' => $storage->getPhone()
+                ]);
+            }
+        }
+
         $this->setOrderPropertyByCode(
             $order,
             'DISCOUNT_CARD',
@@ -866,7 +885,9 @@ class OrderService implements LoggerAwareInterface
     public function splitOrder(OrderStorage $storage): array
     {
         $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
-        if (!$this->orderStorageService->canSplitOrder($delivery)) {
+        if (!$this->orderStorageService->canSplitOrder($delivery) &&
+            !$this->orderStorageService->canGetPartial($delivery)
+        ) {
             throw new OrderSplitException('Cannot split order');
         }
 
