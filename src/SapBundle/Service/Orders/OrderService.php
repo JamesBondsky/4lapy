@@ -430,7 +430,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
             ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($deliveryAddress)
-            ->setDeliveryAddressOrPoint($deliveryAddress->__toString() . ($shopCode? ', ' . $shopCode : ''))
+            ->setDeliveryAddressOrPoint($deliveryAddress->__toString())
             ->setContractorCode($deliveryTypeCode === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
 
         if ($deliveryDate) {
