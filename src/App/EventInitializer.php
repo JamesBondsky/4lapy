@@ -17,6 +17,7 @@ use FourPaws\UserBundle\EventController\Event as UserEvent;
 use FourPaws\UserProps\Event as UserPropLocationEvent;
 use FourPaws\PersonalBundle\EventController\Event as PersonalEvent;
 use FourPaws\StoreBundle\EventController\Event as StoreEvent;
+use FourPaws\AppBundle\EventController\Event as MainEvents;
 use Generator;
 use ReflectionException;
 use RuntimeException;
@@ -44,7 +45,8 @@ final class EventInitializer
         CatalogEvent::class,
         PersonalEvent::class,
         StoreEvent::class,
-        LocationEvent::class
+        LocationEvent::class,
+        MainEvents::class
     ];
 
     /**
