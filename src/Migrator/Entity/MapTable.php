@@ -167,7 +167,7 @@ class MapTable extends DataManager
                                     'select' => ['EXTERNAL_ID'],
                                 ])->fetchAll();
         
-        return \rray_column($result, 'EXTERNAL_ID');
+        return \array_column($result, 'EXTERNAL_ID');
     }
     
     /**
