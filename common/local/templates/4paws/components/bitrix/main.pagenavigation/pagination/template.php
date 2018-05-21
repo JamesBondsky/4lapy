@@ -23,7 +23,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
 
 <div class="b-pagination">
     <ul class="b-pagination__list">
-        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === 1 ? '' : 'b-pagination__item--disabled'; ?>
+        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === 1 ? 'b-pagination__item--disabled' : ''; ?>
         <li class="b-pagination__item b-pagination__item--prev <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] > 1) { ?>
                 <a class="b-pagination__link<?= $class ?>"
@@ -39,7 +39,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         </li>
         <?php $page = $arResult['START_PAGE'];
         while ($page <= $arResult['END_PAGE']):
-            $url = $page > 2 ? htmlspecialcharsbx($component->replaceUrlTemplate($page)) : $arResult['URL'];?>
+            $url = $page >= 2 ? htmlspecialcharsbx($component->replaceUrlTemplate($page)) : $arResult['URL'];?>
             <li class="b-pagination__item <?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $arResult['HIDDEN'][$page] ?? '' ?>">
                 <a class="b-pagination__link<?= $class ?> <?= $page === (int)$arResult['CURRENT_PAGE'] ? 'active' : '' ?>"
                    href="<?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $url ?>"
@@ -57,7 +57,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
             }
             $page++;
         endwhile; ?>
-        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === (int)$arResult['END_PAGE'] ? '' : 'b-pagination__item--disabled'; ?>
+        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === (int)$arResult['END_PAGE'] ? 'b-pagination__item--disabled' : ''; ?>
         <li class="b-pagination__item b-pagination__item--next <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] < (int)$arResult['END_PAGE']) { ?>
                 <a class="b-pagination__link<?= $class ?>"
