@@ -168,7 +168,7 @@ if (null !== $delivery) {
         <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
             <div class="two-deliveries__block<?= !$deliveryIsSplit ? '' : ' active' ?>">
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
-                    <span class="js-mobile-title-order">Заказ №1: <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
+                    <span class="js-mobile-title-order">Заказ №1: <?= $deliveryResult1Quantity ?> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
                     сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price) ?>
                 </h4>
@@ -197,7 +197,7 @@ if (null !== $delivery) {
                 </div>
 
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
-                    <span class="js-mobile-title-order">Заказ №2: <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
+                    <span class="js-mobile-title-order">Заказ №2: <?= $deliveryResult2Quantity ?> <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult2Weight, true) ?>) на
                     сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price) ?>
                 </h4>
