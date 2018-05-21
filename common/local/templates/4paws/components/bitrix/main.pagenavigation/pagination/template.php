@@ -23,7 +23,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
 
 <div class="b-pagination">
     <ul class="b-pagination__list">
-        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === 1 ? '' : 'b-pagination__item--disabled'; ?>
+        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === 1 ? 'b-pagination__item--disabled' : ''; ?>
         <li class="b-pagination__item b-pagination__item--prev <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] > 1) { ?>
                 <a class="b-pagination__link<?= $class ?>"
@@ -57,7 +57,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
             }
             $page++;
         endwhile; ?>
-        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === (int)$arResult['END_PAGE'] ? '' : 'b-pagination__item--disabled'; ?>
+        <?php $disabled = (int)$arResult['CURRENT_PAGE'] === (int)$arResult['END_PAGE'] ? 'b-pagination__item--disabled' : ''; ?>
         <li class="b-pagination__item b-pagination__item--next <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] < (int)$arResult['END_PAGE']) { ?>
                 <a class="b-pagination__link<?= $class ?>"
