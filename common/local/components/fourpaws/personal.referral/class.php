@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\GroupTable;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
@@ -118,8 +119,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
         try {
             $curUser = $this->currentUserProvider->getCurrentUser();
-            /** @todo используется ID переделать на код группы рефералов */
-            if (!\in_array(UserGroup::OPT_ID, $this->currentUserProvider->getUserGroups(), true)) {
+            $optId = (int)GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            if($optId === 0){
+                $optId = UserGroup::OPT_ID;
+            }
+            if (!\in_array($optId, $this->currentUserProvider->getUserGroups(), true)) {
                 LocalRedirect('/personal');
             }
         } catch (NotAuthorizedException $e) {
