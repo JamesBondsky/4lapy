@@ -549,6 +549,9 @@ class OrderService
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
+        /** ставим account_number = id чека с обрезкой в 100 символов на всякий случай */
+        $bitrixOrder->setFieldNoDemand('ACCOUNT_NUMBER', substr($order->getManzanaId(), 0, 100));
+
         /** корзина */
         $orderBasket = Basket::create(SITE_ID);
         /** @var OrderItem $item */
