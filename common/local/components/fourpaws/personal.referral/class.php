@@ -19,6 +19,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\Enum\UserGroup;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
@@ -35,8 +36,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 {
-    protected static $accessUserGroup = 30;
-
     /**
      * @var ReferralService
      */
@@ -119,7 +118,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
         try {
             $curUser = $this->currentUserProvider->getCurrentUser();
-            if (!\in_array((int)static::$accessUserGroup, $this->currentUserProvider->getUserGroups(), true)) {
+            /** @todo используется ID переделать на код группы рефералов */
+            if (!\in_array(UserGroup::OPT_ID, $this->currentUserProvider->getUserGroups(), true)) {
                 LocalRedirect('/personal');
             }
         } catch (NotAuthorizedException $e) {

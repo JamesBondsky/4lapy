@@ -3,6 +3,7 @@
 /*
  * @copyright Copyright (c) ADV/web-engineering co
  */
+/** @todo используется ID переделать на код группы рефералов */
 
 $aMenuLinks = [
     [
@@ -30,7 +31,7 @@ $aMenuLinks = [
         '/personal/referral/',
         [],
         [],
-        "\\in_array(30, \$USER->GetUserGroupArray())"
+        "\\in_array(\\FourPaws\\Enum\\UserGroup::OPT_ID, \$USER->GetUserGroupArray())"
     ],
     [
         'Подписка на доставку',
