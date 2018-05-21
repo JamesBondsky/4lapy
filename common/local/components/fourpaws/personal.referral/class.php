@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\GroupTable;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
@@ -19,6 +20,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\Enum\UserGroup;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
@@ -35,8 +37,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 {
-    protected static $accessUserGroup = 30;
-
     /**
      * @var ReferralService
      */
@@ -119,7 +119,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
         try {
             $curUser = $this->currentUserProvider->getCurrentUser();
-            if (!\in_array((int)static::$accessUserGroup, $this->currentUserProvider->getUserGroups(), true)) {
+            $optId = (int)GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            if($optId === 0){
+                $optId = UserGroup::OPT_ID;
+            }
+            if (!\in_array($optId, $this->currentUserProvider->getUserGroups(), true)) {
                 LocalRedirect('/personal');
             }
         } catch (NotAuthorizedException $e) {
