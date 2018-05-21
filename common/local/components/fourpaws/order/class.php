@@ -339,6 +339,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
                 ? null
                 : (clone $pickup)->setStockResult($available);
+
+            $GLOBALS['AZAZA'] = true;
+
             $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderStorageService->canGetPartial($pickup);
             $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderStorageService->canSplitOrder($pickup);
             $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;

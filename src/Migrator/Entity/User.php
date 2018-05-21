@@ -119,7 +119,7 @@ class User extends AbstractEntity
      *
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function setInternalKeys(array $data, string $internal, string $entity)
+    public function setInternalKeys(array $data, string $internal, string $entity): void
     {
         if ($data['groups']) {
             $groups = MapTable::getInternalIdListByExternalIdList($data['groups'], $entity);
