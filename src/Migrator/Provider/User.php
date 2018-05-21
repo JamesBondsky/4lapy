@@ -2,7 +2,9 @@
 
 namespace FourPaws\Migrator\Provider;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\UserTable;
+use RuntimeException;
 
 /**
  * Class User
@@ -63,6 +65,9 @@ class User extends ProviderAbstract
      * @param array $data
      *
      * @return array
+     *
+     * @throws RuntimeException
+     * @throws ArgumentException
      */
     public function prepareData(array $data): array
     {
@@ -90,7 +95,7 @@ class User extends ProviderAbstract
      */
     public function isLoginPhone(string $phone): bool
     {
-        return (strlen(preg_replace('~\D~', '', $phone)) === strlen($phone)) && strlen($phone) >= 10;
+        return (\strlen(\preg_replace('~\D~', '', $phone)) === \strlen($phone)) && \strlen($phone) >= 10;
     }
 
     /**
@@ -111,10 +116,10 @@ class User extends ProviderAbstract
     public function normalizeEmail(string $email): string
     {
         /** Пусть сами разбираются с дублями
-        $emailParts = explode('@', $email);
-        $emailParts[0] = str_replace('.', '', $emailParts[0]);
-
-        return implode('@', $emailParts); */
+         * $emailParts = explode('@', $email);
+         * $emailParts[0] = str_replace('.', '', $emailParts[0]);
+         *
+         * return implode('@', $emailParts); */
 
         return $email;
     }
