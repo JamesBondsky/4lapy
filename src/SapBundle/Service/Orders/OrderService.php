@@ -405,19 +405,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             [$deliveryTypeCode, $contractorDeliveryTypeCode] = \explode('_', $deliveryTypeCode);
         }
 
-        $deliveryPoint = '';
-
-        $shopCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
-        $terminalCode = $this->getPropertyValueByCode($order, 'DPD_TERMINAL_CODE');
-
-        if ($shopCode) {
-            $deliveryPoint = $shopCode;
-        }
-
-        if ($terminalCode) {
-            $deliveryPoint = $terminalCode;
-        }
-
         try {
             $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode(
                 $order,
@@ -435,7 +422,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
-        $deliveryAddress = $this->getDeliveryAddress($order, $deliveryPoint);
+        $deliveryAddress = $this->getDeliveryAddress($order);
 
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
@@ -443,7 +430,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
             ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($deliveryAddress)
-            ->setDeliveryAddressOrPoint($deliveryAddress->__toString())
+            ->setDeliveryAddressOrPoint($deliveryAddress->__toString() . ($shopCode? ', ' . $shopCode : ''))
             ->setContractorCode($deliveryTypeCode === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
 
         if ($deliveryDate) {
@@ -496,18 +483,18 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param Order $order
-     * @param string $point
      *
      * @return DeliveryAddress|OutDeliveryAddress
      * @throws Exception
      */
-    private function getDeliveryAddress(Order $order, string $point = '')
+    private function getDeliveryAddress(Order $order)
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
         $regionCode = $this->locationService->getRegionCode($city);
         $regionCode = \preg_match('~\D~', '', $regionCode);
 
         return (new OutDeliveryAddress())
+            ->setDeliveryPlaceCode($this->getPropertyValueByCode($order,'DELIVERY_PLACE_CODE'))
             ->setRegionCode($regionCode)
             ->setPostCode('')
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
@@ -519,7 +506,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setOwnerShip('')
             ->setFloor($this->getPropertyValueByCode($order, 'FLOOR'))
             ->setRoomNumber($this->getPropertyValueByCode($order, 'APARTMENT'))
-            ->setDeliveryPointCode($point);
+            ->setDeliveryPointCode($this->getPropertyValueByCode($order, 'DPD_TERMINAL_CODE'));
     }
 
     /**
