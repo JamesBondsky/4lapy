@@ -335,13 +335,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 if (!$stockResult->getDelayed()->isEmpty()) {
                     $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
                 }
-
-                /**
-                 * Если склад является магазином, то учитываем его график работы
-                 */
-                if ($this->selectedStore->isShop()) {
-                    $this->calculateWithStoreSchedule($date, $this->selectedStore);
-                }
             }
         }
 
@@ -441,18 +434,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                      */
                     $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
                 }
-            }
-
-            if ($store->isShop()) {
-                /**
-                 * Добавляем "срок поставки" к дате доставки
-                 * (он должен быть не менее 1 дня)
-                 */
-                $modifier = $store->getDeliveryTime();
-                if ($store->getDeliveryTime() < 1) {
-                    $modifier = 1;
-                }
-                $date->modify(sprintf('+%s days', $modifier));
             }
         }
 
