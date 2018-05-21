@@ -115,9 +115,14 @@ if ($orderSubscribe) {
                         </span>
                         <?php
                     } else {
-                        ?>
+                        $orderNumber = 0;
+                        if($order->isManzana()){
+                            $orderNumber = $order->getManzanaId();
+                        } else {
+                            $orderNumber = !empty($order->getAccountNumber()) ? $order->getAccountNumber() : $order->getId();
+                        }?>
                         <span class="b-accordion-order-item__number-order">
-                            <?= ('№ ' . $order->getId() . ' от ' . $order->getFormatedDateInsert()) ?>
+                            <?= ('№ ' . $orderNumber . ' от ' . $order->getFormatedDateInsert()) ?>
                         </span>
                         <?php
                     }

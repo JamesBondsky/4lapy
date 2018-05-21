@@ -3,7 +3,6 @@
 /*
  * @copyright Copyright (c) ADV/web-engineering co
  */
-/** @todo используется ID переделать на код группы рефералов */
 
 use Bitrix\Main\GroupTable;
 use FourPaws\Enum\UserGroup;
