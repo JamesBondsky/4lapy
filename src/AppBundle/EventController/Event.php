@@ -47,8 +47,8 @@ class Event implements ServiceHandlerInterface
         /** исправление буфера вывода - доп обертка - дикая дикость - но проблема в прологе common/bitrix/modules/main/classes/general/main.php - стркои 3420-3432
          * при нахождении более лучшего варианта выпилить
          */
-        self::initHandler('OnPageStart', [static::class, 'startBuffer'], 'main');
-        self::initHandler('OnAfterEpilog', [static::class, 'endBuffer'], 'main');
+//        self::initHandler('OnPageStart', [static::class, 'startBuffer'], 'main');
+//        self::initHandler('OnAfterEpilog', [static::class, 'endBuffer'], 'main');
     }
 
     /**

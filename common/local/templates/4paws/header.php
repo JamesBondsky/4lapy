@@ -26,8 +26,18 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
         window.js_static = '/static/build/';
         window._global = {};
     </script>
-    <?php $APPLICATION->ShowHead(); ?>
-    <title><?php $APPLICATION->ShowTitle() ?></title>
+    <?php
+//    $APPLICATION->ShowHead();
+    $bXhtmlStyle = true;
+    echo '<meta http-equiv="Content-Type" content="text/html; charset='.LANG_CHARSET.'"'.($bXhtmlStyle? ' /':'').'>'."\n";
+//    $APPLICATION->ShowMeta("robots", false, $bXhtmlStyle);
+//    $APPLICATION->ShowMeta("keywords", false, $bXhtmlStyle);
+//    $APPLICATION->ShowMeta("description", false, $bXhtmlStyle);
+//    $APPLICATION->ShowLink("canonical", null, $bXhtmlStyle);
+    $APPLICATION->ShowCSS(true, $bXhtmlStyle);
+    $APPLICATION->ShowHeadStrings();
+    $APPLICATION->ShowHeadScripts();?>
+    <title><?php $APPLICATION->ShowTitle(false) ?></title>
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
     Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
@@ -149,19 +159,19 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
-        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
-            'b-container b-container--news') ?>">
-            <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
+        <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
+            'b-container b-container--news')*/ ?>">
+            <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news')*/ ?>">
                 <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                 <?php
                 }
 
                 if ($template->hasHeaderDetailPageContainer()) {
                     ?>
-                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
-                        'b-container b-container--news-detail') ?>">
-                        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
-                            'b-detail-page') ?>">
+                    <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
+                        'b-container b-container--news-detail')*/ ?>">
+                        <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
+                            'b-detail-page')*/ ?>">
                             <?php
                             $APPLICATION->IncludeComponent('bitrix:breadcrumb',
                                 'breadcrumb',
