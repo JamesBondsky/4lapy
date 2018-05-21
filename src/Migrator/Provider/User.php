@@ -110,9 +110,12 @@ class User extends ProviderAbstract
      */
     public function normalizeEmail(string $email): string
     {
+        /** Пусть сами разбираются с дублями
         $emailParts = explode('@', $email);
         $emailParts[0] = str_replace('.', '', $emailParts[0]);
 
-        return implode('@', $emailParts);
+        return implode('@', $emailParts); */
+
+        return $email;
     }
 }
