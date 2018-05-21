@@ -866,7 +866,9 @@ class OrderService implements LoggerAwareInterface
     public function splitOrder(OrderStorage $storage): array
     {
         $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
-        if (!$this->orderStorageService->canSplitOrder($delivery)) {
+        if (!$this->orderStorageService->canSplitOrder($delivery) &&
+            !$this->orderStorageService->canGetPartial($delivery)
+        ) {
             throw new OrderSplitException('Cannot split order');
         }
 

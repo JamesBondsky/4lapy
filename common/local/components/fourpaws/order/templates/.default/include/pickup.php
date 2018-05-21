@@ -129,7 +129,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
                     </li>
                 </ul>
             </div>
-            <div class="b-radio__addition-text js-excluded-parts" <?= $delayed->isEmpty() ? 'style="display:none"' : '' ?>>
+            <div class="b-radio__addition-text js-excluded-parts" <?= (!$canGetPartial) ? 'style="display:none"' : '' ?>>
                 <p>За исключением:</p>
                 <ol class="js-delay-items">
                     <?php /** @var StockResult $item */ ?>
