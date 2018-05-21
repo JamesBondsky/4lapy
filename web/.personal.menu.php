@@ -56,7 +56,7 @@ $aMenuLinks = [
         '/personal/referral/',
         [],
         ['icon' => 'icon-menu-referal'],
-        "\$GLOBALS['isAuth'] && \\in_array(!\$GLOBALS['optId'], \$USER->GetUserGroupArray()) && !\$GLOBALS['isAvatarAuth']",
+        "\$GLOBALS['isAuth'] && \\in_array((string)\$GLOBALS['optId'], \$USER->GetUserGroupArray(), true) && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Профиль',
