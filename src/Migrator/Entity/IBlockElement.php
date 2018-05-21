@@ -38,7 +38,7 @@ abstract class IBlockElement extends IBlock
         $cIBlockElement = new \CIBlockElement();
     
         foreach ($data['PROPERTY_VALUE'] as &$value) {
-            if (is_array($value) && $value['file'] === true) {
+            if (\is_array($value) && $value['file'] === true) {
                 unset($value['file']);
             }
         }
@@ -55,7 +55,7 @@ abstract class IBlockElement extends IBlock
         /**
          * @todo переписать к чертям
          */
-        if (is_array($data['CATALOG']) && $data['CATALOG']) {
+        if (\is_array($data['CATALOG']) && $data['CATALOG']) {
             Loader::includeModule('catalog');
             
             $price = $data['CATALOG']['PRICE'];
@@ -144,7 +144,7 @@ abstract class IBlockElement extends IBlock
         /**
          * @todo переписать к чертям
          */
-        if (is_array($data['CATALOG']) && $data['CATALOG']) {
+        if (\is_array($data['CATALOG']) && $data['CATALOG']) {
             Loader::includeModule('catalog');
             
             $price = $data['CATALOG']['PRICE'];
@@ -188,7 +188,7 @@ abstract class IBlockElement extends IBlock
      *
      * @throws ArgumentException
      */
-    public function setInternalKeys(array $data, string $internal, string $entity)
+    public function setInternalKeys(array $data, string $internal, string $entity): void
     {
         if ($data['sections']) {
             $sectionList = MapTable::getInternalIdListByExternalIdList($data['sections'], $entity);
@@ -262,7 +262,7 @@ abstract class IBlockElement extends IBlock
     protected function deleteFilesBeforeUpdate(string $primary, array &$data)
     {
         foreach ($data['PROPERTY_VALUES'] as $code => &$value) {
-            if (is_array($value) && $value['file']) {
+            if (\is_array($value) && $value['file']) {
                 \CIBlockElement::SetPropertyValuesEx($primary,
                                                      $this->getIblockId(),
                                                      [$code => ['VALUE' => ['del' => 'Y']]]);

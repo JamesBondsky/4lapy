@@ -16,6 +16,7 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\Internals\EntityCompatibility;
@@ -111,10 +112,10 @@ class Order extends AbstractEntity
             throw new AddException(sprintf('User with external id #%s is not found.', $data['USER_ID']));
         }
 
+
         $order = SaleOrder::create(SITE_ID, $userId, $data['CURRENCY']);
         $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
-        $order->doFinalAction();
         $result = $order->save();
 
         if (!$result->isSuccess()) {
@@ -147,6 +148,7 @@ class Order extends AbstractEntity
 
         $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
+
         $result = $order->save();
 
         if (!$result->isSuccess()) {
@@ -190,7 +192,13 @@ class Order extends AbstractEntity
      */
     protected function prepareOrderData(array $rawData): array
     {
-        $rawData = OrderCompatibility::convertDateFields($rawData, Utils::getOdrerDateFields());
+        $rawData = OrderCompatibility::convertDateFields($rawData,
+            \array_merge(
+                Utils::getOdrerDateFields(),
+                Utils::getPaymentDateFields(),
+                ['DATE_CANCELED' => 'datetime',]
+            )
+        );
 
         foreach ($rawData['PROPERTY_VALUES'] as $property) {
             if ((int)$property['ORDER_PROPS_ID'] === 42) {
@@ -502,6 +510,10 @@ class Order extends AbstractEntity
 
         \array_walk($data,
             function (&$rawProperty) {
+                if ($rawProperty['CODE'] === 'delivery_date') {
+                    $rawProperty['VALUE'] = DateTime::createFromText($rawProperty['VALUE']);
+                }
+
                 $rawProperty['ORDER_PROPS_ID'] = $this->propertyMap[$rawProperty['ORDER_PROPS_ID']];
             });
 
