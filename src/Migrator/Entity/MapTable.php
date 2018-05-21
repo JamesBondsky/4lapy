@@ -146,7 +146,7 @@ class MapTable extends DataManager
                                     'select' => ['INTERNAL_ID'],
                                 ])->fetchAll();
         
-        return array_column($result, 'INTERNAL_ID');
+        return \array_column($result, 'INTERNAL_ID');
     }
     
     /**
@@ -167,7 +167,7 @@ class MapTable extends DataManager
                                     'select' => ['EXTERNAL_ID'],
                                 ])->fetchAll();
         
-        return array_column($result, 'EXTERNAL_ID');
+        return \rray_column($result, 'EXTERNAL_ID');
     }
     
     /**
@@ -213,6 +213,6 @@ class MapTable extends DataManager
                                  ],
                              ])->fetchAll();
         
-        return array_combine(array_column($map, 'EXTERNAL_ID'), array_column($map, 'INTERNAL_ID'));
+        return \array_combine(\array_column($map, 'EXTERNAL_ID'), \array_column($map, 'INTERNAL_ID'));
     }
 }
