@@ -943,7 +943,11 @@ class OrderService implements LoggerAwareInterface
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $availableAmount,
-                        [],
+                        [
+                            'PRICE' => $basketItem->getPrice(),
+                            'BASE_PRICE' => $basketItem->getBasePrice(),
+                            'DISCOUNT' => $basketItem->getDiscountPrice()
+                        ],
                         false,
                         $basket1
                     );
@@ -952,7 +956,11 @@ class OrderService implements LoggerAwareInterface
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $delayedAmount,
-                        [],
+                        [
+                            'PRICE' => $basketItem->getPrice(),
+                            'BASE_PRICE' => $basketItem->getBasePrice(),
+                            'DISCOUNT' => $basketItem->getDiscountPrice()
+                        ],
                         false,
                         $basket2
                     );
