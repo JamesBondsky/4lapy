@@ -285,7 +285,7 @@ class CCommentsComponent extends \CBitrixComponent
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
-            if (!$addNotAuth) {
+            if (!$addNotAuth || ((!empty($data['EMAIL']) || !empty($data['PHONE'])) && !empty($data['PASSWORD']))) {
                 $userRepository = $this->userCurrentUserService->getUserRepository();
                 $filter = [
                     'LOGIC' => 'OR',
