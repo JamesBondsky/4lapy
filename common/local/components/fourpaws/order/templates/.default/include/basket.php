@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array                      $arResult
  * @var Basket                     $basket
  * @var CalculationResultInterface $selectedDelivery
+ * @var FourPawsOrderComponent     $component
  */
 
 use Bitrix\Sale\Basket;
@@ -16,36 +17,12 @@ use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-
-function getOrderItemData(StockResultCollection $stockResultCollection)
-{
-    $itemData = [];
-    $totalWeight = 0;
-    /** @var StockResult $item */
-    foreach ($stockResultCollection->getIterator() as $item) {
-        $weight = $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
-        $itemData[] = [
-            'name'     => $item->getOffer()->getName(),
-            'quantity' => $item->getAmount(),
-            'price'    => $item->getPrice() * $item->getAmount(),
-            'weight'   => $weight,
-        ];
-
-        $totalWeight += $weight;
-    }
-
-    return [
-        $itemData,
-        $totalWeight,
-    ];
-}
 
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
@@ -76,6 +53,8 @@ $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
 
+$isSplit = $storage->isSplit();
+
 if (null !== $pickup) {
     /** @var Store $selectedShop */
     $selectedShop = $arResult['SELECTED_SHOP'];
@@ -86,22 +65,35 @@ if (null !== $pickup) {
     if ($available->isEmpty()) {
         $available = $stockResult->getDelayed();
         $availableQuantity = $available->getAmount();
-        [$availableItems, $availableWeight] = getOrderItemData($available);
+        [$availableItems, $availableWeight] = $component->getOrderItemData($available);
         $availablePrice = $available->getPrice();
     } else {
         $availableQuantity = $available->getAmount();
-        [$availableItems, $availableWeight] = getOrderItemData($available);
+        [$availableItems, $availableWeight] = $component->getOrderItemData($available);
         $availablePrice = $available->getPrice();
 
         $delayed = $stockResult->getDelayed();
         $delayedQuantity = $delayed->getAmount();
-        [$delayedItems, $delayedWeight] = getOrderItemData($delayed);
+        [$delayedItems, $delayedWeight] = $component->getOrderItemData($delayed);
         $delayedPrice = $delayed->getPrice();
 
         if (!$delayed->isEmpty()) {
             $showDelayedItems = true;
         }
     }
+
+    $pickupCanSplit = $arResult['SPLIT_PICKUP_AVAILABLE'];
+    $pickupCanGetPartial = $arResult['PARTIAL_PICKUP_AVAILABLE'];
+
+    $pickupIsSplit = $isSplit && $pickupCanSplit;
+    $pickupIsPartial = $isSplit && $showDelayedItems;
+}
+
+$isPickup = $deliveryService->isPickup($selectedDelivery);
+if ($isPickup &&
+    !($pickupIsPartial || $pickupIsSplit) // @todo костыль пока не будет выводиться статичный чек для самовывоза
+) {
+    $showPickupContainer = false;
 }
 
 $productsDeclension = new Declension('товар', 'товара', 'товаров');
@@ -110,10 +102,10 @@ if (null !== $delivery) {
     $deliveryResult = $delivery->getStockResult();
     $deliveryOrderableResult = $deliveryResult->getOrderable();
     $deliveryOrderableQuantity = $deliveryResult->getAmount();
-    [$deliveryOrderableItems, $deliveryOrderableWeight] = getOrderItemData($deliveryResult);
+    [$deliveryOrderableItems, $deliveryOrderableWeight] = $component->getOrderItemData($deliveryResult);
     $deliveryOrderablePrice = $deliveryResult->getPrice();
 
-    $isSplit = $storage->isSplit() && !empty($arResult['SPLIT_RESULT']);
+    $deliveryIsSplit = $isSplit && !empty($arResult['SPLIT_RESULT']);
     if (!empty($arResult['SPLIT_RESULT'])) {
         /** @var StockResultCollection $deliveryResult1 */
         $deliveryResult1 = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getStockResult();
@@ -121,22 +113,25 @@ if (null !== $delivery) {
         $deliveryResult2 = $arResult['SPLIT_RESULT']['2']['DELIVERY']->getStockResult();
 
         $deliveryResult1Quantity = $deliveryResult1->getAmount();
-        [$deliveryResult1Items, $deliveryResult1Weight] = getOrderItemData($deliveryResult1);
+        [$deliveryResult1Items, $deliveryResult1Weight] = $component->getOrderItemData($deliveryResult1);
         $deliveryResult1Price = $deliveryResult1->getPrice();
 
         $deliveryResult2Quantity = $deliveryResult2->getAmount();
-        [$deliveryResult2Items, $deliveryResult2Weight] = getOrderItemData($deliveryResult2);
+        [$deliveryResult2Items, $deliveryResult2Weight] = $component->getOrderItemData($deliveryResult2);
         $deliveryResult2Price = $deliveryResult2->getPrice();
     }
 
     $deliveryUnavailableResult = $deliveryResult->getUnavailable();
     $deliveryUnavailableQuantity = $deliveryUnavailableResult->getAmount();
-    [$deliveryUnavailableItems, $deliveryUnavailableWeight] = getOrderItemData($deliveryUnavailableResult);
+    [$deliveryUnavailableItems, $deliveryUnavailableWeight] = $component->getOrderItemData($deliveryUnavailableResult);
     $deliveryUnavailablePrice = $deliveryUnavailableResult->getPrice();
+
+    // @todo костыль пока не будет выводиться статичный чек для самовывоза
+    $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
     ?>
     <?php /* отображается на 2 шаге, когда выбрана курьерская доставка */ ?>
     <aside class="b-order__list js-list-orders-static" <?= !$showPickupContainer ? '' : 'style="display:none"' ?>>
-        <div class="one-delivery__block<?= $isSplit ? '' : ' active' ?>">
+        <div class="one-delivery__block<?= $deliveryIsSplit ? '' : ' active' ?>">
             <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
                 <span class="js-mobile-title-order">Заказ: <?= $deliveryOrderableQuantity ?> <?= $productsDeclension->get($deliveryOrderableQuantity) ?>
                 </span>
@@ -171,9 +166,9 @@ if (null !== $delivery) {
             </div>
         </div>
         <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
-            <div class="two-deliveries__block<?= !$isSplit ? '' : ' active' ?>">
+            <div class="two-deliveries__block<?= !$deliveryIsSplit ? '' : ' active' ?>">
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
-                    <span class="js-mobile-title-order">Заказ №1: <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
+                    <span class="js-mobile-title-order">Заказ №1: <?= $deliveryResult1Quantity ?> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
                     сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price) ?>
                 </h4>
@@ -202,7 +197,7 @@ if (null !== $delivery) {
                 </div>
 
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
-                    <span class="js-mobile-title-order">Заказ №2: <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
+                    <span class="js-mobile-title-order">Заказ №2: <?= $deliveryResult2Quantity ?> <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult2Weight, true) ?>) на
                     сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price) ?>
                 </h4>
@@ -282,7 +277,7 @@ if (null !== $delivery) {
 <?php /* отображается на 2 шаге, когда выбран самовывоз */ ?>
 <aside class="b-order__list js-list-orders-cont" <?= $showPickupContainer ? '' : 'style="display:none"' ?>>
     <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
-        Заказ: <?= $availableQuantity ?> <?= $productsDeclension->get($availableQuantity) ?>
+        <?= $pickupCanSplit ? 'Заказ №1' : 'Заказ' ?>: <?= $availableQuantity ?> <?= $productsDeclension->get($availableQuantity) ?>
         (<?= WordHelper::showWeight($availableWeight, true) ?>) на сумму <?= CurrencyHelper::formatPrice(
             $availablePrice,
             false
@@ -312,8 +307,8 @@ if (null !== $delivery) {
         </ul>
     </div>
     <h4 class="b-title b-title--order-list js-parts-list-title"
-        <?= !$showDelayedItems ? 'style="display:none"' : '' ?>>
-        <span class="js-mobile-title-order">Останется в корзине: <?= $delayedQuantity ?></span>
+        <?= !($pickupCanSplit || $pickupCanGetPartial) ? 'style="display:none"' : '' ?>>
+        <span class="js-mobile-title-order"><?= $pickupCanSplit ? 'Заказ №2' : 'Останется в корзине' ?>: <?= $delayedQuantity ?></span>
         <?= $productsDeclension->get($delayedQuantity) ?> (<?= WordHelper::showWeight($delayedWeight, true) ?>) на
         сумму <?= CurrencyHelper::formatPrice(
             $delayedPrice,
@@ -321,7 +316,7 @@ if (null !== $delivery) {
         ) ?>
     </h4>
     <div class="b-order-list b-order-list--aside js-popup-mobile js-parts-list"
-        <?= !$showDelayedItems ? 'style="display:none"' : '' ?>>
+        <?= !($pickupCanSplit || $pickupCanGetPartial) ? 'style="display:none"' : '' ?>>
         <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
             заказе</a>
         <ul class="b-order-list__list js-order-list-block">

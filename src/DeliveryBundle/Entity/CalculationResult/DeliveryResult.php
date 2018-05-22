@@ -68,7 +68,9 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                     break;
                 }
 
-                $this->intervalOffset = $date->diff($defaultDate)->days;
+                $this->intervalOffset = (clone $date)->setTime(0,0,0,0)
+                    ->diff((clone $defaultDate)->setTime(0,0,0,0))
+                    ->days;
             }
         }
 

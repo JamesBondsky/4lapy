@@ -2,9 +2,14 @@
 
 namespace FourPaws\Migrator\Client;
 
+/**
+ * Class User
+ *
+ * @package FourPaws\Migrator\Client
+ */
 class User extends ClientAbstract
 {
-    const ENTITY_NAME = 'user';
+    public const ENTITY_NAME = 'user';
 
-    const API_PATH    = '/user/list/';
+    public const API_PATH    = '/user/list/';
 }

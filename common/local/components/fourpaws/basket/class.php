@@ -33,6 +33,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
@@ -102,6 +103,7 @@ class BasketComponent extends CBitrixComponent
      *
      * @return void
      *
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws SystemException
@@ -134,6 +136,10 @@ class BasketComponent extends CBitrixComponent
             if (null === $order = $basket->getOrder()) {
                 $order = Order::create(SITE_ID);
                 $order->setBasket($basket);
+                // но иногда он так просто не запускается
+                if (!$order->hasMeaningfulField()) {
+                    $order->doFinalAction(true);
+                }
             }
             // необходимо подгрузить подарки
             $this->offerCollection = $this->basketService->getOfferCollection(true);
@@ -379,7 +385,9 @@ class BasketComponent extends CBitrixComponent
         $page = '';
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
-        if (!$this->arParams['MINI_BASKET'] && !$basket->count()) {
+        /** @var Order $order */
+        $order = $basket->getOrder();
+        if (!$this->arParams['MINI_BASKET'] && !Manager::isOrderNotEmpty($order)) {
             $page = 'empty';
         }
         return $page;

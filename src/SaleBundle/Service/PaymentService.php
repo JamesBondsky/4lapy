@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use CUser;
 
@@ -28,10 +29,11 @@ class PaymentService
      * @todo переделать на DTO
      * @todo переделать на сериализацию
      *
-     * @param Order $order
+     * @param Order       $order
      * @param CUser|array $user
-     * @param int $taxSystem
+     * @param int         $taxSystem
      *
+     * @throws ObjectNotFoundException
      * @return array
      */
     public function getFiscalization(Order $order, $user, int $taxSystem): array
@@ -96,10 +98,11 @@ class PaymentService
             18 => 3,
         ];
 
-        $itemsCnt = 1;
+        $itemsCnt = 0;
         $arCheck = null;
         $itemMap = [];
 
+        $cartItems = [];
         /** @var \Bitrix\Sale\BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
             $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
@@ -112,8 +115,8 @@ class PaymentService
 
             $amount += $itemAmount * $basketItem->getQuantity(); //Для фискализации общая сумма берется путем суммирования округленных позиций.
 
-            $fiscal['orderBundle']['cartItems']['items'][] = [
-                'positionId' => $itemsCnt++,
+            $cartItems[] = [
+                'positionId' => ++$itemsCnt,
                 'name' => $basketItem->getField('NAME'),
                 'quantity' => [
                     'value' => $basketItem->getQuantity(),
@@ -130,8 +133,9 @@ class PaymentService
             $itemMap[(int)\preg_replace('~^(.*#)~', '', $basketItem->getField('PRODUCT_XML_ID'))] = $basketItem->getProductId();
         }
 
+        $delivery = null;
         if ($order->getDeliveryPrice() > 0) {
-            $fiscal['orderBundle']['cartItems']['items'][] = [
+            $delivery = [
                 'positionId' => $itemsCnt + 1,
                 'name' => Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE'),
                 'quantity' => [
@@ -145,9 +149,51 @@ class PaymentService
                     'taxType' => 0,
                 ],
             ];
+        }
 
+        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
+        if ($innerPayment && $innerPayment->isPaid()) {
+            $bonusSum = $innerPayment->getSum() * 100;
+            $diff = $amount - $bonusSum;
+
+            $correction = 0;
+            foreach ($cartItems as $i => $item) {
+                $cartItems[$i]['itemPrice'] = floor($item['itemPrice'] * ($diff / $amount));
+                $oldAmount = $cartItems[$i]['itemAmount'];
+                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
+                $correction += $oldAmount - $cartItems[$i]['itemAmount'];
+            }
+
+            /**
+             * распределяем погрешность по товарам
+             */
+            $correction = $bonusSum - $correction;
+            foreach ($cartItems as $i => $item) {
+                if ((int)$correction === 0) {
+                    break;
+                }
+                $quantity = $cartItems[$i]['quantity']['value'];
+
+                $oldAmount = $cartItems[$i]['itemAmount'];
+                $cartItems[$i]['itemPrice'] = floor(
+                    $item['itemAmount'] * ($item['itemAmount'] - $correction) / $item['itemAmount'] / $quantity
+                );
+                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
+                $correction -= $oldAmount - $cartItems[$i]['itemAmount'];
+            }
+
+            /** погрешность все равно может не стать равной 0  */
+            $amount += $correction;
+
+            $amount -= $bonusSum;
+        }
+
+        if ($delivery) {
+            $cartItems[] = $delivery;
             $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
         }
+
+        $fiscal['orderBundle']['cartItems']['items'] = $cartItems;
 
         return \compact('amount', 'fiscal', 'itemMap');
     }

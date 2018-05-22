@@ -85,7 +85,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected function prepareResult(array $city = [])
     {
-        if ($pickupDelivery = $this->getPickupDelivery()) {
+        if ($pickupDelivery = $this->getPickupResult()) {
             /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
             $router = Application::getInstance()->getContainer()->get('router');
             /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
@@ -110,11 +110,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     {
         $result = [];
 
-        if (!$pickupDelivery = $this->getPickupDelivery()) {
+        if (!$pickup = $this->getPickupResult()) {
             return $result;
         }
-
-        $canGetPartial = $this->orderStorageService->canGetPartial($pickupDelivery);
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
@@ -122,8 +120,8 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $avgGpsN = 0;
             $avgGpsS = 0;
 
-            $showTime = $this->deliveryService->isInnerPickup($pickupDelivery);
-            $bestShops = $pickupDelivery->getBestShops();
+            $showTime = $this->deliveryService->isInnerPickup($pickup);
+            $bestShops = $pickup->getBestShops();
             $metroList = $this->getMetroInfo($bestShops);
 
             if (!empty($params['filter'])) {
@@ -146,10 +144,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             /** @var Store $store */
             $shopCount = 0;
-            $isDpd = $this->deliveryService->isDpdPickup($pickupDelivery);
+            $isDpd = $this->deliveryService->isDpdPickup($pickup);
             $storage = clone $this->orderStorageService->getStorage();
             $storage->setDeliveryPlaceCode('');
-            $storage->setDeliveryId($pickupDelivery->getDeliveryId());
+            $storage->setDeliveryId($pickup->getDeliveryId());
             $payments = $this->orderStorageService->getAvailablePayments($storage, false, false);
             /** @var array $payment */
             $paymentCodeToName = [];
@@ -158,7 +156,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             }
 
             foreach ($bestShops as $store) {
-                $fullResult = (clone $pickupDelivery)->setSelectedShop($store);
+                $fullResult = (clone $pickup)->setSelectedShop($store);
                 [$available, $delayed] = $this->orderStorageService->splitStockResult($fullResult);
 
                 if (!$fullResult->isSuccess()) {
@@ -175,6 +173,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
 
+                $canGetPartial = $this->orderStorageService->canGetPartial($fullResult);
                 if ($isDpd) {
                     $orderType = !$delayed->isEmpty() ? 'delay' : 'full';
                     if (!$delayed->isEmpty()) {
@@ -187,6 +186,8 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         $orderType = 'full';
                     } elseif ($available->isEmpty()) {
                         $orderType = 'delay';
+                    } elseif (!$canGetPartial) {
+                        $orderType = 'split';
                     }
                 }
 
@@ -211,8 +212,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
                     ];
                 }
-
-
 
                 if ($canGetPartial) {
                     $price = $available->isEmpty() ?
@@ -327,7 +326,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     {
         $result = new StoreCollection();
 
-        $pickupDelivery = $this->getPickupDelivery();
+        $pickupDelivery = $this->getPickupResult();
         if ($pickupDelivery instanceof DpdPickupResult) {
             $result = $pickupDelivery->getTerminals();
         } elseif ($pickupDelivery) {
@@ -356,7 +355,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      */
-    protected function getPickupDelivery(): ?PickupResultInterface
+    protected function getPickupResult(): ?PickupResultInterface
     {
         $pickupDelivery = null;
         $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());

@@ -31,7 +31,7 @@ class D7EntityManager implements D7EntityManagerInterface
     /**
      * @var array
      */
-    private $select = [];
+    private $select = ['*'];
 
     /**
      * @var array

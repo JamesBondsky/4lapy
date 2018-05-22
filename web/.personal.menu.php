@@ -1,73 +1,89 @@
-<?
+<?php
+
+global $optId;
+
+use Bitrix\Main\GroupTable;
+use FourPaws\App\Application;
+use FourPaws\Enum\UserGroup;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+
+global $optId, $isAuth, $isAvatarAuth, $USER;
+$isAuth = $USER->IsAuthorized();
+$isAvatarAuth = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->isAvatarAuthorized();
+$optId = (int)GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+if ($optId === 0) {
+    $optId = UserGroup::OPT_ID;
+}
+
 $aMenuLinks = [
     [
         'Мои заказы',
         '/personal/orders/',
         [],
         ['icon' => 'icon-order'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Адреса доставки',
         '/personal/address/',
         [],
         ['icon' => 'icon-delivery-header'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Подписка на доставку',
         '/personal/subscribe/',
         [],
         ['icon' => 'icon-delivery-menu'],
-        "\$USER->IsAuthorized()",
+        "\$GLOBALS['isAuth']",
     ],
     [
         'Мои питомцы',
         '/personal/pets/',
         [],
         ['icon' => 'icon-pet'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Бонусы',
         '/personal/bonus/',
         [],
         ['icon' => 'icon-bonus'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Реферальная программа',
         '/personal/referral/',
         [],
         ['icon' => 'icon-menu-referal'],
-        "\$USER->IsAuthorized() && \\in_array(30, \$USER->GetUserGroupArray()) && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && \\in_array((string)\$GLOBALS['optId'], \$USER->GetUserGroupArray(), true) && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Профиль',
         '/personal/',
         [],
         ['icon' => 'icon-profile'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Топ 10 товаров',
         '/personal/top/',
         [],
         ['icon' => 'icon-empty-star'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Выход',
         '?logout=yes',
         [],
         ['icon' => 'icon-exit'],
-        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Вернуться',
         '/front-office/avatar/logout.php',
         [],
         ['icon' => 'icon-exit'],
-        "\$USER->IsAuthorized() && \FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$GLOBALS['isAuth'] && \$GLOBALS['isAvatarAuth']",
     ],
 ];

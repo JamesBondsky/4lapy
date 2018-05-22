@@ -16,7 +16,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
          data-phone="<?= $phone ?>"
          data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
-    <form class="b-registration__form js-form-validation js-registration-form js-ajax-form"
+    <form class="b-registration__form js-form-validation js-registration-form js-ajax-sms-form"
           id="reg-step3-form"
           data-url="/ajax/user/auth/login/"
           method="post">

@@ -10,6 +10,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\Enum\UserGroup;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
@@ -332,6 +333,15 @@ class User implements UserInterface
      * @Serializer\SkipWhenEmpty()
      */
     protected $esSubscribed = false;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_ADDRESS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $address = '';
 
     public function __construct()
     {
@@ -1281,7 +1291,7 @@ class User implements UserInterface
         $groups = $this->getGroups()->toArray();
         /** @var Group $group */
         foreach ($groups as $group) {
-            if($group->getCode() === 'opt'){
+            if ($group->getCode() === UserGroup::OPT_CODE) {
                 return true;
             }
         }
@@ -1302,5 +1312,21 @@ class User implements UserInterface
     public function setEsSubscribed(bool $esSubscribed): void
     {
         $this->esSubscribed = $esSubscribed;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAddress(): string
+    {
+        return $this->address ?? '';
+    }
+
+    /**
+     * @param string $address
+     */
+    public function setAddress(string $address): void
+    {
+        $this->address = $address;
     }
 }

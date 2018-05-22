@@ -405,19 +405,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             [$deliveryTypeCode, $contractorDeliveryTypeCode] = \explode('_', $deliveryTypeCode);
         }
 
-        $deliveryPoint = '';
-
-        $shopCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
-        $terminalCode = $this->getPropertyValueByCode($order, 'DPD_TERMINAL_CODE');
-
-        if ($shopCode) {
-            $deliveryPoint = $shopCode;
-        }
-
-        if ($terminalCode) {
-            $deliveryPoint = $terminalCode;
-        }
-
         try {
             $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode(
                 $order,
@@ -435,7 +422,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
-        $deliveryAddress = $this->getDeliveryAddress($order, $deliveryPoint);
+        $deliveryAddress = $this->getDeliveryAddress($order);
 
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
@@ -466,13 +453,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($order->getBasket() as $basketItem) {
-            $xmlId = $basketItem->getField('PRODUCT_XML_ID');
-
-            if (\strpos($xmlId, '#')) {
-                /** @noinspection ShortListSyntaxCanBeUsedInspection */
-                list(, $xmlId) = \explode('#', $xmlId);
-            }
-
             try {
                 $chargeBonus = $this->basketService->isItemWithBonusAwarding($basketItem, $order);
             } catch (InvalidArgumentException $e) {
@@ -481,7 +461,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             $offer = (new OrderOffer())
                 ->setPosition($position)
-                ->setOfferXmlId($xmlId)
+                ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
                 ->setUnitPrice($basketItem->getPrice())
                 ->setQuantity($basketItem->getQuantity())
                 /**
@@ -503,18 +483,18 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param Order $order
-     * @param string $point
      *
      * @return DeliveryAddress|OutDeliveryAddress
      * @throws Exception
      */
-    private function getDeliveryAddress(Order $order, string $point = '')
+    private function getDeliveryAddress(Order $order)
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
         $regionCode = $this->locationService->getRegionCode($city);
         $regionCode = \preg_match('~\D~', '', $regionCode);
 
         return (new OutDeliveryAddress())
+            ->setDeliveryPlaceCode($this->getPropertyValueByCode($order,'DELIVERY_PLACE_CODE'))
             ->setRegionCode($regionCode)
             ->setPostCode('')
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
@@ -526,7 +506,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setOwnerShip('')
             ->setFloor($this->getPropertyValueByCode($order, 'FLOOR'))
             ->setRoomNumber($this->getPropertyValueByCode($order, 'APARTMENT'))
-            ->setDeliveryPointCode($point);
+            ->setDeliveryPointCode($this->getPropertyValueByCode($order, 'DPD_TERMINAL_CODE'));
     }
 
     /**
@@ -748,11 +728,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
-            $article = \substr(
-                $basketItem->getField('PRODUCT_XML_ID'),
-                (\strpos($basketItem->getField('PRODUCT_XML_ID'), '#') + 1) ?: 0
-            );
-            $article = \ltrim($article, '0');
+            $article = \ltrim($this->basketService->getBasketItemXmlId($basketItem), '0');
 
             $externalItem = $externalItems->filter(
                 function ($item) use ($article) {

@@ -55,7 +55,7 @@ $nextUrl='/ajax/food_selection/show/step/required/';  ?>
 if($full_fields){ ?>
     <div class="b-quest b-quest--step-3 js-quest js-quest--step-3 js-block-norequired main-quest-block" data-step="3">
         <?php $required = false;
-        $nextUrl='/ajax/food_selection/show/step/not_required/';
+        $nextUrl='/ajax/catalog/product-info/';
         $nextStep=3;
 
         /** Особенности */

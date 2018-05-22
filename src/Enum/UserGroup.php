@@ -34,7 +34,7 @@ class UserGroup
     public const CONTROL_PANEL_USERS = 7;
 
     /** id лучше не юзать */
-    public const OPT_ID = 30;
-    public const OPT_CODE = 'opt';
+    public const OPT_ID = 32;
+    public const OPT_CODE = 'VIP';
 
 }

@@ -2,12 +2,19 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\StringField;
+use Bitrix\Main\SystemException;
 
+/**
+ * ClassMapTable
+ *
+ * @package FourPaws\Migrator\Entity
+ */
 class MapTable extends DataManager
 {
     /**
@@ -17,11 +24,12 @@ class MapTable extends DataManager
     {
         return 'adv_migrator_map';
     }
-    
+
     /**
      * @return array
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws SystemException
+     * @throws ArgumentException
      */
     public static function getMap() : array
     {
@@ -48,14 +56,15 @@ class MapTable extends DataManager
                                                   ['join_type' => 'left']),
         ];
     }
-    
+
     /**
      * @param string $external
      * @param string $entity
      *
      * @return bool
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws SystemException
+     * @throws ArgumentException
      */
     public static function isInternalEntityExists(string $external, string $entity) : bool
     {
@@ -68,43 +77,55 @@ class MapTable extends DataManager
                                  'select' => ['ID'],
                              ])->getSelectedRowsCount() === 1;
     }
-    
+
     /**
      * @param string $external
      * @param string $entity
      *
      * @return string
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws SystemException
+     * @throws ArgumentException
      */
     public static function getInternalIdByExternalId(string $external, string $entity) : string
     {
-        return (string)self::getList([
-                                         'filter' => [
-                                             'EXTERNAL_ID' => $external,
-                                             'ENTITY'      => $entity,
-                                         ],
-                                         'select' => ['INTERNAL_ID'],
-                                     ])->fetch()['INTERNAL_ID'];
+        /**
+         * @var array $result
+         */
+        $result = self::getList([
+            'filter' => [
+                'EXTERNAL_ID' => $external,
+                'ENTITY'      => $entity,
+            ],
+            'select' => ['INTERNAL_ID'],
+        ])->fetch();
+
+        return $result ? (string)$result['INTERNAL_ID'] : '';
     }
-    
+
     /**
      * @param string $internal
      * @param string $entity
      *
      * @return string
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws SystemException
+     * @throws ArgumentException
      */
     public static function getExternalIdByInternalId(string $internal, string $entity) : string
     {
-        return (string)self::getList([
-                                         'filter' => [
-                                             'INTERNAL_ID' => $internal,
-                                             'ENTITY'      => $entity,
-                                         ],
-                                         'select' => ['EXTERNAL_ID'],
-                                     ])->fetch()['EXTERNAL_ID'];
+        /**
+         * @var array $result
+         */
+        $result = self::getList([
+            'filter' => [
+                'INTERNAL_ID' => $internal,
+                'ENTITY'      => $entity,
+            ],
+            'select' => ['EXTERNAL_ID'],
+        ])->fetch();
+
+        return $result ? (string)$result['EXTERNAL_ID'] : '';
     }
     
     /**
@@ -113,7 +134,7 @@ class MapTable extends DataManager
      *
      * @return array
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public static function getInternalIdListByExternalIdList(array $external, string $entity) : array
     {
@@ -125,7 +146,7 @@ class MapTable extends DataManager
                                     'select' => ['INTERNAL_ID'],
                                 ])->fetchAll();
         
-        return array_column($result, 'INTERNAL_ID');
+        return \array_column($result, 'INTERNAL_ID');
     }
     
     /**
@@ -134,7 +155,7 @@ class MapTable extends DataManager
      *
      * @return array
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public static function getExternalListIdByInternalIdList(array $internal, string $entity) : array
     {
@@ -146,7 +167,7 @@ class MapTable extends DataManager
                                     'select' => ['EXTERNAL_ID'],
                                 ])->fetchAll();
         
-        return array_column($result, 'EXTERNAL_ID');
+        return \array_column($result, 'EXTERNAL_ID');
     }
     
     /**
@@ -180,7 +201,7 @@ class MapTable extends DataManager
      *
      * @return array
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public static function getFullMapByEntity(string $entity) : array
     {
@@ -192,6 +213,6 @@ class MapTable extends DataManager
                                  ],
                              ])->fetchAll();
         
-        return array_combine(array_column($map, 'EXTERNAL_ID'), array_column($map, 'INTERNAL_ID'));
+        return \array_combine(\array_column($map, 'EXTERNAL_ID'), \array_column($map, 'INTERNAL_ID'));
     }
 }

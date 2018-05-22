@@ -19,7 +19,7 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateProductException;
  */
 abstract class IBlockElement extends IBlock
 {
-    const PROPERTY_PREFIX = 'PROPERTY_';
+    public const PROPERTY_PREFIX = 'PROPERTY_';
     
     /**
      * @param string $primary
@@ -38,7 +38,7 @@ abstract class IBlockElement extends IBlock
         $cIBlockElement = new \CIBlockElement();
     
         foreach ($data['PROPERTY_VALUE'] as &$value) {
-            if (is_array($value) && $value['file'] === true) {
+            if (\is_array($value) && $value['file'] === true) {
                 unset($value['file']);
             }
         }
@@ -55,7 +55,7 @@ abstract class IBlockElement extends IBlock
         /**
          * @todo переписать к чертям
          */
-        if (is_array($data['CATALOG']) && $data['CATALOG']) {
+        if (\is_array($data['CATALOG']) && $data['CATALOG']) {
             Loader::includeModule('catalog');
             
             $price = $data['CATALOG']['PRICE'];
@@ -123,31 +123,33 @@ abstract class IBlockElement extends IBlock
         $cIBlockElement = new \CIBlockElement();
     
         $this->deleteFilesBeforeUpdate($primary, $data);
-    
-        foreach ($data['PROPERTY_VALUE'] as &$value) {
-            if (is_array($value) && $value['file'] === true) {
-                unset($value['file']);
-            }
+
+        foreach ($data['PROPERTY_VALUES'] as $code => $value) {
+            $cIBlockElement->SetPropertyValueCode($primary, $code, $value);
         }
-        
+
+        return new UpdateResult(true, $primary);
+
+        unset($data['PROPERTY_VALUES']);
+
         if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
             throw new UpdateException(sprintf('IBlock %s element #%s update error: %s',
                                               $this->getIblockId(),
                                               $primary,
                                               $cIBlockElement->LAST_ERROR));
         }
-        
+
         $this->setInternalKeys(['sections' => $data['SECTIONS']], $primary, $this->entity . '_section');
         
         /**
          * @todo переписать к чертям
          */
-        if (is_array($data['CATALOG']) && $data['CATALOG']) {
+        if (\is_array($data['CATALOG']) && $data['CATALOG']) {
             Loader::includeModule('catalog');
             
             $price = $data['CATALOG']['PRICE'];
             unset($data['CATALOG']['PRICE'], $data['CATALOG']['TIMESTAMP_X']);
-            
+
             foreach ($data['CATALOG'] as $k => $v) {
                 if (strpos($k, '_ORIG') !== false) {
                     unset($data['CATALOG'][$k]);
@@ -186,7 +188,7 @@ abstract class IBlockElement extends IBlock
      *
      * @throws ArgumentException
      */
-    public function setInternalKeys(array $data, string $internal, string $entity)
+    public function setInternalKeys(array $data, string $internal, string $entity): void
     {
         if ($data['sections']) {
             $sectionList = MapTable::getInternalIdListByExternalIdList($data['sections'], $entity);
@@ -260,7 +262,7 @@ abstract class IBlockElement extends IBlock
     protected function deleteFilesBeforeUpdate(string $primary, array &$data)
     {
         foreach ($data['PROPERTY_VALUES'] as $code => &$value) {
-            if (is_array($value) && $value['file']) {
+            if (\is_array($value) && $value['file']) {
                 \CIBlockElement::SetPropertyValuesEx($primary,
                                                      $this->getIblockId(),
                                                      [$code => ['VALUE' => ['del' => 'Y']]]);

@@ -20,20 +20,17 @@ class Client
     /**
      * API Url by default
      */
-    const DEFAULT_API_URL = 'http://sds.smstraffic.ru/smartdelivery-in/multi.php';
-
+    public const DEFAULT_API_URL = 'http://sds.smstraffic.ru/smartdelivery-in/multi.php';
     /**
      * Reserved API Url
      */
-    const RESERVE_API_URL = 'http://91.238.120.150/smartdelivery-in/multi.php';
-
+    public const RESERVE_API_URL = 'http://91.238.120.150/smartdelivery-in/multi.php';
     /**
      * Sms Traffic Login
      *
      * @var string
      */
     protected $login;
-
     /**
      * Sms Traffic Password
      *
@@ -44,11 +41,15 @@ class Client
     /**
      * Route
      *
-     * По умолчанию - сначала пытаемся отправить в вайбер, если в течение 90с сообщение не пришло, то отправляем в смс
+     * По умолчанию - смс
+     *
+     * Пример сложного роута:
+     *  viber(90)-sms
+     *  сначала пытаемся отправить в вайбер, если в течение 90с сообщение не пришло, то отправляем в смс
      *
      * @var string
      */
-    protected $route = 'viber(90)-sms';
+    protected $route = 'sms';
 
     /**
      * Message sender
@@ -170,7 +171,7 @@ class Client
      *
      * @return $this
      */
-    public function setApiUrl($apiUrl)
+    public function setApiUrl($apiUrl): self
     {
         $this->apiUrl = $apiUrl;
 
@@ -184,7 +185,7 @@ class Client
      *
      * @return $this
      */
-    public function setPreRequestCallback(callable $preRequestCallback)
+    public function setPreRequestCallback(callable $preRequestCallback): self
     {
         $this->preRequestCallback = $preRequestCallback;
 
@@ -198,7 +199,7 @@ class Client
      *
      * @return $this
      */
-    public function setPostRequestCallback(callable $postRequestCallback)
+    public function setPostRequestCallback(callable $postRequestCallback): self
     {
         $this->postRequestCallback = $postRequestCallback;
 

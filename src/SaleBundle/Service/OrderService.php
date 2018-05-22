@@ -39,11 +39,15 @@ use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
+use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
@@ -361,7 +365,8 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $order->setBasket($basket);
+        /** @noinspection PhpParamsInspection */
+        $order->setBasket($basket->getOrderableItems());
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
         }
@@ -480,6 +485,36 @@ class OrderService implements LoggerAwareInterface
         }
 
         /**
+         * Заполнение складов довоза товара для элементов корзины
+         */
+        $shipmentResults = $selectedDelivery->getShipmentResults();
+        $shipmentDays = ['DC01' => 0];
+        /** @var BasketItem $item */
+        foreach ($order->getBasket()->getOrderableItems() as $item) {
+            $shipmentPlaceCode = 'DC01';
+            /** @var DeliveryScheduleResult $deliveryResult */
+            if ($shipmentResults &&
+                ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
+            ) {
+                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
+                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
+                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
+                    $shipmentDays[$shipmentPlaceCode] = $days;
+                }
+            }
+
+            $this->basketService->setBasketItemPropertyValue(
+                $item,
+                'SHIPMENT_PLACE_CODE',
+                $shipmentPlaceCode
+            );
+        }
+        if (!empty($shipmentDays)) {
+            arsort($shipmentDays);
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
+        }
+
+        /**
          * Задание способов оплаты
          */
         if ($storage->getPaymentId()) {
@@ -580,16 +615,45 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        /** установка свойств для быстрого заказа и сброс ненужных свойств */
         if ($fastOrder) {
-            /** зануляем дату доставки и интервал - ибо не пользователь все выбирал а система */
-            $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
-            $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
-            $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
-            $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
-            $this->setOrderPropertyByCode($order, 'IS_FAST_ORDER', 'Y');
+            $fastOrderProperties = [
+                'NAME',
+                'EMAIL',
+                'PHONE',
+                'PHONE_ALT',
+                'CITY',
+                'CITY_CODE',
+                'COM_WAY',
+                'IS_FAST_ORDER'
+            ];
+
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                $value = $propertyValue->getValue();
+
+                if (!\in_array($code, $fastOrderProperties, true)) {
+                    $value = null;
+                } else {
+                    switch ($code) {
+                        case 'IS_FAST_ORDER':
+                            $value = 'Y';
+                            break;
+                        case 'CITY':
+                            $value = $selectedCity['NAME'];
+                            break;
+                        case 'CITY_CODE':
+                            $value = $selectedCity['CODE'];
+                            break;
+                    }
+                }
+
+                $propertyValue->setValue($value);
+            }
+
             return [$order, $selectedDelivery];
         }
+
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
@@ -723,6 +787,21 @@ class OrderService implements LoggerAwareInterface
             $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
         );
 
+        if (!$user->getDiscountCardNumber() && !$storage->getDiscountCardNumber()) {
+            try {
+                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+                if (($card = $contact->getCards()->first()) instanceof Card) {
+                    $storage->setDiscountCardNumber($card->cardNumber);
+                }
+            } catch (WrongPhoneNumberException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+            } catch (ManzanaServiceException $e) {
+                $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
+                    'phone' => $storage->getPhone()
+                ]);
+            }
+        }
+
         $this->setOrderPropertyByCode(
             $order,
             'DISCOUNT_CARD',
@@ -781,36 +860,6 @@ class OrderService implements LoggerAwareInterface
 
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
 
-        /**
-         * Заполнение складов довоза товара для элементов корзины
-         */
-        $shipmentResults = $selectedDelivery->getShipmentResults();
-        $shipmentDays = [];
-        /** @var BasketItem $item */
-        foreach ($order->getBasket()->getOrderableItems() as $item) {
-            $shipmentPlaceCode = 'DC01';
-            /** @var DeliveryScheduleResult $deliveryResult */
-            if ($shipmentResults &&
-                ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
-            ) {
-                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
-                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
-                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
-                    $shipmentDays[$shipmentPlaceCode] = $days;
-                }
-            }
-
-            $this->basketService->setBasketItemPropertyValue(
-                $item,
-                'SHIPMENT_PLACE_CODE',
-                $shipmentPlaceCode
-            );
-        }
-        if (!empty($shipmentDays)) {
-            arsort($shipmentDays);
-            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
-        }
-
         try {
             $result = $order->save();
             if (!$result->isSuccess()) {
@@ -865,7 +914,9 @@ class OrderService implements LoggerAwareInterface
     public function splitOrder(OrderStorage $storage): array
     {
         $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
-        if (!$this->orderStorageService->canSplitOrder($delivery)) {
+        if (!$this->orderStorageService->canSplitOrder($delivery) &&
+            !$this->orderStorageService->canGetPartial($delivery)
+        ) {
             throw new OrderSplitException('Cannot split order');
         }
 
