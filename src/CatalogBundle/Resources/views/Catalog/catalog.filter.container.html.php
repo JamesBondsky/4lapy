@@ -118,7 +118,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             ); ?>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар',
+                            ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
@@ -136,11 +137,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                         if (!$filter->hasAvailableVariants()) {
                             continue;
                         }
-                         ?>
+                        ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
-                            ?>
+                                    ?>
                                     <li class="b-filter-link-list__item">
                                         <label class="b-filter-link-list__label">
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -156,11 +157,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                             </a>
                                         </label>
                                     </li>
-                                <?php
-                        } ?>
+                                    <?php
+                                } ?>
                             </ul>
                         </span>
-                    <?php
+                        <?php
                     } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
@@ -181,6 +182,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
         <?php $i = 0;
+        $countItems = $productSearchResult->getProductCollection()->count();
         foreach ($productSearchResult->getProductCollection() as $product) {
             $i++;
 
@@ -193,19 +195,19 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             );
 
             if ($catalogRequest->getCategory()->isLanding() && !empty($catalogRequest->getCategory()->getUfLandingBanner())) {
-                if ($i === 3) {
+                if ($i === 3 || ($i === $countItems && $i < 3)) {
                     ?>
                     <div class="b-fleas-protection-banner b-tablet">
-                        <?=htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner())?>
+                        <?= htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner()) ?>
                     </div>
-                <?php
+                    <?php
                 }
-                if ($i === 4) {
+                if ($i === 4 || ($i === $countItems && $i < 4)) {
                     ?>
                     <div class="b-fleas-protection-banner">
-                        <?=htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner())?>
+                        <?= htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner()) ?>
                     </div>
-                <?php
+                    <?php
                 }
             }
         } ?>
