@@ -14,6 +14,7 @@ use Bitrix\Iblock\SectionElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Query\IblockSectQuery;
@@ -118,11 +119,14 @@ class FoodSelectionRepository
      *
      * @param array $exceptionItems
      *
+     * @param int   $limit
+     *
      * @return array
      * @throws ArgumentException
      * @throws SystemException
+     * @throws ObjectPropertyException
      */
-    public function getProductsBySections(array $sections, int $iblockId, array $exceptionItems = []): array
+    public function getProductsBySections(array $sections, int $iblockId, array $exceptionItems = [], int $limit = 6): array
     {
         $countSections = \count($sections);
         $propId = PropertyTable::query()->setFilter(
@@ -162,7 +166,6 @@ class FoodSelectionRepository
             ]
         );
         $query->setGroup('ITEM');
-        $queryString = $query->getQuery();
         $res = $query->exec();
         $itemIds = [];
         while ($item = $res->fetch()) {
@@ -172,7 +175,9 @@ class FoodSelectionRepository
         $products = [];
         if (!empty($itemIds)) {
             $query = new ProductQuery();
-            $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE'=>'Y'])->exec();
+            $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE'=>'Y'])
+                ->withNav(['nTopCount'=>$limit])
+                ->exec();
             $products = $res->toArray();
         }
 

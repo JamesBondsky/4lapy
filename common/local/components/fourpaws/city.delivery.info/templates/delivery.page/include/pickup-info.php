@@ -18,7 +18,7 @@ use FourPaws\Helpers\WordHelper;
     </div>
     <div class="b-delivery__delivery-type-row__price">
         <p>Стоимость</p>
-        <span><?= CurrencyHelper::formatPrice($pickup['PRICE']) ?></span>
+        <span><?= ($pickup['PRICE'] >  0) ? (WordHelper::numberFormat($pickup['PRICE'], 0) . ' ₽') : 'Бесплатно'?></span>
         <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
             <a href="/company/shops/?codeNearest=<?=$arParams['LOCATION_CODE']?>&findNearest=Y" data-url="<?= $arResult['SHOP_LIST_URL'] ?>" data-code="<?= $arParams['LOCATION_CODE'] ?>">
                 Найти ближайший
