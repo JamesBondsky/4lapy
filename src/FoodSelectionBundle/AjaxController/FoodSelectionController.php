@@ -48,7 +48,7 @@ class FoodSelectionController extends Controller
     public function beginAction(Request $request): JsonResponse
     {
         /** оставляем токо одно значение, ибо все остальное надо сбросить */
-        $values = ['pet_type'=>$request->get('pet_type')];
+        $values = ['pet_type' => $request->get('pet_type')];
 
         $petTypeCode = '';
         if (!empty($values['pet_type'])) {
@@ -92,7 +92,7 @@ class FoodSelectionController extends Controller
             [
                 'form_html'  => ob_get_clean(),
                 'items_html' => '',
-                'has_items' => false,
+                'has_items'  => false,
             ]
         );
     }
@@ -147,7 +147,7 @@ class FoodSelectionController extends Controller
         $form_html = ob_get_clean();
 
         try {
-            $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($values));
+            $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($values), [], 6);
         } catch (ArgumentException|SystemException $e) {
             $recommendedItems = [];
         }
@@ -163,12 +163,12 @@ class FoodSelectionController extends Controller
         unset($values['food_consistence']);
         try {
             /** дополнительные итемы */
-            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems);
+            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, 3);
         } catch (ArgumentException|SystemException $e) {
             $alsoItems = [];
         }
 
-        if(\is_array($alsoItems) && !empty($alsoItems) && !$hasItems){
+        if (\is_array($alsoItems) && !empty($alsoItems) && !$hasItems) {
             $hasItems = true;
         }
 
@@ -183,7 +183,7 @@ class FoodSelectionController extends Controller
             [
                 'form_html'  => $form_html,
                 'items_html' => $items_html,
-                'has_items' => $hasItems
+                'has_items'  => $hasItems,
             ]
         );
     }
@@ -208,7 +208,7 @@ class FoodSelectionController extends Controller
         }
 
         try {
-            $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($values));
+            $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($values), [], 6);
         } catch (ArgumentException|SystemException $e) {
             $recommendedItems = [];
         }
@@ -223,12 +223,12 @@ class FoodSelectionController extends Controller
         }
         unset($values['food_consistence']);
         try {
-            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems);
+            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, 3);
         } catch (ArgumentException|SystemException $e) {
             $alsoItems = [];
         }
 
-        if(\is_array($alsoItems) && !empty($alsoItems) && !$hasItems){
+        if (\is_array($alsoItems) && !empty($alsoItems) && !$hasItems) {
             $hasItems = true;
         }
 
@@ -242,7 +242,7 @@ class FoodSelectionController extends Controller
             'Успешный аякс',
             [
                 'items_html' => $items_html,
-                'has_items' => $hasItems
+                'has_items'  => $hasItems,
             ]
         );
     }
