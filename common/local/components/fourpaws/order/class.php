@@ -274,7 +274,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             if ($this->arResult['PARTIAL_PICKUP_AVAILABLE'] &&
-                $this->deliveryService->isInnerDelivery($selectedDelivery)
+                $this->deliveryService->isInnerPickup($selectedDelivery)
             ) {
                 $this->arResult['SELECTED_DELIVERY'] = $this->arResult['PARTIAL_PICKUP'];
             }
@@ -339,8 +339,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
                 ? null
                 : (clone $pickup)->setStockResult($available);
-
-            $GLOBALS['AZAZA'] = true;
 
             $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderStorageService->canGetPartial($pickup);
             $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderStorageService->canSplitOrder($pickup);
