@@ -15,7 +15,7 @@ use Exception;
  *
  * @package Sprint\Migration
  */
-class OrderPropertyOldSiteOrderAdd20180621121739 extends SprintMigrationBase
+class OrderPropertyOldSiteOrderAdd20180521121739 extends SprintMigrationBase
 {
 
     protected const PROP_CODE = 'IS_OLD_SITE_ORDER';
