@@ -127,7 +127,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                     сайте</p>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-tel">Мобильный телефон</label>
-                    <input class="b-form-review__input js-phone-mask"
+                    <input class="b-form-review__input js-phone-mask js-may-be-empty"
                            id="id-review-tel"
                            type="tel"
                            name="PHONE"
@@ -137,7 +137,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-mail">Эл. почта</label>
-                    <input class="b-form-review__input"
+                    <input class="b-form-review__input js-may-be-empty"
                            id="id-review-mail"
                            type="email"
                            name="EMAIL"
@@ -147,7 +147,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-pass">Пароль</label>
-                    <input class="b-form-review__input"
+                    <input class="b-form-review__input js-may-be-empty"
                            id="id-review-pass"
                            type="password"
                            name="PASSWORD"
