@@ -27,10 +27,6 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    /**
-     * @todo move it to settings
-     */
-    public const BASE_PATH   = 'http://old4lapy.e.adv.ru/migrate';
     public const API_PATH    = '';
     public const ENTITY_NAME = '';
     
@@ -42,6 +38,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     protected $limit;
     protected $force;
     protected $provider;
+    protected $url;
     protected $token = '';
     
     /**
@@ -64,6 +61,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
          * @todo move into defaults
          */
         $this->token = Application::getInstance()->getContainer()->getParameter('migrator')['token'];
+        $this->url = Application::getInstance()->getContainer()->getParameter('migrator')['url'];
     }
     
     /**
@@ -156,7 +154,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     {
         $options['token'] = $this->getToken();
         
-        return $this::BASE_PATH . static::API_PATH . ($options ? '?' . http_build_query($options) : '');
+        return $this->url . static::API_PATH . ($options ? '?' . http_build_query($options) : '');
     }
     
     /**

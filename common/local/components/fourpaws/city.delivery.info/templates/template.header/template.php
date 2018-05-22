@@ -22,6 +22,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\Helpers\WordHelper;
 
 $this->setFrameMode(true);
 
@@ -41,19 +42,17 @@ if (empty($arResult)) {
         <?php if ($arResult['CURRENT']['DELIVERY']['FREE_FROM']) { ?>
             Бесплатная доставка
         <?php } else { ?>
-            Доставка от <?= CurrencyHelper::formatPrice($arResult['CURRENT']['DELIVERY']['PRICE']) ?>
+            Доставка от <?= WordHelper::numberFormat($arResult['CURRENT']['DELIVERY']['PRICE'], 0) ?> ₽
         <?php } ?>
         <span class="b-icon b-icon--delivery-arrow">
             <?= new SvgDecorator('icon-arrow-down', 20, 16) ?>
         </span>
     </a>
     <div class="b-popover b-popover--blue-arrow js-popover">
-        <p class="b-popover__text">Доставка от <?= CurrencyHelper::formatPrice(
-                $arResult['CURRENT']['DELIVERY']['PRICE']
-            ) ?></p>
+        <p class="b-popover__text">Доставка от <?= WordHelper::numberFormat($arResult['CURRENT']['DELIVERY']['PRICE'], 0) ?> ₽</p>
         <?php if ($arResult['CURRENT']['DELIVERY']['FREE_FROM']) { ?>
             <p class="b-popover__text b-popover__text--last">Бесплатно при заказе
-                от <?= CurrencyHelper::formatPrice($arResult['CURRENT']['DELIVERY']['FREE_FROM']) ?></p>
+                от <?= WordHelper::numberFormat($arResult['CURRENT']['DELIVERY']['FREE_FROM'], 0) ?> ₽</p>
         <?php } ?>
     </div>
 </div>
@@ -68,19 +67,19 @@ if (empty($arResult)) {
         <?php if ($arResult['DEFAULT']['DELIVERY']['FREE_FROM']) { ?>
             Бесплатная доставка
         <?php } else { ?>
-            Доставка от <?= CurrencyHelper::formatPrice($arResult['DEFAULT']['DELIVERY']['PRICE']) ?>
+            Доставка от <?= WordHelper::numberFormat($arResult['DEFAULT']['DELIVERY']['PRICE'], 0) ?> ₽
         <?php } ?>
         <span class="b-icon b-icon--delivery-arrow">
             <?= new SvgDecorator('icon-arrow-down', 20, 16) ?>
         </span>
     </a>
     <div class="b-popover b-popover--blue-arrow js-popover">
-        <p class="b-popover__text">Доставка от <?= CurrencyHelper::formatPrice(
+        <p class="b-popover__text">Доставка от <?= WordHelper::numberFormat(
                 $arResult['DEFAULT']['DELIVERY']['PRICE']
-            ) ?></p>
+                , 0) ?> ₽</p>
         <?php if ($arResult['DEFAULT']['DELIVERY']['FREE_FROM']) { ?>
             <p class="b-popover__text b-popover__text--last">Бесплатно при заказе
-                от <?= CurrencyHelper::formatPrice($arResult['DEFAULT']['DELIVERY']['FREE_FROM']) ?></p>
+                от <?= WordHelper::numberFormat($arResult['DEFAULT']['DELIVERY']['FREE_FROM'], 0) ?> ₽</p>
         <?php } ?>
     </div>
 </div>

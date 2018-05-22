@@ -158,7 +158,7 @@ if (null !== $delivery) {
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--aside js-full-list">
-                                <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                             </div>
                         </li>
                     <?php } ?>
@@ -170,7 +170,7 @@ if (null !== $delivery) {
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
                     <span class="js-mobile-title-order">Заказ №1: <?= $deliveryResult1Quantity ?> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
-                    сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price) ?>
+                    сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price, false) ?>
                 </h4>
                 <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile js-popup-mobile--aside js-full-list">
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
@@ -189,7 +189,7 @@ if (null !== $delivery) {
                                     </div>
                                 </div>
                                 <div class="b-order-list__order-value b-order-list__order-value--aside">
-                                    <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                    <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                                 </div>
                             </li>
                         <?php } ?>
@@ -199,7 +199,7 @@ if (null !== $delivery) {
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
                     <span class="js-mobile-title-order">Заказ №2: <?= $deliveryResult2Quantity ?> <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult2Weight, true) ?>) на
-                    сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price) ?>
+                    сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price, false) ?>
                 </h4>
                 <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile js-popup-mobile--aside js-full-list">
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
@@ -218,7 +218,7 @@ if (null !== $delivery) {
                                     </div>
                                 </div>
                                 <div class="b-order-list__order-value b-order-list__order-value--aside">
-                                    <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                    <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                                 </div>
                             </li>
                         <?php } ?>
@@ -254,7 +254,7 @@ if (null !== $delivery) {
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--aside">
-                            <?= CurrencyHelper::formatPrice($item['price']) ?>
+                            <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                         </div>
                     </li>
                 <?php } ?>
@@ -300,7 +300,7 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value">
-                        <?= CurrencyHelper::formatPrice($item['price']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                     </div>
                 </li>
             <?php } ?>
@@ -333,7 +333,7 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--aside">
-                        <?= CurrencyHelper::formatPrice($item['price']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                     </div>
                 </li>
             <?php } ?>
