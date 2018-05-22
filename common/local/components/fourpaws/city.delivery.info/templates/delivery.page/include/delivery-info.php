@@ -16,10 +16,10 @@ use FourPaws\Helpers\WordHelper;
     </div>
     <div class="b-delivery__delivery-type-row__price">
         <p>Стоимость</p>
-        <span><?= CurrencyHelper::formatPrice($delivery['PRICE']) ?></span>
+        <span><?= WordHelper::numberFormat($delivery['PRICE'], 0) ?> ₽</span>
         <?php if (!empty($delivery['FREE_FROM'])) {
     ?>
-            <span>Бесплатно при заказе от <?= CurrencyHelper::formatPrice($delivery['FREE_FROM']) ?></span>
+            <span>Бесплатно при заказе от <?= WordHelper::numberFormat($delivery['FREE_FROM'], 0) ?> ₽</span>
         <?php
 } ?>
     </div>

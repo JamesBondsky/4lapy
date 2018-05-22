@@ -8,6 +8,8 @@ namespace FourPaws\FoodSelectionBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\BitrixOrm\Model\IblockSect;
 use FourPaws\Enum\IblockCode;
@@ -127,12 +129,15 @@ class FoodSelectionService
      *
      * @param array $exceptionItems
      *
+     * @param int   $limit
+     *
      * @return array
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
      */
-    public function getProductsBySections(array $sections, array $exceptionItems = []): array
+    public function getProductsBySections(array $sections, array $exceptionItems = [], int $limit = 6): array
     {
-        return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems);
+        return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems, $limit);
     }
 }
