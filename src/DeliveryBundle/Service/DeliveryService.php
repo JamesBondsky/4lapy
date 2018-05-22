@@ -346,9 +346,7 @@ class DeliveryService implements LoggerAwareInterface
                 continue;
             }
             $deliveryZone = $this->getDeliveryZoneForShipment($shipment);
-            if($deliveryZone !== null) {
-                $calculationResult->setDeliveryZone($deliveryZone);
-            }
+            $calculationResult->setDeliveryZone($deliveryZone);
             $calculationResult->setDeliveryId($service->getId());
             $calculationResult->setDeliveryName($name);
             $calculationResult->setDeliveryCode($service->getCode());
