@@ -434,9 +434,9 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @param bool     $skipLocations
      * @throws ObjectNotFoundException
-     * @return string|null
+     * @return string
      */
-    public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): ?string
+    public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): string
     {
         if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
             return static::ZONE_4;
