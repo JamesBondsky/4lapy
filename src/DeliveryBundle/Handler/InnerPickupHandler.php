@@ -66,11 +66,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return false;
         }
 
-        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
-        if (!$deliveryLocation) {
-            return false;
-        }
-
         return true;
     }
 

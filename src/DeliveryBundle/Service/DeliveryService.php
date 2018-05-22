@@ -436,7 +436,7 @@ class DeliveryService implements LoggerAwareInterface
     public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): string
     {
         if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
-            return null;
+            return static::ZONE_4;
         }
         $deliveryId = $shipment->getDeliveryId();
 
