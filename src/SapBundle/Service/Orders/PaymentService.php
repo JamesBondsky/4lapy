@@ -12,7 +12,12 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order as SaleOrder;
+use Bitrix\Sale\Order as BitrixOrder;
+use Bitrix\Sale\Payment;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
@@ -114,7 +119,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws ArgumentOutOfRangeException
      * @throws PaymentException
      * @throws ArgumentException
-     * @throws \FourPaws\SaleBundle\Exception\PaymentException
      */
     public function paymentTaskPerform(Order $paymentTask)
     {
@@ -139,11 +143,41 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $fiscalization = $this->getFiscalization($order, $user, $paymentTask);
         $amount = $paymentTask->getSumPayed();
-        $orderId = $order->getId();
+        $return = $paymentTask->getSumReturned();
 
-        $this->response(function () use ($orderId, $amount, $fiscalization) {
-            return $this->sberbankProcessing->depositPayment($orderId, $amount, $fiscalization);
-        });
+        try {
+            $orderInvoiceId = $this->getOrderInvoiceId($order);
+            if ($amount) {
+                $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
+                    return $this->sberbankProcessing->depositPayment($orderInvoiceId, $amount, $fiscalization);
+                });
+            }
+
+            if ($return === $paymentTask->getSumTotal()) {
+                $this->tryPaymentReverse($order);
+            } else {
+                $this->tryPaymentRefund($order, $amount, $fiscalization);
+            }
+        } catch (SalePaymentException $e) {
+            $this->log()->error(
+                sprintf(
+                    'failed to process payment task for order %s: %s: %s',
+                    $order->getId(),
+                    \get_class($e),
+                    $e->getMessage()
+                )
+            );
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf(
+                    'failed to process payment task for order %s: %s: %s',
+                    $order->getId(),
+                    \get_class($e),
+                    $e->getMessage()
+                ),
+                ['trace' => $e->getTrace()]
+            );
+        }
     }
 
     /**
@@ -159,13 +193,68 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order $order
+     * @param BitrixOrder $order
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectNotFoundException
+     * @throws SalePaymentException
+     * @throws ObjectException
+     * @throws SystemException
+     * @throws \Exception
      */
-    public function tryPaymentRefund(Order $order)
+    public function tryPaymentReverse(BitrixOrder $order) {
+        $orderInvoiceId = $this->getOrderInvoiceId($order);
+        $this->response(function () use ($orderInvoiceId) {
+            return $this->sberbankProcessing->reversePayment($orderInvoiceId);
+        });
+
+        /** @var Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            $payment->setPaid('N');
+            $payment->save();
+        }
+
+        $order->save();
+    }
+
+    /**
+     * @param BitrixOrder $order
+     * @param float       $amount
+     * @param array       $fiscalization
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws SalePaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function tryPaymentRefund(BitrixOrder $order, float $amount, array $fiscalization): void
     {
-        /**
-         * @todo refund
-         */
+        $orderInvoiceId = $this->getOrderInvoiceId($order);
+
+        /** @var Payment[] $payments */
+        $payments = [];
+        /** @var Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isInner()) {
+                $payments['inner'] = $payment;
+            } else {
+                $payments['external'] = $payment;
+            }
+        }
+
+        $this->response(function () use ($orderInvoiceId, $fiscalization) {
+            return $this->sberbankProcessing->refundPayment($orderInvoiceId, $fiscalization['amount']);
+        });
+        $payments['external']->setField('PS_SUM', $payment->getSumPaid() - $amount);
+        $payments['external']->setPaid('N');
+        $payments['external']->save();
+        $order->save();
     }
 
     /**
@@ -289,5 +378,27 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         }
 
         return $this->sberbankProcessing->parseResponse($response);
+    }
+
+    /**
+     * @param BitrixOrder $order
+     *
+     * @return string
+     *
+     * @throws ObjectNotFoundException
+     */
+    private function getOrderInvoiceId(BitrixOrder $order): string
+    {
+        $result = '';
+        /** @var Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isInner()) {
+                continue;
+            }
+
+            $result = $payment->getField('PS_INVOICE_ID');
+        }
+
+        return $result;
     }
 }

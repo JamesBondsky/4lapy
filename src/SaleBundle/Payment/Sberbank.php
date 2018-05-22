@@ -114,7 +114,7 @@ class Sberbank
         $data['userName'] = $this->user_name;
         $data['password'] = $this->password;
         $data['CMS'] = 'Bitrix';
-        $data['Module-Version'] = \VERSION;
+        $data['Module-Version'] = RBS_VERSION;
         $dataEncoded = \http_build_query($data);
 
         if (\SITE_CHARSET !== 'UTF-8') {
@@ -136,7 +136,7 @@ class Sberbank
             \CURLOPT_RETURNTRANSFER => true,
             \CURLOPT_POST => true,
             \CURLOPT_POSTFIELDS => $dataEncoded,
-            \CURLOPT_HTTPHEADER => ['CMS: Bitrix', 'Module-Version: ' . \VERSION],
+            \CURLOPT_HTTPHEADER => ['CMS: Bitrix', 'Module-Version: ' . RBS_VERSION],
             \CURLOPT_SSLVERSION => 6,
         ]);
         $response = \curl_exec($curl);
@@ -148,7 +148,7 @@ class Sberbank
             ]);
 
             $client->setHeader('CMS', 'Bitrix');
-            $client->setHeader('Module-Version', \VERSION);
+            $client->setHeader('Module-Version', RBS_VERSION);
             $response = $client->post($url . $method, $data);
         }
 
