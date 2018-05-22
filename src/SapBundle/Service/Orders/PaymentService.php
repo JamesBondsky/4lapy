@@ -19,7 +19,6 @@ use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\Order as BitrixOrder;
 use Bitrix\Sale\Payment;
 use FourPaws\Helpers\BusinessValueHelper;
-use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -32,8 +31,6 @@ use FourPaws\SapBundle\Exception\PaymentException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -110,15 +107,15 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param Order $paymentTask
      *
-     * @throws ArgumentNullException
-     * @throws NotImplementedException
-     * @throws NotFoundException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws NotFoundOrderUserException
-     * @throws ArgumentOutOfRangeException
-     * @throws PaymentException
      * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws SalePaymentException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function paymentTaskPerform(Order $paymentTask)
     {
@@ -145,38 +142,17 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $amount = $paymentTask->getSumPayed();
         $return = $paymentTask->getSumReturned();
 
-        try {
-            $orderInvoiceId = $this->getOrderInvoiceId($order);
-            if ($amount) {
-                $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
-                    return $this->sberbankProcessing->depositPayment($orderInvoiceId, $amount, $fiscalization);
-                });
-            }
+        $orderInvoiceId = $this->getOrderInvoiceId($order);
+        if ($amount) {
+            $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
+                return $this->sberbankProcessing->depositPayment($orderInvoiceId, $amount, $fiscalization);
+            });
+        }
 
-            if ($return === $paymentTask->getSumTotal()) {
-                $this->tryPaymentReverse($order);
-            } else {
-                $this->tryPaymentRefund($order, $amount, $fiscalization);
-            }
-        } catch (SalePaymentException $e) {
-            $this->log()->error(
-                sprintf(
-                    'failed to process payment task for order %s: %s: %s',
-                    $order->getId(),
-                    \get_class($e),
-                    $e->getMessage()
-                )
-            );
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf(
-                    'failed to process payment task for order %s: %s: %s',
-                    $order->getId(),
-                    \get_class($e),
-                    $e->getMessage()
-                ),
-                ['trace' => $e->getTrace()]
-            );
+        if ($return === $paymentTask->getSumTotal()) {
+            $this->tryPaymentReverse($order);
+        } else {
+            $this->tryPaymentRefund($order, $amount, $fiscalization);
         }
     }
 
