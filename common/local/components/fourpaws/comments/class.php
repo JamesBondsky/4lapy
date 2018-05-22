@@ -281,7 +281,7 @@ class CCommentsComponent extends \CBitrixComponent
     public function getData(bool $addNotAuth = false): array
     {
         $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
-        unset($data['action']);
+        unset($data['action'], $data['g-recaptcha-response']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
