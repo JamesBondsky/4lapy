@@ -84,7 +84,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $intervalConfig = $config['MAIN']['ITEMS']['INTERVALS']['VALUE'];
         /** @var array $intervalGroup */
         foreach ($intervalConfig as $intervalGroup) {
-            if ($intervalGroup['ZONE_CODE'] !== $deliveryZone) {
+            if ($deliveryZone === null || $intervalGroup['ZONE_CODE'] !== $deliveryZone) {
                 continue;
             }
 
@@ -145,7 +145,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, false);
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         $data = [];
-        if ($this->config['PRICES'][$deliveryZone]) {
+        if ($deliveryZone !== null && $this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
@@ -159,7 +159,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
         $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, true);
         $data['INTERVALS'] = $this->getIntervals($shipment);
-        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+        if ($deliveryLocation === null || empty($deliveryLocation) || !$offers = static::getOffers($deliveryLocation, $basket)) {
             $result->setData($data);
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
@@ -167,10 +167,15 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
-        if ($availableStores->isEmpty()) {
+        if($deliveryZone === null){
             $result->addError(new Error('Не найдено доступных складов'));
             return $result;
+        } else {
+            $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
+            if ($availableStores->isEmpty()) {
+                $result->addError(new Error('Не найдено доступных складов'));
+                return $result;
+            }
         }
 
         $stockResult = static::getStocks($basket, $offers, $availableStores);

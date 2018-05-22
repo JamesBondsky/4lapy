@@ -345,7 +345,10 @@ class DeliveryService implements LoggerAwareInterface
                 ]);
                 continue;
             }
-            $calculationResult->setDeliveryZone($this->getDeliveryZoneForShipment($shipment));
+            $deliveryZone = $this->getDeliveryZoneForShipment($shipment);
+            if($deliveryZone !== null) {
+                $calculationResult->setDeliveryZone($deliveryZone);
+            }
             $calculationResult->setDeliveryId($service->getId());
             $calculationResult->setDeliveryName($name);
             $calculationResult->setDeliveryCode($service->getCode());
@@ -431,9 +434,9 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @param bool     $skipLocations
      * @throws ObjectNotFoundException
-     * @return string
+     * @return string|null
      */
-    public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): string
+    public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): ?string
     {
         if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
             return null;

@@ -128,7 +128,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             }
         }
 
-        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+        if ($deliveryLocation === null || empty($deliveryLocation) || !$offers = static::getOffers($deliveryLocation, $basket)) {
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
