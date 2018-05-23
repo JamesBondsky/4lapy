@@ -305,7 +305,12 @@ class BasketService implements LoggerAwareInterface
         if (!\is_array($giftIds) || !($giftIds = \array_flip(\array_flip(\array_filter($giftIds))))) {
             throw new NotFoundException('Товары по акции не найдены');
         }
-        $giftGroup['list'] = (new OfferQuery())->withFilterParameter('ID', $giftIds)->exec();
+        $offerCollection = new OfferCollection(new \CDBResult());
+        foreach ($giftIds as $giftId) {
+            $offer = OfferQuery::getById((int)$giftId);
+            $offerCollection->add($offer);
+        }
+        $giftGroup['list'] = $offerCollection;
         return $giftGroup;
     }
 
@@ -885,26 +890,12 @@ class BasketService implements LoggerAwareInterface
         }
 
         if (!empty($this->basketProductIds)) {
-            /** местоположение нам тоже нужно */
-            /** @var LocationService $locationService */
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $location = $locationService->getCurrentLocation();
             /** для кеша всегда уникальные и отсортирвоанный массив */
-            $basketProductIds = $this->basketProductIds;
-            $getOfferCollection = function () use ($basketProductIds) {
-                $offerCollection = (new OfferQuery())->withFilterParameter('ID', $basketProductIds)->exec();
-                $offerCollection->toArray();//для заполнения коллекции перед сохранением в кеш
-                return $offerCollection;
-            };
-            $bitrixCache = new BitrixCache();
-            $bitrixCache->withTime(6 * 60 * 60)//кеш на 6 часов
-            ->withId('offers_location_' . $location . md5(serialize($basketProductIds)));
-            foreach ($basketProductIds as $basketProductId) {
-                $bitrixCache->withTag('catalog:offer:' . $basketProductId);
-                $bitrixCache->withTag('iblock:item:' . $basketProductId);
+            $offerCollection = new OfferCollection(new \CDBResult());
+            foreach ($this->basketProductIds as $offerId) {
+                $offer = OfferQuery::getById((int)$offerId);
+                $offerCollection->add($offer);
             }
-//            $bitrixCache->withTag('location:'.$location);
-            $offerCollection = $bitrixCache->resultOf($getOfferCollection)['result'];
         } else {
             $offerCollection = new OfferCollection(new \CDBResult());
         }

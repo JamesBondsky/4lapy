@@ -143,16 +143,15 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         }
 
         /** @var OfferCollection $offers */
-        $offers = (new OfferQuery())->withFilterParameter('ID', $offerIds)->exec();
-        if ($offers->isEmpty()) {
-            return null;
-        }
-
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            if (!$offer->isByRequest()) {
+        $hasOffers = false;
+        foreach ($offerIds as $offerId) {
+            $offer = OfferQuery::getById((int)$offerId);
+            if ($offer !== null && !$offer->isByRequest()) {
                 $offer->withStocks($offer->getAllStocks()->filterByStores($stores));
             }
+        }
+        if (!$hasOffers) {
+            return null;
         }
 
         return $offers;

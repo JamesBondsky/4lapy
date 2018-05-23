@@ -3,14 +3,61 @@
 namespace FourPaws\Catalog\Query;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\LocationBundle\LocationService;
+use WebArch\BitrixCache\BitrixCache;
 
 class OfferQuery extends IblockElementQuery
 {
+
+    /**
+     * @param int $id
+     *
+     * @return Offer|null
+     */
+    public static function getById(int $id = 0): ?Offer
+    {
+        /** кешируем на сутки */
+        $cacheTime = 24*60*60;
+        if($id <= 0){
+            return null;
+        }
+        /** @var LocationService $locationService */
+        try {
+            $locationService = Application::getInstance()->getContainer()->get('location.service');
+            $location = $locationService->getCurrentLocation();
+        } catch (ApplicationCreateException $e) {
+            /** @todo залогировать ошибку */
+            return null;
+        }
+        $query = new static();
+        $getOffer = function () use ($id, $query) {
+            $query->withFilter(['ID' => $id]);
+            $collection = $query->exec();
+            /** @todo перед сохранением вызвать все расчетные методы, для сохранения рассчитанного оффера?? */
+            return $collection->isEmpty() ? null : $collection->first();
+        };
+        $bitrixCache = new BitrixCache();
+        $bitrixCache->withId('offer_' . $id . '_location_' . $location);
+        $bitrixCache->withTag('catalog:offer:' . $id);
+        $bitrixCache->withTag('iblock:item:' . $id);
+        $bitrixCache->withTime($cacheTime);//пока что кешируем на сутки
+        /** @todo увеличить время кеширование до года - если кеш будет корректно отрабатывать */
+        try {
+            return $bitrixCache->resultOf($getOffer)['result'];
+        } catch (\Exception $e) {
+            return null;
+            /** @todo залогировать ошибку */
+        }
+    }
+
     /**
      * @inheritdoc
      */
@@ -53,7 +100,7 @@ class OfferQuery extends IblockElementQuery
             'PROPERTY_COND_FOR_ACTION',
         ];
     }
-    
+
     /**
      * @inheritdoc
      */

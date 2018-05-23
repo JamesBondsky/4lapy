@@ -1348,7 +1348,12 @@ class OrderService implements LoggerAwareInterface
         }
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
+        $offerCollection = new OfferCollection(new \CDBResult());
+        foreach ($ids as $offerId) {
+            $offer = OfferQuery::getById((int)$offerId);
+            $offerCollection->add($offer);
+        }
+        return $offerCollection;
     }
 
     /**
