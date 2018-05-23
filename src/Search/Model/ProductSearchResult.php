@@ -41,9 +41,9 @@ class ProductSearchResult implements ProductResultInterface
     /**
      * ProductSearchResult constructor.
      *
-     * @param ResultSet $resultSet
+     * @param ResultSet  $resultSet
      * @param Navigation $navigation
-     * @param string $query
+     * @param string     $query
      *
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
