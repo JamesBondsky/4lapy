@@ -94,9 +94,13 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
                 return;
             }
 
-            $offerFields = OfferQuery::getById((int)$arFields['PRODUCT_ID'])->toArray();
+            $offerFields = [];
+            $offer = OfferQuery::getById((int)$arFields['PRODUCT_ID']);
+            if($offer !== null){
+                $offerFields = $offer->toArray();
+            }
 
-            if (false == $offerFields || empty($offerFields)) {
+            if (empty($offerFields)) {
                 return;
             }
 

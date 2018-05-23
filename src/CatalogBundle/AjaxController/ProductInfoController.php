@@ -409,10 +409,9 @@ class ProductInfoController extends Controller
             }
             /** @noinspection UnSafeIsSetOverArrayInspection */
             if (!empty($offerIds) && isset($share)) {
+                $offers = (new OfferQuery())->withFilter(['=ID' => $offerIds])->exec();
                 /** @var Offer $offer */
-                foreach ($offerIds as $offerId) {
-                    $offer = OfferQuery::getById((int)$offerId);
-
+                foreach ($offers as $offer) {
                     /** @var ResizeImageCollection $images */
                     $images = $offer->getResizeImages(110, 110);
                     if (null !== $image = $images->first()) {

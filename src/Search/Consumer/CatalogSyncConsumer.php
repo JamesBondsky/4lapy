@@ -161,7 +161,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private function updateOffer(int $offerId)
     {
-        $offer = OfferQuery::getById((int)$offerId);
+        $offer = OfferQuery::getById($offerId);
 
         if (!($offer instanceof Offer)) {
             $this->log()->error(

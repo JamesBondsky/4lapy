@@ -165,7 +165,6 @@ class BasketService implements LoggerAwareInterface
             $basketItem->save();
             //всегда перегружаем из-за подарков
             $this->setBasketIds();
-            /** При добавлении кеш не сбрасываем изменится входящий массив - будет другой кеш*/
             if (!\in_array($basketItem->getProductId(), $this->basketProductIds, true)) {
                 $this->basketProductIds[] = $basketItem->getProductId();
             }
@@ -214,7 +213,6 @@ class BasketService implements LoggerAwareInterface
         if ($res) {
             //всегда перегружаем из-за подарков
             $this->setBasketIds();
-            /** При удалении кеш не сбрасываем изменится входящий массив - будет другой кеш */
         }
         return $res;
     }
@@ -261,9 +259,6 @@ class BasketService implements LoggerAwareInterface
 
         //всегда перегружаем из-за подарков
         $this->setBasketIds();
-        /** При обновлении кеш не сбрасываем, количество в корзине не влияет на офферы
-         * если добавится подарок другого товара, изменится входящий массив - будет другой кеш
-         */
 
         return true;
     }
@@ -305,12 +300,7 @@ class BasketService implements LoggerAwareInterface
         if (!\is_array($giftIds) || !($giftIds = \array_flip(\array_flip(\array_filter($giftIds))))) {
             throw new NotFoundException('Товары по акции не найдены');
         }
-        $offerCollection = new OfferCollection(new \CDBResult());
-        foreach ($giftIds as $giftId) {
-            $offer = OfferQuery::getById((int)$giftId);
-            $offerCollection->add($offer);
-        }
-        $giftGroup['list'] = $offerCollection;
+        $giftGroup['list'] = (new OfferQuery())->withFilterParameter('=ID', $giftIds)->exec();
         return $giftGroup;
     }
 
@@ -573,11 +563,6 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @todo Избавиться от этих двух методов, перенеся их непосредственно в обработчики акций, однако необходимо
-     *     отделить общую часть от проектной
-     */
-
-    /**
      * @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ
      *
      * @return float
@@ -696,7 +681,7 @@ class BasketService implements LoggerAwareInterface
         $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
 
         if (!$basketDiscounts) {
-            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
+            /** @var BasketPropertyItem $basketPropertyItem */
             foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
                 $propCode = $basketPropertyItem->getField('CODE');
                 if ($propCode === 'DETACH_FROM') {
@@ -890,12 +875,7 @@ class BasketService implements LoggerAwareInterface
         }
 
         if (!empty($this->basketProductIds)) {
-            /** для кеша всегда уникальные и отсортирвоанный массив */
-            $offerCollection = new OfferCollection(new \CDBResult());
-            foreach ($this->basketProductIds as $offerId) {
-                $offer = OfferQuery::getById((int)$offerId);
-                $offerCollection->add($offer);
-            }
+            $offerCollection = (new OfferQuery())->withFilter(['=ID' => $this->basketProductIds])->exec();
         } else {
             $offerCollection = new OfferCollection(new \CDBResult());
         }

@@ -483,8 +483,8 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $offers = [];
         if (!empty($offerIds)) {
             /** @var Offer $offer */
-            foreach ($offerIds as $offerId) {
-                $offer = OfferQuery::getById((int)$offerId);
+            $res   = (new OfferQuery())->withFilter(['=ID' => $offerIds])->exec();
+            foreach ($res->toArray() as $offer) {
                 if (!\in_array($offer->getCml2Link(), $this->itemIds, true)) {
                     $this->itemIds[] = $offer->getCml2Link();
                 }
