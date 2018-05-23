@@ -892,7 +892,9 @@ class BasketService implements LoggerAwareInterface
             /** для кеша всегда уникальные и отсортирвоанный массив */
             $basketProductIds = $this->basketProductIds;
             $getOfferCollection = function () use ($basketProductIds) {
-                return (new OfferQuery())->withFilterParameter('ID', $basketProductIds)->exec();
+                $offerCollection = (new OfferQuery())->withFilterParameter('ID', $basketProductIds)->exec();
+                $offerCollection->toArray();//для заполнения коллекции перед сохранением в кеш
+                return $offerCollection;
             };
             $bitrixCache = new BitrixCache();
             $bitrixCache->withTime(6 * 60 * 60)//кеш на 6 часов
@@ -902,7 +904,7 @@ class BasketService implements LoggerAwareInterface
                 $bitrixCache->withTag('iblock:item:' . $basketProductId);
             }
 //            $bitrixCache->withTag('location:'.$location);
-            $offerCollection = $bitrixCache->resultOf($getOfferCollection);
+            $offerCollection = $bitrixCache->resultOf($getOfferCollection)['result'];
         } else {
             $offerCollection = new OfferCollection(new \CDBResult());
         }
