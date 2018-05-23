@@ -863,6 +863,8 @@ class BasketService implements LoggerAwareInterface
 
         if (!empty($this->basketProductIds)) {
             $this->basketProductIds = \array_flip(\array_flip(\array_filter($this->basketProductIds)));
+            $this->basketProductIds = array_unique($this->basketProductIds);
+            sort($this->basketProductIds);
         }
         return $hasGifts;
     }
@@ -888,8 +890,7 @@ class BasketService implements LoggerAwareInterface
             $locationService = Application::getInstance()->getContainer()->get('location.service');
             $location = $locationService->getCurrentLocation();
             /** для кеша всегда уникальные и отсортирвоанный массив */
-            $basketProductIds = array_unique($this->basketProductIds);
-            sort($basketProductIds);
+            $basketProductIds = $this->basketProductIds;
             $getOfferCollection = function () use ($basketProductIds) {
                 return (new OfferQuery())->withFilterParameter('ID', $basketProductIds)->exec();
             };
