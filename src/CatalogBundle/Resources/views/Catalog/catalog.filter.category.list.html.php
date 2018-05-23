@@ -29,30 +29,34 @@ use Symfony\Component\Templating\PhpEngine;
 
 /** @var Category $child */
 if ($isBrand && !empty($brand)) {
-    $cacheTime = 60 * 60;
+    $cacheTime = 24 * 60 * 60;
     $instance = Application::getInstance();
     $requestSections = implode(',', $instance->getContext()->getRequest()->get('Sections'));
     $childs = null;
     $cache = $instance->getCache();
-    /** @todo сброс кеша по тегу сделать */
+
+    /** не кешируем поиск товаров - так как он может постоянно меняться, остальное кешируется на сутки */
+    $nav = new Navigation();
+    $nav->withPageSize(9999);//нам нужны все итемы
+    $searchResult = $searchService->searchProducts(
+        $catalogRequest->getCategory()->getFilters(),
+        $catalogRequest->getSorts()->getSelected(),
+        $nav,
+        $catalogRequest->getSearchString()
+    );
+    $products = $searchResult->getProductCollection()->toArray();
+
     if ($cache->initCache($cacheTime,
-        serialize(['brand' => $brand]))) {
+        serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($products))]))) {
         $result = $cache->getVars();
         $childs = $result['childs'];
     } elseif ($cache->startDataCache()) {
         $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
-        $nav = new Navigation();
-        $nav->withPageSize(9999);//нам нужны все итемы
-        $searchResult = $searchService->searchProducts(
-            $catalogRequest->getCategory()->getFilters(),
-            $catalogRequest->getSorts()->getSelected(),
-            $nav,
-            $catalogRequest->getSearchString()
-        );
-        $products = $searchResult->getProductCollection();
+
         /** @var Product $product */
         $sectionIds = [];
         foreach ($products as $product) {
+
             $sectList = $product->getSectionsIdList();
             if (!empty($sectList)) {
                 foreach ($sectList as $value) {
