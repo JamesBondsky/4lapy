@@ -35,113 +35,56 @@ if ($isBrand && !empty($brand)) {
     $childs = null;
     $cache = $instance->getCache();
     /** @todo сброс кеша по тегу сделать */
-    if (isset($catalogRequest, $searchService)) {
-        if ($cache->initCache($cacheTime,
-            serialize(['brand' => $brand]))) {
-            $result = $cache->getVars();
-            $childs = $result['childs'];
-        } elseif ($cache->startDataCache()) {
-            $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
-            $nav = new Navigation();
-            $nav->withPageSize(9999);//нам нужны все итемы
-            $searchResult = $searchService->searchProducts(
-                $catalogRequest->getCategory()->getFilters(),
-                $catalogRequest->getSorts()->getSelected(),
-                $nav,
-                $catalogRequest->getSearchString()
-            );
-            $products = $searchResult->getProductCollection();
-            /** @var Product $product */
-            $sectionIds = [];
-            foreach ($products as $product) {
-                $sectList = $product->getSectionsIdList();
-                if (!empty($sectList)) {
-                    foreach ($sectList as $value) {
-                        $sectionIds[] = $value;
-                    }
+    if ($cache->initCache($cacheTime,
+        serialize(['brand' => $brand]))) {
+        $result = $cache->getVars();
+        $childs = $result['childs'];
+    } elseif ($cache->startDataCache()) {
+        $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
+        $nav = new Navigation();
+        $nav->withPageSize(9999);//нам нужны все итемы
+        $searchResult = $searchService->searchProducts(
+            $catalogRequest->getCategory()->getFilters(),
+            $catalogRequest->getSorts()->getSelected(),
+            $nav,
+            $catalogRequest->getSearchString()
+        );
+        $products = $searchResult->getProductCollection();
+        /** @var Product $product */
+        $sectionIds = [];
+        foreach ($products as $product) {
+            $sectList = $product->getSectionsIdList();
+            if (!empty($sectList)) {
+                foreach ($sectList as $value) {
+                    $sectionIds[] = $value;
                 }
             }
-            if (!empty($sectionIds)) {
-                $sectionIds = array_unique($sectionIds);
-                $childs = (new CategoryQuery())->withFilter([
-                    '=ID'           => $sectionIds,
-                    'ACTIVE'        => 'Y',
-                    'GLOBAL_ACTIVE' => 'Y',
-                ])->exec();
-                /** @var Category $section */
-                foreach ($childs as $key => $section) {
-                    if ($section->getDepthLevel() > 1) {
-                        $item = (new CategoryQuery())->withFilter([
-                            '>LEFT_MARGIN'  => $section->getLeftMargin(),
-                            '<RIGHT_MARGIN' => $section->getRightMargin(),
-                            'DEPTH_LEVEL'   => 1,
-                        ])->withNav(['nTopCount' => 1])->exec()->first();
-                        if ($item instanceof Category) {
-                            $childs->add($item);
-                        }
-                        $childs->remove($key);
-                    }
-                }
-            }
-
-            $tagCache->end();
-            $cache->endDataCache(['childs' => $childs]);
         }
-    } else {
-        if ($cache->initCache($cacheTime,
-            serialize(['brand' => $brand]))) {
-            $result = $cache->getVars();
-            $childs = $result['childs'];
-        } elseif ($cache->startDataCache()) {
-            $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
-            $products = (new ProductQuery())
-                ->withFilter([
-                    [
-                        'LOGIC'               => 'OR',
-                        'PROPERTY_BRAND.NAME' => $brand,
-                        'PROPERTY_BRAND.CODE' => $brand,
-                    ],
-                    'ACTIVE'        => 'Y',
-                    'GLOBAL_ACTIVE' => 'Y',
-                ])
-                ->withSelect(['ID'])
-                ->exec();
-            /** @var Product $product */
-            $sectionIds = [];
-            foreach ($products as $product) {
-                $sectList = $product->getSectionsIdList();
-                if (!empty($sectList)) {
-                    foreach ($sectList as $value) {
-                        $sectionIds[] = $value;
+        if (!empty($sectionIds)) {
+            $sectionIds = array_unique($sectionIds);
+            $childs = (new CategoryQuery())->withFilter([
+                '=ID'           => $sectionIds,
+                'ACTIVE'        => 'Y',
+                'GLOBAL_ACTIVE' => 'Y',
+            ])->exec();
+            /** @var Category $section */
+            foreach ($childs as $key => $section) {
+                if ($section->getDepthLevel() > 1) {
+                    $item = (new CategoryQuery())->withFilter([
+                        '>LEFT_MARGIN'  => $section->getLeftMargin(),
+                        '<RIGHT_MARGIN' => $section->getRightMargin(),
+                        'DEPTH_LEVEL'   => 1,
+                    ])->withNav(['nTopCount' => 1])->exec()->first();
+                    if ($item instanceof Category) {
+                        $childs->add($item);
                     }
+                    $childs->remove($key);
                 }
             }
-            if (!empty($sectionIds)) {
-                $sectionIds = array_unique($sectionIds);
-                $childs = (new CategoryQuery())->withFilter([
-                    '=ID'           => $sectionIds,
-                    'ACTIVE'        => 'Y',
-                    'GLOBAL_ACTIVE' => 'Y',
-                ])->exec();
-                /** @var Category $section */
-                foreach ($childs as $key => $section) {
-                    if ($section->getDepthLevel() > 1) {
-                        $item = (new CategoryQuery())->withFilter([
-                            '>LEFT_MARGIN'  => $section->getLeftMargin(),
-                            '<RIGHT_MARGIN' => $section->getRightMargin(),
-                            'DEPTH_LEVEL'   => 1,
-                        ])->withNav(['nTopCount' => 1])->exec()->first();
-                        if ($item instanceof Category) {
-                            $childs->add($item);
-                        }
-                        $childs->remove($key);
-                    }
-                }
-            }
-
-            $tagCache->end();
-            $cache->endDataCache(['childs' => $childs]);
         }
+
+        $tagCache->end();
+        $cache->endDataCache(['childs' => $childs]);
     }
 } else {
     $childs = $category->getChild();
