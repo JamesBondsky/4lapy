@@ -45,18 +45,21 @@ if ($isBrand && !empty($brand)) {
         $catalogRequest->getSearchString()
     );
     $products = $searchResult->getProductCollection()->toArray();
+    $productIds = [];
+    /** @var Product $product */
+    foreach ($products as $product) {
+        $productIds = $product->getId();
+    }
 
     if ($cache->initCache($cacheTime,
-        serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($products))]))) {
+        serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($productIds))]))) {
         $result = $cache->getVars();
         $childs = $result['childs'];
     } elseif ($cache->startDataCache()) {
         $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
 
-        /** @var Product $product */
         $sectionIds = [];
         foreach ($products as $product) {
-
             $sectList = $product->getSectionsIdList();
             if (!empty($sectList)) {
                 foreach ($sectList as $value) {
