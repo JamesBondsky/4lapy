@@ -68,6 +68,7 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
             );
         }
 
+        die('aazaza'); //debug
         return $success;
     }
 

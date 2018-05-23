@@ -40,6 +40,14 @@ class Sberbank
 
     private const ERROR_CODES = [1, 2, 3, 4, 5, 7, 8, 999];
 
+    public const ORDER_STATUS_HOLD = 1;
+
+    public const ORDER_STATUS_PAID = 2;
+
+    public const ORDER_STATUS_REVERSE = 3;
+
+    public const ORDER_STATUS_REFUND = 4;
+
     /**
      * ЛОГИН МЕРЧАНТА
      *
@@ -221,7 +229,7 @@ class Sberbank
     {
         $data = \compact('orderId', 'amount');
 
-        return $this->gatewayQuery('reverse.do', $data);
+        return $this->gatewayQuery('refund.do', $data);
     }
 
     /**
@@ -249,12 +257,14 @@ class Sberbank
      */
     public function parseResponse($response): bool
     {
-        if (!\is_array($response) || !\in_array((int)$response['errorCode'], self::ERROR_CODES, true)) {
+        if (!\is_array($response) ||
+            (((int)$response['errorCode'] !== self::SUCCESS_CODE) && \in_array((int)$response['errorCode'], self::ERROR_CODES, true))
+        ) {
             /** @noinspection ForgottenDebugOutputInspection */
             throw new PaymentException(
                 \sprintf(
                     'Unknown payment exception from response %s',
-                    \var_export($response)
+                    \var_export($response, true)
                 )
             );
         }

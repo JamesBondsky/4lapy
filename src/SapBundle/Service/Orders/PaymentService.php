@@ -139,20 +139,26 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         }
 
         $fiscalization = $this->getFiscalization($order, $user, $paymentTask);
+        $orderInvoiceId = $this->getOrderInvoiceId($order);
+        $orderInfo = $this->sberbankProcessing->getOrderStatusByOrderId($orderInvoiceId);
+        $orderStatus = $orderInfo['orderStatus'];
+
+
         $amount = $paymentTask->getSumPayed();
         $return = $paymentTask->getSumReturned();
 
-        $orderInvoiceId = $this->getOrderInvoiceId($order);
-        if ($amount) {
+        if ($amount && $orderStatus === Sberbank::ORDER_STATUS_HOLD) {
             $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
                 return $this->sberbankProcessing->depositPayment($orderInvoiceId, $amount, $fiscalization);
             });
         }
 
-        if ($return === $paymentTask->getSumTotal()) {
-            $this->tryPaymentReverse($order);
-        } else {
-            $this->tryPaymentRefund($order, $amount, $fiscalization);
+        if ($return) {
+            if ($orderStatus === Sberbank::ORDER_STATUS_HOLD) {
+                $this->tryPaymentReverse($order);
+            } elseif ($orderStatus === Sberbank::ORDER_STATUS_PAID) {
+                $this->tryPaymentRefund($order, $return, $fiscalization);
+            }
         }
     }
 
@@ -211,6 +217,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      */
     public function tryPaymentRefund(BitrixOrder $order, float $amount, array $fiscalization): void
     {
+        $amount *= 100;
         $orderInvoiceId = $this->getOrderInvoiceId($order);
 
         /** @var Payment[] $payments */
@@ -224,12 +231,20 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             }
         }
 
-        $this->response(function () use ($orderInvoiceId, $fiscalization) {
-            return $this->sberbankProcessing->refundPayment($orderInvoiceId, $fiscalization['amount']);
+        $reqAmount = ($amount > $fiscalization['amount']) ? $fiscalization['amount'] : $amount;
+        $this->response(function () use ($orderInvoiceId, $reqAmount) {
+            return $this->sberbankProcessing->refundPayment($orderInvoiceId, $reqAmount);
         });
-        $payments['external']->setField('PS_SUM', $payment->getSumPaid() - $amount);
+
+        $payments['external']->setField('PS_SUM', $payment->getSumPaid() - $reqAmount);
         $payments['external']->setPaid('N');
         $payments['external']->save();
+
+        if ($reqAmount > $fiscalization['amount']) {
+            $payments['inner']->setPaid('N');
+            $payments['inner']->save();
+        }
+
         $order->save();
     }
 
@@ -318,15 +333,18 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             })->toArray();
         }
 
-        $fiscalization['fiscal']['orderBundle']['cartItems']['items'] = \array_reduce($itemsAfter, function ($to, $from) {
+        $amount = 0;
+        $fiscalization['fiscal']['orderBundle']['cartItems']['items'] = \array_reduce($itemsAfter, function ($to, $from) use (&$amount) {
             $to = $to ?? [];
 
             if ($from) {
+                $amount += current($from)['itemAmount'];
                 return \array_merge($to, $from);
             }
 
             return $to;
         });
+        $fiscalization['amount'] = $amount;
 
         return $fiscalization;
     }
@@ -365,7 +383,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      */
     private function getOrderInvoiceId(BitrixOrder $order): string
     {
-        $result = '';
         /** @var Payment $payment */
         foreach ($order->getPaymentCollection() as $payment) {
             if ($payment->isInner()) {
@@ -373,8 +390,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             }
 
             $result = $payment->getField('PS_INVOICE_ID');
+            break;
         }
 
-        return $result;
+        return $result ?: '';
     }
 }
