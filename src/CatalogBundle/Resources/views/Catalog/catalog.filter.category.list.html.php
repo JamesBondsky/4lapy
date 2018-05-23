@@ -12,7 +12,9 @@
  * @var ArrayCollection                       $sectionIds
  */
 
+use Bitrix\Iblock\SectionElementTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\Entity\ExpressionField;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
@@ -44,12 +46,7 @@ if ($isBrand && !empty($brand)) {
         $nav,
         $catalogRequest->getSearchString()
     );
-    $products = $searchResult->getProductCollection()->toArray();
-    $productIds = [];
-    /** @var Product $product */
-    foreach ($products as $product) {
-        $productIds = $product->getId();
-    }
+    $productIds = $searchResult->getProductIds();
 
     if ($cache->initCache($cacheTime,
         serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($productIds))]))) {
@@ -59,13 +56,12 @@ if ($isBrand && !empty($brand)) {
         $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
 
         $sectionIds = [];
-        foreach ($products as $product) {
-            $sectList = $product->getSectionsIdList();
-            if (!empty($sectList)) {
-                foreach ($sectList as $value) {
-                    $sectionIds[] = $value;
-                }
-            }
+        $res = SectionElementTable::query()
+            ->whereIn('IBLOCK_ELEMENT_ID', $productIds)->setSelect(['DISTINCT_SECTION_ID'])
+            ->registerRuntimeField(new ExpressionField('DISTINCT_SECTION_ID', 'distinct IBLOCK_SECTION_ID'))
+            ->exec();
+        while ($item = $res->fetch()) {
+            $sectionIds[] = (int)$item['DISTINCT_SECTION_ID'];
         }
         if (!empty($sectionIds)) {
             $sectionIds = array_unique($sectionIds);

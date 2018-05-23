@@ -86,6 +86,18 @@ class ProductSearchResult implements ProductResultInterface
         return $this->productCollection;
     }
 
+    public function getProductIds(): array
+    {
+        $productIds = [];
+
+        /** @var Result $item */
+        foreach ($this->resultSet as $item) {
+            $productIds[] = (int)$item->getId();
+        }
+
+        return $productIds;
+    }
+
     /**
      * @return ResultSet
      */
