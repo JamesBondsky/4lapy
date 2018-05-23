@@ -3,6 +3,7 @@
 namespace FourPaws\Catalog\Query;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
@@ -16,6 +17,8 @@ use WebArch\BitrixCache\BitrixCache;
 
 class OfferQuery extends IblockElementQuery
 {
+    /** кешируем на неделю  */
+    protected const CACHE_TIME_BY_ID = 7*24*60*60;
 
     /**
      * @param int $id
@@ -25,36 +28,27 @@ class OfferQuery extends IblockElementQuery
     public static function getById(int $id = 0): ?Offer
     {
         /** кешируем на сутки */
-        $cacheTime = 24*60*60;
         if($id <= 0){
-            return null;
-        }
-        /** @var LocationService $locationService */
-        try {
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $location = $locationService->getCurrentLocation();
-        } catch (ApplicationCreateException $e) {
-            /** @todo залогировать ошибку */
+            /** @todo вместо null выбивать exception */
             return null;
         }
         $query = new static();
         $getOffer = function () use ($id, $query) {
-            $query->withFilter(['ID' => $id]);
-            $collection = $query->exec();
-            /** @todo перед сохранением вызвать все расчетные методы, для сохранения рассчитанного оффера?? */
+            $collection = $query->withFilter(['ID' => $id])->exec();
             return $collection->isEmpty() ? null : $collection->first();
         };
         $bitrixCache = new BitrixCache();
-        $bitrixCache->withId('offer_' . $id . '_location_' . $location);
+        $bitrixCache->withId('offer_' . $id);
         $bitrixCache->withTag('catalog:offer:' . $id);
         $bitrixCache->withTag('iblock:item:' . $id);
-        $bitrixCache->withTime($cacheTime);//пока что кешируем на сутки
-        /** @todo увеличить время кеширование до года - если кеш будет корректно отрабатывать */
+        $bitrixCache->withTime(static::CACHE_TIME_BY_ID);
         try {
             return $bitrixCache->resultOf($getOffer)['result'];
         } catch (\Exception $e) {
+            /** @todo вместо null выбивать exception */
+            $logger = LoggerFactory::create('offer');
+            $logger->warning('ошибка получения оффера по id - '.$id.': '.$e->getMessage());
             return null;
-            /** @todo залогировать ошибку */
         }
     }
 
