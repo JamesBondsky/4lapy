@@ -137,7 +137,7 @@ class BasketComponent extends CBitrixComponent
                 $order = Order::create(SITE_ID);
                 $order->setBasket($basket);
                 // но иногда он так просто не запускается
-                if (!$order->hasMeaningfulField()) {
+                if (!Manager::isExtendCalculated()) {
                     $order->doFinalAction(true);
                 }
             }
