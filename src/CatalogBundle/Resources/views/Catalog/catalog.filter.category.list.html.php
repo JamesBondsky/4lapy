@@ -17,9 +17,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
-use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -60,28 +58,31 @@ if ($isBrand && !empty($brand)) {
             ->whereIn('IBLOCK_ELEMENT_ID', $productIds)->setSelect(['DISTINCT_SECTION_ID'])
             ->registerRuntimeField(new ExpressionField('DISTINCT_SECTION_ID', 'distinct IBLOCK_SECTION_ID'))
             ->exec();
-        while ($item = $res->fetch()) {
-            $sectionIds[] = (int)$item['DISTINCT_SECTION_ID'];
+        while ($sect = $res->fetch()) {
+            $sectionIds[] = (int)$sect['DISTINCT_SECTION_ID'];
         }
         if (!empty($sectionIds)) {
-            $sectionIds = array_unique($sectionIds);
             $childs = (new CategoryQuery())->withFilter([
-                '=ID'           => $sectionIds,
-                'ACTIVE'        => 'Y',
-                'GLOBAL_ACTIVE' => 'Y',
-            ])->exec();
+                '=ID'            => $sectionIds,
+                '=ACTIVE'        => 'Y',
+                '=GLOBAL_ACTIVE' => 'Y',
+            ])->withOrder(['DEPTH_LEVEL' => 'asc'])->exec();
             /** @var Category $section */
+            $rootSections = [];
             foreach ($childs as $key => $section) {
                 if ($section->getDepthLevel() > 1) {
-                    $item = (new CategoryQuery())->withFilter([
+                    $parent = (new CategoryQuery())->withFilter([
                         '>LEFT_MARGIN'  => $section->getLeftMargin(),
                         '<RIGHT_MARGIN' => $section->getRightMargin(),
-                        'DEPTH_LEVEL'   => 1,
+                        '=DEPTH_LEVEL'  => 1,
                     ])->withNav(['nTopCount' => 1])->exec()->first();
-                    if ($item instanceof Category) {
-                        $childs->add($item);
+                    if ($parent instanceof Category && !\in_array($parent->getId(), $rootSections, true)) {
+                        $childs->add($parent);
+                        $rootSections[] = $parent->getId();
                     }
                     $childs->remove($key);
+                } else {
+                    $rootSections[] = $section->getId();
                 }
             }
         }
