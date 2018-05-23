@@ -2,34 +2,42 @@
 
 namespace FourPaws\Migrator\Client;
 
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Migrator\Entity\User as UserEntity;
-use FourPaws\Migrator\Entity\UserGroup as UserGroupEntity;
 use FourPaws\Migrator\Provider\User as UserProvider;
-use FourPaws\Migrator\Provider\UserGroup as UserGroupProvider;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
+/**
+ * Class UserPull
+ *
+ * @package FourPaws\Migrator\Client
+ */
 class UserPull extends ClientPullAbstract
 {
     /**
-     * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     * @return ClientInterface[] array
      *
-     * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
-    public function getBaseClientList() : array
+    public function getBaseClientList(): array
     {
         return [
-            new UserGroup(new UserGroupProvider(new UserGroupEntity(UserGroup::ENTITY_NAME)),
-                          ['force' => $this->force]),
+            /* new UserGroup(new UserGroupProvider(new UserGroupEntity(UserGroup::ENTITY_NAME)),
+               ['force' => $this->force]),*/
         ];
     }
-    
+
     /**
-     * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     * @return ClientInterface[] array
      *
-     * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
-    public function getClientList() : array
+    public function getClientList(): array
     {
         return [
             new User(new UserProvider(new UserEntity(User::ENTITY_NAME)), [

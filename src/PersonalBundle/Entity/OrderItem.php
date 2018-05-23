@@ -407,15 +407,19 @@ class OrderItem extends BaseEntity
     public function reloadPageUrl(): void
     {
         $filter = [];
+        $offer = null;
 
         if ($this->hasArticle()) {
             $filter = ['=XML_ID' => $this->getArticle()];
         } elseif ($this->hasProductId()) {
             $filter = ['=ID' => $this->getProductId()];
+            $offer = OfferQuery::getById((int)$this->getProductId());
         }
 
         if (!empty($filter)) {
-            $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
+            if($offer === null) {
+                $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
+            }
             /** @var Offer $offer */
             if ($offer) {
                 $this->setDetailPageUrl($offer->getLink());

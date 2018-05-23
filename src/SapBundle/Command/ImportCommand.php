@@ -112,6 +112,11 @@ class ImportCommand extends Command implements LoggerAwareInterface
         }
 
         if ($this->lockerService->isLocked($pipeline)) {
+            $this->log()->critical(\sprintf(
+                'Pipeline %s is locked',
+                $pipeline
+            ));
+
             throw new RuntimeException(
                 \sprintf(
                     'Pipeline %s is locked',
