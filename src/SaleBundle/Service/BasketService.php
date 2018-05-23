@@ -20,6 +20,7 @@ use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
@@ -27,6 +28,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
@@ -881,6 +883,10 @@ class BasketService implements LoggerAwareInterface
         }
 
         if (!empty($this->basketProductIds)) {
+            /** местоположение нам тоже нужно */
+            /** @var LocationService $locationService */
+            $locationService = Application::getInstance()->getContainer()->get('location.service');
+            $location = $locationService->getCurrentLocation();
             /** для кеша всегда уникальные и отсортирвоанный массив */
             $basketProductIds = array_unique($this->basketProductIds);
             sort($basketProductIds);
@@ -889,11 +895,12 @@ class BasketService implements LoggerAwareInterface
             };
             $bitrixCache = new BitrixCache();
             $bitrixCache->withTime(6 * 60 * 60)//кеш на 6 часов
-            ->withId('offers_' . md5(serialize($basketProductIds)));
+            ->withId('offers_location_' . $location . md5(serialize($basketProductIds)));
             foreach ($basketProductIds as $basketProductId) {
                 $bitrixCache->withTag('catalog:offer:' . $basketProductId);
                 $bitrixCache->withTag('iblock:item:' . $basketProductId);
             }
+//            $bitrixCache->withTag('location:'.$location);
             $offerCollection = $bitrixCache->resultOf($getOfferCollection);
         } else {
             $offerCollection = new OfferCollection(new \CDBResult());
