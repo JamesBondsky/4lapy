@@ -846,9 +846,7 @@ class StoreService implements LoggerAwareInterface
     protected function getOfferById(int $offerId): Offer
     {
         if (!isset($this->offers[$offerId])) {
-            $offerQuery = new OfferQuery();
-            $offerQuery->withFilter(['ID' => $offerId]);
-            $this->offers[$offerId] = $offerQuery->exec()->first();
+            $this->offers[$offerId] = OfferQuery::getById($offerId);
         }
 
         return $this->offers[$offerId];
