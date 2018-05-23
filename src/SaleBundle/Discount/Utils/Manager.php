@@ -189,4 +189,20 @@ class Manager
 
         return $result;
     }
+
+    /**
+     * @return bool
+     */
+    public static function isExtendCalculated(): bool
+    {
+        return self::$extendCalculated;
+    }
+
+    /**
+     * @param bool $extendCalculated
+     */
+    public static function setExtendCalculated(bool $extendCalculated): void
+    {
+        self::$extendCalculated = $extendCalculated;
+    }
 }
