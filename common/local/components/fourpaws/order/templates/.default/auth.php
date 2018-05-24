@@ -277,7 +277,7 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                                 <div class="b-order-list__order-value b-order-list__order-value--aside js-full-list">
-                                    <?= CurrencyHelper::formatPrice($item->getQuantity() * $item->getPrice()) ?>
+                                    <?= CurrencyHelper::formatPrice($item->getQuantity() * $item->getPrice(), false) ?>
                                 </div>
                             </li>
                         <?php } ?>
