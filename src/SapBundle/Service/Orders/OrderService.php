@@ -741,22 +741,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             throw new NotFoundOrderDeliveryException('unknown sap delivery code');
         }
 
-        /** @var Shipment $shipment */
-        foreach ($order->getShipmentCollection() as $shipment) {
-            if ($shipment->isSystem()) {
-                continue;
+        $deliveryPrice = 0;
+        foreach ($orderDto->getProducts() as $orderOffer) {
+            $xmlId = \ltrim($orderOffer->getOfferXmlId(), '0');
+            if ($xmlId[0] === '2') {
+                $deliveryPrice = $orderOffer->getUnitPrice();
             }
-
-            $currentDeliveryCode = $shipment->getDelivery()->getCode();
-        }
-
-        $deliveryCode = DeliveryService::INNER_PICKUP_CODE;
-        if (null === $currentDeliveryCode) {
-            throw new NotFoundOrderDeliveryException('failed to get order delivery code');
-        }
-
-        if ($currentDeliveryCode === $deliveryCode) {
-            return;
         }
 
         $deliveryService = DeliveryManager::getObjectByCode($deliveryCode);
@@ -767,10 +757,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             }
 
             /** @noinspection PhpInternalEntityUsedInspection */
-            $shipment->setFieldsNoDemand(
+            $shipment->setFields(
                 [
                     'DELIVERY_ID'           => $deliveryService->getId(),
+                    'PRICE_DELIVERY'        => $deliveryPrice,
                     'DELIVERY_NAME'         => $deliveryService->getName(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
         }

@@ -57,15 +57,15 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class BasketComponent extends CBitrixComponent
 {
     /**
-     * @var DeliveryService
-     */
-    private $deliveryService;
-    /**
      * @var BasketService
      */
     public $basketService;
     /** @var OfferCollection */
     public $offerCollection;
+    /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
     /**
      * @var UserService
      */
@@ -126,41 +126,38 @@ class BasketComponent extends CBitrixComponent
         }
 
         $this->offerCollection = $this->basketService->getOfferCollection();
-        if (!$this->arParams['MINI_BASKET']) {
-            $this->setItems($basket);
-        }
+        $this->setItems($basket);
 
         $this->arResult['BASKET'] = $basket;
-        if (!$this->arParams['MINI_BASKET']) {
-            // привязывать к заказу нужно для расчета скидок
-            if (null === $order = $basket->getOrder()) {
-                $order = Order::create(SITE_ID);
-                $order->setBasket($basket);
-                // но иногда он так просто не запускается
-                if (!Manager::isExtendCalculated()) {
-                    $order->doFinalAction(true);
-                }
+
+        // привязывать к заказу нужно для расчета скидок
+        if (null === $order = $basket->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($basket);
+            // но иногда он так просто не запускается
+            if (!Manager::isExtendCalculated()) {
+                $order->doFinalAction(true);
             }
-            // необходимо подгрузить подарки
-            $this->offerCollection = $this->basketService->getOfferCollection(true);
-            $this->loadPromoDescriptions();
-            $this->setCoupon();
-            $this->arResult['USER'] = null;
-            $this->arResult['USER_ACCOUNT'] = null;
-            try {
-                $user = $this->currentUserService->getCurrentUser();
-                $this->arResult['USER'] = $user;
-                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
-            } /** @noinspection BadExceptionsProcessingInspection */
-            catch (NotAuthorizedException $e) {
-                /** в случае ошибки не показываем бюджет в большой корзине */
-            }
-            $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
-            $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
-            $this->calcTemplateFields();
-            $this->checkSelectedGifts();
-            $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
         }
+        // необходимо подгрузить подарки
+        $this->offerCollection = $this->basketService->getOfferCollection(true);
+        $this->loadPromoDescriptions();
+        $this->setCoupon();
+        $this->arResult['USER'] = null;
+        $this->arResult['USER_ACCOUNT'] = null;
+        try {
+            $user = $this->currentUserService->getCurrentUser();
+            $this->arResult['USER'] = $user;
+            $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
+        } /** @noinspection BadExceptionsProcessingInspection */
+        catch (NotAuthorizedException $e) {
+            /** в случае ошибки не показываем бюджет в большой корзине */
+        }
+        $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
+        $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
+        $this->calcTemplateFields();
+        $this->checkSelectedGifts();
+        $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
 
         $this->loadImages();
         $this->includeComponentTemplate($this->getPage());
@@ -201,6 +198,54 @@ class BasketComponent extends CBitrixComponent
         }
 
         return $result;
+    }
+
+    /**
+     *
+     * @param BasketItem $basketItem
+     * @param bool       $onlyApplied
+     *
+     * @return array
+     */
+    public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
+    {
+        $result = [];
+        /**
+         * @var BasketItemCollection $basketItemCollection
+         * @var Order                $order
+         */
+        $applyResult = $this->arResult['DISCOUNT_RESULT'];
+        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
+        if (!$basketDiscounts) {
+            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
+            foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
+                if ($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
+                    $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
+                }
+            }
+        }
+
+        if ($basketDiscounts) {
+            /** @noinspection ForeachSourceInspection */
+            foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
+                    continue;
+                }
+                if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
+                    $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return DeliveryService
+     */
+    public function getDeliveryService(): DeliveryService
+    {
+        return $this->deliveryService;
     }
 
     /**
@@ -387,7 +432,7 @@ class BasketComponent extends CBitrixComponent
         $basket = $this->arResult['BASKET'];
         /** @var Order $order */
         $order = $basket->getOrder();
-        if (!$this->arParams['MINI_BASKET'] && !Manager::isOrderNotEmpty($order)) {
+        if (!Manager::isOrderNotEmpty($order)) {
             $page = 'empty';
         }
         return $page;
@@ -411,8 +456,8 @@ class BasketComponent extends CBitrixComponent
                 ['ID' => 'ASC'],
                 [
                     'PROPERTY_BASKET_RULES' => \array_values($discountMap),
-                    'IBLOCK_CODE' => IblockCode::SHARES,
-                    'IBLOCK_TYPE' => IblockType::PUBLICATION,
+                    'IBLOCK_CODE'           => IblockCode::SHARES,
+                    'IBLOCK_TYPE'           => IblockType::PUBLICATION,
                 ],
                 false,
                 false,
@@ -423,53 +468,13 @@ class BasketComponent extends CBitrixComponent
                 if (\is_array($elem['PROPERTY_BASKET_RULES_VALUE'])) {
                     foreach ($elem['PROPERTY_BASKET_RULES_VALUE'] as $ruleId) {
                         $this->promoDescriptions[$ruleId] = [
-                            'url' => $elem['DETAIL_PAGE_URL'],
+                            'url'  => $elem['DETAIL_PAGE_URL'],
                             'name' => $elem['NAME'],
                         ];
                     }
                 }
             }
         }
-    }
-
-    /**
-     *
-     * @param BasketItem $basketItem
-     * @param bool $onlyApplied
-     *
-     * @return array
-     */
-    public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
-    {
-        $result = [];
-        /**
-         * @var BasketItemCollection $basketItemCollection
-         * @var Order $order
-         */
-        $applyResult = $this->arResult['DISCOUNT_RESULT'];
-        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
-        if (!$basketDiscounts) {
-            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
-            foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
-                if ($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
-                    $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
-                }
-            }
-        }
-
-        if ($basketDiscounts) {
-            /** @noinspection ForeachSourceInspection */
-            foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
-                if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
-                    continue;
-                }
-                if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
-                    $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
-                }
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -481,13 +486,5 @@ class BasketComponent extends CBitrixComponent
     {
         $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
         $this->arResult['COUPON_DISCOUNT'] = !empty($this->arResult['COUPON']) ? $this->basketService->getPromocodeDiscount() : 0;
-    }
-
-    /**
-     * @return DeliveryService
-     */
-    public function getDeliveryService(): DeliveryService
-    {
-        return $this->deliveryService;
     }
 }
