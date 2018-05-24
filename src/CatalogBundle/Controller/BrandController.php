@@ -50,7 +50,6 @@ class BrandController extends Controller
             'request'             => $request,
             'catalogRequest'      => $catalogBrandRequest,
             'productSearchResult' => $result,
-            'searchService' => $searchService,
         ]);
     }
 }

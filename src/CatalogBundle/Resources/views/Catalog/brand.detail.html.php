@@ -8,14 +8,12 @@ use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Search\Model\ProductSearchResult;
-use FourPaws\Search\SearchService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
 /**
  * @var CatalogBrandRequest $catalogRequest
  * @var ProductSearchResult $productSearchResult
- * @var SearchService $searchService
  * @var PhpEngine           $view
  * @var CMain               $APPLICATION
  * @var Request             $request
@@ -187,7 +185,6 @@ if (!$isAjax) { ?>
             'FourPawsCatalogBundle:Catalog:brand.filter.container.html.php',
             [
                 'catalogRequest'      => $catalogRequest,
-                'searchService'      => $searchService,
                 'productSearchResult' => $productSearchResult,
                 'brand' => $catalogRequest->getBrand()->getCode(),
             ]

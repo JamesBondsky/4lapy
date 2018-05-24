@@ -206,7 +206,7 @@ class Category extends IblockSection implements FilterInterface
             }
             if ($this->getIblockSectionId()) {
                 $parent = (new CategoryQuery())
-                    ->withFilterParameter('=ID', $this->getIblockSectionId())
+                    ->withFilterParameter('ID', $this->getIblockSectionId())
                     ->exec()
                     ->first();
                 $this->withParent($parent);
@@ -240,7 +240,7 @@ class Category extends IblockSection implements FilterInterface
         if (0 === $this->child->count()) {
             if ($this->getRightMargin() - $this->getLeftMargin() > 1) {
                 $this->child = (new CategoryQuery())
-                    ->withFilterParameter('=SECTION_ID', $this->getId())
+                    ->withFilterParameter('SECTION_ID', $this->getId())
                     ->withFilterParameter('CNT_ACTIVE', 'Y')
                     ->withOrder(['SORT' => 'ASC'])
                     ->withCountElements(true)
