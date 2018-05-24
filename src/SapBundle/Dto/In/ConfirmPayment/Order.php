@@ -93,6 +93,17 @@ class Order
     protected $sumPayed = 0;
 
     /**
+     * Сумма возврата
+     *
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("Sum_Returned")
+     * @Serializer\XmlAttribute()
+     *
+     * @var float
+     */
+    protected $sumReturned = 0;
+
+    /**
      * Остатки
      *
      * @Serializer\XmlList(inline=true, entry="Item")
@@ -198,6 +209,24 @@ class Order
     public function getSumPayed(): float
     {
         return $this->sumPayed;
+    }
+
+    /**
+     * @return float
+     */
+    public function getSumReturned(): float
+    {
+        return $this->sumReturned;
+    }
+
+    /**
+     * @param float $sumReturned
+     * @return Order
+     */
+    public function setSumReturned(float $sumReturned): Order
+    {
+        $this->sumReturned = $sumReturned;
+        return $this;
     }
 
     /**
