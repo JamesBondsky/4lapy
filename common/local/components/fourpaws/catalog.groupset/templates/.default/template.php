@@ -73,35 +73,38 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             ?>
         </div>
         <script id="advice-item-template" type="text/template">
-            <div class="b-advice__item js-tempalate js-advice-item"
-                 data-price="{{cost}}"
-                 data-offer-id="{{offerid}}"
-                 data-advicecount="2">
-                <div class="b-advice__image-wrapper js-tempalate"><img class="b-advice__image"
-                                                                       src="{{image}}"
-                                                                       alt=""
-                                                                       title=""
-                                                                       role="presentation"/>
+            <a href="{{link}}" class="js-tempalate">
+                <div class="b-advice__item js-advice-item"
+                     data-price="{{cost}}"
+                     data-offer-id="{{offerid}}"
+                     data-advicecount="2">
+                    <div class="b-advice__image-wrapper js-tempalate"><img class="b-advice__image"
+                                                                           src="{{image}}"
+                                                                           alt=""
+                                                                           title=""
+                                                                           role="presentation"/>
+                    </div>
+                    <span class="b-advice__block js-tempalate"><a class="b-advice__product-link js-tempalate"
+                                                                  href="javascript:void(0)"
+                                                                  title=""><span
+                                    class="b-clipped-text b-clipped-text--advice"><span><strong>{{title}}  </strong>{{description}}</span></span></a><span
+                                class="b-advice__info js-tempalate"><span
+                                    class="b-advice__weight">{{weight}}</span><span
+                                    class="b-advice__cost">{{cost}}<span
+                                        class="b-ruble b-ruble--advice">₽</span></span></span><a
+                                class="b-button b-button--advice-set js-group-set"
+                                href="javascript:void(0);"
+                                title="Другой товар"
+                                data-popup-id="popup-choose-gift">Другой товар</a></span>
                 </div>
-                <span class="b-advice__block js-tempalate"><a class="b-advice__product-link js-tempalate"
-                                                              href="javascript:void(0)"
-                                                              title=""><span
-                                class="b-clipped-text b-clipped-text--advice"><span><strong>{{title}}  </strong>{{description}}</span></span></a><span
-                            class="b-advice__info js-tempalate"><span
-                                class="b-advice__weight">{{weight}}</span><span
-                                class="b-advice__cost">{{cost}}<span
-                                    class="b-ruble b-ruble--advice">₽</span></span></span><a
-                            class="b-button b-button--advice-set js-group-set"
-                            href="javascript:void(0);"
-                            title="Другой товар"
-                            data-popup-id="popup-choose-gift">Другой товар</a></span>
-            </div>
+            </a>
         </script>
         <script id="advice-item-blank" type="text/template">
-            <div class="b-advice__item js-tempalate blank js-advice-item" data-advicecount="2">
-                <div class="b-advice__image-wrapper">
-                </div>
-                <span class="b-advice__block">
+            <a href="{{link}}" class="js-tempalate">
+                <div class="b-advice__item blank js-advice-item" data-advicecount="2">
+                    <div class="b-advice__image-wrapper">
+                    </div>
+                    <span class="b-advice__block">
                     <span class="b-advice__product-link">
                         <span class="b-advice__blank-text">
                             <br/><br/>
@@ -114,7 +117,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             href="javascript:void(0);"
                             title="Выбрать товар"
                             data-popup-id="popup-choose-gift">Выбрать товар</a></span>
-            </div>
+                </div>
+            </a>
         </script>
         <div class="b-advice__list-cost">
             <div class="b-advice__sign b-advice__sign--equally">
