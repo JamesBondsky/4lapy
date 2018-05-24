@@ -174,11 +174,12 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     ): StockResultCollection {
         $stockResultCollection = new StockResultCollection();
 
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
+        foreach ($basket as $item) {
             $basketItem = null;
+
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
             /** @var BasketItem $item */
-            foreach ($basket as $item) {
                 if ((int)$item->getProductId() === $offer->getId()) {
                     $basketItem = $item;
                     break;
