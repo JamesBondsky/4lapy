@@ -4,6 +4,7 @@
  * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
  * @var ProductSearchResult                   $productSearchResult
+ * @var SearchService                         $searchService
  * @var PhpEngine                             $view
  * @var Category                              $category
  * @var CMain                                 $APPLICATION
@@ -11,61 +12,80 @@
  * @var ArrayCollection                       $sectionIds
  */
 
-//use FourPaws\Catalog\Collection\CategoryCollection;
+use Bitrix\Iblock\SectionElementTable;
+use Bitrix\Main\Application;
+use Bitrix\Main\Entity\ExpressionField;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
+use FourPaws\Search\SearchService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
 /** @var Category $child */
 if ($isBrand && !empty($brand)) {
-    $instance = \Bitrix\Main\Application::getInstance();
-    $requestSections = implode(',',$instance->getContext()->getRequest()->get('Sections'));
-    /** @todo сброс кеша по тегу сделать */
+    $cacheTime = 24 * 60 * 60;
+    $instance = Application::getInstance();
+    $requestSections = implode(',', $instance->getContext()->getRequest()->get('Sections'));
     $childs = null;
     $cache = $instance->getCache();
-    $cacheTime = 60 * 60;
+
+    /** не кешируем поиск товаров - так как он может постоянно меняться, остальное кешируется на сутки */
+    $nav = new Navigation();
+    $nav->withPageSize(9999);//нам нужны все итемы
+    $searchResult = $searchService->searchProducts(
+        $catalogRequest->getCategory()->getFilters(),
+        $catalogRequest->getSorts()->getSelected(),
+        $nav,
+        $catalogRequest->getSearchString()
+    );
+    $productIds = $searchResult->getProductIds();
+
     if ($cache->initCache($cacheTime,
-        serialize(['brand' => $brand]))) {
+        serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($productIds))]))) {
         $result = $cache->getVars();
         $childs = $result['childs'];
     } elseif ($cache->startDataCache()) {
-        $tagCache = new TaggedCacheHelper($cachePath);
-        $products = (new \FourPaws\Catalog\Query\ProductQuery())->withFilter(['PROPERTY_BRAND.NAME' => $brand])->exec();
-        /** @var \FourPaws\Catalog\Model\Product $product */
+        $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
+
         $sectionIds = [];
-        foreach ($products as $product) {
-            $sectList = $product->getSectionsIdList();
-            if (!empty($sectList)) {
-                foreach ($sectList as $value) {
-                    $sectionIds[] = $value;
-                }
-            }
+        $res = SectionElementTable::query()
+            ->whereIn('IBLOCK_ELEMENT_ID', $productIds)->setSelect(['DISTINCT_SECTION_ID'])
+            ->registerRuntimeField(new ExpressionField('DISTINCT_SECTION_ID', 'distinct IBLOCK_SECTION_ID'))
+            ->exec();
+        while ($sect = $res->fetch()) {
+            $sectionIds[] = (int)$sect['DISTINCT_SECTION_ID'];
         }
         if (!empty($sectionIds)) {
-            $sectionIds = array_unique($sectionIds);
-            $childs = (new CategoryQuery())->withFilter(['=ID' => $sectionIds])->exec();
+            $childs = (new CategoryQuery())->withFilter([
+                '=ID'            => $sectionIds,
+                '=ACTIVE'        => 'Y',
+                '=GLOBAL_ACTIVE' => 'Y',
+            ])->withOrder(['DEPTH_LEVEL' => 'asc'])->exec();
             /** @var Category $section */
+            $rootSections = [];
             foreach ($childs as $key => $section) {
                 if ($section->getDepthLevel() > 1) {
-                    $item = (new CategoryQuery())->withFilter(['>LEFT_MARGIN'  => $section->getLeftMargin(),
-                                                               '<RIGHT_MARGIN' => $section->getRightMargin(),
-                                                               'DEPTH_LEVEL'    => 1,
-                    ])->withNav(['nTopCount'=>1])->exec()->first();
-                    if($item instanceof Category) {
-                        $childs->add($item);
+                    $parent = (new CategoryQuery())->withFilter([
+                        '>LEFT_MARGIN'  => $section->getLeftMargin(),
+                        '<RIGHT_MARGIN' => $section->getRightMargin(),
+                        '=DEPTH_LEVEL'  => 1,
+                    ])->withNav(['nTopCount' => 1])->exec()->first();
+                    if ($parent instanceof Category && !\in_array($parent->getId(), $rootSections, true)) {
+                        $childs->add($parent);
+                        $rootSections[] = $parent->getId();
                     }
                     $childs->remove($key);
+                } else {
+                    $rootSections[] = $section->getId();
                 }
             }
         }
-
-        $tagCache->addTag('catalog:brand:' . $brand);
 
         $tagCache->end();
         $cache->endDataCache(['childs' => $childs]);
