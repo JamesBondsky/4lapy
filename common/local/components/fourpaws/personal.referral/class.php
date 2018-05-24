@@ -162,11 +162,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['COUNT_ACTIVE'] = $result['COUNT_ACTIVE'];
             $this->arResult['COUNT_MODERATE'] = $result['COUNT_MODERATE'];
         } elseif ($cache->startDataCache()) {
-            $tagCache = null;
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($cachePath);
-            }
+            $tagCache = new TaggedCacheHelper($cachePath);
             try {
                 /** @var ArrayCollection $items
                  * @var bool $redirect
@@ -212,15 +208,13 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
             $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
 
-            if ($tagCache !== null) {
-                TaggedCacheHelper::addManagedCacheTags([
-                    'personal:referral',
-                    'personal:referral:' . $curUser->getId(),
-                    'hlb:field:referral_user:' . $curUser->getId(),
-                ], $tagCache);
-                $tagCache->endTagCache();
-            }
+            $tagCache->addTags([
+                'personal:referral',
+                'personal:referral:' . $curUser->getId(),
+                'hlb:field:referral_user:' . $curUser->getId(),
+            ]);
 
+            $tagCache->end();
             $cache->endDataCache([
                 'NAV'        => $nav,
                 'BONUS'      => $this->arResult['BONUS'],
@@ -246,14 +240,14 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             ],
             $cachePath
         )) {
-            $this->arResult['referral_type'] = $this->referralService->getReferralType();
-            $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
-
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:referral',
                 'personal:referral:' . $curUser->getId(),
                 'hlb:field:referral_user:' . $curUser->getId(),
             ]);
+
+            $this->arResult['referral_type'] = $this->referralService->getReferralType();
+            $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
 
             $this->includeComponentTemplate();
         }
