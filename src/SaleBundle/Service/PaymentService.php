@@ -19,10 +19,17 @@ use CUser;
 class PaymentService
 {
     /**
-     * PaymentService constructor.
+     * @var BasketService
      */
-    public function __construct()
+    protected $basketService;
+
+    /**
+     * PaymentService constructor.
+     * @param BasketService $basketService
+     */
+    public function __construct(BasketService $basketService)
     {
+        $this->basketService = $basketService;
     }
 
     /**
@@ -105,6 +112,11 @@ class PaymentService
         $cartItems = [];
         /** @var \Bitrix\Sale\BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
+            // пропускаем подарки
+            if ($this->basketService->getBasketItemXmlId($basketItem)[0] === '3') {
+                continue;
+            }
+
             $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
             $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
 

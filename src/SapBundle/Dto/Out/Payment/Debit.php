@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Dto\Out\Payment;
 
 use DateTime;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class Debit

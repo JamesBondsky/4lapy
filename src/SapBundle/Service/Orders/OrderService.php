@@ -487,7 +487,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @return DeliveryAddress|OutDeliveryAddress
      * @throws Exception
      */
-    private function getDeliveryAddress(Order $order)
+    public function getDeliveryAddress(Order $order)
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
         $regionCode = $this->locationService->getRegionCode($city);
