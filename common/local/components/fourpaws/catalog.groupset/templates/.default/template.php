@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+$adviceCount = 2;
 ?>
 
 
@@ -29,12 +30,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                  data-url="/ajax/catalog/product-info/groupSet/"
                  data-index="0">
                 <span class="b-advice__image-wrapper">
-                    <img
-                            class="b-advice__image"
-                            src="<?= $arResult['IMG']; ?>"
-                            alt="<?= $arResult['NAME']; ?>"
-                            title="<?= $arResult['NAME']; ?>"
-                            role="presentation"/>
+                    <img class="b-advice__image"
+                         src="<?= $arResult['IMG']; ?>"
+                         alt="<?= $arResult['NAME']; ?>"
+                         title="<?= $arResult['NAME']; ?>"
+                         role="presentation"/>
                 </span>
                 <span class="b-advice__block">
                     <span class="product-link">
@@ -46,87 +46,95 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     </span>
                     <span class="b-advice__info">
                         <span class="b-advice__weight"><?= $arResult['WEIGHT']; ?></span>
-                        <span class="b-advice__cost"><?= $arResult['PRICE']; ?><span
-                                    class="b-ruble b-ruble--advice">₽</span></span>
+                        <span class="b-advice__cost"><?= $arResult['PRICE']; ?>
+                            <span class="b-ruble b-ruble--advice">₽</span>
+                        </span>
                     </span>
                 </span>
             </div>
             <?php
             $i = 0;
-            while (++$i <= $arResult['EMPTY_SLOTS']) {
-                ?>
+            while (++$i <= $arResult['EMPTY_SLOTS']) { ?>
                 <div class="b-advice__sign b-advice__sign--plus"></div>
-                <div class="b-advice__item blank js-advice-item" data-index="<?= $i; ?>" data-price="0">
-                    <div class="b-advice__image-wrapper">
-                    </div>
-                    <span class="b-advice__block"><span class="b-advice__product-link"><span
-                                    class="b-advice__blank-text">                                                                      <br/>                                                       <br/>                                           </span></span><span
-                                class="b-advice__info"><span
-                                    class="b-advice__blank-text">                  </span></span><a
-                                class="b-button b-button--advice-set js-group-set"
-                                href="javascript:void(0);"
-                                title="Выбрать товар"
-                                data-popup-id="popup-choose-gift">Выбрать товар</a></span>
+                <div class="b-advice__item js-advice-item blank" data-index="<?= $i; ?>" data-price="0">
+                    <div class="b-advice__image-wrapper"></div>
+                    <span class="b-advice__block">
+                        <span class="b-advice__product-link">
+                            <span class="b-advice__blank-text">                                                                     
+                                <br/><br/>                                          
+                            </span>
+                        </span>
+                        <span class="b-advice__info">
+                            <span class="b-advice__blank-text"></span>
+                        </span>
+                        <a class="b-button b-button--advice-set js-group-set"
+                           href="javascript:void(0);"
+                           title="Выбрать товар"
+                           data-popup-id="popup-choose-gift">Выбрать товар</a>
+                    </span>
                 </div>
-                <?php
-            }
-            ?>
+            <?php } ?>
         </div>
         <script id="advice-item-template" type="text/template">
-            <a href="{{link}}" class="js-tempalate">
-                <div class="b-advice__item js-advice-item"
-                     data-price="{{cost}}"
-                     data-offer-id="{{offerid}}"
-                     data-advicecount="2">
-                    <div class="b-advice__image-wrapper js-tempalate"><img class="b-advice__image"
-                                                                           src="{{image}}"
-                                                                           alt=""
-                                                                           title=""
-                                                                           role="presentation"/>
-                    </div>
-                    <span class="b-advice__block js-tempalate"><a class="b-advice__product-link js-tempalate"
-                                                                  href="javascript:void(0)"
-                                                                  title=""><span
-                                    class="b-clipped-text b-clipped-text--advice"><span><strong>{{title}}  </strong>{{description}}</span></span></a><span
-                                class="b-advice__info js-tempalate"><span
-                                    class="b-advice__weight">{{weight}}</span><span
-                                    class="b-advice__cost">{{cost}}<span
-                                        class="b-ruble b-ruble--advice">₽</span></span></span><a
-                                class="b-button b-button--advice-set js-group-set"
-                                href="javascript:void(0);"
-                                title="Другой товар"
-                                data-popup-id="popup-choose-gift">Другой товар</a></span>
+            <div class="b-advice__item js-tempalate js-advice-item"
+                 data-price="{{cost}}"
+                 data-offer-id="{{offerid}}"
+                 data-advicecount="<?= $adviceCount ?>">
+                <div class="b-advice__image-wrapper js-tempalate">
+                    <img class="b-advice__image"
+                         src="{{image}}"
+                         alt=""
+                         title=""
+                         role="presentation"/>
                 </div>
-            </a>
+                <span class="b-advice__block js-tempalate">
+                    <a class="b-advice__product-link js-tempalate"
+                       href="{{link}}"
+                       target="_blank">
+                        <span class="b-clipped-text b-clipped-text--advice">
+                            <span>
+                                <strong>{{title}}  </strong>{{description}}
+                            </span>
+                        </span>
+                    </a>
+                    <span class="b-advice__info js-tempalate">
+                        <span class="b-advice__weight">{{weight}}</span>
+                        <span class="b-advice__cost">{{cost}}
+                            <span class="b-ruble b-ruble--advice">₽</span>
+                        </span>
+                    </span>
+                    <a class="b-button b-button--advice-set js-group-set"
+                       href="javascript:void(0);"
+                       title="Другой товар"
+                       data-popup-id="popup-choose-gift">Другой товар</a>
+                </span>
+            </div>
         </script>
         <script id="advice-item-blank" type="text/template">
-            <a href="{{link}}" class="js-tempalate">
-                <div class="b-advice__item blank js-advice-item" data-advicecount="2">
-                    <div class="b-advice__image-wrapper">
-                    </div>
-                    <span class="b-advice__block">
+            <div class="b-advice__item blank" data-advicecount="<?= $adviceCount ?>">
+                <div class="b-advice__image-wrapper"></div>
+                <span class="b-advice__block">
                     <span class="b-advice__product-link">
                         <span class="b-advice__blank-text">
                             <br/><br/>
                         </span>
                     </span>
-                    <span class="b-advice__info"><span class="b-advice__blank-text"></span>
+                    <span class="b-advice__info">
+                        <span class="b-advice__blank-text"></span>
                     </span>
-                    <a
-                            class="b-button b-button--advice-set js-group-set"
-                            href="javascript:void(0);"
-                            title="Выбрать товар"
-                            data-popup-id="popup-choose-gift">Выбрать товар</a></span>
-                </div>
-            </a>
+                    <a class="b-button b-button--advice-set js-group-set"
+                       href="javascript:void(0);"
+                       title="Выбрать товар"
+                       data-popup-id="popup-choose-gift">Выбрать товар</a>
+                </span>
+            </div>
         </script>
         <div class="b-advice__list-cost">
-            <div class="b-advice__sign b-advice__sign--equally">
-            </div>
+            <div class="b-advice__sign b-advice__sign--equally"></div>
             <div class="b-advice__cost-wrapper">
                 <span class="b-advice__total-price">
                     <span class="b-advice__old-price js-advice-oldprice" style="display:none;">
-                        <span class="js-value">6 445</span>
+                        <span class="js-value"></span>
                         <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
                     </span>
                     <span class="b-advice__new-price js-advice-newprice">

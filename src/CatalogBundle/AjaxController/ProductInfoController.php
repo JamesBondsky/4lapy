@@ -478,6 +478,7 @@ class ProductInfoController extends Controller
                     $items[] = [
                         'id'         => $offer->getId(),
                         'price'      => $offer->getPrice(),
+                        'link'      => $offer->getLink(),
                         'image'      => $image,
                         'name'       => $name,
                         'additional' => $weight,
