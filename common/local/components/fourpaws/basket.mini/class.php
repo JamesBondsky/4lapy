@@ -67,25 +67,31 @@ class BasketMiniComponent extends FourPawsComponent
     }
 
     /**
-     * @param int $id
+     * @param int $offerId
      *
      * @return Offer|null
      */
-    public function getOffer(int $id): ?Offer
+    public function getOffer(int $offerId): ?Offer
     {
-        if (!isset($this->offers[$id])) {
-            $this->offers[$id] = OfferQuery::getById($id);
+        if($offerId <= 0){
+            return null;
         }
-        return $this->offers[$id];
+        if (!isset($this->offers[$offerId])) {
+            $this->offers[$offerId] = OfferQuery::getById($offerId);
+        }
+        return $this->offers[$offerId];
     }
 
     /**
-     * @param $offerId
+     * @param int $offerId
      *
      * @return ResizeImageDecorator|null
      */
-    public function getImage($offerId): ?ResizeImageDecorator
+    public function getImage(int $offerId): ?ResizeImageDecorator
     {
+        if($offerId <= 0){
+            return null;
+        }
         if (!isset($this->images[$offerId])) {
             $offer = $this->getOffer($offerId);
             $image = null;

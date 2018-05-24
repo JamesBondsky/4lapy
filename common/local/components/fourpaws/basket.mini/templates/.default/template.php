@@ -57,7 +57,7 @@ if (true !== $arParams['IS_AJAX']) {
                     }
 
                     $offer = $component->getOffer((int)$basketItem->getProductId());
-                    $image = $component->getImage($basketItem->getProductId()); ?>
+                    $image = $component->getImage((int)$basketItem->getProductId()); ?>
                     <div class="b-cart-item">
                         <div class="b-cart-item__image-wrapper">
                             <?php if (null !== $image) { ?>
