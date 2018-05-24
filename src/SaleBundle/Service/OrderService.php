@@ -17,11 +17,13 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
@@ -65,12 +67,19 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class OrderService
@@ -276,9 +285,9 @@ class OrderService implements LoggerAwareInterface
      * @param Basket|null                     $basket
      * @param CalculationResultInterface|null $selectedDelivery
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -548,7 +557,7 @@ class OrderService implements LoggerAwareInterface
                 $extPayment = $paymentCollection->createItem();
                 $extPayment->setField('SUM', $sum);
                 $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
-                /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+                /** @var Service $paySystem */
                 $paySystem = $extPayment->getPaySystem();
                 $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
             } catch (\Exception $e) {
@@ -662,14 +671,14 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage                    $storage
      * @param CalculationResultInterface|null $selectedDelivery
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws NotFoundException
+     * @throws ValidationException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -889,10 +898,10 @@ class OrderService implements LoggerAwareInterface
      *
      * @param OrderStorage $storage
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws NotFoundException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -1034,14 +1043,14 @@ class OrderService implements LoggerAwareInterface
      *
      * @param OrderStorage $storage
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ValidationException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @throws NotFoundException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -1251,7 +1260,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -1277,7 +1286,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws \Exception
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -1348,16 +1357,16 @@ class OrderService implements LoggerAwareInterface
         }
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
+        return (new OfferQuery())->withFilterParameter('=ID', $ids)->exec();
     }
 
     /**
      * @param Order $order
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -1441,9 +1450,9 @@ class OrderService implements LoggerAwareInterface
      * @param User  $user
      *
      * @return string
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotFoundException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws \RuntimeException
      */
     public function getOrderBonusSum(Order $order, ?User $user = null): string
@@ -1541,23 +1550,23 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @return null|\Bitrix\Sale\PaySystem\Service
+     * @return null|Service
      */
-    public function getCashPaySystemService(): ?\Bitrix\Sale\PaySystem\Service
+    public function getCashPaySystemService(): ?Service
     {
         $paySystemService = null;
         if (!isset($this->paySystemServiceCache['cash'])) {
             $this->paySystemServiceCache['cash'] = null;
             $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH_OR_CARD);
             if ($data) {
-                $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
+                $this->paySystemServiceCache['cash'] = new Service(
                     $data
                 );
             }
         }
 
         if ($this->paySystemServiceCache['cash']) {
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystemService */
+            /** @var Service $paySystemService */
             $paySystemService = clone $this->paySystemServiceCache['cash'];
         }
 
@@ -1567,15 +1576,15 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @return \Bitrix\Main\Type\Date|null
+     * @return Date|null
      */
-    public function getOrderDeliveryDate(Order $order): ?\Bitrix\Main\Type\Date
+    public function getOrderDeliveryDate(Order $order): ?Date
     {
         $deliveryDate = null;
         try {
             $propValue = $this->getOrderPropertyByCode($order, 'DELIVERY_DATE');
             $value = $propValue->getValue();
-            if ($value instanceof \Bitrix\Main\Type\Date) {
+            if ($value instanceof Date) {
                 $deliveryDate = $value;
             }
         } catch (\Exception $exception) {
@@ -1590,7 +1599,7 @@ class OrderService implements LoggerAwareInterface
      * @param CalculationResultInterface $delivery
      * @param bool                       $isFastOrder
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
      * @throws ObjectPropertyException
@@ -1656,7 +1665,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
