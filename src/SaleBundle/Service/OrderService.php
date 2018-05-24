@@ -984,7 +984,7 @@ class OrderService implements LoggerAwareInterface
         );
         if ($storage1->getBonus() > $maxBonusesForOrder1) {
             $storage1->setBonus($maxBonusesForOrder1);
-            $storage2->setBonus(floor($storage1->getBonus() - $maxBonusesForOrder1));
+            $storage2->setBonus(floor($storage->getBonus() - $maxBonusesForOrder1));
         } else {
             $storage2->setBonus(0);
         }
