@@ -23,10 +23,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
-use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -60,8 +59,8 @@ class BasketComponent extends CBitrixComponent
      * @var BasketService
      */
     public $basketService;
-    /** @var OfferCollection */
-    public $offerCollection;
+    /** @var array */
+    public $offers;
     /**
      * @var DeliveryService
      */
@@ -125,7 +124,6 @@ class BasketComponent extends CBitrixComponent
             $basket = $this->basketService->getBasket();
         }
 
-        $this->offerCollection = $this->basketService->getOfferCollection();
         $this->setItems($basket);
 
         $this->arResult['BASKET'] = $basket;
@@ -140,7 +138,6 @@ class BasketComponent extends CBitrixComponent
             }
         }
         // необходимо подгрузить подарки
-        $this->offerCollection = $this->basketService->getOfferCollection(true);
         $this->loadPromoDescriptions();
         $this->setCoupon();
         $this->arResult['USER'] = null;
@@ -159,18 +156,7 @@ class BasketComponent extends CBitrixComponent
         $this->checkSelectedGifts();
         $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
 
-        $this->loadImages();
         $this->includeComponentTemplate($this->getPage());
-    }
-
-    /**
-     * @param $offerId
-     *
-     * @return ResizeImageDecorator|null
-     */
-    public function getImage($offerId): ?ResizeImageDecorator
-    {
-        return $this->images[$offerId] ?? null;
     }
 
     /**
@@ -179,25 +165,6 @@ class BasketComponent extends CBitrixComponent
     public function getCurrentUserService(): UserService
     {
         return $this->currentUserService;
-    }
-
-    /**
-     * @param int $id
-     *
-     * @return Offer|null
-     */
-    public function getOffer(int $id): ?Offer
-    {
-        $result = null;
-        /** @var Offer $item */
-        foreach ($this->offerCollection as $item) {
-            if ($item->getId() === $id) {
-                $result = $item;
-                break;
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -246,6 +213,43 @@ class BasketComponent extends CBitrixComponent
     public function getDeliveryService(): DeliveryService
     {
         return $this->deliveryService;
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return Offer|null
+     */
+    public function getOffer(int $offerId): ?Offer
+    {
+        if ($offerId <= 0) {
+            return null;
+        }
+        if (!isset($this->offers[$offerId])) {
+            $this->offers[$offerId] = OfferQuery::getById($offerId);
+        }
+        return $this->offers[$offerId];
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return ResizeImageDecorator|null
+     */
+    public function getImage(int $offerId): ?ResizeImageDecorator
+    {
+        if ($offerId <= 0) {
+            return null;
+        }
+        if (!isset($this->images[$offerId])) {
+            $offer = $this->getOffer($offerId);
+            $image = null;
+            if ($offer !== null) {
+                $images = $offer->getResizeImages(110, 110);
+                $this->images[$offerId] = $images->first();
+            }
+        }
+        return $this->images[$offerId];
     }
 
     /**
@@ -372,23 +376,6 @@ class BasketComponent extends CBitrixComponent
                 $this->arResult['SELECTED_GIFTS'][$group['discountId']] = $this->basketService
                     ->getAdder('gift')->getExistGifts($group['discountId'], true);
             }
-        }
-    }
-
-    /**
-     *
-     * @throws \InvalidArgumentException
-     */
-    private function loadImages(): void
-    {
-        /** @var Offer $item */
-        foreach ($this->offerCollection as $item) {
-            if (isset($this->images[$item->getId()])) {
-                continue;
-            }
-            /** @var ResizeImageCollection $images */
-            $images = $item->getResizeImages(110, 110);
-            $this->images[$item->getId()] = $images->first();
         }
     }
 
