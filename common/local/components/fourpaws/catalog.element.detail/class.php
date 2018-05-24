@@ -125,6 +125,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
             $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
 
+            TaggedCacheHelper::addManagedCacheTags([
+                'catalog:offer:' . $currentOffer->getId(),
+                'catalog:product:' . $product->getId(),
+                'iblock:item:' . $product->getId(),
+            ]);
+
             $sectionId = (int)current($product->getSectionsIdList());
 
             $this->arResult = [
@@ -139,11 +145,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 //'SECTION' => $this->getSection($sectionId),
             ];
 
-            TaggedCacheHelper::addManagedCacheTags([
-                'catalog:offer:' . $currentOffer->getId(),
-                'catalog:product:' . $product->getId(),
-                'iblock:item:' . $product->getId(),
-            ]);
+
 
             $this->setResultCacheKeys(['PRODUCT', 'CURRENT_OFFER', 'SHOW_FAST_ORDER']);
 

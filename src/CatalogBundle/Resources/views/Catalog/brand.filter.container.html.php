@@ -58,7 +58,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
                     'filters' => $filterCollection->getFiltersToShow(),
-                    'isBrand' => true,
+                    'isBrand' => true
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
