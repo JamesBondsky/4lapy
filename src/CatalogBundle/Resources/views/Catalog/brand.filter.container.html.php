@@ -2,6 +2,7 @@
 /**
  * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
+ * @var SearchService                         $searchService
  * @var ProductSearchResult                   $productSearchResult
  * @var PhpEngine                             $view
  * @var CMain                                 $APPLICATION
@@ -15,6 +16,7 @@ use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
+use FourPaws\Search\SearchService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
@@ -45,16 +47,18 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
                 [
-                    'category'   => $category,
-                    'brand' => $brand,
-                    'isBrand'=>true
+                    'category'       => $category,
+                    'searchService'  => $searchService,
+                    'catalogRequest' => $catalogRequest,
+                    'brand'          => $brand,
+                    'isBrand'        => true,
                 ]
             ) ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
                     'filters' => $filterCollection->getFiltersToShow(),
-                    'isBrand'=>true
+                    'isBrand' => true,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
