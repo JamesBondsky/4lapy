@@ -58,6 +58,15 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
 
 /** @var User $user */
 $user = $arResult['USER'];
+
+$basketItems = [];
+/** @var BasketItem $item */
+foreach ($basket as $item) {
+    $basketItems[$item->getProductId()]['name'] = $item->getField('NAME');
+    $basketItems[$item->getProductId()]['quantity'] += $item->getQuantity();
+    $basketItems[$item->getProductId()]['totalPrice'] += $item->getQuantity() * $item->getPrice();
+}
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -263,21 +272,21 @@ $user = $arResult['USER'];
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
                         заказе</a>
                     <ul class="b-order-list__list js-order-list-block">
-                        <?php /** @var BasketItem $item */ ?>
-                        <?php foreach ($basket as $item) { ?>
+                        <?php /** @var array $item */ ?>
+                        <?php foreach ($basketItems as $item) { ?>
                             <li class="b-order-list__item b-order-list__item--aside js-full-list">
                                 <div class="b-order-list__order-text b-order-list__order-text--aside js-full-list">
                                     <div class="b-order-list__clipped-text">
                                         <div class="b-order-list__text-backed">
-                                            <?= $item->getField('NAME') ?>
-                                            <?php if ($item->getQuantity() > 1) { ?>
-                                                (<?= $item->getQuantity() ?> шт)
+                                            <?= $item['name'] ?>
+                                            <?php if ($item['quantity'] > 1) { ?>
+                                                (<?= $item['quantity'] ?> шт)
                                             <?php } ?>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="b-order-list__order-value b-order-list__order-value--aside js-full-list">
-                                    <?= CurrencyHelper::formatPrice($item->getQuantity() * $item->getPrice(), false) ?>
+                                    <?= CurrencyHelper::formatPrice($item['totalPrice'], false) ?>
                                 </div>
                             </li>
                         <?php } ?>

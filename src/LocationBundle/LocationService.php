@@ -144,7 +144,11 @@ class LocationService
      *
      * @param string $locationCode
      *
-     * @throws Exception
+     * @return string
+     */
+
+    /**
+     * @param string $locationCode
      * @return string
      */
     public function getRegionCode(string $locationCode): string
@@ -186,6 +190,15 @@ class LocationService
         } catch (Exception $e) {
             return $getRegionCode();
         }
+    }
+
+    /**
+     * @param string $location
+     * @return string
+     */
+    public function getRegionNumberCode(string $location): string
+    {
+        return substr($this->getRegionCode($location), 2);
     }
 
     /**
@@ -350,9 +363,6 @@ class LocationService
      * @param bool $needPath
      *
      * @return array
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findLocationNew(
         $queryParams,
@@ -463,10 +473,6 @@ class LocationService
      * @param string $code
      *
      * @return array
-     * @throws ArgumentException
-     * @throws CityNotFoundException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findLocationByCode(string $code): array
     {
@@ -489,9 +495,6 @@ class LocationService
      * @param bool $exactRegion
      *
      * @return array
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function findLocationCity(
         string $query,
