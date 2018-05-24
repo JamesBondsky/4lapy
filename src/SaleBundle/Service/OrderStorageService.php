@@ -557,6 +557,7 @@ class OrderStorageService
         $result = false;
 
         if (!$this->deliveryService->isDpdPickup($delivery) &&
+            \in_array($delivery->getDeliveryZone(), [DeliveryService::ZONE_1, DeliveryService::ZONE_2], true) &&
             !$delivery->getStockResult()->getOrderable()->getByRequest(true)->isEmpty()
         ) {
             [$available, $delayed] = $this->splitStockResult($delivery);

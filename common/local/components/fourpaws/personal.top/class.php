@@ -166,11 +166,8 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             $offerIds          = $vars['offerIds'];
             $this->allProducts = $vars['allProducts'];
         } elseif ($cache->startDataCache()) {
-            $tagCache = null;
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($cachePath);
-            }
+            $tagCache = new TaggedCacheHelper($cachePath);
+
             //получение данных из манзаны
             list($xmlIds, $allItems) = $this->getXmlIdsByManzana();
             //получение товаров с сайта по XML_ID
@@ -216,15 +213,13 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                 }
             }
 
-            if ($tagCache !== null) {
-                TaggedCacheHelper::addManagedCacheTags([
-                    'personal:top',
-                    'personal:top:'. $userId,
-                    'order:'. $userId
-                ], $tagCache);
-                $tagCache->endTagCache();
-            }
-            
+            $tagCache->addTags([
+                'personal:top',
+                'personal:top:'. $userId,
+                'order:'. $userId
+            ]);
+
+            $tagCache->end();
             $cache->endDataCache(
                 [
                     'sortItems'   => $this->sortItems,
@@ -245,6 +240,12 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             ],
             $cachePath
         )) {
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:top',
+                'personal:top:'. $userId,
+                'order:'. $userId
+            ]);
+
             //сортировка по цене
             Collection::sortByColumn(
                 $this->sortItems,
@@ -276,12 +277,6 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             if(empty($this->arResult['PRODUCTS'])){
                 $page = 'notItems';
             }
-
-            TaggedCacheHelper::addManagedCacheTags([
-                'personal:top',
-                'personal:top:'. $userId,
-                'order:'. $userId
-            ]);
 
             $this->includeComponentTemplate($page);
         }

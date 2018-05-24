@@ -102,11 +102,7 @@ class ReferralRepository extends BaseHlRepository
             $result = $cache->getVars();
             $referrals = $result['referrals'];
         } elseif ($cache->startDataCache()) {
-            $tagCache = null;
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache(__FUNCTION__);
-            }
+            $tagCache = new TaggedCacheHelper(__FUNCTION__);
 
             $referrals = $this->findBy(
                 [
@@ -114,13 +110,9 @@ class ReferralRepository extends BaseHlRepository
                 ]
             );
 
-            if ($tagCache !== null) {
-                TaggedCacheHelper::addManagedCacheTags([
-                    'hlb:field:referral_user:'. $curUserId
-                ], $tagCache);
-                $tagCache->endTagCache();
-            }
+            $tagCache->addTag('hlb:field:referral_user:'. $curUserId);
 
+            $tagCache->end();
             $cache->endDataCache([
                 'referrals' => $referrals,
             ]);

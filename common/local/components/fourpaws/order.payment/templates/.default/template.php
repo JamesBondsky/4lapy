@@ -70,7 +70,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
                                 (<?= WordHelper::showWeight($orderWeight) ?>)
                             <?php } ?>
                             на
-                            сумму <?= CurrencyHelper::formatPrice($order->getPrice() - $order->getSumPaid()) ?></p>
+                            сумму <?= CurrencyHelper::formatPrice($order->getPrice() - $order->getPaymentCollection()->getInnerPayment()->getSum()) ?></p>
                     </div>
                     <?php if ($order->isPaid()) { ?>
                         <button class="b-button b-button--order-step-3 b-button--next" disabled="disabled">
@@ -100,7 +100,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
                                     (<?= WordHelper::showWeight($relatedOrderWeight) ?>)
                                 <?php } ?>
                                 на
-                                сумму <?= CurrencyHelper::formatPrice($relatedOrder->getPrice() - $relatedOrder->getSumPaid()) ?>
+                                сумму <?= CurrencyHelper::formatPrice($relatedOrder->getPrice() - $relatedOrder->getPaymentCollection()->getInnerPayment()->getSum()) ?>
                             </p>
                         </div>
                         <?php if ($relatedOrder->isPaid()) { ?>
