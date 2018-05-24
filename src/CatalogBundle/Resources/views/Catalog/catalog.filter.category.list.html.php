@@ -35,11 +35,7 @@ if ($isBrand && !empty($brand)) {
         $result = $cache->getVars();
         $childs = $result['childs'];
     } elseif ($cache->startDataCache()) {
-        $tagCache = null;
-        if (\defined('BX_COMP_MANAGED_CACHE')) {
-            $tagCache = $instance->getTaggedCache();
-            $tagCache->startTagCache($cachePath);
-        }
+        $tagCache = new TaggedCacheHelper($cachePath);
         $products = (new \FourPaws\Catalog\Query\ProductQuery())->withFilter(['PROPERTY_BRAND.NAME' => $brand])->exec();
         /** @var \FourPaws\Catalog\Model\Product $product */
         $sectionIds = [];
@@ -69,13 +65,9 @@ if ($isBrand && !empty($brand)) {
             }
         }
 
-        if ($tagCache !== null) {
-            TaggedCacheHelper::addManagedCacheTags([
-                'catalog:brand:' . $brand,
-            ], $tagCache);
-            $tagCache->endTagCache();
-        }
+        $tagCache->addTag('catalog:brand:' . $brand);
 
+        $tagCache->end();
         $cache->endDataCache(['childs' => $childs]);
     }
 } else {

@@ -75,17 +75,17 @@ class CatalogOftenSeekComponent extends CBitrixComponent
         }
 
         if ($this->startResultCache()) {
+            TaggedCacheHelper::addManagedCacheTags([
+                'catalog:often_seek:'.$this->arParams['SECTION_ID'],
+                'catalog:often_seek'
+            ]);
+
             $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
                 $this->arParams['SECTION_ID'],
                 $this->arParams['LEFT_MARGIN'],
                 $this->arParams['RIGHT_MARGIN'],
                 $this->arParams['DEPTH_LEVEL']
             );
-
-            TaggedCacheHelper::addManagedCacheTags([
-                'catalog:often_seek:'.$this->arParams['SECTION_ID'],
-                'catalog:often_seek'
-            ]);
 
             $this->includeComponentTemplate();
         }

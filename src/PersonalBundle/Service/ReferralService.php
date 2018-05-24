@@ -151,11 +151,7 @@ class ReferralService
                 $result = $cache->getVars();
                 $referrals = $result['referrals'];
             } elseif ($cache->startDataCache()) {
-                $tagCache = null;
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->startTagCache(__FUNCTION__ . '\ReferralsByFilter');
-                }
+                $tagCache = new TaggedCacheHelper(__FUNCTION__ . '\ReferralsByFilter');
 
                 $referrals = $this->referralRepository->findBy(
                     [
@@ -163,13 +159,9 @@ class ReferralService
                     ]
                 );
 
-                if ($tagCache !== null) {
-                    TaggedCacheHelper::addManagedCacheTags([
-                        'hlb:field:referral_user:' . $curUserId,
-                    ], $tagCache);
-                    $tagCache->endTagCache();
-                }
+                $tagCache->addTag('hlb:field:referral_user:' . $curUserId);
 
+                $tagCache->end();
                 $cache->endDataCache([
                     'referrals' => $referrals,
                 ]);

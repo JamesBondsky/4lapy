@@ -5,6 +5,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Result;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -87,20 +88,13 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
                 return $arResult;
             }
 
-            if (defined('BX_COMP_MANAGED_CACHE') && is_object($GLOBALS['CACHE_MANAGER'])) {
-                $GLOBALS['CACHE_MANAGER']->startTagCache($sCachePath);
-                $GLOBALS['CACHE_MANAGER']->registerTag('iblock_id_'.$arParams['IBLOCK_ID']);
-            }
+           (new TaggedCacheHelper($sCachePath))->addTag('iblock_id_'.$arParams['IBLOCK_ID']);
 
             $obLettersResult = $this->getLettersList();
             $arResult = $obLettersResult->getData();
 
             if ($arParams['TEMPLATE_NO_CACHE'] !== 'Y') {
                 $this->includeComponentTemplate();
-            }
-
-            if (defined('BX_COMP_MANAGED_CACHE') && is_object($GLOBALS['CACHE_MANAGER'])) {
-                $GLOBALS['CACHE_MANAGER']->endTagCache();
             }
 
             $this->endResultCache();

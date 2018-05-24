@@ -86,6 +86,12 @@ class ProductsByProp extends CBitrixComponent
 
         $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
         if ($this->startResultCache()) {
+            TaggedCacheHelper::addManagedCacheTags([
+                'product:by:prop',
+                'product:by:prop:'.$this->arParams['ITEM_ID'],
+                'iblock:item:'.$this->arParams['ITEM_ID']
+            ]);
+
             parent::executeComponent();
 
             $res = \CIBlockElement::GetProperty($this->arParams['IBLOCK_ID'], $this->arParams['ITEM_ID'], '', '',
@@ -112,12 +118,6 @@ class ProductsByProp extends CBitrixComponent
                 }
                 $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
             }
-
-            TaggedCacheHelper::addManagedCacheTags([
-                'product:by:prop',
-                'product:by:prop:'.$this->arParams['ITEM_ID'],
-                'iblock:item:'.$this->arParams['ITEM_ID']
-            ]);
 
             $this->includeComponentTemplate();
         }
