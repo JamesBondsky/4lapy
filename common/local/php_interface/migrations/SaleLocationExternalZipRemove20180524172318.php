@@ -23,6 +23,8 @@ class SaleLocationExternalZipRemove20180524172318 extends SprintMigrationBase
      */
     public function up()
     {
+        $this->log()->debug('Удаление zip из местоположений');
+
         $connection = Application::getConnection();
         $connection->startTransaction();
 
@@ -41,8 +43,16 @@ class SaleLocationExternalZipRemove20180524172318 extends SprintMigrationBase
             );
 
             $connection->commitTransaction();
+
+            $this->log()->debug('Удаление zip из местоположений завершено');
+
+            return true;
         } catch (Exception $e) {
             $connection->rollbackTransaction();
+
+            $this->log()->debug(\sprintf('Ошибка удаления zip из местоположений: %s', $e->getMessage()));
+
+            return true;
         }
     }
 }
