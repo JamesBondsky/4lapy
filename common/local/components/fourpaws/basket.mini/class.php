@@ -62,8 +62,6 @@ class BasketMiniComponent extends FourPawsComponent
         }
 
         $this->arResult['BASKET'] = $basket;
-
-        $this->includeComponentTemplate();
     }
 
     /**
