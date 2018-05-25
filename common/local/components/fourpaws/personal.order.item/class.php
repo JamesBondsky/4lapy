@@ -67,14 +67,10 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
         $cachePath = $cachePath.'/'.$personalOrder->getId();
 
         if ($this->startResultCache(false, false, $cachePath)) {
+            (new TaggedCacheHelper($cachePath))->addTag('order:item:'.$personalOrder->getId());
+
             $this->arResult['ORDER'] = $personalOrder;
             $this->arResult['METRO'] = $this->arParams['METRO'];
-
-            TaggedCacheHelper::addManagedCacheTags(
-                [
-                    'order:item:'.$personalOrder->getId(),
-                ]
-            );
 
             $this->includeComponentTemplate();
         }

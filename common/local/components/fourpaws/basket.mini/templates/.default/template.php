@@ -5,10 +5,9 @@
 /**
  * @global BasketComponent $component
  *
- * @var User $user
- * @var array $arResult
- * @var array $arParams
- * @var Basket $basket
+ * @var array              $arResult
+ * @var array              $arParams
+ * @var Basket             $basket
  */
 
 use Bitrix\Sale\Basket;
@@ -16,9 +15,6 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\UserBundle\Entity\User;
-
-$user = $arResult['USER'];
 
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
@@ -60,8 +56,8 @@ if (true !== $arParams['IS_AJAX']) {
                         continue;
                     }
 
-                    $image = $component->getImage($basketItem->getProductId());
-                    $offer = $component->getOffer((int)$basketItem->getProductId()); ?>
+                    $offer = $component->getOffer((int)$basketItem->getProductId());
+                    $image = $component->getImage((int)$basketItem->getProductId()); ?>
                     <div class="b-cart-item">
                         <div class="b-cart-item__image-wrapper">
                             <?php if (null !== $image) { ?>
@@ -82,8 +78,9 @@ if (true !== $arParams['IS_AJAX']) {
                                     <?= $basketItem->getField('NAME') ?>
                                 </a>
                             </div>
-                            <?php if($basketItem->getQuantity() > 0 && $basketItem->getWeight() > 0) {?>
-                                <span class="b-cart-item__weight"><?= WordHelper::showWeight($basketItem->getWeight() * $basketItem->getQuantity(), true) ?></span>
+                            <?php if ($basketItem->getQuantity() > 0 && $basketItem->getWeight() > 0) { ?>
+                                <span class="b-cart-item__weight"><?= WordHelper::showWeight($basketItem->getWeight() * $basketItem->getQuantity(),
+                                        true) ?></span>
                             <?php } ?>
                             <span class="b-cart-item__amount">(<?= $basketItem->getQuantity() ?> шт.)</span>
                         </div>

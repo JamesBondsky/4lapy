@@ -141,10 +141,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
      */
     protected function getOffer(int $id): ?Offer
     {
-        return (new OfferQuery($id))
-            ->withFilterParameter('ID', $id)
-            ->exec()
-            ->first();
+        return OfferQuery::getById($id);
     }
 
     /**

@@ -22,10 +22,12 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Delivery\Services\Manager as DeliveryManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PropertyValueCollection;
+use Bitrix\Sale\Shipment;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -487,7 +489,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @return DeliveryAddress|OutDeliveryAddress
      * @throws Exception
      */
-    private function getDeliveryAddress(Order $order)
+    public function getDeliveryAddress(Order $order)
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
         $regionCode = $this->locationService->getRegionCode($city);
@@ -701,14 +703,69 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order      $order
      * @param OrderDtoIn $orderDto
+     *
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotFoundOrderDeliveryException
+     * @throws Exception
+     * @throws SystemException
      */
     private function setDeliveryFromDto(Order $order, OrderDtoIn $orderDto): void
     {
-        /**
-         * Мы не меняем службу доставки при смене статуса
-         */
+        $deliveryType = $orderDto->getDeliveryTimeInterval();
+
+        $deliveryCode = null;
+        $currentDeliveryCode = null;
+
+        switch ($deliveryType) {
+            case SapOrder::DELIVERY_TYPE_COURIER_RC:
+            case SapOrder::DELIVERY_TYPE_COURIER_SHOP:
+            case SapOrder::DELIVERY_TYPE_ROUTE:
+                $deliveryCode = DeliveryService::INNER_DELIVERY_CODE;
+                break;
+            case SapOrder::DELIVERY_TYPE_PICKUP:
+            case SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE:
+                $deliveryCode = DeliveryService::INNER_PICKUP_CODE;
+                break;
+            case SapOrder::DELIVERY_TYPE_CONTRACTOR:
+                $deliveryCode = ($orderDto->getDeliveryAddress() && $orderDto->getDeliveryAddress()->getDeliveryPointCode())
+                    ? DeliveryService::DPD_PICKUP_CODE
+                    : DeliveryService::DPD_DELIVERY_CODE;
+        }
+
+
+        if (null === $deliveryCode) {
+            throw new NotFoundOrderDeliveryException('unknown sap delivery code');
+        }
+
+        $deliveryPrice = 0;
+        foreach ($orderDto->getProducts() as $orderOffer) {
+            $xmlId = \ltrim($orderOffer->getOfferXmlId(), '0');
+            if ($xmlId[0] === '2') {
+                $deliveryPrice = $orderOffer->getUnitPrice();
+            }
+        }
+
+        $deliveryService = DeliveryManager::getObjectByCode($deliveryCode);
+        /** @var Shipment $shipment */
+        foreach ($order->getShipmentCollection() as $shipment) {
+            if ($shipment->isSystem()) {
+                continue;
+            }
+
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $shipment->setFields(
+                [
+                    'DELIVERY_ID'           => $deliveryService->getId(),
+                    'PRICE_DELIVERY'        => $deliveryPrice,
+                    'DELIVERY_NAME'         => $deliveryService->getName(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
+                ]
+            );
+        }
     }
 
     /**
