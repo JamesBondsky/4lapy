@@ -208,8 +208,8 @@ class FastOrderController extends Controller
         }
 
         try {
-            [$order, $selectedDelivery] = $this->orderService->initOrder($orderStorage, null, null);
-            $this->orderService->saveOrder($order, $orderStorage, $selectedDelivery);
+            $order = $this->orderService->initOrder($orderStorage);
+            $this->orderService->saveOrder($order, $orderStorage);
             if ($order instanceof Order && $order->getId() > 0) {
                 if ($request->get('type', 'basket') === 'card') {
                     ob_start();
