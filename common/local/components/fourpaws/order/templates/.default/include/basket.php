@@ -53,6 +53,8 @@ $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
 
+$isSplit = $storage->isSplit();
+
 if (null !== $pickup) {
     /** @var Store $selectedShop */
     $selectedShop = $arResult['SELECTED_SHOP'];
@@ -79,6 +81,19 @@ if (null !== $pickup) {
             $showDelayedItems = true;
         }
     }
+
+    $pickupCanSplit = $arResult['SPLIT_PICKUP_AVAILABLE'];
+    $pickupCanGetPartial = $arResult['PARTIAL_PICKUP_AVAILABLE'];
+
+    $pickupIsSplit = $isSplit && $pickupCanSplit;
+    $pickupIsPartial = $isSplit && $showDelayedItems;
+}
+
+$isPickup = $deliveryService->isPickup($selectedDelivery);
+if ($isPickup &&
+    !($pickupIsPartial || $pickupIsSplit) // @todo костыль пока не будет выводиться статичный чек для самовывоза
+) {
+    $showPickupContainer = false;
 }
 
 $productsDeclension = new Declension('товар', 'товара', 'товаров');
@@ -90,7 +105,7 @@ if (null !== $delivery) {
     [$deliveryOrderableItems, $deliveryOrderableWeight] = $component->getOrderItemData($deliveryResult);
     $deliveryOrderablePrice = $deliveryResult->getPrice();
 
-    $isSplit = $storage->isSplit() && !empty($arResult['SPLIT_RESULT']);
+    $deliveryIsSplit = $isSplit && !empty($arResult['SPLIT_RESULT']);
     if (!empty($arResult['SPLIT_RESULT'])) {
         /** @var StockResultCollection $deliveryResult1 */
         $deliveryResult1 = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getStockResult();
@@ -110,10 +125,13 @@ if (null !== $delivery) {
     $deliveryUnavailableQuantity = $deliveryUnavailableResult->getAmount();
     [$deliveryUnavailableItems, $deliveryUnavailableWeight] = $component->getOrderItemData($deliveryUnavailableResult);
     $deliveryUnavailablePrice = $deliveryUnavailableResult->getPrice();
+
+    // @todo костыль пока не будет выводиться статичный чек для самовывоза
+    $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
     ?>
     <?php /* отображается на 2 шаге, когда выбрана курьерская доставка */ ?>
     <aside class="b-order__list js-list-orders-static" <?= !$showPickupContainer ? '' : 'style="display:none"' ?>>
-        <div class="one-delivery__block<?= $isSplit ? '' : ' active' ?>">
+        <div class="one-delivery__block<?= $deliveryIsSplit ? '' : ' active' ?>">
             <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
                 <span class="js-mobile-title-order">Заказ: <?= $deliveryOrderableQuantity ?> <?= $productsDeclension->get($deliveryOrderableQuantity) ?>
                 </span>
@@ -140,7 +158,7 @@ if (null !== $delivery) {
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--aside js-full-list">
-                                <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                             </div>
                         </li>
                     <?php } ?>
@@ -148,11 +166,11 @@ if (null !== $delivery) {
             </div>
         </div>
         <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
-            <div class="two-deliveries__block<?= !$isSplit ? '' : ' active' ?>">
+            <div class="two-deliveries__block<?= !$deliveryIsSplit ? '' : ' active' ?>">
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
-                    <span class="js-mobile-title-order">Заказ №1: <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
+                    <span class="js-mobile-title-order">Заказ №1: <?= $deliveryResult1Quantity ?> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
-                    сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price) ?>
+                    сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price, false) ?>
                 </h4>
                 <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile js-popup-mobile--aside js-full-list">
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
@@ -171,7 +189,7 @@ if (null !== $delivery) {
                                     </div>
                                 </div>
                                 <div class="b-order-list__order-value b-order-list__order-value--aside">
-                                    <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                    <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                                 </div>
                             </li>
                         <?php } ?>
@@ -179,9 +197,9 @@ if (null !== $delivery) {
                 </div>
 
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
-                    <span class="js-mobile-title-order">Заказ №2: <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
+                    <span class="js-mobile-title-order">Заказ №2: <?= $deliveryResult2Quantity ?> <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult2Weight, true) ?>) на
-                    сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price) ?>
+                    сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price, false) ?>
                 </h4>
                 <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile js-popup-mobile--aside js-full-list">
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
@@ -200,7 +218,7 @@ if (null !== $delivery) {
                                     </div>
                                 </div>
                                 <div class="b-order-list__order-value b-order-list__order-value--aside">
-                                    <?= CurrencyHelper::formatPrice($item['price']) ?>
+                                    <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                                 </div>
                             </li>
                         <?php } ?>
@@ -236,7 +254,7 @@ if (null !== $delivery) {
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--aside">
-                            <?= CurrencyHelper::formatPrice($item['price']) ?>
+                            <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                         </div>
                     </li>
                 <?php } ?>
@@ -259,7 +277,7 @@ if (null !== $delivery) {
 <?php /* отображается на 2 шаге, когда выбран самовывоз */ ?>
 <aside class="b-order__list js-list-orders-cont" <?= $showPickupContainer ? '' : 'style="display:none"' ?>>
     <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
-        Заказ: <?= $availableQuantity ?> <?= $productsDeclension->get($availableQuantity) ?>
+        <?= $pickupCanSplit ? 'Заказ №1' : 'Заказ' ?>: <?= $availableQuantity ?> <?= $productsDeclension->get($availableQuantity) ?>
         (<?= WordHelper::showWeight($availableWeight, true) ?>) на сумму <?= CurrencyHelper::formatPrice(
             $availablePrice,
             false
@@ -282,15 +300,15 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value">
-                        <?= CurrencyHelper::formatPrice($item['price']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                     </div>
                 </li>
             <?php } ?>
         </ul>
     </div>
     <h4 class="b-title b-title--order-list js-parts-list-title"
-        <?= !$showDelayedItems ? 'style="display:none"' : '' ?>>
-        <span class="js-mobile-title-order">Останется в корзине: <?= $delayedQuantity ?></span>
+        <?= !($pickupCanSplit || $pickupCanGetPartial) ? 'style="display:none"' : '' ?>>
+        <span class="js-mobile-title-order"><?= $pickupCanSplit ? 'Заказ №2' : 'Останется в корзине' ?>: <?= $delayedQuantity ?></span>
         <?= $productsDeclension->get($delayedQuantity) ?> (<?= WordHelper::showWeight($delayedWeight, true) ?>) на
         сумму <?= CurrencyHelper::formatPrice(
             $delayedPrice,
@@ -298,7 +316,7 @@ if (null !== $delivery) {
         ) ?>
     </h4>
     <div class="b-order-list b-order-list--aside js-popup-mobile js-parts-list"
-        <?= !$showDelayedItems ? 'style="display:none"' : '' ?>>
+        <?= !($pickupCanSplit || $pickupCanGetPartial) ? 'style="display:none"' : '' ?>>
         <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
             заказе</a>
         <ul class="b-order-list__list js-order-list-block">
@@ -315,7 +333,7 @@ if (null !== $delivery) {
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--aside">
-                        <?= CurrencyHelper::formatPrice($item['price']) ?>
+                        <?= CurrencyHelper::formatPrice($item['price'], false) ?>
                     </div>
                 </li>
             <?php } ?>

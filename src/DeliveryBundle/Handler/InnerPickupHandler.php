@@ -66,11 +66,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return false;
         }
 
-        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
-        if (!$deliveryLocation) {
-            return false;
-        }
-
         return true;
     }
 
@@ -128,7 +123,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             }
         }
 
-        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+        if ($deliveryLocation === null || empty($deliveryLocation) || !$offers = static::getOffers($deliveryLocation, $basket)) {
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */

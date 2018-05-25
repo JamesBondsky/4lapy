@@ -114,7 +114,7 @@ class Sberbank
         $data['userName'] = $this->user_name;
         $data['password'] = $this->password;
         $data['CMS'] = 'Bitrix';
-        $data['Module-Version'] = \VERSION;
+        $data['Module-Version'] = RBS_VERSION;
         $dataEncoded = \http_build_query($data);
 
         if (\SITE_CHARSET !== 'UTF-8') {
@@ -136,7 +136,7 @@ class Sberbank
             \CURLOPT_RETURNTRANSFER => true,
             \CURLOPT_POST => true,
             \CURLOPT_POSTFIELDS => $dataEncoded,
-            \CURLOPT_HTTPHEADER => ['CMS: Bitrix', 'Module-Version: ' . \VERSION],
+            \CURLOPT_HTTPHEADER => ['CMS: Bitrix', 'Module-Version: ' . RBS_VERSION],
             \CURLOPT_SSLVERSION => 6,
         ]);
         $response = \curl_exec($curl);
@@ -148,7 +148,7 @@ class Sberbank
             ]);
 
             $client->setHeader('CMS', 'Bitrix');
-            $client->setHeader('Module-Version', \VERSION);
+            $client->setHeader('Module-Version', RBS_VERSION);
             $response = $client->post($url . $method, $data);
         }
 
@@ -221,7 +221,7 @@ class Sberbank
     {
         $data = \compact('orderId', 'amount');
 
-        return $this->gatewayQuery('reverse.do', $data);
+        return $this->gatewayQuery('refund.do', $data);
     }
 
     /**
@@ -235,8 +235,9 @@ class Sberbank
      */
     public function depositPayment(string $orderId, int $amount, array $fiscal = []): array
     {
-        $data = \array_merge(\compact('orderId', 'amount'), $fiscal);
-
+        $depositItems = $fiscal['fiscal']['orderBundle']['cartItems'] ?? [];
+        $depositItems = \json_encode($depositItems);
+        $data = \array_merge(\compact('orderId', 'depositItems', 'amount'), $fiscal);
         return $this->gatewayQuery('deposit.do', $data);
     }
 
@@ -249,12 +250,14 @@ class Sberbank
      */
     public function parseResponse($response): bool
     {
-        if (!\is_array($response) || !\in_array((int)$response['errorCode'], self::ERROR_CODES, true)) {
+        if (!\is_array($response) ||
+            (((int)$response['errorCode'] !== self::SUCCESS_CODE) && \in_array((int)$response['errorCode'], self::ERROR_CODES, true))
+        ) {
             /** @noinspection ForgottenDebugOutputInspection */
             throw new PaymentException(
                 \sprintf(
                     'Unknown payment exception from response %s',
-                    \var_export($response)
+                    \var_export($response, true)
                 )
             );
         }

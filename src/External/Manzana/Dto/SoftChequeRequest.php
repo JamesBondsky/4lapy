@@ -357,6 +357,14 @@ class SoftChequeRequest
     }
 
     /**
+     * @return float
+     */
+    public function getPaidByBonus(): float
+    {
+        return $this->paidByBonus;
+    }
+
+    /**
      * @param float $paidByBonus
      *
      * @return $this

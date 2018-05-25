@@ -52,8 +52,7 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
         }
         
         if (empty($params['OFFER']) && !empty($params['OFFER_ID'])) {
-            $offerQuery      = new OfferQuery();
-            $params['OFFER'] = $offerQuery->withFilter(['=ID' => $params['OFFER_ID']])->exec()->first();
+            $params['OFFER'] = OfferQuery::getById((int)$params['OFFER_ID']);
         }
         if (empty($params['OFFER']) && $params['PRODUCT'] instanceof Product) {
             $params['OFFER'] = $params['PRODUCT']->getOffers()->first();

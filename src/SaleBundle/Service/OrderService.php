@@ -17,11 +17,13 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
@@ -39,11 +41,15 @@ use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
+use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
@@ -61,12 +67,19 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class OrderService
@@ -272,9 +285,9 @@ class OrderService implements LoggerAwareInterface
      * @param Basket|null                     $basket
      * @param CalculationResultInterface|null $selectedDelivery
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -481,6 +494,36 @@ class OrderService implements LoggerAwareInterface
         }
 
         /**
+         * Заполнение складов довоза товара для элементов корзины
+         */
+        $shipmentResults = $selectedDelivery->getShipmentResults();
+        $shipmentDays = ['DC01' => 0];
+        /** @var BasketItem $item */
+        foreach ($order->getBasket()->getOrderableItems() as $item) {
+            $shipmentPlaceCode = 'DC01';
+            /** @var DeliveryScheduleResult $deliveryResult */
+            if ($shipmentResults &&
+                ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
+            ) {
+                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
+                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
+                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
+                    $shipmentDays[$shipmentPlaceCode] = $days;
+                }
+            }
+
+            $this->basketService->setBasketItemPropertyValue(
+                $item,
+                'SHIPMENT_PLACE_CODE',
+                $shipmentPlaceCode
+            );
+        }
+        if (!empty($shipmentDays)) {
+            arsort($shipmentDays);
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
+        }
+
+        /**
          * Задание способов оплаты
          */
         if ($storage->getPaymentId()) {
@@ -514,7 +557,7 @@ class OrderService implements LoggerAwareInterface
                 $extPayment = $paymentCollection->createItem();
                 $extPayment->setField('SUM', $sum);
                 $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
-                /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+                /** @var Service $paySystem */
                 $paySystem = $extPayment->getPaySystem();
                 $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
             } catch (\Exception $e) {
@@ -581,16 +624,45 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        /** установка свойств для быстрого заказа и сброс ненужных свойств */
         if ($fastOrder) {
-            /** зануляем дату доставки и интервал - ибо не пользователь все выбирал а система */
-            $this->setOrderPropertyByCode($order, 'DELIVERY_INTERVAL', '');
-            $this->setOrderPropertyByCode($order, 'DELIVERY_DATE', '');
-            $this->setOrderPropertyByCode($order, 'CITY_CODE', $selectedCity['CODE']);
-            $this->setOrderPropertyByCode($order, 'CITY', $selectedCity['NAME']);
-            $this->setOrderPropertyByCode($order, 'IS_FAST_ORDER', 'Y');
+            $fastOrderProperties = [
+                'NAME',
+                'EMAIL',
+                'PHONE',
+                'PHONE_ALT',
+                'CITY',
+                'CITY_CODE',
+                'COM_WAY',
+                'IS_FAST_ORDER'
+            ];
+
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                $value = $propertyValue->getValue();
+
+                if (!\in_array($code, $fastOrderProperties, true)) {
+                    $value = null;
+                } else {
+                    switch ($code) {
+                        case 'IS_FAST_ORDER':
+                            $value = 'Y';
+                            break;
+                        case 'CITY':
+                            $value = $selectedCity['NAME'];
+                            break;
+                        case 'CITY_CODE':
+                            $value = $selectedCity['CODE'];
+                            break;
+                    }
+                }
+
+                $propertyValue->setValue($value);
+            }
+
             return [$order, $selectedDelivery];
         }
+
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
@@ -599,14 +671,14 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage                    $storage
      * @param CalculationResultInterface|null $selectedDelivery
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws NotFoundException
+     * @throws ValidationException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -724,6 +796,21 @@ class OrderService implements LoggerAwareInterface
             $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
         );
 
+        if (!$user->getDiscountCardNumber() && !$storage->getDiscountCardNumber()) {
+            try {
+                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+                if (($card = $contact->getCards()->first()) instanceof Card) {
+                    $storage->setDiscountCardNumber($card->cardNumber);
+                }
+            } catch (WrongPhoneNumberException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+            } catch (ManzanaServiceException $e) {
+                $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
+                    'phone' => $storage->getPhone()
+                ]);
+            }
+        }
+
         $this->setOrderPropertyByCode(
             $order,
             'DISCOUNT_CARD',
@@ -782,36 +869,6 @@ class OrderService implements LoggerAwareInterface
 
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
 
-        /**
-         * Заполнение складов довоза товара для элементов корзины
-         */
-        $shipmentResults = $selectedDelivery->getShipmentResults();
-        $shipmentDays = ['DC01' => 0];
-        /** @var BasketItem $item */
-        foreach ($order->getBasket()->getOrderableItems() as $item) {
-            $shipmentPlaceCode = 'DC01';
-            /** @var DeliveryScheduleResult $deliveryResult */
-            if ($shipmentResults &&
-                ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
-            ) {
-                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
-                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
-                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
-                    $shipmentDays[$shipmentPlaceCode] = $days;
-                }
-            }
-
-            $this->basketService->setBasketItemPropertyValue(
-                $item,
-                'SHIPMENT_PLACE_CODE',
-                $shipmentPlaceCode
-            );
-        }
-        if (!empty($shipmentDays)) {
-            arsort($shipmentDays);
-            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
-        }
-
         try {
             $result = $order->save();
             if (!$result->isSuccess()) {
@@ -841,10 +898,10 @@ class OrderService implements LoggerAwareInterface
      *
      * @param OrderStorage $storage
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws NotFoundException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -866,7 +923,9 @@ class OrderService implements LoggerAwareInterface
     public function splitOrder(OrderStorage $storage): array
     {
         $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
-        if (!$this->orderStorageService->canSplitOrder($delivery)) {
+        if (!$this->orderStorageService->canSplitOrder($delivery) &&
+            !$this->orderStorageService->canGetPartial($delivery)
+        ) {
             throw new OrderSplitException('Cannot split order');
         }
 
@@ -893,7 +952,11 @@ class OrderService implements LoggerAwareInterface
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $availableAmount,
-                        [],
+                        [
+                            'PRICE' => $basketItem->getPrice(),
+                            'BASE_PRICE' => $basketItem->getBasePrice(),
+                            'DISCOUNT' => $basketItem->getDiscountPrice()
+                        ],
                         false,
                         $basket1
                     );
@@ -902,7 +965,11 @@ class OrderService implements LoggerAwareInterface
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $delayedAmount,
-                        [],
+                        [
+                            'PRICE' => $basketItem->getPrice(),
+                            'BASE_PRICE' => $basketItem->getBasePrice(),
+                            'DISCOUNT' => $basketItem->getDiscountPrice()
+                        ],
                         false,
                         $basket2
                     );
@@ -917,7 +984,7 @@ class OrderService implements LoggerAwareInterface
         );
         if ($storage1->getBonus() > $maxBonusesForOrder1) {
             $storage1->setBonus($maxBonusesForOrder1);
-            $storage2->setBonus(floor($storage1->getBonus() - $maxBonusesForOrder1));
+            $storage2->setBonus(floor($storage->getBonus() - $maxBonusesForOrder1));
         } else {
             $storage2->setBonus(0);
         }
@@ -976,14 +1043,14 @@ class OrderService implements LoggerAwareInterface
      *
      * @param OrderStorage $storage
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ValidationException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @throws NotFoundException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -1193,7 +1260,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -1219,7 +1286,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws \Exception
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -1290,16 +1357,16 @@ class OrderService implements LoggerAwareInterface
         }
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
+        return (new OfferQuery())->withFilterParameter('=ID', $ids)->exec();
     }
 
     /**
      * @param Order $order
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -1383,9 +1450,9 @@ class OrderService implements LoggerAwareInterface
      * @param User  $user
      *
      * @return string
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotFoundException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws \RuntimeException
      */
     public function getOrderBonusSum(Order $order, ?User $user = null): string
@@ -1483,23 +1550,23 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @return null|\Bitrix\Sale\PaySystem\Service
+     * @return null|Service
      */
-    public function getCashPaySystemService(): ?\Bitrix\Sale\PaySystem\Service
+    public function getCashPaySystemService(): ?Service
     {
         $paySystemService = null;
         if (!isset($this->paySystemServiceCache['cash'])) {
             $this->paySystemServiceCache['cash'] = null;
             $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH_OR_CARD);
             if ($data) {
-                $this->paySystemServiceCache['cash'] = new \Bitrix\Sale\PaySystem\Service(
+                $this->paySystemServiceCache['cash'] = new Service(
                     $data
                 );
             }
         }
 
         if ($this->paySystemServiceCache['cash']) {
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystemService */
+            /** @var Service $paySystemService */
             $paySystemService = clone $this->paySystemServiceCache['cash'];
         }
 
@@ -1509,15 +1576,15 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @return \Bitrix\Main\Type\Date|null
+     * @return Date|null
      */
-    public function getOrderDeliveryDate(Order $order): ?\Bitrix\Main\Type\Date
+    public function getOrderDeliveryDate(Order $order): ?Date
     {
         $deliveryDate = null;
         try {
             $propValue = $this->getOrderPropertyByCode($order, 'DELIVERY_DATE');
             $value = $propValue->getValue();
-            if ($value instanceof \Bitrix\Main\Type\Date) {
+            if ($value instanceof Date) {
                 $deliveryDate = $value;
             }
         } catch (\Exception $exception) {
@@ -1532,7 +1599,7 @@ class OrderService implements LoggerAwareInterface
      * @param CalculationResultInterface $delivery
      * @param bool                       $isFastOrder
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
      * @throws ObjectPropertyException
@@ -1598,7 +1665,7 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws NotFoundException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException

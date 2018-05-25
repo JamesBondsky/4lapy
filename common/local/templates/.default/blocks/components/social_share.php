@@ -15,14 +15,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 ?>
 <div class="b-container">
     <div class="b-social-big">
-        <p>Рассказать в соцсетях</p>
+        <p><?= $shareTitle ?? 'Рассказать в соцсетях' ?></p>
         <div class="ya-share2--wrapper">
             <div class="ya-share2"
                  data-lang="en"
                  data-services="facebook,odnoklassniki,vkontakte"
                  data-url="<?= /** @noinspection PhpUnhandledExceptionInspection */
                  new FullHrefDecorator(
-                     Application::getInstance()->getContext()->getRequest()->getRequestUri()
+                     $shareUrl ?? Application::getInstance()->getContext()->getRequest()->getRequestUri()
                  ) ?>"
                  data-title="<?php $APPLICATION->ShowTitle(false) ?>"
                  data-description="<?php $APPLICATION->ShowViewContent('social-share-description') ?>"

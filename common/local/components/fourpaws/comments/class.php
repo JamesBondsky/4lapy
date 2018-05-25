@@ -15,6 +15,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
@@ -27,16 +28,15 @@ use FourPaws\AppBundle\Exception\UserNotFoundAddCommentException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\WrongEmailException;
 use FourPaws\UserBundle\Exception\WrongPasswordException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class CCommentsComponent extends \CBitrixComponent
 {
     /**
@@ -56,24 +56,18 @@ class CCommentsComponent extends \CBitrixComponent
      * @param bool $addNotAuth
      *
      * @return bool
-     * @throws WrongPasswordException
-     * @throws ObjectPropertyException
-     * @throws ArgumentException
-     * @throws UserNotFoundAddCommentException
-     * @throws CaptchaErrorException
-     * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws WrongEmailException
-     * @throws WrongPhoneNumberException
-     * @throws EmptyUserDataComments
-     * @throws \RuntimeException
-     * @throws \LogicException
-     * @throws SystemException
-     * @throws LoaderException
-     * @throws \Exception
      * @throws ErrorAddComment
+     * @throws CaptchaErrorException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws ObjectException
+     * @throws EmptyUserDataComments
+     * @throws WrongPasswordException
+     * @throws UserNotFoundAddCommentException
+     * @throws WrongPhoneNumberException
+     * @throws WrongEmailException
+     * @throws LoaderException
+     *
      */
     public static function addComment(bool $addNotAuth = false): bool
     {
@@ -92,9 +86,11 @@ class CCommentsComponent extends \CBitrixComponent
         unset($data['HL_ID']);
 
         $class->setHLEntity();
-        $res = $class->hlEntity::add($data);
-        if ($res->isSuccess()) {
-            return true;
+        if (!empty($data)) {
+            $res = $class->hlEntity::add($data);
+            if ($res->isSuccess()) {
+                return true;
+            }
         }
 
         throw new ErrorAddComment(
@@ -111,7 +107,6 @@ class CCommentsComponent extends \CBitrixComponent
      * @throws \LogicException
      * @throws LoaderException
      * @throws SystemException
-     * @throws \RuntimeException
      * @throws \RuntimeException
      * @return mixed
      */
@@ -147,14 +142,11 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * @throws \LogicException
-     * @throws InvalidArgumentException
      * @throws ServiceNotFoundException
-     * @throws ArgumentException
-     * @throws LoaderException
      * @throws SystemException
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
+     * @throws LoaderException
      * @return array
      */
     public static function getNextItems(): array
@@ -198,10 +190,12 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * {@inheritdoc}
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws ServiceNotFoundException
      * @throws \RuntimeException
      * @throws \LogicException
+     * @throws LoaderException
+     * @throws Exception
      */
     public function executeComponent()
     {
@@ -233,14 +227,19 @@ class CCommentsComponent extends \CBitrixComponent
 
         /** @todo кеширование комментариев */
         if ($this->startResultCache()) {
+            $tagCache = new TaggedCacheHelper();
+            $tagCache->addTags([
+                'comments:objectId:' . $this->arParams['OBJECT_ID'],
+                'comments:type:' . $this->arParams['TYPE'],
+                'hlb:field:comments_objectId:' . $this->arParams['OBJECT_ID'],
+                'catalog:comments',
+            ]);
 
             try {
                 $this->setHLEntity();
-            } catch (LoaderException $e) {
-                ShowError($e->getMessage());
-
-                return false;
-            } catch (SystemException $e) {
+            } catch (LoaderException|SystemException $e) {
+                $this->abortResultCache();
+                $tagCache->abortTagCache();
                 ShowError($e->getMessage());
 
                 return false;
@@ -251,6 +250,8 @@ class CCommentsComponent extends \CBitrixComponent
                 $this->arResult['COMMENTS'] = $comments['ITEMS'];
                 $this->arResult['COUNT_COMMENTS'] = $comments['COUNT'];
             } catch (ArgumentException $e) {
+                $this->abortResultCache();
+                $tagCache->abortTagCache();
                 ShowError($e->getMessage());
 
                 return false;
@@ -259,13 +260,6 @@ class CCommentsComponent extends \CBitrixComponent
 
             $this->setResultCacheKeys(['AUTH']);
 
-            TaggedCacheHelper::addManagedCacheTags([
-                'comments:objectId:' . $this->arParams['OBJECT_ID'],
-                'comments:type:' . $this->arParams['TYPE'],
-                'hlb:field:comments_objectId:' . $this->arParams['OBJECT_ID'],
-                'catalog:comments',
-            ]);
-
             $this->includeComponentTemplate();
         }
 
@@ -273,38 +267,25 @@ class CCommentsComponent extends \CBitrixComponent
     }
 
     /**
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     */
-    protected function setUserBundle()
-    {
-        $this->userAuthService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
-        $this->userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-    }
-
-    /**
      * @param bool $addNotAuth
      *
+     * @return array
+     * @throws ObjectException
+     * @throws EmptyUserDataComments
      * @throws WrongPasswordException
      * @throws UserNotFoundAddCommentException
-     * @throws NotAuthorizedException
-     * @throws \Exception
-     * @throws SystemException
-     * @throws EmptyUserDataComments
-     * @throws ErrorAddComment
      * @throws WrongPhoneNumberException
      * @throws WrongEmailException
-     * @return array
+     * @throws SystemException
      */
-    protected function getData(bool $addNotAuth = false): array
+    public function getData(bool $addNotAuth = false): array
     {
         $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
-        unset($data['action']);
+        unset($data['action'], $data['g-recaptcha-response']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
-            if (!$addNotAuth) {
+            if (!$addNotAuth || ((!empty($data['EMAIL']) || !empty($data['PHONE'])) && !empty($data['PASSWORD']))) {
                 $userRepository = $this->userCurrentUserService->getUserRepository();
                 $filter = [
                     'LOGIC' => 'OR',
@@ -358,6 +339,17 @@ class CCommentsComponent extends \CBitrixComponent
     }
 
     /**
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    protected function setUserBundle(): void
+    {
+        $this->userAuthService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+        $this->userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+    }
+
+    /**
      * @throws \Exception
      * @throws ObjectPropertyException
      * @throws ArgumentException
@@ -366,7 +358,7 @@ class CCommentsComponent extends \CBitrixComponent
      * @throws SystemException
      * @throws \RuntimeException
      */
-    protected function setHLEntity()
+    protected function setHLEntity(): void
     {
         $this->hlEntity = static::getHLEntity($this->arParams['HL_ID']);
     }
@@ -437,7 +429,7 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * @return int
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws ObjectPropertyException
      * @throws ArgumentException
      */

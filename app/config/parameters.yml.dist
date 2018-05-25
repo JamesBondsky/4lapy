@@ -12,6 +12,7 @@ parameters:
 
   migrator:
     token: c81789b482ecbe6976f496a9697d75de
+    url: 'http://old4lapy.e.adv.ru/migrate'
 
   sms.start_messaging: '09:00'
   sms.stop_messaging: '21:00'

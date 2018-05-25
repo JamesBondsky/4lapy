@@ -34,6 +34,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     use ManzanaServiceTrait;
 
     /**
+     * @var SoftChequeResponse[]
+     */
+    protected $results = [];
+
+    /**
      * @param BasketBase $basket
      * @param string $card
      * @param BasketService $basketService
@@ -84,6 +89,17 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 $signCharge = 1;
             }
 
+            try {
+                $item->getPropertyCollection()->createItem()->setFields([
+                    'CODE' => 'HAS_BONUS',
+                    'VALUE' => (bool)$signCharge
+                ]);
+            } catch (\Exception $e) {
+                /**
+                 * Да не может быть
+                 */
+            }
+
             $chequePosition->setSignCharge($signCharge);
 
             $request->addItem($chequePosition);
@@ -91,7 +107,8 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
         $request->setSumm($sum)
             ->setSummDiscounted($sumDiscounted)
-            ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
+            ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum))
+            ->setPaidByBonus(floor($basket->getPrice()));
 
         if ($card) {
             $request->setCardByNumber($card);
@@ -210,8 +227,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $this->prepareRequest($chequeRequest);
 
-        return
-            [
+        return [
                 'request_options' =>
                     [
                         'request' => [
@@ -248,33 +264,49 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
     /**
      * @param SoftChequeRequest $chequeRequest
-     *
-     * @throws ExecuteException
+     * @param bool              $noCache
      *
      * @return SoftChequeResponse
+     * @throws ExecuteException
      */
-    protected function execute(SoftChequeRequest $chequeRequest): SoftChequeResponse
+    protected function execute(SoftChequeRequest $chequeRequest, bool $noCache = false): SoftChequeResponse
     {
-        try {
-            $result = $this->buildResponseFromRawResponse(
-                $this->client->call(
-                    self::METHOD_EXECUTE,
-                    $this->buildParametersFromRequest($chequeRequest)
-                )
-            );
-        } catch (Exception $e) {
+        $items = [];
+        /** @var ChequePosition $item */
+        foreach ($chequeRequest->getItems() as $item) {
+            $items[$item->getChequeItemId()] = $item->getQuantity();
+        }
+        asort($items);
+
+        $cacheKey = \json_encode(['items' => $items, 'bonus' => floor($chequeRequest->getPaidByBonus())]);
+        if ($noCache || !$this->results[$cacheKey]) {
             try {
-                /** @noinspection PhpUndefinedFieldInspection */
-                $detail = $e->detail->details->description;
-            } catch (Throwable $e) {
-                $detail = 'none';
+                $result = $this->buildResponseFromRawResponse(
+                    $this->client->call(
+                        self::METHOD_EXECUTE,
+                        $this->buildParametersFromRequest($chequeRequest)
+                    )
+                );
+            } catch (Exception $e) {
+                try {
+                    /** @noinspection PhpUndefinedFieldInspection */
+                    $detail = $e->detail->details->description;
+                } catch (Throwable $e) {
+                    $detail = 'none';
+                }
+
+                throw new ExecuteException(
+                    \sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail),
+                    $e->getCode(),
+                    $e
+                );
             }
 
-            throw new ExecuteException(
-                \sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail),
-                $e->getCode(),
-                $e
-            );
+            if (!$noCache) {
+                $this->results[$cacheKey] = $result;
+            }
+        } else {
+            $result = $this->results[$cacheKey];
         }
 
         return $result;

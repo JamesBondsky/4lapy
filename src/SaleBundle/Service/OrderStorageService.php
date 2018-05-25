@@ -19,6 +19,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -26,6 +27,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -44,6 +46,8 @@ class OrderStorageService
     public const PAYMENT_STEP_CARD = 'payment-card';
 
     public const COMPLETE_STEP = 'complete';
+
+    public const SESSION_EXPIRED_VIOLATION = 'session-expired';
 
     /**
      * Порядок оформления заказа
@@ -237,7 +241,20 @@ class OrderStorageService
                     } elseif ((int)$data['split'] === 1) {
                         $tmpStorage = clone $storage;
                         $tmpStorage->setDeliveryId($data['deliveryId']);
-                        $pickup = $this->getSelectedDelivery($tmpStorage);
+                        $pickup = clone $this->getSelectedDelivery($tmpStorage);
+                        if ($pickup instanceof PickupResultInterface) {
+                            $availableStores = $pickup->getBestShops();
+                            $storeXmlId = $data['deliveryPlaceCode'];
+                            $selectedStore = null;
+                            /** @var Store $store */
+                            foreach ($availableStores as $store) {
+                                if ($store->getXmlId() === $storeXmlId) {
+                                    $selectedStore = $store;
+                                    $pickup->setSelectedShop($selectedStore);
+                                    break;
+                                }
+                            }
+                        }
                         if (!$this->canSplitOrder($pickup) && !$this->canGetPartial($pickup)) {
                             $data['split'] = 0;
                         }
@@ -538,16 +555,16 @@ class OrderStorageService
     public function canSplitOrder(CalculationResultInterface $delivery): bool
     {
         $result = false;
-        /**
-         * Для самовывоза DPD разделения заказов нет
-         */
-        if (!$delivery instanceof DpdPickupResult) {
-            if (!($this->deliveryService->isDelivery($delivery) && $delivery->getStockResult()->getOrderable()->getByRequest()->isEmpty())) {
-                [$available, $delayed] = $this->splitStockResult($delivery);
 
-                $result = !$available->isEmpty() && !$delayed->isEmpty();
-            }
+        if (!$this->deliveryService->isDpdPickup($delivery) &&
+            \in_array($delivery->getDeliveryZone(), [DeliveryService::ZONE_1, DeliveryService::ZONE_2], true) &&
+            !$delivery->getStockResult()->getOrderable()->getByRequest(true)->isEmpty()
+        ) {
+            [$available, $delayed] = $this->splitStockResult($delivery);
+
+            $result = !$available->isEmpty() && !$delayed->isEmpty();
         }
+
         return $result;
     }
 
@@ -561,8 +578,8 @@ class OrderStorageService
     public function canGetPartial(CalculationResultInterface $delivery): bool
     {
         $result = false;
-        if ($delivery->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE &&
-            $delivery->getStockResult()->getByRequest()->isEmpty() &&
+        if ($this->deliveryService->isInnerPickup($delivery) &&
+            $delivery->getStockResult()->getByRequest(true)->isEmpty() &&
             !$delivery->getStockResult()->getAvailable()->isEmpty() &&
             !$delivery->getStockResult()->getDelayed()->isEmpty()
         ) {

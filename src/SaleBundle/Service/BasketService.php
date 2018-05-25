@@ -20,12 +20,15 @@ use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
@@ -41,6 +44,7 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -52,25 +56,26 @@ class BasketService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    /** Оплата бонусами до 90% заказа */
+    public const MAX_BONUS_PAYMENT = 0.9;
     /** @var Basket */
     private $basket;
+    private $basketProductIds = [];
     /** @var CurrentUserProviderInterface */
     private $currentUserProvider;
     /** @var OfferCollection */
     private $offerCollection;
     /** @var ManzanaPosService */
     private $manzanaPosService;
-
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
-    /** Оплата бонусами до 90% заказа */
-    public const MAX_BONUS_PAYMENT = 0.9;
+    private $fUserId;
 
     /**
      * BasketService constructor.
      *
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param ManzanaPosService $manzanaPosService
+     * @param ManzanaPosService            $manzanaPosService
      */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
@@ -81,10 +86,10 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param int $offerId
-     * @param int|null $quantity
-     * @param array $rewriteFields
-     * @param bool $save
+     * @param int         $offerId
+     * @param int|null    $quantity
+     * @param array       $rewriteFields
+     * @param bool        $save
      * @param Basket|null $basket
      *
      * @throws \Bitrix\Main\ArgumentNullException
@@ -111,9 +116,9 @@ class BasketService implements LoggerAwareInterface
             $quantity = 1;
         }
         $fields = [
-            'PRODUCT_ID' => $offerId,
-            'QUANTITY' => $quantity,
-            'MODULE' => 'catalog',
+            'PRODUCT_ID'             => $offerId,
+            'QUANTITY'               => $quantity,
+            'MODULE'                 => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
         if ($rewriteFields) {
@@ -158,11 +163,15 @@ class BasketService implements LoggerAwareInterface
         }
         if ($save) {
             $basketItem->save();
+            //всегда перегружаем из-за подарков
+            $this->setBasketIds();
+            if (!\in_array($basketItem->getProductId(), $this->basketProductIds, true)) {
+                $this->basketProductIds[] = $basketItem->getProductId();
+            }
         }
 
         return $basketItem;
     }
-
 
     /**
      * @param int $basketId
@@ -200,12 +209,16 @@ class BasketService implements LoggerAwareInterface
                 throw new BitrixProxyException($result);
             }
         }
-
-        return BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
+        $res = BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
+        if ($res) {
+            //всегда перегружаем из-за подарков
+            $this->setBasketIds();
+        }
+        return $res;
     }
 
     /**
-     * @param int $basketId
+     * @param int      $basketId
      * @param int|null $quantity
      *
      * @throws Exception
@@ -244,9 +257,11 @@ class BasketService implements LoggerAwareInterface
             $this->getBasket()->save();
         }
 
+        //всегда перегружаем из-за подарков
+        $this->setBasketIds();
+
         return true;
     }
-
 
     /**
      * @param int|null $discountId
@@ -285,13 +300,13 @@ class BasketService implements LoggerAwareInterface
         if (!\is_array($giftIds) || !($giftIds = \array_flip(\array_flip(\array_filter($giftIds))))) {
             throw new NotFoundException('Товары по акции не найдены');
         }
-        $giftGroup['list'] = (new OfferQuery())->withFilterParameter('ID', $giftIds)->exec();
+        $giftGroup['list'] = (new OfferQuery())->withFilterParameter('=ID', $giftIds)->exec();
         return $giftGroup;
     }
 
     /**
      * @param bool|null $reload
-     * @param int $fUserId
+     * @param int       $fUserId
      *
      * @return Basket
      */
@@ -302,16 +317,16 @@ class BasketService implements LoggerAwareInterface
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
 
-            if ($fUserId === 0) {
-                $fUserId = $this->currentUserProvider->getCurrentFUserId();
-            }
+            $this->setFuserId($fUserId);
 
-            $this->basket = Basket::loadItemsForFUser($fUserId, SITE_ID);
+            $this->basket = Basket::loadItemsForFUser($this->fUserId, SITE_ID);
+            //всегда перегружаем из-за подарков
+            $this->setBasketIds();
             try {
                 $this->refreshAvailability($this->basket);
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to update basket availability: %s', $e->getMessage()), [
-                    'fuserId' => $fUserId,
+                    'fuserId' => $this->fUserId,
                 ]);
             }
         }
@@ -352,43 +367,6 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     *
-     * @throws InvalidArgumentException
-     *
-     * @return OfferCollection
-     */
-    private function loadOfferCollection(): OfferCollection
-    {
-        /**
-         * @var Basket $basket
-         * @var BasketItem $basketItem
-         * @var OfferCollection $offerCollection
-         *
-         * @todo перенести в метод выше и при повторном запросе проверять айдишники,
-         * если нет в коллекции, то делать запрос
-         */
-        $ids = [];
-        $basket = $this->getBasket();
-        foreach ($basket->getBasketItems() as $basketItem) {
-            $ids[] = $basketItem->getProductId();
-        }
-
-        if (null !== $order = $basket->getOrder()) {
-            /** @noinspection AdditionOperationOnArraysInspection */
-            $ids += Gift::getPossibleGifts($order);
-        }
-
-        $ids = \array_flip(\array_flip(\array_filter($ids)));
-        if (empty($ids)) {
-            $ids = false;
-        }
-
-        $offerCollection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
-
-        return $this->offerCollection = $offerCollection;
-    }
-
-    /**
      * @param Basket $basket
      *
      * @throws ServiceNotFoundException
@@ -400,6 +378,7 @@ class BasketService implements LoggerAwareInterface
      */
     public function refreshAvailability(Basket $basket): Basket
     {
+        $updateIds = false;
         $isTemporary = function (BasketItem $basketItem): bool {
             $property = $basketItem->getPropertyCollection()->getPropertyValues()['IS_TEMPORARY'];
             return $property && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
@@ -423,6 +402,7 @@ class BasketService implements LoggerAwareInterface
             if ($isTemporaryItem) {
                 if (isset($normalItems[$basketItem->getProductId()])) {
                     $basketItem->delete();
+                    $updateIds = true;
                     continue;
                 }
 
@@ -450,6 +430,7 @@ class BasketService implements LoggerAwareInterface
                 }
 
                 if (!empty($toUpdate)) {
+                    $updateIds = true;
                     $basketItem->setFields($toUpdate);
                 }
 
@@ -457,16 +438,17 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
+        if ($updateIds) {
+            //всегда перегружаем из-за подарков
+            $this->setBasketIds();
+        }
+
         return $basket;
     }
 
     /**
-     * @todo Избавиться от этих двух методов, перенеся их непосредственно в обработчики акций, однако необходимо
-     *     отделить общую часть от проектной
-     */
-    /**
      * @param string $type
-     * @param bool $renew
+     * @param bool   $renew
      *
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -477,8 +459,8 @@ class BasketService implements LoggerAwareInterface
         static $storage;
         if (null === $storage || $renew) {
             $storage = [
-                'gift' => null,
-                'detach' => null
+                'gift'   => null,
+                'detach' => null,
             ];
         }
         if (null === $order = $this->getBasket()->getOrder()) {
@@ -509,7 +491,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param string $type
-     * @param bool $renew
+     * @param bool   $renew
      *
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -520,8 +502,8 @@ class BasketService implements LoggerAwareInterface
         static $storage;
         if (null === $storage || $renew) {
             $storage = [
-                'gift' => null,
-                'detach' => null
+                'gift'   => null,
+                'detach' => null,
             ];
         }
         if (null === $order = $this->getBasket()->getOrder()) {
@@ -641,7 +623,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param BasketItem $basketItem
-     * @param string $code
+     * @param string     $code
      *
      * @return null|string
      */
@@ -671,8 +653,8 @@ class BasketService implements LoggerAwareInterface
     {
         /**
          * @var BasketItemCollection $basketItemCollection
-         * @var Order $order
-         * @var Basket $basket
+         * @var Order                $order
+         * @var Basket               $basket
          */
 
         if (
@@ -699,7 +681,7 @@ class BasketService implements LoggerAwareInterface
         $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
 
         if (!$basketDiscounts) {
-            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
+            /** @var BasketPropertyItem $basketPropertyItem */
             foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
                 $propCode = $basketPropertyItem->getField('CODE');
                 if ($propCode === 'DETACH_FROM') {
@@ -711,9 +693,9 @@ class BasketService implements LoggerAwareInterface
                             if ((int)$appliedDiscount['REAL_DISCOUNT_ID'] === (int)$discountId) {
                                 $basketDiscounts = [
                                     'DISCOUNT_ID' => $appliedDiscount['ID'],
-                                    'COUPON_ID' => '',
-                                    'APPLY' => 'Y',
-                                    'DESCR' => $appliedDiscount['ACTIONS_DESCR']['BASKET'],
+                                    'COUPON_ID'   => '',
+                                    'APPLY'       => 'Y',
+                                    'DESCR'       => $appliedDiscount['ACTIONS_DESCR']['BASKET'],
                                 ];
                             }
                         }
@@ -729,60 +711,12 @@ class BasketService implements LoggerAwareInterface
         return (bool)$basketDiscounts;
     }
 
-    /**
-     * ad
-     *
-     * @param array $applyResult
-     * @param array $appliedDiscounts
-     *
-     * @return array
-     */
-    protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts): array
-    {
-        foreach ($appliedDiscounts as $k => $appliedDiscount) {
-            $id = $applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
-            $settings = $applyResult['FULL_DISCOUNT_LIST'][$id]['ACTIONS']['CHILDREN'];
-
-            if (
-                !(
-                    \count($settings) === 1
-                    &&
-                    ($settings = \current($settings))
-                    &&
-                    $settings['CLASS_ID'] === 'ActSaleBsktGrp'
-                    &&
-                    ($settings = \array_values($settings['CHILDREN']))
-                    &&
-                    \count($settings) === 2
-                    &&
-                    (
-                        (
-                            0 === \strpos($settings[0]['CLASS_ID'], 'BasketQuantity')
-                            &&
-                            0 === \strpos($settings[1]['CLASS_ID'], 'CondIBProp')
-                        )
-                        ||
-                        (
-                            0 === \strpos($settings[1]['CLASS_ID'], 'BasketQuantity')
-                            &&
-                            0 === \strpos($settings[0]['CLASS_ID'], 'CondIBProp')
-                        )
-                    )
-                )
-            ) {
-                unset($appliedDiscounts[$k]);
-            }
-        }
-
-        return $appliedDiscounts;
-    }
-
     /** @noinspection MoreThanThreeArgumentsInspection
      *
      * @param BasketItem $basketItem
-     * @param string $code
-     * @param string $value
-     * @param string $name
+     * @param string     $code
+     * @param string     $value
+     * @param string     $name
      */
     public function setBasketItemPropertyValue(
         BasketItem $basketItem,
@@ -803,18 +737,149 @@ class BasketService implements LoggerAwareInterface
             if (!$found) {
                 $property = $basketItem->getPropertyCollection()->createItem();
                 $property->setFields([
-                    'NAME' => $name ?: $code,
-                    'CODE' => $code,
-                    'VALUE' => $value
+                    'NAME'  => $name ?: $code,
+                    'CODE'  => $code,
+                    'VALUE' => $value,
                 ]);
             }
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to update basket item property: %s', $e->getMessage()), [
-                'itemId' => $basketItem->getId(),
+                'itemId'  => $basketItem->getId(),
                 'offerId' => $basketItem->getProductId(),
-                'code' => $code,
-                'value' => $value
+                'code'    => $code,
+                'value'   => $value,
             ]);
         }
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     *
+     * @return string
+     */
+    public function getBasketItemXmlId(BasketItem $basketItem): string
+    {
+        if (!$xmlId = $basketItem->getField('PRODUCT_XML_ID')) {
+            $xmlId = $basketItem->getPropertyCollection()->getPropertyValues()['PRODUCT.XML_ID']['VALUE'] ?? '';
+        }
+
+        if (\strpos($xmlId, '#')) {
+            /** @noinspection ShortListSyntaxCanBeUsedInspection */
+            list(, $xmlId) = \explode('#', $xmlId);
+        }
+
+        return $xmlId;
+    }
+
+    /**
+     * ad
+     *
+     * @param array $applyResult
+     * @param array $appliedDiscounts
+     *
+     * @return array
+     */
+    protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts): array
+    {
+        foreach ($appliedDiscounts as $k => $appliedDiscount) {
+            $id = $applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
+            $settings = $applyResult['FULL_DISCOUNT_LIST'][$id]['ACTIONS']['CHILDREN'];
+
+            if (
+                \count($settings) === 1
+                &&
+                ($settings = \current($settings))
+                &&
+                $settings['CLASS_ID'] === 'ActSaleBsktGrp'
+                &&
+                ($settings = \array_values($settings['CHILDREN']))
+                &&
+                \count($settings) === 2
+                &&
+                (
+                    (
+                        0 === \strpos($settings[0]['CLASS_ID'], 'BasketQuantity')
+                        &&
+                        0 === \strpos($settings[1]['CLASS_ID'], 'CondIBProp')
+                    )
+                    ||
+                    (
+                        0 === \strpos($settings[1]['CLASS_ID'], 'BasketQuantity')
+                        &&
+                        0 === \strpos($settings[0]['CLASS_ID'], 'CondIBProp')
+                    )
+                )
+            ) {
+                unset($appliedDiscounts[$k]);
+            }
+        }
+
+        return $appliedDiscounts;
+    }
+
+    /**
+     * @param int $fUserId
+     */
+    private function setFuserId(int $fUserId = 0): void
+    {
+        if ($fUserId === 0) {
+            $this->fUserId = $this->currentUserProvider->getCurrentFUserId();
+        } else {
+            $this->fUserId = $fUserId;
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    private function setBasketIds(): bool
+    {
+        $hasGifts = false;
+        /** @var BasketItem $basketItem */
+        $this->basketProductIds = [];
+        $basket = $this->getBasket();
+        foreach ($basket->getBasketItems() as $basketItem) {
+            $this->basketProductIds[] = $basketItem->getProductId();
+        }
+
+        if (null !== $order = $basket->getOrder()) {
+            /** @noinspection AdditionOperationOnArraysInspection */
+            $gifts = Gift::getPossibleGifts($order);
+            $this->basketProductIds += $gifts;
+            if (!empty($gifts)) {
+                $hasGifts = true;
+            }
+        }
+
+        if (!empty($this->basketProductIds)) {
+            $this->basketProductIds = \array_flip(\array_flip(\array_filter($this->basketProductIds)));
+            $this->basketProductIds = array_unique($this->basketProductIds);
+            sort($this->basketProductIds);
+        }
+        return $hasGifts;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     *
+     * @return OfferCollection
+     */
+    private function loadOfferCollection(): OfferCollection
+    {
+        /**
+         * @var Basket          $basket
+         * @var OfferCollection $offerCollection
+         */
+        if (empty($this->basketProductIds)) {
+            $this->setBasketIds();
+        }
+
+        if (!empty($this->basketProductIds)) {
+            $offerCollection = (new OfferQuery())->withFilter(['=ID' => $this->basketProductIds])->exec();
+        } else {
+            $offerCollection = new OfferCollection(new \CDBResult());
+        }
+
+        return $this->offerCollection = $offerCollection;
     }
 }

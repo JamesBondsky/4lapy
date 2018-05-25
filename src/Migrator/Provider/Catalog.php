@@ -208,7 +208,7 @@ class Catalog extends IBlockElement
             $pictureConverter,
             $skuTrimConverter,
             $skuIntConverter,
-            $stmConverter,
+            //$stmConverter,
             $producedConverter,
             $licenseConverter,
             $lowTemperatureConverter,

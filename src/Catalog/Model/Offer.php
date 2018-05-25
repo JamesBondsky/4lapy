@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -52,6 +53,7 @@ use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\SerializerInterface;
 use JMS\SerializerBundle\Templating\SerializerHelper;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -1540,6 +1542,8 @@ class Offer extends IblockElement
             ->where('UF_ACTIVE', true)
             ->where('UF_PRODUCT', $offerId)
             ->setSelect(['ID'])
+            ->setOrder(['RAND'])
+            ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
             ->exec();
         while($break === false){
             $bundleItem = $resBundleItems->fetch();
@@ -1554,6 +1558,8 @@ class Offer extends IblockElement
                 ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
 //                ->addSelect('UF_ACTIVE')
 //                ->addSelect('ID')
+                ->setOrder(['RAND'])
+                ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
                 ->exec();
 
 
@@ -1617,10 +1623,10 @@ class Offer extends IblockElement
             $break = true;
         }
         if($result !== null){
-            $serializer = Application::getInstance()->getContainer()->get(\JMS\Serializer\SerializerInterface::class);
+            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
             $result = $serializer->fromArray($result, Bundle::class, DeserializationContext::create()->setGroups(['read']));
             if(!empty($productIds)){
-                $offerCollection = (new OfferQuery())->withFilter(['ID'=>$productIds])->exec();
+                $offerCollection = (new OfferQuery())->withFilter(['=ID'=>$productIds])->exec();
                 /** @var Offer $offer */
                 foreach ($offerCollection as $offer) {
                     /** @var BundleItem $product */

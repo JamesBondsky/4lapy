@@ -25,6 +25,8 @@ class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
     /**
      *
      *
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \RuntimeException
      * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException

@@ -116,6 +116,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
             $curUser = $this->currentUserProvider->getCurrentUser();
 
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:profile:' . $curUser->getId(),
+                'user:' . $curUser->getId(),
+            ]);
+
             $curBirthday = $curUser->getBirthday();
             if ($curBirthday instanceof Date) {
                 try {
@@ -146,11 +151,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
                 'ADDRESS'         => $curUser->getAddress(),
             ];
-
-            TaggedCacheHelper::addManagedCacheTags([
-                'personal:profile:' . $curUser->getId(),
-                'user:' . $curUser->getId(),
-            ]);
 
             $this->includeComponentTemplate();
         }

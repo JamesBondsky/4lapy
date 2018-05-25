@@ -2,7 +2,9 @@
 
 namespace FourPaws\Migrator\Provider;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\UserTable;
+use RuntimeException;
 
 /**
  * Class User
@@ -39,9 +41,9 @@ class User extends ProviderAbstract
                     'UF_ADDR_STREET' => 'UF_ADDR_STREET',
                     'UF_ADDR_HOME' => 'UF_ADDR_HOME',
                     'UF_ADDR_CORP' => 'UF_ADDR_CORP',
-                    'UF_ADDR_KVART' => 'UF_ADDR_ROOM',
+                    'UF_ADDR_KVART' => 'UF_ADDR_KVART',
                     'UF_ADDR_POD' => 'UF_ADDR_POD',
-                    'UF_ADDR_ETAG' => 'UF_ADDR_FLOOR',
+                    'UF_ADDR_ETAG' => 'UF_ADDR_ETAG',
                     'UF_INTERVIEW_MES' => 'UF_INTERVIEW_MES',
                     'UF_BONUS_MES' => 'UF_BONUS_MES',
                     'UF_SMS_MES' => 'UF_SMS_MES',
@@ -63,6 +65,9 @@ class User extends ProviderAbstract
      * @param array $data
      *
      * @return array
+     *
+     * @throws RuntimeException
+     * @throws ArgumentException
      */
     public function prepareData(array $data): array
     {
@@ -90,7 +95,7 @@ class User extends ProviderAbstract
      */
     public function isLoginPhone(string $phone): bool
     {
-        return (strlen(preg_replace('~\D~', '', $phone)) === strlen($phone)) && strlen($phone) >= 10;
+        return (\strlen(\preg_replace('~\D~', '', $phone)) === \strlen($phone)) && \strlen($phone) >= 10;
     }
 
     /**
@@ -110,9 +115,12 @@ class User extends ProviderAbstract
      */
     public function normalizeEmail(string $email): string
     {
-        $emailParts = explode('@', $email);
-        $emailParts[0] = str_replace('.', '', $emailParts[0]);
+        /** Пусть сами разбираются с дублями
+         * $emailParts = explode('@', $email);
+         * $emailParts[0] = str_replace('.', '', $emailParts[0]);
+         *
+         * return implode('@', $emailParts); */
 
-        return implode('@', $emailParts);
+        return $email;
     }
 }

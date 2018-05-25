@@ -36,9 +36,9 @@ class SalePull extends ClientPullAbstract
         return [
             /* new Status(new StatusProvider(new StatusEntity(Status::ENTITY_NAME)), ['force' => true]),
             new Delivery(new DeliveryProvider(new DeliveryEntity(Delivery::ENTITY_NAME))),
-            new OrderProperty(new OrderPropertyProvider(new OrderPropertyEntity(OrderProperty::ENTITY_NAME))),
+            new OrderPropertyClient(new OrderProperty(new OrderPropertyEntity(OrderPropertyClient::ENTITY_NAME))),
             new Catalog(new CatalogProvider(new CatalogEntity(Catalog::ENTITY_NAME)), ['force' => true]),
-            new UserPull(['force' => true]), */
+            new UserPull(['force' => true]),*/
         ];
     }
 

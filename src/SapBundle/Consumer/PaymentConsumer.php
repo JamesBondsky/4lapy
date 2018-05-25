@@ -59,9 +59,16 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
         } catch (\Exception $e) {
             $success = false;
 
-            $this->log()->critical(\sprintf('Ошибка обработки задания на оплату: %s', $e->getMessage()));
+            /** @var Order $paymentInfo */
+            $this->log()->critical(\sprintf(
+                'Ошибка обработки задания на оплату: %s: %s',
+                \get_class($e),
+                $e->getMessage()),
+                ['order' => $paymentInfo->getBitrixOrderId()]
+            );
         }
 
+        die('aazaza'); //debug
         return $success;
     }
 

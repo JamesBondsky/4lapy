@@ -9,9 +9,11 @@ namespace FourPaws\DeliveryBundle\Handler;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
+use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -88,6 +90,20 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }
 
     /**
+     * @param Shipment $shipment
+     * @return bool
+     * @throws ObjectNotFoundException
+     */
+    public function isCompatible(Shipment $shipment)
+    {
+        if (!parent::isCompatible($shipment)) {
+            return false;
+        }
+
+        return (bool)$this->deliveryService->getDeliveryLocation($shipment);
+    }
+
+    /**
      * Получает коллекцию офферов и проставляет им наличие
      *
      * @param string $locationCode
@@ -127,7 +143,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         }
 
         /** @var OfferCollection $offers */
-        $offers = (new OfferQuery())->withFilterParameter('ID', $offerIds)->exec();
+        $offers = (new OfferQuery())->withFilterParameter('=ID', $offerIds)->exec();
         if ($offers->isEmpty()) {
             return null;
         }
@@ -158,11 +174,12 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     ): StockResultCollection {
         $stockResultCollection = new StockResultCollection();
 
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
+        foreach ($basket as $item) {
             $basketItem = null;
+
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
             /** @var BasketItem $item */
-            foreach ($basket as $item) {
                 if ((int)$item->getProductId() === $offer->getId()) {
                     $basketItem = $item;
                     break;

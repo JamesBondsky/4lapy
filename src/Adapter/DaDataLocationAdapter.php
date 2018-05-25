@@ -73,6 +73,8 @@ class DaDataLocationAdapter extends BaseAdapter
         try {
             /** пока доставка в одной стране - убираем поиск по стране */
             $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
+            $cityType = $entity->getCityTypeFull();
+            $isCity = ToLower($cityType) === 'город';
             if (empty($city)) {
                 $city = $entity->getSettlement();
                 $type = $entity->getSettlementTypeFull();
@@ -80,6 +82,13 @@ class DaDataLocationAdapter extends BaseAdapter
                     $type = 'рабочий посёлок';
                 }
                 $fullCity = $city . ' ' . $type;
+            } else {
+                if(!$isCity){
+                    if ($entity->getCityType() === 'рп') {
+                        $cityType = 'рабочий посёлок';
+                    }
+                    $fullCity = $city . ' ' . $cityType;
+                }
             }
 
             $fullRegion = '';

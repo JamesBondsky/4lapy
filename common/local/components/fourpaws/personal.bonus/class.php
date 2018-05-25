@@ -25,6 +25,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
 {
     /**
@@ -112,44 +113,39 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
-            $tagCache = null;
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($cachePath);
-            }
+            $tagCache = new TaggedCacheHelper($cachePath);
+            $tagCache->addTags([
+                'personal:bonus:' . $user->getId(),
+                'order:' . $user->getId(),
+            ]);
+
             try {
                 $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 $cache->abortDataCache();
+                $tagCache->abortTagCache();
                 return null;
             }
 
-            if ($tagCache !== null) {
-                TaggedCacheHelper::addManagedCacheTags([
-                    'personal:bonus:'. $user->getId(),
-                    'order:'. $user->getId(),
-                ], $tagCache);
-                $tagCache->endTagCache();
-            }
-
+            $tagCache->end();
             $cache->endDataCache(['bonus' => $bonus]);
         }
 
         $this->setFrameMode(true);
 
         if ($this->startResultCache($this->arParams['CACHE_TIME'], [
-            'userId' => $user->getId(),
-            'cardNumber'  => $bonus->getCard()->getCardNumber(),
-            'bonus'  => $bonus->getActiveBonus(),
-            'sum'         => $bonus->getSum(),
-            'paidByBonus' => $bonus->getCredit(),
+            'userId'       => $user->getId(),
+            'cardNumber'   => $bonus->getCard()->getCardNumber(),
+            'bonus'        => $bonus->getActiveBonus(),
+            'sum'          => $bonus->getSum(),
+            'paidByBonus'  => $bonus->getCredit(),
             'realDiscount' => $bonus->getRealDiscount(),
         ], $cachePath)) {
-            TaggedCacheHelper::addManagedCacheTags([
-                'personal:bonus:'. $user->getId(),
-                'order:'. $user->getId(),
+            (new TaggedCacheHelper($cachePath))->addTags([
+                'personal:bonus:' . $user->getId(),
+                'order:' . $user->getId(),
             ]);
 
             $this->includeComponentTemplate();

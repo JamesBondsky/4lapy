@@ -9,5 +9,5 @@ namespace FourPaws\Migrator\Client;
  */
 class OrderProperty extends MockClientAbstract
 {
-    const ENTITY_NAME = 'order_property';
+    public const ENTITY_NAME = 'order_property';
 }
