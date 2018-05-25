@@ -22,10 +22,10 @@
                             для щенков с ягненком и рисом
                         </span>
                     </span>
-                    <span class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift">
-                        <span class="b-common-item__name-value js-value-weight">100 г </span>
-                    </span>
                 </a>
+                <span class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift">
+                    <span class="b-common-item__name-value js-value-weight">100 г </span>
+                </span>
             </div>
             <div class="b-choose-radio">
                 <input class="b-choose-radio__input js-advice-input" type="checkbox"
