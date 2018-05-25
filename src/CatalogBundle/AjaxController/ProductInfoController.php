@@ -413,7 +413,7 @@ class ProductInfoController extends Controller
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
                     /** @var ResizeImageCollection $images */
-                    $images = $offer->getResizeImages(110, 110);
+                    $images = $offer->getResizeImages(140, 140);
                     if (null !== $image = $images->first()) {
                         $image = (string)$image;
                     } else {
