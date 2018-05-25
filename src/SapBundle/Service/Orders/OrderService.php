@@ -492,12 +492,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     public function getDeliveryAddress(Order $order)
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
-        $regionCode = $this->locationService->getRegionCode($city);
-        $regionCode = \preg_match('~\D~', '', $regionCode);
 
         return (new OutDeliveryAddress())
             ->setDeliveryPlaceCode($this->getPropertyValueByCode($order,'DELIVERY_PLACE_CODE'))
-            ->setRegionCode($regionCode)
+            ->setRegionCode($this->locationService->getRegionNumberCode($city))
             ->setPostCode('')
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
             ->setStreetName($this->getPropertyValueByCode($order, 'STREET'))
