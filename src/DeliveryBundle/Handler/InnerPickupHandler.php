@@ -87,7 +87,11 @@ class InnerPickupHandler extends DeliveryHandlerBase
     {
         $result = new CalculationResult();
 
-        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        if (!$deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment)) {
+            $result->addError(new Error('Не задано местоположение доставки'));
+            return $result;
+        }
+
         $shops = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_SHOP);
         if ($shops->isEmpty()) {
             $result->addError(new Error('Нет доступных магазинов'));
@@ -123,7 +127,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             }
         }
 
-        if ($deliveryLocation === null || empty($deliveryLocation) || !$offers = static::getOffers($deliveryLocation, $basket)) {
+        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
