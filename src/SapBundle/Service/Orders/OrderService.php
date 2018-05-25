@@ -283,8 +283,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         $this->setPropertiesFromDto($order, $orderDto);
         $this->setPaymentFromDto($order, $orderDto);
-        $this->setDeliveryFromDto($order, $orderDto);
         $this->setBasketFromDto($order, $orderDto);
+        $this->setDeliveryFromDto($order, $orderDto);
         $this->setStatusFromDto($order, $orderDto);
 
         return $order;
@@ -776,7 +776,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function setBasketFromDto(Order $order, OrderDtoIn $orderDto): void
     {
-        Manager::disableExtendsDiscount();
+        Manager::enableExtendsDiscount();
+        Manager::setExtendCalculated(true);
+
         $externalItems = $orderDto->getProducts();
 
         /**
@@ -790,7 +792,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     /**
                      * @var OrderOfferIn $item
                      */
-                    return $article === \ltrim($item->getOfferXmlId());
+                    return $article === \ltrim($item->getOfferXmlId(), '0');
                 }
             )->first();
 
@@ -811,6 +813,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         foreach ($externalItems as $item) {
             $this->addBasketItem($order->getBasket(), $item);
         }
+
+        Manager::setExtendCalculated(false);
+        Manager::disableExtendsDiscount();
     }
 
     /**
