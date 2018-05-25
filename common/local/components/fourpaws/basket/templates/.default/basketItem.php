@@ -1,10 +1,10 @@
 <?php
 
 /**
- * @var BasketItem $basketItem
- * @var float $userDiscount
- * @var Offer $offer
- * @var bool $isOnlyPickup
+ * @var BasketItem         $basketItem
+ * @var float              $userDiscount
+ * @var Offer              $offer
+ * @var bool               $isOnlyPickup
  *
  * @global BasketComponent $component
  */
@@ -26,7 +26,7 @@ if (!$basketItemId && $propertyValues['DETACH_FROM']) {
 }
 
 $promoLinks = $component->getPromoLink($basketItem);
-$image = $component->getImage($basketItem->getProductId());
+$image = $component->getImage((int)$basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = $basketItem->getBasePrice() !== $basketItem->getPrice();
 /**
@@ -34,7 +34,7 @@ $isDiscounted = $basketItem->getBasePrice() !== $basketItem->getPrice();
  */
 
 if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) {
-    $templateData['OFFERS'][$offer->getId() . '_' . $basketItem->getQuantity()] = $offer;
+    $templateData['OFFERS'][] = ['ID' => $offer->getId(), 'QUANTITY' => $basketItem->getQuantity()];
 } ?>
 <div class="b-item-shopping js-remove-shopping">
     <?php
@@ -120,7 +120,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
 
         if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
             <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
-                <a class="b-plus-minus__minus js-minus" data-url="<?=$basketUpdateUrl?>"
+                <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
                    href="javascript:void(0);"></a>
 
                 <input title="" class="b-plus-minus__count js-plus-minus-count"
@@ -128,10 +128,10 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                        data-one-price="<?= $basketItem->getPrice() ?>"
                        data-cont-max="<?= $maxQuantity ?>"
                        data-basketid="<?= $basketItemId; ?>"
-                       data-url="<?=$basketUpdateUrl?>"
+                       data-url="<?= $basketUpdateUrl ?>"
                        type="text"/>
 
-                <a class="b-plus-minus__plus js-plus" data-url="<?=$basketUpdateUrl?>"
+                <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
                    href="javascript:void(0);"></a>
             </div>
             <div class="b-select b-select--shopping-cart">
@@ -169,7 +169,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             </div>
         <?php } ?>
         <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-           data-url="<?=$basketDeleteUrl?>" data-basketId="<?= $basketItemId; ?>">
+           data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
             <span class="b-icon b-icon--delete b-icon--shopping">
                 <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
             </span>

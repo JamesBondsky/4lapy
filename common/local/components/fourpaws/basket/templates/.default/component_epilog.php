@@ -1,6 +1,8 @@
 <?php
+
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\BasketComponent;
+
 /** @global BasketComponent $component */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -11,28 +13,20 @@ if ($arParams['IS_AJAX']) {
     return;
 }
 $offers = $templateData['OFFERS'];
-if(\is_array($offers) && !empty($offers)){
+if (\is_array($offers) && !empty($offers)) {
     $userDiscount = $component->getCurrentUserService()->getDiscount();
-    foreach ($offers as $key => $offer) {
-        if(!($offer instanceof Offer)){
-            if(\is_array($offer) && !empty($offer)){
-                $offer = $component->getOffer($offer['ID']);
-                if(!($offer instanceof Offer)){
-                    continue;
-                }
-            }
-            else{
-                continue;
-            }
+    foreach ($offers as $offerFields) {
+        $offer = $component->getOffer((int)$offerFields['ID']);
+        if ($offer === null) {
+            continue;
         }
-        $explode = explode('_', $key);
-        $id = $explode[0];
-        $quantity=(int)$explode[1];
+
         /** @var Offer $offer */
-        $bonus = $offer->getBonusFormattedText($userDiscount, $quantity, 0);
-        if(!empty($bonus)){?>
+        $bonus = $offer->getBonusFormattedText($userDiscount, (int)$offerFields['QUANTITY'], 0);
+        if (!empty($bonus)) {
+            ?>
             <script type="text/javascript">
-                $(function(){
+                $(function () {
                     $('.js-bonus-<?=$offer->getId()?>').html('<?=$bonus?>');
                 });
             </script>
