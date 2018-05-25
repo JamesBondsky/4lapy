@@ -497,9 +497,11 @@ class OrderItem extends BaseEntity
     public function getImagePath(): string
     {
         $path = '';
-        $image = $this->getImage();
+        $image = (int)$this->getImage();
 
         if ($image) {
+            $path = $this->resizeImage($image);
+        } else {
             $image = $this->getImages();
             /** @noinspection UnserializeExploitsInspection */
             $unserializeImage = \unserialize($image);
@@ -517,8 +519,6 @@ class OrderItem extends BaseEntity
             } else {
                 $path = $this->resizeImage((int)$image);
             }
-        } else {
-            $path = $this->resizeImage((int)$image);
         }
 
         return $path;

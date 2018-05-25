@@ -36,7 +36,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
         $params['ORDER'] = $params['ORDER'] ?? null;
         if (!$params['ORDER'] instanceof Order) {
             $params['ORDER'] = null;
-        };
+        }
 
         $params['METRO'] = $params['METRO'] ?? null;
 
