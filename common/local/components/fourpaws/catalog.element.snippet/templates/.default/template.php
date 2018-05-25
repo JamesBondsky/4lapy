@@ -30,7 +30,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 /** @var Offer $currentOffer */
-$currentOffer = $arResult['CURRENT_OFFER']; ?>
+$currentOffer = $arResult['CURRENT_OFFER'];
+$countOffersInMobile = 3;?>
 
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
@@ -108,9 +109,9 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
             }
             ?>
             <div class="b-weight-container b-weight-container--list">
-                <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
+                <?/*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
                    href="javascript:void(0);"
-                   title=""></a>
+                   title=""></a>*/?>
                 <ul class="b-weight-container__list">
                     <?php
                     $i = 0;
@@ -126,7 +127,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                                 $value = $offer->getVolumeReference()->getName();
                             } elseif ($weight = $offer->getCatalogProduct()->getWeight()) {
                                 if($weight > 0) {
-                                    $value = WordHelper::showWeight($weight);
+                                    $value = WordHelper::showWeight($weight, true, 999);
                                 }
                             }
                         }
@@ -134,8 +135,9 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                         if (!empty($value)) { ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
-                                   class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
-                                   data-price="<?= ceil($offer->getPrice()) ?>" data-offerid="<?= $offer->getId() ?>"
+                                   class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i > $countOffersInMobile ? ' mobile-hidden' : '' ?>"
+                                   data-price="<?= ceil($offer->getPrice()) ?>"
+                                   data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
                             </li>
@@ -143,16 +145,17 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                             <li class="b-weight-container__item" style="display: none">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price active-link"
-                                   data-price="<?= ceil($offer->getPrice()) ?>" data-offerid="<?= $offer->getId() ?>"
+                                   data-price="<?= ceil($offer->getPrice()) ?>"
+                                   data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"></a>
                             </li>
                         <?php } ?>
                     <?php } ?>
                 </ul>
-                <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > 3 ? ' _active' : '' ?>">
-                    <?php if ($offers->count() > 3) { ?>
-                        <p class="js-show-weight">Еще <?= $offers->count() - 3 ?></p>
+                <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > $countOffersInMobile ? ' _active' : '' ?>">
+                    <?php if ($offers->count() > $countOffersInMobile) { ?>
+                        <p class="js-show-weight" href="javascript:void(0)">Еще <?= $offers->count() - $countOffersInMobile ?></p>
                     <?php } ?>
                     <div class="b-weight-container__dropdown-list"></div>
                 </div>
