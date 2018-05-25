@@ -55,6 +55,7 @@ use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -200,6 +201,7 @@ class OrderService implements LoggerAwareInterface
      * @param AddressService                    $addressService
      * @param BasketService                     $basketService
      * @param CurrentUserProviderInterface      $currentUserProvider
+     * @param UserSearchInterface               $userProvider
      * @param DeliveryService                   $deliveryService
      * @param LocationService                   $locationService
      * @param StoreService                      $storeService
@@ -302,13 +304,13 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return Order|array
+     * @return Order
      */
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
         ?CalculationResultInterface $selectedDelivery = null
-    ) {
+    ): Order {
         $fastOrder = $storage->isFastOrder();
 
         $order = Order::create(SITE_ID);
@@ -335,6 +337,8 @@ class OrderService implements LoggerAwareInterface
         if (!$selectedDelivery->isSuccess()) {
             throw new DeliveryNotAvailableException('Нет доступных доставок');
         }
+
+        Manager::disableExtendsDiscount();
 
         /**
          * Привязываем корзину
@@ -374,8 +378,11 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        $order->setMathActionOnly(true);
         /** @noinspection PhpParamsInspection */
         $order->setBasket($basket->getOrderableItems());
+        $order->setMathActionOnly(false);
+
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
         }
@@ -659,9 +666,9 @@ class OrderService implements LoggerAwareInterface
 
                 $propertyValue->setValue($value);
             }
-
-            return [$order, $selectedDelivery];
         }
+
+        Manager::enableExtendsDiscount();
 
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
