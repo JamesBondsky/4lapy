@@ -280,7 +280,7 @@ class Address
         $map = [
             ['value' => $this->city, 'prefix' => ''],
             ['value' => $this->street, 'prefix' => ''],
-            ['value' => $this->house, 'prefix' => ''],
+            ['value' => $this->house, 'prefix' => 'дом'],
             ['value' => $this->housing, 'prefix' => 'корпус'],
             ['value' => $this->entrance, 'prefix' => 'подъезд'],
             ['value' => $this->floor, 'prefix' => 'этаж'],
