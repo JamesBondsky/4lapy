@@ -274,6 +274,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             if ($this->arResult['PARTIAL_PICKUP_AVAILABLE'] &&
+                $storage->isSplit() &&
                 $this->deliveryService->isInnerPickup($selectedDelivery)
             ) {
                 $this->arResult['SELECTED_DELIVERY'] = $this->arResult['PARTIAL_PICKUP'];
