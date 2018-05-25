@@ -108,8 +108,8 @@ if ($arParams['IS_AJAX']) {
                                 <div class="b-gift-order__gift-product js-section-remove-stock">
                                     <?php foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
                                         for ($i = 0; $i < $gift['quantity']; ++$i) {
-                                            $offer = $component->offerCollection->getById($gift['offerId']);
-                                            $image = $component->getImage($gift['offerId']);
+                                            $offer = $component->getOffer((int)$gift['offerId']);
+                                            $image = $component->getImage((int)$gift['offerId']);
                                             /**
                                              * @var Offer $offer
                                              */

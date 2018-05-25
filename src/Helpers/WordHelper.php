@@ -7,8 +7,8 @@ class WordHelper
     /**
      * Возвращает нужную форму существительного, стоящего после числительного
      *
-     * @param int $number числительное
-     * @param array $forms формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
+     * @param int   $number числительное
+     * @param array $forms  формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
      *
      * @return mixed
      */
@@ -22,14 +22,16 @@ class WordHelper
 
     /**
      * @param float $weight
-     * @param bool $short
+     * @param bool  $short
+     *
+     * @param int   $fullLimit
      *
      * @return string
      */
-    public static function showWeight(float $weight, $short = false): string
+    public static function showWeight(float $weight, $short = false, int $fullLimit = 0): string
     {
-        if ($short) {
-            return static::numberFormat($weight / 1000) . ' кг';
+        if ($short && ($fullLimit === 0 || ($fullLimit > 0 && $weight > $fullLimit))) {
+            return static::numberFormat($weight / 1000, 2, true) . ' кг';
         }
 
         $parts = [];
@@ -48,18 +50,26 @@ class WordHelper
     }
 
     /**
-     * @param     $number
-     * @param int $decimals
+     * @param      $number
+     * @param int  $decimals
+     *
+     * @param bool $delEndNull
      *
      * @return string
      */
-    public static function numberFormat($number, int $decimals = 2): string
+    public static function numberFormat($number, int $decimals = 2, bool $delEndNull = false): string
     {
-        return number_format($number, $decimals, '.', ' ');
+        $number = number_format($number, $decimals, '.', ' ');
+        if($delEndNull) {
+            $number = rtrim($number, '0');
+            $number = rtrim($number, '.');
+        }
+        return $number;
     }
 
     /**
      * @param $string
+     *
      * @return mixed
      */
     public static function clear($string)
