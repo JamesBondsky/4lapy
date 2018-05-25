@@ -173,8 +173,23 @@ class LocationService
                 );
             }
             $region = ExternalTable::query()
+                ->setSelect(['XML_ID'])
                 ->setFilter($filter)
                 ->setLimit(1)
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'SERVICE',
+                        ExternalServiceTable::getEntity(),
+                        ['=this.SERVICE_ID' => 'ref.ID']
+                    )
+                )
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'LOCATION',
+                        LocationTable::getEntity(),
+                        ['=this.LOCATION_ID' => 'ref.ID']
+                    )
+                )
                 ->exec()
                 ->fetch();
 

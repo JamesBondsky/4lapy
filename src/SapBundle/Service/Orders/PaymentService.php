@@ -20,6 +20,7 @@ use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\Order as BitrixOrder;
 use Bitrix\Sale\Payment;
 use FourPaws\Helpers\BusinessValueHelper;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
@@ -187,9 +188,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             }
 
             if ($datePaid instanceof DateTime) {
-                $date = new \DateTime();
-                $date->setTimestamp($datePaid->getTimestamp());
-                $debit->setPaymentDate($date);
+                $debit->setPaymentDate(DateHelper::convertToDateTime($datePaid));
             }
 
             $this->out($debit);
