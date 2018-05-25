@@ -184,7 +184,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         /** @noinspection PhpUndefinedVariableInspection */
-        $basket = $order->getBasket()->getOrderableItems();
+        $basket = $order->getBasket();
 
         $this->arResult['URL'] = [
             'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
