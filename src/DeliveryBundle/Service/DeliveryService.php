@@ -243,11 +243,13 @@ class DeliveryService implements LoggerAwareInterface
             $result = [];
             if (!empty($zoneData['LOCATIONS'])) {
                 $location = current($zoneData['LOCATIONS']);
-                $shipment = $this->generateShipment($location);
-                $availableServices = Manager::getRestrictedObjectsList($shipment);
+                if(!empty($location)) {
+                    $shipment = $this->generateShipment($location);
+                    $availableServices = Manager::getRestrictedObjectsList($shipment);
 
-                foreach ($availableServices as $service) {
-                    $result[] = $service->getCode();
+                    foreach ($availableServices as $service) {
+                        $result[] = $service->getCode();
+                    }
                 }
             }
 
