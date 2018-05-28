@@ -31,4 +31,11 @@ class PriceForAmountCollection extends ArrayCollection
 
         return $result;
     }
+
+    public function __clone()
+    {
+        foreach ($this->getIterator() as $i => $item) {
+            $this[$i] = clone $item;
+        }
+    }
 }

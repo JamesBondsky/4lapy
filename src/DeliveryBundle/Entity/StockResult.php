@@ -144,12 +144,12 @@ class StockResult
         $result = clone $this;
 
         $neededAmount = $amount;
+        $currentAmountCollection = clone $this->getPriceForAmount();
         $priceForAmountCollection = new PriceForAmountCollection();
-        /** @var PriceForAmount $item */
-        foreach ($this->getPriceForAmount() as $item) {
+        foreach ($currentAmountCollection as $item) {
             if ($neededAmount <= 0) {
                 $priceForAmountCollection->add(clone $item);
-                $this->getPriceForAmount()->removeElement($item);
+                $currentAmountCollection->removeElement($item);
                 continue;
             }
 
@@ -164,6 +164,7 @@ class StockResult
             $neededAmount -= $item->getAmount();
         }
 
+        $this->setPriceForAmount($currentAmountCollection);
         return $result->setPriceForAmount($priceForAmountCollection);
     }
 
