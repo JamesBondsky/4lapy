@@ -1547,7 +1547,7 @@ class OrderService implements LoggerAwareInterface
     public function isManzanaOrder(Order $order): bool
     {
         try {
-            $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER');
+            $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER')->getValue();
             $result = !empty($propValue);
         } catch (\Exception $exception) {
             $result = false;
