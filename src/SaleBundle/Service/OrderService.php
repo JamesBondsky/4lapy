@@ -321,7 +321,7 @@ class OrderService implements LoggerAwareInterface
         $needRecalculateBasket = false;
         if (null === $basket) {
             $needRecalculateBasket = true;
-            $basket = $this->basketService->getBasket();
+            $basket = $this->basketService->getBasket()->createClone();
         }
 
         if ($basket->getOrderableItems()->isEmpty()) {
@@ -340,7 +340,9 @@ class OrderService implements LoggerAwareInterface
             throw new DeliveryNotAvailableException('Нет доступных доставок');
         }
 
-        Manager::disableExtendsDiscount();
+        if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
 
         /**
          * Привязываем корзину
@@ -680,7 +682,9 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        Manager::enableExtendsDiscount();
+        if ($isDiscountEnabled) {
+            Manager::enableExtendsDiscount();
+        }
 
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
@@ -955,6 +959,11 @@ class OrderService implements LoggerAwareInterface
         $storage2->setComment($storage->getSecondComment());
 
         $basket = $this->basketService->getBasket();
+
+        if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
+
         /** @noinspection PhpUnusedLocalVariableInspection */
         [$available, $delayed] = $this->orderStorageService->splitStockResult($delivery);
 
@@ -987,6 +996,7 @@ class OrderService implements LoggerAwareInterface
                             'PRICE' => $basketItem->getPrice(),
                             'BASE_PRICE' => $basketItem->getBasePrice(),
                             'DISCOUNT' => $basketItem->getDiscountPrice(),
+                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
                         ],
                         false,
                         $basket1
@@ -1000,6 +1010,7 @@ class OrderService implements LoggerAwareInterface
                             'PRICE' => $basketItem->getPrice(),
                             'BASE_PRICE' => $basketItem->getBasePrice(),
                             'DISCOUNT' => $basketItem->getDiscountPrice(),
+                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
                         ],
                         false,
                         $basket2
@@ -1056,6 +1067,10 @@ class OrderService implements LoggerAwareInterface
             $this->log()->error(sprintf('failed to update shipment price: %s', $e->getMessage()), [
                 'fuserId' => $storage->getFuserId(),
             ]);
+        }
+
+        if ($isDiscountEnabled) {
+            Manager::enableExtendsDiscount();
         }
 
         return [
