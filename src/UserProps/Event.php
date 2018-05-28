@@ -8,64 +8,25 @@ namespace FourPaws\UserProps;
 
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Page\Asset;
-use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\App\BaseServiceHandler;
 
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
     /**
      * @param EventManager $eventManager
+     *
      * @return void
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        $eventManager->addEventHandler(
-            'main',
-            'OnUserTypeBuildList',
-            [
-                UserPropStoreList::class,
-                'getUserTypeDescription',
-            ]
-        );
+        parent::initHandlers($eventManager);
 
-        $eventManager->addEventHandler(
-            'main',
-            'OnUserTypeBuildList',
-            [
-                UserPropLocation::class,
-                'getUserTypeDescription',
-            ]
-        );
-
-        $eventManager->addEventHandler(
-            'main',
-            'OnUserTypeBuildList',
-            [
-                UserPropWeekDay::class,
-                'getUserTypeDescription',
-            ]
-        );
-
-        $eventManager->addEventHandler(
-
-            'main',
-            'OnEpilog',
-            [
-                __CLASS__,
-                'addAdminScriptPropLocation',
-            ]
-
-        );
-
-        $eventManager->addEventHandler(
-
-            'main',
-            'OnAdminListDisplay',
-            [
-                __CLASS__,
-                'OnAdminListDisplayHandler',
-            ]
-
-        );
+        $module = 'main';
+        static::initHandler('OnUserTypeBuildList', [UserPropStoreList::class, 'getUserTypeDescription'], $module);
+        static::initHandler('OnUserTypeBuildList', [UserPropLocation::class, 'getUserTypeDescription'], $module);
+        static::initHandler('OnUserTypeBuildList', [UserPropWeekDay::class, 'getUserTypeDescription'], $module);
+        static::initHandler('OnEpilog', [__CLASS__, 'addAdminScriptPropLocation'], $module);
+        static::initHandler('OnAdminListDisplay', [__CLASS__, 'OnAdminListDisplayHandler'], $module);
     }
 
     public function addAdminScriptPropLocation()

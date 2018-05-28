@@ -14,8 +14,8 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
@@ -32,19 +32,17 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\SapBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
-    /**
-     * @var EventManager
-     */
-    protected static $eventManager;
     protected static $isEventsDisable = false;
 
-    public static function disableEvents(): void {
+    public static function disableEvents(): void
+    {
         self::$isEventsDisable = true;
     }
 
-    public static function enableEvents(): void {
+    public static function enableEvents(): void
+    {
         self::$isEventsDisable = false;
     }
 
@@ -55,24 +53,11 @@ class Event implements ServiceHandlerInterface
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        self::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
 
-        self::initHandler('OnSaleOrderSaved', 'consumeOrderAfterSaveOrder');
-        self::initHandler('OnSalePaymentEntitySaved', 'consumeOrderAfterSavePayment');
-    }
-
-    /**
-     * @param string $eventName
-     * @param string $method
-     * @param string $module
-     */
-    public static function initHandler(string $eventName, string $method, string $module = 'sale'): void
-    {
-        self::$eventManager->addEventHandler(
-            $module,
-            $eventName,
-            [self::class, $method]
-        );
+        $module = 'sale';
+        static::initHandler('OnSaleOrderSaved', 'consumeOrderAfterSaveOrder', $module);
+        static::initHandler('OnSalePaymentEntitySaved', 'consumeOrderAfterSavePayment', $module);
     }
 
     /**
@@ -90,7 +75,7 @@ class Event implements ServiceHandlerInterface
         }
 
         /**
-         * @var Order $order
+         * @var Order        $order
          * @var OrderService $orderService
          */
         $order = $event->getParameter('ENTITY');

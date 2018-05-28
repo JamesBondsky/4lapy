@@ -7,7 +7,7 @@
 namespace FourPaws\LocationBundle\EventController;
 
 use Bitrix\Main\EventManager;
-use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\Helpers\TaggedCacheHelper;
 
 /**
@@ -15,25 +15,28 @@ use FourPaws\Helpers\TaggedCacheHelper;
  *
  * @package FourPaws\DeliveryBundle
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
     /**
      * @param EventManager $eventManager
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        $eventManager->addEventHandler('sale', 'GroupOnAdd', [
+        parent::initHandlers($eventManager);
+
+        $module = 'sale';
+        static::initHandler('GroupOnAdd', [
             static::class,
             'resetLocationGroupCache',
-        ]);
-        $eventManager->addEventHandler('sale', 'GroupOnUpdate', [
+        ], $module);
+        static::initHandler('GroupOnUpdate', [
             static::class,
             'resetLocationGroupCache',
-        ]);
-        $eventManager->addEventHandler('sale', 'GroupOnDelete', [
+        ], $module);
+        static::initHandler('GroupOnDelete', [
             static::class,
             'resetLocationGroupCache',
-        ]);
+        ], $module);
     }
 
     public static function resetLocationGroupCache()

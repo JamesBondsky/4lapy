@@ -14,9 +14,9 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use FourPaws\App\Application;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
-use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -39,19 +39,17 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\SaleBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
-    /**
-     * @var EventManager
-     */
-    protected static $eventManager;
     protected static $isEventsDisable = false;
 
-    public static function disableEvents(): void {
+    public static function disableEvents(): void
+    {
         self::$isEventsDisable = true;
     }
 
-    public static function enableEvents(): void {
+    public static function enableEvents(): void
+    {
         self::$isEventsDisable = false;
     }
 
@@ -62,56 +60,43 @@ class Event implements ServiceHandlerInterface
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        self::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
 
+        $module = 'sale';
         ###   Обработчики скидок       ###
 
         /** Инициализация кастомных правил работы с корзиной */
-        self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
-        self::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr']);
-        self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
-        self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
-        self::initHandler('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr']);
+        static::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr'], $module);
+        static::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr'], $module);
+        static::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr'], $module);
+        static::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr'], $module);
+        static::initHandler('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr'], $module);
         /** Здесь дополнительная обработка акций */
-        self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
-        self::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction']);
+        static::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction'], $module);
+        static::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction'], $module);
 
         ###   Обработчики скидок EOF   ###
 
         /** отправка email */
         // новый заказ
-        self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
+        static::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage'], $module);
         // смена платежной системы у заказа
-        self::initHandler('OnSalePaymentEntitySaved', [static::class, 'sendNewOrderMessage']);
+        static::initHandler('OnSalePaymentEntitySaved', [static::class, 'sendNewOrderMessage'], $module);
         // оплата заказа
-        self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);
+        static::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage'], $module);
         // отмена заказа
-        self::initHandler('OnSaleOrderCanceled', [static::class, 'sendOrderCancelMessage']);
+        static::initHandler('OnSaleOrderCanceled', [static::class, 'sendOrderCancelMessage'], $module);
         // смена статуса заказа
-        self::initHandler('OnSaleStatusOrderChange', [static::class, 'sendOrderStatusMessage']);
-
-        /** обновление бонусного счета пользователя и бонусного процента пользователя */
-        self::initHandler('OnAfterUserLogin', [static::class, 'updateUserAccountBalance'], 'main');
-        self::initHandler('OnAfterUserAuthorize', [static::class, 'updateUserAccountBalance'], 'main');
-        self::initHandler('OnAfterUserLoginByHash', [static::class, 'updateUserAccountBalance'], 'main');
+        static::initHandler('OnSaleStatusOrderChange', [static::class, 'sendOrderStatusMessage'], $module);
 
         /** очистка кеша заказа */
-        self::initHandler('OnSaleOrderSaved', [static::class, 'clearOrderCache']);
-    }
+        static::initHandler('OnSaleOrderSaved', [static::class, 'clearOrderCache'], $module);
 
-    /**
-     * @param string   $eventName
-     * @param callable $callback
-     * @param string   $module
-     *
-     */
-    public static function initHandler(string $eventName, callable $callback, string $module = 'sale'): void
-    {
-        self::$eventManager->addEventHandler(
-            $module,
-            $eventName,
-            $callback
-        );
+        /** обновление бонусного счета пользователя и бонусного процента пользователя */
+        $module = 'main';
+        static::initHandler('OnAfterUserLogin', [static::class, 'updateUserAccountBalance'], $module);
+        static::initHandler('OnAfterUserAuthorize', [static::class, 'updateUserAccountBalance'], $module);
+        static::initHandler('OnAfterUserLoginByHash', [static::class, 'updateUserAccountBalance'], $module);
     }
 
     public static function updateUserAccountBalance(): void
@@ -212,8 +197,8 @@ class Event implements ServiceHandlerInterface
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
         );
-        if($orderService->isManzanaOrder($order)){
-            return ;
+        if ($orderService->isManzanaOrder($order)) {
+            return;
         }
 
         /** @var NotificationService $notificationService */
@@ -244,8 +229,8 @@ class Event implements ServiceHandlerInterface
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
         );
-        if($orderService->isManzanaOrder($order)){
-            return ;
+        if ($orderService->isManzanaOrder($order)) {
+            return;
         }
 
         /** @var NotificationService $notificationService */
@@ -279,8 +264,8 @@ class Event implements ServiceHandlerInterface
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
         );
-        if($orderService->isManzanaOrder($order)){
-            return ;
+        if ($orderService->isManzanaOrder($order)) {
+            return;
         }
 
         /** @var NotificationService $notificationService */

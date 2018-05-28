@@ -10,8 +10,8 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
 use FourPaws\App\Application as App;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -34,14 +34,10 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\UserBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
     public const GROUP_ADMIN = 1;
     public const GROUP_TECHNICAL_USERS = 8;
-    /**
-     * @var EventManager
-     */
-    protected static $eventManager;
 
     /**
      * @param EventManager $eventManager
@@ -49,45 +45,29 @@ class Event implements ServiceHandlerInterface
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        self::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
 
-        self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
+        $module = 'main';
+        static::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler', $module);
 
         /**
          * События форматирования телефона
          */
-        self::initHandler('OnBeforeUserAdd', 'checkPhoneFormat');
-        self::initHandler('OnBeforeUserUpdate', 'checkPhoneFormat');
+        static::initHandler('OnBeforeUserAdd', 'checkPhoneFormat', $module);
+        static::initHandler('OnBeforeUserUpdate', 'checkPhoneFormat', $module);
 
-        self::initHandler('OnBeforeUserLogon', 'replaceLogin');
+        static::initHandler('OnBeforeUserLogon', 'replaceLogin', $module);
 
-        self::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth');
-        self::initHandler('OnBeforeUserRegister', 'preventAuthorizationOnRegister');
-        self::initHandler('OnAfterUserRegister', 'sendEmail');
-        self::initHandler('OnAfterUserUpdate', 'updateManzana');
+        static::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth', $module);
+        static::initHandler('OnBeforeUserRegister', 'preventAuthorizationOnRegister', $module);
+        static::initHandler('OnAfterUserRegister', 'sendEmail', $module);
+        static::initHandler('OnAfterUserUpdate', 'updateManzana', $module);
 
         /** обновляем логин если он равняется телефону или email */
-        self::initHandler('OnBeforeUserUpdate', 'replaceLoginOnUpdate');
+        static::initHandler('OnBeforeUserUpdate', 'replaceLoginOnUpdate', $module);
 
         /** очистка кеша пользователя */
-        self::initHandler('OnAfterUserUpdate', 'clearUserCache');
-    }
-
-    /**
-     * @param string $eventName
-     * @param string $method
-     * @param string $module
-     */
-    public static function initHandler(string $eventName, string $method, string $module = 'main'): void
-    {
-        self::$eventManager->addEventHandler(
-            $module,
-            $eventName,
-            [
-                self::class,
-                $method,
-            ]
-        );
+        static::initHandler('OnAfterUserUpdate', 'clearUserCache', $module);
     }
 
     /**
@@ -197,7 +177,7 @@ class Event implements ServiceHandlerInterface
      */
     public static function updateManzana($fields): bool
     {
-        if(!isset($_SESSION['NOT_MANZANA_UPDATE'])){
+        if (!isset($_SESSION['NOT_MANZANA_UPDATE'])) {
             $_SESSION['NOT_MANZANA_UPDATE'] = false;
         }
         if (!$_SESSION['NOT_MANZANA_UPDATE']) {
@@ -238,7 +218,7 @@ class Event implements ServiceHandlerInterface
      */
     public static function replaceLoginOnUpdate(&$fields): void
     {
-        $notReplacedGroups= [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
+        $notReplacedGroups = [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
                 $container = App::getInstance()->getContainer();
@@ -246,9 +226,9 @@ class Event implements ServiceHandlerInterface
                 $user = $userService->getUserRepository()->find((int)$fields['ID']);
 
                 if ($user instanceof User && $user->getActive()) {
-                    foreach($notReplacedGroups as $groupId){
+                    foreach ($notReplacedGroups as $groupId) {
                         foreach ($user->getGroups() as $group) {
-                            if($group->getId() === $groupId){
+                            if ($group->getId() === $groupId) {
                                 return;
                             }
                         }

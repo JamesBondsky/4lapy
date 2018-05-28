@@ -17,4 +17,6 @@ interface ServiceHandlerInterface
      * @param \Bitrix\Main\EventManager $eventManager
      */
     public static function initHandlers(EventManager $eventManager): void;
+
+    public static function initHandler(string $eventName, callable $callback, string $module = ''): void;
 }

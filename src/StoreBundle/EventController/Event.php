@@ -13,8 +13,8 @@ use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Enum\StoreFields;
@@ -28,52 +28,27 @@ use FourPaws\StoreBundle\Service\StoreService;
  *
  * @package FourPaws\SapBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
-    /**
-     * @var EventManager
-     */
-    protected static $eventManager;
-
     /**
      * @param EventManager $eventManager
      *
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        static::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
 
-        static::initHandler('StoreOnBeforeAdd', 'updateStoreRegionD7');
-        static::initHandler('StoreOnBeforeUpdate', 'updateStoreRegionD7');
-        static::initHandler('OnCatalogStoreAdd', 'updateStoreRegion', true);
-        static::initHandler('OnBeforeCatalogStoreUpdate', 'updateStoreRegion', true);
+        $module = 'catalog';
+        /** @todo разобраться что должно идти на compitable метод */
+        static::initHandler('StoreOnBeforeAdd', 'updateStoreRegionD7',$module);
+        static::initHandler('StoreOnBeforeUpdate', 'updateStoreRegionD7', $module);
+        static::initHandler('OnCatalogStoreAdd', 'updateStoreRegion', $module);
+        static::initHandler('OnBeforeCatalogStoreUpdate', 'updateStoreRegion', $module);
 
-        static::initHandler('StoreOnAdd', 'resetStoreCache');
-        static::initHandler('StoreOnUpdate', 'resetStoreCache');
-        static::initHandler('OnCatalogStoreAdd', 'resetStoreCache', true);
-        static::initHandler('OnCatalogStoreUpdate', 'resetStoreCache', true);
-    }/** @noinspection MoreThanThreeArgumentsInspection */
-
-    /**
-     * @param string $eventName
-     * @param string $method
-     * @param string $module
-     */
-    public static function initHandler(string $eventName, string $method, $d7 = true, string $module = 'catalog'): void
-    {
-        if ($d7) {
-            static::$eventManager->addEventHandler(
-                $module,
-                $eventName,
-                [static::class, $method]
-            );
-        } else {
-            static::$eventManager->addEventHandlerCompatible(
-                $module,
-                $eventName,
-                [static::class, $method]
-            );
-        }
+        static::initHandler('StoreOnAdd', 'resetStoreCache', $module);
+        static::initHandler('StoreOnUpdate', 'resetStoreCache', $module);
+        static::initHandler('OnCatalogStoreAdd', 'resetStoreCache', $module);
+        static::initHandler('OnCatalogStoreUpdate', 'resetStoreCache', $module);
     }
 
     /**
@@ -131,6 +106,7 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param string $location
+     *
      * @return array
      * @throws ApplicationCreateException
      */
@@ -151,6 +127,7 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param string $location
+     *
      * @return string
      * @throws ApplicationCreateException
      */
