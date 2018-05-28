@@ -378,10 +378,8 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $order->setMathActionOnly(true);
         /** @noinspection PhpParamsInspection */
         $order->setBasket($basket->getOrderableItems());
-        $order->setMathActionOnly(false);
 
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
@@ -1547,7 +1545,7 @@ class OrderService implements LoggerAwareInterface
     public function isManzanaOrder(Order $order): bool
     {
         try {
-            $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER');
+            $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER')->getValue();
             $result = !empty($propValue);
         } catch (\Exception $exception) {
             $result = false;
