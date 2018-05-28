@@ -26,6 +26,7 @@ $bundle = $arResult['BUNDLE']; ?>
     <div class="b-advice__list">
         <?php /** @var BundleItem $product */
         $i = -1;
+        $countItems = \count($bundle->getProducts());
         foreach ($bundle->getProducts() as $product) {
             $i++;
             $offer = $product->getOffer(); ?>
@@ -35,24 +36,24 @@ $bundle = $arResult['BUNDLE']; ?>
                     <?php } ?>
                     <div class="b-advice__item js-advice-item"
                          data-offerid="<?= $offer->getId() . '_' . $product->getQuantity(); ?>">
-                <span class="b-advice__image-wrapper">
-                    <?php /** @var ResizeImageDecorator $image */
-                    $image = $offer->getResizeImages(140, 140)->first(); ?>
-                    <img
-                            class="b-advice__image"
-                            src="<?= $image->getSrc(); ?>"
-                            alt="<?= $offer->getName(); ?>"
-                            title="<?= $offer->getName(); ?>"
-                            role="presentation"/>
-                </span>
+                        <div class="b-advice__image-wrapper">
+                            <?php /** @var ResizeImageDecorator $image */
+                            $image = $offer->getResizeImages(140, 140)->first(); ?>
+                            <img
+                                    class="b-advice__image"
+                                    src="<?= $image->getSrc(); ?>"
+                                    alt="<?= $offer->getName(); ?>"
+                                    title="<?= $offer->getName(); ?>"
+                                    role="presentation"/>
+                        </div>
                         <span class="b-advice__block">
-                    <span class="product-link">
+                    <div class="product-link">
                         <span class="b-clipped-text b-clipped-text--advice">
                             <span>
                                 <?= $offer->getName(); ?>
                             </span>
                         </span>
-                    </span>
+                    </div>
                     <span class="b-advice__info">
                         <?php $weight = $offer->getCatalogProduct()->getWeight();
                         if ($weight > 0) { ?>
@@ -79,6 +80,9 @@ $bundle = $arResult['BUNDLE']; ?>
                     </div>
                     <?php if ($i > 0){ ?>
                 </a>
+            <?php }
+            if($i<$countItems-1){ ?>
+                <div class="b-advice__sign b-advice__sign--plus"></div>
             <?php } ?>
             </div>
         <?php } ?>
