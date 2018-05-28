@@ -16,6 +16,7 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\Internals\EntityCompatibility;
@@ -111,9 +112,10 @@ class Order extends AbstractEntity
             throw new AddException(sprintf('User with external id #%s is not found.', $data['USER_ID']));
         }
 
+
         $order = SaleOrder::create(SITE_ID, $userId, $data['CURRENCY']);
+        $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
-        $order->doFinalAction();
         $result = $order->save();
 
         if (!$result->isSuccess()) {
@@ -144,7 +146,9 @@ class Order extends AbstractEntity
                 $primary));
         }
 
+        $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
+
         $result = $order->save();
 
         if (!$result->isSuccess()) {
@@ -188,7 +192,13 @@ class Order extends AbstractEntity
      */
     protected function prepareOrderData(array $rawData): array
     {
-        $rawData = OrderCompatibility::convertDateFields($rawData, Utils::getOdrerDateFields());
+        $rawData = OrderCompatibility::convertDateFields($rawData,
+            \array_merge(
+                Utils::getOdrerDateFields(),
+                Utils::getPaymentDateFields(),
+                ['DATE_CANCELED' => 'datetime',]
+            )
+        );
 
         foreach ($rawData['PROPERTY_VALUES'] as $property) {
             if ((int)$property['ORDER_PROPS_ID'] === 42) {
@@ -312,7 +322,11 @@ class Order extends AbstractEntity
     protected function addPropertiesToOrder(array $properties, SaleOrder $order): SaleOrder
     {
         $propertyCollection = $order->getPropertyCollection();
-        $propertyCollection->setValuesFromPost($this->preparePropertiesData($properties['PROPERTY_VALUES'] ?? []), []);
+        $properties = $this->preparePropertiesData($properties['PROPERTY_VALUES'] ?? []);
+
+        foreach ($propertyCollection as $property) {
+            $property->setValue($properties[$property->getField('ORDER_PROPS_ID')]);
+        }
 
         return $order;
     }
@@ -467,7 +481,7 @@ class Order extends AbstractEntity
             return \in_array($key, $fields, true);
         };
 
-        $data = array_filter($data, $filter, ARRAY_FILTER_USE_KEY);
+        $data = \array_filter($data, $filter, ARRAY_FILTER_USE_KEY);
         $data['CUSTOM_PRICE'] = 'Y';
 
         return $data;
@@ -480,15 +494,35 @@ class Order extends AbstractEntity
      */
     protected function preparePropertiesData(array $data): array
     {
-        array_walk($data,
+        /**
+         * Магия - 998 и 999 - маппинг для свойств "Старый заказ" и "Экспортировано в САП".
+         * Ниже - 25 - ID свойства "Интервал доставки"
+         * После миграции не потребуется, так что...
+         */
+        $data[] = [
+            'ORDER_PROPS_ID' => '998',
+            'VALUE' => 'Y'
+        ];
+        $data[] = [
+            'ORDER_PROPS_ID' => '999',
+            'VALUE' => 'Y'
+        ];
+
+        \array_walk($data,
             function (&$rawProperty) {
+                if ($rawProperty['CODE'] === 'delivery_date') {
+                    $rawProperty['VALUE'] = DateTime::createFromText($rawProperty['VALUE']);
+                }
+
                 $rawProperty['ORDER_PROPS_ID'] = $this->propertyMap[$rawProperty['ORDER_PROPS_ID']];
             });
 
         $data = \array_combine(\array_column($data, 'ORDER_PROPS_ID'), \array_column($data, 'VALUE'));
         unset($data[null]);
 
-        $data[13] = $this->getDeliveryInterval($data[13] ?? '');
+        if ($data[25]) {
+            $data[25] = $this->getDeliveryInterval($data[25] ?? '');
+        }
 
         return $data;
     }

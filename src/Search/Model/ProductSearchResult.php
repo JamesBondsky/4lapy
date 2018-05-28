@@ -41,9 +41,9 @@ class ProductSearchResult implements ProductResultInterface
     /**
      * ProductSearchResult constructor.
      *
-     * @param ResultSet $resultSet
+     * @param ResultSet  $resultSet
      * @param Navigation $navigation
-     * @param string $query
+     * @param string     $query
      *
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
@@ -84,6 +84,18 @@ class ProductSearchResult implements ProductResultInterface
         }
 
         return $this->productCollection;
+    }
+
+    public function getProductIds(): array
+    {
+        $productIds = [];
+
+        /** @var Result $item */
+        foreach ($this->resultSet as $item) {
+            $productIds[] = (int)$item->getId();
+        }
+
+        return $productIds;
     }
 
     /**

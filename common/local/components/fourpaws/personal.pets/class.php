@@ -103,18 +103,18 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         $this->setFrameMode(true);
 
         if ($this->startResultCache($this->arParams['CACHE_TIME'], ['user_id'=>$this->currentUserProvider->getCurrentUserId()])) {
+            TaggedCacheHelper::addManagedCacheTags([
+                'personal:pets:'. $this->currentUserProvider->getCurrentUserId(),
+                'personal:pets',
+                'hlb:field:pets_user:'. $this->currentUserProvider->getCurrentUserId()
+            ]);
+
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
             /** получение пола */
             $this->setGenderVals();
 
             /** получение типов питомцев */
             $this->setPetTypes();
-
-            TaggedCacheHelper::addManagedCacheTags([
-                'personal:pets:'. $this->currentUserProvider->getCurrentUserId(),
-                'personal:pets',
-                'hlb:field:pets_user:'. $this->currentUserProvider->getCurrentUserId()
-            ]);
 
             $this->includeComponentTemplate();
         }

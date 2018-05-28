@@ -6,6 +6,7 @@ use Bitrix\Main\EventManager;
 use FourPaws\CatalogBundle\EventController\Event as CatalogEvent;
 use FourPaws\DeliveryBundle\EventController\Event as DeliveryEvent;
 use FourPaws\IblockProps\Event as IblockPropsEvent;
+use FourPaws\LocationBundle\EventController\Event as LocationEvent;
 use FourPaws\MobileApiBundle\EventController\Event as MobileApiUserEvent;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\SaleBundle\EventController\Event as SaleEvent;
@@ -42,7 +43,8 @@ final class EventInitializer
         MobileApiUserEvent::class,
         CatalogEvent::class,
         PersonalEvent::class,
-        StoreEvent::class
+        StoreEvent::class,
+        LocationEvent::class
     ];
 
     /**

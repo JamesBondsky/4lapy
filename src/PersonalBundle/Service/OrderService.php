@@ -54,6 +54,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Bitrix\Catalog\Product\CatalogProvider;
 
 /**
  * Class OrderService
@@ -549,10 +550,14 @@ class OrderService
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
+        /** ставим account_number = id чека с обрезкой в 100 символов на всякий случай */
+        $bitrixOrder->setFieldNoDemand('ACCOUNT_NUMBER', substr($order->getManzanaId(), 0, 100));
+
         /** корзина */
         $orderBasket = Basket::create(SITE_ID);
         /** @var OrderItem $item */
         $allBonuses = 0;
+        $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
         foreach ($order->getItems() as $item) {
             $productId = $item->getId();
             /** @var Offer $offer */
@@ -565,11 +570,9 @@ class OrderService
             $basketItem->setFieldNoDemand('CURRENCY', 'RUB');
             $basketItem->setFieldNoDemand('NAME', $offer->getName());
             $basketItem->setFieldNoDemand('WEIGHT', $offer->getCatalogProduct()->getWeight());
-            $basketItem->setFieldNoDemand('DETAIL_PAGE_URL',
-                $offer->getProduct()->getDetailPageUrl() . '?offer=' . $offer->getId());
-            $basketItem->setFieldNoDemand('PRODUCT_PROVIDER_CLASS', 'Bitrix\Catalog\Product\CatalogProvider');
-            $basketItem->setFieldNoDemand('CATALOG_XML_ID',
-                IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
+            $basketItem->setFieldNoDemand('DETAIL_PAGE_URL', $offer->getLink());
+            $basketItem->setFieldNoDemand('PRODUCT_PROVIDER_CLASS', CatalogProvider::class);
+            $basketItem->setFieldNoDemand('CATALOG_XML_ID', $offerIblockId);
             $basketItem->setFieldNoDemand('PRODUCT_XML_ID', $item->getArticle());
             $allBonuses += $item->getBonus();
         }

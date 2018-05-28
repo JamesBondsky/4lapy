@@ -66,11 +66,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return false;
         }
 
-        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
-        if (!$deliveryLocation) {
-            return false;
-        }
-
         return true;
     }
 
@@ -92,7 +87,11 @@ class InnerPickupHandler extends DeliveryHandlerBase
     {
         $result = new CalculationResult();
 
-        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        if (!$deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment)) {
+            $result->addError(new Error('Не задано местоположение доставки'));
+            return $result;
+        }
+
         $shops = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_SHOP);
         if ($shops->isEmpty()) {
             $result->addError(new Error('Нет доступных магазинов'));

@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Service;
 
 use FourPaws\AppBundle\Service\LockerInterface;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SapBundle\Consumer\ConsumerRegistryInterface;
 use FourPaws\SapBundle\Exception\NotFoundPipelineException;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
@@ -59,6 +60,8 @@ class SapService
      */
     public function execute(string $pipelineCode): void
     {
+        Manager::disableExtendsDiscount();
+
         foreach ($this->pipelineRegistry->generator($pipelineCode) as $sourceMessage) {
             if ($this->consumerRegistry->consume($sourceMessage->getData())) {
                 $this->sourceRegistry->ack($sourceMessage);

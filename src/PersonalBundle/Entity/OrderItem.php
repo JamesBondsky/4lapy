@@ -2,14 +2,19 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
-
+use FourPaws\App\Templates\MediaEnum;
 use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * Class OrderItem
+ *
+ * @package FourPaws\PersonalBundle\Entity
+ */
 class OrderItem extends BaseEntity
 {
     /** @var string
@@ -294,17 +299,17 @@ class OrderItem extends BaseEntity
     /**
      * @return string
      */
-    public function getFormatedSum(): string
+    public function getFormattedSum(): string
     {
-        return number_format($this->getSum(), 2, '.', ' ');
+        return \number_format($this->getSum(), 2, '.', ' ');
     }
 
     /**
      * @return string
      */
-    public function getFormatedPrice(): string
+    public function getFormattedPrice(): string
     {
-        return number_format($this->getPrice(), 2, '.', ' ');
+        return \number_format($this->getPrice(), 2, '.', ' ');
     }
 
     /**
@@ -371,7 +376,7 @@ class OrderItem extends BaseEntity
                 !$this->hasDetailPageUrl(true)
                 || (
                     $this->hasDetailPageUrl(true)
-                    && !preg_match('/^\/catalog\/.*\.html\?offer2=.*/i', $this->detailPageUrl)
+                    && !\preg_match('/^\/catalog\/.*\.html\?offer2=/i', $this->detailPageUrl)
                 )
             )
         ) {
@@ -400,21 +405,30 @@ class OrderItem extends BaseEntity
         } else {
             $detailPageUrl = $this->getDetailPageUrl();
         }
+
         return !empty($detailPageUrl);
     }
 
     public function reloadPageUrl(): void
     {
         $filter = [];
+        $offer = null;
+
         if ($this->hasArticle()) {
             $filter = ['=XML_ID' => $this->getArticle()];
         } elseif ($this->hasProductId()) {
             $filter = ['=ID' => $this->getProductId()];
+            $offer = OfferQuery::getById((int)$this->getProductId());
         }
+
         if (!empty($filter)) {
-            $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
+            if ($offer === null) {
+                $offer = (new OfferQuery())->withFilter($filter)->exec()->first();
+            }
             /** @var Offer $offer */
-            $this->setDetailPageUrl($offer->getLink());
+            if ($offer) {
+                $this->setDetailPageUrl($offer->getLink());
+            }
         }
     }
 
@@ -447,7 +461,7 @@ class OrderItem extends BaseEntity
      */
     public function getImages(): string
     {
-        return $this->images;
+        return $this->images ?? '';
     }
 
     /**
@@ -483,18 +497,19 @@ class OrderItem extends BaseEntity
     public function getImagePath(): string
     {
         $path = '';
-        $image = $this->getImage();
-        if (!empty($image)) {
-            $path = $this->cropImage((int)$image);
+        $image = (int)$this->getImage();
+
+        if ($image) {
+            $path = $this->resizeImage($image);
         } else {
             $image = $this->getImages();
             /** @noinspection UnserializeExploitsInspection */
             $unserializeImage = \unserialize($image);
-            if(\is_array($unserializeImage)){
+            if (\is_array($unserializeImage)) {
                 if (\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])) {
                     foreach ($unserializeImage['VALUE'] as $imgId) {
                         if (!empty($imgId)) {
-                            $path = $this->cropImage((int)$imgId);
+                            $path = $this->resizeImage((int)$imgId);
                             if (!empty($path)) {
                                 break;
                             }
@@ -502,9 +517,10 @@ class OrderItem extends BaseEntity
                     }
                 }
             } else {
-                $path = $this->cropImage((int)$image);
+                $path = $this->resizeImage((int)$image);
             }
         }
+
         return $path;
     }
 
@@ -513,15 +529,19 @@ class OrderItem extends BaseEntity
      *
      * @return string
      */
-    protected function cropImage(int $id): string
+    protected function resizeImage(int $id): string
     {
-        $path = '';
         try {
-            $path = CropImageDecorator::createFromPrimary($id)
-                ->setCropWidth(80)
-                ->setCropHeight(145)->getSrc();
+            $path = ResizeImageDecorator::createFromPrimary($id)
+                ->setResizeWidth(80)
+                ->setResizeHeight(145)->getSrc();
         } catch (FileNotFoundException $e) {
+            $path = (new ResizeImageDecorator())->setSrc(MediaEnum::NO_IMAGE_WEB_PATH)
+                ->setResizeWidth(80)
+                ->setResizeHeight(145)
+                ->getSrc();
         }
+
         return $path;
     }
 }
