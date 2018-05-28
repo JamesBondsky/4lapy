@@ -66,11 +66,11 @@ class Event extends BaseServiceHandler
         ###   Обработчики скидок       ###
 
         /** Инициализация кастомных правил работы с корзиной */
-        static::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr'], $module);
-        static::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr'], $module);
-        static::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr'], $module);
-        static::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr'], $module);
-        static::initHandler('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr'], $module);
         /** Здесь дополнительная обработка акций */
         static::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction'], $module);
         static::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction'], $module);
@@ -94,9 +94,9 @@ class Event extends BaseServiceHandler
 
         /** обновление бонусного счета пользователя и бонусного процента пользователя */
         $module = 'main';
-        static::initHandler('OnAfterUserLogin', [static::class, 'updateUserAccountBalance'], $module);
-        static::initHandler('OnAfterUserAuthorize', [static::class, 'updateUserAccountBalance'], $module);
-        static::initHandler('OnAfterUserLoginByHash', [static::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserLogin', [static::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [static::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [static::class, 'updateUserAccountBalance'], $module);
     }
 
     public static function updateUserAccountBalance(): void

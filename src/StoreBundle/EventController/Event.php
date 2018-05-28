@@ -39,16 +39,15 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         $module = 'catalog';
-        /** @todo разобраться что должно идти на compitable метод */
-        static::initHandler('StoreOnBeforeAdd', 'updateStoreRegionD7',$module);
-        static::initHandler('StoreOnBeforeUpdate', 'updateStoreRegionD7', $module);
-        static::initHandler('OnCatalogStoreAdd', 'updateStoreRegion', $module);
-        static::initHandler('OnBeforeCatalogStoreUpdate', 'updateStoreRegion', $module);
+        static::initHandler('StoreOnBeforeAdd', [static::class, 'updateStoreRegionD7'],$module);
+        static::initHandler('StoreOnBeforeUpdate', [static::class, 'updateStoreRegionD7'], $module);
+        static::initHandlerCompatible('OnCatalogStoreAdd', [static::class,'updateStoreRegion'], $module);
+        static::initHandlerCompatible('OnBeforeCatalogStoreUpdate', [static::class,'updateStoreRegion'], $module);
 
-        static::initHandler('StoreOnAdd', 'resetStoreCache', $module);
-        static::initHandler('StoreOnUpdate', 'resetStoreCache', $module);
-        static::initHandler('OnCatalogStoreAdd', 'resetStoreCache', $module);
-        static::initHandler('OnCatalogStoreUpdate', 'resetStoreCache', $module);
+        static::initHandler('StoreOnAdd', [static::class,'resetStoreCache'], $module);
+        static::initHandler('StoreOnUpdate', [static::class,'resetStoreCache'], $module);
+        static::initHandlerCompatible('OnCatalogStoreAdd', [static::class,'resetStoreCache'], $module);
+        static::initHandlerCompatible('OnCatalogStoreUpdate', [static::class,'resetStoreCache'], $module);
     }
 
     /**

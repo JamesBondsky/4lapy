@@ -37,17 +37,17 @@ class EventHandlers extends BaseServiceHandler
 
         $module = 'iblock';
         foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventType) {
-            static::initHandler($eventType, [static::class, 'updateInElastic'], $module);
+            static::initHandlerCompatible($eventType, [static::class, 'updateInElastic'], $module);
         }
-        static::initHandler('OnAfterIBlockElementDelete', [static::class, 'deleteInElastic'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementDelete', [static::class, 'deleteInElastic'], $module);
 
         $module = 'catalog';
         foreach (['OnPriceUpdate', 'OnPriceAdd'] as $eventType) {
-            static::initHandler($eventType, [static::class, 'updateOfferInElasticOnPriceChange'], $module);
+            static::initHandlerCompatible($eventType, [static::class, 'updateOfferInElasticOnPriceChange'], $module);
         }
 
         foreach (['OnProductUpdate', 'OnProductAdd'] as $eventType) {
-            static::initHandler($eventType, [static::class, 'updateOfferInElasticOnCatalogProductChange'], $module);
+            static::initHandlerCompatible($eventType, [static::class, 'updateOfferInElasticOnCatalogProductChange'], $module);
         }
     }
 

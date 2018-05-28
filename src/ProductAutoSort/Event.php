@@ -33,7 +33,7 @@ class Event extends BaseServiceHandler
 
         $module = 'main';
         //sort 1000;
-        static::initHandler('OnUserTypeBuildList',
+        static::initHandlerCompatible('OnUserTypeBuildList',
             [ElementPropertyConditionUserType::class, 'getUserTypeDescription'], $module);
 
         static::initHandler('OnProlog', [self::class, 'includeJquery'], $module);
@@ -42,7 +42,7 @@ class Event extends BaseServiceHandler
         static::initHandler('OnAfterIBlockSectionDelete', [self::class, 'deleteEPCValue'], $module);
 
         foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventTYpe) {
-            static::initHandler($eventTYpe, [self::class, 'autosortProduct'], $module);
+            static::initHandlerCompatible($eventTYpe, [self::class, 'autosortProduct'], $module);
         }
     }
 

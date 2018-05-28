@@ -21,8 +21,8 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
         $module = 'iblock';
-        static::initHandler('OnIBlockPropertyBuildList', [Location::class, 'GetUserTypeDescription',], $module);
-        static::initHandler('OnIBlockPropertyBuildList', [LinkToBasketRules::class, 'GetUserTypeDescription',],
+        static::initHandlerCompatible('OnIBlockPropertyBuildList', [Location::class, 'GetUserTypeDescription'], $module);
+        static::initHandlerCompatible('OnIBlockPropertyBuildList', [LinkToBasketRules::class, 'GetUserTypeDescription'],
             $module);
     }
 }

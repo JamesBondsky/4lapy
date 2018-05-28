@@ -22,11 +22,14 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         $module = 'main';
-        static::initHandler('OnUserTypeBuildList', [UserPropStoreList::class, 'getUserTypeDescription'], $module);
-        static::initHandler('OnUserTypeBuildList', [UserPropLocation::class, 'getUserTypeDescription'], $module);
-        static::initHandler('OnUserTypeBuildList', [UserPropWeekDay::class, 'getUserTypeDescription'], $module);
-        static::initHandler('OnEpilog', [__CLASS__, 'addAdminScriptPropLocation'], $module);
-        static::initHandler('OnAdminListDisplay', [__CLASS__, 'OnAdminListDisplayHandler'], $module);
+        static::initHandlerCompatible('OnUserTypeBuildList', [UserPropStoreList::class, 'getUserTypeDescription'],
+            $module);
+        static::initHandlerCompatible('OnUserTypeBuildList', [UserPropLocation::class, 'getUserTypeDescription'],
+            $module);
+        static::initHandlerCompatible('OnUserTypeBuildList', [UserPropWeekDay::class, 'getUserTypeDescription'],
+            $module);
+        static::initHandlerCompatible('OnEpilog', [__CLASS__, 'addAdminScriptPropLocation'], $module);
+        static::initHandlerCompatible('OnAdminListDisplay', [__CLASS__, 'OnAdminListDisplayHandler'], $module);
     }
 
     public function addAdminScriptPropLocation()

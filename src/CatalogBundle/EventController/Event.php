@@ -49,19 +49,19 @@ class Event extends BaseServiceHandler
         $module = 'catalog';
 
         /** Очистка кеша при изменении количества и оффера*/
-        static::initHandler('OnStoreProductUpdate', [static::class, 'clearProductCache'], $module);
-        static::initHandler('OnStoreProductAdd', [static::class, 'clearProductCache'], $module);
-        static::initHandler('OnProductUpdate', [static::class, 'clearProductCache'], $module);
-        static::initHandler('OnProductAdd', [static::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnStoreProductUpdate', [static::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnStoreProductAdd', [static::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnProductUpdate', [static::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnProductAdd', [static::class, 'clearProductCache'], $module);
 
         $module = 'iblock';
 
         /** очистка кеша при изменении элемента инфоблока */
-        static::initHandler('OnAfterIBlockElementUpdate', [static::class, 'clearIblockItemCache'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [static::class, 'clearIblockItemCache'], $module);
 
         /** запуск переиндексации товаров при изменении товара */
-        static::initHandler('OnAfterIBlockElementUpdate', [static::class, 'reindexProduct'], $module);
-        static::initHandler('OnAfterIBlockElementUpdate', [static::class, 'reindexOffer'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [static::class, 'reindexProduct'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [static::class, 'reindexOffer'], $module);
     }
 
     /**
