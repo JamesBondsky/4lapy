@@ -42,8 +42,13 @@ class Shipment extends \Ipolh\DPD\Shipment
      * @param array|string $locationCode код местоположения
      *
      * @return $this
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws CityNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function setSender($locationCode)
+    public function setSender($locationCode):self
     {
         $this->locationFrom = \is_array($locationCode)
             ? $locationCode
@@ -58,8 +63,13 @@ class Shipment extends \Ipolh\DPD\Shipment
      * @param array|string $locationCode код местоположения
      *
      * @return $this
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws CityNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function setReceiver($locationCode)
+    public function setReceiver($locationCode):self
     {
         $this->locationTo = \is_array($locationCode)
             ? $locationCode
@@ -127,20 +137,24 @@ class Shipment extends \Ipolh\DPD\Shipment
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws ApplicationCreateException
-     * @throws CityNotFoundException
      * @return array
+     * @throws CityNotFoundException
      */
-    protected function getDpdLocation($locationCode)
+    protected function getDpdLocation($locationCode): array
     {
-        /** @var LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-        /** @var DpdLocationService $dpdLocationService */
-        $dpdLocationService = Application::getInstance()->getContainer()->get(DpdLocationService::class);
-        $location = $locationService->findLocationCityByCode($locationCode);
-        try {
-            $dpdLocation = $dpdLocationService->getOneByLocationId($location['ID']);
-        } catch (LocationNotFoundException $e) {
-            $dpdLocation = new DpdLocation();
+        if(!empty($locationCode)) {
+            /** @var LocationService $locationService */
+            $locationService = Application::getInstance()->getContainer()->get('location.service');
+            /** @var DpdLocationService $dpdLocationService */
+            $dpdLocationService = Application::getInstance()->getContainer()->get(DpdLocationService::class);
+                $location = $locationService->findLocationCityByCode($locationCode);
+                try {
+                    $dpdLocation = $dpdLocationService->getOneByLocationId($location['ID']);
+                } catch (LocationNotFoundException $e) {
+                    $dpdLocation = new DpdLocation();
+                }
+        } else {
+            throw new CityNotFoundException('город не найден');
         }
 
         return [

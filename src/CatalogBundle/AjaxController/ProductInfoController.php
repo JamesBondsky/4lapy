@@ -306,30 +306,7 @@ class ProductInfoController extends Controller
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         $location = $locationService->getCurrentLocation();
 
-        $getCurrentOffer = function () use ($offerId) {
-            $currentOffer = null;
-            if ($offerId > 0) {
-                $offerCollection = (new OfferQuery())->withFilter([
-                    '=ID' => $offerId,
-                ])->exec();
-                if (!$offerCollection->isEmpty()) {
-                    $currentOffer = $offerCollection->first();
-                }
-            }
-            return $currentOffer;
-        };
-
-        $bitrixCache = new BitrixCache();
-        $bitrixCache
-            ->withId('offer_' . $offerId . '_location_' . $location);
-        if ($offerId > 0) {
-            $bitrixCache->withTag('catalog:offer:' . $offerId);
-            $bitrixCache->withTag('iblock:item:' . $offerId);
-        }
-        $bitrixCache->withTime(24*60*60);//кешируем на сутки
-        /** @var OfferCollection $offerCollection */
-        $currentOffer = $bitrixCache->resultOf($getCurrentOffer)['result'];
-
+        $currentOffer = OfferQuery::getById($offerId);
 
         if ($currentOffer !== null) {
             $getResponse = function () use ($currentOffer) {
@@ -382,33 +359,8 @@ class ProductInfoController extends Controller
         $currentOffer = null;
         $requestedOfferId = (int)$request->get('offer', 0);
 
-        /** @var LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-        $location = $locationService->getCurrentLocation();
+        $currentOffer = OfferQuery::getById($requestedOfferId);
 
-        $getCurrentOffer = function () use ($requestedOfferId) {
-            $currentOffer = null;
-            if ($requestedOfferId > 0) {
-                $offerCollection = (new OfferQuery())->withFilter([
-                    '=ID' => $requestedOfferId,
-                ])->exec();
-                if (!$offerCollection->isEmpty()) {
-                    $currentOffer = $offerCollection->first();
-                }
-            }
-            return $currentOffer;
-        };
-
-        $bitrixCache = new BitrixCache();
-        $bitrixCache
-            ->withId('offer_' . $requestedOfferId . '_location_' . $location);
-        if ($requestedOfferId > 0) {
-            $bitrixCache->withTag('catalog:offer:' . $requestedOfferId);
-            $bitrixCache->withTag('iblock:item:' . $requestedOfferId);
-        }
-        $bitrixCache->withTime(24*60*60);//кешируем на сутки
-        /** @var OfferCollection $offerCollection */
-        $currentOffer = $bitrixCache->resultOf($getCurrentOffer)['result'];
         if ($currentOffer) {
             global $APPLICATION;
             ob_start();
@@ -444,7 +396,7 @@ class ProductInfoController extends Controller
         $groupIndex = (int)$request->get('index');
         $requestedOffer = false;
         if ($offerId && null !== $groupIndex) {
-            $requestedOffer = (new OfferQuery())->withFilter(['=ID' => $offerId])->exec()->first();
+            $requestedOffer = OfferQuery::getById($offerId);
         }
         if ($requestedOffer) {
             /** @var Offer $requestedOffer */
@@ -461,7 +413,7 @@ class ProductInfoController extends Controller
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
                     /** @var ResizeImageCollection $images */
-                    $images = $offer->getResizeImages(110, 110);
+                    $images = $offer->getResizeImages(140, 140);
                     if (null !== $image = $images->first()) {
                         $image = (string)$image;
                     } else {
@@ -478,6 +430,7 @@ class ProductInfoController extends Controller
                     $items[] = [
                         'id'         => $offer->getId(),
                         'price'      => $offer->getPrice(),
+                        'link'      => $offer->getLink(),
                         'image'      => $image,
                         'name'       => $name,
                         'additional' => $weight,

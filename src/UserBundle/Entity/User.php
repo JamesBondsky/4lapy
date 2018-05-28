@@ -769,7 +769,10 @@ class User implements UserInterface
     public function getManzanaBirthday()
     {
         $birthday = $this->getBirthday();
-        if ($birthday instanceof Date) {
+        if ($birthday !== null) {
+            if((int)$birthday->format('Y') < 1900){
+                return null;
+            }
             return new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
         }
 
@@ -869,6 +872,9 @@ class User implements UserInterface
     {
         $dateRegister = $this->getDateRegister();
         if ($dateRegister instanceof DateTime) {
+            if((int)$dateRegister->format('Y') < 1900){
+                return null;
+            }
             return new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s'));
         }
         return null;

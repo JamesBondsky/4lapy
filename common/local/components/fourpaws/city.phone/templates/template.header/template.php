@@ -33,7 +33,7 @@ $this->setFrameMode(true);
         </a>
     </dt>
     <dd class="b-phone-pair__description">
-        Для <?= $arResult['LOCATION']['TYPE'] === LocationService::TYPE_CITY ? 'г.' : '' ?><?= $arResult['CITY_NAME'] ?>
+        Для <?= $arResult['LOCATION']['TYPE']['CODE'] === LocationService::TYPE_CITY ? 'г.' : '' ?><?= $arResult['CITY_NAME'] ?>
         . <?= $arResult['WORKING_HOURS'] ?></dd>
 </dl>
 <?php $frame->beginStub() ?>

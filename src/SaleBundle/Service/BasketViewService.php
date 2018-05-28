@@ -37,13 +37,12 @@ class BasketViewService
         \ob_start();
         Manager::disableExtendsDiscount();
         $APPLICATION->IncludeComponent(
-            'fourpaws:basket',
-            'header.basket',
+            'fourpaws:basket.mini',
+            '',
             [
-                'COMPONENT_TEMPLATE' => 'header.basket',
+                'COMPONENT_TEMPLATE' => '',
                 'PATH_TO_BASKET' => '/cart/',
                 'PATH_TO_ORDER' => '/sale/order/',
-                'MINI_BASKET' => true,
                 'IS_AJAX' => $isAjax,
             ],
             false,

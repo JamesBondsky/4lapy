@@ -688,13 +688,16 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         $deliveryDate = null;
         $bitrixOrder = $order->getBitrixOrder();
-        $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
-            $bitrixOrder
-        );
-        if ($deliveryCalcResult !== null) {
-            $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
-                $deliveryCalcResult
+        $cityCode = $order->getProperty('CITY_CODE');
+        if($cityCode !== null && $cityCode) {
+            $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
+                $bitrixOrder
             );
+            if ($deliveryCalcResult !== null) {
+                $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
+                    $deliveryCalcResult
+                );
+            }
         }
 
         return $deliveryDate;

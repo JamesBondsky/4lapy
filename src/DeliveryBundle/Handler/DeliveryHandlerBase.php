@@ -14,6 +14,7 @@ use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -111,9 +112,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      *
      * @throws ArgumentException
      * @throws ApplicationCreateException
-     * @return null|OfferCollection
+     * @return null|ArrayCollection
      */
-    public static function getOffers(string $locationCode, BasketBase $basket): ?OfferCollection
+    public static function getOffers(string $locationCode, BasketBase $basket): ?ArrayCollection
     {
         if ($basket->isEmpty()) {
             return null;
@@ -134,6 +135,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             return null;
         }
 
+        $offers = new ArrayCollection();
+
         /** @noinspection PhpUnhandledExceptionInspection */
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
@@ -142,16 +145,10 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             return null;
         }
 
-        /** @var OfferCollection $offers */
-        $offers = (new OfferQuery())->withFilterParameter('ID', $offerIds)->exec();
-        if ($offers->isEmpty()) {
-            return null;
-        }
 
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            if (!$offer->isByRequest()) {
-                $offer->withStocks($offer->getAllStocks()->filterByStores($stores));
+        foreach ($offerIds as $offerId) {
+            if ($offer = OfferQuery::getById($offerId)) {
+                $offers[$offerId] = $offer;
             }
         }
 
@@ -160,7 +157,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
     /**
      * @param BasketBase $basket
-     * @param OfferCollection $offers
+     * @param ArrayCollection $offers
      * @param StoreCollection $storesAvailable
      *
      * @throws ApplicationCreateException
@@ -169,16 +166,17 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      */
     public static function getStocks(
         BasketBase $basket,
-        OfferCollection $offers,
+        ArrayCollection $offers,
         StoreCollection $storesAvailable
     ): StockResultCollection {
         $stockResultCollection = new StockResultCollection();
 
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
+        foreach ($basket as $item) {
             $basketItem = null;
+
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
             /** @var BasketItem $item */
-            foreach ($basket as $item) {
                 if ((int)$item->getProductId() === $offer->getId()) {
                     $basketItem = $item;
                     break;
