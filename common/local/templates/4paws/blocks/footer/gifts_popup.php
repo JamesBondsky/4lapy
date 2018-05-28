@@ -15,17 +15,17 @@
                      title=""/>
             </span>
             <div class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                <a class="b-common-item__description-wrap" href="javascript:void(0);" title="">
+                <div class="b-common-item__description-wrap">
                     <span class="b-clipped-text b-clipped-text--popup-gift">
                         <span class="js-name-replace">
                             <strong>Хиллс</strong>
                             для щенков с ягненком и рисом
                         </span>
                     </span>
-                </a>
-                <span class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift">
-                    <span class="b-common-item__name-value js-value-weight">100 г </span>
-                </span>
+                    <span class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift">
+                        <span class="b-common-item__name-value js-value-weight">100 г </span>
+                    </span>
+                </div>
             </div>
             <div class="b-choose-radio">
                 <input class="b-choose-radio__input js-advice-input" type="checkbox"
