@@ -39,6 +39,8 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Entity\PriceForAmount;
+use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -348,28 +350,40 @@ class OrderService implements LoggerAwareInterface
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
                 $toUpdate = [];
-                $resultByOffer = $orderable->filterByOfferId($basketItem->getProductId());
-                $diff = $basketItem->getQuantity() - $resultByOffer->getAmount();
-                if ($resultByOffer->isEmpty()) {
+                /** @var StockResult $resultByOffer */
+                $resultByOffer = $orderable->filterByOfferId($basketItem->getProductId())->first();
+
+
+                if (!$resultByOffer) {
                     $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
-                } elseif ($diff > 0) {
-                    $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
-                    $this->basketService->addOfferToBasket(
-                        $basketItem->getProductId(),
-                        $diff,
-                        [
-                            'DELAY' => BitrixUtils::BX_BOOL_TRUE,
-                            'PROPS' => [
-                                [
-                                    'NAME'  => 'IS_TEMPORARY',
-                                    'CODE'  => 'IS_TEMPORARY',
-                                    'VALUE' => 'Y',
+                } else {
+                    $amount = 0;
+                    if ($priceForAmount = $resultByOffer->getPriceForAmountByBasketCode((string)$basketItem->getBasketCode())) {
+                        $amount = $priceForAmount->getAmount();
+                    }
+
+                    $diff = $basketItem->getQuantity() - $amount;
+                    if ($amount === 0) {
+                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                    } elseif ($diff > 0) {
+                        $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
+                        $this->basketService->addOfferToBasket(
+                            $basketItem->getProductId(),
+                            $diff,
+                            [
+                                'DELAY' => BitrixUtils::BX_BOOL_TRUE,
+                                'PROPS' => [
+                                    [
+                                        'NAME'  => 'IS_TEMPORARY',
+                                        'CODE'  => 'IS_TEMPORARY',
+                                        'VALUE' => 'Y',
+                                    ],
                                 ],
                             ],
-                        ],
-                        false,
-                        $basket
-                    );
+                            false,
+                            $basket
+                        );
+                    }
                 }
 
                 if (!empty($toUpdate)) {
@@ -640,7 +654,7 @@ class OrderService implements LoggerAwareInterface
                 'CITY',
                 'CITY_CODE',
                 'COM_WAY',
-                'IS_FAST_ORDER'
+                'IS_FAST_ORDER',
             ];
 
             /** @var PropertyValue $propertyValue */
@@ -813,7 +827,7 @@ class OrderService implements LoggerAwareInterface
             } catch (ManzanaServiceContactSearchNullException $e) {
             } catch (ManzanaServiceException $e) {
                 $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
-                    'phone' => $storage->getPhone()
+                    'phone' => $storage->getPhone(),
                 ]);
             }
         }
@@ -952,8 +966,20 @@ class OrderService implements LoggerAwareInterface
             $basket2 = Basket::create(SITE_ID);
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
-                $availableAmount = $available->filterByOfferId($basketItem->getProductId())->getAmount();
-                $delayedAmount = $delayed->filterByOfferId($basketItem->getProductId())->getAmount();
+                $availableAmount = 0;
+                if ($availableResult = $available->filterByOfferId($basketItem->getProductId())->first()) {
+                    /** @var StockResult $availableResult */
+                    if ($priceForAmount = $availableResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) {
+                        $availableAmount = $priceForAmount->getAmount();
+                    }
+                }
+                $delayedAmount = 0;
+                if ($delayedResult = $delayed->filterByOfferId($basketItem->getProductId())->first()) {
+                    /** @var StockResult $delayedResult */
+                    if ($priceForAmount = $delayedResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) {
+                        $delayedAmount = $priceForAmount->getAmount();
+                    }
+                }
 
                 if ($availableAmount) {
                     $this->basketService->addOfferToBasket(
@@ -962,7 +988,7 @@ class OrderService implements LoggerAwareInterface
                         [
                             'PRICE' => $basketItem->getPrice(),
                             'BASE_PRICE' => $basketItem->getBasePrice(),
-                            'DISCOUNT' => $basketItem->getDiscountPrice()
+                            'DISCOUNT' => $basketItem->getDiscountPrice(),
                         ],
                         false,
                         $basket1
@@ -975,7 +1001,7 @@ class OrderService implements LoggerAwareInterface
                         [
                             'PRICE' => $basketItem->getPrice(),
                             'BASE_PRICE' => $basketItem->getBasePrice(),
-                            'DISCOUNT' => $basketItem->getDiscountPrice()
+                            'DISCOUNT' => $basketItem->getDiscountPrice(),
                         ],
                         false,
                         $basket2
