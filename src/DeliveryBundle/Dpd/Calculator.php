@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -50,20 +51,55 @@ class Calculator extends DPD
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param string $profile
-     * @param array $config
-     * @param array $order
-     * @param int $STEP
-     * @param bool $TEMP
+     * @param bool $arOrder
      *
-     * @return array
+     * @return Shipment
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws CityNotFoundException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws ApplicationCreateException
-     * @throws StoreNotFoundException
      */
-    public function Calculate($profile, $config, $order, $STEP, $TEMP = false)
+    protected static function makeShipment($arOrder = false)
+    {
+        $defaultDimensions = [
+            'WEIGHT' => 1, // 1g
+            'WIDTH'  => 100, // 10cm
+            'HEIGHT' => 100, // 10cm
+            'LENGTH' => 100, // 10cm
+        ];
+        if (!self::$shipment || $arOrder) {
+            self::$shipment = new Shipment(\FourPaws\DeliveryBundle\Dpd\Lib\User::getInstance());
+            self::$shipment
+                ->setSender($arOrder['LOCATION_FROM'])
+                ->setReceiver($arOrder['LOCATION_TO'])
+                ->setItems($arOrder['ITEMS'], $arOrder['PRICE'], $defaultDimensions);
+        }
+
+        return self::$shipment;
+    }
+
+    /**
+     * @param string $profile
+     * @param array  $config
+     * @param array  $order
+     * @param int    $STEP
+     * @param bool   $TEMP
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws CityNotFoundException
+     * @throws ObjectPropertyException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     */
+    public function Calculate($profile, $config, $order, $STEP, $TEMP = false):array
     {
         $serviceContainer = Application::getInstance()->getContainer();
         /** @var StoreService $storeService */
@@ -78,7 +114,7 @@ class Calculator extends DPD
         } catch (NotFoundException $e) {
             $result = [
                 'RESULT' => 'ERROR',
-                'TEXT' => 'Доставка не найдена',
+                'TEXT'   => 'Доставка не найдена',
             ];
 
             return $result;
@@ -93,7 +129,7 @@ class Calculator extends DPD
         if (!$deliveryZone) {
             $result = [
                 'RESULT' => 'ERROR',
-                'TEXT' => 'Не определена зона доставки',
+                'TEXT'   => 'Не определена зона доставки',
             ];
 
             return $result;
@@ -129,7 +165,7 @@ class Calculator extends DPD
                 if ($stockResult->getOrderable()->isEmpty()) {
                     $result = [
                         'RESULT' => 'ERROR',
-                        'TEXT' => 'Отсутствуют товары в наличии',
+                        'TEXT'   => 'Отсутствуют товары в наличии',
                     ];
 
                     return $result;
@@ -147,10 +183,10 @@ class Calculator extends DPD
 
         $cacheKey = CalculationResultFactory::getDpdCacheKey($order);
         CalculationResultFactory::$dpdData[$cacheKey][$profileCode] = [
-            'TERMINALS' => $terminals,
-            'DAYS_FROM' => $result['DPD_TARIFF']['DAYS'],
-            'STOCK_RESULT' => $stockResult,
-            'DELIVERY_ZONE' => $deliveryZone
+            'TERMINALS'     => $terminals,
+            'DAYS_FROM'     => $result['DPD_TARIFF']['DAYS'],
+            'STOCK_RESULT'  => $stockResult,
+            'DELIVERY_ZONE' => $deliveryZone,
         ];
 
         $result['VALUE'] = floor($result['VALUE']);
@@ -159,40 +195,18 @@ class Calculator extends DPD
     }
 
     /**
-     * @param bool $arOrder
-     *
-     * @return Shipment
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     */
-    protected static function makeShipment($arOrder = false)
-    {
-        $defaultDimensions = [
-            'WEIGHT' => 1, // 1g
-            'WIDTH' => 100, // 10cm
-            'HEIGHT' => 100, // 10cm
-            'LENGTH' => 100, // 10cm
-        ];
-        if (!self::$shipment || $arOrder) {
-            self::$shipment = new Shipment(\FourPaws\DeliveryBundle\Dpd\Lib\User::getInstance());
-            self::$shipment
-                ->setSender($arOrder['LOCATION_FROM'])
-                ->setReceiver($arOrder['LOCATION_TO'])
-                ->setItems($arOrder['ITEMS'], $arOrder['PRICE'], $defaultDimensions);
-        }
-
-        return self::$shipment;
-    }
-
-    /**
      * @param array $arOrder
      * @param array $arConfig
      *
      * @return array
-     * @throws ArgumentException
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function Compability($arOrder, $arConfig)
+    public function Compability($arOrder, $arConfig):array
     {
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
@@ -205,23 +219,29 @@ class Calculator extends DPD
         if ($stores->isEmpty()) {
             $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
         }
-        $shipment = self::makeShipment($arOrder);
-
-        if (($arOrder['LOCATION_TO'] === static::LOCATION_RU) || $shipment->isPossibileSelfDelivery()) {
-            $profiles = ['COURIER', 'PICKUP'];
-        } elseif ($shipment->isPossibileDelivery()) {
-            $profiles = ['COURIER'];
+        try {
+            $shipment = self::makeShipment($arOrder);
+            if (($arOrder['LOCATION_TO'] === static::LOCATION_RU) || $shipment->isPossibileSelfDelivery()) {
+                $profiles = ['COURIER', 'PICKUP'];
+            } elseif ($shipment->isPossibileDelivery()) {
+                $profiles = ['COURIER'];
+            }
+        } catch (CityNotFoundException $e) {
+            $profiles = [];
         }
 
-        $event = new Event(IPOLH_DPD_MODULE, 'onCompabilityBefore', [$profiles, $arOrder, $arConfig]);
-        $event->send();
 
-        foreach ($event->getResults() as $eventResult) {
-            if ((int)$eventResult->getType() !== EventResult::SUCCESS) {
-                continue;
+        if (!empty($profiles)) {
+            $event = new Event(IPOLH_DPD_MODULE, 'onCompabilityBefore', [$profiles, $arOrder, $arConfig]);
+            $event->send();
+
+            foreach ($event->getResults() as $eventResult) {
+                if ((int)$eventResult->getType() !== EventResult::SUCCESS) {
+                    continue;
+                }
+
+                $profiles = array_unique($eventResult->getParameters());
             }
-
-            $profiles = array_unique($eventResult->getParameters());
         }
 
         return $profiles;
