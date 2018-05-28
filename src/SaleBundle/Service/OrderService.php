@@ -378,10 +378,8 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $order->setMathActionOnly(true);
         /** @noinspection PhpParamsInspection */
         $order->setBasket($basket->getOrderableItems());
-        $order->setMathActionOnly(false);
 
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
