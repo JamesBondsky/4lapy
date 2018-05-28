@@ -2,7 +2,7 @@
 
 /**
  * @global BasketComponent $component
- * @global \CMain          $APPLICATION
+ * @global \CMain $APPLICATION
  */
 
 use Bitrix\Sale\Basket;
@@ -108,8 +108,8 @@ if ($arParams['IS_AJAX']) {
                                 <div class="b-gift-order__gift-product js-section-remove-stock">
                                     <?php foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
                                         for ($i = 0; $i < $gift['quantity']; ++$i) {
-                                            $offer = $component->offerCollection->getById($gift['offerId']);
-                                            $image = $component->getImage($gift['offerId']);
+                                            $offer = $component->getOffer((int)$gift['offerId']);
+                                            $image = $component->getImage((int)$gift['offerId']);
                                             /**
                                              * @var Offer $offer
                                              */
@@ -121,12 +121,34 @@ if ($arParams['IS_AJAX']) {
                                                          src="<?= $image ?>" alt="<?= $product->getName() ?>">
                                                 </span>
                                                 <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart">
-                                                    <a class="b-common-item__description-wrap" href="#!" title="">
+                                            <?php
+                                                if (strpos($offer->getXmlId(), '1') === 0) {
+                                                    ?>
+                                                    <a class="b-common-item__description-wrap"
+                                                       href="<?= $offer->getLink(); ?>" title="">
+                                            <?php
+                                                } else {
+                                                    ?>
+                                                    <div class="b-common-item__description-wrap">
+                                            <?php
+                                                }
+                                                ?>
+
                                                         <span class="b-clipped-text b-clipped-text--shopping-cart">
                                                             <span><?= $name ?></span>
                                                         </span>
-                                                        <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart"><span class="b-common-item__name-value">Цвет:</span><span>прозрачные</span></span>*/ ?>
+                                                            <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart"><span class="b-common-item__name-value">Цвет:</span><span>прозрачные</span></span>*/ ?>
+                                            <?php
+                                                if (strpos($offer->getXmlId(), '1') === 0) {
+                                                    ?>
                                                     </a>
+                                            <?php
+                                                } else {
+                                                ?>
+                                                    </div>
+                                            <?php
+                                                }
+                                                ?>
                                                     <a class="b-common-item__delete js-present-delete-item"
                                                        href="javascript:void(0);" title=""
                                                        data-url="/ajax/sale/basket/gift/refuse/"
@@ -269,7 +291,8 @@ if ($arParams['IS_AJAX']) {
                             </div>
                             <a class="b-information-order__delete-promocode js-promo-code-del"
                                href="javascript:void(0)" title="Сбросить промокод"
-                               data-url="/ajax/sale/basket/promo/delete/" data-promocode-id="<?= $arResult['COUPON'] ?>">
+                               data-url="/ajax/sale/basket/promo/delete/"
+                               data-promocode-id="<?= $arResult['COUPON'] ?>">
                                 <span class="b-icon b-icon--delete-promocode">
                                     <?= new SvgDecorator('filter-change', 8, 8) ?>
                                 </span>

@@ -3,6 +3,9 @@
 namespace FourPaws\Adapter;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
@@ -71,47 +74,37 @@ class DaDataLocationAdapter extends BaseAdapter
         $bitrixLocation = new BitrixLocation();
 
         try {
-            /** пока доставка в одной стране - убираем поиск по стране */
-            $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
-            $cityType = $entity->getCityTypeFull();
-            $isCity = ToLower($cityType) === 'город';
-            if (empty($city)) {
-                $city = $entity->getSettlement();
-                $type = $entity->getSettlementTypeFull();
-                if ($entity->getSettlementType() === 'рп') {
-                    $type = 'рабочий посёлок';
+            $cities = [];
+            if (!empty($entity->getKladrId())) {
+                $city = !empty($entity->getCity()) ? $entity->getCity() : '';
+                $fullCity = $this->getFullCity($entity);
+                $region = $this->getRegion($entity);
+                try {
+                    $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE, $entity->getKladrId());
+                } catch (\Exception $e) {
+                    $cities = [];
+                    $logger = LoggerFactory::create('dadataAdapter');
+                    $logger->error($e->getMessage(), $e);
                 }
-                $fullCity = $city . ' ' . $type;
-            } else {
-                if(!$isCity){
-                    if ($entity->getCityType() === 'рп') {
-                        $cityType = 'рабочий посёлок';
+                /** фикс - так как по одному кладру почпу то находит несколько местоположений */
+                if (\count($cities) > 1) {
+                    foreach ($cities as $key => $city) {
+                        if ($fullCity !== $city['NAME']) {
+                            unset($cities[$key]);
+                        }
                     }
-                    $fullCity = $city . ' ' . $cityType;
                 }
             }
+            if (empty($cities)) {
+                /** пока доставка в одной стране - убираем поиск по стране */
+                $city = !empty($entity->getCity()) ? $entity->getCity() : '';
+                $fullCity = $this->getFullCity($entity);
 
-            $fullRegion = '';
-            $region = trim(!empty($entity->getRegion()) && $city !== $entity->getRegion() ? sprintf(str_replace('/',
-                '%s',
-                $entity->getRegion()), '(', ')') : '');
-            if (!empty($region)) {
-                $continue = true;
-                /** если регион это город федерального значения то не юзаем префикс */
-                if(\in_array(ToLower($region), ['москва','санкт-петербург', 'севастополь'])){
-                    $continue = false;
-                }
-                if($continue) {
-                    $regionType = trim($entity->getRegionTypeFull());
-                    $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
-                    if ($entity->getRegionType() === 'Респ' && !\in_array($region, $regionExcluded, true)) {
-                        $fullRegion = $regionType . ' ' . $region;
-                    } else {
-                        $fullRegion = $region . ' ' . $regionType;
-                    }
-                }
+
+                $region = $this->getRegion($entity);
+                $fullRegion = $this->getFullRegion($entity);
+                $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
             }
-            $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
             if (!empty($cities)) {
                 $selectedCity = reset($cities);
             } else {
@@ -191,5 +184,74 @@ class DaDataLocationAdapter extends BaseAdapter
         unset($location['PATH']);
 
         return \array_merge([$location], $path);
+    }
+
+    /**
+     * @param DadataLocation $entity
+     *
+     * @return string
+     */
+    private function getFullCity(DadataLocation $entity): string
+    {
+        $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
+        $cityType = $entity->getCityTypeFull();
+        $isCity = ToLower($cityType) === 'город';
+        if (empty($city)) {
+            $city = $entity->getSettlement();
+            $type = $entity->getSettlementTypeFull();
+            if ($entity->getSettlementType() === 'рп') {
+                $type = 'рабочий посёлок';
+            }
+            $fullCity = $city . ' ' . $type;
+        } else {
+            if (!$isCity) {
+                if ($entity->getCityType() === 'рп') {
+                    $cityType = 'рабочий посёлок';
+                }
+                $fullCity = $city . ' ' . $cityType;
+            }
+        }
+        return $fullCity;
+    }
+
+    /**
+     * @param DadataLocation $entity
+     *
+     * @return string
+     */
+    private function getFullRegion(DadataLocation $entity): string
+    {
+        $fullRegion = '';
+        $region = $this->getRegion($entity);
+        if (!empty($region)) {
+            $continue = true;
+            /** если регион это город федерального значения то не юзаем префикс */
+            if (\in_array(ToLower($region), ['москва', 'санкт-петербург', 'севастополь'])) {
+                $continue = false;
+            }
+            if ($continue) {
+                $regionType = trim($entity->getRegionTypeFull());
+                $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
+                if ($entity->getRegionType() === 'Респ' && !\in_array($region, $regionExcluded, true)) {
+                    $fullRegion = $regionType . ' ' . $region;
+                } else {
+                    $fullRegion = $region . ' ' . $regionType;
+                }
+            }
+        }
+
+        return $fullRegion;
+    }
+
+    /**
+     * @param $entity
+     *
+     * @return string
+     */
+    private function getRegion(DadataLocation $entity): string
+    {
+        return trim(!empty($entity->getRegion()) && $entity->getCity() !== $entity->getRegion() ? sprintf(str_replace('/',
+            '%s',
+            $entity->getRegion()), '(', ')') : '');
     }
 }

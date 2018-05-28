@@ -13,6 +13,9 @@ use FourPaws\UserBundle\Entity\User;
 
 /** @global \FourPaws\Components\FourPawsFastOrderComponent $component */
 
+$basketUpdateUrl = '/ajax/sale/basket/update/?fastOrder=y';
+$basketDeleteUrl = '/ajax/sale/basket/delete/?fastOrder=y';
+
 $isAuth = $arResult['IS_AUTH'];
 if ($isAuth) {
     /** @var User $curUser */
@@ -164,14 +167,17 @@ if ($request->offsetExists('phone')) {
                     } ?>
                     <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont js-no-valid">
                         <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"
-                           data-url="/ajax/sale/basket/update/?fastOrder=y"></a>
+                           data-url="<?=$basketUpdateUrl?>"></a>
                         <input class="b-plus-minus__count js-plus-minus-count"
                                value="<?= WordHelper::numberFormat($basketItem->getQuantity(), 0) ?>"
                                data-cont-max="<?= $maxQuantity ?>"
                                data-one-price="<?= $basketItem->getPrice() ?>"
-                               data-basketid="<?= $basketItem->getId(); ?>" type="text" title=""/>
+                               data-basketid="<?= $basketItem->getId(); ?>"
+                               data-url="<?=$basketUpdateUrl?>"
+                               type="text"
+                               title=""/>
                         <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"
-                           data-url="/ajax/sale/basket/update/?fastOrder=y"></a>
+                           data-url="<?=$basketUpdateUrl?>"></a>
                     </div>
                     <div class="b-select b-select--shopping-cart js-no-valid">
                         <?php /** @todo mobile max quantity */
@@ -200,7 +206,7 @@ if ($request->offsetExists('phone')) {
                         <?php } ?>
                     </div>
                     <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-                       data-url="/ajax/sale/basket/delete/?fastOrder=y" data-basketId="<?= $basketItem->getId(); ?>">
+                       data-url="<?=$basketDeleteUrl?>" data-basketId="<?= $basketItem->getId(); ?>">
                     <span class="b-icon b-icon--delete-one-click">
                         <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
                     </span>

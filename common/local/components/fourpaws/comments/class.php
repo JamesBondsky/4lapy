@@ -227,14 +227,19 @@ class CCommentsComponent extends \CBitrixComponent
 
         /** @todo кеширование комментариев */
         if ($this->startResultCache()) {
+            $tagCache = new TaggedCacheHelper();
+            $tagCache->addTags([
+                'comments:objectId:' . $this->arParams['OBJECT_ID'],
+                'comments:type:' . $this->arParams['TYPE'],
+                'hlb:field:comments_objectId:' . $this->arParams['OBJECT_ID'],
+                'catalog:comments',
+            ]);
 
             try {
                 $this->setHLEntity();
-            } catch (LoaderException $e) {
-                ShowError($e->getMessage());
-
-                return false;
-            } catch (SystemException $e) {
+            } catch (LoaderException|SystemException $e) {
+                $this->abortResultCache();
+                $tagCache->abortTagCache();
                 ShowError($e->getMessage());
 
                 return false;
@@ -245,6 +250,8 @@ class CCommentsComponent extends \CBitrixComponent
                 $this->arResult['COMMENTS'] = $comments['ITEMS'];
                 $this->arResult['COUNT_COMMENTS'] = $comments['COUNT'];
             } catch (ArgumentException $e) {
+                $this->abortResultCache();
+                $tagCache->abortTagCache();
                 ShowError($e->getMessage());
 
                 return false;
@@ -252,13 +259,6 @@ class CCommentsComponent extends \CBitrixComponent
             $this->arResult['RATING'] = $this->getRating();
 
             $this->setResultCacheKeys(['AUTH']);
-
-            TaggedCacheHelper::addManagedCacheTags([
-                'comments:objectId:' . $this->arParams['OBJECT_ID'],
-                'comments:type:' . $this->arParams['TYPE'],
-                'hlb:field:comments_objectId:' . $this->arParams['OBJECT_ID'],
-                'catalog:comments',
-            ]);
 
             $this->includeComponentTemplate();
         }
@@ -281,11 +281,11 @@ class CCommentsComponent extends \CBitrixComponent
     public function getData(bool $addNotAuth = false): array
     {
         $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
-        unset($data['action']);
+        unset($data['action'], $data['g-recaptcha-response']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
-            if (!$addNotAuth) {
+            if (!$addNotAuth || ((!empty($data['EMAIL']) || !empty($data['PHONE'])) && !empty($data['PASSWORD']))) {
                 $userRepository = $this->userCurrentUserService->getUserRepository();
                 $filter = [
                     'LOGIC' => 'OR',

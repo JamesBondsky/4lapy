@@ -651,7 +651,7 @@ class SharesService implements LoggerAwareInterface
                                 'CLASS_ID' => 'ADV:BasketFilterQuantityMore',
                                 'DATA' => [
                                     'All' => 'AND',
-                                    'Value' => $countCondition,
+                                    'Value' => $countCondition - 1,
                                 ],
                                 'CHILDREN' => [
                                     [

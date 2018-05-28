@@ -139,11 +139,15 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
     {
         $result = new CalculationResult();
 
+        if (!$deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment)) {
+            $result->addError(new Error('Не задано местоположение доставки'));
+            return $result;
+        }
+
         /** @noinspection PhpInternalEntityUsedInspection */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, false);
-        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         $data = [];
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);

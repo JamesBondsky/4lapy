@@ -89,6 +89,8 @@ class Manzana implements LoggerAwareInterface
         } else {
             $basket = $this->basketService->getBasket();
         }
+        /** @var Basket $basket */
+        $basket = $basket->getOrderableItems();
 
         if (!$basket->count()) {
             /**

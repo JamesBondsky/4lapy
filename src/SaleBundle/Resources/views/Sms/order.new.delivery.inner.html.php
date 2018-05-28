@@ -12,5 +12,4 @@
 $deliveryDateFormatted = $deliveryDate ? $deliveryDate->format('d.m.Y') : ''
 
 ?>
-    Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price ?> руб. оформлен!
-    И будет доставлен <?= $deliveryDateFormatted ?>
+Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price ?> руб. оформлен! И будет доставлен <?= $deliveryDateFormatted ?>

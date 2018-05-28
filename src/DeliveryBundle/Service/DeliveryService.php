@@ -243,11 +243,13 @@ class DeliveryService implements LoggerAwareInterface
             $result = [];
             if (!empty($zoneData['LOCATIONS'])) {
                 $location = current($zoneData['LOCATIONS']);
-                $shipment = $this->generateShipment($location);
-                $availableServices = Manager::getRestrictedObjectsList($shipment);
+                if(!empty($location)) {
+                    $shipment = $this->generateShipment($location);
+                    $availableServices = Manager::getRestrictedObjectsList($shipment);
 
-                foreach ($availableServices as $service) {
-                    $result[] = $service->getCode();
+                    foreach ($availableServices as $service) {
+                        $result[] = $service->getCode();
+                    }
                 }
             }
 
@@ -345,7 +347,8 @@ class DeliveryService implements LoggerAwareInterface
                 ]);
                 continue;
             }
-            $calculationResult->setDeliveryZone($this->getDeliveryZoneForShipment($shipment));
+            $deliveryZone = $this->getDeliveryZoneForShipment($shipment);
+            $calculationResult->setDeliveryZone($deliveryZone);
             $calculationResult->setDeliveryId($service->getId());
             $calculationResult->setDeliveryName($name);
             $calculationResult->setDeliveryCode($service->getCode());
@@ -436,7 +439,7 @@ class DeliveryService implements LoggerAwareInterface
     public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): string
     {
         if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
-            return null;
+            return static::ZONE_4;
         }
         $deliveryId = $shipment->getDeliveryId();
 

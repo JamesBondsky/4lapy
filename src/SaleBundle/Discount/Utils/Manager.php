@@ -42,7 +42,7 @@ class Manager
      */
     public static function OnBeforeSaleOrderFinalAction(Event $event): void
     {
-        if(!self::$extendEnabled) {
+        if (!self::$extendEnabled) {
             $event->addResult(new EventResult(EventResult::ERROR));
         }
     }
@@ -71,9 +71,8 @@ class Manager
          * @var Order $order
          */
         $order = $event->getParameter('ENTITY');
-        $isOrderBasketFilled = $order->getBasket() && $order->getBasket()->count() > 0;
 
-        if ($isOrderBasketFilled && !self::$extendCalculated) {
+        if (self::isOrderNotEmpty($order) && !self::$extendCalculated) {
             self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
@@ -90,25 +89,48 @@ class Manager
                 ->getCleaner('gift')
                 ->processOrder();
 
-            $basketService
-                ->getAdder('detach')
-                ->processOrder();
+            // нужна дополнительная проверка так как иногда к этому моменту в корзине не остается товаров
+            if (self::isOrderNotEmpty($order)) {
 
-            $promoCode = $couponStorage->getApplicableCoupon();
-            if ($promoCode) {
-                $manzana->setPromocode($promoCode);
-            }
+                $basketService
+                    ->getAdder('detach')
+                    ->processOrder();
 
-            try {
-                $manzana->calculate($order);
-                $basketService->setPromocodeDiscount($manzana->getDiscount());
-            } catch (ManzanaPromocodeUnavailableException $e) {
-                $couponStorage->delete($promoCode);
+                $promoCode = $couponStorage->getApplicableCoupon();
+                if ($promoCode) {
+                    $manzana->setPromocode($promoCode);
+                }
+
+                try {
+                    $manzana->calculate($order);
+                    $basketService->setPromocodeDiscount($manzana->getDiscount());
+                } catch (ManzanaPromocodeUnavailableException $e) {
+                    $couponStorage->delete($promoCode);
+                }
             }
 
             self::enableExtendsDiscount();
             self::$extendCalculated = true;
         }
+    }
+
+    /**
+     * @todo вынести куданить в хелпер
+     *
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public static function isOrderNotEmpty(Order $order): bool
+    {
+        $quantity = 0;
+        if ($basket = $order->getBasket()) {
+            /** @var BasketItem $basketItem */
+            foreach ($basket->getBasketItems() as $basketItem) {
+                $quantity += (int)$basketItem->getQuantity();
+            }
+        }
+        return (bool)$quantity;
     }
 
     /**
@@ -166,5 +188,21 @@ class Manager
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function isExtendCalculated(): bool
+    {
+        return self::$extendCalculated;
+    }
+
+    /**
+     * @param bool $extendCalculated
+     */
+    public static function setExtendCalculated(bool $extendCalculated): void
+    {
+        self::$extendCalculated = $extendCalculated;
     }
 }

@@ -15,7 +15,7 @@ use Exception;
  *
  * @package Sprint\Migration
  */
-class OrderPropertyOldSiteOrderAdd extends SprintMigrationBase
+class OrderPropertyOldSiteOrderAdd20180521121739 extends SprintMigrationBase
 {
 
     protected const PROP_CODE = 'IS_OLD_SITE_ORDER';
@@ -39,17 +39,17 @@ class OrderPropertyOldSiteOrderAdd extends SprintMigrationBase
             if (!$prop) {
                 $addResult = OrderPropsTable::add(
                     [
-                        'CODE'           => self::PROP_CODE,
-                        'NAME'           => 'Заказ со старого сайта',
-                        'TYPE'           => 'Y/N',
-                        'REQUIRED'       => 'N',
-                        'USER_PROPS'     => 'N',
-                        'DESCRIPTION'    => '',
+                        'CODE' => self::PROP_CODE,
+                        'NAME' => 'Заказ со старого сайта',
+                        'TYPE' => 'Y/N',
+                        'REQUIRED' => 'N',
+                        'USER_PROPS' => 'N',
+                        'DESCRIPTION' => '',
                         'PERSON_TYPE_ID' => 1,
                         'PROPS_GROUP_ID' => 4,
-                        'UTIL'           => 'Y',
-                        'IS_FILTERED'    => 'Y',
-                        'SORT'           => '5100',
+                        'UTIL' => 'Y',
+                        'IS_FILTERED' => 'Y',
+                        'SORT' => '5100',
                     ]
                 );
                 if (!$addResult->isSuccess()) {
@@ -61,20 +61,11 @@ class OrderPropertyOldSiteOrderAdd extends SprintMigrationBase
                 $this->log()->warning('Свойство заказа ' . self::PROP_CODE . ' уже существует');
             }
         } catch (ObjectPropertyException | ArgumentException | SystemException | Exception $e) {
-
             $this->log()->error(sprintf('Ошибка добавления свойства заказа %s: %s', self::PROP_CODE, $e->getMessage()));
+
+            return false;
         }
 
+        return true;;
     }
-
-    /**
-     * @return bool|void
-     */
-    public function down()
-    {
-        /**
-         * Do not required
-         */
-    }
-
 }

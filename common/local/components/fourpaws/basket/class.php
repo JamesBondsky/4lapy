@@ -23,16 +23,16 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
-use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
@@ -56,15 +56,15 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class BasketComponent extends CBitrixComponent
 {
     /**
-     * @var DeliveryService
-     */
-    private $deliveryService;
-    /**
      * @var BasketService
      */
     public $basketService;
-    /** @var OfferCollection */
-    public $offerCollection;
+    /** @var array */
+    public $offers;
+    /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
     /**
      * @var UserService
      */
@@ -102,6 +102,7 @@ class BasketComponent extends CBitrixComponent
      *
      * @return void
      *
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws SystemException
@@ -123,51 +124,39 @@ class BasketComponent extends CBitrixComponent
             $basket = $this->basketService->getBasket();
         }
 
-        $this->offerCollection = $this->basketService->getOfferCollection();
-        if (!$this->arParams['MINI_BASKET']) {
-            $this->setItems($basket);
-        }
+        $this->setItems($basket);
 
         $this->arResult['BASKET'] = $basket;
-        if (!$this->arParams['MINI_BASKET']) {
-            // привязывать к заказу нужно для расчета скидок
-            if (null === $order = $basket->getOrder()) {
-                $order = Order::create(SITE_ID);
-                $order->setBasket($basket);
+
+        // привязывать к заказу нужно для расчета скидок
+        if (null === $order = $basket->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($basket);
+            // но иногда он так просто не запускается
+            if (!Manager::isExtendCalculated()) {
+                $order->doFinalAction(true);
             }
-            // необходимо подгрузить подарки
-            $this->offerCollection = $this->basketService->getOfferCollection(true);
-            $this->loadPromoDescriptions();
-            $this->setCoupon();
-            $this->arResult['USER'] = null;
-            $this->arResult['USER_ACCOUNT'] = null;
-            try {
-                $user = $this->currentUserService->getCurrentUser();
-                $this->arResult['USER'] = $user;
-                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
-            } /** @noinspection BadExceptionsProcessingInspection */
-            catch (NotAuthorizedException $e) {
-                /** в случае ошибки не показываем бюджет в большой корзине */
-            }
-            $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
-            $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
-            $this->calcTemplateFields();
-            $this->checkSelectedGifts();
-            $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
         }
+        // необходимо подгрузить подарки
+        $this->loadPromoDescriptions();
+        $this->setCoupon();
+        $this->arResult['USER'] = null;
+        $this->arResult['USER_ACCOUNT'] = null;
+        try {
+            $user = $this->currentUserService->getCurrentUser();
+            $this->arResult['USER'] = $user;
+            $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
+        } /** @noinspection BadExceptionsProcessingInspection */
+        catch (NotAuthorizedException $e) {
+            /** в случае ошибки не показываем бюджет в большой корзине */
+        }
+        $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
+        $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
+        $this->calcTemplateFields();
+        $this->checkSelectedGifts();
+        $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
 
-        $this->loadImages();
         $this->includeComponentTemplate($this->getPage());
-    }
-
-    /**
-     * @param $offerId
-     *
-     * @return ResizeImageDecorator|null
-     */
-    public function getImage($offerId): ?ResizeImageDecorator
-    {
-        return $this->images[$offerId] ?? null;
     }
 
     /**
@@ -179,22 +168,88 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     * @param int $id
      *
-     * @return Offer|null
+     * @param BasketItem $basketItem
+     * @param bool       $onlyApplied
+     *
+     * @return array
      */
-    public function getOffer(int $id): ?Offer
+    public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
-        $result = null;
-        /** @var Offer $item */
-        foreach ($this->offerCollection as $item) {
-            if ($item->getId() === $id) {
-                $result = $item;
-                break;
+        $result = [];
+        /**
+         * @var BasketItemCollection $basketItemCollection
+         * @var Order                $order
+         */
+        $applyResult = $this->arResult['DISCOUNT_RESULT'];
+        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
+        if (!$basketDiscounts) {
+            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
+            foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
+                if ($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
+                    $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
+                }
+            }
+        }
+
+        if ($basketDiscounts) {
+            /** @noinspection ForeachSourceInspection */
+            foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
+                    continue;
+                }
+                if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
+                    $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
+                }
             }
         }
 
         return $result;
+    }
+
+    /**
+     * @return DeliveryService
+     */
+    public function getDeliveryService(): DeliveryService
+    {
+        return $this->deliveryService;
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return Offer|null
+     */
+    public function getOffer(int $offerId): ?Offer
+    {
+        if ($offerId <= 0) {
+            return null;
+        }
+        if (!isset($this->offers[$offerId])) {
+            $this->offers[$offerId] = OfferQuery::getById($offerId);
+        }
+        return $this->offers[$offerId];
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return ResizeImageDecorator|null
+     */
+    public function getImage(int $offerId): ?ResizeImageDecorator
+    {
+        if ($offerId <= 0) {
+            return null;
+        }
+        if (!isset($this->images[$offerId])) {
+            $offer = $this->getOffer($offerId);
+            $image = null;
+            if ($offer !== null) {
+                $images = $offer->getResizeImages(110, 110);
+                $this->images[$offerId] = $images->first();
+            }
+        }
+        return $this->images[$offerId];
     }
 
     /**
@@ -326,23 +381,6 @@ class BasketComponent extends CBitrixComponent
 
     /**
      *
-     * @throws \InvalidArgumentException
-     */
-    private function loadImages(): void
-    {
-        /** @var Offer $item */
-        foreach ($this->offerCollection as $item) {
-            if (isset($this->images[$item->getId()])) {
-                continue;
-            }
-            /** @var ResizeImageCollection $images */
-            $images = $item->getResizeImages(110, 110);
-            $this->images[$item->getId()] = $images->first();
-        }
-    }
-
-    /**
-     *
      *
      * @throws \Bitrix\Main\ArgumentNullException
      */
@@ -379,7 +417,9 @@ class BasketComponent extends CBitrixComponent
         $page = '';
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
-        if (!$this->arParams['MINI_BASKET'] && !$basket->count()) {
+        /** @var Order $order */
+        $order = $basket->getOrder();
+        if (!Manager::isOrderNotEmpty($order)) {
             $page = 'empty';
         }
         return $page;
@@ -403,8 +443,8 @@ class BasketComponent extends CBitrixComponent
                 ['ID' => 'ASC'],
                 [
                     'PROPERTY_BASKET_RULES' => \array_values($discountMap),
-                    'IBLOCK_CODE' => IblockCode::SHARES,
-                    'IBLOCK_TYPE' => IblockType::PUBLICATION,
+                    'IBLOCK_CODE'           => IblockCode::SHARES,
+                    'IBLOCK_TYPE'           => IblockType::PUBLICATION,
                 ],
                 false,
                 false,
@@ -415,53 +455,13 @@ class BasketComponent extends CBitrixComponent
                 if (\is_array($elem['PROPERTY_BASKET_RULES_VALUE'])) {
                     foreach ($elem['PROPERTY_BASKET_RULES_VALUE'] as $ruleId) {
                         $this->promoDescriptions[$ruleId] = [
-                            'url' => $elem['DETAIL_PAGE_URL'],
+                            'url'  => $elem['DETAIL_PAGE_URL'],
                             'name' => $elem['NAME'],
                         ];
                     }
                 }
             }
         }
-    }
-
-    /**
-     *
-     * @param BasketItem $basketItem
-     * @param bool $onlyApplied
-     *
-     * @return array
-     */
-    public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
-    {
-        $result = [];
-        /**
-         * @var BasketItemCollection $basketItemCollection
-         * @var Order $order
-         */
-        $applyResult = $this->arResult['DISCOUNT_RESULT'];
-        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
-        if (!$basketDiscounts) {
-            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
-            foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
-                if ($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
-                    $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
-                }
-            }
-        }
-
-        if ($basketDiscounts) {
-            /** @noinspection ForeachSourceInspection */
-            foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
-                if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
-                    continue;
-                }
-                if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
-                    $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
-                }
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -473,13 +473,5 @@ class BasketComponent extends CBitrixComponent
     {
         $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
         $this->arResult['COUPON_DISCOUNT'] = !empty($this->arResult['COUPON']) ? $this->basketService->getPromocodeDiscount() : 0;
-    }
-
-    /**
-     * @return DeliveryService
-     */
-    public function getDeliveryService(): DeliveryService
-    {
-        return $this->deliveryService;
     }
 }

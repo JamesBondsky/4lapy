@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
-<div class="b-quest js-quest <?=$required ? ' js-block-required' : ''?>" style="display: block">
+<div class="b-quest js-quest <?=$required ? ' js-block-required' : ''?> clicked" style="display: block">
     <h3 class="b-quest__title">Корм</h3>
     <h4 class="b-quest__subtitle">Специализация</h4>
     <div class="b-select b-select--recall b-select--q-food">

@@ -184,7 +184,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         /** @noinspection PhpUndefinedVariableInspection */
-        $basket = $order->getBasket()->getOrderableItems();
+        $basket = $order->getBasket();
 
         $this->arResult['URL'] = [
             'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
@@ -274,7 +274,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             if ($this->arResult['PARTIAL_PICKUP_AVAILABLE'] &&
-                $this->deliveryService->isInnerDelivery($selectedDelivery)
+                $storage->isSplit() &&
+                $this->deliveryService->isInnerPickup($selectedDelivery)
             ) {
                 $this->arResult['SELECTED_DELIVERY'] = $this->arResult['PARTIAL_PICKUP'];
             }
@@ -339,6 +340,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
                 ? null
                 : (clone $pickup)->setStockResult($available);
+
             $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderStorageService->canGetPartial($pickup);
             $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderStorageService->canSplitOrder($pickup);
             $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;

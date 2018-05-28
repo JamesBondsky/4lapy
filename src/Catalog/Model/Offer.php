@@ -1626,7 +1626,7 @@ class Offer extends IblockElement
             $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
             $result = $serializer->fromArray($result, Bundle::class, DeserializationContext::create()->setGroups(['read']));
             if(!empty($productIds)){
-                $offerCollection = (new OfferQuery())->withFilter(['ID'=>$productIds])->exec();
+                $offerCollection = (new OfferQuery())->withFilter(['=ID'=>$productIds])->exec();
                 /** @var Offer $offer */
                 foreach ($offerCollection as $offer) {
                     /** @var BundleItem $product */

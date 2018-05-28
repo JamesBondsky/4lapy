@@ -139,7 +139,7 @@ class Event implements ServiceHandlerInterface
             /** @var IndexHelper $indexHelper */
             $indexHelper = Application::getInstance()->getContainer()->get('search.index_helper');
             /** @var Offer $offer */
-            $offer = (new OfferQuery())->withFilterParameter('ID', $fields['ID'])->exec()->first();
+            $offer = OfferQuery::getById((int)$fields['ID']);
             if ($offer) {
                 $indexHelper->indexProduct($offer->getProduct());
             }
