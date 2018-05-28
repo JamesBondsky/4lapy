@@ -498,8 +498,7 @@ class OrderSubscribeCopyParams
                 $this->getDeliveryDate(),
                 $this->getCurrentDate()
             );
-            $this->dateForOrderCreate = new \DateTimeImmutable();
-            $this->dateForOrderCreate->setTimestamp($dateForOrderCreate->getTimestamp());
+            $this->dateForOrderCreate = \DateTimeImmutable::createFromMutable($dateForOrderCreate);
         }
 
         return $this->dateForOrderCreate;
