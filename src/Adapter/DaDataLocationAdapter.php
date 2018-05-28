@@ -3,6 +3,9 @@
 namespace FourPaws\Adapter;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
@@ -76,7 +79,13 @@ class DaDataLocationAdapter extends BaseAdapter
                 $city = !empty($entity->getCity()) ? $entity->getCity() : '';
                 $fullCity = $this->getFullCity($entity);
                 $region = $this->getRegion($entity);
-                $cities = $this->locationService->findLocationByExtService('KLADR', $entity->getKladrId());
+                try {
+                    $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE, $entity->getKladrId());
+                } catch (\Exception $e) {
+                    $cities = [];
+                    $logger = LoggerFactory::create('dadataAdapter');
+                    $logger->error($e->getMessage(), $e);
+                }
                 /** фикс - так как по одному кладру почпу то находит несколько местоположений */
                 if (\count($cities) > 1) {
                     foreach ($cities as $key => $city) {

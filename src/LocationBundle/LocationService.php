@@ -656,33 +656,6 @@ class LocationService
     }
 
     /**
-     * Поиск местоположений по КЛАДР
-     *
-     * @param string $code
-     *
-     * @return array
-     * @throws CityNotFoundException
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
-    public function findLocationCityByKladr(string $code): array
-    {
-        if ($code) {
-            if (!isset($this->locationsByCode[$code])) {
-                $this->locationsByCode[$code] = reset($this->findLocationNew([
-                    '=PROPERTY.KLADR' => $code,
-                ]));
-            }
-            if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {
-                return $this->locationsByCode[$code];
-            }
-        }
-
-        throw new CityNotFoundException('Город не найден');
-    }
-
-    /**
      * @param string $cityCode
      *
      * @return array
