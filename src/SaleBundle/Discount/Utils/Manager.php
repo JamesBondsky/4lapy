@@ -37,12 +37,15 @@ class Manager
     protected static $extendEnabled = true;
     protected static $extendCalculated = false;
 
+    /** @var bool */
+    protected static $calculation = false;
+
     /**
      * @param Event $event
      */
     public static function OnBeforeSaleOrderFinalAction(Event $event): void
     {
-        if (!self::$extendEnabled) {
+        if (self::isCalculation()) {
             $event->addResult(new EventResult(EventResult::ERROR));
         }
     }
@@ -73,6 +76,7 @@ class Manager
         $order = $event->getParameter('ENTITY');
 
         if (self::isOrderNotEmpty($order) && !self::$extendCalculated) {
+            self::setCalculation(true);
             self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
@@ -110,6 +114,7 @@ class Manager
             }
 
             self::enableExtendsDiscount();
+            self::setCalculation(false);
             self::$extendCalculated = true;
         }
     }
@@ -204,5 +209,21 @@ class Manager
     public static function setExtendCalculated(bool $extendCalculated): void
     {
         self::$extendCalculated = $extendCalculated;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function isCalculation(): bool
+    {
+        return self::$calculation;
+    }
+
+    /**
+     * @param bool $calculation
+     */
+    public static function setCalculation(bool $calculation): void
+    {
+        self::$calculation = $calculation;
     }
 }
