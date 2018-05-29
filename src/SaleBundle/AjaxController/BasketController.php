@@ -75,8 +75,7 @@ class BasketController extends Controller implements LoggerAwareInterface
         BasketViewService $basketViewService,
         Manzana $manzana,
         CouponStorageInterface $couponStorage
-    )
-    {
+    ) {
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
         $this->manzana = $manzana;
@@ -218,7 +217,7 @@ class BasketController extends Controller implements LoggerAwareInterface
         } else {
             foreach ($offers as $offer) {
                 $explode = explode('_', $offer);
-                $offerId=(int)$explode[0];
+                $offerId = (int)$explode[0];
                 $quantity = (int)$explode[1];
 
                 try {
@@ -234,7 +233,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             }
         }
         /** @noinspection UnSafeIsSetOverArrayInspection */
-        if(!isset($response)) {
+        if (!isset($response)) {
             // @todo костыль - иначе в миникорзине не будет картинки нового товара
             $this->basketService->getOfferCollection(true);
 
@@ -494,12 +493,17 @@ class BasketController extends Controller implements LoggerAwareInterface
                 } else {
                     $weight = '';
                 }
+                $link = '';
+                if (strpos($offer->getXmlId(), '1') === 0) {
+                    $link = $offer->getLink();
+                }
                 $items[] = [
                     'id' => $offer->getId(),
                     'actionId' => $discountId,
                     'image' => $image,
                     'name' => $name,
                     'additional' => $weight,
+                    'link' => $link,
                 ];
 
             }
