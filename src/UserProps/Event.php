@@ -28,18 +28,18 @@ class Event extends BaseServiceHandler
             $module);
         static::initHandlerCompatible('OnUserTypeBuildList', [UserPropWeekDay::class, 'getUserTypeDescription'],
             $module);
-        static::initHandlerCompatible('OnEpilog', [__CLASS__, 'addAdminScriptPropLocation'], $module);
-        static::initHandlerCompatible('OnAdminListDisplay', [__CLASS__, 'OnAdminListDisplayHandler'], $module);
+        static::initHandlerCompatible('OnEpilog', [self::class, 'addAdminScriptPropLocation'], $module);
+        static::initHandlerCompatible('OnAdminListDisplay', [self::class, 'OnAdminListDisplayHandler'], $module);
     }
 
-    public function addAdminScriptPropLocation()
+    public function addAdminScriptPropLocation(): void
     {
         Asset::getInstance()->addJs(
             '/local/templates/.default/components/bitrix/system.field.edit/sale_location/editScript.js'
         );
     }
 
-    public function OnAdminListDisplayHandler()
+    public function OnAdminListDisplayHandler(): void
     {
         \CUtil::InitJSCore(['jquery']);
     }

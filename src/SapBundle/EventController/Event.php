@@ -56,8 +56,8 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         $module = 'sale';
-        static::initHandler('OnSaleOrderSaved', 'consumeOrderAfterSaveOrder', $module);
-        static::initHandler('OnSalePaymentEntitySaved', 'consumeOrderAfterSavePayment', $module);
+        static::initHandler('OnSaleOrderSaved', [self::class, 'consumeOrderAfterSaveOrder'], $module);
+        static::initHandler('OnSalePaymentEntitySaved', [self::class,'consumeOrderAfterSavePayment'], $module);
     }
 
     /**
@@ -102,7 +102,6 @@ class Event extends BaseServiceHandler
     /**
      * @param BitrixEvent $event
      *
-     * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws ArgumentNullException
      * @throws NotImplementedException
      * @throws ApplicationCreateException
@@ -159,7 +158,6 @@ class Event extends BaseServiceHandler
      *
      * @return bool
      *
-     * @throws ObjectNotFoundException
      */
     private static function isOrderExported(Order $order): bool
     {
@@ -173,7 +171,6 @@ class Event extends BaseServiceHandler
      *
      * @return bool
      *
-     * @throws ObjectNotFoundException
      */
     private static function isManzanaOrder(Order $order): bool
     {

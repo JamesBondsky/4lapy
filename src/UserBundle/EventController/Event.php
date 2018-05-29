@@ -48,26 +48,26 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         $module = 'main';
-        static::initHandlerCompatible('OnBeforeUserAdd', 'checkSocserviseRegisterHandler', $module);
+        static::initHandlerCompatible('OnBeforeUserAdd', [self::class,'checkSocserviseRegisterHandler'], $module);
 
         /**
          * События форматирования телефона
          */
-        static::initHandlerCompatible('OnBeforeUserAdd', 'checkPhoneFormat', $module);
-        static::initHandlerCompatible('OnBeforeUserUpdate', 'checkPhoneFormat', $module);
+        static::initHandlerCompatible('OnBeforeUserAdd', [self::class,'checkPhoneFormat'], $module);
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class,'checkPhoneFormat'], $module);
 
-        static::initHandlerCompatible('OnBeforeUserLogon', 'replaceLogin', $module);
+        static::initHandlerCompatible('OnBeforeUserLogon', [self::class,'replaceLogin'], $module);
 
-        static::initHandlerCompatible('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth', $module);
-        static::initHandlerCompatible('OnBeforeUserRegister', 'preventAuthorizationOnRegister', $module);
-        static::initHandlerCompatible('OnAfterUserRegister', 'sendEmail', $module);
-        static::initHandlerCompatible('OnAfterUserUpdate', 'updateManzana', $module);
+        static::initHandlerCompatible('onBeforeUserLoginByHttpAuth', [self::class,'deleteBasicAuth'], $module);
+        static::initHandlerCompatible('OnBeforeUserRegister', [self::class,'preventAuthorizationOnRegister'], $module);
+        static::initHandlerCompatible('OnAfterUserRegister', [self::class,'sendEmail'], $module);
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class,'updateManzana'], $module);
 
         /** обновляем логин если он равняется телефону или email */
-        static::initHandlerCompatible('OnBeforeUserUpdate', 'replaceLoginOnUpdate', $module);
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class,'replaceLoginOnUpdate'], $module);
 
         /** очистка кеша пользователя */
-        static::initHandlerCompatible('OnAfterUserUpdate', 'clearUserCache', $module);
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class,'clearUserCache'], $module);
     }
 
     /**

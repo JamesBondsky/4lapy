@@ -32,9 +32,9 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         $module = 'main';
-        static::initHandler('OnUserLogin', 'updateTokenAfterLogin', $module);
-        static::initHandler('OnAfterUserLogout', 'updateTokenAfterLogout', $module);
-        static::initHandler('onAfterUserUpdate', 'updateUser', $module);
+        static::initHandler('OnUserLogin', [self::class,'updateTokenAfterLogin'], $module);
+        static::initHandler('OnAfterUserLogout', [self::class,'updateTokenAfterLogout'], $module);
+        static::initHandler('onAfterUserUpdate', [self::class,'updateUser'], $module);
     }
 
     /**
@@ -42,20 +42,16 @@ class Event extends BaseServiceHandler
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public static function updateTokenAfterLogin()
+    public static function updateTokenAfterLogin(): void
     {
         $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
         $sessionHandler->login();
     }
 
     /**
-     * @param array $fields
-     *
-     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      */
-    public static function updateTokenAfterLogout(array &$fields)
+    public static function updateTokenAfterLogout(): void
     {
         $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
         $sessionHandler->logout();
@@ -66,7 +62,7 @@ class Event extends BaseServiceHandler
      *
      * @throws ApplicationCreateException
      */
-    public static function updateUser(array &$fields)
+    public static function updateUser(array &$fields): void
     {
         if ($fields['RESULT'] && $fields['ID'] ?? 0) {
             $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);

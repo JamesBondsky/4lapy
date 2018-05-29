@@ -7,14 +7,16 @@
 namespace FourPaws\SapBundle\Subscriber;
 
 use Bitrix\Highloadblock\DataManager;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
-use RuntimeException;
 
 class BitrixEvents extends BaseServiceHandler
 {
@@ -33,7 +35,9 @@ class BitrixEvents extends BaseServiceHandler
      *
      * @param EventManager $eventManager
      *
-     * @throws RuntimeException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ApplicationCreateException
      */
     public static function initHandlers(EventManager $eventManager): void
     {
@@ -42,7 +46,7 @@ class BitrixEvents extends BaseServiceHandler
         /**
          * @var static $current
          */
-        $current = Application::getInstance()->getContainer()->get(static::class);
+        $current = Application::getInstance()->getContainer()->get(self::class);
         $referenceStorage = Application::getInstance()->getContainer()->get(SapReferenceStorage::class);
 
         /**
@@ -76,11 +80,21 @@ class BitrixEvents extends BaseServiceHandler
         }
     }
 
-    protected static function compileEventName(Base $entity, $type)
+    /**
+     * @param Base $entity
+     * @param      $type
+     *
+     * @return string
+     */
+    protected static function compileEventName(Base $entity, $type): string
     {
         return $entity->getNamespace() . $entity->getName() . '::' . $type;
     }
 
+    /**
+     * @param string      $code
+     * @param DataManager $dataManager
+     */
     public function add(string $code, DataManager $dataManager)
     {
         return $this->collection->set($code, $dataManager);

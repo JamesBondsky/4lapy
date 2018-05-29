@@ -79,24 +79,24 @@ class Event extends BaseServiceHandler
 
         /** отправка email */
         // новый заказ
-        static::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage'], $module);
+        static::initHandler('OnSaleOrderSaved', [self::class, 'sendNewOrderMessage'], $module);
         // смена платежной системы у заказа
-        static::initHandler('OnSalePaymentEntitySaved', [static::class, 'sendNewOrderMessage'], $module);
+        static::initHandler('OnSalePaymentEntitySaved', [self::class, 'sendNewOrderMessage'], $module);
         // оплата заказа
-        static::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage'], $module);
+        static::initHandler('OnSaleOrderPaid', [self::class, 'sendOrderPaymentMessage'], $module);
         // отмена заказа
-        static::initHandler('OnSaleOrderCanceled', [static::class, 'sendOrderCancelMessage'], $module);
+        static::initHandler('OnSaleOrderCanceled', [self::class, 'sendOrderCancelMessage'], $module);
         // смена статуса заказа
-        static::initHandler('OnSaleStatusOrderChange', [static::class, 'sendOrderStatusMessage'], $module);
+        static::initHandler('OnSaleStatusOrderChange', [self::class, 'sendOrderStatusMessage'], $module);
 
         /** очистка кеша заказа */
-        static::initHandler('OnSaleOrderSaved', [static::class, 'clearOrderCache'], $module);
+        static::initHandler('OnSaleOrderSaved', [self::class, 'clearOrderCache'], $module);
 
         /** обновление бонусного счета пользователя и бонусного процента пользователя */
         $module = 'main';
-        static::initHandlerCompatible('OnAfterUserLogin', [static::class, 'updateUserAccountBalance'], $module);
-        static::initHandlerCompatible('OnAfterUserAuthorize', [static::class, 'updateUserAccountBalance'], $module);
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [static::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'updateUserAccountBalance'], $module);
     }
 
     public static function updateUserAccountBalance(): void

@@ -39,15 +39,15 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         $module = 'catalog';
-        static::initHandler('StoreOnBeforeAdd', [static::class, 'updateStoreRegionD7'],$module);
-        static::initHandler('StoreOnBeforeUpdate', [static::class, 'updateStoreRegionD7'], $module);
-        static::initHandlerCompatible('OnCatalogStoreAdd', [static::class,'updateStoreRegion'], $module);
-        static::initHandlerCompatible('OnBeforeCatalogStoreUpdate', [static::class,'updateStoreRegion'], $module);
+        static::initHandler('StoreOnBeforeAdd', [self::class, 'updateStoreRegionD7'],$module);
+        static::initHandler('StoreOnBeforeUpdate', [self::class, 'updateStoreRegionD7'], $module);
+        static::initHandlerCompatible('OnCatalogStoreAdd', [self::class,'updateStoreRegion'], $module);
+        static::initHandlerCompatible('OnBeforeCatalogStoreUpdate', [self::class,'updateStoreRegion'], $module);
 
-        static::initHandler('StoreOnAdd', [static::class,'resetStoreCache'], $module);
-        static::initHandler('StoreOnUpdate', [static::class,'resetStoreCache'], $module);
-        static::initHandlerCompatible('OnCatalogStoreAdd', [static::class,'resetStoreCache'], $module);
-        static::initHandlerCompatible('OnCatalogStoreUpdate', [static::class,'resetStoreCache'], $module);
+        static::initHandler('StoreOnAdd', [self::class,'resetStoreCache'], $module);
+        static::initHandler('StoreOnUpdate', [self::class,'resetStoreCache'], $module);
+        static::initHandlerCompatible('OnCatalogStoreAdd', [self::class,'resetStoreCache'], $module);
+        static::initHandlerCompatible('OnCatalogStoreUpdate', [self::class,'resetStoreCache'], $module);
     }
 
     /**
@@ -56,7 +56,7 @@ class Event extends BaseServiceHandler
      *
      * @throws ApplicationCreateException
      */
-    public static function updateStoreRegion($id, $fields)
+    public static function updateStoreRegion($id, $fields): void
     {
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');

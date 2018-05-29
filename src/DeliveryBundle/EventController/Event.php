@@ -28,11 +28,11 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
         $module = 'sale';
-        static::initHandler('onSaleDeliveryHandlersClassNamesBuildList', [static::class, 'addCustomDeliveryServices'],
+        static::initHandler('onSaleDeliveryHandlersClassNamesBuildList', [self::class, 'addCustomDeliveryServices'],
             $module);
-        static::initHandler('onSaleDeliveryRestrictionsClassNamesBuildList', [static::class, 'addCustomRestrictions'],
+        static::initHandler('onSaleDeliveryRestrictionsClassNamesBuildList', [self::class, 'addCustomRestrictions'],
             $module);
-        static::initHandler('registerInputTypes', [static::class, 'addCustomTypes'], $module);
+        static::initHandler('registerInputTypes', [self::class, 'addCustomTypes'], $module);
     }
 
     /**

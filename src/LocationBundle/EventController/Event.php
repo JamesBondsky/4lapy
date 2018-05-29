@@ -26,20 +26,20 @@ class Event extends BaseServiceHandler
 
         $module = 'sale';
         static::initHandler('GroupOnAdd', [
-            static::class,
+            self::class,
             'resetLocationGroupCache',
         ], $module);
         static::initHandler('GroupOnUpdate', [
-            static::class,
+            self::class,
             'resetLocationGroupCache',
         ], $module);
         static::initHandler('GroupOnDelete', [
-            static::class,
+            self::class,
             'resetLocationGroupCache',
         ], $module);
     }
 
-    public static function resetLocationGroupCache()
+    public static function resetLocationGroupCache(): void
     {
         TaggedCacheHelper::clearManagedCache(['location:groups']);
     }

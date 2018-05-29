@@ -11,20 +11,18 @@ namespace FourPaws\App;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
+use Psr\Log\LoggerInterface;
 
 abstract class BaseServiceHandler implements ServiceHandlerInterface
 {
-
+    /** @var LoggerInterface */
     protected static $logger;
+    /** @var string  */
     protected static $loggerName = 'event_main';
-    /**
-     * @var EventManager
-     */
-    private static $eventManager;
+    /** @var EventManager */
+    protected static $eventManager;
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;

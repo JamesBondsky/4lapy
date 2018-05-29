@@ -43,40 +43,40 @@ class Event extends BaseServiceHandler
 
         $prefix = 'Address';
         /** сброс кеша */
-        static::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        static::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        static::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
 
         $prefix = 'Pet';
         /** сброс кеша */
-        static::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        static::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        static::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
 
         /** обновление данных в манзане по питомцам */
-        static::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'UpdateManzana']);
-        static::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'UpdateManzana']);
-        static::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'PrepareDelUpdateManzana']);
-        static::initHandler($prefix . 'OnAfterDelete', [static::class, ToLower($prefix) . 'UpdateManzana']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'UpdateManzana']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'UpdateManzana']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'PrepareDelUpdateManzana']);
+        static::initHandler($prefix . 'OnAfterDelete', [self::class, ToLower($prefix) . 'UpdateManzana']);
 
 
         $prefix = 'Referral';
         /** сброс кеша */
-        static::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        static::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        static::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
 
         /** отправка письма после добавления */
-        static::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'SendModerateEmail']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'SendModerateEmail']);
 
         /** отправка данных в манзану после добавления */
-        static::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'SendToManzana']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'SendToManzana']);
 
         $prefix = 'Comments';
         /** сброс кеша */
-        static::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        static::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        static::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
     }
 
     /**

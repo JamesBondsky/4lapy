@@ -7,6 +7,7 @@ use Bitrix\Main\EventManager;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -26,6 +27,11 @@ class EventHandlers extends BaseServiceHandler
      */
     private static $lastSyncMessage;
 
+    /**
+     * @param EventManager $eventManager
+     *
+     * @throws ApplicationCreateException
+     */
     public static function initHandlers(EventManager $eventManager): void
     {
         parent::initHandlers($eventManager);
@@ -37,17 +43,17 @@ class EventHandlers extends BaseServiceHandler
 
         $module = 'iblock';
         foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventType) {
-            static::initHandlerCompatible($eventType, [static::class, 'updateInElastic'], $module);
+            static::initHandlerCompatible($eventType, [self::class, 'updateInElastic'], $module);
         }
-        static::initHandlerCompatible('OnAfterIBlockElementDelete', [static::class, 'deleteInElastic'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementDelete', [self::class, 'deleteInElastic'], $module);
 
         $module = 'catalog';
         foreach (['OnPriceUpdate', 'OnPriceAdd'] as $eventType) {
-            static::initHandlerCompatible($eventType, [static::class, 'updateOfferInElasticOnPriceChange'], $module);
+            static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnPriceChange'], $module);
         }
 
         foreach (['OnProductUpdate', 'OnProductAdd'] as $eventType) {
-            static::initHandlerCompatible($eventType, [static::class, 'updateOfferInElasticOnCatalogProductChange'], $module);
+            static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnCatalogProductChange'], $module);
         }
     }
 
@@ -126,7 +132,7 @@ class EventHandlers extends BaseServiceHandler
         }
 
         $entityType = $this->recognizeEntityType($arFields);
-        if ('' == $entityType) {
+        if ('' === $entityType) {
             return;
         }
 
@@ -138,7 +144,7 @@ class EventHandlers extends BaseServiceHandler
      */
     protected function logException(Throwable $exception): void
     {
-        $this->logger->error(
+        static::$logger->error(
             sprintf(
                 "[%s] %s (%s)\n%s\n",
                 \get_class($exception),

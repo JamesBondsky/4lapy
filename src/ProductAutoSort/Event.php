@@ -49,7 +49,7 @@ class Event extends BaseServiceHandler
     /**
      * Подключить jQuery для административной панели, чтобы обогатить функциональность кастомного свойства.
      */
-    public static function includeJquery()
+    public static function includeJquery(): void
     {
         if (!\defined('ADMIN_SECTION')) {
             return;
@@ -61,8 +61,10 @@ class Event extends BaseServiceHandler
      * Удаляет значения свойств элемента
      *
      * @param $arFields
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public static function deleteEPCValue($arFields)
+    public static function deleteEPCValue($arFields): void
     {
         if (!isset($arFields['ID']) || $arFields['ID'] <= 0) {
             return;
@@ -78,7 +80,7 @@ class Event extends BaseServiceHandler
      *
      * @param $arFields
      */
-    public static function autosortProduct($arFields)
+    public static function autosortProduct($arFields): void
     {
         try {
             $productIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
@@ -87,9 +89,9 @@ class Event extends BaseServiceHandler
 
             if (
                 !isset($arFields['IBLOCK_ID'], $arFields['ID'], $arFields['PROPERTY_VALUES'][$applyAutosortPropId])
-                || $arFields['IBLOCK_ID'] != $productIblockId
+                || (int)$arFields['IBLOCK_ID'] !== $productIblockId
                 //Не отмечен флажок "Автоматически определить категории"
-                || reset($arFields['PROPERTY_VALUES'][$applyAutosortPropId])['VALUE'] == 0
+                || (int)reset($arFields['PROPERTY_VALUES'][$applyAutosortPropId])['VALUE'] === 0
             ) {
                 return;
             }
