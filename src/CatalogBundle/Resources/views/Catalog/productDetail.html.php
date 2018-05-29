@@ -1,7 +1,7 @@
 <?php
 /**
  * @var ProductDetailRequest $productDetailRequest
- * @var CMain $APPLICATION
+ * @var CMain                $APPLICATION
  */
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -14,6 +14,7 @@ use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
+use FourPaws\CatalogBundle\Service\MarkService;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
@@ -34,9 +35,9 @@ $product = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.element.detail',
     '',
     [
-        'CODE' => $productDetailRequest->getProductSlug(),
-        'OFFER_ID' => $offerId,
-        'SET_TITLE' => 'Y',
+        'CODE'            => $productDetailRequest->getProductSlug(),
+        'OFFER_ID'        => $offerId,
+        'SET_TITLE'       => 'Y',
         'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4,
     ],
     false,
@@ -90,18 +91,7 @@ if (null === $offer) {
                     <div class="b-common-item__rank b-common-item__rank--card">
                         <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW); ?>
                         <div class="b-common-item__rank-wrapper">
-                            <?php if ($offer->isNew()) { ?>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Новинка</span>
-                            <?php } ?>
-                            <?php if ($offer->isHit()) { ?>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Хит</span>
-                            <?php } ?>
-                            <?php if ($offer->isPopular()) { ?>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Популярный</span>
-                            <?php } ?>
-                            <?php if ($offer->isSale()) { ?>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Распродажа</span>
-                            <?php } ?>
+                            <?php (new MarkService())->getDetailTopMarks($offer) ?>
                             <?php if ($offer->isShare()) {
                                 /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) { ?>
@@ -132,7 +122,7 @@ if (null === $offer) {
                 null,
                 ['HIDE_ICONS' => 'Y']
             );
-            if(!$hasSetFirst) {
+            if (!$hasSetFirst) {
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.product.bundle',
                     '',
@@ -142,7 +132,7 @@ if (null === $offer) {
                     null,
                     ['HIDE_ICONS' => 'Y']
                 );
-            }?>
+            } ?>
         </div>
         <div class="b-product-card__tab">
             <div class="b-tab">
@@ -222,12 +212,12 @@ if (null === $offer) {
                         'fourpaws:comments',
                         'catalog',
                         [
-                            'HL_ID' => HighloadHelper::getIdByName('Comments'),
-                            'OBJECT_ID' => $product->getId(),
-                            'SORT_DESC' => 'Y',
-                            'ITEMS_COUNT' => 5,
+                            'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                            'OBJECT_ID'          => $product->getId(),
+                            'SORT_DESC'          => 'Y',
+                            'ITEMS_COUNT'        => 5,
                             'ACTIVE_DATE_FORMAT' => 'd j Y',
-                            'TYPE' => 'catalog',
+                            'TYPE'               => 'catalog',
                         ],
                         false,
                         ['HIDE_ICONS' => 'Y']
@@ -246,7 +236,7 @@ if (null === $offer) {
                         'catalog.detail.tab',
                         [
                             'PRODUCT' => $product,
-                            'OFFER' => $offer,
+                            'OFFER'   => $offer,
                         ],
                         false,
                         ['HIDE_ICONS' => 'Y']
@@ -280,17 +270,21 @@ if (null === $offer) {
 
                                                     if ($activeFrom && $activeTo) {
                                                         ?>
-                                                        <?= DateHelper::replaceRuMonth($activeFrom->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                        <?= DateHelper::replaceRuMonth($activeFrom->format('d #n# Y'),
+                                                            DateHelper::GENITIVE) ?>
                                                         —
-                                                        <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                        <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y'),
+                                                            DateHelper::GENITIVE) ?>
                                                         <?php
                                                     } elseif ($activeFrom) {
                                                         ?>
-                                                        С <?= DateHelper::replaceRuMonth($activeFrom->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                        С <?= DateHelper::replaceRuMonth($activeFrom->format('d #n# Y'),
+                                                            DateHelper::GENITIVE) ?>
                                                         <?php
                                                     } elseif ($activeTo) {
                                                         ?>
-                                                        По <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y'), DateHelper::GENITIVE) ?>
+                                                        По <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y'),
+                                                            DateHelper::GENITIVE) ?>
                                                         <?php
                                                     } ?>
                                                 </div>
@@ -344,14 +338,14 @@ if (null === $offer) {
                                     'fourpaws:products.by.prop',
                                     'product.detail.stocks',
                                     [
-                                        'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION,
+                                        'IBLOCK_ID'            => IblockUtils::getIblockId(IblockType::PUBLICATION,
                                             IblockCode::SHARES),
-                                        'ITEM_ID' => $share->getId(),
-                                        'TITLE' => 'Товары по акции',
-                                        'COUNT_ON_PAGE' => 20,
-                                        'PROPERTY_CODE' => 'PRODUCTS',
-                                        'FILTER_FIELD' => 'XML_ID',
-                                        'SHOW_PAGE_NAVIGATION' => false
+                                        'ITEM_ID'              => $share->getId(),
+                                        'TITLE'                => 'Товары по акции',
+                                        'COUNT_ON_PAGE'        => 20,
+                                        'PROPERTY_CODE'        => 'PRODUCTS',
+                                        'FILTER_FIELD'         => 'XML_ID',
+                                        'SHOW_PAGE_NAVIGATION' => false,
                                     ],
                                     null,
                                     [
@@ -375,8 +369,8 @@ $APPLICATION->IncludeComponent(
     '',
     [
         'AREA_FILE_SHOW' => 'file',
-        'PATH' => '/local/include/blocks/advantages.php',
-        'EDIT_TEMPLATE' => '',
+        'PATH'           => '/local/include/blocks/advantages.php',
+        'EDIT_TEMPLATE'  => '',
     ],
     null,
     [
@@ -394,8 +388,8 @@ $APPLICATION->IncludeFile(
     ],
     [
         'SHOW_BORDER' => false,
-        'NAME' => 'Блок похожих товаров',
-        'MODE' => 'php',
+        'NAME'        => 'Блок похожих товаров',
+        'MODE'        => 'php',
     ]
 );
 
