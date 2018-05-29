@@ -60,12 +60,12 @@ class EventHandlers extends BaseServiceHandler
     /**
      * @param $arFields
      */
-    public function updateInElastic($arFields): void
+    public static function updateInElastic($arFields): void
     {
         try {
-            $this->doActionInElastic(CatalogSyncMsg::ACTION_UPDATE, $arFields);
+            self::doActionInElastic(CatalogSyncMsg::ACTION_UPDATE, $arFields);
         } catch (Exception $exception) {
-            $this->logException($exception);
+            self::logException($exception);
         }
     }
 
@@ -74,7 +74,7 @@ class EventHandlers extends BaseServiceHandler
      *
      * @param array $arFields
      */
-    public function updateOfferInElasticOnPriceChange($arFields): void
+    public static function updateOfferInElasticOnPriceChange($arFields): void
     {
         try {
             if (!isset($arFields['PRODUCT_ID']) || $arFields['PRODUCT_ID'] <= 0) {
@@ -91,9 +91,9 @@ class EventHandlers extends BaseServiceHandler
                 return;
             }
 
-            $this->updateInElastic($offerFields);
+            self::updateInElastic($offerFields);
         } catch (Exception $exception) {
-            $this->logException($exception);
+            self::logException($exception);
         }
     }
 
@@ -102,9 +102,9 @@ class EventHandlers extends BaseServiceHandler
      *
      * @param $productId
      */
-    public function updateOfferInElasticOnCatalogProductChange($productId): void
+    public static function updateOfferInElasticOnCatalogProductChange($productId): void
     {
-        $this->updateOfferInElasticOnPriceChange(['PRODUCT_ID' => (int)$productId]);
+        self::updateOfferInElasticOnPriceChange(['PRODUCT_ID' => (int)$productId]);
     }
 
     /**
@@ -113,9 +113,9 @@ class EventHandlers extends BaseServiceHandler
     public function deleteInElastic($arFields): void
     {
         try {
-            $this->doActionInElastic(CatalogSyncMsg::ACTION_DELETE, $arFields);
+            self::doActionInElastic(CatalogSyncMsg::ACTION_DELETE, $arFields);
         } catch (Exception $exception) {
-            $this->logException($exception);
+            self::logException($exception);
         }
     }
 
@@ -125,24 +125,24 @@ class EventHandlers extends BaseServiceHandler
      *
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
-    protected function doActionInElastic(string $action, array $arFields): void
+    protected static function doActionInElastic(string $action, array $arFields): void
     {
         if (!isset($arFields['ID'], $arFields['IBLOCK_ID'])) {
             return;
         }
 
-        $entityType = $this->recognizeEntityType($arFields);
+        $entityType = self::recognizeEntityType($arFields);
         if ('' === $entityType) {
             return;
         }
 
-        $this->publishCatSyncMsg($action, $entityType, (int)$arFields['ID']);
+        self::publishCatSyncMsg($action, $entityType, (int)$arFields['ID']);
     }
 
     /**
      * @param $exception
      */
-    protected function logException(Throwable $exception): void
+    protected static function logException(Throwable $exception): void
     {
         static::$logger->error(
             sprintf(
@@ -161,7 +161,7 @@ class EventHandlers extends BaseServiceHandler
      * @return string
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
-    protected function recognizeEntityType(array $arFields): string
+    protected static function recognizeEntityType(array $arFields): string
     {
         if (!isset($arFields['IBLOCK_ID'])) {
             return '';
@@ -188,7 +188,7 @@ class EventHandlers extends BaseServiceHandler
      * @param string $entityType
      * @param int    $entityId
      */
-    private function publishCatSyncMsg(string $action, string $entityType, int $entityId): void
+    private static function publishCatSyncMsg(string $action, string $entityType, int $entityId): void
     {
         $newCatSyncMsg = new CatalogSyncMsg($action, $entityType, $entityId);
 
