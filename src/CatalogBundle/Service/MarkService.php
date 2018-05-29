@@ -3,9 +3,8 @@
 namespace FourPaws\CatalogBundle\Service;
 
 
-use FourPaws\BitrixOrm\Model\HlbReferenceItem;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\Catalog\Model\Offer;
 
 /**
  * Class DiscountMarkService
@@ -23,6 +22,8 @@ final class MarkService
     public const YELLOW_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">%s</span>';
     public const GREEN_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#44af2b;data-background:#44af2b;">%s</span>';
 
+    public const GREEN_TEMPLATE_DETAIL_TOP = '<<span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">%s</span>';
+
 
     /**
      * Returns mark`s html
@@ -37,16 +38,56 @@ final class MarkService
         /**
          * @todo get content from promo actions
          */
-        
+
         if (!$content) {
             $content = $this->getMarkImage($offer);
         }
-        
+
         if ($content) {
             return \sprintf($this->getMarkTemplate($offer), $content);
         }
 
         return '';
+    }
+
+    /**
+     * Returns mark`s html
+     *
+     * @param Offer $offer
+     *
+     * @return string
+     */
+    public function getDetailTopMarks(Offer $offer): string
+    {
+        $html = '';
+        if ($offer->isNew()) {
+            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Новинка');
+        }
+
+        if ($offer->isHit()) {
+            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Хит');
+        }
+
+        if ($offer->isPopular()) {
+            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Популярный');
+        }
+
+        if ($offer->isSale()) {
+            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Распродажа');
+        }
+
+        return $html;
+    }
+
+    /**
+     * @param $template
+     * @param $content
+     *
+     * @return string
+     */
+    private function getDetailTopMark($template, $content): string
+    {
+        return \sprintf($template, $content);
     }
 
     /**
@@ -70,8 +111,8 @@ final class MarkService
 
         if ($offer->isShare()) {
             /** @var Share $share */
-            $share  = $offer->getShare()->first();
-            if(!empty($share->getPropertyLabel())){
+            $share = $offer->getShare()->first();
+            if (!empty($share->getPropertyLabel())) {
                 return $share->getPropertyLabel();
             }
 

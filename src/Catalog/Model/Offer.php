@@ -1353,6 +1353,14 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
+    public function isPopular():bool
+    {
+        return $this->getPropertyPopular();
+    }
+
+    /**
+     * @return bool
+     */
     public function isShare(): bool
     {
         return !$this->getShare()->isEmpty();
