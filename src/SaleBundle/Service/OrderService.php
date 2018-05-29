@@ -519,7 +519,7 @@ class OrderService implements LoggerAwareInterface
          * Заполнение складов довоза товара для элементов корзины
          */
         $shipmentResults = $selectedDelivery->getShipmentResults();
-        $shipmentDays = ['DC01' => 0];
+        $shipmentDays = [];
         /** @var BasketItem $item */
         foreach ($order->getBasket()->getOrderableItems() as $item) {
             $shipmentPlaceCode = 'DC01';
