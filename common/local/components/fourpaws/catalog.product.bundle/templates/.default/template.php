@@ -24,18 +24,18 @@ $bundle = $arResult['BUNDLE']; ?>
         <h2 class="b-title b-title--advice"><?= $bundle->getName() ?></h2>
     <?php } ?>
     <div class="b-advice__list">
-        <?php /** @var BundleItem $product */
-        $i = -1;
-        $countItems = \count($bundle->getProducts());
-        foreach ($bundle->getProducts() as $product) {
-            $i++;
-            $offer = $product->getOffer(); ?>
-            <div class="b-advice__list-items js-advice-list">
-                <?php if ($i > 0){ ?>
-                <a href="<?= $offer->getLink() ?>">
-                    <?php } ?>
-                    <div class="b-advice__item js-advice-item"
-                         data-offerid="<?= $offer->getId() . '_' . $product->getQuantity(); ?>">
+        <div class="b-advice__list-items js-advice-list">
+            <?php /** @var BundleItem $product */
+            $i = -1;
+            $countItems = \count($bundle->getProducts());
+            foreach ($bundle->getProducts() as $product) {
+                $i++;
+                $offer = $product->getOffer(); ?>
+                <div class="b-advice__item js-advice-item"
+                     data-offerid="<?= $offer->getId() . '_' . $product->getQuantity(); ?>">
+                    <?php if ($i > 0){ ?>
+                    <a href="<?= $offer->getLink() ?>">
+                        <?php } ?>
                         <div class="b-advice__image-wrapper">
                             <?php /** @var ResizeImageDecorator $image */
                             $image = $offer->getResizeImages(140, 140)->first(); ?>
@@ -47,45 +47,45 @@ $bundle = $arResult['BUNDLE']; ?>
                                     role="presentation"/>
                         </div>
                         <span class="b-advice__block">
-                    <div class="product-link">
-                        <span class="b-clipped-text b-clipped-text--advice">
-                            <span>
-                                <?= $offer->getName(); ?>
+                        <div class="product-link">
+                            <span class="b-clipped-text b-clipped-text--advice">
+                                <span>
+                                    <?= $offer->getName(); ?>
+                                </span>
                             </span>
-                        </span>
-                    </div>
-                    <span class="b-advice__info">
-                        <?php $weight = $offer->getCatalogProduct()->getWeight();
-                        if ($weight > 0) { ?>
-                            <span class="b-advice__weight"><?= WordHelper::showWeight($weight) ?></span>
-                        <?php }
-                        $oldPrice = $offer->getOldPrice();
-                        $price = $offer->getPrice();
-                        if ($oldPrice > 0 && $oldPrice > $price) {
-                            ?>
-                            <span class="b-advice__old-price">
-                                <span class="js-value"><?= $oldPrice ?></span>
-                                <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
+                        </div>
+                        <span class="b-advice__info">
+                            <?php $weight = $offer->getCatalogProduct()->getWeight();
+                            if ($weight > 0) { ?>
+                                <span class="b-advice__weight"><?= WordHelper::showWeight($weight) ?></span>
+                            <?php }
+                            $oldPrice = $offer->getOldPrice();
+                            $price = $offer->getPrice();
+                            if ($oldPrice > 0 && $oldPrice > $price) {
+                                ?>
+                                <span class="b-advice__old-price">
+                                    <span class="js-value"><?= $oldPrice ?></span>
+                                    <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
+                                </span>
+                                <?php /** делаем перевод на новую строку далее ибо не помещается - по красоте поправить верстку*/
+                                ?>
+                                <br/>
+                            <?php } ?>
+                            <span class="b-advice__cost">
+                                <?= $price; ?>
+                                <span class="b-ruble b-ruble--advice">₽</span>
                             </span>
-                            <?php /** делаем перевод на новую строку далее ибо не помещается - по красоте поправить верстку*/
-                            ?>
-                            <br/>
-                        <?php } ?>
-                        <span class="b-advice__cost">
-                            <?= $price; ?>
-                            <span class="b-ruble b-ruble--advice">₽</span>
+                            <span> x <?= $product->getQuantity() ?></span>
                         </span>
-                        <span> x <?= $product->getQuantity() ?></span>
-                    </span>
-                    </div>
-                    <?php if ($i > 0){ ?>
-                </a>
-            <?php }
-            if($i<$countItems-1){ ?>
-                <div class="b-advice__sign b-advice__sign--plus"></div>
-            <?php } ?>
-            </div>
-        <?php } ?>
+                            <?php if ($i > 0){ ?>
+                    </a>
+                <?php } ?>
+                </div>
+                <?php if ($i < $countItems - 1) { ?>
+                    <div class="b-advice__sign b-advice__sign--plus"></div>
+                <?php }
+            } ?>
+        </div>
         <div class="b-advice__list-cost">
             <div class="b-advice__sign b-advice__sign--equally">
             </div>

@@ -17,10 +17,11 @@ use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Collection\PriceForAmountCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
@@ -107,7 +108,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     /**
      * Получает коллекцию офферов и проставляет им наличие
      *
-     * @param string $locationCode
+     * @param string     $locationCode
      * @param BasketBase $basket
      *
      * @throws ArgumentException
@@ -128,7 +129,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             if (!$offerId || !$quantity) {
                 continue;
             }
-            $offerIds[] = $offerId;
+            $offerIds[$offerId] = $offerId;
         }
 
         if (empty($offerIds)) {
@@ -145,7 +146,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             return null;
         }
 
-
         foreach ($offerIds as $offerId) {
             if ($offer = OfferQuery::getById($offerId)) {
                 $offers[$offerId] = $offer;
@@ -156,7 +156,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param BasketBase $basket
+     * @param BasketBase      $basket
      * @param ArrayCollection $offers
      * @param StoreCollection $storesAvailable
      *
@@ -168,15 +168,19 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         BasketBase $basket,
         ArrayCollection $offers,
         StoreCollection $storesAvailable
-    ): StockResultCollection {
+    ): StockResultCollection
+    {
         $stockResultCollection = new StockResultCollection();
 
+        /** @var PriceForAmountCollection[] $offerData */
+        $offerData = [];
+        /** @var BasketItem $item */
         foreach ($basket as $item) {
             $basketItem = null;
 
             /** @var Offer $offer */
             foreach ($offers as $offer) {
-            /** @var BasketItem $item */
+                /** @var BasketItem $item */
                 if ((int)$item->getProductId() === $offer->getId()) {
                     $basketItem = $item;
                     break;
@@ -186,10 +190,20 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 continue;
             }
 
+            if (null === $offerData[$item->getProductId()]) {
+                $offerData[$item->getProductId()] = new PriceForAmountCollection();
+            }
+            $offerData[$item->getProductId()]->add((new PriceForAmount())
+                ->setPrice($item->getPrice())
+                ->setAmount($item->getQuantity())
+                ->setBasketCode($basketItem->getBasketCode())
+            );
+        }
+
+        foreach ($offerData as $offerId => $priceForAmountCollection) {
             static::getStocksForItem(
-                $offer,
-                $basketItem->getQuantity(),
-                $basketItem->getPrice(),
+                $offers[$offerId],
+                $priceForAmountCollection,
                 $storesAvailable,
                 $stockResultCollection
             );
@@ -199,10 +213,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Offer $offer
-     * @param int $neededAmount
-     * @param float $price
-     * @param StoreCollection $stores
+     * @param Offer                      $offer
+     * @param PriceForAmountCollection   $priceForAmountCollection
+     * @param StoreCollection            $stores
      * @param StockResultCollection|null $stockResultCollection
      *
      * @return StockResultCollection
@@ -211,57 +224,58 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      */
     public static function getStocksForItem(
         Offer $offer,
-        int $neededAmount,
-        float $price,
+        PriceForAmountCollection $priceForAmountCollection,
         StoreCollection $stores,
         StockResultCollection $stockResultCollection = null
-    ): StockResultCollection {
+    ): StockResultCollection
+    {
         if (null === $stockResultCollection) {
             $stockResultCollection = new StockResultCollection();
         }
 
         /** @var Store $store */
         foreach ($stores->getIterator() as $store) {
-            $amount = $neededAmount;
             $stockResult = new StockResult();
-            $stockResult->setAmount($amount)
+            $stockResult->setPriceForAmount($priceForAmountCollection)
                 ->setOffer($offer)
-                ->setStore($store)
-                ->setPrice($price);
+                ->setStore($store);
+            $delayedStockResult = null;
+            $unavailableStockResult = null;
 
+            $amount = $stockResult->getAmount();
             $stocks = $offer->getAllStocks();
             if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
                 if ($availableAmount < $amount) {
-                    $stockResult->setAmount($availableAmount);
+                    $delayedStockResult = $stockResult->splitByAmount($availableAmount);
                     $amount -= $availableAmount;
                 } else {
                     $amount = 0;
                 }
                 $stockResultCollection->add($stockResult);
+            } else {
+                $delayedStockResult = $stockResult;
             }
 
             /**
              * Товар в наличии не полностью. Часть будет отложена
              */
-            if ($amount) {
+            if ($delayedStockResult) {
                 $storesDelay = $offer->getAllStocks()->getStores()->excludeStore($store);
                 if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
-                    $delayedStockResult = clone $stockResult;
-                    $delayedStockResult->setType(StockResult::TYPE_DELAYED)
-                        ->setAmount($delayedAmount >= $amount ? $amount : $delayedAmount);
+                    $delayedStockResult->setType(StockResult::TYPE_DELAYED);
+                    if ($delayedAmount < $amount) {
+                        $unavailableStockResult = $delayedStockResult->splitByAmount($delayedAmount);
+                    }
                     $stockResultCollection->add($delayedStockResult);
-
-                    $amount = ($delayedAmount >= $amount) ? 0 : $amount - $delayedAmount;
                 }
 
                 /**
                  * Часть товара (или все количество) не в наличии
                  */
-                if ($amount) {
-                    $unavailableStockResult = clone $stockResult;
-                    $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                        ->setAmount($amount);
-                    $stockResultCollection->add($unavailableStockResult);
+                if ($unavailableStockResult) {
+                    $stockResultCollection->add(
+                        $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
+                    );
                 }
             }
         }
@@ -282,7 +296,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         string $deliveryCode,
         string $deliveryZone,
         string $locationCode = ''
-    ): StoreCollection {
+    ): StoreCollection
+    {
         $serviceContainer = Application::getInstance()->getContainer();
         /** @var StoreService $storeService */
         $storeService = $serviceContainer->get('store.service');
@@ -353,13 +368,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
         $result = [
             'MAIN' => [
-                'TITLE' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN'),
+                'TITLE'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN'),
                 'DESCRIPTION' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN_DESCR'),
-                'ITEMS' => [
+                'ITEMS'       => [
                     'CURRENCY' => [
-                        'TYPE' => 'DELIVERY_READ_ONLY',
-                        'NAME' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_CURRENCY'),
-                        'VALUE' => $this->currency,
+                        'TYPE'       => 'DELIVERY_READ_ONLY',
+                        'NAME'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_CURRENCY'),
+                        'VALUE'      => $this->currency,
                         'VALUE_VIEW' => $currency,
                     ],
                 ],

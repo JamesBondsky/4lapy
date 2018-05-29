@@ -3,77 +3,64 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
 use Exception;
 use FourPaws\App\Application;
-use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\App\BaseServiceHandler;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Search\Model\CatalogSyncMsg;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use Throwable;
 
-class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
+class EventHandlers extends BaseServiceHandler
 {
-    use LoggerAwareTrait;
 
+    protected static $loggerName = 'event_catalog';
+    /**
+     * @var SearchService
+     */
+    protected static $searchService;
     /**
      * @var CatalogSyncMsg
      */
     private static $lastSyncMessage;
 
     /**
-     * @var SearchService
+     * @param EventManager $eventManager
+     *
+     * @throws ApplicationCreateException
      */
-    protected $searchService;
-
-    public function __construct()
-    {
-        $this->searchService = Application::getInstance()->getContainer()->get('search.service');
-        $this->setLogger(LoggerFactory::create('CatalogEvent'));
-    }
-
     public static function initHandlers(EventManager $eventManager): void
     {
-        $myself = new self;
+        parent::initHandlers($eventManager);
+        static::$searchService = Application::getInstance()->getContainer()->get('search.service');
 
         /**
          * Т.к. эластику без разницы добавление или обновление, используется соединение этих событий.
          */
 
+        $module = 'iblock';
         foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventType) {
-            $eventManager->addEventHandler('iblock', $eventType, [$myself, 'updateInElastic']);
+            static::initHandlerCompatible($eventType, [self::class, 'updateInElastic'], $module);
         }
-        $eventManager->addEventHandler(
-            'iblock',
-            'OnAfterIBlockElementDelete',
-            [$myself, 'deleteInElastic']
-        );
+        static::initHandlerCompatible('OnAfterIBlockElementDelete', [self::class, 'deleteInElastic'], $module);
 
+        $module = 'catalog';
         foreach (['OnPriceUpdate', 'OnPriceAdd'] as $eventType) {
-            $eventManager->addEventHandler(
-                'catalog',
-                $eventType,
-                [$myself, 'updateOfferInElasticOnPriceChange']
-            );
+            static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnPriceChange'], $module);
         }
 
         foreach (['OnProductUpdate', 'OnProductAdd'] as $eventType) {
-            $eventManager->addEventHandler(
-                'catalog',
-                $eventType,
-                [$myself, 'updateOfferInElasticOnCatalogProductChange']
-            );
+            static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnCatalogProductChange'], $module);
         }
     }
 
     /**
      * @param $arFields
      */
-    public function updateInElastic($arFields)
+    public function updateInElastic($arFields): void
     {
         try {
             $this->doActionInElastic(CatalogSyncMsg::ACTION_UPDATE, $arFields);
@@ -87,7 +74,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
      *
      * @param array $arFields
      */
-    public function updateOfferInElasticOnPriceChange($arFields)
+    public function updateOfferInElasticOnPriceChange($arFields): void
     {
         try {
             if (!isset($arFields['PRODUCT_ID']) || $arFields['PRODUCT_ID'] <= 0) {
@@ -96,7 +83,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
 
             $offerFields = [];
             $offer = OfferQuery::getById((int)$arFields['PRODUCT_ID']);
-            if($offer !== null){
+            if ($offer !== null) {
                 $offerFields = $offer->toArray();
             }
 
@@ -115,7 +102,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
      *
      * @param $productId
      */
-    public function updateOfferInElasticOnCatalogProductChange($productId)
+    public function updateOfferInElasticOnCatalogProductChange($productId): void
     {
         $this->updateOfferInElasticOnPriceChange(['PRODUCT_ID' => (int)$productId]);
     }
@@ -123,7 +110,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
     /**
      * @param $arFields
      */
-    public function deleteInElastic($arFields)
+    public function deleteInElastic($arFields): void
     {
         try {
             $this->doActionInElastic(CatalogSyncMsg::ACTION_DELETE, $arFields);
@@ -135,15 +122,17 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
     /**
      * @param string $action
      * @param array  $arFields
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
-    protected function doActionInElastic(string $action, array $arFields)
+    protected function doActionInElastic(string $action, array $arFields): void
     {
         if (!isset($arFields['ID'], $arFields['IBLOCK_ID'])) {
             return;
         }
 
         $entityType = $this->recognizeEntityType($arFields);
-        if ('' == $entityType) {
+        if ('' === $entityType) {
             return;
         }
 
@@ -153,9 +142,9 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
     /**
      * @param $exception
      */
-    protected function logException(Throwable $exception)
+    protected function logException(Throwable $exception): void
     {
-        $this->logger->error(
+        static::$logger->error(
             sprintf(
                 "[%s] %s (%s)\n%s\n",
                 \get_class($exception),
@@ -170,6 +159,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
      * @param array $arFields
      *
      * @return string
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
     protected function recognizeEntityType(array $arFields): string
     {
@@ -185,7 +175,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
         if (IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS) === $iblockId) {
             return CatalogSyncMsg::ENTITY_TYPE_OFFER;
         }
-        
+
         if (IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS) === $iblockId) {
             return CatalogSyncMsg::ENTITY_TYPE_BRAND;
         }
@@ -198,7 +188,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
      * @param string $entityType
      * @param int    $entityId
      */
-    private function publishCatSyncMsg(string $action, string $entityType, int $entityId)
+    private function publishCatSyncMsg(string $action, string $entityType, int $entityId): void
     {
         $newCatSyncMsg = new CatalogSyncMsg($action, $entityType, $entityId);
 
@@ -212,7 +202,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
             return;
         }
 
-        $this->searchService->getIndexHelper()->publishSyncMessage($newCatSyncMsg);
+        static::$searchService->getIndexHelper()->publishSyncMessage($newCatSyncMsg);
         self::$lastSyncMessage = $newCatSyncMsg;
     }
 }
