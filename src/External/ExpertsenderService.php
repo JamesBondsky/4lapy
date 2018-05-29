@@ -105,7 +105,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $params['type'] = 'email_register';
         }
         if (!isset($params['subscribe'])) {
-            $params['subscribe'] = 0;
+            $params['subscribe'] = false;
         }
         if (!empty($user->getEmail())) {
             $addUserToList = new AddUserToList();
@@ -290,7 +290,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         }
                     } else {
                         /** если нет старой почты или не нашли на сайте регистрируем в сендере */
-                        if ($this->sendEmailAfterRegister($curUser, ['isReg' => 0, 'type' => 'email_change_email'])) {
+                        if ($this->sendEmailAfterRegister($curUser, ['isReg' => false, 'type' => 'email_change_email'])) {
                             $continue = true;
                         }
                     }
@@ -423,10 +423,9 @@ class ExpertsenderService implements LoggerAwareInterface
                     throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
                 }
 
-
                 /** если не нашли id по почте регистрируем в сендере */
                 return $this->sendEmailAfterRegister($user,
-                    ['isReg' => 0, 'type' => 'email_subscribe', 'subscribe' => true]);
+                    ['isReg' => false, 'type' => 'email_subscribe', 'subscribe' => true]);
             } catch (GuzzleException|Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
@@ -467,7 +466,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setId($expertSenderId);
                     $addUserToList->setEmail($user->getEmail());
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', 0));
+                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', false));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
