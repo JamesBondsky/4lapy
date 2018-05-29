@@ -3,9 +3,7 @@
 namespace FourPaws\Appbundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -101,9 +99,9 @@ class UpdateUserPasswords extends Command implements LoggerAwareInterface
         $data = [];
         while ([$externalId, $hash] = fgetcsv($fp)) {
             $data[$externalId] = $hash;
-            if (\count($data) >= 50000) {
+            if (\count($data) >= 10000) {
                 $this->processData($data, $fpo);
-                $progressBar->advance(50000);
+                $progressBar->advance(10000);
                 $data = [];
             }
         }
