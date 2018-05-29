@@ -9,6 +9,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Service\MarkService;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 
 /**
  * @global CMain                 $APPLICATION
@@ -80,9 +81,11 @@ if (!$arParams['ITEM_ATTR_ID']) {
                 ob_start();
                 ?>
                 <div class="b-weight-container b-weight-container--list">
-                    <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
-                       href="javascript:void(0);"></a>
-                    <ul class="b-weight-container__list"><?php
+                    <?/*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
+                       href="javascript:void(0);"></a>*/?>
+                    <ul class="b-weight-container__list">
+                        <?php
+                        $countSizes = 0;
                         foreach ($offers as $offer) {
                             $value = '';
                             switch ($mainCombinationType) {
@@ -98,13 +101,14 @@ if (!$arParams['ITEM_ATTR_ID']) {
                                     $catalogProduct = $offer->getCatalogProduct();
                                     $weightGrams = $catalogProduct->getWeight();
                                     if ($weightGrams > 0) {
-                                        $value = \FourPaws\Helpers\WordHelper::showWeight($weightGrams);
+                                        $value = WordHelper::showWeight($weightGrams);
                                     }
                                     break;
                             }
                             if (empty($value)) {
                                 continue;
                             }
+                            $countSizes++;
                             $isOffersPrinted = true;
                             $addAttr = '';
                             $addAttr .= ' data-price="' . ceil($offer->getPrice()) . '"';
@@ -112,15 +116,57 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
-                            $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : '';
-                            ?>
-                            <li class="b-weight-container__item">
-                            <a<?= $addAttr ?> href="javascript:void(0)"
-                                              class="b-weight-container__link js-price<?= $addClass ?>"><?= $value ?></a>
-                            </li><?php
-                        }
-                        ?>
+                            $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : ''; ?>
+                            <li class="b-weight-container__item<?= $currentOffer->getId() === $offer->getId() ? '' : ' mobile-hidden' ?>">
+                                <a<?= $addAttr ?> href="javascript:void(0)"
+                                              class="b-weight-container__link js-price<?= $addClass ?>">
+                                    <?= $value ?>
+                                </a>
+                            </li>
+                        <?php } ?>
                     </ul>
+                    <?php if($countSizes > 1){ ?>
+                        <div class="b-weight-container__dropdown-list__wrapper _active">
+                            <p class="js-show-weight b-weight-container__link b-weight-container__link--mobile"></p>
+                            <div class="b-weight-container__dropdown-list">
+                                <?php
+                                $i = 0;
+                                foreach ($offers as $offer) {
+                                    $i++;
+                                    $value = '';
+                                    switch ($mainCombinationType) {
+                                        case 'SIZE':
+                                            $value = $offer->getClothingSize()->getName();
+                                            break;
+
+                                        case 'VOLUME':
+                                            $value = $offer->getVolumeReference()->getName();
+                                            break;
+
+                                        case 'WEIGHT':
+                                            $catalogProduct = $offer->getCatalogProduct();
+                                            $weightGrams = $catalogProduct->getWeight();
+                                            if ($weightGrams > 0) {
+                                                $value = WordHelper::showWeight($weightGrams);
+                                            }
+                                            break;
+                                    }
+                                    if (empty($value)) {
+                                        continue;
+                                    } ?>
+                                        <a class="b-weight-container__link js-price mobile-hidden ajaxSend select-hidden-weight"
+                                           href="javascript:void(0);"
+                                           data-price="<?= ceil($offer->getPrice()) ?>"
+                                           data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                           data-offerid="<?= $offer->getId() ?>"
+                                           data-link="<?= $offer->getLink() ?>"
+                                           tabindex="<?= $i ?>">
+                                            <?= $value ?>
+                                        </a>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    <?php } ?>
                 </div>
                 <?php if ($isOffersPrinted) {
                     echo ob_get_clean();
