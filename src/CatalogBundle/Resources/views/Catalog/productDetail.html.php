@@ -93,6 +93,15 @@ if (null === $offer) {
                             <?php if ($offer->isNew()) { ?>
                                 <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Новинка</span>
                             <?php } ?>
+                            <?php if ($offer->isHit()) { ?>
+                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Хит</span>
+                            <?php } ?>
+                            <?php if ($offer->isPopular()) { ?>
+                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Популярный</span>
+                            <?php } ?>
+                            <?php if ($offer->isSale()) { ?>
+                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Распродажа</span>
+                            <?php } ?>
                             <?php if ($offer->isShare()) {
                                 /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) { ?>
