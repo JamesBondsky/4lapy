@@ -3,19 +3,28 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Main\Application;
+use Exception;
 use FourPaws\Migrator\Client\UserGroup as UserGroupClient;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
+use RuntimeException;
 
+/**
+ * Class User
+ *
+ * @package FourPaws\Migrator\Entity
+ */
 class User extends AbstractEntity
 {
     /**
-     * Считаем удалённого со старого сайта администратора нашим админом
+     * Уже не считаем удалённого со старого сайта администратора нашим админом.
      *
      * EXTERNAL -> INTERNAL
      *
      * @return array
-     * @throws \Exception
+     *
+     * @throws Exception
+     * @throws RuntimeException
      */
     public function setDefaults() : array
     {
@@ -34,7 +43,7 @@ class User extends AbstractEntity
             $result = MapTable::addEntity($this->entity, $key, $item);
             
             if (!$result->isSuccess()) {
-                throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
+                throw new RuntimeException("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
         
@@ -76,7 +85,7 @@ class User extends AbstractEntity
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \Bitrix\Main\DB\SqlQueryException
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Exception
+     * @throws Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
@@ -105,10 +114,10 @@ class User extends AbstractEntity
      *
      * @throws \Bitrix\Main\DB\SqlQueryException
      */
-    public function setRawPassword(int $id, string $password, string $checkword)
+    public function setRawPassword(int $id, string $password, string $checkword): void
     {
-        $query = vsprintf('UPDATE b_user SET PASSWORD=\'%2$s\', CHECKWORD=\'%3$s\' WHERE id=\'%1$d\'', func_get_args());
-        
+        $query = \vsprintf('UPDATE b_user SET PASSWORD=\'%2$s\', CHECKWORD=\'%3$s\' WHERE id=\'%1$d\'', \func_get_args());
+
         Application::getConnection()->query($query);
     }
     
