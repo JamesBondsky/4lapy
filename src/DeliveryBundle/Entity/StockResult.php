@@ -3,6 +3,7 @@
 namespace FourPaws\DeliveryBundle\Entity;
 
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\PriceForAmountCollection;
 use FourPaws\StoreBundle\Entity\Store;
 
 class StockResult
@@ -14,14 +15,9 @@ class StockResult
     public const TYPE_UNAVAILABLE = 'unavailable';
 
     /**
-     * @var int
+     * @var PriceForAmountCollection
      */
-    protected $amount;
-
-    /**
-     * @var float
-     */
-    protected $price = 0;
+    protected $priceForAmount;
 
     /**
      * @var string
@@ -45,19 +41,7 @@ class StockResult
      */
     public function getAmount(): int
     {
-        return $this->amount;
-    }
-
-    /**
-     * @param int $amount
-     *
-     * @return StockResult
-     */
-    public function setAmount(int $amount): StockResult
-    {
-        $this->amount = $amount;
-
-        return $this;
+        return $this->priceForAmount->getAmount();
     }
 
     /**
@@ -121,22 +105,85 @@ class StockResult
     }
 
     /**
+     * @return PriceForAmountCollection
+     */
+    public function getPriceForAmount(): PriceForAmountCollection
+    {
+        return $this->priceForAmount;
+    }
+
+    /**
+     * @param PriceForAmountCollection $priceForAmount
+     * @return StockResult
+     */
+    public function setPriceForAmount(PriceForAmountCollection $priceForAmount): StockResult
+    {
+        $this->priceForAmount = $priceForAmount;
+
+        return $this;
+    }
+
+    /**
      * @return float
      */
     public function getPrice(): float
     {
-        return $this->price;
+        return $this->priceForAmount->getPrice();
     }
 
     /**
-     * @param float $price
+     * Разделяет элемент, оставляя в нем нужно кол-во товара.
+     * Возращает собственный клон, содержащий остаток.
      *
-     * @return StockResult
+     * @param $amount
+     *
+     * @return StockResult;
      */
-    public function setPrice(float $price): StockResult
+    public function splitByAmount($amount): StockResult
     {
-        $this->price = $price;
+        $result = clone $this;
 
-        return $this;
+        $neededAmount = $amount;
+        $currentAmountCollection = clone $this->getPriceForAmount();
+        $priceForAmountCollection = new PriceForAmountCollection();
+        foreach ($currentAmountCollection as $item) {
+            if ($neededAmount <= 0) {
+                $priceForAmountCollection->add(clone $item);
+                $currentAmountCollection->removeElement($item);
+                continue;
+            }
+
+            $diff = $item->getAmount() - $neededAmount;
+            if ($diff > 0) {
+                $item->setAmount($neededAmount);
+                $priceForAmountCollection->add(
+                    (clone $item)->setAmount($diff)
+                );
+            }
+
+            $neededAmount -= $item->getAmount();
+        }
+
+        $this->setPriceForAmount($currentAmountCollection);
+        return $result->setPriceForAmount($priceForAmountCollection);
+    }
+
+    /**
+     * @param string $basketCode
+     *
+     * @return PriceForAmount|null
+     */
+    public function getPriceForAmountByBasketCode(string $basketCode): ?PriceForAmount
+    {
+        $result = null;
+        /** @var PriceForAmount $item */
+        foreach ($this->getPriceForAmount()->getIterator() as $item) {
+            if ($item->getBasketCode() === $basketCode) {
+                $result = $item;
+                break;
+            }
+        }
+
+        return $result;
     }
 }

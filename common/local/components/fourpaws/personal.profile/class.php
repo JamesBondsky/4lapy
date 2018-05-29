@@ -112,9 +112,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return null;
         }
 
+        $curUser = $this->currentUserProvider->getCurrentUser();
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
-            $curUser = $this->currentUserProvider->getCurrentUser();
+            ['USER_ID' => $curUser->getId()])) {
 
             TaggedCacheHelper::addManagedCacheTags([
                 'personal:profile:' . $curUser->getId(),

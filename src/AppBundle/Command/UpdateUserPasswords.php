@@ -101,9 +101,9 @@ class UpdateUserPasswords extends Command implements LoggerAwareInterface
         $data = [];
         while ([$externalId, $hash] = fgetcsv($fp)) {
             $data[$externalId] = $hash;
-            if (\count($data) >= 500) {
+            if (\count($data) >= 50000) {
                 $this->processData($data, $fpo);
-                $progressBar->advance(500);
+                $progressBar->advance(50000);
                 $data = [];
             }
         }

@@ -77,7 +77,11 @@ class DaDataLocationAdapter extends BaseAdapter
             $cities = [];
             if (!empty($entity->getKladrId())) {
                 $city = !empty($entity->getCity()) ? $entity->getCity() : '';
-                $fullCity = $this->getFullCity($entity);
+                $fullCities = [];
+                $fullCities[] = $fullCity = $this->getFullCity($entity);
+                if(strpos($fullCity, 'рабочий')){
+                    $fullCities[] = str_replace(' рабочий', '', $fullCity);
+                }
                 $region = $this->getRegion($entity);
                 try {
                     $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE, $entity->getKladrId());
@@ -86,11 +90,19 @@ class DaDataLocationAdapter extends BaseAdapter
                     $logger = LoggerFactory::create('dadataAdapter');
                     $logger->error($e->getMessage(), $e);
                 }
-                /** фикс - так как по одному кладру почпу то находит несколько местоположений */
+                /** двухфакторный фикс - первый отбирает частичное соответствие населенного пунка, второй полное соответствие если рещультатов больше 1 */
                 if (\count($cities) > 1) {
-                    foreach ($cities as $key => $city) {
-                        if ($fullCity !== $city['NAME']) {
+                    foreach ($cities as $key => $cityItem) {
+                        if (strpos($cityItem['NAME'], $city) === false) {
                             unset($cities[$key]);
+                        }
+                    }
+                    /** если после частичного отбора все равно много местоположений - отбираем по полному совпадению */
+                    if (\count($cities) > 1) {
+                        foreach ($cities as $key => $cityItem) {
+                            if (!\in_array($cityItem['NAME'], $fullCities, true)) {
+                                unset($cities[$key]);
+                            }
                         }
                     }
                 }
