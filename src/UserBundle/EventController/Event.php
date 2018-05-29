@@ -259,7 +259,7 @@ class Event extends BaseServiceHandler
     /**
      * @param $arFields
      */
-    public function clearUserCache($arFields): void
+    public static function clearUserCache($arFields): void
     {
         TaggedCacheHelper::clearManagedCache([
             'user:' . $arFields['ID'],

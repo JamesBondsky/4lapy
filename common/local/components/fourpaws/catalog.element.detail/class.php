@@ -397,14 +397,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      */
     public function getCurrentOffer(Product $product, int $offerId = 0): Offer
     {
-        $offers = $product->getOffers();
         if ($offerId > 0) {
-            foreach ($offers as $offer) {
-                if ($offer->getId() === $offerId) {
-                    break;
-                }
+            $offer = OfferQuery::getById($offerId);
+            if($offer === null){
+                $offers = $product->getOffers();
             }
         } else {
+            $offers = $product->getOffers();
             foreach ($offers as $offer) {
                 if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
                     break;
