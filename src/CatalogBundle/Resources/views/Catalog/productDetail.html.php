@@ -91,7 +91,7 @@ if (null === $offer) {
                     <div class="b-common-item__rank b-common-item__rank--card">
                         <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW); ?>
                         <div class="b-common-item__rank-wrapper">
-                            <?php (new MarkService())->getDetailTopMarks($offer) ?>
+                            <?php MarkService::getDetailTopMarks($offer) ?>
                             <?php if ($offer->isShare()) {
                                 /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) { ?>

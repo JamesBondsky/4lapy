@@ -33,18 +33,18 @@ final class MarkService
      *
      * @return string
      */
-    public function getMark(Offer $offer, $content = ''): string
+    public static function getMark(Offer $offer, $content = ''): string
     {
         /**
          * @todo get content from promo actions
          */
 
         if (!$content) {
-            $content = $this->getMarkImage($offer);
+            $content = self::getMarkImage($offer);
         }
 
         if ($content) {
-            return \sprintf($this->getMarkTemplate($offer), $content);
+            return \sprintf(self::getMarkTemplate($offer), $content);
         }
 
         return '';
@@ -57,23 +57,23 @@ final class MarkService
      *
      * @return string
      */
-    public function getDetailTopMarks(Offer $offer): string
+    public static function getDetailTopMarks(Offer $offer): string
     {
         $html = '';
         if ($offer->isNew()) {
-            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Новинка');
+            $html .= self::getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Новинка');
         }
 
         if ($offer->isHit()) {
-            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Хит');
+            $html .= self::getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Хит');
         }
 
         if ($offer->isPopular()) {
-            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Популярный');
+            $html .= self::getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Популярный');
         }
 
         if ($offer->isSale()) {
-            $html .= $this->getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Распродажа');
+            $html .= self::getDetailTopMark(self::GREEN_TEMPLATE_DETAIL_TOP, 'Распродажа');
         }
 
         return $html;
@@ -85,7 +85,7 @@ final class MarkService
      *
      * @return string
      */
-    private function getDetailTopMark($template, $content): string
+    private static function getDetailTopMark($template, $content): string
     {
         return \sprintf($template, $content);
     }
@@ -95,14 +95,24 @@ final class MarkService
      *
      * @return string
      */
-    private function getMarkImage(Offer $offer): string
+    private static function getMarkImage(Offer $offer): string
     {
         if ($offer->isHit()) {
             return self::MARK_HIT_IMAGE;
         }
 
+        if ($offer->isPopular()) {
+            /** @todo возможно другой шаблон */
+            return self::MARK_HIT_IMAGE;
+        }
+
         if ($offer->isNew()) {
             return self::MARK_NEW_IMAGE;
+        }
+
+        if ($offer->isSale()) {
+            /** @todo возможно другой шаблон */
+            return self::MARK_SALE_IMAGE;
         }
 
         if ($offer->isSimpleSaleAction()) {
@@ -127,7 +137,7 @@ final class MarkService
      *
      * @return string
      */
-    private function getMarkTemplate(Offer $offer): string
+    private static function getMarkTemplate(Offer $offer): string
     {
         if ($offer->isHit()) {
             return self::YELLOW_TEMPLATE;
@@ -135,6 +145,16 @@ final class MarkService
 
         if ($offer->isNew()) {
             return self::GREEN_TEMPLATE;
+        }
+
+        if ($offer->isSale()) {
+            /** @todo возможно другой шаблон */
+            return self::DEFAULT_TEMPLATE;
+        }
+
+        if ($offer->isPopular()) {
+            /** @todo возможно другой шаблон */
+            return self::YELLOW_TEMPLATE;
         }
 
         return self::DEFAULT_TEMPLATE;
