@@ -68,6 +68,8 @@ class Event extends BaseServiceHandler
 
         /** очистка кеша пользователя */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class,'clearUserCache'], $module);
+        /** чистим кеш юзера при авторизации */
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class,'clearUserCache'], $module);
     }
 
     /**
