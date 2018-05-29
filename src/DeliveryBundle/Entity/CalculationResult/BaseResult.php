@@ -422,10 +422,10 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                         /**
                          * Если может быть поставлено меньшее, чем нужно, количество
                          */
-                        $stockResultForOffer->setAmount($amount);
+                        $unavailableStockResultForOffer = $stockResultForOffer->splitByAmount($amount);
+
                         $this->stockResult->add(
-                            (clone $stockResultForOffer)->setAmount($diff)
-                                ->setType(StockResult::TYPE_UNAVAILABLE)
+                            $unavailableStockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE)
                         );
                     }
                 } else {
