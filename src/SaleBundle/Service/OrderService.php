@@ -39,7 +39,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -321,7 +320,7 @@ class OrderService implements LoggerAwareInterface
         $needRecalculateBasket = false;
         if (null === $basket) {
             $needRecalculateBasket = true;
-            $basket = $this->basketService->getBasket()->createClone();
+            $basket = $this->basketService->getBasket();
         }
 
         if ($basket->getOrderableItems()->isEmpty()) {
@@ -351,45 +350,47 @@ class OrderService implements LoggerAwareInterface
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
-                $toUpdate = [];
-                /** @var StockResult $resultByOffer */
-                $resultByOffer = $orderable->filterByOfferId($basketItem->getProductId())->first();
+                $toUpdate = [
+                    'CUSTOM_PRICE' => 'Y'
+                ];
 
-
-                if (!$resultByOffer) {
+                $amount = 0;
+                $resultsByOffer = $orderable->filterByOfferId($basketItem->getProductId());
+                if (!$resultsByOffer->isEmpty()) {
+                    foreach ($resultsByOffer as $resultByOffer) {
+                        if ($priceForAmount = $resultByOffer->getPriceForAmountByBasketCode((string)$basketItem->getBasketCode())) {
+                            $amount += $priceForAmount->getAmount();
+                        }
+                    }
+                }
+                $diff = $basketItem->getQuantity() - $amount;
+                if ($amount === 0) {
                     $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
-                } else {
-                    $amount = 0;
-                    if ($priceForAmount = $resultByOffer->getPriceForAmountByBasketCode((string)$basketItem->getBasketCode())) {
-                        $amount = $priceForAmount->getAmount();
-                    }
+                } elseif ($diff > 0) {
+                    $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
 
-                    $diff = $basketItem->getQuantity() - $amount;
-                    if ($amount === 0) {
-                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
-                    } elseif ($diff > 0) {
-                        $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
-                        $this->basketService->addOfferToBasket(
-                            $basketItem->getProductId(),
-                            $diff,
-                            [
-                                'DELAY' => BitrixUtils::BX_BOOL_TRUE,
-                                'PROPS' => [
-                                    [
-                                        'NAME'  => 'IS_TEMPORARY',
-                                        'CODE'  => 'IS_TEMPORARY',
-                                        'VALUE' => 'Y',
-                                    ],
-                                ],
-                            ],
-                            false,
-                            $basket
-                        );
-                    }
+                    $props = $basketItem->getPropertyCollection()->getPropertyValues();
+                    $props[] = [
+                        'NAME'  => 'IS_TEMPORARY',
+                        'CODE'  => 'IS_TEMPORARY',
+                        'VALUE' => 'Y',
+                    ];
+
+                    $this->basketService->addOfferToBasket(
+                        $basketItem->getProductId(),
+                        $diff,
+                        [
+                            'CUSTOM_PRICE' => 'Y',
+                            'DELAY' => BitrixUtils::BX_BOOL_TRUE,
+                            'PROPS' => $props,
+                        ],
+                        false,
+                        $basket
+                    );
                 }
 
                 if (!empty($toUpdate)) {
-                    $basketItem->setFieldsNoDemand($toUpdate);
+                    $basketItem->setFields($toUpdate);
                 }
             }
         }
@@ -988,16 +989,19 @@ class OrderService implements LoggerAwareInterface
                     }
                 }
 
+                $rewriteFields = [
+                    'PRICE' => $basketItem->getPrice(),
+                    'BASE_PRICE' => $basketItem->getBasePrice(),
+                    'CUSTOM_PRICE' => 'Y',
+                    'DISCOUNT' => $basketItem->getDiscountPrice(),
+                    'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
+                ];
+
                 if ($availableAmount) {
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $availableAmount,
-                        [
-                            'PRICE' => $basketItem->getPrice(),
-                            'BASE_PRICE' => $basketItem->getBasePrice(),
-                            'DISCOUNT' => $basketItem->getDiscountPrice(),
-                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
-                        ],
+                        $rewriteFields,
                         false,
                         $basket1
                     );
@@ -1006,12 +1010,7 @@ class OrderService implements LoggerAwareInterface
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $delayedAmount,
-                        [
-                            'PRICE' => $basketItem->getPrice(),
-                            'BASE_PRICE' => $basketItem->getBasePrice(),
-                            'DISCOUNT' => $basketItem->getDiscountPrice(),
-                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
-                        ],
+                        $rewriteFields,
                         false,
                         $basket2
                     );
@@ -1118,6 +1117,10 @@ class OrderService implements LoggerAwareInterface
      */
     public function createOrder(OrderStorage $storage): Order
     {
+        if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
+
         /**
          * Разделение заказов
          */
@@ -1185,6 +1188,10 @@ class OrderService implements LoggerAwareInterface
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);
+        }
+
+        if ($isDiscountEnabled) {
+            Manager::enableExtendsDiscount();
         }
 
         $this->orderStorageService->clearStorage($storage);
