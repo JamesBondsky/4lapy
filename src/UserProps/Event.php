@@ -32,14 +32,14 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAdminListDisplay', [self::class, 'OnAdminListDisplayHandler'], $module);
     }
 
-    public function addAdminScriptPropLocation(): void
+    public static function addAdminScriptPropLocation(): void
     {
         Asset::getInstance()->addJs(
             '/local/templates/.default/components/bitrix/system.field.edit/sale_location/editScript.js'
         );
     }
 
-    public function OnAdminListDisplayHandler(): void
+    public static function OnAdminListDisplayHandler(): void
     {
         \CUtil::InitJSCore(['jquery']);
     }
