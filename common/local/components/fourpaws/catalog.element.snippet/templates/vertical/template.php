@@ -3,26 +3,26 @@
 }
 
 use Bitrix\Main\Localization\Loc;
-use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\CatalogBundle\Service\MarkService;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
 
 /**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
- * @var CatalogElementSnippet $component
+ * @global CMain                 $APPLICATION
+ * @var array                    $arParams
+ * @var array                    $arResult
+ * @var CatalogElementSnippet    $component
  * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $componentPath
+ * @var string                   $templateName
+ * @var string                   $componentPath
  *
- * @var Product $product
- * @var OfferCollection $offers
- * @var Offer $offer
- * @var Offer $currentOffer
+ * @var Product                  $product
+ * @var OfferCollection          $offers
+ * @var Offer                    $offer
+ * @var Offer                    $currentOffer
  */
 
 $product = $arResult['PRODUCT'];
@@ -35,8 +35,9 @@ $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['I
 if (!$arParams['ITEM_ATTR_ID']) {
     $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
 } ?>
-    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>" data-productid="<?= $product->getId() ?>">
-        <?= $component->getMarkService()->getMark($currentOffer) ?>
+    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
+         data-productid="<?= $product->getId() ?>">
+        <?= MarkService::getMark($currentOffer) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
                 <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
@@ -48,7 +49,8 @@ if (!$arParams['ITEM_ATTR_ID']) {
             <?php } ?>
         </span>
         <div class="b-common-item__info-center-block">
-            <a class="b-common-item__description-wrap js-item-link track-recommendation" href="<?= $currentOffer->getLink() ?>">
+            <a class="b-common-item__description-wrap js-item-link track-recommendation"
+               href="<?= $currentOffer->getLink() ?>">
                 <span class="b-clipped-text b-clipped-text--three">
                     <span>
                         <?php if ($product->getBrand()) {
@@ -95,7 +97,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                                 case 'WEIGHT':
                                     $catalogProduct = $offer->getCatalogProduct();
                                     $weightGrams = $catalogProduct->getWeight();
-                                    if($weightGrams > 0) {
+                                    if ($weightGrams > 0) {
                                         $value = \FourPaws\Helpers\WordHelper::showWeight($weightGrams);
                                     }
                                     break;
@@ -113,8 +115,8 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : '';
                             ?>
                             <li class="b-weight-container__item">
-                                <a<?= $addAttr ?> href="javascript:void(0)"
-                                                  class="b-weight-container__link js-price<?= $addClass ?>"><?= $value ?></a>
+                            <a<?= $addAttr ?> href="javascript:void(0)"
+                                              class="b-weight-container__link js-price<?= $addClass ?>"><?= $value ?></a>
                             </li><?php
                         }
                         ?>
@@ -131,7 +133,8 @@ if (!$arParams['ITEM_ATTR_ID']) {
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                               data-price="<?= ceil($currentOffer->getPrice()) ?>" data-offerid="<?= $currentOffer->getId() ?>"
+                               data-price="<?= ceil($currentOffer->getPrice()) ?>"
+                               data-offerid="<?= $currentOffer->getId() ?>"
                                data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                                data-link="<?= $currentOffer->getLink() ?>"></a>
                         </li>
@@ -195,19 +198,19 @@ if (!$arParams['ITEM_ATTR_ID']) {
 //
 if (isset($arParams['BIG_DATA']['RCM_ID']) && !empty($arParams['BIG_DATA']['RCM_ID'])) {
     $jsProduct = [
-        'ID' => $product->getId(),
+        'ID'     => $product->getId(),
         'RCM_ID' => $arParams['BIG_DATA']['RCM_ID'] ?? '',
     ];
     $jsSelectors = [
-        'item' => '#' . $arParams['ITEM_ATTR_ID'],
+        'item'                => '#' . $arParams['ITEM_ATTR_ID'],
         'trackRecommendation' => '#' . $arParams['ITEM_ATTR_ID'] . ' .track-recommendation',
     ];
     $jsParams = [
         'cookiePrefix' => $arParams['BIG_DATA']['cookiePrefix'] ?? '',
         'cookieDomain' => $arParams['BIG_DATA']['cookieDomain'] ?? '',
-        'serverTime' => $arParams['BIG_DATA']['serverTime'] ?? 0,
-        'product' => $jsProduct,
-        'selectors' => $jsSelectors,
+        'serverTime'   => $arParams['BIG_DATA']['serverTime'] ?? 0,
+        'product'      => $jsProduct,
+        'selectors'    => $jsSelectors,
     ];
 
     ?>
