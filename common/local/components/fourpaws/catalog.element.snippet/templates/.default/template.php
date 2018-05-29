@@ -1,16 +1,16 @@
 <?php
 /**
- * @var array $arParams
- * @var array $arResult
+ * @var array                 $arParams
+ * @var array                 $arResult
  *
  * @var CatalogElementSnippet $component
  *
- * @var Product $product
- * @var OfferCollection $offers
- * @var Offer $offer
- * @var Offer $currentOffer
+ * @var Product               $product
+ * @var OfferCollection       $offers
+ * @var Offer                 $offer
+ * @var Offer                 $currentOffer
  *
- * @global \CMain $APPLICATION
+ * @global \CMain             $APPLICATION
  */
 
 use Bitrix\Main\Web\Uri;
@@ -18,6 +18,7 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\CatalogBundle\Service\MarkService;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\HighloadHelper;
@@ -31,11 +32,11 @@ $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
-$countOffersInMobile = 3;?>
+$countOffersInMobile = 3; ?>
 
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
-    <?= $component->getMarkService()->getMark($currentOffer) ?>
+    <?= MarkService::getMark($currentOffer) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
             <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
@@ -64,13 +65,13 @@ $countOffersInMobile = 3;?>
                 'fourpaws:comments',
                 'catalog.snippet',
                 [
-                    'HL_ID' => HighloadHelper::getIdByName('Comments'),
-                    'OBJECT_ID' => $productId,
-                    'SORT_DESC' => 'Y',
-                    'ITEMS_COUNT' => 5,
+                    'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                    'OBJECT_ID'          => $productId,
+                    'SORT_DESC'          => 'Y',
+                    'ITEMS_COUNT'        => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
-                    'TYPE' => 'catalog',
-                    'ITEM_LINK' => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
+                    'TYPE'               => 'catalog',
+                    'ITEM_LINK'          => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
@@ -109,9 +110,9 @@ $countOffersInMobile = 3;?>
             }
             ?>
             <div class="b-weight-container b-weight-container--list">
-                <?/*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
+                <? /*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
                    href="javascript:void(0);"
-                   title=""></a>*/?>
+                   title=""></a>*/ ?>
                 <ul class="b-weight-container__list">
                     <?php
                     $i = 0;
@@ -126,7 +127,7 @@ $countOffersInMobile = 3;?>
                             if ($offer->getVolumeReference()) {
                                 $value = $offer->getVolumeReference()->getName();
                             } elseif ($weight = $offer->getCatalogProduct()->getWeight()) {
-                                if($weight > 0) {
+                                if ($weight > 0) {
                                     $value = WordHelper::showWeight($weight, true, 999);
                                 }
                             }
@@ -155,7 +156,8 @@ $countOffersInMobile = 3;?>
                 </ul>
                 <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > $countOffersInMobile ? ' _active' : '' ?>">
                     <?php if ($offers->count() > $countOffersInMobile) { ?>
-                        <p class="js-show-weight" href="javascript:void(0)">Еще <?= $offers->count() - $countOffersInMobile ?></p>
+                        <p class="js-show-weight" href="javascript:void(0)">
+                            Еще <?= $offers->count() - $countOffersInMobile ?></p>
                     <?php } ?>
                     <div class="b-weight-container__dropdown-list"></div>
                 </div>
@@ -167,7 +169,8 @@ $countOffersInMobile = 3;?>
                     <li class="b-weight-container__item">
                         <a href="javascript:void(0)"
                            class="b-weight-container__link js-price active-link"
-                           data-price="<?= ceil($currentOffer->getPrice()) ?>" data-offerid="<?= $currentOffer->getId() ?>"
+                           data-price="<?= ceil($currentOffer->getPrice()) ?>"
+                           data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                            data-link="<?= $currentOffer->getLink() ?>"></a>
                     </li>
