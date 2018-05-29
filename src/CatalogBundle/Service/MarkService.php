@@ -22,7 +22,7 @@ final class MarkService
     public const YELLOW_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">%s</span>';
     public const GREEN_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#44af2b;data-background:#44af2b;">%s</span>';
 
-    public const GREEN_TEMPLATE_DETAIL_TOP = '<<span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">%s</span>';
+    public const GREEN_TEMPLATE_DETAIL_TOP = '<span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">%s</span>';
 
 
     /**
