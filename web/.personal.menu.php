@@ -77,7 +77,7 @@ $aMenuLinks = [
         '?logout=yes',
         [],
         ['icon' => 'icon-exit'],
-        "\$GLOBALS['isAuth']",
+        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
     ],
     [
         'Вернуться',

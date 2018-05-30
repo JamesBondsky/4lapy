@@ -1,7 +1,15 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var \CMain $APPLICATION */
+/** @var array $arResult */
+
+if (!$arResult['canEditProfile']) {
+    return;
+}
+
+?>
 <div class="b-account-profile__link-block">
     <a class="b-link b-link--edit-data js-open-popup js-open-popup--edit-data"
        href="javascript:void(0)"
