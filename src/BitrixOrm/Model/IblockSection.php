@@ -175,6 +175,6 @@ abstract class IblockSection extends BitrixArrayItemBase
      */
     public function getSectionPageUrl(): string
     {
-        return $this->SECTION_PAGE_URL;
+        return $this->SECTION_PAGE_URL ?? '';
     }
 }

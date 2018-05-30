@@ -124,7 +124,6 @@ class BasketComponent extends CBitrixComponent
             $basket = $this->basketService->getBasket();
         }
 
-        $this->setItems($basket);
 
         $this->arResult['BASKET'] = $basket;
 
@@ -137,6 +136,9 @@ class BasketComponent extends CBitrixComponent
                 $order->doFinalAction(true);
             }
         }
+
+        $this->setItems($basket);
+
         // необходимо подгрузить подарки
         $this->loadPromoDescriptions();
         $this->setCoupon();
