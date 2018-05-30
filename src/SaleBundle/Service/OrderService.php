@@ -516,33 +516,40 @@ class OrderService implements LoggerAwareInterface
         }
 
         /**
-         * Заполнение складов довоза товара для элементов корзины
+         * Заполнение складов довоза товара для элементов корзины (кроме доставок 04 и 06)
          */
-        $shipmentResults = $selectedDelivery->getShipmentResults();
-        $shipmentDays = [];
-        /** @var BasketItem $item */
-        foreach ($order->getBasket()->getOrderableItems() as $item) {
-            $shipmentPlaceCode = 'DC01';
-            /** @var DeliveryScheduleResult $deliveryResult */
-            if ($shipmentResults &&
-                ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
-            ) {
-                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
-                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
-                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
-                    $shipmentDays[$shipmentPlaceCode] = $days;
+        if (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
+            (
+                ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
+                $this->deliveryService->isInnerPickup($selectedDelivery)
+            ))
+        ) {
+            $shipmentResults = $selectedDelivery->getShipmentResults();
+            $shipmentDays = [];
+            /** @var BasketItem $item */
+            foreach ($order->getBasket()->getOrderableItems() as $item) {
+                $shipmentPlaceCode = 'DC01';
+                /** @var DeliveryScheduleResult $deliveryResult */
+                if ($shipmentResults &&
+                    ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
+                ) {
+                    $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
+                    $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
+                    if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
+                        $shipmentDays[$shipmentPlaceCode] = $days;
+                    }
                 }
-            }
 
-            $this->basketService->setBasketItemPropertyValue(
-                $item,
-                'SHIPMENT_PLACE_CODE',
-                $shipmentPlaceCode
-            );
-        }
-        if (!empty($shipmentDays)) {
-            arsort($shipmentDays);
-            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
+                $this->basketService->setBasketItemPropertyValue(
+                    $item,
+                    'SHIPMENT_PLACE_CODE',
+                    $shipmentPlaceCode
+                );
+            }
+            if (!empty($shipmentDays)) {
+                arsort($shipmentDays);
+                $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
+            }
         }
 
         /**

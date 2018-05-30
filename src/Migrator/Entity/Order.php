@@ -47,6 +47,8 @@ use FourPaws\SapBundle\EventController\Event;
  */
 class Order extends AbstractEntity
 {
+    public const DEFAULT_DELIVERY_ID = 27;
+
     protected $propertyMap;
 
     /**
@@ -385,7 +387,8 @@ class Order extends AbstractEntity
     protected function addDeliveryToOrder(array $data, SaleOrder $order): SaleOrder
     {
         $shipmentCollection = $order->getShipmentCollection();
-        $deliveryId = MapTable::getInternalIdByExternalId($data['DELIVERY_ID'], Delivery::ENTITY_NAME);
+
+        $deliveryId = MapTable::getInternalIdByExternalId($data['DELIVERY_ID'], Delivery::ENTITY_NAME) ? $data['DELIVERY_ID'] : self::DEFAULT_DELIVERY_ID;
 
         $service = DeliveryManager::getObjectById($deliveryId);
 
