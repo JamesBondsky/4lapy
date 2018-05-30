@@ -388,7 +388,9 @@ class Order extends AbstractEntity
     {
         $shipmentCollection = $order->getShipmentCollection();
 
-        $deliveryId = MapTable::getInternalIdByExternalId($data['DELIVERY_ID'], Delivery::ENTITY_NAME) ? $data['DELIVERY_ID'] : self::DEFAULT_DELIVERY_ID;
+        $deliveryId = $data['DELIVERY_ID']
+            ? MapTable::getInternalIdByExternalId($data['DELIVERY_ID'], Delivery::ENTITY_NAME)
+            : self::DEFAULT_DELIVERY_ID;
 
         $service = DeliveryManager::getObjectById($deliveryId);
 
