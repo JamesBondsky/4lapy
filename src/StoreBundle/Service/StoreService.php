@@ -731,6 +731,7 @@ class StoreService implements LoggerAwareInterface
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             $result['sortHtml'] = $sortHtml;
+            $result['all_cities'] = false;
             /** имя местоположения для страницы магазинов */
             if (!empty($params['region_id']) || !empty($params['city_code'])) {
                 $result['location_name'] = '';//если пустое что-то пошло не так
@@ -745,6 +746,7 @@ class StoreService implements LoggerAwareInterface
                 }
             } else {
                 $result['location_name'] = 'Все города';
+                $result['all_cities'] = true;
             }
             if ($params['returnActiveServices']) {
                 $result['services'] = $servicesList;
