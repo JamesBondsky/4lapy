@@ -1928,8 +1928,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getFullDeliveryAvailability(): array
     {
         if (null === $this->fullDeliveryAvailability) {
-            $isByRequest = $this->isByRequest();
-
             $canDeliver = !($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator()
                 || $this->isDeliveryAreaRestrict());
             /** @var DeliveryService $deliveryService */
@@ -1948,9 +1946,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                             break;
                     }
                 }
-                if ($isByRequest && !empty($result)) {
-                    $result[] = static::AVAILABILITY_BY_REQUEST;
-                }
+
                 $this->fullDeliveryAvailability[$zone] = $result;
             }
         }
@@ -1970,6 +1966,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
          * @var array $deliveries
          */
         foreach ($this->getFullDeliveryAvailability() as $zone => $deliveries) {
+            if (!empty($deliveries) && $this->isByRequest()) {
+                $deliveries[] = static::AVAILABILITY_BY_REQUEST;
+            }
+
             foreach ($deliveries as $delivery) {
                 $result[] = $zone . '_' . $delivery;
             }
