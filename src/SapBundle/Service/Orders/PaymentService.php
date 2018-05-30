@@ -30,6 +30,7 @@ use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Dto\Out\Payment\Debit as OutDebit;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
+use FourPaws\SapBundle\Exception\OrderPaymentReverseException;
 use FourPaws\SapBundle\Exception\PaymentException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
@@ -125,6 +126,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws ObjectNotFoundException
      * @throws SalePaymentException
      * @throws SystemException
+     * @throws OrderPaymentReverseException
      * @throws \Exception
      */
     public function paymentTaskPerform(Order $paymentTask)
@@ -193,7 +195,15 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
             $this->out($debit);
         } elseif ($return) {
-            $this->tryPaymentReverse($order);
+            $orderInfo = $this->sberbankProcessing->getOrderStatusByOrderId($orderInvoiceId);
+            $orderStatus = $orderInfo['orderStatus'];
+            if ($orderStatus === Sberbank::ORDER_STATUS_HOLD) {
+                $this->tryPaymentReverse($order);
+            } elseif ($orderStatus === Sberbank::ORDER_STATUS_PAID) {
+                $this->tryPaymentRefund($order);
+            } else {
+                throw new OrderPaymentReverseException(sprintf('Invalid order status %s', $orderStatus));
+            }
         }
     }
 
@@ -225,6 +235,33 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $orderInvoiceId = $this->getOrderInvoiceId($order);
         $this->response(function () use ($orderInvoiceId) {
             return $this->sberbankProcessing->reversePayment($orderInvoiceId);
+        });
+
+        /** @var Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            $payment->setPaid('N');
+            $payment->save();
+        }
+
+        $order->save();
+    }
+
+    /**
+     * @param BitrixOrder $order
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws SalePaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function tryPaymentRefund(BitrixOrder $order) {
+        $orderInvoiceId = $this->getOrderInvoiceId($order);
+        $this->response(function () use ($orderInvoiceId) {
+            return $this->sberbankProcessing->refundPayment($orderInvoiceId, 0);
         });
 
         /** @var Payment $payment */
