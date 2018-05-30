@@ -533,16 +533,13 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-        if (!$email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue()) {
-            throw new ExpertsenderServiceException('order email is empty');
-        }
-
         $properties = $orderService->getOrderPropertiesByCode($order, [
             'NAME',
             'DELIVERY_DATE',
             'PHONE',
             'USER_REGISTERED',
             'COM_WAY',
+            'EMAIL'
         ]);
 
         /**
@@ -550,6 +547,11 @@ class ExpertsenderService implements LoggerAwareInterface
          */
         if ($properties['COM_WAY'] === OrderPropertyService::COMMUNICATION_ONE_CLICK) {
             return 0;
+        }
+
+
+        if (!$email = $properties['EMAIL']) {
+            throw new ExpertsenderServiceException('order email is empty', ['orderId' => $order->getId()]);
         }
 
         $properties['BONUS_COUNT'] = $orderService->getOrderBonusSum($order);
