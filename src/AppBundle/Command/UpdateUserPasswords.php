@@ -3,9 +3,7 @@
 namespace FourPaws\Appbundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -20,22 +18,15 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Class MigrateData
- *
- * @package FourPaws\Console\Command
- *
- * Миграция данных со старого сайта из консоли
- */
 class UpdateUserPasswords extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
     private const OPT_FILE = 'file';
 
-    private const PROGRESS_BAR_FORMAT = ' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%';
+    private const OPT_OUT_FILE = 'out';
 
-    private $updated = 0;
+    private const PROGRESS_BAR_FORMAT = ' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%';
 
     private $notFound = 0;
 
@@ -62,6 +53,12 @@ class UpdateUserPasswords extends Command implements LoggerAwareInterface
                 'f',
                 InputOption::VALUE_REQUIRED,
                 'file path'
+            )
+            ->addOption(
+                self::OPT_OUT_FILE,
+                'o',
+                InputOption::VALUE_REQUIRED,
+                'out file path'
             );
     }
 
@@ -74,12 +71,18 @@ class UpdateUserPasswords extends Command implements LoggerAwareInterface
     {
         $this->log()->info('Update started');
         $file = $input->getOption(self::OPT_FILE);
+        $outFile = $input->getOption(self::OPT_OUT_FILE);
+
         if (!file_exists($file)) {
             throw new InvalidArgumentException('file not found');
         }
 
         if (!$fp = fopen($file, 'rb')) {
             throw new InvalidArgumentException('cannot open file');
+        }
+
+        if (!$fpo = fopen($outFile, 'wb+')) {
+            throw new InvalidArgumentException('cannot create output file');
         }
 
         $lineCount = 0;
@@ -96,30 +99,29 @@ class UpdateUserPasswords extends Command implements LoggerAwareInterface
         $data = [];
         while ([$externalId, $hash] = fgetcsv($fp)) {
             $data[$externalId] = $hash;
-            if (\count($data) >= 50000) {
-                $this->processData($data);
-                $progressBar->advance(50000);
+            if (\count($data) >= 10000) {
+                $this->processData($data, $fpo);
+                $progressBar->advance(10000);
                 $data = [];
             }
         }
-        $this->processData($data);
+        $this->processData($data, $fpo);
         $progressBar->finish();
 
         $this->log()->info(sprintf(
-            'Update complete. Updated %s. Not found %s.',
-            $this->updated,
+            'Update complete. Not found %s.',
             $this->notFound
         ));
     }
 
     /**
-     * @param array $data
+     * @param array    $data
+     * @param $fpo
      * @throws ArgumentException
      * @throws ObjectPropertyException
-     * @throws SqlQueryException
      * @throws SystemException
      */
-    protected function processData(array $data) {
+    protected function processData(array $data, $fpo) {
         if (empty($data)) {
             return;
         }
@@ -132,10 +134,7 @@ class UpdateUserPasswords extends Command implements LoggerAwareInterface
                 $this->log()->warning(sprintf('user with externalId %s not found', $externalId));
                 $this->notFound++;
             } else {
-                Application::getConnection()->query(
-                    sprintf('UPDATE b_user SET PASSWORD = "%s" WHERE ID = %s', $hash, $users[$externalId])
-                );
-                $this->updated++;
+                fwrite($fpo, sprintf('UPDATE b_user SET PASSWORD = "%s" WHERE ID = %s;', $hash, $users[$externalId]));
             }
         }
     }

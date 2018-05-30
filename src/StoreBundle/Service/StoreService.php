@@ -731,19 +731,22 @@ class StoreService implements LoggerAwareInterface
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             $result['sortHtml'] = $sortHtml;
+            $result['all_cities'] = false;
             /** имя местоположения для страницы магазинов */
             if (!empty($params['region_id']) || !empty($params['city_code'])) {
-                $result['location_name'] = '';
+                $result['location_name'] = '';//если пустое что-то пошло не так
+                $loc = null;
                 if (!empty($params['region_id'])) {
                     $loc = LocationTable::query()->setFilter(['ID' => $params['region_id']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
                 } elseif (!empty($params['city_code'])) {
                     $loc = LocationTable::query()->setFilter(['=CODE' => $params['city_code']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
                 }
-                if (empty($result['location_name'])) {
+                if ($loc !== null && empty($result['location_name'])) {
                     $result['location_name'] = $loc['LOC_NAME'];
                 }
             } else {
-                $result['location_name'] = 'Россия';
+                $result['location_name'] = 'Все города';
+                $result['all_cities'] = true;
             }
             if ($params['returnActiveServices']) {
                 $result['services'] = $servicesList;

@@ -238,7 +238,7 @@ class SearchService implements LoggerAwareInterface
                 ->setQuery($searchString)
                 ->setFields(['NAME'])
                 ->setType('phrase')
-                ->setAnalyzer('full-text-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 80.0)
                 ->setParam('_name', 'name-phrase')
         );
@@ -250,7 +250,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['NAME'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 70.0)
                 ->setParam('_name', 'name-exact-word')
 
@@ -300,7 +300,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields($textFields)
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 0.5)
                 ->setParam('_name', 'desc-exact-word')
         );
