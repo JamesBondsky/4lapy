@@ -667,7 +667,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         /**
          * Мы не меняем платежную систему при смене статуса, только суммы
          */
-        $statusPayed = SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus() ? 'N' : 'Y';
+        $statusPayed = (empty($orderDto->getPayStatus()) || SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus())
+            ? 'N'
+            : 'Y';
+
         $bonusPayedCount = $orderDto->getBonusPayedCount();
         $innerPayment = $order->getPaymentCollection()->getInnerPayment();
         $externalPayment = null;

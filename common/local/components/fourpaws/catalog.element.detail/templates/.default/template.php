@@ -247,7 +247,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     <?php
                 } ?>
                 <li class="b-product-information__item">
-                    <div class="b-product-information__title-info">Цена</div>
+                    <div class="b-product-information__title-info b-product-information__title-info--price">Цена</div>
                     <div class="b-product-information__value b-product-information__value--price">
                         <?php if ($currentOffer->getOldPrice() > $currentOffer->getPrice()) {
                             ?>

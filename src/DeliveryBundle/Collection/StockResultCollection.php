@@ -200,7 +200,7 @@ class StockResultCollection extends ArrayCollection
                 continue;
             }
 
-            $price += $item->getPrice() * $item->getAmount();
+            $price += $item->getPrice();
         }
 
         return $price;

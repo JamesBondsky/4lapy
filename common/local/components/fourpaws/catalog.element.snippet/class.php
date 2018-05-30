@@ -25,25 +25,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class CatalogElementSnippet extends CBitrixComponent
 {
     /**
-     * @var MarkService
-     */
-    private $markService;
-
-    /**
-     * CatalogElementSnippet constructor.
-     *
-     * @param CBitrixComponent $component
-     *
-     * @throws ApplicationCreateException
-     */
-    public function __construct($component = null)
-    {
-        parent::__construct($component);
-
-        $this->markService = Application::getInstance()->getContainer()->get(MarkService::class);
-    }
-
-    /**
      * @param array $params
      *
      * @return array
@@ -98,14 +79,6 @@ class CatalogElementSnippet extends CBitrixComponent
 
             $this->abortResultCache();
         }
-    }
-
-    /**
-     * @return MarkService
-     */
-    public function getMarkService(): MarkService
-    {
-        return $this->markService;
     }
 
     /**

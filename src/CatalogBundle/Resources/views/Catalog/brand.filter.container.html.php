@@ -58,7 +58,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
                     'filters' => $filterCollection->getFiltersToShow(),
-                    'isBrand' => true
+                    'isBrand' => true,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -72,17 +72,17 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
 </aside>
 <main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
-        <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
-           href="javascript:void(0);"
-           title="Открыть фильтры">
-            <span class="b-icon b-icon--open-filter">
-                <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
-            </span>
-        </a>
         <div class="b-catalog-filter__filter-part">
             <div class="b-line b-line--sort-desktop"></div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
+                    <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
+                       href="javascript:void(0);"
+                       title="Открыть фильтры">
+                        <span class="b-icon b-icon--open-filter">
+                            <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
+                        </span>
+                    </a>
                     <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар',
                             ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(

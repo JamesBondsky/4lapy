@@ -9,7 +9,7 @@ use Bitrix\Main\Page\Asset;
 use CIBlockElement;
 use Exception;
 use FourPaws\App\Application;
-use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\ProductAutoSort\UserType\ElementPropertyConditionUserType;
@@ -20,39 +20,36 @@ use Psr\Log\LoggerInterface;
  *
  * @package FourPaws\ProductAutoSort
  */
-abstract class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
     /**
      * @param EventManager $eventManager
+     *
      * @return void
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        $eventManager->addEventHandler(
-            'main',
-            'OnUserTypeBuildList',
-            [ElementPropertyConditionUserType::class, 'getUserTypeDescription'],
-            false,
-            1000
-        );
+        parent::initHandlers($eventManager);
 
-        $eventManager->addEventHandler('main', 'OnProlog', [self::class, 'includeJquery']);
+        $module = 'main';
+        //sort 1000;
+        static::initHandlerCompatible('OnUserTypeBuildList',
+            [ElementPropertyConditionUserType::class, 'getUserTypeDescription'], $module);
 
-        $eventManager->addEventHandler(
-            'iblock',
-            'OnAfterIBlockSectionDelete',
-            [self::class, 'deleteEPCValue']
-        );
+        static::initHandler('OnProlog', [self::class, 'includeJquery'], $module);
+
+        $module = 'iblock';
+        static::initHandler('OnAfterIBlockSectionDelete', [self::class, 'deleteEPCValue'], $module);
 
         foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventTYpe) {
-            $eventManager->addEventHandler('iblock', $eventTYpe, [self::class, 'autosortProduct']);
+            static::initHandlerCompatible($eventTYpe, [self::class, 'autosortProduct'], $module);
         }
     }
 
     /**
      * Подключить jQuery для административной панели, чтобы обогатить функциональность кастомного свойства.
      */
-    public static function includeJquery()
+    public static function includeJquery(): void
     {
         if (!\defined('ADMIN_SECTION')) {
             return;
@@ -64,8 +61,10 @@ abstract class Event implements ServiceHandlerInterface
      * Удаляет значения свойств элемента
      *
      * @param $arFields
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public static function deleteEPCValue($arFields)
+    public static function deleteEPCValue($arFields): void
     {
         if (!isset($arFields['ID']) || $arFields['ID'] <= 0) {
             return;
@@ -81,7 +80,7 @@ abstract class Event implements ServiceHandlerInterface
      *
      * @param $arFields
      */
-    public static function autosortProduct($arFields)
+    public static function autosortProduct($arFields): void
     {
         try {
             $productIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
@@ -90,9 +89,9 @@ abstract class Event implements ServiceHandlerInterface
 
             if (
                 !isset($arFields['IBLOCK_ID'], $arFields['ID'], $arFields['PROPERTY_VALUES'][$applyAutosortPropId])
-                || $arFields['IBLOCK_ID'] != $productIblockId
+                || (int)$arFields['IBLOCK_ID'] !== $productIblockId
                 //Не отмечен флажок "Автоматически определить категории"
-                || reset($arFields['PROPERTY_VALUES'][$applyAutosortPropId])['VALUE'] == 0
+                || (int)reset($arFields['PROPERTY_VALUES'][$applyAutosortPropId])['VALUE'] === 0
             ) {
                 return;
             }
@@ -103,7 +102,8 @@ abstract class Event implements ServiceHandlerInterface
             $result = $autosort->defineProductsCategories([$arFields['ID']]);
 
             //Результат вызова не имеет смысла, т.к. не позволяет определить ошибку
-            (new CIBlockElement())->SetElementSection($arFields['ID'], $result[$arFields['ID']], false, 0, $result[$arFields['ID']][0]);
+            (new CIBlockElement())->SetElementSection($arFields['ID'], $result[$arFields['ID']], false, 0,
+                $result[$arFields['ID']][0]);
 
             //Снятие флажка
             CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], ['APPLY_AUTOSORT' => 0]);

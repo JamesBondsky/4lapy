@@ -117,6 +117,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             $tagCache->addTags([
                 'personal:bonus:' . $user->getId(),
                 'order:' . $user->getId(),
+                'user:' . $user->getId(),
             ]);
 
             try {
@@ -146,6 +147,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             (new TaggedCacheHelper($cachePath))->addTags([
                 'personal:bonus:' . $user->getId(),
                 'order:' . $user->getId(),
+                'user:' . $user->getId(),
             ]);
 
             $this->includeComponentTemplate();

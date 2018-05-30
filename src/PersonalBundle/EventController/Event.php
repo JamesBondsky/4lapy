@@ -11,8 +11,8 @@ use Bitrix\Main\Mail\Event as EventMail;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
@@ -30,13 +30,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\PersonalBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
-    /**
-     * @var EventManager
-     */
-    protected static $eventManager;
-
     /**
      * @param EventManager $eventManager
      *
@@ -44,59 +39,44 @@ class Event implements ServiceHandlerInterface
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        self::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
 
         $prefix = 'Address';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        self::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
 
         $prefix = 'Pet';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        self::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
 
         /** обновление данных в манзане по питомцам */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'UpdateManzana']);
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'UpdateManzana']);
-        self::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'PrepareDelUpdateManzana']);
-        self::initHandler($prefix . 'OnAfterDelete', [static::class, ToLower($prefix) . 'UpdateManzana']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'UpdateManzana']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'UpdateManzana']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'PrepareDelUpdateManzana']);
+        static::initHandler($prefix . 'OnAfterDelete', [self::class, ToLower($prefix) . 'UpdateManzana']);
 
 
         $prefix = 'Referral';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        self::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
 
         /** отправка письма после добавления */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'SendModerateEmail']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'SendModerateEmail']);
 
         /** отправка данных в манзану после добавления */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'SendToManzana']);
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'SendToManzana']);
 
         $prefix = 'Comments';
         /** сброс кеша */
-        self::initHandler($prefix . 'OnAfterAdd', [static::class, ToLower($prefix) . 'ClearCacheAdd']);
-        self::initHandler($prefix . 'OnAfterUpdate', [static::class, ToLower($prefix) . 'ClearCacheUpdate']);
-        self::initHandler($prefix . 'OnBeforeDelete', [static::class, ToLower($prefix) . 'ClearCacheDelete']);
-    }
-
-    /**
-     * @param string   $eventName
-     * @param callable $callback
-     * @param string   $module
-     */
-    public static function initHandler(string $eventName, callable $callback, string $module = ''): void
-    {
-        /** для событий хайлоал блоков модуль должен быть пустой - дичь */
-        self::$eventManager->addEventHandler(
-            $module,
-            $eventName,
-            $callback
-        );
+        static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
+        static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
+        static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
     }
 
     /**
@@ -320,8 +300,8 @@ class Event implements ServiceHandlerInterface
         }
         if (!empty($id) && !empty($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id])) {
             /** для удаления */
-            $fields = $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id];
-            unset($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_'.$id]);
+            $fields = $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id];
+            unset($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id]);
         } else {
             $fields = $event->getParameter('fields');
             /** для обновления, если эти данные не пришли */
@@ -410,6 +390,23 @@ class Event implements ServiceHandlerInterface
     }
 
     /**
+     * @param BitrixEvent $event
+     *
+     * @throws \Exception
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
+     */
+    public static function petPrepareDelUpdateManzana(BitrixEvent $event): void
+    {
+        $id = $event->getParameter('id');
+        if (\is_array($id)) {
+            $id = $id['ID'];
+        }
+        $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id] = static::getHlItemFieldsById('Pet', $id);
+    }
+
+    /**
      * @param $id
      */
     protected static function hlItemClearCache($id): void
@@ -444,22 +441,5 @@ class Event implements ServiceHandlerInterface
     {
         return HLBlockFactory::createTableObject($entityName)::query()->addFilter('=ID',
             $id)->addSelect('*')->exec()->fetch();
-    }
-
-    /**
-     * @param BitrixEvent $event
-     *
-     * @throws \Exception
-     * @throws SystemException
-     * @throws ObjectPropertyException
-     * @throws ArgumentException
-     */
-    public static function petPrepareDelUpdateManzana(BitrixEvent $event): void
-    {
-        $id = $event->getParameter('id');
-        if (\is_array($id)) {
-            $id = $id['ID'];
-        }
-        $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id] = static::getHlItemFieldsById('Pet', $id);
     }
 }

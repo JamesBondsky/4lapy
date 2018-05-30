@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use FourPaws\App\Application;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
@@ -114,5 +115,23 @@ class BasketMiniComponent extends FourPawsComponent
             return false;
         }
         return true;
+    }
+
+    /**
+     *
+     *
+     * @param Basket $basket
+     *
+     * @return int
+     */
+    public function getBasketCountWithoutGifts(Basket $basket): int {
+        $result = 0;
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                ++$result;
+            }
+        }
+        return $result;
     }
 }

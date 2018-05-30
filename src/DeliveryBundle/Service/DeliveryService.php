@@ -27,9 +27,11 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\PriceForAmountCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -835,10 +837,15 @@ class DeliveryService implements LoggerAwareInterface
         float $price = null
     ): StockResultCollection
     {
+        $priceForAmountCollection = new PriceForAmountCollection();
+        $priceForAmountCollection->add((new PriceForAmount())
+            ->setAmount($quantity)
+            ->setPrice($price)
+        );
+
         return DeliveryHandlerBase::getStocksForItem(
             $offer,
-            $quantity ?? $offer->getStocks()->getTotalAmount(),
-            $price ?? $offer->getPrice(),
+            $priceForAmountCollection,
             DeliveryHandlerBase::getAvailableStores($delivery->getDeliveryCode(), $delivery->getDeliveryZone())
         );
     }

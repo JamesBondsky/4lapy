@@ -493,11 +493,12 @@ class OrderSubscribeCopyParams
         if (!$this->dateForOrderCreate) {
             $calculationResult = $this->getNewOrderDeliveryCalculationResult();
             $orderSubscribeService = $this->getOrderSubscribeService();
-            $this->dateForOrderCreate = $orderSubscribeService->getDateForOrderCreate(
+            $dateForOrderCreate = $orderSubscribeService->getDateForOrderCreate(
                 $calculationResult,
                 $this->getDeliveryDate(),
                 $this->getCurrentDate()
             );
+            $this->dateForOrderCreate = \DateTimeImmutable::createFromMutable($dateForOrderCreate);
         }
 
         return $this->dateForOrderCreate;

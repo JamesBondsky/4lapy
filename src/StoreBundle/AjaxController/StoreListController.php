@@ -185,10 +185,11 @@ class StoreListController extends Controller implements LoggerAwareInterface
 
         if ((int)$offerId > 0) {
             try {
+                [$storeCollection, $hideTab] = $this->storeService->getActiveStoresByProduct($offerId);
                 return JsonSuccessResponse::createWithData(
                     'Подгрузка успешна',
                     $this->storeService->getFormatedStoreByCollection(
-                        ['storeCollection' => $this->storeService->getActiveStoresByProduct($offerId)]
+                        ['storeCollection' => $storeCollection, 'hideTab' => $hideTab]
                     )
                 );
             } catch (Exception $e) {

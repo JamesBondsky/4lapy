@@ -77,7 +77,7 @@ class CityController extends Controller
             }
             $response = JsonSuccessResponse::createWithData(
                 'Условия приобретения товаров будут пересчитаны после изменения выбранного региона',
-                $city,
+                $city ?? [],
                 200,
                 ['reload' => true]
             );
@@ -107,7 +107,7 @@ class CityController extends Controller
                     }
                     $response = JsonSuccessResponse::createWithData(
                         'Условия приобретения товаров будут пересчитаны после изменения выбранного региона',
-                        $city,
+                        $city ?? [],
                         200,
                         ['reload' => true]
                     );
@@ -136,12 +136,12 @@ class CityController extends Controller
                         }
                         $response = JsonSuccessResponse::createWithData(
                             'Условия приобретения товаров будут пересчитаны после изменения выбранного региона',
-                            $city,
+                            $city ?? [],
                             200,
                             ['reload' => true]
                         );
                     } catch (CityNotFoundException $e) {
-                        $response = JsonErrorResponse::create($e->getMessage());
+                        $response = JsonErrorResponse::createWithData($e->getMessage());
                     }
                 }
             } else{
@@ -166,12 +166,12 @@ class CityController extends Controller
                     }
                     $response = JsonSuccessResponse::createWithData(
                         'Условия приобретения товаров будут пересчитаны после изменения выбранного региона',
-                        $city,
+                        $city ?? [],
                         200,
                         ['reload' => true]
                     );
                 } catch (CityNotFoundException $e) {
-                    $response = JsonErrorResponse::create($e->getMessage());
+                    $response = JsonErrorResponse::createWithData($e->getMessage());
                 }
             }
         } catch (\Exception $e) {
@@ -183,7 +183,7 @@ class CityController extends Controller
                     'regionName' => $regionName
                 ]
             );
-            $response = JsonErrorResponse::create($e->getMessage());
+            $response = JsonErrorResponse::createWithData($e->getMessage());
         }
 
         return $response;
