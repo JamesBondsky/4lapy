@@ -551,7 +551,7 @@ class ExpertsenderService implements LoggerAwareInterface
 
 
         if (!$email = $properties['EMAIL']) {
-            throw new ExpertsenderServiceException('order email is empty', ['orderId' => $order->getId()]);
+            throw new ExpertsenderServiceException('order email is empty');
         }
 
         $properties['BONUS_COUNT'] = $orderService->getOrderBonusSum($order);
