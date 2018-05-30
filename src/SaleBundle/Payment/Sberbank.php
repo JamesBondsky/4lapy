@@ -40,6 +40,14 @@ class Sberbank
 
     private const ERROR_CODES = [1, 2, 3, 4, 5, 7, 8, 999];
 
+    public const ORDER_STATUS_HOLD = 1;
+
+    public const ORDER_STATUS_PAID = 2;
+
+    public const ORDER_STATUS_REVERSE = 3;
+
+    public const ORDER_STATUS_REFUND = 4;
+
     /**
      * ЛОГИН МЕРЧАНТА
      *
