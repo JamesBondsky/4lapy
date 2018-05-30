@@ -200,7 +200,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             if ($orderStatus === Sberbank::ORDER_STATUS_HOLD) {
                 $this->tryPaymentReverse($order);
             } elseif ($orderStatus === Sberbank::ORDER_STATUS_PAID) {
-                $this->tryPaymentRefund($order);
+                $this->tryPaymentRefund($order, $orderInfo['amount']);
             } else {
                 throw new OrderPaymentReverseException(sprintf('Invalid order status %s', $orderStatus));
             }
@@ -248,6 +248,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param BitrixOrder $order
+     * @param int         $amount
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
@@ -258,10 +259,10 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws SystemException
      * @throws \Exception
      */
-    public function tryPaymentRefund(BitrixOrder $order) {
+    public function tryPaymentRefund(BitrixOrder $order, int $amount) {
         $orderInvoiceId = $this->getOrderInvoiceId($order);
-        $this->response(function () use ($orderInvoiceId) {
-            return $this->sberbankProcessing->refundPayment($orderInvoiceId, 0);
+        $this->response(function () use ($orderInvoiceId, $amount) {
+            return $this->sberbankProcessing->refundPayment($orderInvoiceId, $amount);
         });
 
         /** @var Payment $payment */
