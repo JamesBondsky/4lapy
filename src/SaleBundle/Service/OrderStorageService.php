@@ -596,7 +596,7 @@ class OrderStorageService
     public function splitStockResult(CalculationResultInterface $delivery): array
     {
         $stockResultCollection = $delivery->getStockResult();
-        if ($delivery->getStockResult()->getByRequest()->isEmpty()) {
+        if ($delivery->getStockResult()->getByRequest(true)->isEmpty()) {
             $available = $stockResultCollection->getAvailable();
             $delayed = $stockResultCollection->getDelayed();
         } else {
