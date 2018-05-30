@@ -65,7 +65,7 @@ $bundle = $arResult['BUNDLE']; ?>
                             ?>
                             <span class="b-advice__old-price">
                                 <span class="js-value"><?= $oldPrice ?></span>
-                                <span class="b-ruble b-ruble--total b-ruble--light">₽</span>
+                                <span class="b-ruble b-ruble--advice b-ruble--light">₽</span>
                             </span>
                             <?php /** делаем перевод на новую строку далее ибо не помещается - по красоте поправить верстку*/
                             ?>
