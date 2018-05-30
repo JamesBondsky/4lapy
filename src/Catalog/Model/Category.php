@@ -284,8 +284,10 @@ class Category extends IblockSection implements FilterInterface
     public function getSectionPageUrl(): string
     {
         $symlink = $this->getSymlink();
-
-        if ($symlink instanceof Category) {
+        /** поставленна базовая защита на дурака
+         * если будет выжирать вся память, то мы вошли в рекурсию, через каскад разделов
+         */
+        if ($symlink !== null) {
             return $symlink->getSectionPageUrl();
         }
 
@@ -293,18 +295,18 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
-     * @return Category
+     * @return Category|null
      */
-    public function getSymlink()
+    public function getSymlink(): ?Category
     {
-        if (is_null($this->symlink)) {
+        if ($this->symlink === null && (int)$this->UF_SYMLINK > 0 && (int)$this->UF_SYMLINK !== $this->getId()) {
             /**
              * Обязательно запрашивается активный раздел, т.к. на него будет ссылка
              * и при деактивации целевого раздела показывать битую ссылку плохо.
              */
-            $this->symlink = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
-                ->exec()
-                ->current();
+             $res = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
+                ->exec();
+            $this->symlink = $res->isEmpty() ? null : $res->current();
         }
 
         return $this->symlink;
