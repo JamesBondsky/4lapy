@@ -9,12 +9,10 @@ namespace FourPaws\AppBundle\Command;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Internals\OrderTable;
-use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
@@ -93,22 +91,13 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
                 '<DATE_INSERT'        => $date->format('d.m.Y H:i:s'),
                 '>DATE_INSERT'        => $maxDate->format('d.m.Y H:i:s'),
                 '=PAYMENT_SYSTEM.CODE' => OrderService::PAYMENT_ONLINE,
-                '=STATUS_ID'           => [OrderStatus::STATUS_NEW_COURIER, OrderStatus::STATUS_NEW_PICKUP],
                 '!CANCELED'           => 'Y',
-                '!PAYMENT.PAID'       => 'Y',
+                '!PAYED'       => 'Y',
             ])->registerRuntimeField(
                 new ReferenceField(
                     'PAYMENT_SYSTEM',
                     PaySystemActionTable::class,
                     ['=this.PAY_SYSTEM_ID' => 'ref.ID'],
-                    ['join_type' => 'INNER']
-                )
-            )
-            ->registerRuntimeField(
-                new ReferenceField(
-                    'PAYMENT',
-                    PaymentTable::class,
-                    ['=this.ID' => 'ref.ORDER_ID', '=this.PAY_SYSTEM_ID' => 'ref.PAY_SYSTEM_ID'],
                     ['join_type' => 'INNER']
                 )
             )->exec();
