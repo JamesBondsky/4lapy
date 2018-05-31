@@ -20,7 +20,7 @@ class Client
     /**
      * API Url by default
      */
-    public const DEFAULT_API_URL = 'http://sds.intervale.ru/smartdelivery-in/multi.php';
+    public const DEFAULT_API_URL = 'http://sds.smstraffic.ru/smartdelivery-in/multi.php';
     /**
      * Reserved API Url
      */
