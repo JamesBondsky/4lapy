@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -14,21 +15,15 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\Share;
-use FourPaws\Catalog\Model\Filter\BrandFilter;
-use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
-use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
+use FourPaws\CatalogBundle\Dto\CatalogBrandFilterRequest;
+use FourPaws\CatalogBundle\Dto\ChildCategoryFilterRequest;
 use FourPaws\CatalogBundle\Dto\EmptyCatalogRequest;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
-use FourPaws\CatalogBundle\Exception\NoBrandFilterInRootDirectory;
-use FourPaws\CatalogBundle\Service\BrandService;
-use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
@@ -479,69 +474,24 @@ class ProductInfoController extends Controller
     /**
      * @Route("/count-by-filter-brand/", methods={"GET", "POST"})
      *
-     * @param Request             $request
-     * @param EmptyCatalogRequest $emptyRequest
+     * @param CatalogBrandFilterRequest $catalogBrandRequest
      *
      * @return JsonResponse
      */
-    public function getCountItemsByFilterBrand(Request $request, EmptyCatalogRequest $emptyRequest): JsonResponse
+    public function getCountItemsByFilterBrand(CatalogBrandFilterRequest $catalogBrandRequest): JsonResponse
     {
-        $catalogBrandRequest = new CatalogBrandRequest();
-        $catalogBrandRequest->setNavigation($emptyRequest->getNavigation());
-        $catalogBrandRequest->setSearchString($emptyRequest->getSearchString());
-        $catalogBrandRequest->setSorts($emptyRequest->getSorts());
-        $brandCode = $request->get('brand_code', '');
-        $continue = false;
-        if ($brandCode) {
-            try {
-                $container = Application::getInstance()->getContainer();
-                /** @var BrandService $brandService */
-                $brandService = $container->get(BrandService::class);
-                $brand = $brandService->getByCode($brandCode);
-                $category = $brandService->getBrandCategory($brand);
-
-                $filterHelper = $container->get(FilterHelper::class);
-                $filterHelper->initCategoryFilters($category, $request);
-
-                $brandFilters = $category->getFilters()->filter(function (FilterInterface $filter) {
-                    return $filter instanceof BrandFilter;
-                });
-
-                /**
-                 * @var BrandFilter $brandFilter
-                 */
-                $brandFilter = $brandFilters->current();
-
-                if (!$brandFilter) {
-                    throw new NoBrandFilterInRootDirectory('Фильтр по бренду не найден среди фильтров корневой категории');
-                }
-                $brandFilter->setCheckedVariants([$brand->getCode()]);
-                $brandFilter->setVisible(false);
-
-                $catalogBrandRequest
-                    ->setBrand($brand)
-                    ->setCategory($category);
-                $continue = true;
-            } catch (\Exception $e) {
-                /** @todo записать в лог как ошибку */
-            }
-        }
         $count = 0;
-        if ($continue) {
-            try {
-                $productSearchResult = $this->searchService->searchProducts(
-                    $catalogBrandRequest->getCategory()->getFilters(),
-                    $catalogBrandRequest->getSorts()->getSelected(),
-                    $catalogBrandRequest->getNavigation(),
-                    $catalogBrandRequest->getSearchString()
-                );
-                $count = $productSearchResult->getResultSet()->getTotalHits();
-            } catch (\Exception $e) {
-                /** @todo записать в лог как ошибку */
-            }
-        }
-        else{
-            /** @todo записать в лог как ошибку */
+        $logger = LoggerFactory::create('ajaxFilter');
+        try {
+            $productSearchResult = $this->searchService->searchProducts(
+                $catalogBrandRequest->getCategory()->getFilters(),
+                $catalogBrandRequest->getSorts()->getSelected(),
+                $catalogBrandRequest->getNavigation(),
+                $catalogBrandRequest->getSearchString()
+            );
+            $count = $productSearchResult->getResultSet()->getTotalHits();
+        } catch (\Exception $e) {
+            $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
             [
@@ -560,6 +510,7 @@ class ProductInfoController extends Controller
     public function getCountItemsByFilterSearch(SearchRequest $searchRequest): JsonResponse
     {
         $count = 0;
+        $logger = LoggerFactory::create('ajaxFilter');
         try {
             $productSearchResult = $this->searchService->searchProducts(
                 $searchRequest->getCategory()->getFilters(),
@@ -569,7 +520,7 @@ class ProductInfoController extends Controller
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
         } catch (\Exception $e) {
-            /** @todo записать в лог как ошибку */
+            $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
             [
@@ -581,47 +532,24 @@ class ProductInfoController extends Controller
     /**
      * @Route("/count-by-filter-list/", methods={"GET", "POST"})
      *
-     * @param Request             $request
-     * @param EmptyCatalogRequest $emptyRequest
+     * @param ChildCategoryFilterRequest $categoryRequest
      *
      * @return JsonResponse
      */
-    public function getCountItemsByFilterList(Request $request, EmptyCatalogRequest $emptyRequest): JsonResponse
+    public function getCountItemsByFilterList(ChildCategoryFilterRequest $categoryRequest): JsonResponse
     {
-        $categoryRequest = new ChildCategoryRequest();
-        $categoryRequest->setNavigation($emptyRequest->getNavigation());
-        $categoryRequest->setSearchString($emptyRequest->getSearchString());
-        $categoryRequest->setSorts($emptyRequest->getSorts());
-        $sectionId = (int)$request->get('section_id', 0);
-        $continue = false;
-        if ($sectionId > 0) {
-            try {
-                $container = Application::getInstance()->getContainer();
-                $category = (new CategoryQuery())->withFilter(['=ID' => $sectionId])->exec()->first();
-
-                $filterHelper = $container->get(FilterHelper::class);
-                $filterHelper->initCategoryFilters($category, $request);
-                $categoryRequest->setCategory($category);
-                $continue = true;
-            } catch (\Exception $e) {
-                /** @todo записать в лог как ошибку */
-            }
-        }
         $count = 0;
-        if ($continue) {
-            try {
-                $productSearchResult = $this->searchService->searchProducts(
-                    $categoryRequest->getCategory()->getFilters(),
-                    $categoryRequest->getSorts()->getSelected(),
-                    $categoryRequest->getNavigation(),
-                    $categoryRequest->getSearchString()
-                );
-                $count = $productSearchResult->getResultSet()->getTotalHits();
-            } catch (\Exception $e) {
-                /** @todo записать в лог как ошибку */
-            }
-        } else {
-            /** @todo записать в лог как ошибку */
+        $logger = LoggerFactory::create('ajaxFilter');
+        try {
+            $productSearchResult = $this->searchService->searchProducts(
+                $categoryRequest->getCategory()->getFilters(),
+                $categoryRequest->getSorts()->getSelected(),
+                $categoryRequest->getNavigation(),
+                $categoryRequest->getSearchString()
+            );
+            $count = $productSearchResult->getResultSet()->getTotalHits();
+        } catch (\Exception $e) {
+            $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
             [
