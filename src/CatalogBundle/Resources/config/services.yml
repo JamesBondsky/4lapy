@@ -41,3 +41,7 @@ services:
     FourPaws\CatalogBundle\Service\OftenSeekInterface:
         class: FourPaws\CatalogBundle\Service\OftenSeekService
         public: true
+
+    FourPaws\CatalogBundle\Service\BrandService:
+            class: FourPaws\CatalogBundle\Service\BrandService
+            public: true
