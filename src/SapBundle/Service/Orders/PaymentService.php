@@ -339,11 +339,12 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         /** @noinspection ForeachSourceInspection */
         foreach ($fiscalization['fiscal']['orderBundle']['cartItems']['items'] as $item) {
             $itemsAfter[] = $paymentTask->getItems()->map(function (Item $v) use ($map, $item) {
-                if (
-                    /* Доставка */
-                    ($v->getOfferXmlId() >= 2000000 && $item['name'] === null)
-                    /* или товар */
-                    || $map[$v->getOfferXmlId()] === $item['itemCode']
+                if ($v->getQuantity() && (
+                        /* Доставка */
+                        ($v->getOfferXmlId() >= 2000000 && $item['name'] === null)
+                        /* или товар */
+                        || $map[$v->getOfferXmlId()] === $item['itemCode']
+                    )
                 ) {
                     $newItem = $item;
                     $newItem['quantity']['value'] = $v->getQuantity();
