@@ -23,6 +23,7 @@ use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
@@ -266,7 +267,7 @@ class NotificationService implements LoggerAwareInterface
         $smsTemplate = null;
         $sendCompleteEmail = false;
         switch ($status) {
-            case OrderService::STATUS_ISSUING_POINT:
+            case OrderStatus::STATUS_ISSUING_POINT:
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
                     if ($parameters['dcDelivery']) {
                         $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.issuingPoint.dc.html.php';
@@ -275,13 +276,13 @@ class NotificationService implements LoggerAwareInterface
                     }
                 }
                 break;
-            case OrderService::STATUS_DELIVERING:
+            case OrderStatus::STATUS_DELIVERING:
                 $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.delivering.html.php';
                 }
                 break;
-            case OrderService::STATUS_DELIVERED:
+            case OrderStatus::STATUS_DELIVERED:
                 $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.delivered.html.php';
