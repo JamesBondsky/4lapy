@@ -47,7 +47,8 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
             <?php foreach ($arResult['MENU_TREE'] as $arItem) {
                 if ($arItem['NESTED'] || $arItem['IS_BRAND_MENU']) {
                     /** @todo переделать это дерьмо - не расширяемо нормально */
-                    if ($arItem['CODE'] === 'pet' || $arItem['CODE'] === 'services') {
+                    //|| $arItem['CODE'] === 'services'
+                    if ($arItem['CODE'] === 'pet') {
                         $sAddClass1 = ' js-menu-pet-mobile';
                         $sAddClass2 = ' js-open-main-menu js-open-step-mobile';
                     } else {
@@ -63,7 +64,8 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
                         <?php
                         // Выпадающее меню, если это не меню "Товары по питомцу" и "По бренду".
                         // Только второй уровень версткой предусмотрен
-                        if ($arItem['CODE'] !== 'pet' && $arItem['CODE'] === 'services' && !$arItem['IS_BRAND_MENU']) { ?>
+                        //&& $arItem['CODE'] === 'services'
+                        if ($arItem['CODE'] !== 'pet' && !$arItem['IS_BRAND_MENU']) { ?>
                             <div class="b-menu__dropdown b-dropdown-menu">
                                 <div class="b-item-back">
                                     <a class="b-item-back__link js-close-dropdown"<?= $arItem['_LINK_ATTR2_'] ?>
