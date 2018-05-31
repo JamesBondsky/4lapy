@@ -80,8 +80,13 @@ class CItemsListComponent extends CBitrixComponent
                         $paramsIblock['filter']['IBLOCK_TYPE_ID'] = $params['IBLOCK_TYPE'];
                     }
                     $res = IblockTable::getList($paramsIblock);
-                    while ($item = $res->fetch()) {
-                        $params['IBLOCK_ID'][] = (int)$item['ID'];
+                    if($res->getSelectedRowsCount() > 0) {
+                        if(!\is_array($params['IBLOCK_ID'])) {
+                            $params['IBLOCK_ID'] = [];
+                        }
+                        while ($item = $res->fetch()) {
+                            $params['IBLOCK_ID'][] = (int)$item['ID'];
+                        }
                     }
                 } catch (ArgumentException $e) {
                 }
@@ -139,8 +144,8 @@ class CItemsListComponent extends CBitrixComponent
         }
         $params['PREVIEW_TRUNCATE_LEN'] = (int)$params['PREVIEW_TRUNCATE_LEN'];
 
-        $params['DISPLAY_TOP_PAGER'] = $params['DISPLAY_TOP_PAGER'] === 'Y';
-        $params['DISPLAY_BOTTOM_PAGER'] = $params['DISPLAY_BOTTOM_PAGER'] !== 'N';
+        $params['DISPLAY_TOP_PAGER'] = isset($params['DISPLAY_TOP_PAGER']) ? $params['DISPLAY_TOP_PAGER'] === 'Y' : false;
+        $params['DISPLAY_BOTTOM_PAGER'] =  isset($params['DISPLAY_BOTTOM_PAGER']) ? $params['DISPLAY_BOTTOM_PAGER'] !== 'N' : false;
         $params['PAGER_TITLE'] = trim($params['PAGER_TITLE']);
         $params['PAGER_SHOW_ALWAYS'] = $params['PAGER_SHOW_ALWAYS'] === 'Y';
         $params['PAGER_TEMPLATE'] = trim($params['PAGER_TEMPLATE']);
@@ -274,7 +279,7 @@ class CItemsListComponent extends CBitrixComponent
             ];
 
             $navigation = CDBResult::GetNavParams($navParams);
-            $navigation->
+            $navParams['iNumPage'] = $navigation['PAGEN'];
             if ($navigation['PAGEN'] === 0 && $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'] > 0) {
                 $this->arParams['CACHE_TIME'] = $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'];
             }
@@ -396,7 +401,8 @@ class CItemsListComponent extends CBitrixComponent
         $this->arResult['ITEMS'] = [];
         $this->arResult['ELEMENTS'] = [];
 
-//        $filter = array_merge($filter, $this->externalFilter);
+        $filter = array_merge($filter, $this->externalFilter);
+        /** @todo переписать на d7 чтобы избавиться от фикса поиска по id вместо свойств */
         $rsElement = CIBlockElement::GetList(
             $sort,
             $filter,
@@ -404,12 +410,9 @@ class CItemsListComponent extends CBitrixComponent
             $this->navParams,
             $select
         );
-        $countItems = $rsElement->SelectedRowsCount();
         $listPageUrlEl = '';
-        $iblocks = [];
         while ($obElement = $rsElement->GetNextElement()) {
             $item = $obElement->GetFields();
-            $iblocks[] = $item['IBLOCK_ID'];
             if (empty($listPageUrlEl)) {
                 $listPageUrlEl = $item['~LIST_PAGE_URL'];
             }
@@ -495,7 +498,6 @@ class CItemsListComponent extends CBitrixComponent
             $this->arResult['ITEMS'][] = $item;
             $this->arResult['ELEMENTS'][] = $item['ID'];
         }
-        $iblocks=array_unique($iblocks);
 
         $navComponentParameters = [];
         if ($this->arParams['PAGER_BASE_LINK_ENABLE'] === 'Y') {
