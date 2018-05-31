@@ -388,6 +388,12 @@ class OrderCopy
         /** @var Basket $newBasket */
         $newBasket = Basket::create($oldBasket->getSiteId());
 
+        $fUserId = (int)$oldBasket->getFUserId(true);
+        if (!$fUserId) {
+            $fUserId = $newBasket->getFUserId(false);
+        }
+        $newBasket->setFUserId($fUserId);
+
         $oldBasketItems = $oldBasket->getBasketItems();
         foreach ($oldBasketItems as $oldBasketItem) {
             $isSuccess = true;
