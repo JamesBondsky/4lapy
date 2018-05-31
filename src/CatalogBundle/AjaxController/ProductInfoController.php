@@ -21,7 +21,6 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Dto\CatalogBrandFilterRequest;
 use FourPaws\CatalogBundle\Dto\ChildCategoryFilterRequest;
-use FourPaws\CatalogBundle\Dto\EmptyCatalogRequest;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\Helpers\WordHelper;
