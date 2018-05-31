@@ -10,6 +10,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 
@@ -162,9 +163,9 @@ if ($orderSubscribe) {
                         echo ' ';
                         /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
                         $checkStatuses = [
-                            OrderService::STATUS_IN_ASSEMBLY_1,
-                            OrderService::STATUS_IN_ASSEMBLY_2,
-                            OrderService::STATUS_ISSUING_POINT,
+                            OrderStatus::STATUS_IN_ASSEMBLY_1,
+                            OrderStatus::STATUS_IN_ASSEMBLY_2,
+                            OrderStatus::STATUS_ISSUING_POINT,
                         ];
                         echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
                         echo $order->getFormatedDateStatus();
