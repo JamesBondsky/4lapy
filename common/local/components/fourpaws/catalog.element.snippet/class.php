@@ -2,18 +2,14 @@
 
 namespace FourPaws\Components;
 
-use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use CBitrixComponent;
-use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\CatalogBundle\Service\MarkService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;

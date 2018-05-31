@@ -18,7 +18,7 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\CatalogBundle\Service\MarkService;
+use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\HighloadHelper;
@@ -36,7 +36,7 @@ $countOffersInMobile = 3; ?>
 
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
-    <?= MarkService::getMark($currentOffer) ?>
+    <?= MarkHelper::getMark($currentOffer) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
             <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
