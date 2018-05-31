@@ -274,6 +274,7 @@ class CItemsListComponent extends CBitrixComponent
             ];
 
             $navigation = CDBResult::GetNavParams($navParams);
+            $navigation->
             if ($navigation['PAGEN'] === 0 && $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'] > 0) {
                 $this->arParams['CACHE_TIME'] = $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'];
             }
@@ -395,16 +396,20 @@ class CItemsListComponent extends CBitrixComponent
         $this->arResult['ITEMS'] = [];
         $this->arResult['ELEMENTS'] = [];
 
+//        $filter = array_merge($filter, $this->externalFilter);
         $rsElement = CIBlockElement::GetList(
             $sort,
-            array_merge($filter, $this->externalFilter),
+            $filter,
             false,
             $this->navParams,
             $select
         );
+        $countItems = $rsElement->SelectedRowsCount();
         $listPageUrlEl = '';
+        $iblocks = [];
         while ($obElement = $rsElement->GetNextElement()) {
             $item = $obElement->GetFields();
+            $iblocks[] = $item['IBLOCK_ID'];
             if (empty($listPageUrlEl)) {
                 $listPageUrlEl = $item['~LIST_PAGE_URL'];
             }
@@ -490,6 +495,7 @@ class CItemsListComponent extends CBitrixComponent
             $this->arResult['ITEMS'][] = $item;
             $this->arResult['ELEMENTS'][] = $item['ID'];
         }
+        $iblocks=array_unique($iblocks);
 
         $navComponentParameters = [];
         if ($this->arParams['PAGER_BASE_LINK_ENABLE'] === 'Y') {
@@ -562,7 +568,7 @@ class CItemsListComponent extends CBitrixComponent
         }
         $filter = [
             'IBLOCK_ID'         => $this->arParams['IBLOCK_ID'],
-            'IBLOCK_LID'        => SITE_ID,
+//            'IBLOCK_LID'        => SITE_ID,
             'ACTIVE'            => 'Y',
             'CHECK_PERMISSIONS' => $this->arParams['CHECK_PERMISSIONS'] ? 'Y' : 'N',
         ];
