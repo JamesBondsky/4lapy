@@ -14,15 +14,23 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\Share;
-use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Filter\BrandFilter;
+use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
+use FourPaws\CatalogBundle\Dto\EmptyCatalogRequest;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
+use FourPaws\CatalogBundle\Dto\SearchRequest;
+use FourPaws\CatalogBundle\Exception\NoBrandFilterInRootDirectory;
+use FourPaws\CatalogBundle\Service\BrandService;
+use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -55,11 +63,6 @@ class ProductInfoController extends Controller
     protected $searchService;
 
     /**
-     * @var BasketService
-     */
-    protected $basketService;
-
-    /**
      * @var BasketRulesRepository
      */
     protected $basketRulesRepository;
@@ -69,17 +72,14 @@ class ProductInfoController extends Controller
      *
      * @param ValidatorInterface    $validator
      * @param SearchService         $searchService
-     * @param BasketService         $basketService
      * @param BasketRulesRepository $basketRulesRepository
      */
     public function __construct(
         ValidatorInterface $validator,
         SearchService $searchService,
-        BasketService $basketService,
         BasketRulesRepository $basketRulesRepository
     ) {
         $this->validator = $validator;
-        $this->basketService = $basketService;
         $this->searchService = $searchService;
         $this->basketRulesRepository = $basketRulesRepository;
     }
@@ -277,7 +277,7 @@ class ProductInfoController extends Controller
                 $bitrixCache->withTag('iblock:item:' . $product->getId());
                 $bitrixCache->withTag('catalog:offer:' . $offer->getId());
                 $bitrixCache->withTag('iblock:item:' . $offer->getId());
-                $bitrixCache->withTime(24*60*60);//кешируем на сутки
+                $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
                 $responseItem = $bitrixCache->resultOf($getResponseItem);
 
                 $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
@@ -331,7 +331,7 @@ class ProductInfoController extends Controller
             if ($offerId > 0) {
                 $bitrixCache->withTag('catalog:offer:' . $offerId);
                 $bitrixCache->withTag('iblock:item:' . $offerId);
-                $bitrixCache->withTime(24*60*60);//кешируем на сутки
+                $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
             }
             $response = $bitrixCache->resultOf($getResponse);
         } else {
@@ -430,7 +430,7 @@ class ProductInfoController extends Controller
                     $items[] = [
                         'id'         => $offer->getId(),
                         'price'      => $offer->getPrice(),
-                        'link'      => $offer->getLink(),
+                        'link'       => $offer->getLink(),
                         'image'      => $image,
                         'name'       => $name,
                         'additional' => $weight,
@@ -474,5 +474,159 @@ class ProductInfoController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * @Route("/count-by-filter-brand/", methods={"GET", "POST"})
+     *
+     * @param Request             $request
+     * @param EmptyCatalogRequest $emptyRequest
+     *
+     * @return JsonResponse
+     */
+    public function getCountItemsByFilterBrand(Request $request, EmptyCatalogRequest $emptyRequest): JsonResponse
+    {
+        $catalogBrandRequest = new CatalogBrandRequest();
+        $catalogBrandRequest->setNavigation($emptyRequest->getNavigation());
+        $catalogBrandRequest->setSearchString($emptyRequest->getSearchString());
+        $catalogBrandRequest->setSorts($emptyRequest->getSorts());
+        $brandCode = $request->get('brand_code', '');
+        $continue = false;
+        if ($brandCode) {
+            try {
+                $container = Application::getInstance()->getContainer();
+                /** @var BrandService $brandService */
+                $brandService = $container->get(BrandService::class);
+                $brand = $brandService->getByCode($brandCode);
+                $category = $brandService->getBrandCategory($brand);
+
+                $filterHelper = $container->get(FilterHelper::class);
+                $filterHelper->initCategoryFilters($category, $request);
+
+                $brandFilters = $category->getFilters()->filter(function (FilterInterface $filter) {
+                    return $filter instanceof BrandFilter;
+                });
+
+                /**
+                 * @var BrandFilter $brandFilter
+                 */
+                $brandFilter = $brandFilters->current();
+
+                if (!$brandFilter) {
+                    throw new NoBrandFilterInRootDirectory('Фильтр по бренду не найден среди фильтров корневой категории');
+                }
+                $brandFilter->setCheckedVariants([$brand->getCode()]);
+                $brandFilter->setVisible(false);
+
+                $catalogBrandRequest
+                    ->setBrand($brand)
+                    ->setCategory($category);
+                $continue = true;
+            } catch (\Exception $e) {
+                /** @todo записать в лог как ошибку */
+            }
+        }
+        $count = 0;
+        if ($continue) {
+            try {
+                $productSearchResult = $this->searchService->searchProducts(
+                    $catalogBrandRequest->getCategory()->getFilters(),
+                    $catalogBrandRequest->getSorts()->getSelected(),
+                    $catalogBrandRequest->getNavigation(),
+                    $catalogBrandRequest->getSearchString()
+                );
+                $count = $productSearchResult->getResultSet()->getTotalHits();
+            } catch (\Exception $e) {
+                /** @todo записать в лог как ошибку */
+            }
+        }
+        else{
+            /** @todo записать в лог как ошибку */
+        }
+        return JsonSuccessResponse::createWithData('подгрузка количества успешна',
+            [
+                'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
+                        ['товар', 'товара', 'товаров']),
+            ]);
+    }
+
+    /**
+     * @Route("/count-by-filter-search/", methods={"GET", "POST"})
+     *
+     * @param SearchRequest $searchRequest
+     *
+     * @return JsonResponse
+     */
+    public function getCountItemsByFilterSearch(SearchRequest $searchRequest): JsonResponse
+    {
+        $count = 0;
+        try {
+            $productSearchResult = $this->searchService->searchProducts(
+                $searchRequest->getCategory()->getFilters(),
+                $searchRequest->getSorts()->getSelected(),
+                $searchRequest->getNavigation(),
+                $searchRequest->getSearchString()
+            );
+            $count = $productSearchResult->getResultSet()->getTotalHits();
+        } catch (\Exception $e) {
+            /** @todo записать в лог как ошибку */
+        }
+        return JsonSuccessResponse::createWithData('подгрузка количества успешна',
+            [
+                'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
+                        ['товар', 'товара', 'товаров']),
+            ]);
+    }
+
+    /**
+     * @Route("/count-by-filter-list/", methods={"GET", "POST"})
+     *
+     * @param Request             $request
+     * @param EmptyCatalogRequest $emptyRequest
+     *
+     * @return JsonResponse
+     */
+    public function getCountItemsByFilterList(Request $request, EmptyCatalogRequest $emptyRequest): JsonResponse
+    {
+        $categoryRequest = new ChildCategoryRequest();
+        $categoryRequest->setNavigation($emptyRequest->getNavigation());
+        $categoryRequest->setSearchString($emptyRequest->getSearchString());
+        $categoryRequest->setSorts($emptyRequest->getSorts());
+        $sectionId = (int)$request->get('section_id', 0);
+        $continue = false;
+        if ($sectionId > 0) {
+            try {
+                $container = Application::getInstance()->getContainer();
+                $category = (new CategoryQuery())->withFilter(['=ID' => $sectionId])->exec()->first();
+
+                $filterHelper = $container->get(FilterHelper::class);
+                $filterHelper->initCategoryFilters($category, $request);
+                $categoryRequest->setCategory($category);
+                $continue = true;
+            } catch (\Exception $e) {
+                /** @todo записать в лог как ошибку */
+            }
+        }
+        $count = 0;
+        if ($continue) {
+            try {
+                $productSearchResult = $this->searchService->searchProducts(
+                    $categoryRequest->getCategory()->getFilters(),
+                    $categoryRequest->getSorts()->getSelected(),
+                    $categoryRequest->getNavigation(),
+                    $categoryRequest->getSearchString()
+                );
+                $count = $productSearchResult->getResultSet()->getTotalHits();
+            } catch (\Exception $e) {
+                /** @todo записать в лог как ошибку */
+            }
+        } else {
+            /** @todo записать в лог как ошибку */
+        }
+        return JsonSuccessResponse::createWithData('подгрузка количества успешна',
+            [
+                'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
+                        ['товар', 'товара', 'товаров']),
+            ]);
     }
 }
