@@ -406,10 +406,6 @@ class ScheduleResultService implements LoggerAwareInterface
              */
             $modifier++;
 
-            foreach ($from as $date) {
-                $date->modify(sprintf('+%s days', $modifier));
-            }
-
             if (null === $route) {
                 $route = new StoreCollection();
             }
@@ -427,6 +423,11 @@ class ScheduleResultService implements LoggerAwareInterface
                      */
                     $shipmentDate = $schedule->getReceiver()->getShipmentDate($date);
 
+                    $shipmentDate->modify(sprintf('+%s days', $modifier));
+
+                    /**
+                     * Дата поставки на $receiver
+                     */
                     $nextDelivery = $schedule->getNextDelivery($shipmentDate);
 
                     if (null !== $nextDelivery) {
