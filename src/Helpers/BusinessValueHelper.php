@@ -35,7 +35,7 @@ class BusinessValueHelper
                         ->where('CONSUMER_KEY', BusinessValueTable::COMMON_CONSUMER_KEY)
                 )
                 ->whereIn('CODE_KEY', $selected)
-                ->where('PROVIDER_KEY', 'VALUE')
+                ->whereIn('PROVIDER_KEY', ['VALUE', 'INPUT'])
                 ->setSelect(['*'])
                 ->setSelect(['CODE_KEY', 'CONSUMER_KEY', 'PROVIDER_VALUE'])
                 ->setCacheTtl(static::DEFAULT_TTL)

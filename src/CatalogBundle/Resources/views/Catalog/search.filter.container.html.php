@@ -45,7 +45,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
         </div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>" data-url="/ajax/catalog/product-info/count-by-filter-search/">
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilter() ? 'style="display:block"' : '' ?>>
                 <a class="b-link b-link--reset js-reset-filter"

@@ -160,15 +160,15 @@ class FourPawsSapExtension extends ConfigurableExtension
         }
 
         if ($out['prefix']['order']) {
-            $container->getDefinition(OrderService::class)->addMethodCall('setOutPath', [$out['path']['order']]);
+            $container->getDefinition(OrderService::class)->addMethodCall('setOutPrefix', [$out['prefix']['order']]);
         }
 
         if ($out['path']['payment']) {
-            $container->getDefinition(PaymentService::class)->addMethodCall('setOutPrefix', [$out['path']['payment']]);
+            $container->getDefinition(PaymentService::class)->addMethodCall('setOutPath', [$out['path']['payment']]);
         }
 
         if ($out['prefix']['payment']) {
-            $container->getDefinition(PaymentService::class)->addMethodCall('setOutPrefix', [$out['path']['payment']]);
+            $container->getDefinition(PaymentService::class)->addMethodCall('setOutPrefix', [$out['prefix']['payment']]);
         }
     }
 }

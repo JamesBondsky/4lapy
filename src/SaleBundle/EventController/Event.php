@@ -24,6 +24,7 @@ use FourPaws\SaleBundle\Discount\Action\Condition\BasketFilter;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
@@ -88,6 +89,9 @@ class Event extends BaseServiceHandler
         static::initHandler('OnSaleOrderCanceled', [self::class, 'sendOrderCancelMessage'], $module);
         // смена статуса заказа
         static::initHandler('OnSaleStatusOrderChange', [self::class, 'sendOrderStatusMessage'], $module);
+
+        /** отмена заказа, перешедшего в статус отмены */
+        static::initHandler('OnSaleStatusOrderChange', [self::class, 'cancelOrder'], $module);
 
         /** очистка кеша заказа */
         static::initHandler('OnSaleOrderSaved', [self::class, 'clearOrderCache'], $module);
@@ -274,6 +278,37 @@ class Event extends BaseServiceHandler
             ->get(NotificationService::class);
 
         $notificationService->sendOrderStatusMessage($order);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Exception
+     */
+    public static function cancelOrder(BitrixEvent $event): void
+    {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+
+        $status = $order->getField('STATUS_ID');
+        if (\in_array(
+            $order->getField('STATUS_ID'),
+            [OrderStatus::STATUS_CANCEL_COURIER, OrderStatus::STATUS_CANCEL_PICKUP],
+            true
+        ) && !$order->isCanceled()) {
+            $order->setField('CANCELED', 'Y');
+            $order->save();
+        }
     }
 
     /**

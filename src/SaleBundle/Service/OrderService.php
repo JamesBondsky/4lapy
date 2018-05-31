@@ -59,6 +59,7 @@ use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -101,41 +102,6 @@ class OrderService implements LoggerAwareInterface
     public const PAYMENT_INNER = 'inner';
 
     public const PROPERTY_TYPE_ENUM = 'ENUM';
-
-    /**
-     * Дефолтный статус заказа при курьерской доставке
-     */
-    public const STATUS_NEW_COURIER = 'Q';
-
-    /**
-     * Дефолтный статус заказа при самовывозе
-     */
-    public const STATUS_NEW_PICKUP = 'N';
-
-    /**
-     * Заказ доставляется ("Исполнен" для курьерской доставки)
-     */
-    public const STATUS_DELIVERING = 'Y';
-
-    /**
-     * Заказ в пункте выдачи
-     */
-    public const STATUS_ISSUING_POINT = 'F';
-
-    /**
-     * Заказ доставлен
-     */
-    public const STATUS_DELIVERED = 'J';
-
-    /**
-     * Заказ в сборке
-     */
-    public const STATUS_IN_ASSEMBLY_1 = 'H';
-
-    /**
-     * Заказ в сборке
-     */
-    public const STATUS_IN_ASSEMBLY_2 = 'W';
 
     /**
      * @var AddressService
@@ -422,7 +388,7 @@ class OrderService implements LoggerAwareInterface
                 }
             }
             /** @noinspection PhpInternalEntityUsedInspection */
-            $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
+            $order->setFieldNoDemand('STATUS_ID', OrderStatus::STATUS_NEW_COURIER);
         }
 
         $shipmentCollection = $order->getShipmentCollection();

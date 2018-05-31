@@ -926,7 +926,7 @@ class OrderSubscribeService
             $this->log()->critical(
                 sprintf(
                     'Ошибка копирования заказа по подписке - %s',
-                    implode("\n", $result->getErrorMessages())
+                    implode("\n", $result->getErrorMessagesEx())
                 ),
                 [
                     'ORIGIN_ORDER_ID' => $params->getOriginOrderId(),

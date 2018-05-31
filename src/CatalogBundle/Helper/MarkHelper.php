@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\CatalogBundle\Service;
+namespace FourPaws\CatalogBundle\Helper;
 
 
 use FourPaws\BitrixOrm\Model\Share;
@@ -9,9 +9,9 @@ use FourPaws\Catalog\Model\Offer;
 /**
  * Class DiscountMarkService
  *
- * @package FourPaws\CatalogBundle\Service
+ * @package FourPaws\CatalogBundle\Helper
  */
-final class MarkService
+final class MarkHelper
 {
     public const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
     public const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
@@ -35,10 +35,6 @@ final class MarkService
      */
     public static function getMark(Offer $offer, $content = ''): string
     {
-        /**
-         * @todo get content from promo actions
-         */
-
         if (!$content) {
             $content = self::getMarkImage($offer);
         }
@@ -97,26 +93,12 @@ final class MarkService
      */
     private static function getMarkImage(Offer $offer): string
     {
-        if ($offer->isHit()) {
-            return self::MARK_HIT_IMAGE;
-        }
-
-        if ($offer->isPopular()) {
-            /** @todo возможно другой шаблон */
+        if ($offer->isHit() || $offer->isPopular()) {
             return self::MARK_HIT_IMAGE;
         }
 
         if ($offer->isNew()) {
             return self::MARK_NEW_IMAGE;
-        }
-
-        if ($offer->isSale()) {
-            /** @todo возможно другой шаблон */
-            return self::MARK_SALE_IMAGE;
-        }
-
-        if ($offer->isSimpleSaleAction()) {
-            return self::MARK_SALE_IMAGE;
         }
 
         if ($offer->isShare()) {
@@ -129,6 +111,10 @@ final class MarkService
             return self::MARK_GIFT_IMAGE;
         }
 
+        if ($offer->isSale() || $offer->isSimpleSaleAction()) {
+            return self::MARK_SALE_IMAGE;
+        }
+
         return '';
     }
 
@@ -139,7 +125,7 @@ final class MarkService
      */
     private static function getMarkTemplate(Offer $offer): string
     {
-        if ($offer->isHit()) {
+        if ($offer->isHit() || $offer->isPopular()) {
             return self::YELLOW_TEMPLATE;
         }
 
@@ -150,11 +136,6 @@ final class MarkService
         if ($offer->isSale()) {
             /** @todo возможно другой шаблон */
             return self::DEFAULT_TEMPLATE;
-        }
-
-        if ($offer->isPopular()) {
-            /** @todo возможно другой шаблон */
-            return self::YELLOW_TEMPLATE;
         }
 
         return self::DEFAULT_TEMPLATE;
