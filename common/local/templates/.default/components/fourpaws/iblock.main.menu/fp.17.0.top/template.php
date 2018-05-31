@@ -46,7 +46,7 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
         <ul class="b-menu__list">
             <?php foreach ($arResult['MENU_TREE'] as $arItem) {
                 if ($arItem['NESTED'] || $arItem['IS_BRAND_MENU']) {
-                    if ($arItem['CODE'] === 'pet') {
+                    if ($arItem['CODE'] === 'pet' || $arItem['CODE'] === 'services') {
                         $sAddClass1 = ' js-menu-pet-mobile';
                         $sAddClass2 = ' js-open-main-menu js-open-step-mobile';
                     } else {
@@ -116,7 +116,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                     </li>
                     <?php foreach ($arFirstLevelItem['NESTED'] as $arSecondLevelItem) { ?>
                         <li class="b-menu-main__item">
-                            <a class="b-menu-main__link js-active-submenu js-open-step-mobile"<?= $arSecondLevelItem['_LINK_ATTR2_'] ?>
+                            <a class="b-menu-main__link js-active-submenu <?=$arSecondLevelItem['NESTED'] ? ' js-open-step-mobile' : ''?>"<?= $arSecondLevelItem['_LINK_ATTR2_'] ?>
                                href="<?= $arSecondLevelItem['_URL_'] ?>">
                                 <?php echo $arSecondLevelItem['_TEXT_'];
                                 if ($arSecondLevelItem['NESTED']) {
@@ -135,7 +135,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                     <?php if ($arSecondLevelItem['NESTED']) {
                                         foreach ($arSecondLevelItem['NESTED'] as $arThirdLevelItem) { ?>
                                             <div class="b-submenu-column">
-                                                <a class="b-link b-link--submenu js-open-step-mobile js-open-step-mobile--submenu"<?= $arThirdLevelItem['_LINK_ATTR2_'] ?>
+                                                <a class="b-link b-link--submenu <?=$arThirdLevelItem['NESTED'] ? ' js-open-step-mobile js-open-step-mobile--submenu' : ''?>"<?= $arThirdLevelItem['_LINK_ATTR2_'] ?>
                                                    href="<?= $arThirdLevelItem['_URL_'] ?>">
                                                     <?php echo '<span class="b-link__text b-link__text--submenu">' . $arThirdLevelItem['_TEXT_'] . '</span>';
                                                     if ($arThirdLevelItem['NESTED']) {
@@ -167,57 +167,55 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                             </div>
                                         <?php }
                                     }
-                                    if ($arSecondLevelItem['SECTION_HREF'] && $arSecondLevelItem['SECTION_HREF']['ID']) {
-                                        if ($arResult['SECTIONS_POPULAR_BRANDS'][$arSecondLevelItem['SECTION_HREF']['ID']]) {
-                                            $sTmpUrl = 'javascript:void(0);';
-                                            $sTmpText = 'Популярные бренды';
-                                            $sTmpTitle = 'Популярные бренды'; ?>
-                                            <div class="b-menu-main__popular-brand">
-                                                <div class="b-menu-main__title js-open-step-mobile">
-                                                    <?php //* ?>
-                                                    <a class="b-link b-link--brand-menu js-not-href js-not-href--brand-menu"
-                                                       href="<?= $sTmpUrl ?>" title="<?= $sTmpTitle ?>"><?php
-                                                        echo '<span class="b-link__text b-link__text--brand-menu">' . $sTmpText . '</span>';
-                                                        echo $sArrowDownIcoThird;
-                                                        ?></a><?php
-                                                    /*/
-                                                    ?><span class="b-link b-link--brand-menu js-not-href js-not-href--brand-menu"><?php
-                                                        echo '<span class="b-link__text b-link__text--brand-menu">'.$sTmpText.'</span>';
-                                                        echo $sArrowDownIcoThird;
-                                                    ?></span><?php
-                                                    //*/
-                                                    ?></div>
-                                                <div class="b-popular-brand b-popular-brand--flex b-popular-brand--menu-dropdown js-step-mobile">
-                                                    <?php /*
-                                                ?><div class="b-popular-brand-item b-popular-brand-item--menu-dropdown">
-                                                    <a class="b-back-link__link js-back-submenu" href="<?=$sTmpUrl?>" title="<?=$sTmpTitle?>"><?php
-                                                        echo $sArrowDownOrangeIco;
-                                                        echo $sTmpText;
-                                                    ?></a>
-                                                </div><?php
-                                                */
-                                                    foreach ($arResult['SECTIONS_POPULAR_BRANDS'][$arSecondLevelItem['SECTION_HREF']['ID']] as $arBrandItem) { ?>
-                                                        <div class="b-popular-brand-item b-popular-brand-item--menu-dropdown">
-                                                            <a class="b-popular-brand-item__link b-popular-brand-item__link--menu-dropdown"
-                                                               title="<?= $arBrandItem['NAME'] ?>"
-                                                               href="<?= $arBrandItem['DETAIL_PAGE_URL'] ?>">
-                                                                <?php echo '<span class="b-popular-brand-item__text">' . $arBrandItem['NAME'] . '</span>';
-                                                                //                                                                echo $sArrowDownIcoBrand;
-                                                                if ($arBrandItem['PRINT_PICTURE']) {
-                                                                    $arImg = $arBrandItem['PRINT_PICTURE']; ?>
-                                                                    <img
-                                                                            class="b-popular-brand-item__image js-image-wrapper"
-                                                                            src="<?= $arImg['SRC'] ?>"
-                                                                            alt="<?= $arImg['ALT'] ?>"
-                                                                            title="<?= $arImg['TITLE'] ?>">
-                                                                <?php } ?>
-                                                            </a>
-                                                        </div>
-                                                    <?php } ?>
-                                                </div>
+                                    if ($arSecondLevelItem['SECTION_HREF'] && $arSecondLevelItem['SECTION_HREF']['ID'] && $arResult['SECTIONS_POPULAR_BRANDS'][$arSecondLevelItem['SECTION_HREF']['ID']]) {
+                                        $sTmpUrl = 'javascript:void(0);';
+                                        $sTmpText = 'Популярные бренды';
+                                        $sTmpTitle = 'Популярные бренды'; ?>
+                                        <div class="b-menu-main__popular-brand">
+                                            <div class="b-menu-main__title js-open-step-mobile">
+                                                <?php //* ?>
+                                                <a class="b-link b-link--brand-menu js-not-href js-not-href--brand-menu"
+                                                   href="<?= $sTmpUrl ?>" title="<?= $sTmpTitle ?>"><?php
+                                                    echo '<span class="b-link__text b-link__text--brand-menu">' . $sTmpText . '</span>';
+                                                    echo $sArrowDownIcoThird;
+                                                    ?></a><?php
+                                                /*/
+                                                ?><span class="b-link b-link--brand-menu js-not-href js-not-href--brand-menu"><?php
+                                                    echo '<span class="b-link__text b-link__text--brand-menu">'.$sTmpText.'</span>';
+                                                    echo $sArrowDownIcoThird;
+                                                ?></span><?php
+                                                //*/
+                                                ?></div>
+                                            <div class="b-popular-brand b-popular-brand--flex b-popular-brand--menu-dropdown js-step-mobile">
+                                                <?php /*
+                                            ?><div class="b-popular-brand-item b-popular-brand-item--menu-dropdown">
+                                                <a class="b-back-link__link js-back-submenu" href="<?=$sTmpUrl?>" title="<?=$sTmpTitle?>"><?php
+                                                    echo $sArrowDownOrangeIco;
+                                                    echo $sTmpText;
+                                                ?></a>
+                                            </div><?php
+                                            */
+                                                foreach ($arResult['SECTIONS_POPULAR_BRANDS'][$arSecondLevelItem['SECTION_HREF']['ID']] as $arBrandItem) { ?>
+                                                    <div class="b-popular-brand-item b-popular-brand-item--menu-dropdown">
+                                                        <a class="b-popular-brand-item__link b-popular-brand-item__link--menu-dropdown"
+                                                           title="<?= $arBrandItem['NAME'] ?>"
+                                                           href="<?= $arBrandItem['DETAIL_PAGE_URL'] ?>">
+                                                            <?php echo '<span class="b-popular-brand-item__text">' . $arBrandItem['NAME'] . '</span>';
+                                                            //                                                                echo $sArrowDownIcoBrand;
+                                                            if ($arBrandItem['PRINT_PICTURE']) {
+                                                                $arImg = $arBrandItem['PRINT_PICTURE']; ?>
+                                                                <img
+                                                                        class="b-popular-brand-item__image js-image-wrapper"
+                                                                        src="<?= $arImg['SRC'] ?>"
+                                                                        alt="<?= $arImg['ALT'] ?>"
+                                                                        title="<?= $arImg['TITLE'] ?>">
+                                                            <?php } ?>
+                                                        </a>
+                                                    </div>
+                                                <?php } ?>
                                             </div>
-                                        <?php }
-                                    } ?>
+                                        </div>
+                                    <?php } ?>
                                 </div>
                             <?php } ?>
                         </li>
