@@ -72,4 +72,18 @@ class OrderSubscribeCopyResult extends Result
 
         return $saveResult ? $saveResult->getId() : 0;
     }
+
+    /**
+     * @return array
+     */
+    public function getErrorMessagesEx()
+    {
+        $messages = [];
+
+        foreach ($this->getErrors() as $error) {
+            $messages[] = '['.$error->getCode().'] '.$error->getMessage();
+        }
+
+        return $messages;
+    }
 }
