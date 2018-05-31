@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -14,15 +15,16 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\Share;
-use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\CatalogBundle\Dto\CatalogBrandFilterRequest;
+use FourPaws\CatalogBundle\Dto\ChildCategoryFilterRequest;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
+use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -55,11 +57,6 @@ class ProductInfoController extends Controller
     protected $searchService;
 
     /**
-     * @var BasketService
-     */
-    protected $basketService;
-
-    /**
      * @var BasketRulesRepository
      */
     protected $basketRulesRepository;
@@ -69,17 +66,14 @@ class ProductInfoController extends Controller
      *
      * @param ValidatorInterface    $validator
      * @param SearchService         $searchService
-     * @param BasketService         $basketService
      * @param BasketRulesRepository $basketRulesRepository
      */
     public function __construct(
         ValidatorInterface $validator,
         SearchService $searchService,
-        BasketService $basketService,
         BasketRulesRepository $basketRulesRepository
     ) {
         $this->validator = $validator;
-        $this->basketService = $basketService;
         $this->searchService = $searchService;
         $this->basketRulesRepository = $basketRulesRepository;
     }
@@ -277,7 +271,7 @@ class ProductInfoController extends Controller
                 $bitrixCache->withTag('iblock:item:' . $product->getId());
                 $bitrixCache->withTag('catalog:offer:' . $offer->getId());
                 $bitrixCache->withTag('iblock:item:' . $offer->getId());
-                $bitrixCache->withTime(24*60*60);//кешируем на сутки
+                $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
                 $responseItem = $bitrixCache->resultOf($getResponseItem);
 
                 $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
@@ -331,7 +325,7 @@ class ProductInfoController extends Controller
             if ($offerId > 0) {
                 $bitrixCache->withTag('catalog:offer:' . $offerId);
                 $bitrixCache->withTag('iblock:item:' . $offerId);
-                $bitrixCache->withTime(24*60*60);//кешируем на сутки
+                $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
             }
             $response = $bitrixCache->resultOf($getResponse);
         } else {
@@ -430,7 +424,7 @@ class ProductInfoController extends Controller
                     $items[] = [
                         'id'         => $offer->getId(),
                         'price'      => $offer->getPrice(),
-                        'link'      => $offer->getLink(),
+                        'link'       => $offer->getLink(),
                         'image'      => $image,
                         'name'       => $name,
                         'additional' => $weight,
@@ -474,5 +468,92 @@ class ProductInfoController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * @Route("/count-by-filter-brand/", methods={"GET", "POST"})
+     *
+     * @param CatalogBrandFilterRequest $catalogBrandRequest
+     *
+     * @return JsonResponse
+     */
+    public function getCountItemsByFilterBrand(CatalogBrandFilterRequest $catalogBrandRequest): JsonResponse
+    {
+        $count = 0;
+        $logger = LoggerFactory::create('ajaxFilter');
+        try {
+            $productSearchResult = $this->searchService->searchProducts(
+                $catalogBrandRequest->getCategory()->getFilters(),
+                $catalogBrandRequest->getSorts()->getSelected(),
+                $catalogBrandRequest->getNavigation(),
+                $catalogBrandRequest->getSearchString()
+            );
+            $count = $productSearchResult->getResultSet()->getTotalHits();
+        } catch (\Exception $e) {
+            $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
+        }
+        return JsonSuccessResponse::createWithData('подгрузка количества успешна',
+            [
+                'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
+                        ['товар', 'товара', 'товаров']),
+            ]);
+    }
+
+    /**
+     * @Route("/count-by-filter-search/", methods={"GET", "POST"})
+     *
+     * @param SearchRequest $searchRequest
+     *
+     * @return JsonResponse
+     */
+    public function getCountItemsByFilterSearch(SearchRequest $searchRequest): JsonResponse
+    {
+        $count = 0;
+        $logger = LoggerFactory::create('ajaxFilter');
+        try {
+            $productSearchResult = $this->searchService->searchProducts(
+                $searchRequest->getCategory()->getFilters(),
+                $searchRequest->getSorts()->getSelected(),
+                $searchRequest->getNavigation(),
+                $searchRequest->getSearchString()
+            );
+            $count = $productSearchResult->getResultSet()->getTotalHits();
+        } catch (\Exception $e) {
+            $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
+        }
+        return JsonSuccessResponse::createWithData('подгрузка количества успешна',
+            [
+                'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
+                        ['товар', 'товара', 'товаров']),
+            ]);
+    }
+
+    /**
+     * @Route("/count-by-filter-list/", methods={"GET", "POST"})
+     *
+     * @param ChildCategoryFilterRequest $categoryRequest
+     *
+     * @return JsonResponse
+     */
+    public function getCountItemsByFilterList(ChildCategoryFilterRequest $categoryRequest): JsonResponse
+    {
+        $count = 0;
+        $logger = LoggerFactory::create('ajaxFilter');
+        try {
+            $productSearchResult = $this->searchService->searchProducts(
+                $categoryRequest->getCategory()->getFilters(),
+                $categoryRequest->getSorts()->getSelected(),
+                $categoryRequest->getNavigation(),
+                $categoryRequest->getSearchString()
+            );
+            $count = $productSearchResult->getResultSet()->getTotalHits();
+        } catch (\Exception $e) {
+            $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
+        }
+        return JsonSuccessResponse::createWithData('подгрузка количества успешна',
+            [
+                'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
+                        ['товар', 'товара', 'товаров']),
+            ]);
     }
 }
