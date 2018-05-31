@@ -632,7 +632,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->setPropertyValue($propertyCollection, 'CITY', $deliveryAddress->getCityName());
             $this->setPropertyValue($propertyCollection, 'STREET', $deliveryAddress->getStreetName());
             $this->setPropertyValue($propertyCollection, 'HOUSE', $deliveryAddress->getHouse());
-            $this->setPropertyValue($propertyCollection, 'BUILDING', $deliveryAddress->getBuilding());
+            $this->setPropertyValue($propertyCollection, 'BUILDING', $deliveryAddress->getHousing());
             $this->setPropertyValue($propertyCollection, 'FLOOR', $deliveryAddress->getFloor());
             $this->setPropertyValue($propertyCollection, 'APARTMENT', $deliveryAddress->getRoomNumber());
         }
