@@ -5,6 +5,11 @@ namespace FourPaws\Migrator\Provider;
 use Bitrix\Main\GroupTable;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class UserGroup
+ *
+ * @package FourPaws\Migrator\Provider
+ */
 class UserGroup extends ProviderAbstract
 {
     /**
