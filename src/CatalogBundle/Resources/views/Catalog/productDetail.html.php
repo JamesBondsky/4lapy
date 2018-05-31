@@ -14,7 +14,7 @@ use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
-use FourPaws\CatalogBundle\Service\MarkService;
+use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
@@ -91,7 +91,7 @@ if (null === $offer) {
                     <div class="b-common-item__rank b-common-item__rank--card">
                         <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW); ?>
                         <div class="b-common-item__rank-wrapper">
-                            <?=MarkService::getDetailTopMarks($offer) ?>
+                            <?=MarkHelper::getDetailTopMarks($offer) ?>
                             <?php if ($offer->isShare()) {
                                 /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) { ?>

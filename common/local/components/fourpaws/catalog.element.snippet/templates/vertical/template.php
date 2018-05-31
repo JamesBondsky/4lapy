@@ -6,7 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\CatalogBundle\Service\MarkService;
+use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
@@ -38,7 +38,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
 } ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
          data-productid="<?= $product->getId() ?>">
-        <?= MarkService::getMark($currentOffer) ?>
+        <?= MarkHelper::getMark($currentOffer) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
                 <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
