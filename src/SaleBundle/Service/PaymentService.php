@@ -95,7 +95,7 @@ class PaymentService
         $vatList = [];
         $dbRes = \CCatalogVat::GetListEx();
         while ($arRes = $dbRes->Fetch()) {
-            $vatList[$arRes['ID']] = $arRes['RATE'];
+            $vatList[$arRes['ID']] = (int)$arRes['RATE'];
         }
 
         $vatGateway = [
