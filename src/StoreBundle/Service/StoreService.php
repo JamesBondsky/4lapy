@@ -668,18 +668,14 @@ class StoreService implements LoggerAwareInterface
 
                 $gpsS = $store->getLongitude();
                 $gpsN = $store->getLatitude();
-                if ($gpsN > 0) {
-                    $avgGpsN += $gpsN;
-                } else {
-                    /** скипаем если нет местоположения */
+
+                /** скипаем если нет местоположения, кординаты могут быть отрицательными, скипаем до усреднения, чтобы не портить координаты */
+                if($gpsN === 0 || $gpsS === 0){
                     continue;
                 }
-                if ($gpsS > 0) {
-                    $avgGpsS += $gpsS;
-                } else {
-                    /** скипаем если нет местоположения */
-                    continue;
-                }
+
+                $avgGpsN += $gpsN;
+                $avgGpsS += $gpsS;
 
                 $item = [
                     'id'         => $store->getXmlId(),
