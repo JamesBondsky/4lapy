@@ -27,16 +27,16 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
         window._global = {};
     </script>
     <?php
-//    $APPLICATION->ShowHead();
-    $bXhtmlStyle = true;
+    $APPLICATION->ShowHead();
+    /*$bXhtmlStyle = true;
     echo '<meta http-equiv="Content-Type" content="text/html; charset='.LANG_CHARSET.'"'.($bXhtmlStyle? ' /':'').'>'."\n";
 //    $APPLICATION->ShowMeta("robots", false, $bXhtmlStyle);
 //    $APPLICATION->ShowMeta("keywords", false, $bXhtmlStyle);
 //    $APPLICATION->ShowMeta("description", false, $bXhtmlStyle);
-//    $APPLICATION->ShowLink("canonical", null, $bXhtmlStyle);
+    $APPLICATION->ShowLink("canonical", null, $bXhtmlStyle);
     $APPLICATION->ShowCSS(true, $bXhtmlStyle);
     $APPLICATION->ShowHeadStrings();
-    $APPLICATION->ShowHeadScripts();?>
+    $APPLICATION->ShowHeadScripts();*/?>
     <title><?php $APPLICATION->ShowTitle(false) ?></title>
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
@@ -111,7 +111,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
                      * Основное меню.
                      * dropdown передается через header_dropdown_menu
                      */
-                    $APPLICATION->IncludeComponent(
+                    /*$APPLICATION->IncludeComponent(
                         'fourpaws:iblock.main.menu',
                         'fp.17.0.top',
                         [
@@ -134,7 +134,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
                         [
                             'HIDE_ICONS' => 'Y'
                         ]
-                    );
+                    );*/
                     ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
                         '',
@@ -168,10 +168,10 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
 
                 if ($template->hasHeaderDetailPageContainer()) {
                     ?>
-                    <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
-                        'b-container b-container--news-detail')*/ ?>">
-                        <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
-                            'b-detail-page')*/ ?>">
+                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
+                        'b-container b-container--news-detail') ?>">
+                        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
+                            'b-detail-page') ?>">
                             <?php
                             $APPLICATION->IncludeComponent('bitrix:breadcrumb',
                                 'breadcrumb',

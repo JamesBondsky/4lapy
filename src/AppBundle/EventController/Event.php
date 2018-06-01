@@ -43,6 +43,7 @@ class Event extends BaseServiceHandler
         /** исправление буфера вывода - доп обертка - дикая дикость - но проблема в прологе common/bitrix/modules/main/classes/general/main.php - стркои 3420-3432
          * при нахождении более лучшего варианта выпилить
          */
+//        self::initHandler('OnEndBufferContent', [static::class, 'sanitizeOutput'], 'main');
 //        self::initHandler('OnPageStart', [static::class, 'startBuffer'], 'main');
 //        self::initHandler('OnAfterEpilog', [static::class, 'endBuffer'], 'main');
     }
@@ -50,15 +51,24 @@ class Event extends BaseServiceHandler
     /**
      * @param $id
      */
-//    public static function startBuffer(): void
-//    {
-//        ob_start();
-//    }
-//
-//    public static function endBuffer(): void
-//    {
-//        $contant = ob_get_clean();
-//        $contant = preg_replace('/^\n*/', '', $contant);
-//        echo $contant;
-//    }
+    public static function startBuffer(): void
+    {
+        ob_start();
+    }
+
+    public static function endBuffer(): void
+    {
+        $content = ob_get_clean();
+        $content = preg_replace('/^\n*/', '', $content);
+        echo $content;
+    }
+
+    /**
+     * @param $content
+     */
+    public function sanitizeOutput(&$content): void
+    {
+        $content = preg_replace( '/(<!--.*?-->)/s', '', $content );
+        $content =preg_replace('/>\s*\n*\s*</', '><', $content);
+    }
 }
