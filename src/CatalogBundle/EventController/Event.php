@@ -8,6 +8,8 @@ namespace FourPaws\CatalogBundle\EventController;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Catalog\PriceTable;
+use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
@@ -55,6 +57,9 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnProductAdd', [self::class, 'clearProductCache'], $module);
 
         $module = 'iblock';
+
+        /** задание нулевой цены при создании оффера */
+        static::initHandler('OnAfterIBlockElementAdd', [self::class, 'createOfferPrice'], $module);
 
         /** очистка кеша при изменении элемента инфоблока */
         static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'clearIblockItemCache'], $module);
@@ -151,5 +156,23 @@ class Event extends BaseServiceHandler
     public static function unlockEvents(): void
     {
         self::$lockEvents = false;
+    }
+
+    /**
+     * @param $fields
+     * @throws IblockNotFoundException
+     * @throws \Exception
+     */
+    public static function createOfferPrice($fields): void
+    {
+        if ((int)$fields['IBLOCK_ID'] === (int)IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)) {
+            PriceTable::add([
+                'PRODUCT_ID' => $fields['ID'],
+                'CATALOG_GROUP_ID' => '2',
+                'PRICE' => 0,
+                'CURRENCY' => CurrencyManager::getBaseCurrency(),
+                'PRICE_SCALE' => 0
+            ]);
+        }
     }
 }

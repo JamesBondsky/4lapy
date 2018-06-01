@@ -3,9 +3,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/**
- * @global CMain $APPLICATION
- */
+/** @var \CMain $APPLICATION */
+/** @var array $arResult */
+
 ?>
 <div class="b-account-profile">
     <div class="b-account-profile__title">
@@ -16,17 +16,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <?php require_once 'include/userActions.php' ?>
     </div>
     <div class="b-account-profile__other">
-        <?php $APPLICATION->IncludeComponent(
-            'bitrix:socserv.auth.split',
-            'profile.socserv',
-            [
-                'ALLOW_DELETE'  => 'Y',
-                // Разрешить удалять объединенные профили
-                'SHOW_PROFILES' => 'Y',
-                // Показывать объединенные профили
-            ],
-            false
-        ); ?>
+        <?php
+        if ($arResult['canEditSocial']) {
+            $APPLICATION->IncludeComponent(
+                'bitrix:socserv.auth.split',
+                'profile.socserv',
+                [
+                    'ALLOW_DELETE'  => 'Y',
+                    // Разрешить удалять объединенные профили
+                    'SHOW_PROFILES' => 'Y',
+                    // Показывать объединенные профили
+                ],
+                false
+            );
+        }
+        ?>
         <?php require_once 'include/subscribe.php' ?>
     </div>
 </div>

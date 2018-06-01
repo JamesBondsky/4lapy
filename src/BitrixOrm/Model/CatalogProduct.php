@@ -104,6 +104,33 @@ class CatalogProduct
     protected $measureId = 5;
 
     /**
+     * ID ставки НДС
+     *
+     * @Serializer\SerializedName("VAT_ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups({"create","read","update"})
+     *
+     * @var int
+     */
+    protected $vatId;
+
+    /**
+     * @var bool
+     * @Serializer\SerializedName("AVAILABLE")
+     * @Serializer\Type("bitrix_bool")
+     * @Serializer\Groups({"create","read","update"})
+     */
+    protected $available = true;
+
+    /**
+     * @var bool
+     * @Serializer\SerializedName("CAN_BUY_ZERO")
+     * @Serializer\Type("bitrix_bool")
+     * @Serializer\Groups({"create","read","update"})
+     */
+    protected $canBuyZero = true;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -245,5 +272,59 @@ class CatalogProduct
     public function getMeasureId(): int
     {
         return $this->measureId;
+    }
+
+    /**
+     * @return int
+     */
+    public function getVatId(): int
+    {
+        return $this->vatId;
+    }
+
+    /**
+     * @param int $vatId
+     * @return CatalogProduct
+     */
+    public function setVatId(int $vatId): CatalogProduct
+    {
+        $this->vatId = $vatId;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAvailable(): bool
+    {
+        return $this->available;
+    }
+
+    /**
+     * @param bool $available
+     * @return CatalogProduct
+     */
+    public function setAvailable(bool $available): CatalogProduct
+    {
+        $this->available = $available;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canBuyZero(): bool
+    {
+        return $this->canBuyZero;
+    }
+
+    /**
+     * @param bool $canBuyZero
+     * @return CatalogProduct
+     */
+    public function setCanBuyZero(bool $canBuyZero): CatalogProduct
+    {
+        $this->canBuyZero = $canBuyZero;
+        return $this;
     }
 }
