@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Catalog\Model\Offer;
@@ -28,13 +29,8 @@ use RuntimeException;
  *
  * @package FourPaws\AppBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
-    /**
-     * @var EventManager
-     */
-    protected static $eventManager;
-
     /**
      * @param EventManager $eventManager
      *
@@ -42,30 +38,13 @@ class Event implements ServiceHandlerInterface
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        self::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
 
         /** исправление буфера вывода - доп обертка - дикая дикость - но проблема в прологе common/bitrix/modules/main/classes/general/main.php - стркои 3420-3432
          * при нахождении более лучшего варианта выпилить
          */
 //        self::initHandler('OnPageStart', [static::class, 'startBuffer'], 'main');
 //        self::initHandler('OnAfterEpilog', [static::class, 'endBuffer'], 'main');
-    }
-
-    /**
-     *
-     *
-     * @param string $eventName
-     * @param callable $callback
-     * @param string $module
-     *
-     */
-    public static function initHandler(string $eventName, callable $callback, string $module = 'main'): void
-    {
-        self::$eventManager->addEventHandler(
-            $module,
-            $eventName,
-            $callback
-        );
     }
 
     /**
