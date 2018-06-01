@@ -31,17 +31,13 @@ class ScheduleHandler implements SubscribingHandlerInterface
 
     /**
      * @param JsonSerializationVisitor $visitor
-     * @param $data
-     * @param array $type
-     * @param Context $context
+     * @param                          $data
+     * @param array                    $type
+     * @param Context                  $context
      * @return mixed
      */
     public function serialize(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
     {
-        if ($data instanceof Schedule) {
-            $data = (string)$data;
-        }
-
         return $visitor->getNavigator()->accept(
             (string)$data,
             [
@@ -53,7 +49,8 @@ class ScheduleHandler implements SubscribingHandlerInterface
     }/** @noinspection PhpUnusedParameterInspection */
 
     /**
-     * @param $data
+     * @param JsonDeserializationVisitor $visitor
+     * @param                            $data
      * @return Schedule
      */
     public function deserialize(JsonDeserializationVisitor $visitor, $data): Schedule
