@@ -903,7 +903,9 @@ class OrderSubscribeService
             // отправка уведомлений во внешние системы
             if ($result->isSuccess()) {
                 try {
-                    $this->doNewOrderIntegration($result->getNewOrderId());
+                    $this->doNewOrderIntegration(
+                        $params->getOrderCopyHelper()->getNewOrder()
+                    );
                 } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
@@ -1171,17 +1173,22 @@ class OrderSubscribeService
     /**
      * Отправка уведомлений во внешние системы о созданном заказе по подписке
      *
-     * @param int $orderId
+     * @param \Bitrix\Sale\Order|int $order
      * @throws ApplicationCreateException
-     * @throws ArgumentException
      * @throws ArgumentNullException
+     * @throws InvalidArgumentException
      * @throws NotImplementedException
-     * @throws SystemException
      * @throws \Bitrix\Main\ObjectNotFoundException
      */
-    protected function doNewOrderIntegration(int $orderId)
+    protected function doNewOrderIntegration($order)
     {
-        $order = \Bitrix\Sale\Order::load($orderId);
+        if (is_numeric($order)) {
+            $order = \Bitrix\Sale\Order::load((int)$order);
+        }
+
+        if (!($order instanceof \Bitrix\Sale\Order)) {
+            throw new InvalidArgumentException('Argument "order" is not valid', 100);
+        }
 
         $saleOrderService = $this->getOrderService();
         if ($saleOrderService->isOnlinePayment($order)) {

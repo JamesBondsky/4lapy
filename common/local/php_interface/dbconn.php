@@ -43,3 +43,5 @@ define('BX_DISABLE_INDEX_PAGE', true);
 if (!(defined('CHK_EVENT') && CHK_EVENT === true)) {
     define('BX_CRONTAB_SUPPORT', true);
 }
+
+define('BX_COMPRESSION_DISABLED', true);
