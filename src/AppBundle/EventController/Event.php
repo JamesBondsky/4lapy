@@ -50,15 +50,15 @@ class Event extends BaseServiceHandler
     /**
      * @param $id
      */
-    public static function startBuffer(): void
-    {
-        ob_start();
-    }
-
-    public static function endBuffer(): void
-    {
-        $contant = ob_get_clean();
-        $contant = preg_replace('/^\n*/', '', $contant);
-        echo $contant;
-    }
+//    public static function startBuffer(): void
+//    {
+//        ob_start();
+//    }
+//
+//    public static function endBuffer(): void
+//    {
+//        $contant = ob_get_clean();
+//        $contant = preg_replace('/^\n*/', '', $contant);
+//        echo $contant;
+//    }
 }
