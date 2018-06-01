@@ -10,8 +10,8 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
@@ -28,7 +28,7 @@ use RuntimeException;
  *
  * @package FourPaws\CatalogBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
     /**
      * Блокировка событий, для очистки кеша.
@@ -38,47 +38,30 @@ class Event implements ServiceHandlerInterface
     protected static $lockEvents = false;
 
     /**
-     * @var EventManager
-     */
-    protected static $eventManager;
-
-    /**
      * @param EventManager $eventManager
      *
      * @return mixed|void
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        self::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
+
+        $module = 'catalog';
+
         /** Очистка кеша при изменении количества и оффера*/
-        self::initHandler('OnStoreProductUpdate', [static::class, 'clearProductCache']);
-        self::initHandler('OnStoreProductAdd', [static::class, 'clearProductCache']);
-        self::initHandler('OnProductUpdate', [static::class, 'clearProductCache']);
-        self::initHandler('OnProductAdd', [static::class, 'clearProductCache']);
+        static::initHandlerCompatible('OnStoreProductUpdate', [self::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnStoreProductAdd', [self::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnProductUpdate', [self::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnProductAdd', [self::class, 'clearProductCache'], $module);
+
+        $module = 'iblock';
 
         /** очистка кеша при изменении элемента инфоблока */
-        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'clearIblockItemCache'], 'iblock');
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'clearIblockItemCache'], $module);
 
         /** запуск переиндексации товаров при изменении товара */
-        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'reindexProduct'], 'iblock');
-        self::initHandler('OnAfterIBlockElementUpdate', [static::class, 'reindexOffer'], 'iblock');
-    }
-
-    /**
-     *
-     *
-     * @param string $eventName
-     * @param callable $callback
-     * @param string $module
-     *
-     */
-    public static function initHandler(string $eventName, callable $callback, string $module = 'catalog'): void
-    {
-        self::$eventManager->addEventHandler(
-            $module,
-            $eventName,
-            $callback
-        );
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexProduct'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexOffer'], $module);
     }
 
     /**

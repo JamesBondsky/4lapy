@@ -107,7 +107,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
             </div>
         </div>
         <form class="b-form-review js-form-review js-form-validation js-review-query-catalog"
-              id="commentsForm"
+              id="commentsFormCatalog"
               data-url="/ajax/comments/catalog/add/"
               method="post">
             <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>" class="js-no-valid">

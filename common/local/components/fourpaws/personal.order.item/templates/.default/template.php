@@ -10,6 +10,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 
@@ -162,9 +163,9 @@ if ($orderSubscribe) {
                         echo ' ';
                         /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
                         $checkStatuses = [
-                            OrderService::STATUS_IN_ASSEMBLY_1,
-                            OrderService::STATUS_IN_ASSEMBLY_2,
-                            OrderService::STATUS_ISSUING_POINT,
+                            OrderStatus::STATUS_IN_ASSEMBLY_1,
+                            OrderStatus::STATUS_IN_ASSEMBLY_2,
+                            OrderStatus::STATUS_ISSUING_POINT,
                         ];
                         echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
                         echo $order->getFormatedDateStatus();
@@ -180,18 +181,21 @@ if ($orderSubscribe) {
                     </div>
                 <?php }
                 $store = $order->getStore();
-                if ($store !== null && $store->getId() > 0 && !empty($store->getAddress())) { ?>
-                    <div class="b-adress-info b-adress-info--order">
-                        <?php if ($store->getMetro() > 0 && $arResult['METRO'] !== null) { ?>
-                            <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($store->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
-                            м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
-                        <?php }
-                        echo $order->getStore()->getAddress();
-                        if (!empty($order->getStore()->getScheduleString())) { ?>
-                            <p class="b-adress-info__mode-operation"><?= $order->getStore()->getScheduleString() ?></p>
-                        <?php } ?>
-                    </div>
-                <?php } ?>
+                if($store !== null && $store->getId() > 0) {
+                    $address = trim($store->getAddress());
+                    if (!empty($address)) { ?>
+                        <div class="b-adress-info b-adress-info--order">
+                            <?php if ($arResult['METRO'] !== null && $store->getMetro() > 0) { ?>
+                                <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($store->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
+                                м. <?= $arResult['METRO']->get($store->getMetro())['UF_NAME'] ?>,
+                            <?php }
+                            echo $address;
+                            if (!empty($store->getScheduleString())) { ?>
+                                <p class="b-adress-info__mode-operation"><?= $store->getScheduleString() ?></p>
+                            <?php } ?>
+                        </div>
+                    <?php }
+                } ?>
             </div>
             <div class="b-accordion-order-item__pay">
                 <div class="b-accordion-order-item__not-pay">

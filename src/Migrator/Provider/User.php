@@ -55,6 +55,7 @@ class User extends ProviderAbstract
                     'UF_PUSH_NEWS' => 'UF_PUSH_NEWS',
                     'GROUPS' => 'GROUPS',
                     'CHECKWORD' => 'CHECKWORD',
+                    'RAW_PASSWORD' => 'RAW_PASSWORD',
                 ]);
         }
 
@@ -71,6 +72,7 @@ class User extends ProviderAbstract
      */
     public function prepareData(array $data): array
     {
+        $data['RAW_PASSWORD'] = $data['PASSWORD'];
         $data['PASSWORD'] = randString(13) . '.';
 
         if ($data['EMAIL'] === $data['LOGIN']) {

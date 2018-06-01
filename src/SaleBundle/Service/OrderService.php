@@ -39,6 +39,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -58,6 +59,7 @@ use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -100,41 +102,6 @@ class OrderService implements LoggerAwareInterface
     public const PAYMENT_INNER = 'inner';
 
     public const PROPERTY_TYPE_ENUM = 'ENUM';
-
-    /**
-     * Дефолтный статус заказа при курьерской доставке
-     */
-    public const STATUS_NEW_COURIER = 'Q';
-
-    /**
-     * Дефолтный статус заказа при самовывозе
-     */
-    public const STATUS_NEW_PICKUP = 'N';
-
-    /**
-     * Заказ доставляется ("Исполнен" для курьерской доставки)
-     */
-    public const STATUS_DELIVERING = 'Y';
-
-    /**
-     * Заказ в пункте выдачи
-     */
-    public const STATUS_ISSUING_POINT = 'F';
-
-    /**
-     * Заказ доставлен
-     */
-    public const STATUS_DELIVERED = 'J';
-
-    /**
-     * Заказ в сборке
-     */
-    public const STATUS_IN_ASSEMBLY_1 = 'H';
-
-    /**
-     * Заказ в сборке
-     */
-    public const STATUS_IN_ASSEMBLY_2 = 'W';
 
     /**
      * @var AddressService
@@ -338,7 +305,9 @@ class OrderService implements LoggerAwareInterface
             throw new DeliveryNotAvailableException('Нет доступных доставок');
         }
 
-        Manager::disableExtendsDiscount();
+        if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
 
         /**
          * Привязываем корзину
@@ -347,25 +316,39 @@ class OrderService implements LoggerAwareInterface
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
-                $toUpdate = [];
-                $resultByOffer = $orderable->filterByOfferId($basketItem->getProductId());
-                $diff = $basketItem->getQuantity() - $resultByOffer->getAmount();
-                if ($resultByOffer->isEmpty()) {
+                $toUpdate = [
+                    'CUSTOM_PRICE' => 'Y'
+                ];
+
+                $amount = 0;
+                $resultsByOffer = $orderable->filterByOfferId($basketItem->getProductId());
+                if (!$resultsByOffer->isEmpty()) {
+                    foreach ($resultsByOffer as $resultByOffer) {
+                        if ($priceForAmount = $resultByOffer->getPriceForAmountByBasketCode((string)$basketItem->getBasketCode())) {
+                            $amount += $priceForAmount->getAmount();
+                        }
+                    }
+                }
+                $diff = $basketItem->getQuantity() - $amount;
+                if ($amount === 0) {
                     $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
                 } elseif ($diff > 0) {
                     $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
+
+                    $props = $basketItem->getPropertyCollection()->getPropertyValues();
+                    $props[] = [
+                        'NAME'  => 'IS_TEMPORARY',
+                        'CODE'  => 'IS_TEMPORARY',
+                        'VALUE' => 'Y',
+                    ];
+
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $diff,
                         [
+                            'CUSTOM_PRICE' => 'Y',
                             'DELAY' => BitrixUtils::BX_BOOL_TRUE,
-                            'PROPS' => [
-                                [
-                                    'NAME'  => 'IS_TEMPORARY',
-                                    'CODE'  => 'IS_TEMPORARY',
-                                    'VALUE' => 'Y',
-                                ],
-                            ],
+                            'PROPS' => $props,
                         ],
                         false,
                         $basket
@@ -373,7 +356,7 @@ class OrderService implements LoggerAwareInterface
                 }
 
                 if (!empty($toUpdate)) {
-                    $basketItem->setFieldsNoDemand($toUpdate);
+                    $basketItem->setFields($toUpdate);
                 }
             }
         }
@@ -405,7 +388,7 @@ class OrderService implements LoggerAwareInterface
                 }
             }
             /** @noinspection PhpInternalEntityUsedInspection */
-            $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
+            $order->setFieldNoDemand('STATUS_ID', OrderStatus::STATUS_NEW_COURIER);
         }
 
         $shipmentCollection = $order->getShipmentCollection();
@@ -499,33 +482,40 @@ class OrderService implements LoggerAwareInterface
         }
 
         /**
-         * Заполнение складов довоза товара для элементов корзины
+         * Заполнение складов довоза товара для элементов корзины (кроме доставок 04 и 06)
          */
-        $shipmentResults = $selectedDelivery->getShipmentResults();
-        $shipmentDays = ['DC01' => 0];
-        /** @var BasketItem $item */
-        foreach ($order->getBasket()->getOrderableItems() as $item) {
-            $shipmentPlaceCode = 'DC01';
-            /** @var DeliveryScheduleResult $deliveryResult */
-            if ($shipmentResults &&
-                ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
-            ) {
-                $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
-                $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
-                if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
-                    $shipmentDays[$shipmentPlaceCode] = $days;
+        if (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
+            (
+                ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
+                $this->deliveryService->isInnerPickup($selectedDelivery)
+            ))
+        ) {
+            $shipmentResults = $selectedDelivery->getShipmentResults();
+            $shipmentDays = [];
+            /** @var BasketItem $item */
+            foreach ($order->getBasket()->getOrderableItems() as $item) {
+                $shipmentPlaceCode = 'DC01';
+                /** @var DeliveryScheduleResult $deliveryResult */
+                if ($shipmentResults &&
+                    ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
+                ) {
+                    $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
+                    $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
+                    if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
+                        $shipmentDays[$shipmentPlaceCode] = $days;
+                    }
                 }
-            }
 
-            $this->basketService->setBasketItemPropertyValue(
-                $item,
-                'SHIPMENT_PLACE_CODE',
-                $shipmentPlaceCode
-            );
-        }
-        if (!empty($shipmentDays)) {
-            arsort($shipmentDays);
-            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
+                $this->basketService->setBasketItemPropertyValue(
+                    $item,
+                    'SHIPMENT_PLACE_CODE',
+                    $shipmentPlaceCode
+                );
+            }
+            if (!empty($shipmentDays)) {
+                arsort($shipmentDays);
+                $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
+            }
         }
 
         /**
@@ -638,7 +628,7 @@ class OrderService implements LoggerAwareInterface
                 'CITY',
                 'CITY_CODE',
                 'COM_WAY',
-                'IS_FAST_ORDER'
+                'IS_FAST_ORDER',
             ];
 
             /** @var PropertyValue $propertyValue */
@@ -666,7 +656,9 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        Manager::enableExtendsDiscount();
+        if ($isDiscountEnabled) {
+            Manager::enableExtendsDiscount();
+        }
 
         return $order;
     }/** @noinspection MoreThanThreeArgumentsInspection */
@@ -811,7 +803,7 @@ class OrderService implements LoggerAwareInterface
             } catch (ManzanaServiceContactSearchNullException $e) {
             } catch (ManzanaServiceException $e) {
                 $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
-                    'phone' => $storage->getPhone()
+                    'phone' => $storage->getPhone(),
                 ]);
             }
         }
@@ -941,6 +933,11 @@ class OrderService implements LoggerAwareInterface
         $storage2->setComment($storage->getSecondComment());
 
         $basket = $this->basketService->getBasket();
+
+        if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
+
         /** @noinspection PhpUnusedLocalVariableInspection */
         [$available, $delayed] = $this->orderStorageService->splitStockResult($delivery);
 
@@ -950,18 +947,34 @@ class OrderService implements LoggerAwareInterface
             $basket2 = Basket::create(SITE_ID);
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
-                $availableAmount = $available->filterByOfferId($basketItem->getProductId())->getAmount();
-                $delayedAmount = $delayed->filterByOfferId($basketItem->getProductId())->getAmount();
+                $availableAmount = 0;
+                if ($availableResult = $available->filterByOfferId($basketItem->getProductId())->first()) {
+                    /** @var StockResult $availableResult */
+                    if ($priceForAmount = $availableResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) {
+                        $availableAmount = $priceForAmount->getAmount();
+                    }
+                }
+                $delayedAmount = 0;
+                if ($delayedResult = $delayed->filterByOfferId($basketItem->getProductId())->first()) {
+                    /** @var StockResult $delayedResult */
+                    if ($priceForAmount = $delayedResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) {
+                        $delayedAmount = $priceForAmount->getAmount();
+                    }
+                }
+
+                $rewriteFields = [
+                    'PRICE' => $basketItem->getPrice(),
+                    'BASE_PRICE' => $basketItem->getBasePrice(),
+                    'CUSTOM_PRICE' => 'Y',
+                    'DISCOUNT' => $basketItem->getDiscountPrice(),
+                    'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
+                ];
 
                 if ($availableAmount) {
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $availableAmount,
-                        [
-                            'PRICE' => $basketItem->getPrice(),
-                            'BASE_PRICE' => $basketItem->getBasePrice(),
-                            'DISCOUNT' => $basketItem->getDiscountPrice()
-                        ],
+                        $rewriteFields,
                         false,
                         $basket1
                     );
@@ -970,11 +983,7 @@ class OrderService implements LoggerAwareInterface
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $delayedAmount,
-                        [
-                            'PRICE' => $basketItem->getPrice(),
-                            'BASE_PRICE' => $basketItem->getBasePrice(),
-                            'DISCOUNT' => $basketItem->getDiscountPrice()
-                        ],
+                        $rewriteFields,
                         false,
                         $basket2
                     );
@@ -1032,6 +1041,10 @@ class OrderService implements LoggerAwareInterface
             ]);
         }
 
+        if ($isDiscountEnabled) {
+            Manager::enableExtendsDiscount();
+        }
+
         return [
             (new OrderSplitResult())->setOrderStorage($storage1)
                 ->setOrder($order1)
@@ -1077,6 +1090,10 @@ class OrderService implements LoggerAwareInterface
      */
     public function createOrder(OrderStorage $storage): Order
     {
+        if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
+
         /**
          * Разделение заказов
          */
@@ -1144,6 +1161,10 @@ class OrderService implements LoggerAwareInterface
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);
+        }
+
+        if ($isDiscountEnabled) {
+            Manager::enableExtendsDiscount();
         }
 
         $this->orderStorageService->clearStorage($storage);

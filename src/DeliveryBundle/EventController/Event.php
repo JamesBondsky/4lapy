@@ -8,7 +8,7 @@ namespace FourPaws\DeliveryBundle\EventController;
 
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
-use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\DeliveryBundle\Handler\InnerDeliveryHandler;
 use FourPaws\DeliveryBundle\Handler\InnerPickupHandler;
 use FourPaws\DeliveryBundle\InputTypes\DeliveryInterval;
@@ -19,30 +19,20 @@ use FourPaws\DeliveryBundle\Restrictions\LocationExceptRestriction;
  *
  * @package FourPaws\DeliveryBundle
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
     /**
      * @param EventManager $eventManager
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        $eventManager->addEventHandler(
-            'sale',
-            'onSaleDeliveryHandlersClassNamesBuildList',
-            [static::class, 'addCustomDeliveryServices']
-        );
-
-        $eventManager->addEventHandler(
-            'sale',
-            'onSaleDeliveryRestrictionsClassNamesBuildList',
-            [static::class, 'addCustomRestrictions']
-        );
-
-        $eventManager->addEventHandler(
-            'sale',
-            'registerInputTypes',
-            [static::class, 'addCustomTypes']
-        );
+        parent::initHandlers($eventManager);
+        $module = 'sale';
+        static::initHandler('onSaleDeliveryHandlersClassNamesBuildList', [self::class, 'addCustomDeliveryServices'],
+            $module);
+        static::initHandler('onSaleDeliveryRestrictionsClassNamesBuildList', [self::class, 'addCustomRestrictions'],
+            $module);
+        static::initHandler('registerInputTypes', [self::class, 'addCustomTypes'], $module);
     }
 
     /**

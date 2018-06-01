@@ -31,7 +31,9 @@ class PickupResult extends BaseResult implements PickupResultInterface
             $this->calculateWithStoreSchedule($this->deliveryDate, $this->selectedStore);
         }
 
-        if ((null !== $this->fullstockResult) && !$this->stockResult->getUnavailable()->isEmpty()) {
+        if ((null !== $this->fullstockResult) &&
+            (!$this->stockResult || !$this->stockResult->getUnavailable()->isEmpty())
+        ) {
             $this->addError(new Error('Присутствуют товары не в наличии'));
         }
     }

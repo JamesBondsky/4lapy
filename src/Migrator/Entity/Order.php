@@ -5,6 +5,7 @@ namespace FourPaws\Migrator\Entity;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -46,6 +47,8 @@ use FourPaws\SapBundle\EventController\Event;
  */
 class Order extends AbstractEntity
 {
+    public const DEFAULT_DELIVERY_ID = 27;
+
     protected $propertyMap;
 
     /**
@@ -107,18 +110,36 @@ class Order extends AbstractEntity
     public function addItem(string $primary, array $data): AddResult
     {
         $userId = MapTable::getInternalIdByExternalId($data['USER_ID'], User::ENTITY_NAME);
+        unset($data['ACCOUNT_NUMBER']);
 
         if (!$userId) {
             throw new AddException(sprintf('User with external id #%s is not found.', $data['USER_ID']));
         }
 
-
         $order = SaleOrder::create(SITE_ID, $userId, $data['CURRENCY']);
-        $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
         $result = $order->save();
 
-        if (!$result->isSuccess()) {
+        if ($result->isSuccess()) {
+            $data = $this->prepareOrderData($data);
+            /**
+             * @var DateTime $insert
+             * @var DateTime $update
+             */
+            $insert = $data['DATE_INSERT'];
+            $update = $data['DATE_UPDATE'];
+
+            $connection = Application::getConnection();
+            $connection->query(
+                \sprintf(
+                    'UPDATE b_sale_order SET DATE_INSERT=\'%s\', DATE_UPDATE=\'%s\', ACCOUNT_NUMBER = \'%s\' WHERE ID=\'%s\';',
+                    $insert->format('Y-m-d  H:i:s'),
+                    $update->format('Y-m-d  H:i:s'),
+                    $primary,
+                    $result->getId()
+                )
+            );
+        } else {
             throw new AddException(sprintf('Order with primary %s add errors: %s.',
                 $primary,
                 implode(', ', $result->getErrorMessages())));
@@ -146,12 +167,25 @@ class Order extends AbstractEntity
                 $primary));
         }
 
-        $order->setField('ACCOUNT_NUMBER', $primary);
         $this->prepareOrder($data, $order);
-
         $result = $order->save();
 
-        if (!$result->isSuccess()) {
+        if ($result->isSuccess()) {
+            $data = $this->prepareOrderData($data);
+            /**
+             * @var DateTime $update
+             */
+            $update = $data['DATE_UPDATE'];
+
+            $connection = Application::getConnection();
+            $connection->query(
+                \sprintf(
+                    'UPDATE b_sale_order SET DATE_UPDATE=\'%s\' WHERE ID=\'%s\';',
+                    $update->format('Y-m-d  H:i:s'),
+                    $primary
+                )
+            );
+        } else {
             throw new UpdateException(sprintf('Order with primary %s update errors: %s.',
                 $primary,
                 implode(', ', $result->getErrorMessages())));
@@ -243,7 +277,8 @@ class Order extends AbstractEntity
         $this->addPaymentToOrder($rawData, $order);
         $this->addDeliveryToOrder($rawData, $order);
         $this->addPropertiesToOrder($rawData, $order);
-        $order->setFieldsNoDemand($this->prepareOrderData($rawData));
+        $data = $this->prepareOrderData($rawData);
+        $order->setFields($data);
 
         return $order;
     }
@@ -352,7 +387,10 @@ class Order extends AbstractEntity
     protected function addDeliveryToOrder(array $data, SaleOrder $order): SaleOrder
     {
         $shipmentCollection = $order->getShipmentCollection();
-        $deliveryId = MapTable::getInternalIdByExternalId($data['DELIVERY_ID'], Delivery::ENTITY_NAME);
+
+        $deliveryId = $data['DELIVERY_ID']
+            ? MapTable::getInternalIdByExternalId($data['DELIVERY_ID'], Delivery::ENTITY_NAME)
+            : self::DEFAULT_DELIVERY_ID;
 
         $service = DeliveryManager::getObjectById($deliveryId);
 

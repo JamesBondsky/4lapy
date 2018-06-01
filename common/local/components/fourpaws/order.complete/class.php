@@ -22,6 +22,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -133,8 +134,8 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         if (!\in_array(
             $order->getField('STATUS_ID'),
             [
-                OrderService::STATUS_NEW_COURIER,
-                OrderService::STATUS_NEW_PICKUP,
+                OrderStatus::STATUS_NEW_COURIER,
+                OrderStatus::STATUS_NEW_PICKUP,
             ],
             true
         )

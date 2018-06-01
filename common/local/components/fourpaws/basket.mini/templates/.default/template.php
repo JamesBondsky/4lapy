@@ -3,23 +3,24 @@
 }
 
 /**
- * @global BasketComponent $component
+ * @global BasketMiniComponent $component
  *
- * @var array              $arResult
- * @var array              $arParams
- * @var Basket             $basket
+ * @var array $arResult
+ * @var array $arParams
+ * @var Basket $basket
  */
 
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
-use FourPaws\Components\BasketComponent;
+use FourPaws\Components\BasketMiniComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
 $basket = $arResult['BASKET'];
+/** @var Basket $orderableItems */
 $orderableItems = $basket->getOrderableItems();
 
-$hasItems = $orderableItems->count() > 0;
+$hasItems = $component->getBasketCountWithoutGifts($orderableItems) > 0;
 
 if (true !== $arParams['IS_AJAX']) {
     echo '<div class="b-header-info__item b-header-info__item--cart">';
@@ -30,17 +31,23 @@ if (true !== $arParams['IS_AJAX']) {
             <?= new SvgDecorator('icon-cart', 16, 16) ?>
         </span>
         <span class="b-header-info__inner">Корзина</span>
-        <span class="b-header-info__number js-count-products"><?= $orderableItems->count() ?></span>
+        <span class="b-header-info__number js-count-products">
+            <?= $component->getBasketCountWithoutGifts($orderableItems); ?>
+        </span>
     </a>
 <?php if ($hasItems) { ?>
     <div class="b-popover b-popover--cart js-popover">
         <div class="b-cart-popover">
             <span class="b-cart-popover__amount">
-                <?= $orderableItems->count() ?>
-                <?= WordHelper::declension($orderableItems->count(), ['Товар', 'Товара', 'Товаров']) ?>
+                <?= $component->getBasketCountWithoutGifts($orderableItems) ?>
+                <?= WordHelper::declension(
+                    $component->getBasketCountWithoutGifts($orderableItems), ['Товар', 'Товара', 'Товаров']
+                ) ?>
             </span>
             <span class="b-cart-popover__link" style="width: 58%">
-                <a class="b-link b-link--popover-cart" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Редактировать">Редактировать</a>
+                <a class="b-link b-link--popover-cart" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Редактировать">
+                    Редактировать
+                </a>
             </span>
             <a class="b-link b-link--popover-cart-mobile" href="<?= $arParams['PATH_TO_BASKET'] ?>"
                title="Редактировать">
@@ -49,7 +56,8 @@ if (true !== $arParams['IS_AJAX']) {
             <a class="b-button b-button--popover-cart" href="<?= $arParams['PATH_TO_ORDER'] ?>" title="Оформить заказ">
                 Оформить заказ
             </a>
-            <?php if (!$orderableItems->isEmpty()) {
+            <?php
+            if ($hasItems) {
                 /** @var BasketItem $basketItem */
                 foreach ($orderableItems as $basketItem) {
                     if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
@@ -79,8 +87,11 @@ if (true !== $arParams['IS_AJAX']) {
                                 </a>
                             </div>
                             <?php if ($basketItem->getQuantity() > 0 && $basketItem->getWeight() > 0) { ?>
-                                <span class="b-cart-item__weight"><?= WordHelper::showWeight($basketItem->getWeight() * $basketItem->getQuantity(),
-                                        true) ?></span>
+                                <span class="b-cart-item__weight">
+                                    <?= WordHelper::showWeight(
+                                        $basketItem->getWeight() * $basketItem->getQuantity(), true
+                                    ) ?>
+                                </span>
                             <?php } ?>
                             <span class="b-cart-item__amount">(<?= $basketItem->getQuantity() ?> шт.)</span>
                         </div>

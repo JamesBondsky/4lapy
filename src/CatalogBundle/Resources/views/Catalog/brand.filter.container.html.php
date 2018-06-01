@@ -1,7 +1,7 @@
 <?php
 /**
  * @var Request                               $request
- * @var CatalogCategorySearchRequestInterface $catalogRequest
+ * @var CatalogBrandRequest $catalogRequest
  * @var SearchService                         $searchService
  * @var ProductSearchResult                   $productSearchResult
  * @var PhpEngine                             $view
@@ -12,7 +12,7 @@ use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
-use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
+use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -37,7 +37,16 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>" data-url="/ajax/catalog/product-info/count-by-filter-brand/">
+            <div class="b-filter__block" style="display: none">
+                <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox" style="display: none">
+                    <li class="b-filter-link-list__item" style="display: none">
+                        <label class="b-filter-link-list__label" style="display: none">
+                            <input type="checkbox" name="brand_code" value="<?=$catalogRequest->getBrand()->getCode()?>" checked="checked" class="b-filter-link-list__checkbox js-filter-control js-checkbox-change" style="display: none">
+                        </label>
+                    </li>
+                </ul>
+            </div>
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilterBrand() ? 'style="display:block"' : '' ?>>
                 <a class="b-link b-link--reset js-reset-filter"
@@ -58,7 +67,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
                     'filters' => $filterCollection->getFiltersToShow(),
-                    'isBrand' => true
+                    'isBrand' => true,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -72,17 +81,17 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
 </aside>
 <main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
-        <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
-           href="javascript:void(0);"
-           title="Открыть фильтры">
-            <span class="b-icon b-icon--open-filter">
-                <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
-            </span>
-        </a>
         <div class="b-catalog-filter__filter-part">
             <div class="b-line b-line--sort-desktop"></div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
+                    <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
+                       href="javascript:void(0);"
+                       title="Открыть фильтры">
+                        <span class="b-icon b-icon--open-filter">
+                            <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
+                        </span>
+                    </a>
                     <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар',
                             ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(

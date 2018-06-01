@@ -144,7 +144,7 @@ class OrderSubscribeHistoryService
         $deliveryDate = null;
         $fields = [];
         $argsCnt = count($args);
-        if ($argsCnt === 3 && ($args[0] instanceof OrderSubscribe) && ((int)$args[1] > 0) && ($args[2] instanceof \DateTime)) {
+        if ($argsCnt === 3 && ($args[0] instanceof OrderSubscribe) && ((int)$args[1] > 0) && ($args[2] instanceof \DateTimeInterface)) {
             $orderSubscribe = $args[0];
             $newOrderId = (int)$args[1];
             $deliveryDate = $args[2];

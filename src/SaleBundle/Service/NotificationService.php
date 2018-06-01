@@ -23,6 +23,7 @@ use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
@@ -142,19 +143,22 @@ class NotificationService implements LoggerAwareInterface
 
         $smsTemplate = null;
         $parameters = $this->getOrderData($order);
-        switch ($parameters['deliveryCode']) {
-            case DeliveryService::INNER_DELIVERY_CODE:
+        switch (true) {
+            case $parameters['isOneClick']:
+                $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.one_click.html.php';
+                break;
+            case $parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE:
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.inner.html.php';
                 break;
-            case DeliveryService::INNER_PICKUP_CODE:
+            case $parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE:
                 if ($parameters['dcDelivery']) {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.pickup.shop.html.php';
                 } else {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.pickup.dc.html.php';
                 }
                 break;
-            case DeliveryService::DPD_DELIVERY_CODE:
-            case DeliveryService::DPD_PICKUP_CODE:
+            case $parameters['deliveryCode'] === DeliveryService::DPD_DELIVERY_CODE:
+            case $parameters['deliveryCode'] === DeliveryService::DPD_PICKUP_CODE:
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dpd.html.php';
                 break;
         }
@@ -263,7 +267,7 @@ class NotificationService implements LoggerAwareInterface
         $smsTemplate = null;
         $sendCompleteEmail = false;
         switch ($status) {
-            case OrderService::STATUS_ISSUING_POINT:
+            case OrderStatus::STATUS_ISSUING_POINT:
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
                     if ($parameters['dcDelivery']) {
                         $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.issuingPoint.dc.html.php';
@@ -272,13 +276,13 @@ class NotificationService implements LoggerAwareInterface
                     }
                 }
                 break;
-            case OrderService::STATUS_DELIVERING:
+            case OrderStatus::STATUS_DELIVERING:
                 $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.delivering.html.php';
                 }
                 break;
-            case OrderService::STATUS_DELIVERED:
+            case OrderStatus::STATUS_DELIVERED:
                 $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.delivered.html.php';
@@ -327,6 +331,9 @@ class NotificationService implements LoggerAwareInterface
         } else {
             $this->smsService->sendSms($text, $parameters['phone']);
         }
+        $this->log()->info(sprintf('sent sms "%s" to %s', $tpl, $parameters['phone']), [
+            'order' => $parameters['accountNumber']
+        ]);
     }
 
     /**
@@ -347,6 +354,7 @@ class NotificationService implements LoggerAwareInterface
                     'EMAIL',
                     'DELIVERY_DATE',
                     'DELIVERY_PLACE_CODE',
+                    'IS_FAST_ORDER'
                 ]
             );
 
@@ -360,8 +368,11 @@ class NotificationService implements LoggerAwareInterface
                 $properties['DELIVERY_DATE']
             );
             $result['deliveryCode'] = $this->orderService->getOrderDeliveryCode($order);
+            $result['isOneClick'] = $properties['IS_FAST_ORDER'] === 'Y';
 
-            if ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
+            if (!$result['isOneClick'] &&
+                ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE)
+            ) {
                 $shop = $this->storeService->getStoreByXmlId(
                     $properties['DELIVERY_PLACE_CODE']
                 );

@@ -59,7 +59,16 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         <div class="b-filter__title">Фильтры</div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>" data-url="/ajax/catalog/product-info/count-by-filter-list/">
+            <div class="b-filter__block" style="display: none">
+                <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox" style="display: none">
+                    <li class="b-filter-link-list__item" style="display: none">
+                        <label class="b-filter-link-list__label" style="display: none">
+                            <input type="checkbox" name="section_id" value="<?=$category->getId()?>" checked="checked" class="b-filter-link-list__checkbox js-filter-control js-checkbox-change" style="display: none">
+                        </label>
+                    </li>
+                </ul>
+            </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.backLink.html.php',
                 [
@@ -96,13 +105,6 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
 </aside>
 <main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
-        <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
-           href="javascript:void(0);"
-           title="Открыть фильтры">
-            <span class="b-icon b-icon--open-filter">
-                <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
-            </span>
-        </a>
         <div class="b-catalog-filter__filter-part">
             <?php $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.often.seek',
@@ -118,6 +120,13 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             ); ?>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
+                    <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
+                       href="javascript:void(0);"
+                       title="Открыть фильтры">
+                        <span class="b-icon b-icon--open-filter">
+                            <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
+                        </span>
+                    </a>
                     <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар',
                             ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(

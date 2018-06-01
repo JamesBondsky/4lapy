@@ -151,6 +151,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
+                                    'russian_stop'
                                 ],
                             ],
                             'autocomplete'     => [

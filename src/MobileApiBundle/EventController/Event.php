@@ -8,8 +8,8 @@ namespace FourPaws\MobileApiBundle\EventController;
 
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
+use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -21,24 +21,20 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\MobileApiBundle\EventController
  */
-class Event implements ServiceHandlerInterface
+class Event extends BaseServiceHandler
 {
-    /**
-     * @var EventManager
-     */
-    protected static $eventManager;
-
     /**
      * @param EventManager $eventManager
      *
      */
     public static function initHandlers(EventManager $eventManager): void
     {
-        self::$eventManager = $eventManager;
+        parent::initHandlers($eventManager);
 
-        self::initHandler('OnUserLogin', 'updateTokenAfterLogin');
-        self::initHandler('OnAfterUserLogout', 'updateTokenAfterLogout');
-        self::initHandler('onAfterUserUpdate', 'updateUser');
+        $module = 'main';
+        static::initHandler('OnUserLogin', [self::class,'updateTokenAfterLogin'], $module);
+        static::initHandler('OnAfterUserLogout', [self::class,'updateTokenAfterLogout'], $module);
+        static::initHandler('onAfterUserUpdate', [self::class,'updateUser'], $module);
     }
 
     /**
@@ -46,20 +42,16 @@ class Event implements ServiceHandlerInterface
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public static function updateTokenAfterLogin()
+    public static function updateTokenAfterLogin(): void
     {
         $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
         $sessionHandler->login();
     }
 
     /**
-     * @param array $fields
-     *
-     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      */
-    public static function updateTokenAfterLogout(array &$fields)
+    public static function updateTokenAfterLogout(): void
     {
         $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
         $sessionHandler->logout();
@@ -70,30 +62,11 @@ class Event implements ServiceHandlerInterface
      *
      * @throws ApplicationCreateException
      */
-    public static function updateUser(array &$fields)
+    public static function updateUser(array &$fields): void
     {
         if ($fields['RESULT'] && $fields['ID'] ?? 0) {
             $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
             $sessionHandler->update((int)$fields['ID']);
         }
-    }
-
-    /**
-     * @param string $eventName
-     * @param string $method
-     * @param string $module
-     */
-    public static function initHandler(string $eventName, string $method, string $module = 'main')
-    {
-        self::$eventManager->addEventHandler(
-            $module,
-            $eventName,
-            [
-                self::class,
-                $method,
-            ],
-            false,
-            1
-        );
     }
 }

@@ -45,7 +45,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
         </div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>" data-url="/ajax/catalog/product-info/count-by-filter-search/">
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilter() ? 'style="display:block"' : '' ?>>
                 <a class="b-link b-link--reset js-reset-filter"
@@ -72,13 +72,6 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
 </aside>
 <main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <div class="b-catalog-filter js-permutation-desktop-here">
-        <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
-           href="javascript:void(0);"
-           title="Открыть фильтры">
-            <span class="b-icon b-icon--open-filter">
-                <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
-            </span>
-        </a>
         <div class="b-catalog-filter__filter-part">
             <dl class="b-catalog-filter__row">
                 <dt class="b-catalog-filter__label b-catalog-filter__label--result">
@@ -89,6 +82,13 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             </div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
+                    <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
+                       href="javascript:void(0);"
+                       title="Открыть фильтры">
+                        <span class="b-icon b-icon--open-filter">
+                            <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
+                        </span>
+                    </a>
                     <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',

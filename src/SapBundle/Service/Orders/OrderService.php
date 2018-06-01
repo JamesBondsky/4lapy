@@ -632,7 +632,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->setPropertyValue($propertyCollection, 'CITY', $deliveryAddress->getCityName());
             $this->setPropertyValue($propertyCollection, 'STREET', $deliveryAddress->getStreetName());
             $this->setPropertyValue($propertyCollection, 'HOUSE', $deliveryAddress->getHouse());
-            $this->setPropertyValue($propertyCollection, 'BUILDING', $deliveryAddress->getBuilding());
+            $this->setPropertyValue($propertyCollection, 'BUILDING', $deliveryAddress->getHousing());
             $this->setPropertyValue($propertyCollection, 'FLOOR', $deliveryAddress->getFloor());
             $this->setPropertyValue($propertyCollection, 'APARTMENT', $deliveryAddress->getRoomNumber());
         }
@@ -667,7 +667,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         /**
          * Мы не меняем платежную систему при смене статуса, только суммы
          */
-        $statusPayed = SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus() ? 'N' : 'Y';
+        $statusPayed = (empty($orderDto->getPayStatus()) || SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus())
+            ? 'N'
+            : 'Y';
+
         $bonusPayedCount = $orderDto->getBonusPayedCount();
         $innerPayment = $order->getPaymentCollection()->getInnerPayment();
         $externalPayment = null;

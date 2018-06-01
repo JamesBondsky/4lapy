@@ -18,6 +18,7 @@ use Bitrix\Sale\ShipmentItem;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCopyBasketException;
 use FourPaws\SaleBundle\Exception\OrderCopyShipmentsException;
@@ -388,6 +389,12 @@ class OrderCopy
         /** @var Basket $newBasket */
         $newBasket = Basket::create($oldBasket->getSiteId());
 
+        $fUserId = (int)$oldBasket->getFUserId(true);
+        if (!$fUserId) {
+            $fUserId = $newBasket->getFUserId(false);
+        }
+        $newBasket->setFUserId($fUserId);
+
         $oldBasketItems = $oldBasket->getBasketItems();
         foreach ($oldBasketItems as $oldBasketItem) {
             $isSuccess = true;
@@ -588,7 +595,7 @@ class OrderCopy
             $deliveryCode = $newShipment->getDelivery()->getCode();
             if ($this->getDeliveryService()->isDeliveryCode($deliveryCode)) {
                 /** @noinspection PhpInternalEntityUsedInspection */
-                $this->newOrder->setFieldNoDemand('STATUS_ID', OrderService::STATUS_NEW_COURIER);
+                $this->newOrder->setFieldNoDemand('STATUS_ID', OrderStatus::STATUS_NEW_COURIER);
             }
 
             // привязывание позиций корзины к отправлению
