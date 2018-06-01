@@ -2,8 +2,12 @@
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\UserGroupTable;
+use Bitrix\Main\UserTable;
 use FourPaws\App\Application;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -278,6 +282,9 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         return $action;
     }
 
+    /**
+     * doAction
+     */
     protected function doAction()
     {
         $action = $this->getAction();
@@ -286,11 +293,17 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         }
     }
 
+    /**
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     protected function initialLoadAction()
     {
         $this->loadData();
     }
 
+    /**
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     protected function postFormAction()
     {
         $this->initPostFields();
@@ -303,6 +316,12 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         $this->loadData();
     }
 
+    /**
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     protected function userAuthAction()
     {
         $this->initPostFields();
@@ -324,13 +343,25 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
                     if ($authResult) {
                         $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
                     } else {
-                        $this->setExecError('authFailed', 'Не удалось авторизоваться под указанным пользователем', 'authFailed');
+                        $this->setExecError(
+                            'authFailed',
+                            'Не удалось авторизоваться под указанным пользователем',
+                            'authFailed'
+                        );
                     }
                 } else {
-                    $this->setExecError('canNotLogin', 'Невозможно авторизоваться под указанным пользователем', 'canNotLogin');
+                    $this->setExecError(
+                        'canNotLogin',
+                        'Невозможно авторизоваться под указанным пользователем',
+                        'canNotLogin'
+                    );
                 }
             } else {
-                $this->setExecError('emptyUserId', 'Не задан идентификатор пользователя', 'emptyUserId');
+                $this->setExecError(
+                    'emptyUserId',
+                    'Не задан идентификатор пользователя',
+                    'emptyUserId'
+                );
             }
         }
 
@@ -365,6 +396,9 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         return $phone;
     }
 
+    /**
+     * processSearchFormFields
+     */
     protected function processSearchFormFields()
     {
         $fieldName = 'cardNumber';
@@ -376,7 +410,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         $fieldName = 'birthDay';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
         if ($value !== '') {
-            if(!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
+            if (!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             } else {
                 if (!$GLOBALS['DB']->IsDate($value, 'DD.MM.YYYY')) {
@@ -488,6 +522,9 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
 
     /**
      * @return Result
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     protected function getUsersByFormFields()
     {
@@ -496,7 +533,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         $fieldsList = [
             'cardNumber', 'phone',
             'firstName', 'secondName', 'lastName',
-            'birthDay'
+            'birthDay',
         ];
         $filter = $this->getFilterByFormFields($fieldsList);
         if (empty($filter)) {
@@ -521,10 +558,157 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     /**
      * @param array $filter
      * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     protected function getUserListByFilter($filter)
     {
         $usersList = [];
+
+        //
+        // На сайте в таблице b_user_group могут быть заданы связи юзеров с несуществующими группами,
+        // поэтому фильтр CHECK_SUBORDINATE в CUser::GetList будет исключать таких юзеров.
+        // Чтобы этого не было, используем самописного монстра:
+        //
+        $filterOrm = $filter;
+        if (isset($filterOrm['PERSONAL_PHONE_EXACT_MATCH'])) {
+            $filterOrm['=PERSONAL_PHONE'] = $filterOrm['PERSONAL_PHONE'];
+            unset($filterOrm['PERSONAL_PHONE_EXACT_MATCH']);
+            unset($filterOrm['PERSONAL_PHONE']);
+        }
+        if (isset($filterOrm['SECOND_NAME_EXACT_MATCH'])) {
+            $filterOrm['=SECOND_NAME'] = $filterOrm['SECOND_NAME'];
+            unset($filterOrm['SECOND_NAME_EXACT_MATCH']);
+            unset($filterOrm['SECOND_NAME']);
+        }
+        if (isset($filterOrm['LAST_NAME_EXACT_MATCH'])) {
+            $filterOrm['=LAST_NAME'] = $filterOrm['LAST_NAME'];
+            unset($filterOrm['LAST_NAME_EXACT_MATCH']);
+            unset($filterOrm['LAST_NAME']);
+        }
+        if (isset($filterOrm['ID_EQUAL_EXACT'])) {
+            $filterOrm['=ID'] = $filterOrm['ID_EQUAL_EXACT'];
+            unset($filterOrm['ID_EQUAL_EXACT']);
+        }
+        if (isset($filterOrm['ACTIVE'])) {
+            $filterOrm['=ACTIVE'] = $filterOrm['ACTIVE'];
+            unset($filterOrm['ACTIVE']);
+        }
+        if (isset($filterOrm['PERSONAL_BIRTHDAY_1'])) {
+            $filterOrm['>=PERSONAL_BIRTHDAY'] = $filterOrm['PERSONAL_BIRTHDAY_1'];
+            unset($filterOrm['PERSONAL_BIRTHDAY_1']);
+        }
+        if (isset($filterOrm['PERSONAL_BIRTHDAY_2'])) {
+            $filterOrm['<=PERSONAL_BIRTHDAY'] = $filterOrm['PERSONAL_BIRTHDAY_2'];
+            unset($filterOrm['PERSONAL_BIRTHDAY_2']);
+        }
+
+        // Основная выборка
+        $query = UserTable::query();
+        $query->setSelect(
+            [
+                'ID', 'NAME', 'LAST_NAME', 'SECOND_NAME',
+                'EMAIL', 'LOGIN',
+                'PERSONAL_PHONE', 'PERSONAL_BIRTHDAY',
+                'UF_DISCOUNT_CARD',
+            ]
+        );
+
+        // Для выборки юзеров с учетом подчиненности генерируем запрос вида:
+        // SELECT U.*
+        //    FROM
+        //    b_user U
+        //    WHERE
+        //    (
+        //      (U.ID=4 OR NOT EXISTS(SELECT 'x' FROM b_user_group UGS WHERE UGS.USER_ID=U.ID AND UGS.GROUP_ID NOT IN (0,2,9)))
+        //      AND
+        //      (not exists (SELECT * FROM b_user_group UGNA WHERE UGNA.USER_ID=U.ID AND UGNA.GROUP_ID = 1))
+        //    )
+        if (isset($filterOrm['CHECK_SUBORDINATE'])) {
+            $userSubordinateGroups = $filterOrm['CHECK_SUBORDINATE'];
+            $userSubordinateGroups[] = 0;
+            $userSubordinateGroups = array_unique($userSubordinateGroups);
+
+            // (SELECT 'x' FROM b_user_group UGS WHERE UGS.USER_ID=U.ID AND UGS.GROUP_ID NOT IN (0,2,9))
+            $notSubordinatedGroupSubQuery = UserGroupTable::query();
+            $notSubordinatedGroupSubQuery->setFilter(
+                [
+                    '!=GROUP_ID' => $userSubordinateGroups,
+                    '=USER_ID' => new SqlExpression('%s'),
+                    // добавим еще проверку существования группы
+                    '!GROUP.ID' => false,
+                ]
+            );
+            $notSubordinatedGroupSubQuery->setCustomBaseTableAlias('UGS');
+
+            // CASE WHEN NOT EXISTS(SELECT 'x' FROM b_user_group UGS WHERE UGS.USER_ID=U.ID AND UGS.GROUP_ID NOT IN (0,2,9)) THEN 1 ELSE 0 END
+            $query->registerRuntimeField(
+                null,
+                new \Bitrix\Main\Entity\ExpressionField(
+                    'IS_SUBORDINATED_USER',
+                    'CASE WHEN NOT EXISTS('.$notSubordinatedGroupSubQuery->getQuery().') THEN 1 ELSE 0 END',
+                    ['ID']
+                )
+            );
+
+            // (U.ID=4 OR NOT EXISTS(SELECT 'x' FROM b_user_group UGS WHERE UGS.USER_ID=U.ID AND UGS.GROUP_ID NOT IN (0,2,9)))
+            $query->where(
+                Query::filter()
+                    //->logic('or')
+                    //->where('ID', $ownUserId)
+                    ->where('IS_SUBORDINATED_USER', 1)
+            );
+
+            unset($filterOrm['CHECK_SUBORDINATE']);
+        }
+
+        if (isset($filterOrm['NOT_ADMIN'])) {
+            // (SELECT * FROM b_user_group UGNA WHERE UGNA.USER_ID=U.ID AND UGNA.GROUP_ID = 1)
+            $groupAdminSubQuery = UserGroupTable::query();
+            $groupAdminSubQuery->setFilter(
+                [
+                    '=GROUP_ID' => 1,
+                    '=USER_ID' => new SqlExpression('%s')
+                ]
+            );
+            $groupAdminSubQuery->setCustomBaseTableAlias('UGNA');
+
+            // CASE WHEN NOT EXISTS(SELECT * FROM b_user_group UGNA WHERE UGNA.USER_ID=U.ID AND UGNA.GROUP_ID = 1) THEN 1 ELSE 0 END
+            $query->registerRuntimeField(
+                null,
+                new \Bitrix\Main\Entity\ExpressionField(
+                    'IS_NOT_ADMIN',
+                    'CASE WHEN NOT EXISTS('.$groupAdminSubQuery->getQuery().') THEN 1 ELSE 0 END',
+                    ['ID']
+                )
+            );
+
+            // (not exists (SELECT * FROM b_user_group UGNA WHERE UGNA.USER_ID=U.ID AND UGNA.GROUP_ID = 1))
+            $query->where('IS_NOT_ADMIN', 1);
+
+            unset($filterOrm['NOT_ADMIN']);
+        }
+
+        if ($filterOrm) {
+            foreach ($filterOrm as $key => $value) {
+                $query->addFilter($key, $value);
+            }
+        }
+
+        $itemsIterator = $query->exec();
+        while ($item = $itemsIterator->fetch()) {
+            /** @var \Bitrix\Main\Type\Date $birth */
+            $birth = $item['PERSONAL_BIRTHDAY'];
+            $item['PERSONAL_BIRTHDAY'] = $birth ? $birth->toString() : '';
+            $item['PERSONAL_BIRTHDAY_DATE'] = $birth ? $birth->format('Y-m-d') : '';
+            $item['_PERSONAL_PHONE_NORMALIZED_'] = $this->cleanPhoneNumberValue($item['PERSONAL_PHONE'] ?? '');
+            $item['_FULL_NAME_'] = trim($item['LAST_NAME'].' '.$item['NAME'].' '.$item['SECOND_NAME']);
+            $usersList[] = $item;
+        }
+
+        // Старый вариант с использованием штатного API
+        /*
         $itemsIterator = \CUser::GetList(
             $by = [
                 'FULL_NAME' => 'asc',
@@ -549,6 +733,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             $item['_FULL_NAME_'] = trim($item['LAST_NAME'].' '.$item['NAME'].' '.$item['SECOND_NAME']);
             $usersList[] = $item;
         }
+        */
 
         return $usersList;
     }
