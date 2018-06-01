@@ -25,13 +25,8 @@ foreach ($arResult['ITEMS'] as $key => &$item) {
         $image = CropImageDecorator::createFromPrimary($item['~PREVIEW_PICTURE']);
     }
     if ($image instanceof CropImageDecorator) {
-        if ($key === 0) {
-            $cropWidth  = 630;
-            $cropHeight = 210;
-        } else {
-            $cropWidth  = 305;
-            $cropHeight = 120;
-        }
+        $cropWidth  = 305;
+        $cropHeight = 120;
         $item['PREVIEW_PICTURE']['SRC'] = $image->setCropWidth($cropWidth)->setCropHeight($cropHeight)->getSrc();
     }
 }
