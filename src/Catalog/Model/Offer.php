@@ -1398,8 +1398,11 @@ class Offer extends IblockElement
      */
     public function isAvailable(): bool
     {
-        return $this->isActive() &&
-            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable()) &&
+        return
+            $this->isActive()
+            &&
+            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable())
+            &&
             ($this->getQuantity() > 0);
     }
 
