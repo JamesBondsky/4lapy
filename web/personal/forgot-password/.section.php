@@ -1,3 +1,2 @@
-<?php
-$sSectionName    = 'Восстановление пароля';
+<?php $sSectionName    = 'Восстановление пароля';
 $arDirProperties = Array();

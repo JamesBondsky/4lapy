@@ -1,3 +1,1 @@
-<?php
-
-$sSectionName = 'Подписка на доставку';
+<?php $sSectionName = 'Подписка на доставку';

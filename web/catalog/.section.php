@@ -1,3 +1,1 @@
-<?php
-
-$sSectionName = 'Каталог';
+<?php $sSectionName = 'Каталог';

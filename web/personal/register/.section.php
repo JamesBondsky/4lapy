@@ -1,3 +1,2 @@
-<?php
-$sSectionName    = 'Регистрация';
+<?php $sSectionName    = 'Регистрация';
 $arDirProperties = Array();
