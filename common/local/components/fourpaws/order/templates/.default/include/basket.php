@@ -101,9 +101,9 @@ $productsDeclension = new Declension('товар', 'товара', 'товаро
 if (null !== $delivery) {
     $deliveryResult = $delivery->getStockResult();
     $deliveryOrderableResult = $deliveryResult->getOrderable();
-    $deliveryOrderableQuantity = $deliveryResult->getAmount();
-    [$deliveryOrderableItems, $deliveryOrderableWeight] = $component->getOrderItemData($deliveryResult);
-    $deliveryOrderablePrice = $deliveryResult->getPrice();
+    $deliveryOrderableQuantity = $deliveryOrderableResult->getAmount();
+    [$deliveryOrderableItems, $deliveryOrderableWeight] = $component->getOrderItemData($deliveryOrderableResult);
+    $deliveryOrderablePrice = $deliveryOrderableResult->getPrice();
 
     $deliveryIsSplit = $isSplit && !empty($arResult['SPLIT_RESULT']);
     if (!empty($arResult['SPLIT_RESULT'])) {
@@ -124,8 +124,7 @@ if (null !== $delivery) {
     $deliveryUnavailableResult = $deliveryResult->getUnavailable();
     $deliveryUnavailableQuantity = $deliveryUnavailableResult->getAmount();
     [$deliveryUnavailableItems, $deliveryUnavailableWeight] = $component->getOrderItemData($deliveryUnavailableResult);
-    $deliveryUnavailablePrice = $deliveryUnavailableResult->getPrice();
-
+    $deliveryUnavailablePrice = $deliveryUnavailableResult->getPrice(false);
     // @todo костыль пока не будет выводиться статичный чек для самовывоза
     $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
     ?>

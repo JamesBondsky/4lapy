@@ -152,9 +152,9 @@ class NotificationService implements LoggerAwareInterface
                 break;
             case $parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE:
                 if ($parameters['dcDelivery']) {
-                    $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.pickup.shop.html.php';
-                } else {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.pickup.dc.html.php';
+                } else {
+                    $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.pickup.shop.html.php';
                 }
                 break;
             case $parameters['deliveryCode'] === DeliveryService::DPD_DELIVERY_CODE:

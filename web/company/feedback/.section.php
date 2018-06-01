@@ -1,3 +1,2 @@
-<?php
-$sSectionName    = 'Обратная связь';
+<?php $sSectionName    = 'Обратная связь';
 $arDirProperties = [];

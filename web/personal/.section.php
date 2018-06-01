@@ -1,3 +1,2 @@
-<?php
-$sSectionName    = 'Профиль';
+<?php $sSectionName    = 'Профиль';
 $arDirProperties = [];
