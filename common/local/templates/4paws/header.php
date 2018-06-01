@@ -149,9 +149,9 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
-        <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
-            'b-container b-container--news')*/ ?>">
-            <div class="<?php /*$APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news')*/ ?>">
+        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
+            'b-container b-container--news') ?>">
+            <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
                 <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                 <?php
                 }
