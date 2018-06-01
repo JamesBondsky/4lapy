@@ -1,3 +1,1 @@
-<?
-$sSectionName = "История по карте";
-?>
+<?php $sSectionName = 'История по карте';

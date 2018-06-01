@@ -1,3 +1,1 @@
-<?
-$sSectionName="Покупателям";
-?>
+<?php $sSectionName= 'Покупателям';
