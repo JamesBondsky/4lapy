@@ -39,7 +39,7 @@
 
 ```
 - ./bin/symfony_console f:s:s # на сегодняший день
-- ./bin/symfony_console f:s:s --date="$(date --date="tomorrow" +%Y-%m-%d)" # на завтра
+- ./bin/symfony_console f:s:s --date="$(date --date="tomorrow" +\%Y-\%m-\%d)" # на завтра
 ```
 
 ## Запуск импорта местоположений DPD
