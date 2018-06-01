@@ -1,12 +1,14 @@
 <?php
 /**
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var PhpEngine                             $view
+ * @var CMain                                 $APPLICATION
  */
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\PropertyTable;
+use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -15,10 +17,10 @@ use Symfony\Component\Templating\PhpEngine;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 $category = $catalogRequest->getCategory();
-if($category->isLanding()) {
+if ($category->isLanding()) {
     $filterName = 'catalogSliderFilter';
     global ${$filterName};
-    ${$filterName}=['PROPERTY_SECTION'=>$category->getId()];
+    ${$filterName} = ['PROPERTY_SECTION' => $category->getId()];
     $APPLICATION->IncludeComponent('bitrix:news.list',
         'index.slider',
         [
@@ -86,18 +88,18 @@ if($category->isLanding()) {
         ],
         false,
         ['HIDE_ICONS' => 'Y']);
-}?>
+} ?>
     <div class="b-catalog js-preloader-fix">
         <div class="b-container b-container--catalog-filter">
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php',
                 [
-                    'catalogRequest' => $catalogRequest,
+                    'catalogRequest'      => $catalogRequest,
                     'productSearchResult' => $productSearchResult,
                 ]
             ) ?>
         </div>
-        <?php if($category->isLanding()) {
+        <?php if ($category->isLanding()) {
             global $faqCategoryId;
             $faqCategoryId = $category->getUfFaqSection();
             $APPLICATION->IncludeComponent(
@@ -116,7 +118,39 @@ if($category->isLanding()) {
 
             $filterName = 'catalogLandingNewsFilter';
             global ${$filterName};
-            ${$filterName} = ['=PROPERTY_IN_LANDING'=>true];
+            $iblocks = [
+                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
+                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
+                //IblockUtils::getIblockId(IblockType::PUBLICATION, 'cloubs_and_nurderis'),//Раскоментить когда добавится инфоблок
+            ];
+            $itemIds = [];
+            $newLimit = $limit = 8;
+            /** @todo это фикс поиска по id вместо свойств в компоненте, оставить до переделки компонента на поиск по d7 */
+            foreach ($iblocks as $iblock) {
+                if ($newLimit > 0) {
+                    $propData = IblockPropEntityConstructor::getDataClass((int)$iblock);
+                    $res = $propData::query()
+                        ->where('PROPERTY_' . PropertyTable::query()
+                                ->setSelect(['ID'])
+                                ->where('IBLOCK_ID',
+                                    $iblock)
+                                ->where('CODE', 'IN_LANDING')
+                                ->setCacheTtl(360000)
+                                ->exec()->fetch()['ID'], 1)
+                        ->setSelect(['IBLOCK_ELEMENT_ID'])
+                        ->setLimit($newLimit)
+                        ->exec();
+                    while ($item = $res->fetch()) {
+                        $itemIds[] = $item['IBLOCK_ELEMENT_ID'];
+                        $newLimit--;
+                    }
+                }
+            }
+            ${$filterName} = [
+//                '=PROPERTY_IN_LANDING' => true,
+                '=ID'                 => $itemIds,
+                'SHOW_ALL_WO_SECTION' => 'Y',
+            ];
             $APPLICATION->IncludeComponent('fourpaws:items.list',
                 'in_catalog',
                 [
@@ -135,13 +169,9 @@ if($category->isLanding()) {
                         '',
                     ],
                     'FILTER_NAME'            => $filterName,
-                    'IBLOCK_ID'              => [
-                        IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
-                        IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
-                        //IblockUtils::getIblockId(IblockType::PUBLICATION, 'cloubs_and_nurderis'),//Раскоментить когда добавится инфоблок
-                    ],
+                    'IBLOCK_ID'              => $iblocks,
                     'IBLOCK_TYPE'            => IblockType::PUBLICATION,
-                    'NEWS_COUNT'             => '8',
+                    'NEWS_COUNT'             => $limit,
                     'PREVIEW_TRUNCATE_LEN'   => '',
                     'PROPERTY_CODE'          => [
                         'PUBLICATION_TYPE',
@@ -152,6 +182,7 @@ if($category->isLanding()) {
                     'SORT_BY2'               => 'SORT',
                     'SORT_ORDER1'            => 'DESC',
                     'SORT_ORDER2'            => 'ASC',
+                    'CHECK_PERMISSIONS'      => 'N',
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']);
@@ -161,8 +192,8 @@ if($category->isLanding()) {
             '',
             [
                 'AREA_FILE_SHOW' => 'file',
-                'PATH' => '/local/include/blocks/viewed_products.php',
-                'EDIT_TEMPLATE' => '',
+                'PATH'           => '/local/include/blocks/viewed_products.php',
+                'EDIT_TEMPLATE'  => '',
             ],
             null,
             [
