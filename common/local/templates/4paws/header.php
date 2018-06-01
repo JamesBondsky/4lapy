@@ -26,23 +26,13 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
         window.js_static = '/static/build/';
         window._global = {};
     </script>
-    <?php
-    $APPLICATION->ShowHead();
-    /*$bXhtmlStyle = true;
-    echo '<meta http-equiv="Content-Type" content="text/html; charset='.LANG_CHARSET.'"'.($bXhtmlStyle? ' /':'').'>'."\n";
-//    $APPLICATION->ShowMeta("robots", false, $bXhtmlStyle);
-//    $APPLICATION->ShowMeta("keywords", false, $bXhtmlStyle);
-//    $APPLICATION->ShowMeta("description", false, $bXhtmlStyle);
-    $APPLICATION->ShowLink("canonical", null, $bXhtmlStyle);
-    $APPLICATION->ShowCSS(true, $bXhtmlStyle);
-    $APPLICATION->ShowHeadStrings();
-    $APPLICATION->ShowHeadScripts();*/?>
+    <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle(false) ?></title>
     <?php
-    Asset::getInstance()->addCss($markup->getCssFile());
-    Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
-    Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
-    ?>
+    $asset = Asset::getInstance();
+    $asset->addCss($markup->getCssFile());
+    $asset->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
+    $asset->addJs('https://www.google.com/recaptcha/api.js'); ?>
 </head>
 <body>
 <?php $APPLICATION->ShowPanel() ?>
@@ -111,7 +101,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
                      * Основное меню.
                      * dropdown передается через header_dropdown_menu
                      */
-                    /*$APPLICATION->IncludeComponent(
+                    $APPLICATION->IncludeComponent(
                         'fourpaws:iblock.main.menu',
                         'fp.17.0.top',
                         [
@@ -134,7 +124,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
                         [
                             'HIDE_ICONS' => 'Y'
                         ]
-                    );*/
+                    );
                     ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
                         '',
@@ -229,8 +219,8 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
 }
 
 if ($template->hasContent()) {
-    Asset::getInstance()->addCss('/include/static/style.css');
-    Asset::getInstance()->addJs('/include/static/scripts.js');
+    $asset->addCss('/include/static/style.css');
+    $asset->addJs('/include/static/scripts.js');
 
     $APPLICATION->IncludeComponent('bitrix:main.include',
         '',
