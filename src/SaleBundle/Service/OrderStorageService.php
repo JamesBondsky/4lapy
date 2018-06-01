@@ -604,6 +604,17 @@ class OrderStorageService
             $delayed = $stockResultCollection->getByRequest();
         }
 
+        /**
+         * Не позволяем разделять так, чтобы один из наборов становился с нулевой ценой
+         * (например, содержал одни только подарки)
+         */
+        if ((!$available->isEmpty() && !$available->getPrice()) ||
+            (!$delayed->isEmpty() && !$delayed->getPrice())
+        ) {
+            $delayed = $stockResultCollection;
+            $available = new StockResultCollection();
+        }
+
         return [$available, $delayed];
     }
 }

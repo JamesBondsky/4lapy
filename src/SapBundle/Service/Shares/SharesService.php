@@ -145,8 +145,8 @@ class SharesService implements LoggerAwareInterface
             } catch (Exception $e) {
                 $this->log()->info(
                     \sprintf(
-                        'Ошибка %s',
-                        $e->getMessage()
+                        'Ошибка %s [%s]',
+                        $e->getMessage(), $share->getShareNumber()
                     )
                 );
                 /**

@@ -233,6 +233,12 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             $stockResultCollection = new StockResultCollection();
         }
 
+        $iterator = $priceForAmountCollection->getIterator();
+        $iterator->uasort(function (PriceForAmount $a, PriceForAmount $b) {
+            return $b->getPrice() <=> $a->getPrice();
+        });
+        $priceForAmountCollection = new PriceForAmountCollection(iterator_to_array($iterator));
+
         /** @var Store $store */
         foreach ($stores->getIterator() as $store) {
             $stockResult = new StockResult();
