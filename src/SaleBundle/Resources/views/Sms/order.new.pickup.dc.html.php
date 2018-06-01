@@ -10,4 +10,4 @@
  * @var array $shop
  */
 ?>
-Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price ?> руб. оформлен! И будет доставлен <?= $deliveryDate->format('d.m.Y') ?> в магазине: <?= $shop['address'] ?>.
+Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price ?> руб. оформлен! И будет доставлен <?= $deliveryDate->format('d.m.Y') ?> в магазин: <?= $shop['address'] ?>.
