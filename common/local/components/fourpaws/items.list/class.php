@@ -80,8 +80,13 @@ class CItemsListComponent extends CBitrixComponent
                         $paramsIblock['filter']['IBLOCK_TYPE_ID'] = $params['IBLOCK_TYPE'];
                     }
                     $res = IblockTable::getList($paramsIblock);
-                    while ($item = $res->fetch()) {
-                        $params['IBLOCK_ID'][] = (int)$item['ID'];
+                    if($res->getSelectedRowsCount() > 0) {
+                        if(!\is_array($params['IBLOCK_ID'])) {
+                            $params['IBLOCK_ID'] = [];
+                        }
+                        while ($item = $res->fetch()) {
+                            $params['IBLOCK_ID'][] = (int)$item['ID'];
+                        }
                     }
                 } catch (ArgumentException $e) {
                 }
@@ -139,8 +144,8 @@ class CItemsListComponent extends CBitrixComponent
         }
         $params['PREVIEW_TRUNCATE_LEN'] = (int)$params['PREVIEW_TRUNCATE_LEN'];
 
-        $params['DISPLAY_TOP_PAGER'] = $params['DISPLAY_TOP_PAGER'] === 'Y';
-        $params['DISPLAY_BOTTOM_PAGER'] = $params['DISPLAY_BOTTOM_PAGER'] !== 'N';
+        $params['DISPLAY_TOP_PAGER'] = isset($params['DISPLAY_TOP_PAGER']) ? $params['DISPLAY_TOP_PAGER'] === 'Y' : false;
+        $params['DISPLAY_BOTTOM_PAGER'] =  isset($params['DISPLAY_BOTTOM_PAGER']) ? $params['DISPLAY_BOTTOM_PAGER'] !== 'N' : false;
         $params['PAGER_TITLE'] = trim($params['PAGER_TITLE']);
         $params['PAGER_SHOW_ALWAYS'] = $params['PAGER_SHOW_ALWAYS'] === 'Y';
         $params['PAGER_TEMPLATE'] = trim($params['PAGER_TEMPLATE']);
@@ -274,6 +279,7 @@ class CItemsListComponent extends CBitrixComponent
             ];
 
             $navigation = CDBResult::GetNavParams($navParams);
+            $navParams['iNumPage'] = $navigation['PAGEN'];
             if ($navigation['PAGEN'] === 0 && $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'] > 0) {
                 $this->arParams['CACHE_TIME'] = $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'];
             }
@@ -395,9 +401,11 @@ class CItemsListComponent extends CBitrixComponent
         $this->arResult['ITEMS'] = [];
         $this->arResult['ELEMENTS'] = [];
 
+        $filter = array_merge($filter, $this->externalFilter);
+        /** @todo переписать на d7 чтобы избавиться от фикса поиска по id вместо свойств */
         $rsElement = CIBlockElement::GetList(
             $sort,
-            array_merge($filter, $this->externalFilter),
+            $filter,
             false,
             $this->navParams,
             $select
@@ -562,7 +570,7 @@ class CItemsListComponent extends CBitrixComponent
         }
         $filter = [
             'IBLOCK_ID'         => $this->arParams['IBLOCK_ID'],
-            'IBLOCK_LID'        => SITE_ID,
+//            'IBLOCK_LID'        => SITE_ID,
             'ACTIVE'            => 'Y',
             'CHECK_PERMISSIONS' => $this->arParams['CHECK_PERMISSIONS'] ? 'Y' : 'N',
         ];

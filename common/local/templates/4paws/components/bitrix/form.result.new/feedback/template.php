@@ -111,6 +111,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                                        placeholder=""
                                        name="<?= $fieldName ?>"/>
                             </div>
+                            <div class="fileNameText"></div>
                             <label class="b-input-line__label b-input-line__label--feedback-page"
                                    for="feedback-<?= $fieldSid ?>">
                                 <?= $question['CAPTION'] ?>
