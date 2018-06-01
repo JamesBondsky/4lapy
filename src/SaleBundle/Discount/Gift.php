@@ -2,11 +2,17 @@
 
 namespace FourPaws\SaleBundle\Discount;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Sale\Discount;
 use Bitrix\Sale\Discount\Actions;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\OrderDiscountManager;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Gift
@@ -122,6 +128,10 @@ class Gift extends \CSaleActionCtrlAction
      * @param Discount|null $callerObject
      * @param int $applyCount
      *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
      */
     public static function applyGift(
         array $order,
@@ -134,22 +144,41 @@ class Gift extends \CSaleActionCtrlAction
         $applyBasket = null;
         $actionDescription = null;
         if (!empty($order['BASKET_ITEMS']) && \is_array($order['BASKET_ITEMS']) && $applyCount) {
+            $giftsSoldOut = true;
             if (!empty($params) && ($params = json_decode($params, true)) && \is_array($params)) {
-                foreach ($params as &$param) {
+                $giftsSoldOut = false;
+                foreach ($params as $l => &$param) {
                     $param['count'] *= $applyCount;
+                    // проверяем наличие подарков
+                    $offerCollection = (new OfferQuery())->withFilterParameter('=ID', $param['list'])->exec();
+                    $param['list'] = [];
+                    /** @var Offer $offer */
+                    foreach ($offerCollection as $k => $offer) {
+                        if($offer->isAvailable()) {
+                            $param['list'][] = $k;
+                        }
+                    }
+                    if(!$param['list']) {
+                        $giftsSoldOut = true;
+                    }
                 }
                 unset($param);
                 $params['discountType'] = 'GIFT';
             }
-            $actionDescription = [
-                'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
-                'ACTION_DESCRIPTION' => \json_encode($params),
-            ];
-            Actions::increaseApplyCounter();
-            Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
+            if($giftsSoldOut) {
+                $actionDescription = false;
+            } else {
+                $actionDescription = [
+                    'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
+                    'ACTION_DESCRIPTION' => \json_encode($params),
+                ];
+                Actions::increaseApplyCounter();
+                Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
 
-            /** @var array $applyBasket */
-            $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
+                /** @var array $applyBasket */
+                $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
+            }
+
         }
 
         if (!$applyBasket || !$actionDescription) {
@@ -158,7 +187,7 @@ class Gift extends \CSaleActionCtrlAction
 
         foreach ($applyBasket as $basketCode => $basketRow) {
             $rowActionDescription = $actionDescription;
-            $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
+            $rowActionDescription['BASKET_CODE'] = $basketCode;
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
         }
     }
