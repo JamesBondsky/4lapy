@@ -22,7 +22,7 @@ class ProductController extends Controller
      *
      * @return Response
      */
-    public function productDetailRequest(ProductDetailRequest $productDetailRequest): Response
+    public function productDetailAction(ProductDetailRequest $productDetailRequest): Response
     {
         return $this->render('FourPawsCatalogBundle:Catalog:productDetail.html.php', [
             'productDetailRequest' => $productDetailRequest,
