@@ -26,11 +26,18 @@ class OldProductController extends Controller
     public function oldProductDetailRequest(string $path): Response
     {
         if (empty($path)) {
-            return $this->render('FourPawsCatalogBundle:Catalog:oldProductDetail.html.php');
+            return $this->render('FourPawsCatalogBundle:Catalog:oldItem.html.php');
         }
+        /** если элемент не активен то 404 - отключено - ибо - в стандартном запрсое оффера такого фильтра нет*/
         $newUrl = '';
         $fullPath = '/online_shop/' . $path;
-        $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_OLD_URL' => $fullPath])->exec();
+        $fullPathWithEndSlash = $fullPath . '/';
+        $offerCollection = (new OfferQuery())
+            ->withFilter([
+                '=PROPERTY_OLD_URL' => [$fullPath, $fullPathWithEndSlash],
+//                'ACTIVE_DATE'       => 'Y', //проверка по активности товаров не нужна??
+//                'ACTIVE'            => 'Y', //проверка по активности товаров не нужна??
+            ])->exec();
         if (!$offerCollection->isEmpty()) {
             /** @var Offer $offer */
             $offer = $offerCollection->first();
@@ -41,6 +48,6 @@ class OldProductController extends Controller
             die();
         }
 
-        return $this->render('FourPawsCatalogBundle:Catalog:oldProductDetail.html.php');
+        return $this->render('FourPawsCatalogBundle:Catalog:oldItem.html.php');
     }
 }

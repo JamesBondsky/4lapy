@@ -25,7 +25,7 @@ class ChangeShopLinkMenu20180122112820 extends SprintMigrationBase
             $res = $obEl->withSelect(['ID'])->withFilter(
                 [
                     '=NAME'        => 'Магазины',
-                    '=IBLOCK_ID'   => IblockUtils::getIblockId(
+                    'IBLOCK_ID'   => IblockUtils::getIblockId(
                         IblockType::MENU,
                         IblockCode::MAIN_MENU
                     ),
