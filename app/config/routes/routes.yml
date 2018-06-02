@@ -23,15 +23,15 @@ app.api:
 
 old_items.news:
     path: /actions_and_programs/news/{path}/
-    defaults: { _controller: '\FourPaws\AppBundle\Controller\ArticleNewsSaleController::oldNewsDetailRequest' }
+    defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldNewsDetailRequest' }
     methods: [GET]
 
 old_items.articles:
     path: /actions_and_programs/article/{path}/
-    defaults: { _controller: '\FourPaws\AppBundle\Controller\ArticleNewsSaleController::oldArticleDetailRequest' }
+    defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldArticleDetailRequest' }
     methods: [GET]
 
 old_items.sale:
     path: /actions_and_programs/{path}/
-    defaults: { _controller: '\FourPaws\AppBundle\Controller\ArticleNewsSaleController::oldSaleDetailRequest' }
+    defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldSaleDetailRequest' }
     methods: [GET]

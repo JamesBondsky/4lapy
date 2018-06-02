@@ -14,11 +14,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class ArticleNewsSaleController
+ * Class OldPublicationController
  *
  * @package FourPaws\AppBundle\AjaxController
  */
-class ArticleNewsSaleController extends Controller
+class OldPublicationController extends Controller
 {
     /**
      * @param string $path
