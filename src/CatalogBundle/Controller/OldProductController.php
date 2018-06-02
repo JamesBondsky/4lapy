@@ -23,7 +23,7 @@ class OldProductController extends Controller
      *
      * @return Response
      */
-    public function oldProductDetailRequest(string $path): Response
+    public function oldProductDetailAction(string $path): Response
     {
         if (empty($path)) {
             return $this->render('FourPawsCatalogBundle:Catalog:oldItem.html.php');
