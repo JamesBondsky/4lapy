@@ -188,7 +188,7 @@ if (null === $offer) {
                     $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 
                     if ($product->getComposition()->getText()) { ?>
-                        <div class="b-tab-content__container js-tab-content b-tab-content_container_recommendations" data-tab-content="composition">
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
                             <div class="b-description-tab b-description-tab--full">
                                 <div class="b-description-tab__column b-description-tab__column--full">
                                     <p><?= $product->getComposition()->getText() ?></p>
@@ -198,7 +198,7 @@ if (null === $offer) {
                     <?php }
 
                     if ($product->getNormsOfUse()->getText()) { ?>
-                        <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
+                        <div class="b-tab-content__container js-tab-content b-tab-content_container_recommendations" data-tab-content="recommendations">
                             <div class="b-description-tab b-description-tab--full">
                                 <div class="b-description-tab__column b-description-tab__column--full">
                                     <p><?= $product->getNormsOfUse()->getText() ?></p>
