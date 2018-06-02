@@ -20,3 +20,18 @@ app.catalog:
 
 app.api:
     resource: "@FourPawsMobileApiBundle/Resources/config/routing.yml"
+
+old_items.news:
+    path: /actions_and_programs/news/{path}/
+    defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldNewsDetailAction' }
+    methods: [GET]
+
+old_items.articles:
+    path: /actions_and_programs/article/{path}/
+    defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldArticleDetailAction' }
+    methods: [GET]
+
+old_items.sale:
+    path: /actions_and_programs/{path}/
+    defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldSaleDetailAction' }
+    methods: [GET]
