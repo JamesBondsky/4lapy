@@ -32,12 +32,7 @@ class OldProductController extends Controller
         $newUrl = '';
         $fullPath = '/online_shop/' . $path;
         $fullPathWithEndSlash = $fullPath . '/';
-        $offerCollection = (new OfferQuery())
-            ->withFilter([
-                '=PROPERTY_OLD_URL' => [$fullPath, $fullPathWithEndSlash],
-//                'ACTIVE_DATE'       => 'Y', //проверка по активности товаров не нужна??
-//                'ACTIVE'            => 'Y', //проверка по активности товаров не нужна??
-            ])->exec();
+        $offerCollection = (new OfferQuery())->withFilter(['=PROPERTY_OLD_URL' => [$fullPath, $fullPathWithEndSlash]])->exec();
         if (!$offerCollection->isEmpty()) {
             /** @var Offer $offer */
             $offer = $offerCollection->first();
