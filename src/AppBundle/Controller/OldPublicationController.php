@@ -26,7 +26,7 @@ class OldPublicationController extends Controller
      * @return Response
      * @throws IblockNotFoundException
      */
-    public function oldNewsDetailRequest(string $path): Response
+    public function oldNewsDetailAction(string $path): Response
     {
         if (empty($path)) {
             return $this->render('FourPawsCatalogBundle:Catalog:oldItem.html.php');
@@ -68,7 +68,7 @@ class OldPublicationController extends Controller
      * @return Response
      * @throws IblockNotFoundException
      */
-    public function oldArticleDetailRequest(string $path): Response
+    public function oldArticleDetailAction(string $path): Response
     {
         if (empty($path)) {
             return $this->render('FourPawsCatalogBundle:Catalog:oldItem.html.php');
@@ -110,7 +110,7 @@ class OldPublicationController extends Controller
      * @return Response
      * @throws IblockNotFoundException
      */
-    public function oldSaleDetailRequest(string $path): Response
+    public function oldSaleDetailAction(string $path): Response
     {
         if (empty($path)) {
             return $this->render('FourPawsCatalogBundle:Catalog:oldItem.html.php');
