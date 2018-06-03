@@ -34,7 +34,7 @@ class ForgotBasketController
          * искдючаем неавторизованные корзины
          */
         $date = DateTime::createFromTimestamp(time());
-        $date->add('-3D'); //-3 дня
+        $date->add('- 3 days'); //-3 дня
         $logger = LoggerFactory::create('forgot_basket_agent');
         $returnString = '\\' . __METHOD__ . '();';
         try {
@@ -124,7 +124,7 @@ class ForgotBasketController
          * искдючаем неавторизованные корзины
          */
         $date = DateTime::createFromTimestamp(time());
-        $date->add('-T3H'); //-3 часа
+        $date->add('- 3 hours'); //-3 часа
         /** получаем измененные итемы */
         $logger = LoggerFactory::create('forgot_basket_agent');
         try {
@@ -177,6 +177,5 @@ class ForgotBasketController
                 return;
             }
         }
-        $a = 1;
     }
 }
