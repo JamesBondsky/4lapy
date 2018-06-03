@@ -29,7 +29,7 @@ class CloseSiteController extends Controller
     /**
      * @return JsonResponse
      */
-    public function addAction(): JsonResponse
+    public function closeAction(): JsonResponse
     {
         $fuserId = Fuser::getId();
         if ($fuserId > 0) {
