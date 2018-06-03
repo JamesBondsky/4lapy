@@ -45,7 +45,7 @@ class ForgotBasketController
                 ->setSelect(['FUSER_ID'])
                 ->exec();
         } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
-            $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e);
+            $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e->getTrace());
             return $returnString;
         }
         $fUserIds = [];
@@ -63,7 +63,7 @@ class ForgotBasketController
                 ->setSelect(['FUSER_ID'])
                 ->exec();
         } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
-            $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e);
+            $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e->getTrace());
             return $returnString;
         }
         while ($basketItem = $res->fetch()) {
@@ -96,17 +96,17 @@ class ForgotBasketController
                                 /** апдейтим дату корзины - чтобы отсчет шел как по тз после отправки первого письма */
                                 BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
                             } catch (\Exception $e) {
-                                $logger->error('Ошибка при обновлении итема корзины ' . $e->getMessage(), $e);
+                                $logger->error('Ошибка при обновлении итема корзины ' . $e->getMessage(), $e->getTrace());
                             }
                         }
                     }
                 } catch (ArgumentException $e) {
-                    $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e);
+                    $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
                 } catch (ApplicationCreateException $e) {
-                    $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e);
+                    $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
                     return $returnString;
                 } catch (ExpertsenderServiceException $e) {
-                    $logger->error('Ошибка при отправке сообщения ' . $e->getMessage(), $e);
+                    $logger->error('Ошибка при отправке сообщения ' . $e->getMessage(), $e->getTrace());
                 }
             }
         }
@@ -116,10 +116,14 @@ class ForgotBasketController
     /**
      * непереодический агент, создаеся при аяксе на закрытие сайта если корзина не пустая
      *
-     * @param int $fuserId
+     * @param int|string $fuserId
      */
-    public function sendEmailByOldBasketAfter3Hours(int $fuserId): void
+    public function sendEmailByOldBasketAfter3Hours($fuserId): void
     {
+        $fuserId = (int)$fuserId;
+        if($fuserId === 0){
+            return;
+        }
         /** получаем неизмененные итемы не привязанные к заказу и с пользователем
          * искдючаем неавторизованные корзины
          */
@@ -133,9 +137,10 @@ class ForgotBasketController
                 ->where('FUSER_ID', $fuserId)
                 ->whereNull('ORDER_ID')
                 ->setSelect(['FUSER_ID'])
+                ->setLimit(1)
                 ->exec();
         } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
-            $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e);
+            $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e->getTrace());
             return;
         }
         /** если нет измененных итемов посылаем письмо */
@@ -162,18 +167,18 @@ class ForgotBasketController
                             /** апдейтим дату корзины чтобы не циклился обработчик */
                             BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
                         } catch (\Exception $e) {
-                            $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e);
+                            $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
                         }
                     }
                 }
             } catch (ArgumentException $e) {
-                $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e);
+                $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
                 return;
             } catch (ApplicationCreateException $e) {
-                $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e);
+                $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
                 return;
             } catch (ExpertsenderServiceException $e) {
-                $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e);
+                $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
                 return;
             }
         }

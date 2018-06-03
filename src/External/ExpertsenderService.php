@@ -720,7 +720,7 @@ class ExpertsenderService implements LoggerAwareInterface
         /** @var BasketService $orderService */
         $basketService = $container->get(BasketService::class);
 
-        $snippets[] = new Snippet('user_name', $user->getName());
+        $snippets[] = new Snippet('user_name', !empty($user->getName()) ? $user->getName() : $user->getFullName());
         $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
 
         $items = $this->getAltProductsItemsByBasket($basket);

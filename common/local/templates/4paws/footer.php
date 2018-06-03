@@ -104,12 +104,10 @@ if ($template->hasMainWrapper()) {
 <?php require_once __DIR__ . '/blocks/footer/popups.php' ?>
 <script src="<?= $markup->getJsFile() ?>"></script>
 <script>
-    $(function(){
-        <?php /** хз насколько кросбраузерно */?>
-        window.onbeforeunload = function () {
-            $.get('/ajax/sale/forgot_basket_close_page/');
-        }
-    });
+    <?php /** хз насколько кросбраузерно */?>
+    window.onbeforeunload = function () {
+        $.get('/ajax/sale/forgot_basket_close_page/');
+    }
 </script>
 </body>
 </html>
