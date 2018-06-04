@@ -429,7 +429,9 @@ class UserService implements
             if ($hostUserId === $id) {
                 throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
             }
-            if($this->bitrixUserService !== null) {
+            if ($this->bitrixUserService !== null) {
+                // logout - чтобы не смешивались корзины
+                $this->bitrixUserService->Logout();
                 $authResult = $this->bitrixUserService->Authorize($id);
             } else {
                 $authResult = false;
@@ -480,10 +482,10 @@ class UserService implements
         $hostUserId = $this->getAvatarHostUserId();
         $guestUserId = $this->getAvatarGuestUserId();
         if ($hostUserId > 0 && $guestUserId > 0) {
-            $curUserId = 0;
             try {
                 $curUserId = $this->getCurrentUserId();
             } catch (\Exception $exception) {
+                $curUserId = 0;
             }
             if ($curUserId === $guestUserId && $curUserId !== $hostUserId) {
                 $isAuthorized = true;
@@ -513,6 +515,10 @@ class UserService implements
             if ($curUserId === $hostUserId) {
                 $isLoggedByHostUser = true;
             } else {
+                if ($this->bitrixUserService !== null) {
+                    // logout - чтобы не смешивались корзины
+                    $this->bitrixUserService->Logout();
+                }
                 $authResult = $this->authorize($hostUserId);
                 if ($authResult) {
                     $isLoggedByHostUser = true;
