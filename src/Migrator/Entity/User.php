@@ -71,7 +71,7 @@ class User extends AbstractEntity
             throw new UpdateException("User #{$primary} update error: $user->LAST_ERROR");
         }
         
-        $this->setRawPassword($primary, $data['PASSWORD'], $data['CHECKWORD']);
+        $this->setRawPassword($primary, $data['RAW_PASSWORD'], $data['CHECKWORD']);
         
         return new UpdateResult(true, $primary);
     }
@@ -98,7 +98,7 @@ class User extends AbstractEntity
             throw new AddException("User #{$primary} add error: $user->LAST_ERROR");
         }
         
-        $this->setRawPassword($id, $data['PASSWORD'], $data['CHECKWORD']);
+        $this->setRawPassword($id, $data['RAW_PASSWORD'], $data['CHECKWORD']);
         
         MapTable::addEntity($this->entity, $primary, $id);
         
