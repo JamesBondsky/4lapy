@@ -560,15 +560,19 @@ class BasketService implements LoggerAwareInterface
                 }
             }
 
-            $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                $this->manzanaPosService->buildRequestFromBasket(
-                    $this->getBasket(),
-                    $cardNumber ?? '',
-                    $this
-                )
+            $basketRequest = $this->manzanaPosService->buildRequestFromBasket(
+                $this->getBasket(),
+                $cardNumber ?? '',
+                $this
             );
-
-            $result = $cheque->getChargedBonus();
+            if(!$basketRequest->getItems()->isEmpty()) {
+                $cheque = $this->manzanaPosService->processChequeWithoutBonus(
+                    $basketRequest
+                );
+                $result = $cheque->getChargedBonus();
+            } else {
+                $result = 0.0;
+            }
         } catch (ExecuteException $e) {
             $result = 0.0;
         }
