@@ -67,11 +67,11 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'clearIblockItemCache'], $module);
 
         /** запуск переиндексации товаров при изменении товара */
-        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexProduct'], $module);
-        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexOffer'], $module);
-        static::initHandlerCompatible('OnAfterIBlockElementAdd', [self::class, 'reindexShareOffers'], $module);
-        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexShareOffers'], $module);
-        static::initHandlerCompatible('OnAfterIBlockElementDelete', [self::class, 'reindexShareOffers'], $module);
+//        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexProduct'], $module);
+//        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexOffer'], $module);
+//        static::initHandlerCompatible('OnAfterIBlockElementAdd', [self::class, 'reindexShareOffers'], $module);
+//        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexShareOffers'], $module);
+//        static::initHandlerCompatible('OnAfterIBlockElementDelete', [self::class, 'reindexShareOffers'], $module);
     }
 
     /**
@@ -89,14 +89,22 @@ class Event extends BaseServiceHandler
     }
 
     /**
-     * @param array $arFields
+     * @param $arFields
+     * @throws IblockNotFoundException
      */
     public static function clearIblockItemCache($arFields): void
     {
         if (!self::isLockEvents()) {
-            TaggedCacheHelper::clearManagedCache([
-                'iblock:item:' . $arFields['ID'],
-            ]);
+            if (isset($arFields['IBLOCK_ID']) &&
+                !\in_array((int)$arFields['IBLOCK_ID'], [
+                    IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                    IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                ], true)
+            ) {
+                TaggedCacheHelper::clearManagedCache([
+                    'iblock:item:' . $arFields['ID'],
+                ]);
+            }
         }
     }
 
