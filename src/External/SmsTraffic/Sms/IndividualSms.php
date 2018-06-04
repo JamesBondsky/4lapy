@@ -29,7 +29,7 @@ class IndividualSms extends AbstractSms
      *
      * @return $this
      */
-    public function addMessage($phone, $message)
+    public function addMessage($phone, $message): self
     {
         $this->phoneMessages[] = [
             $phone,

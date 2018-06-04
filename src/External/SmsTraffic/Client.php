@@ -147,7 +147,7 @@ class Client
      *
      * @return $this
      */
-    public function setTransport(TransportInterface $transport)
+    public function setTransport(TransportInterface $transport): self
     {
         $this->transport = $transport;
 
@@ -159,7 +159,7 @@ class Client
      *
      * @return $this
      */
-    public function setRoute(string $route)
+    public function setRoute(string $route): self
     {
         $this->route = $route;
 
