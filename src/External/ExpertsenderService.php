@@ -579,7 +579,7 @@ class ExpertsenderService implements LoggerAwareInterface
             new Snippet('order_date', $order->getDateInsert()->format('d.m.Y')),
         ];
 
-        $isOnlinePayment = $orderService->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE;
+        $isOnlinePayment = $orderService->isOnlinePayment($order);
         if ($properties['USER_REGISTERED'] === BitrixUtils::BX_BOOL_TRUE) {
             // зарегистрированный пользователь
             if ($isOnlinePayment) {

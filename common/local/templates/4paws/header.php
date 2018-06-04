@@ -32,7 +32,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
     $asset->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
-    $asset->addJs('https://www.google.com/recaptcha/api.js'); ?>
+    $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru'); ?>
 </head>
 <body>
 <?php $APPLICATION->ShowPanel() ?>

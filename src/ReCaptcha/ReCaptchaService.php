@@ -63,9 +63,17 @@ class ReCaptchaService implements LoggerAwareInterface
             . '"></div>';
     }
 
+    /**
+     * @return array
+     */
+    public function getParams(): array
+    {
+        return ['sitekey' => $this->parameters['key']];
+    }
+
     public function addJs()
     {
-        Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
+        Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
     }
 
     /**
@@ -73,7 +81,7 @@ class ReCaptchaService implements LoggerAwareInterface
      */
     public function getJs(): string
     {
-        return '<script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js"></script>';
+        return '<script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js?hl=ru"></script>';
     }
 
     /**
