@@ -9,6 +9,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Search\Model\CatalogSyncMsg;
 use FourPaws\Search\SearchService;
 use JMS\Serializer\Serializer;
@@ -127,6 +128,10 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 
         $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
 
+        TaggedCacheHelper::clearManagedCache([
+            'iblock:item:' . $product->getId(),
+        ]);
+
         $this->log()->debug(
             sprintf(
                 'Обновление продукта #%d: %s',
@@ -144,6 +149,10 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     private function deleteProduct(int $productId)
     {
         $deleteProductResult = $this->searchService->getIndexHelper()->deleteProduct($productId);
+
+        TaggedCacheHelper::clearManagedCache([
+            'iblock:item:' . $productId,
+        ]);
 
         $this->log()->debug(
             sprintf(
@@ -188,6 +197,10 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
         }
 
         $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
+        TaggedCacheHelper::clearManagedCache([
+            'iblock:item:' . $offer->getId(),
+            'iblock:item:' . $product->getId()
+        ]);
 
         $this->log()->debug(
             sprintf(

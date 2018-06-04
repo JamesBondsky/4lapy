@@ -2,12 +2,16 @@
 
 namespace FourPaws\Search;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\EventManager;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\BitrixOrm\Query\ShareQuery;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -123,7 +127,7 @@ class EventHandlers extends BaseServiceHandler
      * @param string $action
      * @param array  $arFields
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      */
     protected static function doActionInElastic(string $action, array $arFields): void
     {
@@ -132,11 +136,13 @@ class EventHandlers extends BaseServiceHandler
         }
 
         $entityType = self::recognizeEntityType($arFields);
-        if ('' === $entityType) {
-            return;
+        if ('' !== $entityType) {
+            self::publishCatSyncMsg($action, $entityType, (int)$arFields['ID']);
+        } else {
+            foreach (self::getDependantEntities($arFields) as $id => $entityType) {
+                self::publishCatSyncMsg($action, $entityType, $id);
+            }
         }
-
-        self::publishCatSyncMsg($action, $entityType, (int)$arFields['ID']);
     }
 
     /**
@@ -159,7 +165,7 @@ class EventHandlers extends BaseServiceHandler
      * @param array $arFields
      *
      * @return string
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      */
     protected static function recognizeEntityType(array $arFields): string
     {
@@ -181,6 +187,36 @@ class EventHandlers extends BaseServiceHandler
         }
 
         return '';
+    }
+
+    /**
+     * @param array $arFields
+     * @return array
+     * @throws IblockNotFoundException
+     */
+    private static function getDependantEntities(array $arFields): array
+    {
+        $result = [];
+        if (isset($arFields['IBLOCK_ID'])) {
+            $iblockId = (int)$arFields['IBLOCK_ID'];
+            if (isset($arFields['ACTIVE']) &&
+                (IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES) === $iblockId)
+            ) {
+                /** @var Share $share */
+                if ($share = (new ShareQuery())
+                    ->withFilter(['ID' => $arFields['ID']])
+                    ->exec()
+                    ->first()
+                ) {
+                    /** @var Offer $offer */
+                    foreach ($share->getProducts() as $offer) {
+                        $result[$offer->getId()] = CatalogSyncMsg::ENTITY_TYPE_OFFER;
+                    }
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
