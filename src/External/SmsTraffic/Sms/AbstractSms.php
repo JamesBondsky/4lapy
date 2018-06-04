@@ -71,7 +71,7 @@ abstract class AbstractSms implements ConstInterface
      *
      * @return $this
      */
-    public function setParameters(array $parameters)
+    public function setParameters(array $parameters): self
     {
         $this->parameters = $parameters;
         
@@ -85,7 +85,7 @@ abstract class AbstractSms implements ConstInterface
      *
      * @return $this
      */
-    public function updateParameters(array $parameters)
+    public function updateParameters(array $parameters): self
     {
         $this->parameters = array_merge($this->parameters, $parameters);
         
@@ -99,7 +99,7 @@ abstract class AbstractSms implements ConstInterface
      *
      * @return $this
      */
-    public function setEncoding($encoding)
+    public function setEncoding($encoding): self
     {
         $this->setParameter(self::PARAMETER_ENCODING, $encoding);
         
@@ -113,7 +113,7 @@ abstract class AbstractSms implements ConstInterface
      *
      * @return $this
      */
-    public function setStartDate(DateTime $date)
+    public function setStartDate(DateTime $date): self
     {
         $this->setParameter(self::PARAMETER_START_DATE, $date->format(self::DATE_FORMAT));
         
@@ -127,7 +127,7 @@ abstract class AbstractSms implements ConstInterface
      *
      * @return $this
      */
-    public function setGap($gap)
+    public function setGap($gap): self
     {
         $this->setParameter(self::PARAMETER_GAP, $gap);
         
