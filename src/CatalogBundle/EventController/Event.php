@@ -11,19 +11,10 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\PriceTable;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\EventManager;
-use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\BitrixOrm\Model\Share;
-use FourPaws\BitrixOrm\Query\ShareQuery;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
-use RuntimeException;
 
 /**
  * Class Event
@@ -65,13 +56,6 @@ class Event extends BaseServiceHandler
 
         /** очистка кеша при изменении элемента инфоблока */
         static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'clearIblockItemCache'], $module);
-
-        /** запуск переиндексации товаров при изменении товара */
-//        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexProduct'], $module);
-//        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexOffer'], $module);
-//        static::initHandlerCompatible('OnAfterIBlockElementAdd', [self::class, 'reindexShareOffers'], $module);
-//        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'reindexShareOffers'], $module);
-//        static::initHandlerCompatible('OnAfterIBlockElementDelete', [self::class, 'reindexShareOffers'], $module);
     }
 
     /**
@@ -105,74 +89,6 @@ class Event extends BaseServiceHandler
                     'iblock:item:' . $arFields['ID'],
                 ]);
             }
-        }
-    }
-
-    /**
-     * @param $fields
-     *
-     * @throws RuntimeException
-     * @throws IblockNotFoundException
-     * @throws ApplicationCreateException
-     */
-    public static function reindexProduct($fields): void
-    {
-        if ((int)$fields['IBLOCK_ID'] === (int)IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)) {
-            if ($product = (new ProductQuery())->withFilterParameter('ID', $fields['ID'])->exec()->first()) {
-                self::doReindexProduct($product);
-            }
-        }
-    }
-
-    /**
-     * @param $fields
-     *
-     * @throws RuntimeException
-     * @throws IblockNotFoundException
-     * @throws ApplicationCreateException
-     */
-    public static function reindexOffer($fields): void
-    {
-        if ((int)$fields['IBLOCK_ID'] === (int)IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)) {
-            /** @var Offer $offer */
-            if ($offer = OfferQuery::getById((int)$fields['ID'])) {
-                self::doReindexProduct($offer->getProduct());
-            }
-        }
-    }
-
-    /**
-     * @param $fields
-     * @throws ApplicationCreateException
-     * @throws IblockNotFoundException
-     */
-    public static function reindexShareOffers($fields): void
-    {
-        if (isset($fields['ACTIVE']) &&
-            (int)$fields['IBLOCK_ID'] === (int)IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)
-        ) {
-            /** @var Share $share */
-            if ($share = (new ShareQuery())
-                ->withFilter(['ID' => $fields['ID']])
-                ->exec()
-                ->first()
-            ) {
-
-                $productIds = [];
-                /** @var Offer $offer */
-                foreach ($share->getProducts() as $offer) {
-                    $productId = $offer->getCml2Link();
-                    $productIds[$productId] = $productId;
-                }
-
-                if (!empty($productIds)) {
-                    $products = (new ProductQuery())->withFilterParameter('ID', $productIds)->exec();
-                    foreach ($products as $product) {
-                        self::doReindexProduct($product);
-                    }
-                }
-            }
-
         }
     }
 
@@ -216,15 +132,5 @@ class Event extends BaseServiceHandler
                 'PRICE_SCALE' => 0
             ]);
         }
-    }
-
-    /**
-     * @param Product $product
-     * @throws ApplicationCreateException
-     */
-    protected static function doReindexProduct(Product $product)
-    {
-        Application::getInstance()->getContainer()->get('search.index_helper')
-            ->indexProduct($product);
     }
 }
