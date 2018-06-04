@@ -59,6 +59,8 @@ class CommentsController extends Controller
     {
         CBitrixComponent::includeComponentClass('fourpaws:comments');
 
+        /** перегрузка капчи на ошибках */
+        $this->ajaxMess->setReloadRecaptcha(true);
         $json = $this->ajaxMess->getSystemError();
         try {
             $res = \CCommentsComponent::addComment();
