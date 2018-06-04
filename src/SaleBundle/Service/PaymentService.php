@@ -328,6 +328,7 @@ class PaymentService
     /**
      * @param Order $order
      * @param float $amount
+     * @param bool  $save
      *
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -335,10 +336,11 @@ class PaymentService
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
+     * @throws PaymentException
      * @throws SystemException
      * @throws \Exception
      */
-    public function cancelPayment(Order $order, float $amount = 0): void
+    public function cancelPayment(Order $order, float $amount = 0, $save = true): void
     {
         if ($this->isOnlinePayment($order)) {
             $this->reverseOnlinePayment($order, $amount);
@@ -347,10 +349,14 @@ class PaymentService
         /** @var Payment $payment */
         foreach ($order->getPaymentCollection() as $payment) {
             $payment->setPaid(BitrixUtils::BX_BOOL_FALSE);
-            $payment->save();
+            if ($save) {
+                $payment->save();
+            }
         }
 
-        $order->save();
+        if ($save) {
+            $order->save();
+        }
     }/** @noinspection PhpUnusedParameterInspection */
 
     /**
@@ -363,6 +369,10 @@ class PaymentService
      */
     protected function reverseOnlinePayment(Order $order, float $amount = 0): void
     {
+        if (!$this->getOrderPayment($order)->isPaid()) {
+            return;
+        }
+
         $orderInfo = $this->getSberbankProcessing()->getOrderStatusByOrderId($this->getOrderInvoiceId($order));
         $orderStatus = $orderInfo['orderStatus'];
         if ($orderStatus === Sberbank::ORDER_STATUS_HOLD) {

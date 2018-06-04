@@ -312,7 +312,7 @@ class Event extends BaseServiceHandler
         ) && !$order->isCanceled()) {
             /** @var PaymentService $paymentService */
             $paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
-            $paymentService->cancelPayment($order);
+            $paymentService->cancelPayment($order, 0, false);
 
             $order->setField('CANCELED', 'Y');
             $order->save();
