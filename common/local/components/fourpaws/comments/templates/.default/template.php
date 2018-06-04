@@ -24,7 +24,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
         <?php } ?>
         <div class="b-comment-block__auth--block js-comments-auth-block-<?=$uniqueCommentString ?>" style="display: none">
             <p class="b-comment-block__auth">
-                <a href="#">Авторизуйтесь</a> , чтобы написать комментарий.
+                <a href="#" class="js-open-popup" data-popup-id="authorization">Авторизуйтесь</a> , чтобы написать комментарий.
             </p>
         </div>
         <?php /** @noinspection PhpUnhandledExceptionInspection */
@@ -149,7 +149,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                               maxlength="1000"></textarea>
                         <div class="b-error"><span class="js-message"></span></div>
                     </div>
-                    <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
+                    <div class="js-comments-captcha-block-<?= $uniqueCommentString ?> js-recaptcha-block" style="display: none"></div>
                     <button class="b-button b-button--form-review" type="submit">Отправить</button>
                 </div>
                 <div class="b-form-review__wrapper-blocks js-success-review">
