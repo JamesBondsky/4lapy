@@ -86,27 +86,30 @@ class ForgotBasketController
             $curDate = DateTime::createFromTimestamp(time());
             foreach ($sendFuserIds as $sendFuserId) {
                 $userBasket = $basketService->getBasket(true, $sendFuserId);
-                try {
-                    $res = $expertSenderService->sendForgotBasket($userBasket,
-                        ExpertsenderService::FORGOT_BASKET_AFTER_TIME);
-                    if ($res) {
-                        /** @var BasketItem $basketItem */
-                        foreach ($userBasket as $basketItem) {
-                            try {
-                                /** апдейтим дату корзины - чтобы отсчет шел как по тз после отправки первого письма */
-                                BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
-                            } catch (\Exception $e) {
-                                $logger->error('Ошибка при обновлении итема корзины ' . $e->getMessage(), $e->getTrace());
+                if($userBasket->count() > 0 && \count($userBasket->getBasketItems()) > 0) {
+                    try {
+                        $res = $expertSenderService->sendForgotBasket($userBasket,
+                            ExpertsenderService::FORGOT_BASKET_AFTER_TIME);
+                        if ($res) {
+                            /** @var BasketItem $basketItem */
+                            foreach ($userBasket->getBasketItems() as $basketItem) {
+                                try {
+                                    /** апдейтим дату корзины - чтобы отсчет шел как по тз после отправки первого письма */
+                                    BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
+                                } catch (\Exception $e) {
+                                    $logger->error('Ошибка при обновлении итема корзины ' . $e->getMessage(),
+                                        $e->getTrace());
+                                }
                             }
                         }
+                    } catch (ArgumentException $e) {
+                        $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
+                    } catch (ApplicationCreateException $e) {
+                        $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
+                        return $returnString;
+                    } catch (ExpertsenderServiceException $e) {
+                        $logger->error('Ошибка при отправке сообщения ' . $e->getMessage(), $e->getTrace());
                     }
-                } catch (ArgumentException $e) {
-                    $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
-                } catch (ApplicationCreateException $e) {
-                    $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
-                    return $returnString;
-                } catch (ExpertsenderServiceException $e) {
-                    $logger->error('Ошибка при отправке сообщения ' . $e->getMessage(), $e->getTrace());
                 }
             }
         }
@@ -156,30 +159,32 @@ class ForgotBasketController
             /** @var ExpertsenderService $expertSenderService */
             $expertSenderService = $container->get('expertsender.service');
             $userBasket = $basketService->getBasket(true, $fuserId);
-            try {
-                $res = $expertSenderService->sendForgotBasket($userBasket,
-                    ExpertsenderService::FORGOT_BASKET_TO_CLOSE_SITE);
-                if ($res) {
-                    $curDate = DateTime::createFromTimestamp(time());
-                    /** @var BasketItem $basketItem */
-                    foreach ($userBasket as $basketItem) {
-                        try {
-                            /** апдейтим дату корзины чтобы не циклился обработчик */
-                            BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
-                        } catch (\Exception $e) {
-                            $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
+            if($userBasket->count() > 0 && \count($userBasket->getBasketItems()) > 0) {
+                try {
+                    $res = $expertSenderService->sendForgotBasket($userBasket,
+                        ExpertsenderService::FORGOT_BASKET_TO_CLOSE_SITE);
+                    if ($res) {
+                        $curDate = DateTime::createFromTimestamp(time());
+                        /** @var BasketItem $basketItem */
+                        foreach ($userBasket->getBasketItems() as $basketItem) {
+                            try {
+                                /** апдейтим дату корзины чтобы не циклился обработчик */
+                                BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
+                            } catch (\Exception $e) {
+                                $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
+                            }
                         }
                     }
+                } catch (ArgumentException $e) {
+                    $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
+                    return;
+                } catch (ApplicationCreateException $e) {
+                    $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
+                    return;
+                } catch (ExpertsenderServiceException $e) {
+                    $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
+                    return;
                 }
-            } catch (ArgumentException $e) {
-                $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
-                return;
-            } catch (ApplicationCreateException $e) {
-                $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
-                return;
-            } catch (ExpertsenderServiceException $e) {
-                $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
-                return;
             }
         }
     }
