@@ -68,7 +68,8 @@ if (!$arParams['ITEM_ATTR_ID']) {
             //
             //$isWeightCapacityPacking = strlen(trim($product->getWeightCapacityPacking())) ? true : false;
             $isWeightCapacityPacking = true;
-            if (($offers->count() > 0 || $isWeightCapacityPacking) && $product->isFood()) {
+            //&& $product->isFood()
+            if ($offers->count() > 0 || $isWeightCapacityPacking) {
                 $isOffersPrinted = false;
                 $mainCombinationType = '';
                 if ($currentOffer->getClothingSize()) {

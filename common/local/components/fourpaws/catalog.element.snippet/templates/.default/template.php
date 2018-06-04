@@ -90,7 +90,8 @@ $countOffersInMobile = 3; ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red"><?= $share->getName() ?></span>
             <?php } ?>
         </div>
-        <?php if ($offers->count() > 0 && $product->isFood()) {
+        <?php //&& $product->isFood()
+        if ($offers->count() > 0) {
 
             $mainCombinationType = '';
             if ($currentOffer->getClothingSize()) {
