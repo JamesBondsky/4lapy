@@ -1168,6 +1168,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $this->orderStorageService->clearStorage($storage);
+        $this->basketService->resetCustomPrices();
 
         return $order;
     }
