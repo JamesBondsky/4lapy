@@ -36,6 +36,7 @@ use FourPaws\SaleBundle\Discount\Utils\CleanerInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -532,19 +533,31 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * @param int|User $userId
+     *
      * @return float
      */
-    public function getBasketBonus(): float
+    public function getBasketBonus($userId = null): float
     {
         try {
-            try {
-                $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
-            } catch (NotAuthorizedException $e) {
-                /** запрашиваем без карты */
-            } catch (InvalidIdentifierException | ConstraintDefinitionException $e) {
-                $logger = LoggerFactory::create('params');
-                $logger->error($e->getMessage());
-                /** запрашиваем без карты */
+            if($userId !== null){
+                if($userId instanceof User){
+                    $user = $userId;
+                } else {
+                    $user = $this->currentUserProvider->getUserRepository()->find($userId);
+                }
+                $cardNumber = $user === null ? '' : $user->getDiscountCardNumber();
+            } else {
+                try {
+                    $user = $this->currentUserProvider->getCurrentUser();
+                    $cardNumber = $user === null ? '' : $user->getDiscountCardNumber();
+                } catch (NotAuthorizedException $e) {
+                    /** запрашиваем без карты */
+                } catch (InvalidIdentifierException | ConstraintDefinitionException $e) {
+                    $logger = LoggerFactory::create('params');
+                    $logger->error($e->getMessage());
+                    /** запрашиваем без карты */
+                }
             }
 
             $cheque = $this->manzanaPosService->processChequeWithoutBonus(
