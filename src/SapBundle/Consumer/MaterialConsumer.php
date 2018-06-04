@@ -13,6 +13,7 @@ use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\EventController\Event;
+use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\Migrator\Entity\AddResult;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
@@ -166,6 +167,10 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
         /**
          * @todo internal storage for import
          */
+        if (!$material->getBrandCode()) {
+            $material->setBrandCode(BrandService::DEFAULT_BRAND_CODE);
+        }
+
         $brand = $this->brandRepository->findByXmlId($material->getBrandCode());
         if (!$brand) {
             $brand = (new Brand())
