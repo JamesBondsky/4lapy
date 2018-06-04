@@ -9,24 +9,28 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\FuserTable;
 use Bitrix\Sale\Order;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\Exception\ExpertsenderNotAllowedException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use LinguaLeo\ExpertSender\Entities\Property;
@@ -52,6 +56,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class ExpertsenderService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
+
+    public const FORGOT_BASKET_TO_CLOSE_SITE = 1;
+    public const FORGOT_BASKET_AFTER_TIME = 2;
 
     protected const MAIN_LIST_MODE = 'AddAndUpdate';
     protected const MAIN_LIST_ID = 178;
@@ -668,6 +675,108 @@ class ExpertsenderService implements LoggerAwareInterface
         } catch (GuzzleException|Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
+    }
+
+    /**
+     * @param Basket $basket
+     *
+     * @param int    $type
+     * type = 1 - отправка после закрытия спустя 3 часа
+     * type = 2 - отправка спустя 3 дня если не было измениней после типа 1
+     *
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendForgotBasket(Basket $basket, int $type):bool
+    {
+        switch ($type){
+            case static::FORGOT_BASKET_TO_CLOSE_SITE:
+                $transactionId = 7115;
+                break;
+            case static::FORGOT_BASKET_AFTER_TIME:
+                $transactionId = 7117;
+                break;
+            default:
+                $transactionId = 0;
+        }
+        if($transactionId === 0){
+            throw new ExpertsenderServiceException('unknown forgotBasket time');
+        }
+        $snippets = [];
+
+        $container = Application::getInstance()->getContainer();
+
+        $userService = $container->get(CurrentUserProviderInterface::class);
+        $user = $userService->getUserRepository()->find(FuserTable::getUserById($basket->getFUserId()));
+        if($user === null){
+            throw new ExpertsenderServiceException('user not found');
+        }
+        if (!$user->hasEmail()) {
+            throw new ExpertsenderServiceException('email is empty');
+        }
+
+        /** @var BasketService $orderService */
+        $basketService = $container->get(BasketService::class);
+
+        $snippets[] = new Snippet('user_name', !empty($user->getName()) ? $user->getName() : $user->getFullName());
+        $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
+
+        $items = $this->getAltProductsItemsByBasket($basket);
+        $items = '<Products>' . implode('', $items) . '</Products>';
+        $snippets[] = new Snippet('alt_products', $items, true);
+
+        try {
+            $apiResult = $this->client->sendSystemTransactional(
+                $transactionId,
+                new Receiver($user->getEmail()),
+                $snippets
+            );
+            if (!$apiResult->isOk()) {
+                throw new ExpertsenderServiceException(
+                    $apiResult->getErrorMessage(),
+                    $apiResult->getErrorCode()
+                );
+            }
+        } catch (GuzzleException|Exception $exception) {
+            throw new ExpertsenderServiceException(
+                $exception->getMessage(),
+                $exception->getCode(),
+                $exception
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * @param Basket $basket
+     *
+     * @return array
+     */
+    protected function getAltProductsItemsByBasket(Basket $basket): array
+    {
+        $items = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $currentOffer = OfferQuery::getById((int)$basketItem->getProductId());
+            if ($currentOffer === null) {
+                throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getProductId()));
+            }
+            $item = '';
+            $item .= '<Product>';
+            $item .= '<Name>' . $basketItem->getField('NAME') . '</Name>';
+            $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
+            $item .= '<Link>' . new FullHrefDecorator($currentOffer->getDetailPageUrl()) . '</Link>';
+            $item .= '<Price1>' . $basketItem->getBasePrice() . '</Price1>';
+            $item .= '<Price2>' . $basketItem->getPrice() . '</Price2>';
+            $item .= '<Amount>' . $basketItem->getQuantity() . '</Amount>';
+            $item .= '</Product>';
+            $items[] = $item;
+        }
+
+        return $items;
     }
 
     /**
