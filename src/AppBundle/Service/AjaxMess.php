@@ -2,6 +2,7 @@
 
 namespace FourPaws\AppBundle\Service;
 
+use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 
@@ -12,6 +13,9 @@ use FourPaws\App\Response\JsonResponse;
  */
 class AjaxMess
 {
+    /** @var bool  */
+    private $reloadRecaptcha = false;
+
     /**
      * @param string $text
      *
@@ -401,6 +405,22 @@ class AjaxMess
     }
 
     /**
+     * @return bool
+     */
+    public function isReloadRecaptcha() : bool
+    {
+        return $this->reloadRecaptcha ?? false;
+    }
+
+    /**
+     * @param bool $reloadRecaptcha
+     */
+    public function setReloadRecaptcha(bool $reloadRecaptcha): void
+    {
+        $this->reloadRecaptcha = $reloadRecaptcha;
+    }
+
+    /**
      * @param string $code
      * @param string $mes
      *
@@ -410,6 +430,11 @@ class AjaxMess
      */
     private function getJsonError(string $code, string $mes, array $additionalData = []): JsonResponse
     {
+        if ($this->isReloadRecaptcha()) {
+            $recaptchaService = Application::getInstance()->getContainer()->get('recaptcha.service');
+            $additionalData = array_merge($additionalData,
+                ['recaptchaReload' => true, 'recaptchaParams' => $recaptchaService->getParams()]);
+        }
         return JsonErrorResponse::createWithData(
             $mes,
             array_merge(['errors' => [$code => $mes]], $additionalData)
