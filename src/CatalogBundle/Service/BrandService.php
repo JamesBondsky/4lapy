@@ -11,6 +11,8 @@ use FourPaws\Catalog\Query\BrandQuery;
 
 class BrandService
 {
+    public const DEFAULT_BRAND_CODE = 'default';
+
     /**
      * @param string $brandCode
      *
