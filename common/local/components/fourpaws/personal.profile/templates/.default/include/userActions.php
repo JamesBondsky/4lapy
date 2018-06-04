@@ -5,9 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var \CMain $APPLICATION */
 /** @var array $arResult */
 
-if (!$arResult['canEditProfile']) {
-    return;
-}
+//if (!$arResult['canEditProfile']) {
+//    return;
+//}
 
 ?>
 <div class="b-account-profile__link-block">
