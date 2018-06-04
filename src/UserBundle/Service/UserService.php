@@ -93,7 +93,16 @@ class UserService implements
          * todo move to factory service
          */
         global $USER;
-        $this->bitrixUserService = $USER;
+        if(\is_object($USER)) {
+            $this->bitrixUserService = $USER;
+        } else {
+            $USER = new \CUser();
+            if(\is_object($USER)) {
+                $this->bitrixUserService = $USER;
+            } else {
+                $this->bitrixUserService = null;
+            }
+        }
         $this->userRepository = $userRepository;
         $this->locationService = $locationService;
     }
@@ -112,12 +121,15 @@ class UserService implements
     public function login(string $rawLogin, string $password): bool
     {
         $login = $this->userRepository->findLoginByRawLogin($rawLogin);
-        $result = $this->bitrixUserService->Login($login, $password);
-        if ($result === true) {
-            return true;
-        }
+        if($this->bitrixUserService !== null) {
+            $result = $this->bitrixUserService->Login($login, $password);
+            if ($result === true) {
+                return true;
+            }
 
-        throw new InvalidCredentialException($result['MESSAGE']);
+            throw new InvalidCredentialException($result['MESSAGE']);
+        }
+        return false;
     }
 
     /**
@@ -125,9 +137,13 @@ class UserService implements
      */
     public function logout(): bool
     {
-        $this->bitrixUserService->Logout();
+        if($this->bitrixUserService !== null) {
+            $this->bitrixUserService->Logout();
 
-        return !$this->isAuthorized();
+
+            return !$this->isAuthorized();
+        }
+        return false;
     }
 
     /**
@@ -135,7 +151,10 @@ class UserService implements
      */
     public function isAuthorized(): bool
     {
-        return $this->bitrixUserService->IsAuthorized();
+        if($this->bitrixUserService !== null) {
+            return $this->bitrixUserService->IsAuthorized();
+        }
+        return false;
     }
 
     /**
@@ -145,9 +164,12 @@ class UserService implements
      */
     public function authorize(int $id): bool
     {
-        $this->bitrixUserService->Authorize($id);
+        if($this->bitrixUserService !== null) {
+            $this->bitrixUserService->Authorize($id);
 
-        return $this->isAuthorized();
+            return $this->isAuthorized();
+        }
+        return false;
     }
 
     /**
@@ -175,9 +197,11 @@ class UserService implements
      */
     public function getCurrentUserId(): int
     {
-        $id = (int)$this->bitrixUserService->GetID();
-        if ($id > 0) {
-            return $id;
+        if($this->bitrixUserService !== null) {
+            $id = (int)$this->bitrixUserService->GetID();
+            if ($id > 0) {
+                return $id;
+            }
         }
         throw new NotAuthorizedException('Trying to get user id without authorization');
     }
@@ -209,14 +233,18 @@ class UserService implements
         try {
             $_SESSION['SEND_REGISTER_EMAIL'] = true;
             /** регистрируем битровым методом регистрации*/
-            $result = $this->bitrixUserService->Register(
-                $user->getLogin() ?? $user->getEmail(),
-                $user->getName() ?? '',
-                $user->getLastName() ?? '',
-                $user->getPassword(),
-                $user->getPassword(),
-                $user->getEmail()
-            );
+            if($this->bitrixUserService !== null) {
+                $result = $this->bitrixUserService->Register(
+                    $user->getLogin() ?? $user->getEmail(),
+                    $user->getName() ?? '',
+                    $user->getLastName() ?? '',
+                    $user->getPassword(),
+                    $user->getPassword(),
+                    $user->getEmail()
+                );
+            } else {
+                throw new \Exception('не доступен сервис');
+            }
             /** отправка письма происходи на событие after в этот момент */
         } catch (\Exception $e) {
             Application::getConnection()->rollbackTransaction();
@@ -230,7 +258,11 @@ class UserService implements
         if ($id <= 0) {
             Application::getConnection()->rollbackTransaction();
             $_SESSION = $session;
-            throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
+            if($this->bitrixUserService !== null) {
+                throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
+            }
+
+            throw new BitrixRuntimeException('не доступен объект $USER');
         }
 
         $user
@@ -397,7 +429,11 @@ class UserService implements
             if ($hostUserId === $id) {
                 throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
             }
-            $authResult = $this->bitrixUserService->Authorize($id);
+            if($this->bitrixUserService !== null) {
+                $authResult = $this->bitrixUserService->Authorize($id);
+            } else {
+                $authResult = false;
+            }
             if ($authResult) {
                 $this->setAvatarHostUserId($hostUserId);
                 $this->setAvatarGuestUserId($id);
