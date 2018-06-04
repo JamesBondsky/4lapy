@@ -81,6 +81,15 @@ if ($bonusCount > 0) {
                         </p>
                     <?php } ?>
                 </div>
+                <?php
+                if ($arResult['isAvatarAuthorized']) {
+                    ?>
+                    <div class="timer-block js-start-timer" data-url="/front-office/avatar/logout.php">
+                        <p>Через <span>20</span>&nbsp;секунд будет выполнен <a href="/front-office/avatar/logout.php">возврат</a></p>
+                    </div>
+                    <?php
+                }
+                ?>
                 <?php if ($arResult['ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) { ?>
                     <h2 class="b-title b-title--order-heading b-title--block">Как оплатить заказ</h2>
                     <div class="b-order__text-block">
