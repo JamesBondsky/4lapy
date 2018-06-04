@@ -104,8 +104,15 @@ class FormService
                 }
                 return $file;
             }
-            
-            throw new FileSaveException('Произошла ошибка при сохранении файла, попробуйте позже');
+
+            switch($file['error']){
+                case UPLOAD_ERR_INI_SIZE:
+                case UPLOAD_ERR_FORM_SIZE:
+                    throw new FileSizeException('Файл не должен быть больше ' . $fileSizeMb . 'Мб');
+                    break;
+                default:
+                    throw new FileSaveException('Произошла ошибка при сохранении файла, попробуйте позже');
+            }
         }
         
         return [];
