@@ -5,8 +5,12 @@ namespace FourPaws\SaleBundle\EventController;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -27,6 +31,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -285,10 +290,10 @@ class Event extends BaseServiceHandler
      * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
      * @throws \Exception
      */
     public static function cancelOrder(BitrixEvent $event): void
@@ -300,12 +305,15 @@ class Event extends BaseServiceHandler
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
 
-        $status = $order->getField('STATUS_ID');
         if (\in_array(
             $order->getField('STATUS_ID'),
             [OrderStatus::STATUS_CANCEL_COURIER, OrderStatus::STATUS_CANCEL_PICKUP],
             true
         ) && !$order->isCanceled()) {
+            /** @var PaymentService $paymentService */
+            $paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
+            $paymentService->cancelPayment($order);
+
             $order->setField('CANCELED', 'Y');
             $order->save();
         }

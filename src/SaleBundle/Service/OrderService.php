@@ -114,6 +114,11 @@ class OrderService implements LoggerAwareInterface
     protected $basketService;
 
     /**
+     * @var PaymentService
+     */
+    protected $paymentService;
+
+    /**
      * @var CurrentUserProviderInterface
      */
     protected $currentUserProvider;
@@ -167,6 +172,7 @@ class OrderService implements LoggerAwareInterface
      *
      * @param AddressService                    $addressService
      * @param BasketService                     $basketService
+     * @param PaymentService                    $paymentService
      * @param CurrentUserProviderInterface      $currentUserProvider
      * @param UserSearchInterface               $userProvider
      * @param DeliveryService                   $deliveryService
@@ -181,6 +187,7 @@ class OrderService implements LoggerAwareInterface
     public function __construct(
         AddressService $addressService,
         BasketService $basketService,
+        PaymentService $paymentService,
         CurrentUserProviderInterface $currentUserProvider,
         UserSearchInterface $userProvider,
         DeliveryService $deliveryService,
@@ -194,6 +201,7 @@ class OrderService implements LoggerAwareInterface
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
+        $this->paymentService = $paymentService;
         $this->currentUserProvider = $currentUserProvider;
         $this->userProvider = $userProvider;
         $this->deliveryService = $deliveryService;
@@ -1181,32 +1189,7 @@ class OrderService implements LoggerAwareInterface
      */
     public function getOrderPayment(Order $order): Payment
     {
-        $payment = null;
-        /** @var Payment $orderPayment */
-        foreach ($order->getPaymentCollection() as $orderPayment) {
-            if ($orderPayment->isInner()) {
-                continue;
-            }
-
-            $payment = $orderPayment;
-        }
-
-        if (null === $payment) {
-            throw new NotFoundException('payment system is not defined');
-        }
-
-        return $payment;
-    }
-
-    /**
-     * @param Order $order
-     *
-     * @return string
-     * @throws ObjectNotFoundException
-     */
-    public function getOrderPaymentType(Order $order): string
-    {
-        return $this->getOrderPayment($order)->getPaySystem()->getField('CODE');
+        return $this->paymentService->getOrderPayment($order);
     }
 
     /**
@@ -1529,16 +1512,7 @@ class OrderService implements LoggerAwareInterface
      */
     public function isOnlinePayment(Order $order): bool
     {
-        $result = false;
-        try {
-            $paymentCode = $this->getOrderPaymentType($order);
-            if ($paymentCode === static::PAYMENT_ONLINE) {
-                $result = true;
-            }
-        } catch (NotFoundException $e) {
-        }
-
-        return $result;
+        return $this->paymentService->isOnlinePayment($order);
     }
 
     /**
