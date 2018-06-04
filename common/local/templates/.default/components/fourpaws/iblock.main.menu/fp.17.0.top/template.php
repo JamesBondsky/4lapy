@@ -70,7 +70,7 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
                                 <div class="b-item-back">
                                     <a class="b-item-back__link js-close-dropdown"<?= $arItem['_LINK_ATTR2_'] ?>
                                        href="<?= $arItem['_URL_'] ?>">
-                                        <?php echo $sArrowDownOrangeIcoBack;
+                                        <?php echo $sArrowDownOrangeIco;
                                         echo $arItem['_TEXT_']; ?>
                                     </a>
                                 </div>

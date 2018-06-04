@@ -223,6 +223,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ? OrderDtoOut::ORDER_SOURCE_MOBILE_APP
             : OrderDtoOut::ORDER_SOURCE_SITE;
 
+        $description = \trim(\implode("\n",
+            [$order->getField('USER_DESCRIPTION'), $order->getField('COMMENTS')]
+        )) ?: '';
+
         $orderDto
             ->setId($order->getId())
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
@@ -230,7 +234,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
             ->setClientPhone($this->getPropertyValueByCode($order, 'PHONE'))
             ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
-            ->setClientComment($order->getField('USER_DESCRIPTION') ?? '')
+            ->setClientComment($description)
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'));
 
@@ -494,7 +498,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
 
         return (new OutDeliveryAddress())
-            ->setDeliveryPlaceCode($this->getPropertyValueByCode($order,'DELIVERY_PLACE_CODE'))
+            ->setDeliveryPlaceCode($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
             ->setRegionCode($this->locationService->getRegionNumberCode($city))
             ->setPostCode('')
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
@@ -704,7 +708,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
      *
      * @throws ArgumentException
@@ -760,9 +764,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             /** @noinspection PhpInternalEntityUsedInspection */
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'           => $deliveryService->getId(),
-                    'PRICE_DELIVERY'        => $deliveryPrice,
-                    'DELIVERY_NAME'         => $deliveryService->getName(),
+                    'DELIVERY_ID' => $deliveryService->getId(),
+                    'PRICE_DELIVERY' => $deliveryPrice,
+                    'DELIVERY_NAME' => $deliveryService->getName(),
                     'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );

@@ -55,6 +55,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $request = new SoftChequeRequest();
 
         /** @var BasketItem $item */
+        $hasItems = false;
         foreach ($basket->getBasketItems() as $k => $item) {
             $xmlId = $item->getField('PRODUCT_XML_ID');
 
@@ -103,6 +104,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $chequePosition->setSignCharge($signCharge);
 
             $request->addItem($chequePosition);
+            $hasItems = true;
+        }
+
+        if(!$hasItems){
+            return $request;
         }
 
         $request->setSumm($sum)
