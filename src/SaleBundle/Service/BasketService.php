@@ -788,6 +788,23 @@ class BasketService implements LoggerAwareInterface
         return $xmlId;
     }
 
+    public function resetCustomPrices() {
+        $basket = $this->getBasket(true);
+
+        try {
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $basketItem->setField('CUSTOM_PRICE', 'N');
+            }
+        } catch (\Exception $e) {
+            $this->log()->error('failed to disable custom price', [
+                'fuserId' => $basket->getFUserId(),
+                'id' => $basketItem->getId()
+            ]);
+        }
+        $basket->save();
+    }
+
     /**
      * ad
      *
