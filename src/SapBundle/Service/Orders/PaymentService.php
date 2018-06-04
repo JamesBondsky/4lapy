@@ -17,12 +17,9 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Order as SaleOrder;
-use Bitrix\Sale\Order as BitrixOrder;
 use Bitrix\Sale\Payment;
-use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
-use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as SalePaymentService;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Item;
@@ -30,7 +27,6 @@ use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Dto\Out\Payment\Debit as OutDebit;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
-use FourPaws\SapBundle\Exception\OrderPaymentReverseException;
 use FourPaws\SapBundle\Exception\PaymentException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
@@ -81,10 +77,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @var UserService
      */
     private $userService;
-    /**
-     * @var Sberbank
-     */
-    private $sberbankProcessing;
 
     /**
      * PaymentService constructor.
@@ -111,8 +103,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $this->salePaymentService = $salePaymentService;
         $this->userService = $userService;
         $this->setFilesystem($filesystem);
-
-        $this->initPayment();
     }
 
     /**
@@ -126,7 +116,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws ObjectNotFoundException
      * @throws SalePaymentException
      * @throws SystemException
-     * @throws OrderPaymentReverseException
      * @throws \Exception
      */
     public function paymentTaskPerform(Order $paymentTask)
@@ -151,15 +140,13 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         }
 
         $fiscalization = $this->getFiscalization($order, $user, $paymentTask);
-        $orderInvoiceId = $this->getOrderInvoiceId($order);
+        $orderInvoiceId = $this->salePaymentService->getOrderInvoiceId($order);
 
         $amount = $paymentTask->getSumPayed();
         $return = $paymentTask->getSumReturned();
 
         if ($amount) {
-            $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
-                return $this->sberbankProcessing->depositPayment($orderInvoiceId, $amount, $fiscalization);
-            });
+            $this->salePaymentService->depositPayment($order, $amount, $fiscalization);
 
             $debit = (new OutDebit())
                 ->setPayMerchantCode(SapOrder::ORDER_PAYMENT_ONLINE_MERCHANT_ID)
@@ -195,15 +182,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
             $this->out($debit);
         } elseif ($return) {
-            $orderInfo = $this->sberbankProcessing->getOrderStatusByOrderId($orderInvoiceId);
-            $orderStatus = $orderInfo['orderStatus'];
-            if ($orderStatus === Sberbank::ORDER_STATUS_HOLD) {
-                $this->tryPaymentReverse($order);
-            } elseif ($orderStatus === Sberbank::ORDER_STATUS_PAID) {
-                $this->tryPaymentRefund($order, $orderInfo['amount']);
-            } else {
-                throw new OrderPaymentReverseException(sprintf('Invalid order status %s', $orderStatus));
-            }
+            $this->salePaymentService->cancelPayment($order);
         }
     }
 
@@ -220,61 +199,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param BitrixOrder $order
-     * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotImplementedException
-     * @throws ObjectNotFoundException
-     * @throws SalePaymentException
-     * @throws ObjectException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    public function tryPaymentReverse(BitrixOrder $order) {
-        $orderInvoiceId = $this->getOrderInvoiceId($order);
-        $this->response(function () use ($orderInvoiceId) {
-            return $this->sberbankProcessing->reversePayment($orderInvoiceId);
-        });
-
-        /** @var Payment $payment */
-        foreach ($order->getPaymentCollection() as $payment) {
-            $payment->setPaid('N');
-            $payment->save();
-        }
-
-        $order->save();
-    }
-
-    /**
-     * @param BitrixOrder $order
-     * @param int         $amount
-     * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotImplementedException
-     * @throws ObjectException
-     * @throws ObjectNotFoundException
-     * @throws SalePaymentException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    public function tryPaymentRefund(BitrixOrder $order, int $amount) {
-        $orderInvoiceId = $this->getOrderInvoiceId($order);
-        $this->response(function () use ($orderInvoiceId, $amount) {
-            return $this->sberbankProcessing->refundPayment($orderInvoiceId, $amount);
-        });
-
-        /** @var Payment $payment */
-        foreach ($order->getPaymentCollection() as $payment) {
-            $payment->setPaid('N');
-            $payment->save();
-        }
-
-        $order->save();
-    }
-
-    /**
      * @param OutDebit $debit
      *
      * @return string
@@ -287,28 +211,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             $debit->getPaymentDate()->format('Ymd'),
             $this->outPrefix,
             $debit->getBitrixOrderId()
-        );
-    }
-
-    /**
-     * Init payment
-     *
-     * @todo shit code
-     *
-     * @return void
-     */
-    public function initPayment(): void
-    {
-        /** @noinspection PhpIncludeInspection */
-        require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
-        $settings = BusinessValueHelper::getPaysystemSettings(3, ['USER_NAME', 'PASSWORD', 'TEST_MODE', 'TWO_STAGE', 'LOGGING']);
-
-        $this->sberbankProcessing = new Sberbank(
-            $settings['USER_NAME'],
-            $settings['PASSWORD'],
-            $settings['TWO_STAGE'] === 'Y',
-            $settings['TEST_MODE'] === 'Y',
-            $settings['LOGGING'] === 'Y'
         );
     }
 
@@ -374,52 +276,5 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $fiscalization['amount'] = $amount;
 
         return $fiscalization;
-    }
-
-    /**
-     * @todo CopyPaste from Sberbank pay system.
-     * Do refactor.
-     *
-     * @param callable $responseCallback
-     *
-     * @return bool
-     *
-     * @throws SalePaymentException
-     */
-    private function response(callable $responseCallback): bool
-    {
-        $response = ['Fake response'];
-
-        for ($i = 0; $i <= 10; $i++) {
-            $response = $responseCallback();
-
-            if ((int)$response['errorCode'] !== 1) {
-                break;
-            }
-        }
-
-        return $this->sberbankProcessing->parseResponse($response);
-    }
-
-    /**
-     * @param BitrixOrder $order
-     *
-     * @return string
-     *
-     * @throws ObjectNotFoundException
-     */
-    private function getOrderInvoiceId(BitrixOrder $order): string
-    {
-        /** @var Payment $payment */
-        foreach ($order->getPaymentCollection() as $payment) {
-            if ($payment->isInner()) {
-                continue;
-            }
-
-            $result = $payment->getField('PS_INVOICE_ID');
-            break;
-        }
-
-        return $result ?: '';
     }
 }
