@@ -18,6 +18,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LogDoc\SmsLogDoc;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -45,7 +46,7 @@ class SmsService implements LoggerAwareInterface
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function __construct()
     {
@@ -62,7 +63,7 @@ class SmsService implements LoggerAwareInterface
      * @param string $number
      *
      */
-    public function sendSmsImmediate(string $text, string $number)
+    public function sendSmsImmediate(string $text, string $number): void
     {
         $this->sendSms($text, $number, true);
     }
@@ -72,7 +73,7 @@ class SmsService implements LoggerAwareInterface
      * @param string $number
      * @param bool $immediate
      */
-    public function sendSms(string $text, string $number, bool $immediate = false)
+    public function sendSms(string $text, string $number, bool $immediate = false): void
     {
         try {
             $sms = new IndividualSms(
@@ -164,9 +165,10 @@ class SmsService implements LoggerAwareInterface
      *
      * @param string $smsEventName
      * @param string $smsEventKey
+     *
      * @return bool
      */
-    public function markAlreadySent(string $smsEventName, string $smsEventKey)
+    public function markAlreadySent(string $smsEventName, string $smsEventKey): bool
     {
         $result = false;
         $smsDocLog = new SmsLogDoc();
