@@ -130,17 +130,13 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 ?>
     <div class="b-product-card__option-product js-weight-default">
-        <?php if ($mainCombinationType && $offers->count() > 0 && $product->isFood()) {
-            ?>
-            <?php if ($mainCombinationType === 'SIZE') {
-                ?>
+        <?php //&& $product->isFood()
+        if ($mainCombinationType && $offers->count() > 0) {
+            if ($mainCombinationType === 'SIZE') { ?>
                 <div class="b-product-card__weight">Размеры</div>
-                <?php
-            } else {
-                ?>
+            <?php } else { ?>
                 <div class="b-product-card__weight">Варианты фасовки</div>
-                <?php
-            } ?>
+            <?php } ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php
