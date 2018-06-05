@@ -607,14 +607,15 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $type
-     * @param bool   $renew
+     * @param string     $type
+     * @param Order|null $order
+     * @param bool       $renew
      *
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @return AdderInterface
      */
-    public function getAdder(string $type, bool $renew = false): AdderInterface
+    public function getAdder(string $type, ?Order $order = null, bool $renew = false): AdderInterface
     {
         static $storage;
         if (null === $storage || $renew) {
@@ -623,7 +624,10 @@ class BasketService implements LoggerAwareInterface
                 'detach' => null,
             ];
         }
-        if (null === $order = $this->getBasket()->getOrder()) {
+
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        $order = $order instanceof Order ? $order : $this->getBasket()->getOrder();
+        if (null === $order) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
@@ -650,14 +654,15 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $type
-     * @param bool   $renew
+     * @param string     $type
+     * @param Order|null $order
+     * @param bool       $renew
      *
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @return CleanerInterface
      */
-    public function getCleaner(string $type, bool $renew = false): CleanerInterface
+    public function getCleaner(string $type, ?Order $order = null, bool $renew = false): CleanerInterface
     {
         static $storage;
         if (null === $storage || $renew) {
@@ -666,7 +671,10 @@ class BasketService implements LoggerAwareInterface
                 'detach' => null,
             ];
         }
-        if (null === $order = $this->getBasket()->getOrder()) {
+
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        $order = $order instanceof Order ? $order : $this->getBasket()->getOrder();
+        if (null === $order) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
