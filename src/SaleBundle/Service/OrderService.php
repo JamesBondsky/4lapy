@@ -77,6 +77,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserAvatarAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
@@ -149,6 +150,11 @@ class OrderService implements LoggerAwareInterface
     protected $userRegistrationProvider;
 
     /**
+     * @var UserAvatarAuthorizationInterface
+     */
+    protected $userAvatarAuthorization;
+
+    /**
      * @var StoreService
      */
     protected $storeService;
@@ -158,10 +164,14 @@ class OrderService implements LoggerAwareInterface
      */
     protected $locationService;
 
-    /** @var ManzanaPosService */
+    /**
+     * @var ManzanaPosService
+     */
     protected $manzanaPosService;
 
-    /** @var ManzanaService */
+    /**
+     * @var ManzanaService
+     */
     protected $manzanaService;
 
     /** @var array $paySystemServiceCache */
@@ -180,6 +190,7 @@ class OrderService implements LoggerAwareInterface
      * @param StoreService                      $storeService
      * @param OrderStorageService               $orderStorageService
      * @param UserCitySelectInterface           $userCityProvider
+     * @param UserAvatarAuthorizationInterface  $userAvatarAuthorization
      * @param UserRegistrationProviderInterface $userRegistrationProvider
      * @param ManzanaPosService                 $manzanaPosService
      * @param ManzanaService                    $manzanaService
@@ -195,6 +206,7 @@ class OrderService implements LoggerAwareInterface
         StoreService $storeService,
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
+        UserAvatarAuthorizationInterface $userAvatarAuthorization,
         UserRegistrationProviderInterface $userRegistrationProvider,
         ManzanaPosService $manzanaPosService,
         ManzanaService $manzanaService
@@ -208,6 +220,7 @@ class OrderService implements LoggerAwareInterface
         $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
         $this->userCityProvider = $userCityProvider;
+        $this->userAvatarAuthorization = $userAvatarAuthorization;
         $this->userRegistrationProvider = $userRegistrationProvider;
         $this->locationService = $locationService;
         $this->manzanaPosService = $manzanaPosService;
@@ -870,6 +883,23 @@ class OrderService implements LoggerAwareInterface
                     ]);
                 }
             }
+        }
+
+        try {
+            if ($this->userAvatarAuthorization->isAvatarAuthorized()) {
+                if ($operator = $this->userProvider->findOne($this->userAvatarAuthorization->getAvatarHostUserId())) {
+                    $order->setField('USER_DESCRIPTION', implode('. ', \array_filter([
+                        $order->getField('USER_DESCRIPTION'),
+                        sprintf('Оператор: %s (%s)', $operator->getLogin(), $operator->getFullName())
+                    ])));
+                }
+            }
+        } catch (UserNotFoundException $e) {
+            $this->log()->error('avatar not found', [
+                'fuserId' => $storage->getFuserId(),
+                'userId'  => $storage->getUserId(),
+                'avatarId' => $this->userAvatarAuthorization->getAvatarHostUserId()
+            ]);
         }
 
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder);
