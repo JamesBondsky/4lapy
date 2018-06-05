@@ -274,13 +274,12 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage                    $storage
      * @param Basket|null                     $basket
      * @param CalculationResultInterface|null $selectedDelivery
+     * @param bool                            $recalculateDiscounts
      *
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws \RuntimeException
+     * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws BitrixProxyException
      * @throws DeliveryNotAvailableException
@@ -292,21 +291,21 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return Order
      */
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
-        ?CalculationResultInterface $selectedDelivery = null
+        ?CalculationResultInterface $selectedDelivery = null,
+        $recalculateDiscounts = false
     ): Order {
         $fastOrder = $storage->isFastOrder();
 
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
-        $needRecalculateBasket = false;
+        $checkAvailability = false;
         if (null === $basket) {
-            $needRecalculateBasket = true;
+            $checkAvailability = true;
             $basket = $this->basketService->getBasket();
         }
 
@@ -327,13 +326,18 @@ class OrderService implements LoggerAwareInterface
         }
 
         if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
-            Manager::disableExtendsDiscount();
+            if (!$recalculateDiscounts) {
+                Manager::disableExtendsDiscount();
+            } else {
+                Manager::enableExtendsDiscount();
+                Manager::setExtendCalculated(false);
+            }
         }
 
         /**
          * Привязываем корзину
          */
-        if ($needRecalculateBasket) {
+        if ($checkAvailability) {
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
@@ -679,6 +683,8 @@ class OrderService implements LoggerAwareInterface
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
+        } else {
+            Manager::disableExtendsDiscount();
         }
 
         return $order;
@@ -958,24 +964,22 @@ class OrderService implements LoggerAwareInterface
     public function splitOrder(OrderStorage $storage): array
     {
         $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
-        if (!$this->orderStorageService->canSplitOrder($delivery) &&
-            !$this->orderStorageService->canGetPartial($delivery)
-        ) {
+        $canSplit = $this->orderStorageService->canSplitOrder($delivery);
+        $canGetPartial = $this->orderStorageService->canGetPartial($delivery);
+
+        if (!($canSplit || $canGetPartial)) {
             throw new OrderSplitException('Cannot split order');
         }
 
-        $storage1 = clone $storage;
-        $storage2 = clone $storage;
-        $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
-        $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
-        $storage2->setComment($storage->getSecondComment());
+        $splitResult1 = null;
+        $splitResult2 = null;
 
         $basket = $this->basketService->getBasket();
-
         if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
             Manager::disableExtendsDiscount();
         }
 
+        $storage1 = clone $storage;
         /** @noinspection PhpUnusedLocalVariableInspection */
         [$available, $delayed] = $this->orderStorageService->splitStockResult($delivery);
 
@@ -1036,13 +1040,10 @@ class OrderService implements LoggerAwareInterface
         );
         if ($storage1->getBonus() > $maxBonusesForOrder1) {
             $storage1->setBonus($maxBonusesForOrder1);
-            $storage2->setBonus(floor($storage->getBonus() - $maxBonusesForOrder1));
-        } else {
-            $storage2->setBonus(0);
         }
 
         /**
-         * Требуется пересчет стоимости доставки
+         * Требуется пересчет стоимости доставки для первого заказа
          */
         $tmpDeliveries = $this->deliveryService->getByBasket(
             $basket1,
@@ -1051,46 +1052,43 @@ class OrderService implements LoggerAwareInterface
             $storage1->getCurrentDate()
         );
         if (!$delivery1 = reset($tmpDeliveries)) {
-            throw new OrderSplitException('Cannot split order');
+            throw new OrderSplitException('Delivery for order1 is unavailable');
         }
 
-        $delivery2 = (clone $delivery)->setStockResult($delayed);
-        if (!$delivery2->isSuccess()) {
-            throw new OrderSplitException('Cannot split order');
-        }
+        $recalculateDiscounts = false;
+        if (!$canGetPartial) {
+            $storage2 = clone $storage;
+            $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
+            $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
+            $storage2->setComment($storage->getSecondComment());
+            $storage2->setBonus($storage->getBonus() - $storage1->getBonus());
 
-        $order1 = $this->initOrder($storage1, $basket1, $delivery1);
-        $order2 = $this->initOrder($storage2, $basket2, $delivery2);
-
-        /**
-         * У второго заказа (содержащего товары под заказ) доставка бесплатная
-         */
-        try {
-            /** @var Shipment $shipment */
-            foreach ($order2->getShipmentCollection() as $shipment) {
-                if ($shipment->isSystem()) {
-                    continue;
-                }
-                $shipment->setField('PRICE_DELIVERY', 0);
+            $delivery2 = (clone $delivery)->setStockResult($delayed);
+            if (!$delivery2->isSuccess()) {
+                throw new OrderSplitException('Delivery for order2 is unavailable');
             }
-        } catch (\Exception $e) {
-            $this->log()->error(sprintf('failed to update shipment price: %s', $e->getMessage()), [
-                'fuserId' => $storage->getFuserId(),
-            ]);
+            /**
+             * У второго заказа (содержащего товары под заказ) доставка бесплатная
+             */
+            $delivery2->setDeliveryPrice(0);
+
+            $order2 = $this->initOrder($storage2, $basket2, $delivery2);
+            $splitResult2 = (new OrderSplitResult())->setOrderStorage($storage2)
+                ->setOrder($order2)
+                ->setDelivery($delivery2);
+        } else {
+            $recalculateDiscounts = true;
         }
+        $order1 = $this->initOrder($storage1, $basket1, $delivery1, $recalculateDiscounts);
+        $splitResult1 = (new OrderSplitResult())->setOrderStorage($storage1)
+            ->setOrder($order1)
+            ->setDelivery($delivery1);
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
         }
 
-        return [
-            (new OrderSplitResult())->setOrderStorage($storage1)
-                ->setOrder($order1)
-                ->setDelivery($delivery1),
-            (new OrderSplitResult())->setOrderStorage($storage2)
-                ->setOrder($order2)
-                ->setDelivery($delivery2),
-        ];
+        return [$splitResult1, $splitResult2];
     }
 
     /**
@@ -1766,5 +1764,4 @@ class OrderService implements LoggerAwareInterface
 
         return $this->setOrderPropertiesByCode($order, $properties);
     }
-
 }
