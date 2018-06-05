@@ -9,6 +9,8 @@ namespace Sprint\Migration;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\Application;
+use Bitrix\Main\Db\SqlQueryException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
@@ -19,9 +21,14 @@ class IblockOfferAddPropertyIsSale20180605140005 extends SprintMigrationBase
     /**
      * @return bool|void
      * @throws IblockNotFoundException
+     * @throws SqlQueryException
      */
     public function up()
     {
+        Application::getConnection()->query(
+            'DELETE FROM sprint_migration_versions WHERE version = "IblockOfferDeletePropertyIsSale20180605113631"'
+        );
+
         $iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
         $this->getHelper()->Iblock()->addPropertyIfNotExists($iblockId, [
             'NAME'               => 'Распродажа',
