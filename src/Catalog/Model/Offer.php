@@ -346,13 +346,6 @@ class Offer extends IblockElement
      * @Type("bool")
      * @Groups({"elastic"})
      */
-    protected $PROPERTY_IS_SALE = false;
-
-    /**
-     * @var bool
-     * @Type("bool")
-     * @Groups({"elastic"})
-     */
     protected $PROPERTY_IS_POPULAR = false;
 
     /**
@@ -954,26 +947,6 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
-    public function getPropertyIsSale(): bool
-    {
-        return $this->PROPERTY_IS_SALE;
-    }
-
-    /**
-     * @param bool $propertySale
-     *
-     * @return Offer
-     */
-    public function setPropertyIsSale($propertySale): Offer
-    {
-        $this->PROPERTY_IS_SALE = $propertySale;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
     public function getPropertyPopular(): bool
     {
         return $this->PROPERTY_IS_POPULAR;
@@ -1347,7 +1320,7 @@ class Offer extends IblockElement
      */
     public function isSale(): bool
     {
-        return $this->getPropertyIsSale();
+        return $this->isSimpleSaleAction() || $this->isSimpleDiscountAction();
     }
 
     /**
