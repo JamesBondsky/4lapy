@@ -54,8 +54,6 @@ class CloseSiteController extends Controller
                 if ($curUser !== null && $curUser->hasEmail()) {
                     $fuserId = $currentUserService->getCurrentFUserId();
                     $userId = $curUser->getId();
-                    (new ForgotBasketController)->sendEmailByOldBasketAfter3Hours($fuserId);
-                    return JsonSuccessResponse::create('аякс успешен');
                     if ($fuserId > 0 && $userId > 0) {
                         /** @var BasketService $basketService */
                         try {
