@@ -44,7 +44,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                                    type="<?= $type ?>"
                                    id="feedback-<?= $fieldSid ?>"
                                    placeholder=""
-                                   name="<?= $fieldName ?>" <?= $question['REQUIRED'] === 'Y' ? ' required' : '' ?>
+                                   name="<?= $fieldName ?>"
                                    value="<?= $arResult['CUR_USER'][$fieldSid] ?>"/>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
