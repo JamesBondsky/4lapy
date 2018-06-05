@@ -225,6 +225,18 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function updateContact(Client $contact): Client
     {
+        if($contact->birthDate !== null){
+            if(!($contact->birthDate instanceof \DateTimeImmutable)){
+                if(!empty($contact->birthDate)){
+                    $contact->birthDate = new \DateTimeImmutable($contact->birthDate);
+                    if((int)$contact->birthDate->format('Y') < 1900){
+                        $contact->birthDate = null;
+                    }
+                } else {
+                    $contact->birthDate = null;
+                }
+            }
+        }
         $data = $this->serializer->toArray($contact);
         /** на обновление это поле ненужно */
         if(isset($data['HasChildrenCode'])) {
