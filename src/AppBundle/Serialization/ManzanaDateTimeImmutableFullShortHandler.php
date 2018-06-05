@@ -76,15 +76,26 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     public function serializeJson(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
     {
         /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            try {
-                $data = new \DateTimeImmutable($data);
-            } catch (\Exception $e) {
+        if (!($data instanceof \DateTimeImmutable)) {
+            if(!empty($data)) {
+                try {
+                    $data = new \DateTimeImmutable($data);
+                    if((int)$data->format('Y') < 1900){
+                        return '';
+                    }
+                    return $data->format('Y-m-d\TH:i:s.u');
+                } catch (\Exception $e) {
+                    return '';
+                }
+            } else {
                 return '';
             }
+        } else {
+            if((int)$data->format('Y') < 1900){
+                return '';
+            }
+            return $data->format('Y-m-d\TH:i:s.u');
         }
-
-        return $data->format('Y-m-d\TH:i:s.u');
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -99,15 +110,26 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     public function serializeXml(XmlSerializationVisitor $visitor, $data, array $type, Context $context)
     {
         /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            try {
-                $data = new \DateTimeImmutable($data);
-            } catch (\Exception $e) {
+        if (!($data instanceof \DateTimeImmutable)) {
+            if(!empty($data)) {
+                try {
+                    $data = new \DateTimeImmutable($data);
+                    if((int)$data->format('Y') < 1900){
+                        return '';
+                    }
+                    return $data->format('Y-m-d\TH:i:s.u');
+                } catch (\Exception $e) {
+                    return '';
+                }
+            } else {
                 return '';
             }
+        } else {
+            if((int)$data->format('Y') < 1900){
+                return '';
+            }
+            return $data->format('Y-m-d\TH:i:s.u');
         }
-
-        return $data->format('Y-m-d\TH:i:s.u');
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -122,15 +144,26 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     public function serializeCsv(CsvSerializationVisitor $visitor, $data, array $type, Context $context)
     {
         /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            try {
-                $data = new \DateTimeImmutable($data);
-            } catch (\Exception $e) {
+        if (!($data instanceof \DateTimeImmutable)) {
+            if(!empty($data)) {
+                try {
+                    $data = new \DateTimeImmutable($data);
+                    if((int)$data->format('Y') < 1900){
+                        return '';
+                    }
+                    return $data->format('Y-m-d\TH:i:s.u');
+                } catch (\Exception $e) {
+                    return '';
+                }
+            } else {
                 return '';
             }
+        } else {
+            if((int)$data->format('Y') < 1900){
+                return '';
+            }
+            return $data->format('Y-m-d\TH:i:s.u');
         }
-
-        return $data->format('Y-m-d\TH:i:s.u');
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -145,15 +178,19 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     public function deserializeJson(JsonDeserializationVisitor $visitor, $data, array $type, Context $context)
     {
         /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            try {
-                $data = new \DateTimeImmutable($data);
-            } catch (\Exception $e) {
+        if (!($data instanceof \DateTimeImmutable)) {
+            if(!empty($data)) {
+                try {
+                    return new \DateTimeImmutable($data);
+                } catch (\Exception $e) {
+                    return null;
+                }
+            } else {
                 return null;
             }
+        } else {
+            return $data;
         }
-
-        return $data;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -168,15 +205,19 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     public function deserializeXml(XmlDeSerializationVisitor $visitor, $data, array $type, Context $context)
     {
         /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            try {
-                $data = new \DateTimeImmutable($data);
-            } catch (\Exception $e) {
+        if (!($data instanceof \DateTimeImmutable)) {
+            if(!empty($data)) {
+                try {
+                    return new \DateTimeImmutable($data);
+                } catch (\Exception $e) {
+                    return null;
+                }
+            } else {
                 return null;
             }
+        } else {
+            return $data;
         }
-
-        return $data;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -191,14 +232,18 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
     public function deserializeCsv(CsvDeSerializationVisitor $visitor, $data, array $type, Context $context)
     {
         /** format Y-m-d\TH:i:s.u */
-        if (!empty($data) && !($data instanceof \DateTimeImmutable)) {
-            try {
-                $data = new \DateTimeImmutable($data);
-            } catch (\Exception $e) {
+        if (!($data instanceof \DateTimeImmutable)) {
+            if(!empty($data)) {
+                try {
+                    return new \DateTimeImmutable($data);
+                } catch (\Exception $e) {
+                    return null;
+                }
+            } else {
                 return null;
             }
+        } else {
+            return $data;
         }
-
-        return $data;
     }
 }
