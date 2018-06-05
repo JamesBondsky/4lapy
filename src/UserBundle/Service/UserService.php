@@ -174,13 +174,22 @@ class UserService implements
 
     /**
      * @throws NotAuthorizedException
+     * @throws UsernameNotFoundException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @return User
      */
     public function getCurrentUser(): User
     {
-        return $this->userRepository->find($this->getCurrentUserId());
+        $userId = $this->getCurrentUserId();
+        if($userId <= 0){
+            throw new NotAuthorizedException('не авторизованы');
+        }
+        $user = $this->userRepository->find($userId);
+        if($user === null){
+            throw new UsernameNotFoundException('пользователь c id - '.$userId.' не найден');
+        }
+        return $user;
     }
 
     /**
@@ -310,17 +319,22 @@ class UserService implements
         }
 
         if ($city && $this->isAuthorized()) {
-            $this->userRepository->updateData($this->getCurrentUserId(), ['UF_LOCATION' => $city['CODE']]);
+            $userId = $this->getCurrentUserId();
+            if($userId > 0) {
+                $this->userRepository->updateData($userId, ['UF_LOCATION' => $city['CODE']]);
+            } else {
+                return false;
+            }
         }
 
         return $city ?: false;
     }
 
     /**
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
      * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getSelectedCity(): array
     {
@@ -425,7 +439,7 @@ class UserService implements
         /** @throws NotAuthorizedException */
         $curUserId = $this->getCurrentUserId();
         $hostUserId = $this->getAvatarHostUserId() ?: $curUserId;
-        if ($hostUserId) {
+        if ($hostUserId > 0) {
             if ($hostUserId === $id) {
                 throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
             }
@@ -487,7 +501,7 @@ class UserService implements
             } catch (\Exception $exception) {
                 $curUserId = 0;
             }
-            if ($curUserId === $guestUserId && $curUserId !== $hostUserId) {
+            if ($curUserId > 0 && $curUserId === $guestUserId && $curUserId !== $hostUserId) {
                 $isAuthorized = true;
             } else {
                 $this->flushAvatarUserData();
@@ -512,7 +526,7 @@ class UserService implements
         $hostUserId = $this->getAvatarHostUserId();
         if ($hostUserId) {
             $isLoggedByHostUser = false;
-            if ($curUserId === $hostUserId) {
+            if ($curUserId > 0 && $curUserId === $hostUserId) {
                 $isLoggedByHostUser = true;
             } else {
                 if ($this->bitrixUserService !== null) {

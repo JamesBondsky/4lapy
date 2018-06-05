@@ -8,10 +8,13 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Result as MainResult;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
@@ -19,6 +22,7 @@ use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\Result;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -93,8 +97,8 @@ class BasketService implements LoggerAwareInterface
      * @param bool        $save
      * @param Basket|null $basket
      *
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentException
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
      * @throws ObjectNotFoundException
@@ -145,21 +149,9 @@ class BasketService implements LoggerAwareInterface
             $basketItem = $result->getData()['BASKET_ITEM'];
         } else {
             // проверяем не специально ли было запорото
-            $found = false;
-            foreach ($result->getErrors() as $error) {
-                if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
-                    $found = true;
-                }
-            }
-            if (!$found) {
+            $basketItem = $this->checkErrorActual($result, $basket, $oldBasketCodes);
+            if($basketItem === null){
                 throw new BitrixProxyException($result);
-            }
-            // и если специально ищем баскет айтем
-            // todo проверить еще и количества
-            foreach ($basket->getBasketItems() as $basketItem) {
-                if (!\in_array($basketItem->getBasketCode(), $oldBasketCodes, true)) {
-                    break;
-                }
             }
         }
         if ($save) {
@@ -175,10 +167,170 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * @param int         $offerId
+     * @param int|null    $quantity
+     * @param array       $rewriteFields
+     * @param bool        $save
+     * @param Basket|null $basket
+     *
+     * @throws ArgumentNullException
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws BitrixProxyException
+     * @throws ObjectNotFoundException
+     * @throws LoaderException
+     * @throws Exception
+     *
+     * @return BasketItem
+     */
+    public function addOfferToBasketWithoutPermission(
+        int $offerId,
+        int $quantity = 1,
+        array $rewriteFields = [],
+        bool $save = true,
+        ?Basket $basket = null
+    ): BasketItem {
+        if ($offerId < 1) {
+            throw new InvalidArgumentException('Неверный ID товара');
+        }
+        if ($quantity < 1) {
+            $quantity = 1;
+        }
+        $fields = [
+            'PRODUCT_ID'             => $offerId,
+            'QUANTITY'               => $quantity,
+            'MODULE'                 => 'catalog',
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+            'USE_MERGE'              => 'Y',
+        ];
+        if ($rewriteFields) {
+            /** @noinspection AdditionOperationOnArraysInspection */
+            $fields = $rewriteFields + $fields;
+        }
+
+        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+
+        $oldBasketCodes = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            $oldBasketCodes[] = $basketItem->getBasketCode();
+        }
+
+        $result = \Bitrix\Catalog\Product\Basket::addProductToBasket(
+            $basket,
+            $fields,
+            $this->getContext()
+        );
+
+        if ($result->isSuccess()) {
+            $basketItem = $result->getData()['BASKET_ITEM'];
+        } else {
+            // проверяем не специально ли было запорото
+            $basketItem = $this->checkErrorActual($result, $basket, $oldBasketCodes);
+            if($basketItem === null){
+                throw new BitrixProxyException($result);
+            }
+        }
+        if ($save) {
+            $basketItem->save();
+            //всегда перегружаем из-за подарков
+            $this->setBasketIds();
+            if (!\in_array($basketItem->getProductId(), $this->basketProductIds, true)) {
+                $this->basketProductIds[] = $basketItem->getProductId();
+            }
+        }
+
+        return $basketItem;
+    }
+
+    /**
+     * @param int         $offerId
+     * @param int|null    $quantity
+     * @param array       $rewriteFields
+     * @param bool        $save
+     * @param Basket|null $basket
+     *
+     * @return bool
+     * @throws ArgumentTypeException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws \Exception
+     */
+    public function addOfferToBasketCustom(
+        int $offerId,
+        int $quantity = 1,
+        array $rewriteFields = [],
+        bool $save = true,
+        ?Basket $basket = null
+    ): bool {
+        if ($basket === null) {
+            $basket = $this->getBasket();
+        }
+        if ($quantity < 1) {
+            $quantity = 1;
+        }
+        $returnRes = true;
+        /** @var BasketItem $basketItem */
+        $props = [];
+        if (!empty($rewriteFields['PROPS'])) {
+            $props = $rewriteFields['PROPS'];
+            unset($rewriteFields['PROPS']);
+        }
+
+        $oldBasketCodes = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            $oldBasketCodes[] = $basketItem->getBasketCode();
+        }
+
+        $basketItem = $basket->getExistsItem('catalog', $offerId, $props);
+        if ($basketItem === null) {
+            $basketItem = $basket->createItem('catalog', $offerId);
+        }
+        $result = $basketItem->setField('QUANTITY', $quantity);
+        $continue = true;
+        if (!$result->isSuccess()) {
+            // проверяем не специально ли было запорото
+//            $basketItem = $this->checkErrorActual($result, $basket, $oldBasketCodes);
+//            if($basketItem === null){
+                return false;
+//            }
+            $continue = false;
+        }
+        if($continue) {
+            if (!empty($rewriteFields)) {
+                $oldVals = $basketItem->getFields()->getValues();
+                if(array_key_exists('QUANTITY', $oldVals)){
+                    unset($oldVals['QUANTITY']);
+                }
+                $res = $basketItem->setFields(array_merge($oldVals, $rewriteFields));
+                if (!$res->isSuccess()) {
+                    $returnRes = false;
+                }
+            }
+            if ($returnRes && !empty($props)) {
+                $propertyCollection = $basketItem->getPropertyCollection();
+                foreach ($props as $prop) {
+                    $value = $propertyCollection->createItem();
+                    $value->setFields($prop);
+                    $propertyCollection->addItem($value);
+                }
+            }
+        }
+        if ($returnRes && $save) {
+            $res = $basketItem->save();
+            return $res->isSuccess();
+        }
+        return $returnRes;
+    }
+
+    /**
      * @param int $basketId
      *
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws BitrixProxyException
      * @throws NotFoundException
@@ -301,7 +453,14 @@ class BasketService implements LoggerAwareInterface
         if (!\is_array($giftIds) || !($giftIds = \array_flip(\array_flip(\array_filter($giftIds))))) {
             throw new NotFoundException('Товары по акции не найдены');
         }
-        $giftGroup['list'] = (new OfferQuery())->withFilterParameter('=ID', $giftIds)->exec();
+        /** @todo сортировка будет работать только пока 1 цена у нас(ибо запрос базовой тут) */
+        $priceType = (int)\CCatalogGroup::GetBaseGroup()['ID'];
+        $offerQuery = new OfferQuery();
+        $offerQuery->withFilterParameter('=ID', $giftIds);
+        if ($priceType > 0) {
+            $offerQuery->withOrder(['catalog_PRICE_' . $priceType => 'asc']);
+        }
+        $giftGroup['list'] = $offerQuery->exec();
         return $giftGroup;
     }
 
@@ -540,8 +699,8 @@ class BasketService implements LoggerAwareInterface
     public function getBasketBonus($userId = null): float
     {
         try {
-            if($userId !== null){
-                if($userId instanceof User){
+            if ($userId !== null) {
+                if ($userId instanceof User) {
                     $user = $userId;
                 } else {
                     $user = $this->currentUserProvider->getUserRepository()->find($userId);
@@ -565,7 +724,7 @@ class BasketService implements LoggerAwareInterface
                 $cardNumber ?? '',
                 $this
             );
-            if(!$basketRequest->getItems()->isEmpty()) {
+            if (!$basketRequest->getItems()->isEmpty()) {
                 $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                     $basketRequest
                 );
@@ -788,7 +947,8 @@ class BasketService implements LoggerAwareInterface
         return $xmlId;
     }
 
-    public function resetCustomPrices() {
+    public function resetCustomPrices()
+    {
         $basket = $this->getBasket(true);
 
         try {
@@ -799,10 +959,42 @@ class BasketService implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->log()->error('failed to disable custom price', [
                 'fuserId' => $basket->getFUserId(),
-                'id' => $basketItem->getId()
+                'id'      => $basketItem->getId(),
             ]);
         }
         $basket->save();
+    }
+
+    /**
+     * @param MainResult $res
+     * @param Basket     $basket
+     * @param array      $oldBasketCodes
+     *
+     * @return BasketItem|null
+     */
+    protected function checkErrorActual(MainResult $res, Basket $basket, array $oldBasketCodes = []): ?BasketItem
+    {
+        // проверяем не специально ли было запорото
+        $found = false;
+        foreach ($res->getErrors() as $error) {
+            if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
+                $found = true;
+            }
+        }
+        if (!$found) {
+            return null;
+        }
+        // и если специально ищем баскет айтем
+        // todo проверить еще и количества
+        $basketItem = null;
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if (!\in_array($basketItem->getBasketCode(), $oldBasketCodes, true)) {
+                break;
+            }
+        }
+
+        return $basketItem;
     }
 
     /**
