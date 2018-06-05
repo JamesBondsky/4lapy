@@ -111,7 +111,7 @@ final class MarkHelper
             return self::MARK_GIFT_IMAGE;
         }
 
-        if ($offer->isSale()) {
+        if ($offer->isSale() || $offer->isSimpleSaleAction()) {
             return self::MARK_SALE_IMAGE;
         }
 
