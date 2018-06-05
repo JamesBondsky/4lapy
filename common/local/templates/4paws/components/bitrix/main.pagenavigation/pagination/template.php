@@ -37,8 +37,8 @@ if ($arParams['AJAX_MODE'] === 'Y') {
                 <span class="b-pagination__link">Назад</span>
             <?php } ?>
         </li>
-        <?php $page = $arResult['START_PAGE'];
-        while ($page <= $arResult['END_PAGE']):
+        <?php $page = 1;
+        while ($page <= $arResult['PAGE_COUNT']):
             $url = $page >= 2 ? htmlspecialcharsbx($component->replaceUrlTemplate($page)) : $arResult['URL'];?>
             <li class="b-pagination__item <?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $arResult['HIDDEN'][$page] ?? '' ?>">
                 <a class="b-pagination__link<?= $class ?> <?= $page === (int)$arResult['CURRENT_PAGE'] ? 'active' : '' ?>"
