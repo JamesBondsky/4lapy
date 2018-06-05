@@ -888,10 +888,10 @@ class OrderService implements LoggerAwareInterface
         try {
             if ($this->userAvatarAuthorization->isAvatarAuthorized()) {
                 if ($operator = $this->userProvider->findOne($this->userAvatarAuthorization->getAvatarHostUserId())) {
-                    $order->setField('USER_DESCRIPTION', implode('. ', \array_filter([
-                        $order->getField('USER_DESCRIPTION'),
+                    $order->setField(
+                        'COMMENTS',
                         sprintf('Оператор: %s (%s)', $operator->getLogin(), $operator->getFullName())
-                    ])));
+                    );
                 }
             }
         } catch (UserNotFoundException $e) {
