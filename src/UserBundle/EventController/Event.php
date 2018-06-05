@@ -22,6 +22,7 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -70,6 +71,8 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class,'clearUserCache'], $module);
         /** чистим кеш юзера при авторизации */
         static::initHandlerCompatible('OnAfterUserLogin', [self::class,'clearUserCache'], $module);
+        /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
+        static::initHandlerCompatible('OnBeforeUserLogin', [self::class,'logoutBeforeAuth'], $module);
     }
 
     /**
@@ -266,5 +269,25 @@ class Event extends BaseServiceHandler
         TaggedCacheHelper::clearManagedCache([
             'user:' . $arFields['ID'],
         ]);
+    }
+
+    public static function logoutBeforeAuth(): void
+    {
+        /** @var UserAuthorizationInterface $userService */
+        try {
+            $userService = Application::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+            if ($userService->isAuthorized()) {
+                $userService->logout();
+            }
+        } catch (\Exception $e){
+            //ошибка сервиса - попробуем через глобальный объект
+            global $USER;
+            if(!\is_object($USER)){
+                $USER = new \CUser();
+            }
+            if($USER->IsAuthorized()){
+                $USER->Logout();
+            }
+        }
     }
 }
