@@ -1915,7 +1915,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $result = false;
         /** @var Offer $offer */
         foreach ($this->getOffers() as $offer) {
-            $result |= $offer->isSale();
+            $result |= $offer->getOldPrice() > $offer->getPrice();
         }
 
         return $result;
