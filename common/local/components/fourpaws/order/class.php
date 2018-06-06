@@ -319,18 +319,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $this->deliveryService->isInnerPickup($selectedDelivery)
             ) {
                 $this->arResult['SELECTED_DELIVERY'] = $this->arResult['PARTIAL_PICKUP'];
+                /** @var Order $order1 */
+                $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
+                $basket = $order1->getBasket();
             }
 
-            $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
-                $basketForRequest = $basket;
-                if ($storage->isSplit() && $this->orderSplitService->canGetPartial($selectedDelivery)) {
-                    /** @var Order $order1 */
-                    $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
-                    $basketForRequest = $order1->getBasket();
-                }
-
-                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basketForRequest);
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket);
             }
         }
 
