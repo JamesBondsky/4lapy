@@ -326,12 +326,12 @@ class OrderService implements LoggerAwareInterface
         }
 
         if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
-            if (!$recalculateDiscounts) {
-                Manager::disableExtendsDiscount();
-            } else {
-                Manager::enableExtendsDiscount();
-                Manager::setExtendCalculated(false);
-            }
+            Manager::disableExtendsDiscount();
+        }
+
+        if ($recalculateDiscounts) {
+            Manager::enableExtendsDiscount();
+            Manager::setExtendCalculated(false);
         }
 
         /**
@@ -1007,12 +1007,12 @@ class OrderService implements LoggerAwareInterface
                 $rewriteFields = [
                     'PRICE' => $basketItem->getPrice(),
                     'BASE_PRICE' => $basketItem->getBasePrice(),
-                    'CUSTOM_PRICE' => 'Y',
                     'DISCOUNT' => $basketItem->getDiscountPrice(),
                     'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
                 ];
 
                 if ($availableAmount) {
+                    $rewriteFields['CUSTOM_PRICE'] = $canGetPartial ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE;
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $availableAmount,
@@ -1022,6 +1022,7 @@ class OrderService implements LoggerAwareInterface
                     );
                 }
                 if ($delayedAmount) {
+                    $rewriteFields['CUSTOM_PRICE'] = BitrixUtils::BX_BOOL_TRUE;
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $delayedAmount,
