@@ -61,7 +61,37 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     'filters' => $filterCollection->getFiltersToShow(),
                 ]
             ) ?>
-            <div class="b-filter__block b-filter__block--discount js-discount-mobile-here"></div>
+            <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
+                <?php
+                /**
+                 * @var FilterBase $filter
+                 */
+                foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
+                    if (!($filter instanceof ActionsFilter) || !$filter->hasAvailableVariants()) {
+                        continue;
+                    } ?>
+                    <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
+                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
+                            ?>
+                            <li class="b-filter-link-list__item">
+                                <label class="b-filter-link-list__label">
+                                    <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
+                                           type="checkbox"
+                                           name="<?= $filter->getFilterCode() ?>"
+                                           value="<?= $variant->getValue() ?>"
+                                           id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
+                                        <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                    <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                       href="javascript:void(0);"
+                                       title="<?= $filter->getName() ?>">
+                                        <?= $filter->getName() ?>
+                                    </a>
+                                </label>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                <?php } ?>
+            </div>
         </form>
     </div>
     <div class="b-filter__bottom">
@@ -100,13 +130,11 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getFiltersToShow() as $filter) {
-                        if (!$filter->hasAvailableVariants()) {
+                    foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
+                        if (!$filter instanceof ActionsFilter || !$filter->hasAvailableVariants()) {
                             continue;
                         }
-                        if (!($filter instanceof ActionsFilter)) {
-                            continue;
-                        } ?>
+                        ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {

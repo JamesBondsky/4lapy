@@ -150,7 +150,6 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                     <div class="b-form-review__group">
                     <textarea class="b-form-review__textarea js-small-input-eight"
                               name="UF_TEXT"
-                              required="required"
                               placeholder="Оставьте ваш отзыв:"
                               minlength="8"
                               maxlength="1000"></textarea>
