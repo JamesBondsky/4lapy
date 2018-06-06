@@ -280,7 +280,6 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage                    $storage
      * @param Basket|null                     $basket
      * @param CalculationResultInterface|null $selectedDelivery
-     * @param bool                            $recalculateDiscounts
      *
      * @return Order
      * @throws ApplicationCreateException
@@ -301,8 +300,7 @@ class OrderService implements LoggerAwareInterface
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
-        ?CalculationResultInterface $selectedDelivery = null,
-        $recalculateDiscounts = false
+        ?CalculationResultInterface $selectedDelivery = null
     ): Order {
         $fastOrder = $storage->isFastOrder();
 
@@ -333,11 +331,6 @@ class OrderService implements LoggerAwareInterface
 
         if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
             Manager::disableExtendsDiscount();
-        }
-
-        if ($recalculateDiscounts) {
-            Manager::enableExtendsDiscount();
-            Manager::setExtendCalculated(false);
         }
 
         /**

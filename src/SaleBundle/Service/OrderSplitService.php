@@ -16,6 +16,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -154,14 +155,8 @@ class OrderSplitService implements LoggerAwareInterface
             $splitResult2 = (new OrderSplitResult())->setOrderStorage($storage2)
                 ->setOrder($order2)
                 ->setDelivery($delivery2);
-        } else {
-            $maxBonusesForOrder1 = floor(
-                min($storage1->getBonus(), $basket1->getPrice() * BasketService::MAX_BONUS_PAYMENT)
-            );
-            if ($storage1->getBonus() > $maxBonusesForOrder1) {
-                $storage1->setBonus($maxBonusesForOrder1);
-            }
         }
+
         $order1 = $this->getOrderService()->initOrder($storage1, $basket1, $delivery1, $canGetPartial);
         $splitResult1 = (new OrderSplitResult())->setOrderStorage($storage1)
             ->setOrder($order1)
@@ -182,7 +177,7 @@ class OrderSplitService implements LoggerAwareInterface
      *
      * @return BasketSplitItemCollection[]
      */
-    protected function splitBasket(Basket $basket, StockResultCollection $available, StockResultCollection $delayed): array
+    public function splitBasket(Basket $basket, StockResultCollection $available, StockResultCollection $delayed): array
     {
         /** @var BasketSplitItemCollection $availableItems */
         $availableItems = new BasketSplitItemCollection();
@@ -197,6 +192,7 @@ class OrderSplitService implements LoggerAwareInterface
                 ) {
                     $availableItems->add((new BasketSplitItem())
                         ->setAmount($priceForAmount->getAmount())
+                        ->setProductId($basketItem->getProductId())
                         ->setPrice($basketItem->getPrice())
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
@@ -212,6 +208,7 @@ class OrderSplitService implements LoggerAwareInterface
                 ) {
                     $delayedItems->add((new BasketSplitItem())
                         ->setAmount($priceForAmount->getAmount())
+                        ->setProductId($basketItem->getProductId())
                         ->setPrice($basketItem->getPrice())
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
@@ -302,6 +299,8 @@ class OrderSplitService implements LoggerAwareInterface
      * @param BasketSplitItemCollection $items
      * @param bool                      $canGetPartial
      *
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return Basket
      */
     protected function generateBasket(BasketSplitItemCollection $items, $canGetPartial = false): Basket
@@ -340,6 +339,23 @@ class OrderSplitService implements LoggerAwareInterface
                     $e->getMessage()
                 )
             );
+        }
+
+        /**
+         * Инициируем пересчет скидок
+         */
+        if ($canGetPartial) {
+            if (!$isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+                Manager::enableExtendsDiscount();
+            }
+
+            Manager::setExtendCalculated(false);
+            $order = Order::create(SITE_ID);
+            $order->setBasket($basket);
+
+            if (!$isDiscountEnabled) {
+                Manager::disableExtendsDiscount();
+            }
         }
 
         return $basket;
