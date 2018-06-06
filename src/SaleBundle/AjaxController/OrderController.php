@@ -7,25 +7,34 @@
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\UserMessageException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\ManzanaService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -67,11 +76,6 @@ class OrderController extends Controller
     private $deliveryService;
 
     /**
-     * @var ManzanaService
-     */
-    private $manzanaService;
-
-    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -92,7 +96,6 @@ class OrderController extends Controller
      * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ReCaptchaService $recaptcha
-     * @param ManzanaService $manzanaService
      */
     public function __construct(
         OrderService $orderService,
@@ -100,8 +103,7 @@ class OrderController extends Controller
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
-        ReCaptchaService $recaptcha,
-        ManzanaService $manzanaService
+        ReCaptchaService $recaptcha
     ) {
         $this->orderService = $orderService;
         $this->storeService = $storeService;
@@ -109,7 +111,6 @@ class OrderController extends Controller
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
-        $this->manzanaService = $manzanaService;
     }
 
     /**
@@ -117,7 +118,7 @@ class OrderController extends Controller
      * @param Request $request
      * @throws SystemException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @return JsonResponse
      */
     public function storeSearchAction(Request $request): JsonResponse
@@ -140,9 +141,16 @@ class OrderController extends Controller
     /**
      * @Route("/delivery-intervals/", methods={"POST"})
      * @param Request $request
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotSupportedException
+     *
      * @return JsonResponse
+     * @throws ArgumentException
+     * @throws OrderStorageSaveException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
      */
     public function deliveryIntervalsAction(Request $request): JsonResponse
     {
@@ -187,8 +195,11 @@ class OrderController extends Controller
      * @Route("/validate/bonus-card", methods={"POST"})
      * @param Request $request
      *
-     * @throws OrderStorageSaveException
      * @return JsonResponse
+     * @throws ArgumentException
+     * @throws OrderStorageSaveException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      */
     public function validateBonusCardAction(Request $request): JsonResponse
     {
@@ -214,9 +225,11 @@ class OrderController extends Controller
     /**
      * @Route("/validate/auth", methods={"POST"})
      * @param Request $request
+     *
      * @throws SystemException
      * @return JsonResponse
-     * @return \FourPaws\App\Response\JsonResponse
+     * @return JsonResponse
+     * @throws OrderStorageSaveException
      */
     public function validateAuthAction(Request $request): JsonResponse
     {
@@ -249,6 +262,10 @@ class OrderController extends Controller
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
      * @return JsonResponse
+     * @throws ArgumentException
+     * @throws OrderStorageSaveException
+     * @throws SystemException
+     * @throws ObjectPropertyException
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
@@ -281,13 +298,21 @@ class OrderController extends Controller
      *
      * @param Request $request
      *
-     * @throws ArgumentException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
      * @return JsonResponse
+     * @throws ArgumentException
+     * @throws OrderStorageSaveException
+     * @throws SystemException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws UserMessageException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws BitrixProxyException
+     * @throws StoreNotFoundException
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
@@ -351,6 +376,16 @@ class OrderController extends Controller
         return $this->stepOrder[++$key];
     }
 
+    /**
+     * @param OrderStorage $storage
+     * @param Request      $request
+     * @param string       $step
+     *
+     * @return array
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     */
     protected function fillStorage(OrderStorage $storage, Request $request, string $step): array
     {
         $errors = [];

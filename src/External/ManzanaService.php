@@ -483,7 +483,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $phone
      *
      * @return string
-     * @throws \Exception
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceException
