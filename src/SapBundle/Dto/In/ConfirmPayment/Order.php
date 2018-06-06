@@ -30,11 +30,11 @@ class Order
     /**
      * Номер заказа Сайт
      *
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Order_BITRIX")
      * @Serializer\XmlAttribute()
      *
-     * @var int
+     * @var string
      */
     protected $bitrixOrderId = 0;
 
@@ -132,18 +132,18 @@ class Order
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getBitrixOrderId(): int
+    public function getBitrixOrderId(): string
     {
         return $this->bitrixOrderId;
     }
 
     /**
-     * @param int $bitrixOrderId
+     * @param string $bitrixOrderId
      * @return Order
      */
-    public function setBitrixOrderId(int $bitrixOrderId): Order
+    public function setBitrixOrderId(string $bitrixOrderId): Order
     {
         $this->bitrixOrderId = $bitrixOrderId;
         return $this;
