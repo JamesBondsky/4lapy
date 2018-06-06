@@ -41,13 +41,13 @@ class Debit
     /**
      * Номер заказа Сайт
      *
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Order_BITRIX")
      * @Serializer\XmlAttribute()
      *
-     * @var int
+     * @var string
      */
-    protected $bitrixOrderId = 0;
+    protected $bitrixOrderId = '';
 
 
     /**
@@ -208,18 +208,18 @@ class Debit
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getBitrixOrderId(): int
+    public function getBitrixOrderId(): string
     {
         return $this->bitrixOrderId;
     }
 
     /**
-     * @param int $bitrixOrderId
+     * @param string $bitrixOrderId
      * @return Debit
      */
-    public function setBitrixOrderId(int $bitrixOrderId): Debit
+    public function setBitrixOrderId(string $bitrixOrderId): Debit
     {
         $this->bitrixOrderId = $bitrixOrderId;
 
