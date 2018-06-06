@@ -111,9 +111,7 @@ $countOffersInMobile = 3; ?>
             }
             ?>
             <div class="b-weight-container b-weight-container--list">
-                <? /*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
-                   href="javascript:void(0);"
-                   title=""></a>*/ ?>
+                <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select" href="javascript:void(0);" title=""></a>
                 <ul class="b-weight-container__list">
                     <?php
                     $i = 0;
