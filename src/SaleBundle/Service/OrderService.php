@@ -1002,7 +1002,7 @@ class OrderService implements LoggerAwareInterface
              * Если выбрано частичное получение, то второй заказ не создается
              */
             $delivery = $this->orderStorageService->getSelectedDelivery($storage);
-            if (!$this->orderStorageService->canGetPartial($delivery)) {
+            if (!$this->orderSplitService->canGetPartial($delivery)) {
                 /**
                  * чтобы предотвратить повторное создание адреса
                  */

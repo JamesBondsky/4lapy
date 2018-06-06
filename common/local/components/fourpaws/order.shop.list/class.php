@@ -19,6 +19,7 @@ use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -41,6 +42,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected $orderStorageService;
 
+    /**
+     * @var OrderSplitService
+     */
+    protected $orderSplitService;
+
     /** @var DeliveryService $deliveryService */
     protected $deliveryService;
 
@@ -61,6 +67,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
         $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
+        $this->orderSplitService = $serviceContainer->get(OrderSplitService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
     }
 
@@ -157,7 +164,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             foreach ($bestShops as $store) {
                 $fullResult = (clone $pickup)->setSelectedShop($store);
-                [$available, $delayed] = $this->orderStorageService->splitStockResult($fullResult);
+                [$available, $delayed] = $this->orderSplitService->splitStockResult($fullResult);
 
                 if (!$fullResult->isSuccess()) {
                     continue;
@@ -173,7 +180,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
 
-                $canGetPartial = $this->orderStorageService->canGetPartial($fullResult);
+                $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
                 if ($isDpd) {
                     $orderType = !$delayed->isEmpty() ? 'delay' : 'full';
                     if (!$delayed->isEmpty()) {

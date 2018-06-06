@@ -324,7 +324,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
                 $basketForRequest = $basket;
-                if ($storage->isSplit() && $this->orderStorageService->canGetPartial($selectedDelivery)) {
+                if ($storage->isSplit() && $this->orderSplitService->canGetPartial($selectedDelivery)) {
                     /** @var Order $order1 */
                     $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
                     $basketForRequest = $order1->getBasket();
@@ -377,13 +377,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage->setSplit(true);
             $storage->setDeliveryId($pickup->getDeliveryId());
             $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
-            [$available, $delayed] = $this->orderStorageService->splitStockResult($pickup);
+            [$available, $delayed] = $this->orderSplitService->splitStockResult($pickup);
             $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
                 ? null
                 : (clone $pickup)->setStockResult($available);
 
-            $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderStorageService->canGetPartial($pickup);
-            $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderStorageService->canSplitOrder($pickup);
+            $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderSplitService->canGetPartial($pickup);
+            $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderSplitService->canSplitOrder($pickup);
             $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
             $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
             $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage);

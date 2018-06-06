@@ -20,6 +20,7 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -67,6 +68,7 @@ class OrderSplitService implements LoggerAwareInterface
         OrderStorageService $orderStorageService
     )
     {
+        $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
         $this->basketService = $basketService;
     }
@@ -94,8 +96,8 @@ class OrderSplitService implements LoggerAwareInterface
     public function splitOrder(OrderStorage $storage): array
     {
         $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
-        $canSplit = $this->orderStorageService->canSplitOrder($delivery);
-        $canGetPartial = $this->orderStorageService->canGetPartial($delivery);
+        $canSplit = $this->canSplitOrder($delivery);
+        $canGetPartial = $this->canGetPartial($delivery);
 
         if (!($canSplit || $canGetPartial)) {
             throw new OrderSplitException('Cannot split order');
@@ -111,7 +113,7 @@ class OrderSplitService implements LoggerAwareInterface
 
         $storage1 = clone $storage;
 
-        [$available, $delayed] = $this->orderStorageService->splitStockResult($delivery);
+        [$available, $delayed] = $this->splitStockResult($delivery);
         [$availableItems, $delayedItems] = $this->splitBasket($basket, $available, $delayed);
 
         $basket1 = $this->generateBasket($availableItems, $canGetPartial);
@@ -220,6 +222,80 @@ class OrderSplitService implements LoggerAwareInterface
         }
 
         return [$availableItems, $delayedItems];
+    }
+
+
+    /**
+     * Можно ли разделить заказ
+     *
+     * @param CalculationResultInterface $delivery
+     *
+     * @return bool
+     */
+    public function canSplitOrder(CalculationResultInterface $delivery): bool
+    {
+        $result = false;
+
+        if (!$this->deliveryService->isDpdPickup($delivery) &&
+            \in_array($delivery->getDeliveryZone(), [DeliveryService::ZONE_1, DeliveryService::ZONE_2], true) &&
+            !$delivery->getStockResult()->getOrderable()->getByRequest(true)->isEmpty()
+        ) {
+            [$available, $delayed] = $this->splitStockResult($delivery);
+
+            $result = !$available->isEmpty() && !$delayed->isEmpty();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Возможно ли частичное получение заказа
+     *
+     * @param CalculationResultInterface $delivery
+     *
+     * @return bool
+     */
+    public function canGetPartial(CalculationResultInterface $delivery): bool
+    {
+        $result = false;
+        if ($this->deliveryService->isInnerPickup($delivery) &&
+            $delivery->getStockResult()->getByRequest(true)->isEmpty() &&
+            !$delivery->getStockResult()->getAvailable()->isEmpty() &&
+            !$delivery->getStockResult()->getDelayed()->isEmpty()
+        ) {
+            $result = true;
+        }
+        return $result;
+    }
+
+    /**
+     * @param CalculationResultInterface $delivery
+     *
+     * @return StockResultCollection[]
+     */
+    public function splitStockResult(CalculationResultInterface $delivery): array
+    {
+        $stockResultCollection = $delivery->getStockResult();
+        if ($delivery->getStockResult()->getByRequest(true)->isEmpty()) {
+            $available = $stockResultCollection->getAvailable();
+            $delayed = $stockResultCollection->getDelayed();
+        } else {
+            $available = $stockResultCollection->getRegular();
+            $delayed = $stockResultCollection->getByRequest();
+        }
+
+        /**
+         * Не позволяем разделять так, чтобы один из наборов становился с нулевой ценой
+         * (например, содержал одни только подарки)
+         */
+        if ((!$available->isEmpty() && !$available->getPrice()) ||
+            (!$delayed->isEmpty() && !$delayed->getPrice())
+        ) {
+            $delayed = $stockResultCollection;
+            $available = new StockResultCollection();
+        }
+
+        return [$available, $delayed];
     }
 
     /**
