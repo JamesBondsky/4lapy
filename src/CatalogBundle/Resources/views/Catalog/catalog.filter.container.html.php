@@ -59,12 +59,16 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         <div class="b-filter__title">Фильтры</div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>" data-url="/ajax/catalog/product-info/count-by-filter-list/">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>"
+              data-url="/ajax/catalog/product-info/count-by-filter-list/">
             <div class="b-filter__block" style="display: none">
-                <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox" style="display: none">
+                <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox"
+                    style="display: none">
                     <li class="b-filter-link-list__item" style="display: none">
                         <label class="b-filter-link-list__label" style="display: none">
-                            <input type="checkbox" name="section_id" value="<?=$category->getId()?>" checked="checked" class="b-filter-link-list__checkbox js-filter-control js-checkbox-change" style="display: none">
+                            <input type="checkbox" name="section_id" value="<?= $category->getId() ?>" checked="checked"
+                                   class="b-filter-link-list__checkbox js-filter-control js-checkbox-change"
+                                   style="display: none">
                         </label>
                     </li>
                 </ul>
@@ -94,6 +98,38 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
+                <?php
+                /**
+                 * @var FilterBase $filter
+                 */
+                foreach ($filterCollection->getIterator() as $filter) {
+                    if (!($filter instanceof ActionsFilter)) {
+                        continue;
+                    }
+                    if (!$filter->hasAvailableVariants()) {
+                        continue;
+                    } ?>
+                    <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
+                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
+                            ?>
+                            <li class="b-filter-link-list__item">
+                                <label class="b-filter-link-list__label">
+                                    <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
+                                           type="checkbox"
+                                           name="<?= $filter->getFilterCode() ?>"
+                                           value="<?= $variant->getValue() ?>"
+                                           id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
+                                        <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                    <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                       href="javascript:void(0);"
+                                       title="<?= $filter->getName() ?>">
+                                        <?= $filter->getName() ?>
+                                    </a>
+                                </label>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                <?php } ?>
             </div>
         </form>
     </div>
