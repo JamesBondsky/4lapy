@@ -102,11 +102,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 /**
                  * @var FilterBase $filter
                  */
-                foreach ($filterCollection->getIterator() as $filter) {
-                    if (!($filter instanceof ActionsFilter)) {
-                        continue;
-                    }
-                    if (!$filter->hasAvailableVariants()) {
+                foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
+                    if (!($filter instanceof ActionsFilter) || !$filter->hasAvailableVariants()) {
                         continue;
                     } ?>
                     <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
@@ -175,11 +172,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getIterator() as $filter) {
-                        if (!($filter instanceof ActionsFilter)) {
-                            continue;
-                        }
-                        if (!$filter->hasAvailableVariants()) {
+                    foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
+                        if (!($filter instanceof ActionsFilter) || !$filter->hasAvailableVariants()) {
                             continue;
                         }
                         ?>

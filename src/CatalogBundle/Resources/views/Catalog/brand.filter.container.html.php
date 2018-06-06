@@ -75,16 +75,13 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 /**
                  * @var FilterBase $filter
                  */
-                foreach ($filterCollection->getIterator() as $filter) {
-                    if (!($filter instanceof ActionsFilter)) {
-                        continue;
-                    }
-                    if (!$filter->hasAvailableVariants()) {
+                $useMobileFilters = [];
+                foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
+                    if (!($filter instanceof ActionsFilter) || !$filter->hasAvailableVariants()) {
                         continue;
                     } ?>
                     <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
-                            ?>
+                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) {?>
                             <li class="b-filter-link-list__item">
                                 <label class="b-filter-link-list__label">
                                     <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -136,8 +133,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getFiltersToShow() as $filter) {
-                        if (!($filter instanceof ActionsFilter)) {
+                    foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
+                        if (!$filter instanceof ActionsFilter || !$filter->hasAvailableVariants()) {
                             continue;
                         } ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
