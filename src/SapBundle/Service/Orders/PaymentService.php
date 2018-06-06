@@ -26,6 +26,7 @@ use FourPaws\SapBundle\Dto\In\ConfirmPayment\Item;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Dto\Out\Payment\Debit as OutDebit;
 use FourPaws\SapBundle\Enum\SapOrder;
+use FourPaws\SapBundle\Exception\NotFoundOrderException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
 use FourPaws\SapBundle\Exception\PaymentException;
 use FourPaws\SapBundle\Service\SapOutFile;
@@ -123,7 +124,12 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         /**
          * Check order existence
          */
-        $order = $this->saleOrderService->getOrderById($paymentTask->getBitrixOrderId());
+        $order = SaleOrder::loadByAccountNumber($paymentTask->getBitrixOrderId());
+        if (!$order) {
+            throw new NotFoundOrderException(
+                sprintf('Order with number %s not found', $paymentTask->getBitrixOrderId())
+            );
+        }
         $user = $this->userService->getUserRepository()->find($order->getUserId());
 
         if (null === $user) {
