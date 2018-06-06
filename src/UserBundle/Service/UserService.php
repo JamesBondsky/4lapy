@@ -682,26 +682,34 @@ class UserService implements
      * @param User $user
      *
      * @return bool
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
-     * @throws ManzanaServiceContactSearchMoreOneException
-     * @throws ManzanaServiceContactSearchNullException
-     * @throws ManzanaServiceException
-     * @throws SystemException
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
      */
     public function refreshUserOpt(User $user): bool
     {
         if(empty($user->getPersonalPhone())){
             return false;
         }
-        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $contact = $manzanaService->getContactByUser($user);
+        try {
+            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        } catch (ApplicationCreateException $e) {
+            $this->log()->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
+            return false;
+        }
+        try {
+            $contact = $manzanaService->getContactByUser($user);
+        } catch (ApplicationCreateException $e) {
+            /** не должно сюда доходить, так как передаем объект юзера */
+            $this->log()->error('ошибка загрузки сервиса', $e->getTrace());
+            return false;
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            $this->log()->error('найдено больше одного пользователя с телефоном '.$user->getPersonalPhone());
+            return false;
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            /** ошибка нам не нужна */
+            return false;
+        } catch (ManzanaServiceException $e) {
+            $this->log()->error('ошибка манзаны', $e->getTrace());
+            return false;
+        }
         $groupsList = [];
         $groups = $user->getGroups()->toArray();
         /** @var Group $group */
@@ -710,7 +718,12 @@ class UserService implements
         }
         if ($contact->isOpt() && !$user->isOpt()) {
             /** установка оптовика */
-            $groupsList[] = GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            try {
+                $groupsList[] = GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+                $this->log()->error('ошибка получения группы пользователя', $e->getTrace());
+                return false;
+            }
             \CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
