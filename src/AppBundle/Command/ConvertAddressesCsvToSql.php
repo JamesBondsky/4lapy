@@ -1,0 +1,248 @@
+<?php
+
+namespace FourPaws\Appbundle\Command;
+
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use FourPaws\AppBundle\Exception\InvalidArgumentException;
+use FourPaws\Migrator\Client\User;
+use FourPaws\Migrator\Entity\MapTable;
+use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+
+class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
+{
+    use LazyLoggerAwareTrait;
+
+    private const OPT_FILE = 'file';
+
+    private const OPT_OUT_FILE = 'out';
+
+    private const PROGRESS_BAR_FORMAT = ' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%';
+
+    private $notFound = 0;
+
+    /**
+     * UpdateUserPasswords constructor.
+     *
+     * @param null|string $name
+     */
+    public function __construct(?string $name = null)
+    {
+        parent::__construct($name);
+    }
+
+    /**
+     * Configure command
+     *
+     * @throws InvalidArgumentException
+     */
+    protected function configure(): void
+    {
+        $this->setName('bitrix:user:update:address')
+            ->setDescription('convert addresses csv to sql from file')
+            ->addOption(
+                self::OPT_FILE,
+                'f',
+                InputOption::VALUE_REQUIRED,
+                'file path'
+            )
+            ->addOption(
+                self::OPT_OUT_FILE,
+                'o',
+                InputOption::VALUE_REQUIRED,
+                'out file path'
+            );
+    }
+
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @throws SystemException
+     */
+    protected function execute(InputInterface $input, OutputInterface $output): void
+    {
+        $this->log()->info('Convert started');
+        $fileName = $input->getOption(self::OPT_FILE);
+        $file = realpath($fileName);
+        if (!$file) {
+            $file = realpath(__DIR__ . '/../' . $fileName);
+            if (!$file) {
+                if (!isset($_SERVER['DOCUMENT_ROOT'])) {
+                    $_SERVER['DOCUMENT_ROOT'] = realpath(__DIR__ . '/../..');
+                }
+                $file = realpath($_SERVER['DOCUMENT_ROOT'] . '/' . $fileName);
+                if (!$file) {
+                    $file = $fileName;
+                }
+            }
+        }
+
+        $fileName = $input->getOption(self::OPT_OUT_FILE);
+        $outFile = realpath($fileName);
+        if (!$outFile) {
+            $outFile = realpath(__DIR__ . '/../' . $fileName);
+            if (!$outFile) {
+                if (!isset($_SERVER['DOCUMENT_ROOT'])) {
+                    $_SERVER['DOCUMENT_ROOT'] = realpath(__DIR__ . '/../..');
+                }
+                $outFile = realpath($_SERVER['DOCUMENT_ROOT'] . '/' . $fileName);
+                if (!$outFile) {
+                    $outFile = $fileName;
+                }
+            }
+        }
+
+        if (!file_exists($file)) {
+            throw new InvalidArgumentException('file not found');
+        }
+
+        if (!$fp = fopen($file, 'rb')) {
+            throw new InvalidArgumentException('cannot open file');
+        }
+
+        if (!$fpo = fopen($outFile, 'wb+')) {
+            throw new InvalidArgumentException('cannot create output file');
+        }
+
+        $lineCount = 0;
+        while (fgets($fp)) {
+            $lineCount++;
+        }
+
+        $progressBar = new ProgressBar($output, $lineCount);
+        $progressBar->setFormat(self::PROGRESS_BAR_FORMAT);
+
+        rewind($fp);
+        $progressBar->start();
+
+        $data = [];
+        while ([$oldUserId, $profileId, $profileName, $code, $value] = fgetcsv($fp)) {
+            if (!isset($data[$oldUserId][$profileId])) {
+                $data[$oldUserId][$profileId] = [
+                    'PROFILE_NAME' => $profileName,
+                    'OLD_USER_ID'  => $oldUserId,
+                    'FIELDS'       => [],
+                ];
+            }
+            $data[$oldUserId][$profileId]['FIELDS'][$code] = $value;
+            if (\count($data) >= 10000) {
+                $this->processData($data, $fpo);
+                $progressBar->advance(10000);
+                $data = [];
+            }
+        }
+        $this->processData($data, $fpo);
+        $progressBar->finish();
+
+        $this->log()->info(sprintf(
+            'Update complete. Not found %s.',
+            $this->notFound
+        ));
+    }
+
+    /**
+     * @param array $data
+     * @param       $fpo
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    protected function processData(array $data, $fpo)
+    {
+        if (empty($data)) {
+            return;
+        }
+
+        $users = $this->getUsers(array_keys($data));
+
+        foreach ($data as $oldUserId => $profiles) {
+            $i = 0;
+            foreach ($profiles as $profileId => $profile) {
+                $i++;
+                if (!isset($users[$oldUserId])) {
+                    $this->log()->warning(sprintf('user with externalId %s not found', $oldUserId));
+                    $this->notFound++;
+                } else {
+                    $cityLocation = $profile['FIELDS']['DELIVERY_CITY	'] ? '"' . $profile['FIELDS']['DELIVERY_CITY	'] . '"' : '';
+                    $city = $profile['FIELDS']['TOWN'] ? '"' . $profile['FIELDS']['TOWN'] . '"' : '';
+                    if (empty($city) && !empty($cityLocation)) {
+                        $res = \Bitrix\Sale\Location\Name\LocationTable::query()->setSelect(['NAME'])->where('LOCATION.CODE',
+                            $cityLocation)->setLimit(1)->exec();
+                        if ($res->getSelectedRowsCount() > 0) {
+                            $city = $res->fetch()['NAME'];
+                        }
+                    }
+                    $comments = '';
+                    // customer_notes и DETAILS - примечание
+                    // delivery_address - адрес доставки
+                    if (!empty($profile['FIELDS']['delivery_address'])) {
+                        $comments = '"' . $profile['FIELDS']['delivery_address'] . '"';
+                    }
+                    if (empty($comments) && !empty($profile['FIELDS']['customer_notes'])) {
+                        $comments = '"' . $profile['FIELDS']['customer_notes'] . '"';
+                    }
+                    if (empty($comments) && !empty($profile['FIELDS']['DETAILS'])) {
+                        $comments = '"' . $profile['FIELDS']['DETAILS'] . '"';
+                    }
+                    $values = [
+                        'UF_USER_ID'       => '"' . $users[$oldUserId] . '"',
+                        'UF_NAME'          => '"' . $profile['PROFILE_NAME'] . '"',
+                        'UF_CITY_LOCATION' => $cityLocation,
+                        'UF_CITY'          => $city,
+                        'UF_STREET'        => $profile['FIELDS']['STREET'] ? '"' . $profile['FIELDS']['STREET'] . '"' : '',
+                        'UF_HOUSE'         => $profile['FIELDS']['HOME'] ? '"' . $profile['FIELDS']['HOME'] . '"' : '',
+                        'UF_HOUSING'       => $profile['FIELDS']['CORP'] ? '"' . $profile['FIELDS']['CORP'] . '"' : '',
+                        'UF_ENTRANCE'      => $profile['FIELDS']['POD'] ? '"' . $profile['FIELDS']['POD'] . '"' : '',
+                        'UF_FLOOR'         => $profile['FIELDS']['ETAG'] ? '"' . $profile['FIELDS']['ETAG'] . '"' : '',
+                        'UF_FLAT'          => $profile['FIELDS']['KVART'] ? '"' . $profile['FIELDS']['KVART'] . '"' : '',
+                        'UF_MAIN'          => $i === 1 ? 1 : 0,
+                        'UF_DETAILS'       => $comments,
+                    ];
+                    TrimArr($values, true);
+                    if (!empty($values)) {
+                        fwrite($fpo,
+                            sprintf('INSERT INTO %s (%s) VALUES(%s)',
+                                'adv_adress',
+                                implode(',', \array_keys($values)),
+                                implode(',', \array_values($values))
+                            )
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param $externalIds
+     *
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    protected function getUsers(array $externalIds)
+    {
+        $result = [];
+
+        $res = MapTable::query()
+            ->where('ENTITY', User::ENTITY_NAME)
+            ->whereIn('EXTERNAL_ID', $externalIds)
+            ->setSelect(['EXTERNAL_ID', 'INTERNAL_ID'])
+            ->exec();
+        while ($user = $res->fetch()) {
+            $result[(int)$user['EXTERNAL_ID']] = (int)$user['INTERNAL_ID'];
+        }
+
+        return $result;
+    }
+}
