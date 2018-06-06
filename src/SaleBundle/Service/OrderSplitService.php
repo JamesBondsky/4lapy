@@ -134,33 +134,32 @@ class OrderSplitService implements LoggerAwareInterface
             throw new OrderSplitException('Delivery for order1 is unavailable');
         }
 
-        if (!$canGetPartial) {
-            $storage2 = clone $storage;
-            $basket2 = $this->generateBasket($delayedItems, false);
-            $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
-            $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
-            $storage2->setComment($storage->getSecondComment());
-            $storage2->setBonus($storage->getBonus() - $storage1->getBonus());
-
-            $delivery2 = (clone $delivery)->setStockResult($delayed);
-            if (!$delivery2->isSuccess()) {
-                throw new OrderSplitException('Delivery for order2 is unavailable');
-            }
-            /**
-             * У второго заказа (содержащего товары под заказ) доставка бесплатная
-             */
-            $delivery2->setDeliveryPrice(0);
-
-            $order2 = $this->getOrderService()->initOrder($storage2, $basket2, $delivery2);
-            $splitResult2 = (new OrderSplitResult())->setOrderStorage($storage2)
-                ->setOrder($order2)
-                ->setDelivery($delivery2);
-        }
-
-        $order1 = $this->getOrderService()->initOrder($storage1, $basket1, $delivery1, $canGetPartial);
+        $order1 = $this->getOrderService()->initOrder($storage1, $basket1, $delivery1);
         $splitResult1 = (new OrderSplitResult())->setOrderStorage($storage1)
             ->setOrder($order1)
             ->setDelivery($delivery1);
+
+        $storage2 = clone $storage;
+        $basket2 = $this->generateBasket($delayedItems, false);
+        $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
+        $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
+        $storage2->setComment($storage->getSecondComment());
+        $storage2->setBonus($storage->getBonus() - $storage1->getBonus());
+
+        $delivery2 = (clone $delivery)->setStockResult($delayed);
+        if (!$delivery2->isSuccess()) {
+            throw new OrderSplitException('Delivery for order2 is unavailable');
+        }
+        /**
+         * У второго заказа (содержащего товары под заказ) доставка бесплатная
+         */
+        $delivery2->setDeliveryPrice(0);
+
+        $order2 = $this->getOrderService()->initOrder($storage2, $basket2, $delivery2);
+        $splitResult2 = (new OrderSplitResult())->setOrderStorage($storage2)
+            ->setOrder($order2)
+            ->setDelivery($delivery2);
+
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
