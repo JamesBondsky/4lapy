@@ -73,6 +73,7 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserLogin', [self::class,'clearUserCache'], $module);
         /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
         static::initHandlerCompatible('OnBeforeUserLogin', [self::class,'logoutBeforeAuth'], $module);
+        static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class,'logoutBeforeAuth'], $module);
     }
 
     /**

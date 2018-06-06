@@ -6,12 +6,15 @@
 
 namespace FourPaws\External\Manzana\Consumer;
 
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
 use PhpAmqpLib\Message\AMQPMessage;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ManzanaContactConsumer
@@ -74,7 +77,15 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             ));
 
             sleep(30);
-            $this->manzanaService->updateContactAsync($contact);
+            try {
+                $this->manzanaService->updateContactAsync($contact);
+            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $this->log()->error(sprintf(
+                    'Manzana contact consumer /service/ error: %s, message: %s',
+                    $e->getMessage(),
+                    $message->getBody()
+                ));
+            }
         }
 
         return true;
