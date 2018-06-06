@@ -130,7 +130,7 @@ if (null !== $delivery) {
     ?>
     <?php /* отображается на 2 шаге, когда выбрана курьерская доставка */ ?>
     <aside class="b-order__list js-list-orders-static" <?= !$showPickupContainer ? '' : 'style="display:none"' ?>>
-        <div class="one-delivery__block<?= $deliveryIsSplit ? '' : ' active' ?>">
+        <div class="one-delivery__block<?= $deliveryIsSplit ? '' : ' active activeBlock' ?>">
             <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
                 <span class="js-mobile-title-order">Заказ: <?= $deliveryOrderableQuantity ?> <?= $productsDeclension->get($deliveryOrderableQuantity) ?>
                 </span>
@@ -165,7 +165,7 @@ if (null !== $delivery) {
             </div>
         </div>
         <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
-            <div class="two-deliveries__block<?= !$deliveryIsSplit ? '' : ' active' ?>">
+            <div class="two-deliveries__block<?= !$deliveryIsSplit ? '' : ' active activeBlock' ?>">
                 <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
                     <span class="js-mobile-title-order">Заказ №1: <?= $deliveryResult1Quantity ?> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
@@ -225,6 +225,7 @@ if (null !== $delivery) {
                 </div>
             </div>
         <?php } ?>
+        <div class="mobile-delivery__block"></div>
         <h4 class="b-title b-title--order-list js-parts-list-title"
             <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
             <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
