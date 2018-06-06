@@ -91,10 +91,13 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'category' => $category,
                 ]
             ) ?>
+            <?php $filterToShow = $filterCollection->getFiltersToShow();
+            $filterActions = $filterCollection->getActionsFilter();
+            ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterCollection->getFiltersToShow(),
+                    'filters' => $filterToShow,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -102,10 +105,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 /**
                  * @var FilterBase $filter
                  */
-                foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
-                    if (!($filter instanceof ActionsFilter) || !$filter->hasAvailableVariants()) {
-                        continue;
-                    } ?>
+                foreach ($filterActions as $filter) {?>
                     <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                         <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
                             ?>
@@ -172,11 +172,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getFiltersToShow()->getIterator() as $filter) {
-                        if (!($filter instanceof ActionsFilter) || !$filter->hasAvailableVariants()) {
-                            continue;
-                        }
-                        ?>
+                    foreach ($filterActions as $filter) {?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
