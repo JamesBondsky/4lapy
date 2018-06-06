@@ -7,11 +7,14 @@
 namespace FourPaws\External\Manzana\Consumer;
 
 use Exception;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ReferralAddException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\ReferralParams;
 use PhpAmqpLib\Message\AMQPMessage;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ManzanaReferralConsumer
@@ -42,7 +45,15 @@ class ManzanaReferralConsumer extends ManzanaConsumerBase
             ));
 
             sleep(30);
-            $this->manzanaService->addReferralByBonusCardAsync($referralParams);
+            try {
+                $this->manzanaService->addReferralByBonusCardAsync($referralParams);
+            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $this->log()->error(sprintf(
+                    'Manzana referral consumer /service/ error: %s, message: %s',
+                    $e->getMessage(),
+                    $message->getBody()
+                ));
+            }
         } catch (ReferralAddException | Exception $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',

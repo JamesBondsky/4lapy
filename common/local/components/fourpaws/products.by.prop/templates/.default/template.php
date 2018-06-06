@@ -30,7 +30,7 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
         <div class="<?=$arParams['SLIDER'] === 'Y' ? 'b-common-section__content b-common-section__content--sale js-popular-product' : 'b-common-wrapper b-common-wrapper--visible js-catalog-wrapper'?>">
             <?php foreach ($offers as $offer) {
                 $params = ['PRODUCT' => $offer->getProduct(), 'CURRENT_OFFER' => $offer];
-                if ($arParams['SLIDER']) {
+                if ($arParams['SLIDER'] === 'Y') {
                     $params['NOT_CATALOG_ITEM_CLASS'] = 'Y';
                 }
                 $APPLICATION->IncludeComponent(
