@@ -145,10 +145,6 @@ class ReferralController extends Controller
         /** @var Card $currentCard */
         try {
             $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
-            /** делаем проверку только если карта не найдена */
-            if(empty($currentCard->phone) && empty($currentCard->cardNumber) && !$this->referralService->manzanaService->validateCardByNumber($card)){
-                return $this->ajaxMess->getWrongCardNumber();
-            }
             $cardInfo = [
                 'last_name'   => $currentCard->lastName,
                 'name'        => $currentCard->firstName,
