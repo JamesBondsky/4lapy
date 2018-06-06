@@ -93,8 +93,6 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             ) ?>
             <?php $filterToShow = $filterCollection->getFiltersToShow();
             $filterActions = $filterCollection->getActionsFilter();
-            $b = $filterActions->count();
-            $c = 1;
             ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
