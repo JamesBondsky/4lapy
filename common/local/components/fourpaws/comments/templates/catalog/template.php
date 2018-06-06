@@ -183,7 +183,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 <div class="b-form-review__group">
                     <textarea class="b-form-review__textarea js-small-input-eight"
                               name="UF_TEXT"
-                              required="required"
                               placeholder="Оставьте ваш отзыв:"
                               minlength="8"
                               maxlength="1000"></textarea>

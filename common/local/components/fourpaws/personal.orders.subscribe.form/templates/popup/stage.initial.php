@@ -253,16 +253,16 @@ if ($order) {
                 <ul class="b-registration__info-delivery">
                     <li class="b-registration__item-delivery">
                         <span class="b-icon b-icon--delivery-calendar">
-                            <?= (new SvgDecorator('icon-delivery-car', 18, 12)) ?>
+                            <?= (new SvgDecorator('icon-delivery-calendar', 16, 17)) ?>
                         </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
-                            <p>Параметры подписки: <?=$subscribeParamsText?></p>
-                            <p>Первая доставка: <?=$subscribeStartDateText?></p>
+                            <p>Параметры подписки: <span class="js-subscribe-query-parameters"><?=$subscribeParamsText?></span></p>
+                            <p>Первая доставка: <span class="js-subscribe-query-parameters"><?=$subscribeStartDateText?></span></p>
                         </div>
                     </li>
                     <li class="b-registration__item-delivery">
                         <span class="b-icon b-icon--delivery-calendar">
-                            <?= (new SvgDecorator('icon-delivery-dollar', 18, 14)) ?>
+                            <?= (new SvgDecorator('icon-delivery-car', 18, 12)) ?>
                         </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
                             <p><?= $order->getDelivery()->getDeliveryName() . ($arResult['deliveryAddress'] ? ', по адресу:' : '') ?></p>

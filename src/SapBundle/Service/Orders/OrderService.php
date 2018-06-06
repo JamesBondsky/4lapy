@@ -228,7 +228,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         )) ?: '';
 
         $orderDto
-            ->setId($order->getId())
+            ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
             ->setClientId($order->getUserId())
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
@@ -274,7 +274,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
-        $order = Order::load($orderDto->getId());
+        $order = Order::loadByAccountNumber($orderDto->getId());
 
         if (null === $order) {
             throw new NotFoundOrderException(
@@ -319,7 +319,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             '/%s/%s%s.xml',
             \trim($this->outPath, '/'),
             $this->outPrefix,
-            $order->getId()
+            $order->getField('ACCOUNT_NUMBER')
         );
     }
 

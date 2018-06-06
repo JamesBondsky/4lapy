@@ -27,7 +27,7 @@ if ($category->isLanding()) {
             'COMPONENT_TEMPLATE'              => 'index.slider',
             'IBLOCK_TYPE'                     => IblockType::PUBLICATION,
             'IBLOCK_ID'                       => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::BANNERS),
-            'NEWS_COUNT'                      => '7',
+            'NEWS_COUNT'                      => '20',
             'SORT_BY1'                        => 'SORT',
             'SORT_ORDER1'                     => 'ASC',
             'SORT_BY2'                        => 'ACTIVE_FROM',
