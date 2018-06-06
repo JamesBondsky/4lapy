@@ -3,6 +3,7 @@
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -615,6 +616,72 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             ]
         );
 
+        // для реализации сортировки FULL_NAME CUser::GetList()
+        $query->registerRuntimeField(
+            null,
+            new ExpressionField(
+                'ORDER_LAST_NAME_1',
+                'IF(%s IS NULL OR %s = \'\', 1, 0)',
+                ['LAST_NAME', 'LAST_NAME']
+            )
+        );
+        $query->registerRuntimeField(
+            null,
+            new ExpressionField(
+                'ORDER_LAST_NAME_2',
+                'IF(%s IS NULL OR %s = \'\', 1, %s)',
+                ['LAST_NAME', 'LAST_NAME', 'LAST_NAME']
+            )
+        );
+        $query->registerRuntimeField(
+            null,
+            new ExpressionField(
+                'ORDER_NAME_1',
+                'IF(%s IS NULL OR %s = \'\', 1, 0)',
+                ['NAME', 'NAME']
+            )
+        );
+        $query->registerRuntimeField(
+            null,
+            new ExpressionField(
+                'ORDER_NAME_2',
+                'IF(%s IS NULL OR %s = \'\', 1, %s)',
+                ['NAME', 'NAME', 'NAME']
+            )
+        );
+        $query->registerRuntimeField(
+            null,
+            new ExpressionField(
+                'ORDER_SECOND_NAME_1',
+                'IF(%s IS NULL OR %s = \'\', 1, 0)',
+                ['SECOND_NAME', 'SECOND_NAME']
+            )
+        );
+        $query->registerRuntimeField(
+            null,
+            new ExpressionField(
+                'ORDER_SECOND_NAME_2',
+                'IF(%s IS NULL OR %s = \'\', 1, %s)',
+                ['SECOND_NAME', 'SECOND_NAME', 'SECOND_NAME']
+            )
+        );
+
+        $query->setOrder(
+            [
+                // сортировка FULL_NAME
+                'ORDER_LAST_NAME_1' => 'asc',
+                'ORDER_LAST_NAME_2' => 'asc',
+                'ORDER_NAME_1' => 'asc',
+                'ORDER_NAME_2' => 'asc',
+                'ORDER_SECOND_NAME_1' => 'asc',
+                'ORDER_SECOND_NAME_2' => 'asc',
+                'LOGIN' => 'asc',
+
+                'UF_DISCOUNT_CARD' => 'asc',
+                'ID' => 'asc',
+            ]
+        );
+
         // Для выборки юзеров с учетом подчиненности генерируем запрос вида:
         // SELECT U.*
         //    FROM
@@ -645,7 +712,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             // CASE WHEN NOT EXISTS(SELECT 'x' FROM b_user_group UGS WHERE UGS.USER_ID=U.ID AND UGS.GROUP_ID NOT IN (0,2,9)) THEN 1 ELSE 0 END
             $query->registerRuntimeField(
                 null,
-                new \Bitrix\Main\Entity\ExpressionField(
+                new ExpressionField(
                     'IS_SUBORDINATED_USER',
                     'CASE WHEN NOT EXISTS('.$notSubordinatedGroupSubQuery->getQuery().') THEN 1 ELSE 0 END',
                     ['ID']
@@ -677,7 +744,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             // CASE WHEN NOT EXISTS(SELECT * FROM b_user_group UGNA WHERE UGNA.USER_ID=U.ID AND UGNA.GROUP_ID = 1) THEN 1 ELSE 0 END
             $query->registerRuntimeField(
                 null,
-                new \Bitrix\Main\Entity\ExpressionField(
+                new ExpressionField(
                     'IS_NOT_ADMIN',
                     'CASE WHEN NOT EXISTS('.$groupAdminSubQuery->getQuery().') THEN 1 ELSE 0 END',
                     ['ID']
@@ -733,7 +800,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             $item['_FULL_NAME_'] = trim($item['LAST_NAME'].' '.$item['NAME'].' '.$item['SECOND_NAME']);
             $usersList[] = $item;
         }
-        */
+        //*/
 
         return $usersList;
     }
