@@ -16,27 +16,27 @@ class BasketSplitItem
     /**
      * @var int
      */
-    protected $amount;
+    protected $amount = 0;
 
     /**
      * @var float
      */
-    protected $price;
+    protected $price = 0;
 
     /**
      * @var float
      */
-    protected $basePrice;
+    protected $basePrice = 0;
 
     /**
      * @var float
      */
-    protected $discount;
+    protected $discount = 0;
 
     /**
      * @var array
      */
-    protected $properties;
+    protected $properties = [];
 
     /**
      * @return int

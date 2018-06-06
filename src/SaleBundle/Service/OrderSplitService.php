@@ -20,6 +20,8 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
@@ -34,6 +36,7 @@ use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
 
@@ -295,14 +298,58 @@ class OrderSplitService implements LoggerAwareInterface
     }
 
     /**
+     * @param StockResultCollection $stockResultCollection
+     * @return StockResultCollection
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     */
+    public function recalculateStockResult(StockResultCollection $stockResultCollection): StockResultCollection
+    {
+        $result = new StockResultCollection();
+        $items = new BasketSplitItemCollection();
+        /** @var StockResult $stockResult */
+        foreach ($stockResultCollection as $stockResult) {
+            $items->add(
+                (new BasketSplitItem())
+                    ->setProductId($stockResult->getOffer()->getId())
+                    ->setAmount($stockResult->getAmount())
+            );
+        }
+
+        /** @var Store $store */
+        $store = $stockResultCollection->getStores()->first();
+
+        $basket = $this->generateBasket($items, true);
+
+        $offers = $stockResultCollection->getOffers(false);
+        $basketPrices = $this->deliveryService->getBasketPrices($basket);
+
+        foreach ($basketPrices as $offerId => $priceForAmountCollection) {
+            if (!isset($offers[$offerId])) {
+                $offers[$offerId] = OfferQuery::getById($offerId);
+            }
+
+            /** @var Offer $offer */
+            $offer = $offers[$offerId];
+            $result->add((new StockResult())
+                ->setOffer($offer)
+                ->setPriceForAmount($basketPrices[$offerId])
+                ->setStore($store)
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * @param BasketSplitItemCollection $items
-     * @param bool                      $canGetPartial
+     * @param bool                      $recalculateDiscounts
      *
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @return Basket
      */
-    protected function generateBasket(BasketSplitItemCollection $items, $canGetPartial = false): Basket
+    protected function generateBasket(BasketSplitItemCollection $items, $recalculateDiscounts = false): Basket
     {
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);
@@ -310,7 +357,7 @@ class OrderSplitService implements LoggerAwareInterface
         try {
             /** @var BasketSplitItem $item */
             foreach ($items as $item) {
-                if ($canGetPartial) {
+                if ($recalculateDiscounts) {
                     $rewriteFields = [];
                 } else {
                     $rewriteFields = [
@@ -340,24 +387,32 @@ class OrderSplitService implements LoggerAwareInterface
             );
         }
 
-        /**
-         * Инициируем пересчет скидок
-         */
-        if ($canGetPartial) {
-            if (!$isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
-                Manager::enableExtendsDiscount();
-            }
-
-            Manager::setExtendCalculated(false);
-            $order = Order::create(SITE_ID);
-            $order->setBasket($basket);
-
-            if (!$isDiscountEnabled) {
-                Manager::disableExtendsDiscount();
-            }
+        if ($recalculateDiscounts) {
+            $this->recalculateDiscounts($basket);
         }
 
         return $basket;
+    }
+
+    /**
+     * @param Basket $basket
+     *
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     */
+    protected function recalculateDiscounts(Basket $basket)
+    {
+        if (!$isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::enableExtendsDiscount();
+        }
+
+        Manager::setExtendCalculated(false);
+        $order = Order::create(SITE_ID);
+        $order->setBasket($basket);
+
+        if (!$isDiscountEnabled) {
+            Manager::disableExtendsDiscount();
+        }
     }
 
     /**
