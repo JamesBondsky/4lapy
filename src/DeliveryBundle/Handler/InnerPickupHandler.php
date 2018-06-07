@@ -12,6 +12,7 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
@@ -98,6 +99,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
         }
 
         /** @noinspection PhpInternalEntityUsedInspection */
+        /** @var Basket $basket */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $shopCode = null;
@@ -126,7 +128,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             }
         }
 
-        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+        if (!$offers = static::getOffers($basket)) {
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */

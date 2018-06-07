@@ -10,7 +10,7 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sale\BasketBase;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
@@ -106,16 +106,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }
 
     /**
-     * Получает коллекцию офферов и проставляет им наличие
+     * @param Basket $basket
      *
-     * @param string     $locationCode
-     * @param BasketBase $basket
-     *
-     * @throws ArgumentException
-     * @throws ApplicationCreateException
      * @return null|ArrayCollection
      */
-    public static function getOffers(string $locationCode, BasketBase $basket): ?ArrayCollection
+    public static function getOffers(Basket $basket): ?ArrayCollection
     {
         if ($basket->isEmpty()) {
             return null;
@@ -138,14 +133,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
         $offers = new ArrayCollection();
 
-        /** @noinspection PhpUnhandledExceptionInspection */
-        /** @var StoreService $storeService */
-        $storeService = Application::getInstance()->getContainer()->get('store.service');
-        $stores = $storeService->getStoresByLocation($locationCode);
-        if ($stores->isEmpty()) {
-            return null;
-        }
-
         foreach ($offerIds as $offerId) {
             if ($offer = OfferQuery::getById($offerId)) {
                 $offers[$offerId] = $offer;
@@ -156,7 +143,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param BasketBase      $basket
+     * @param Basket      $basket
      * @param ArrayCollection $offers
      * @param StoreCollection $storesAvailable
      *
@@ -165,40 +152,14 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @return StockResultCollection
      */
     public static function getStocks(
-        BasketBase $basket,
+        Basket $basket,
         ArrayCollection $offers,
         StoreCollection $storesAvailable
     ): StockResultCollection
     {
         $stockResultCollection = new StockResultCollection();
 
-        /** @var PriceForAmountCollection[] $offerData */
-        $offerData = [];
-        /** @var BasketItem $item */
-        foreach ($basket as $item) {
-            $basketItem = null;
-
-            /** @var Offer $offer */
-            foreach ($offers as $offer) {
-                /** @var BasketItem $item */
-                if ((int)$item->getProductId() === $offer->getId()) {
-                    $basketItem = $item;
-                    break;
-                }
-            }
-            if (!$basketItem) {
-                continue;
-            }
-
-            if (null === $offerData[$item->getProductId()]) {
-                $offerData[$item->getProductId()] = new PriceForAmountCollection();
-            }
-            $offerData[$item->getProductId()]->add((new PriceForAmount())
-                ->setPrice($item->getPrice())
-                ->setAmount($item->getQuantity())
-                ->setBasketCode($basketItem->getBasketCode())
-            );
-        }
+        $offerData = static::getBasketPrices($basket);
 
         foreach ($offerData as $offerId => $priceForAmountCollection) {
             static::getStocksForItem(
@@ -210,6 +171,30 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         }
 
         return $stockResultCollection;
+    }
+
+    /**
+     * @param Basket          $basket
+     *
+     * @return PriceForAmountCollection[]
+     */
+    public static function getBasketPrices(Basket $basket): array
+    {
+        /** @var PriceForAmountCollection[] $result */
+        $result = [];
+        /** @var BasketItem $item */
+        foreach ($basket as $item) {
+            if (null === $result[$item->getProductId()]) {
+                $result[$item->getProductId()] = new PriceForAmountCollection();
+            }
+            $result[$item->getProductId()]->add((new PriceForAmount())
+                ->setPrice($item->getPrice())
+                ->setAmount($item->getQuantity())
+                ->setBasketCode($item->getBasketCode())
+            );
+        }
+
+        return $result;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**

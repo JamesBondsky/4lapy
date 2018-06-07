@@ -8,21 +8,32 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
-use FourPaws\DeliveryBundle\Entity\Terminal;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
+use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -41,8 +52,30 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected $orderStorageService;
 
-    /** @var DeliveryService $deliveryService */
+    /**
+     * @var OrderSplitService
+     */
+    protected $orderSplitService;
+
+    /**
+     * @var DeliveryService
+     */
     protected $deliveryService;
+
+    /**
+     * @var PaymentService
+     */
+    protected $paymentService;
+
+    /**
+     * @var array
+     */
+    protected $paymentCodeToName;
+
+    /**
+     * @var PickupResultInterface
+     */
+    protected $pickup;
 
     /**
      * FourPawsOrderShopListComponent constructor.
@@ -52,7 +85,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @throws \RuntimeException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws ApplicationCreateException
      */
     public function __construct($component = null)
@@ -61,7 +94,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
         $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
+        $this->orderSplitService = $serviceContainer->get(OrderSplitService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->paymentService = $serviceContainer->get(PaymentService::class);
     }
 
     /**
@@ -78,10 +113,16 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
     /**
      * @param array $city
-     * @return bool
+     *
      * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     * @return bool
      */
     protected function prepareResult(array $city = [])
     {
@@ -101,12 +142,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @param array $params
-     *
      * @throws Exception
      * @return array
      */
-    public function getStores(array $params = []): array
+    public function getShopsInfo(): array
     {
         $result = [];
 
@@ -114,172 +153,23 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             return $result;
         }
 
-        $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
+        $stores = $pickup->getBestShops();
         if (!$stores->isEmpty()) {
-
             $avgGpsN = 0;
             $avgGpsS = 0;
 
-            $showTime = $this->deliveryService->isInnerPickup($pickup);
-            $bestShops = $pickup->getBestShops();
-            $metroList = $this->getMetroInfo($bestShops);
-
-            if (!empty($params['filter'])) {
-                /**
-                 * @var string $xmlId
-                 * @var Store $store
-                 */
-                foreach ($bestShops as $xmlId => $store) {
-                    if (!$stores->exists(function (
-                        /** @noinspection PhpUnusedParameterInspection */
-                        $key,
-                        Store $store2
-                    ) use ($store) {
-                        return $store2->getXmlId() === $store->getXmlId();
-                    })) {
-                        unset($bestShops[$xmlId]);
-                    }
-                }
-            }
+            $metroList = $this->getMetroInfo($stores);
 
             /** @var Store $store */
             $shopCount = 0;
-            $isDpd = $this->deliveryService->isDpdPickup($pickup);
-            $storage = clone $this->orderStorageService->getStorage();
-            $storage->setDeliveryPlaceCode('');
-            $storage->setDeliveryId($pickup->getDeliveryId());
-            $payments = $this->orderStorageService->getAvailablePayments($storage, false, false);
-            /** @var array $payment */
-            $paymentCodeToName = [];
-            foreach ($payments as $payment) {
-                $paymentCodeToName[$payment['CODE']] = $payment['NAME'];
-            }
-
-            foreach ($bestShops as $store) {
-                $fullResult = (clone $pickup)->setSelectedShop($store);
-                [$available, $delayed] = $this->orderStorageService->splitStockResult($fullResult);
-
-                if (!$fullResult->isSuccess()) {
-                    continue;
+            foreach ($stores as $store) {
+                try {
+                    $result['items'][] = $this->getShopData($pickup, $store, $metroList, false);
+                    $shopCount++;
+                    $avgGpsN += $store->getLongitude();
+                    $avgGpsS += $store->getLatitude();
+                } catch (DeliveryNotAvailableException $e) {
                 }
-                $shopCount++;
-
-                $partialResult = $isDpd
-                    ? $fullResult
-                    : (clone $fullResult)->setStockResult($available);
-
-                $metro = $store->getMetro();
-                $address = !empty($metro)
-                    ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
-                    : $store->getAddress();
-
-                $canGetPartial = $this->orderStorageService->canGetPartial($fullResult);
-                if ($isDpd) {
-                    $orderType = !$delayed->isEmpty() ? 'delay' : 'full';
-                    if (!$delayed->isEmpty()) {
-                        $delayed = $fullResult->getStockResult()->getOrderable();
-                        $available = new StockResultCollection();
-                    }
-                } else {
-                    $orderType = 'parts';
-                    if ($delayed->isEmpty()) {
-                        $orderType = 'full';
-                    } elseif ($available->isEmpty()) {
-                        $orderType = 'delay';
-                    } elseif (!$canGetPartial) {
-                        $orderType = 'split';
-                    }
-                }
-
-                $partsDelayed = [];
-                /** @var StockResult $item */
-                foreach ($delayed as $item) {
-                    $partsDelayed[] = [
-                        'name' => $item->getOffer()->getName(),
-                        'quantity' => $item->getAmount(),
-                        'price' => $item->getPrice(),
-                        'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
-                    ];
-                }
-
-                $partsAvailable = [];
-                /** @var StockResult $item */
-                foreach ($available as $item) {
-                    $partsAvailable[] = [
-                        'name' => $item->getOffer()->getName(),
-                        'quantity' => $item->getAmount(),
-                        'price' => $item->getPrice(),
-                        'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
-                    ];
-                }
-
-                if ($canGetPartial) {
-                    $price = $available->isEmpty() ?
-                        $fullResult->getStockResult()->getPrice() :
-                        $available->getPrice();
-                } else {
-                    $price = $fullResult->getStockResult()->getPrice();
-                }
-
-                $storePayments = [[
-                    'name' => $paymentCodeToName[OrderService::PAYMENT_ONLINE],
-                    'code' => OrderService::PAYMENT_ONLINE
-                ]];
-                if ($store instanceof Terminal) {
-                    if ($store->isNppAvailable()) {
-                        if ($store->hasCardPayment()) {
-                            $storePayments[] = [
-                                'name' => $paymentCodeToName[OrderService::PAYMENT_CASH_OR_CARD],
-                                'code' => OrderService::PAYMENT_CASH_OR_CARD
-                            ];
-                        } elseif ($store->hasCashPayment()) {
-                            $storePayments[] = [
-                                'name' => $paymentCodeToName[OrderService::PAYMENT_CASH],
-                                'code' => OrderService::PAYMENT_CASH
-                            ];
-                        }
-                    }
-                } else {
-                    $storePayments[] = [
-                        'name' => $paymentCodeToName[OrderService::PAYMENT_CASH_OR_CARD],
-                        'code' => OrderService::PAYMENT_CASH_OR_CARD
-                    ];
-                }
-
-                $result['items'][] = [
-                    'id' => $store->getXmlId(),
-                    'adress' => $address,
-                    'phone' => $store->getPhone(),
-                    'schedule' => $store->getScheduleString(),
-                    'pickup' => DeliveryTimeHelper::showTime(
-                        $available->isEmpty() ? $fullResult : $partialResult,
-                        ['SHORT' => false, 'SHOW_TIME' => $showTime]
-                    ),
-                    'pickup_full' => DeliveryTimeHelper::showTime(
-                        $fullResult,
-                        ['SHORT' => false, 'SHOW_TIME' => $showTime]
-                    ),
-                    'pickup_short' => DeliveryTimeHelper::showTime(
-                        $available->isEmpty() ? $fullResult : $partialResult,
-                        ['SHORT' => true, 'SHOW_TIME' => $showTime]
-                    ),
-                    'pickup_short_full' => DeliveryTimeHelper::showTime(
-                        $fullResult,
-                        ['SHORT' => true, 'SHOW_TIME' => $showTime]
-                    ),
-                    'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
-                    'order' => $orderType,
-                    'parts_available' => $partsAvailable,
-                    'parts_delayed' => $partsDelayed,
-                    'price' => WordHelper::numberFormat($price),
-                    'full_price' => WordHelper::numberFormat($fullResult->getStockResult()->getPrice()),
-                    /* @todo поменять местами gps_s и gps_n */
-                    'gps_n' => $store->getLongitude(),
-                    'gps_s' => $store->getLatitude(),
-                    'payments' => $storePayments
-                ];
-                $avgGpsN += $store->getLongitude();
-                $avgGpsS += $store->getLatitude();
             }
 
             if ($shopCount) {
@@ -292,13 +182,202 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
+     * @param string                     $xmlId
+     * @param PickupResultInterface|null $pickup
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
+     * @throws NotFoundException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @return array
+     */
+    public function getShopInfo(string $xmlId, ?PickupResultInterface $pickup): array
+    {
+        $result = [];
+
+        $pickup = $pickup instanceof PickupResultInterface ? $pickup : $this->getPickupResult();
+        if ($pickup) {
+            $stores = $pickup->getBestShops();
+            $metroList = $this->getMetroInfo($stores);
+            /** @var Store $store */
+            foreach ($stores as $store) {
+                try {
+                    if ($store->getXmlId() === $xmlId) {
+                        $result['items'][] = $this->getShopData($pickup, $store, $metroList, true);
+                    }
+                } catch (DeliveryNotAvailableException $e) {
+                }
+            }
+        }
+
+        return $result;
+    }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
+     * @param PickupResultInterface $pickup
+     * @param Store                 $store
+     * @param array                 $metroList
+     * @param bool                  $recalculateBasket
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotAvailableException
+     * @throws NotFoundException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @return array
+     */
+    protected function getShopData(
+        PickupResultInterface $pickup,
+        Store $store,
+        array $metroList,
+        bool $recalculateBasket = false
+    ): array
+    {
+        $fullResult = (clone $pickup)->setSelectedShop($store);
+        if (!$fullResult->isSuccess()) {
+            throw new DeliveryNotAvailableException(sprintf('Pickup from shop %s is unavailable', $store->getXmlId()));
+        }
+        $paymentCodeToName = $this->getPaymentInfo();
+
+        $showTime = $this->deliveryService->isInnerPickup($pickup);
+
+        [$available, $delayed] = $this->orderSplitService->splitStockResult($fullResult);
+        $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
+        $canSplit = $this->orderSplitService->canSplitOrder($fullResult);
+
+        $partialResult = $canGetPartial
+            ? (clone $fullResult)->setStockResult($available)
+            : $fullResult;
+
+        $address = $store->getAddress();
+        if ($store->getMetro()) {
+            $address = 'м. ' . $metroList[$store->getMetro()]['UF_NAME'] . ', ' . $address;
+        }
+
+        $orderType = 'full';
+        if ($canGetPartial) {
+            $orderType = 'parts';
+        } elseif ($canSplit) {
+            $orderType = 'split';
+        } elseif ($available->isEmpty()) {
+            $orderType = 'delay';
+        }
+
+        $partsFull = $this->getItemData($fullResult->getStockResult());
+        $partsDelayed = $this->getItemData($delayed);
+
+        /**
+         * пересчет корзины для частичного получения
+         */
+        if ($recalculateBasket && $canGetPartial) {
+            $available = $this->orderSplitService->recalculateStockResult($available);
+        }
+        $partsAvailable = $this->getItemData($available);
+
+        $price = $canGetPartial ? $available->getPrice() : $fullResult->getStockResult()->getPrice();
+
+        $storePayments = [];
+        $paymentCodes = $this->paymentService->getAvailablePaymentsForStore($store);
+        foreach ($paymentCodes as $code) {
+            if (isset($paymentCodeToName[$code])) {
+                $storePayments[] = [
+                    'name' => $paymentCodeToName[$code],
+                    'code' => $code,
+                ];
+            }
+        }
+
+        return [
+            'id'                => $store->getXmlId(),
+            'adress'            => $address,
+            'phone'             => $store->getPhone(),
+            'schedule'          => $store->getScheduleString(),
+            'pickup'            => DeliveryTimeHelper::showTime(
+                $available->isEmpty() ? $fullResult : $partialResult,
+                ['SHORT' => false, 'SHOW_TIME' => $showTime]
+            ),
+            'pickup_full'       => DeliveryTimeHelper::showTime(
+                $fullResult,
+                ['SHORT' => false, 'SHOW_TIME' => $showTime]
+            ),
+            'pickup_short'      => DeliveryTimeHelper::showTime(
+                $available->isEmpty() ? $fullResult : $partialResult,
+                ['SHORT' => true, 'SHOW_TIME' => $showTime]
+            ),
+            'pickup_short_full' => DeliveryTimeHelper::showTime(
+                $fullResult,
+                ['SHORT' => true, 'SHOW_TIME' => $showTime]
+            ),
+            'metroClass'        => $store->getMetro() ? '--' . $metroList[$store->getMetro()]['BRANCH']['UF_CLASS'] : '',
+            'order'             => $orderType,
+            'parts_available'   => $partsAvailable,
+            'parts_delayed'     => $partsDelayed,
+            'full'              => $partsFull,
+            'price'             => WordHelper::numberFormat($price),
+            'full_price'        => WordHelper::numberFormat($fullResult->getStockResult()->getPrice()),
+            /* @todo поменять местами gps_s и gps_n */
+            'gps_n'             => $store->getLongitude(),
+            'gps_s'             => $store->getLatitude(),
+            'payments'          => $storePayments,
+        ];
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotFoundException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @return array
+     */
+    protected function getPaymentInfo(): array
+    {
+        if (null === $this->paymentCodeToName && ($pickup = $this->getPickupResult())) {
+            $storage = clone $this->orderStorageService->getStorage();
+            $storage->setDeliveryPlaceCode('');
+            $storage->setDeliveryId($pickup->getDeliveryId());
+            $payments = $this->orderStorageService->getAvailablePayments($storage, false, false);
+            /** @var array $payment */
+            foreach ($payments as $payment) {
+                $this->paymentCodeToName[$payment['CODE']] = $payment['NAME'];
+            }
+        }
+
+        return $this->paymentCodeToName;
+    }
+
+    /**
      *
      * @param StoreCollection $stores
      *
      * @throws \Exception
      * @return array
      */
-    public function getMetroInfo(StoreCollection $stores): array
+    protected function getMetroInfo(StoreCollection $stores): array
     {
         $metroIds = [];
         /** @var Store $store */
@@ -316,56 +395,49 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @param array $filter
-     * @param array $order
      *
-     * @throws Exception
-     * @return StoreCollection
-     */
-    protected function getStoreList(array $filter, array $order): StoreCollection
-    {
-        $result = new StoreCollection();
-
-        $pickupDelivery = $this->getPickupResult();
-        if ($pickupDelivery instanceof DpdPickupResult) {
-            $result = $pickupDelivery->getTerminals();
-        } elseif ($pickupDelivery) {
-            $defaultFilter = [];
-            /** @var Store $store */
-            $idFilter = [];
-            foreach ($pickupDelivery->getStockResult()->getStores() as $store) {
-                $idFilter[] = $store->getId();
-            }
-            if (!empty($idFilter)) {
-                $defaultFilter['ID'] = $idFilter;
-            }
-
-            $result = $this->storeService->getStores(
-                StoreService::TYPE_SHOP,
-                array_merge($filter, $defaultFilter),
-                $order
-            );
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return PickupResultInterface
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
+     * @throws NotFoundException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @return PickupResultInterface|null
      */
     protected function getPickupResult(): ?PickupResultInterface
     {
-        $pickupDelivery = null;
-        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
-        foreach ($deliveries as $delivery) {
-            if ($this->deliveryService->isPickup($delivery)) {
-                $pickupDelivery = $delivery;
-                break;
+        if (null === $this->pickup) {
+            $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+            foreach ($deliveries as $delivery) {
+                if ($this->deliveryService->isPickup($delivery)) {
+                    $this->pickup = $delivery;
+                    break;
+                }
             }
         }
 
-        return $pickupDelivery;
+        return $this->pickup;
+    }
+
+    /**
+     * @param StockResultCollection $stockResultCollection
+     * @return array
+     */
+    protected function getItemData(StockResultCollection $stockResultCollection): array
+    {
+        $result = [];
+        /** @var StockResult $item */
+        foreach ($stockResultCollection as $item) {
+            $result[] = [
+                'name'     => $item->getOffer()->getName(),
+                'quantity' => $item->getAmount(),
+                'price'    => $item->getPrice(),
+                'weight'   => $item->getOffer()->getCatalogProduct()->getWeight(),
+            ];
+        }
+
+        return $result;
     }
 }

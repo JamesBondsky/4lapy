@@ -15,10 +15,10 @@ use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\Shipment as BitrixShipment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
@@ -156,11 +156,9 @@ class Calculator extends DPD
         $stockResult = null;
         $terminals = new StoreCollection();
         if (!empty($order['ITEMS'])) {
+            /** @var Basket $basket */
             $basket = static::$bitrixShipment->getParentOrder()->getBasket()->getOrderableItems();
-            if ($offers = DeliveryHandlerBase::getOffers(
-                $order['LOCATION_FROM'],
-                $basket
-            )) {
+            if ($offers = DeliveryHandlerBase::getOffers($basket)) {
                 $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable);
                 if ($stockResult->getOrderable()->isEmpty()) {
                     $result = [

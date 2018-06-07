@@ -12,16 +12,14 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
 
 class InnerDeliveryHandler extends DeliveryHandlerBase
 {
@@ -145,6 +143,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
 
         /** @noinspection PhpInternalEntityUsedInspection */
+        /** @var Basket $basket */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, false);
@@ -163,7 +162,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
         $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, true);
         $data['INTERVALS'] = $this->getIntervals($shipment);
-        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+        if (!$offers = static::getOffers($basket)) {
             $result->setData($data);
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
