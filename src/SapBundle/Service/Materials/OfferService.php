@@ -21,6 +21,7 @@ use FourPaws\SapBundle\Exception\NotFoundDataManagerException;
 use FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException;
 use FourPaws\SapBundle\Exception\RuntimeException as SapRuntimeException;
 use FourPaws\SapBundle\Repository\OfferRepository;
+use FourPaws\SapBundle\Repository\ProductRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
@@ -45,15 +46,25 @@ class OfferService implements LoggerAwareInterface
     private $offerRepository;
 
     /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    /**
      * OfferService constructor.
      *
      * @param ReferenceService $referenceService
      * @param OfferRepository $offerRepository
      */
-    public function __construct(ReferenceService $referenceService, OfferRepository $offerRepository)
+    public function __construct(
+        ReferenceService $referenceService,
+        OfferRepository $offerRepository,
+        ProductRepository $productRepository
+    )
     {
         $this->referenceService = $referenceService;
         $this->offerRepository = $offerRepository;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -104,12 +115,22 @@ class OfferService implements LoggerAwareInterface
      */
     public function deactivate(string $xmlId): bool
     {
-        $id = $this->offerRepository->findIdByXmlId($xmlId);
+        /** @var Offer $offer */
+        if ($offer = $this->offerRepository->findByXmlId($xmlId)) {
+            $result = $this->offerRepository->setActive($offer->getId(), false);
 
-        if ($id) {
-            $result = $this->offerRepository->setActive($id, false);
             if ($result) {
-                $this->log()->info(sprintf('Деактивирован оффер %s [%s]', $id, $xmlId));
+                $this->log()->info(sprintf('Деактивирован оффер %s [%s]', $offer->getId(), $xmlId));
+            }
+
+            $product = $offer->getProduct();
+            $activeOffers = $product->getOffers(false)->filter(function (Offer $offer) {
+                return $offer->isActive();
+            });
+            if ($activeOffers->isEmpty() &&
+                $this->productRepository->setActive($product->getId(), false)
+            ) {
+                $this->log()->info(sprintf('Деактивирован товар %s [%s]', $product->getId(), $product->getXmlId()));
             }
 
             return $result;
