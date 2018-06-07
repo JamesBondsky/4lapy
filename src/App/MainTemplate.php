@@ -410,8 +410,43 @@ class MainTemplate extends TemplateAbstract
         return $this->isCatalogDetail() || $this->isBasket();
     }
 
+    /**
+     * @return bool
+     */
     public function hasUserAuth(): bool
     {
         return $this->isPartitionDirByFilePath('/ajax/user/auth/login') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasFilterInPage(): bool
+    {
+        return $this->isSearchPage() || $this->isBrand() || $this->isCatalogList();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSearchPage(): bool
+    {
+        return $this->isDir('/catalog/search');
+    }
+
+    /**
+     * @return bool
+     */
+    private function isBrand(): bool
+    {
+        return $this->isPartitionDir('/brand');
+    }
+
+    /**
+     * @return bool
+     */
+    private function isCatalogList(): bool
+    {
+        return $this->isPartitionDir('/catalog') && !$this->isPartitionPage('.html') && !$this->isSearchPage();
     }
 }
