@@ -91,7 +91,6 @@ class OrderController extends Controller
      * OrderController constructor.
      *
      * @param OrderService $orderService
-     * @param StoreService $storeService
      * @param DeliveryService $deliveryService
      * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
@@ -99,14 +98,12 @@ class OrderController extends Controller
      */
     public function __construct(
         OrderService $orderService,
-        StoreService $storeService,
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         ReCaptchaService $recaptcha
     ) {
         $this->orderService = $orderService;
-        $this->storeService = $storeService;
         $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
@@ -115,13 +112,13 @@ class OrderController extends Controller
 
     /**
      * @Route("/store-search/", methods={"GET"})
-     * @param Request $request
+     *
      * @throws SystemException
      * @throws \Exception
      * @throws ApplicationCreateException
      * @return JsonResponse
      */
-    public function storeSearchAction(Request $request): JsonResponse
+    public function storeSearchAction(): JsonResponse
     {
         \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -129,7 +126,7 @@ class OrderController extends Controller
 
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
-            $shopListClass->getStoreInfo()
+            $shopListClass->getShopsInfo()
         );
     }
 
