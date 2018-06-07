@@ -111,7 +111,24 @@ $countOffersInMobile = 3; ?>
             }
             ?>
             <div class="b-weight-container b-weight-container--list">
-                <a class="b-weight-container__link js-mobile-select" href="javascript:void(0);" title=""></a>
+                <?php
+                /** получаем значение текущего оффера */
+                $value = '';
+                if ($mainCombinationType === 'SIZE') {
+                    if ($currentOffer->getClothingSize()) {
+                        $value = $currentOffer->getClothingSize()->getName();
+                    }
+                } else {
+                    if ($currentOffer->getVolumeReference()) {
+                        $value = $currentOffer->getVolumeReference()->getName();
+                    } elseif ($weight = $currentOffer->getCatalogProduct()->getWeight()) {
+                        if ($weight > 0) {
+                            $value = WordHelper::showWeight($weight, true, 999);
+                        }
+                    }
+                }?>
+                <a class="b-weight-container__link js-mobile-select" href="javascript:void(0);" title=""><?=$value?></a>
+                <?php $value='';?>
                 <ul class="b-weight-container__list">
                     <?php
                     $i = 0;
