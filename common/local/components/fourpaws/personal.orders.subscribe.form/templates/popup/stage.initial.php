@@ -257,7 +257,7 @@ if ($order) {
                         </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
                             <p>Параметры подписки: <span class="js-subscribe-query-parameters"><?=$subscribeParamsText?></span></p>
-                            <p>Первая доставка: <span class="js-subscribe-query-parameters"><?=$subscribeStartDateText?></span></p>
+                            <p>Первая доставка: <span class="js-subscribe-query-first"><?=$subscribeStartDateText?></span></p>
                         </div>
                     </li>
                     <li class="b-registration__item-delivery">
