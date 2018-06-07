@@ -122,7 +122,7 @@ if ($arParams['IS_AJAX']) {
                                                 </span>
                                                 <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart">
                                             <?php
-                                                if (strpos($offer->getXmlId(), '1') === 0) {
+                                                if ($offer->getPrice() && strpos($offer->getXmlId(), '1') === 0) {
                                                     ?>
                                                     <a class="b-common-item__description-wrap"
                                                        href="<?= $offer->getLink(); ?>" title="">
