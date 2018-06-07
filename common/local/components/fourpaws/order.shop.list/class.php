@@ -11,7 +11,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -23,7 +22,6 @@ use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Service\StoreService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -116,12 +114,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @param array $params
-     *
      * @throws Exception
      * @return array
      */
-    public function getStores(array $params = []): array
+    public function getStoreInfo(): array
     {
         $result = [];
 
@@ -129,33 +125,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             return $result;
         }
 
-        $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
+        $stores = $pickup->getBestShops();
         if (!$stores->isEmpty()) {
-
             $avgGpsN = 0;
             $avgGpsS = 0;
 
             $showTime = $this->deliveryService->isInnerPickup($pickup);
-            $bestShops = $pickup->getBestShops();
-            $metroList = $this->getMetroInfo($bestShops);
-
-            if (!empty($params['filter'])) {
-                /**
-                 * @var string $xmlId
-                 * @var Store $store
-                 */
-                foreach ($bestShops as $xmlId => $store) {
-                    if (!$stores->exists(function (
-                        /** @noinspection PhpUnusedParameterInspection */
-                        $key,
-                        Store $store2
-                    ) use ($store) {
-                        return $store2->getXmlId() === $store->getXmlId();
-                    })) {
-                        unset($bestShops[$xmlId]);
-                    }
-                }
-            }
+            $metroList = $this->getMetroInfo($stores);
 
             /** @var Store $store */
             $shopCount = 0;
@@ -169,7 +145,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $paymentCodeToName[$payment['CODE']] = $payment['NAME'];
             }
 
-            foreach ($bestShops as $store) {
+            foreach ($stores as $store) {
                 $fullResult = (clone $pickup)->setSelectedShop($store);
                 if (!$fullResult->isSuccess()) {
                     continue;
@@ -294,41 +270,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         return $metro;
-    }
-
-    /**
-     * @param array $filter
-     * @param array $order
-     *
-     * @throws Exception
-     * @return StoreCollection
-     */
-    protected function getStoreList(array $filter, array $order): StoreCollection
-    {
-        $result = new StoreCollection();
-
-        $pickupDelivery = $this->getPickupResult();
-        if ($pickupDelivery instanceof DpdPickupResult) {
-            $result = $pickupDelivery->getTerminals();
-        } elseif ($pickupDelivery) {
-            $defaultFilter = [];
-            /** @var Store $store */
-            $idFilter = [];
-            foreach ($pickupDelivery->getStockResult()->getStores() as $store) {
-                $idFilter[] = $store->getId();
-            }
-            if (!empty($idFilter)) {
-                $defaultFilter['ID'] = $idFilter;
-            }
-
-            $result = $this->storeService->getStores(
-                StoreService::TYPE_SHOP,
-                array_merge($filter, $defaultFilter),
-                $order
-            );
-        }
-
-        return $result;
     }
 
     /**

@@ -129,12 +129,7 @@ class OrderController extends Controller
 
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
-            $shopListClass->getStores(
-                [
-                    'filter' => $this->storeService->getFilterByRequest($request),
-                    'order' => $this->storeService->getOrderByRequest($request),
-                ]
-            )
+            $shopListClass->getStoreInfo()
         );
     }
 
