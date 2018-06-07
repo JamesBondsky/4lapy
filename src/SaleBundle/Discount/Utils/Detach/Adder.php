@@ -55,7 +55,11 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
+            $lastBasketCode = ''; // @todo костыль. при частичном получении корзина заказа пересчитывается и для скидок basketCode приходят как ''
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
+                if ('' === $basketCode) {
+                    $basketCode = $lastBasketCode;
+                }
                 if (is_iterable($discounts)) {
                     foreach ($discounts as $discount) {
                         if (
@@ -115,7 +119,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                         $basketItem->getProductId(),
                                         $oldQuantity - $applyCount,
                                         $fields,
-                                        false
+                                        false,
+                                        $this->order->getBasket()
                                     );
                                 } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
                                     //Просто проставляем поля
@@ -140,6 +145,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         }
                     }
                 }
+                $lastBasketCode = ('' === $basketCode) ? $lastBasketCode : $basketCode;
             }
         }
     }

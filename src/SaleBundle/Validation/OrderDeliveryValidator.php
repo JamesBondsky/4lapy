@@ -17,6 +17,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -30,13 +31,20 @@ class OrderDeliveryValidator extends ConstraintValidator
      */
     public const MAX_DATE_DIFF = 1800;
 
-    /** @var OrderService */
+    /**
+     * @var OrderService
+     */
     protected $orderService;
 
     /**
      * @var OrderStorageService
      */
     protected $orderStorageService;
+
+    /**
+     * @var OrderSplitService
+     */
+    protected $orderSplitService;
 
     /**
      * @var DeliveryService
@@ -46,10 +54,12 @@ class OrderDeliveryValidator extends ConstraintValidator
     public function __construct(
         OrderService $orderService,
         OrderStorageService $orderStorageService,
+        OrderSplitService $orderSplitService,
         DeliveryService $deliveryService
     ) {
         $this->orderService = $orderService;
         $this->orderStorageService = $orderStorageService;
+        $this->orderSplitService = $orderSplitService;
         $this->deliveryService = $deliveryService;
     }
 
@@ -136,7 +146,7 @@ class OrderDeliveryValidator extends ConstraintValidator
             /** @var DeliveryResultInterface $delivery */
             $checkDate($entity->getDeliveryDate(), $entity->getDeliveryInterval(), $delivery);
 
-            if ($entity->isSplit() && !$this->orderStorageService->canSplitOrder($delivery)) {
+            if ($entity->isSplit() && !$this->orderSplitService->canSplitOrder($delivery)) {
                 $this->context->addViolation($constraint->orderSplitMessage);
                 return;
             }
@@ -169,7 +179,7 @@ class OrderDeliveryValidator extends ConstraintValidator
                 }
 
                 if ($entity->isSplit() &&
-                    !($this->orderStorageService->canSplitOrder($delivery) || $this->orderStorageService->canGetPartial($delivery))
+                    !($this->orderSplitService->canSplitOrder($delivery) || $this->orderSplitService->canGetPartial($delivery))
                  ) {
                     $this->context->addViolation($constraint->orderSplitMessage);
                     return;

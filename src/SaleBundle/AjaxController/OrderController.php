@@ -35,7 +35,6 @@ use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -66,11 +65,6 @@ class OrderController extends Controller
     private $userAuthProvider;
 
     /**
-     * @var StoreService
-     */
-    private $storeService;
-
-    /**
      * @var DeliveryService
      */
     private $deliveryService;
@@ -91,7 +85,6 @@ class OrderController extends Controller
      * OrderController constructor.
      *
      * @param OrderService $orderService
-     * @param StoreService $storeService
      * @param DeliveryService $deliveryService
      * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
@@ -99,14 +92,12 @@ class OrderController extends Controller
      */
     public function __construct(
         OrderService $orderService,
-        StoreService $storeService,
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         ReCaptchaService $recaptcha
     ) {
         $this->orderService = $orderService;
-        $this->storeService = $storeService;
         $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
@@ -115,13 +106,13 @@ class OrderController extends Controller
 
     /**
      * @Route("/store-search/", methods={"GET"})
-     * @param Request $request
+     *
      * @throws SystemException
      * @throws \Exception
      * @throws ApplicationCreateException
      * @return JsonResponse
      */
-    public function storeSearchAction(Request $request): JsonResponse
+    public function storeSearchAction(): JsonResponse
     {
         \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -129,12 +120,36 @@ class OrderController extends Controller
 
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
-            $shopListClass->getStores(
-                [
-                    'filter' => $this->storeService->getFilterByRequest($request),
-                    'order' => $this->storeService->getOrderByRequest($request),
-                ]
-            )
+            $shopListClass->getShopsInfo()
+        );
+    }
+
+    /**
+     * @Route("/store-info/", methods={"GET"})
+     *
+     * @param Request $request
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws \Exception
+     * @return JsonResponse
+     */
+    public function storeInfoAction(Request $request): JsonResponse
+    {
+        \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $shopListClass = new \FourPawsOrderShopListComponent();
+
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shopListClass->getShopInfo($request->get('shop') ?? '')
         );
     }
 

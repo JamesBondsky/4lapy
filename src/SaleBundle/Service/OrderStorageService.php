@@ -15,10 +15,9 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\UserMessageException;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -255,7 +254,8 @@ class OrderStorageService
                                 }
                             }
                         }
-                        if (!$this->canSplitOrder($pickup) && !$this->canGetPartial($pickup)) {
+                        $orderSplitService = Application::getInstance()->getContainer()->get(OrderSplitService::class);
+                        if (!$orderSplitService->canSplitOrder($pickup) && !$orderSplitService->canGetPartial($pickup)) {
                             $data['split'] = 0;
                         }
                     }
@@ -543,78 +543,5 @@ class OrderStorageService
     public function storageToArray(OrderStorage $storage): array
     {
         return $this->storageRepository->toArray($storage);
-    }
-
-    /**
-     * Можно ли разделить заказ
-     *
-     * @param CalculationResultInterface $delivery
-     *
-     * @return bool
-     */
-    public function canSplitOrder(CalculationResultInterface $delivery): bool
-    {
-        $result = false;
-
-        if (!$this->deliveryService->isDpdPickup($delivery) &&
-            \in_array($delivery->getDeliveryZone(), [DeliveryService::ZONE_1, DeliveryService::ZONE_2], true) &&
-            !$delivery->getStockResult()->getOrderable()->getByRequest(true)->isEmpty()
-        ) {
-            [$available, $delayed] = $this->splitStockResult($delivery);
-
-            $result = !$available->isEmpty() && !$delayed->isEmpty();
-        }
-
-        return $result;
-    }
-
-    /**
-     * Возможно ли частичное получение заказа
-     *
-     * @param CalculationResultInterface $delivery
-     *
-     * @return bool
-     */
-    public function canGetPartial(CalculationResultInterface $delivery): bool
-    {
-        $result = false;
-        if ($this->deliveryService->isInnerPickup($delivery) &&
-            $delivery->getStockResult()->getByRequest(true)->isEmpty() &&
-            !$delivery->getStockResult()->getAvailable()->isEmpty() &&
-            !$delivery->getStockResult()->getDelayed()->isEmpty()
-        ) {
-            $result = true;
-        }
-        return $result;
-    }
-
-    /**
-     * @param CalculationResultInterface $delivery
-     *
-     * @return StockResultCollection[]
-     */
-    public function splitStockResult(CalculationResultInterface $delivery): array
-    {
-        $stockResultCollection = $delivery->getStockResult();
-        if ($delivery->getStockResult()->getByRequest(true)->isEmpty()) {
-            $available = $stockResultCollection->getAvailable();
-            $delayed = $stockResultCollection->getDelayed();
-        } else {
-            $available = $stockResultCollection->getRegular();
-            $delayed = $stockResultCollection->getByRequest();
-        }
-
-        /**
-         * Не позволяем разделять так, чтобы один из наборов становился с нулевой ценой
-         * (например, содержал одни только подарки)
-         */
-        if ((!$available->isEmpty() && !$available->getPrice()) ||
-            (!$delayed->isEmpty() && !$delayed->getPrice())
-        ) {
-            $delayed = $stockResultCollection;
-            $available = new StockResultCollection();
-        }
-
-        return [$available, $delayed];
     }
 }

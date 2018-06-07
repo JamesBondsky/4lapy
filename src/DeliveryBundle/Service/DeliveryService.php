@@ -851,6 +851,14 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param Basket $basket
+     * @return PriceForAmountCollection[]
+     */
+    public function getBasketPrices(Basket $basket) {
+        return DeliveryHandlerBase::getBasketPrices($basket);
+    }
+
+    /**
      * @param string          $locationCode
      * @param BasketBase|null $basket
      * @return Shipment

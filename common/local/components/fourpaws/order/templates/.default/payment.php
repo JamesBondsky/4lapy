@@ -56,7 +56,7 @@ if (!$selectedPayment) {
     $selectedPayment = current($payments);
 }
 
-$basketPrice = $selectedDelivery->getStockResult()->getPrice();
+$basketPrice = $basket->getPrice();
 
 /** @var User $user */
 $user = $arResult['USER'];
