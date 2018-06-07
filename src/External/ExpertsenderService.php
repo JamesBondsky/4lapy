@@ -66,6 +66,7 @@ class ExpertsenderService implements LoggerAwareInterface
     protected const MAIN_LIST_PROP_REGISTER_ID = 47;
     protected const MAIN_LIST_PROP_IP_ID = 48;
     protected const MAIN_LIST_PROP_HASH_ID = 10;
+
     protected $client;
     private $guzzleClient;
     private $key;
@@ -78,6 +79,20 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws InvalidArgumentException
      * @throws RuntimeException
      */
+
+    public const FORGOT_BASKET_LIST_ID = 7765;//old 7115
+    public const FORGOT_BASKET2_LIST_ID = 7767;//old 7117
+    public const CHANGE_EMAIL_LIST_ID = 7766;//old 7070
+    public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;//old 7071
+    public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;//old 7197
+    public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;//old 7198
+    public const NEW_ORDER_PAY_LIST_ID = 7774;//old 7103
+    public const NEW_ORDER_NOT_PAY_LIST_ID = 7775;//old 7104
+    public const NEW_ORDER_NOT_REG_PAY_LIST_ID = 7776;//old 7150
+    public const NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID = 7777;//old 7148
+    public const COMPLETE_ORDER_LIST_ID = 7778;//old 7122
+    public const FORGOT_PASSWORD_LIST_ID = 7779;//old 7072
+    public const CHANGE_PASSWORD_LIST_ID = 7780;//old 7073
 
     public function __construct()
     {
@@ -166,7 +181,7 @@ class ExpertsenderService implements LoggerAwareInterface
 //        }
         try {
             $receiver = new Receiver($user->getEmail());
-            $apiResult = $this->client->sendSystemTransactional(7073, $receiver);
+            $apiResult = $this->client->sendSystemTransactional(self::CHANGE_PASSWORD_LIST_ID, $receiver);
             if ($apiResult->isOk()) {
                 return true;
             }
@@ -203,7 +218,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
                         true),
                 ];
-                $apiResult = $this->client->sendSystemTransactional(7072, $receiver, $snippets);
+                $apiResult = $this->client->sendSystemTransactional(self::FORGOT_PASSWORD_LIST_ID, $receiver, $snippets);
                 if ($apiResult->isOk()) {
                     return true;
                 }
@@ -250,7 +265,7 @@ class ExpertsenderService implements LoggerAwareInterface
             /** отправка почты на старый email */
             try {
                 $receiver = new Receiver($oldUser->getEmail());
-                $apiResult = $this->client->sendSystemTransactional(7070, $receiver);
+                $apiResult = $this->client->sendSystemTransactional(self::CHANGE_EMAIL_LIST_ID, $receiver);
                 if ($apiResult->isOk()) {
                     $continue = true;
                 }
@@ -306,7 +321,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 if ($continue) {
                     /** отправка почты на новый email, отправляем именно при смене и при регистрации */
                     $receiver = new Receiver($curUser->getEmail());
-                    $apiResult = $this->client->sendSystemTransactional(7071, $receiver);
+                    $apiResult = $this->client->sendSystemTransactional(self::CHANGE_EMAIL_TO_NEW_EMAIL_LIST, $receiver);
                     if ($apiResult->isOk()) {
                         return true;
                     }
@@ -584,10 +599,10 @@ class ExpertsenderService implements LoggerAwareInterface
             // зарегистрированный пользователь
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                $transactionId = 7103;
+                $transactionId = self::NEW_ORDER_PAY_LIST_ID;
             } else {
                 // оплата при получении
-                $transactionId = 7104;
+                $transactionId = self::NEW_ORDER_NOT_PAY_LIST_ID;
             }
         } else {
             // незарегистрированный пользователь
@@ -596,10 +611,10 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('password', $_SESSION['NEW_USER']['PASSWORD']);
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                $transactionId = 7150;
+                $transactionId = self::NEW_ORDER_NOT_REG_PAY_LIST_ID;
             } else {
                 // оплата при получении
-                $transactionId = 7148;
+                $transactionId = self::NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID;
             }
         }
 
@@ -663,7 +678,7 @@ class ExpertsenderService implements LoggerAwareInterface
             ),
         ];
 
-        $transactionId = 7122;
+        $transactionId = self::COMPLETE_ORDER_LIST_ID;
 
         try {
             $apiResult = $this->client->sendSystemTransactional($transactionId, new Receiver($email), $snippets);
@@ -693,10 +708,10 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         switch ($type){
             case static::FORGOT_BASKET_TO_CLOSE_SITE:
-                $transactionId = 7115;
+                $transactionId = self::FORGOT_BASKET_LIST_ID;
                 break;
             case static::FORGOT_BASKET_AFTER_TIME:
-                $transactionId = 7117;
+                $transactionId = self::FORGOT_BASKET2_LIST_ID;
                 break;
             default:
                 $transactionId = 0;
@@ -850,7 +865,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendOrderSubscribedEmail(OrderSubscribe $orderSubscribe): int
     {
-        $transactionId = 7197;
+        $transactionId = self::SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID;
         $snippets = [];
 
         $personalOrder = $orderSubscribe->getOrder();
@@ -913,7 +928,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendOrderSubscribeOrderNewEmail(Order $order): int
     {
-        $transactionId = 7198;
+        $transactionId = self::SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID;
         $snippets = [];
 
         /** @var OrderService $orderService */
