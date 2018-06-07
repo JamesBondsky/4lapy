@@ -46,49 +46,51 @@ if ($isBrand && !empty($brand)) {
     );
     $productIds = $searchResult->getProductIds();
 
-    if ($cache->initCache($cacheTime,
-        serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($productIds))]))) {
-        $result = $cache->getVars();
-        $childs = $result['childs'];
-    } elseif ($cache->startDataCache()) {
-        $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
+    if(!empty($productIds)) {
+        if ($cache->initCache($cacheTime,
+            serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($productIds))]))) {
+            $result = $cache->getVars();
+            $childs = $result['childs'];
+        } elseif ($cache->startDataCache()) {
+            $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
 
-        $sectionIds = [];
-        $res = SectionElementTable::query()
-            ->whereIn('IBLOCK_ELEMENT_ID', $productIds)->setSelect(['DISTINCT_SECTION_ID'])
-            ->registerRuntimeField(new ExpressionField('DISTINCT_SECTION_ID', 'distinct IBLOCK_SECTION_ID'))
-            ->exec();
-        while ($sect = $res->fetch()) {
-            $sectionIds[] = (int)$sect['DISTINCT_SECTION_ID'];
-        }
-        if (!empty($sectionIds)) {
-            $childs = (new CategoryQuery())->withFilter([
-                '=ID'            => $sectionIds,
-                '=ACTIVE'        => 'Y',
-                '=GLOBAL_ACTIVE' => 'Y',
-            ])->withOrder(['DEPTH_LEVEL' => 'asc'])->exec();
-            /** @var Category $section */
-            $rootSections = [];
-            foreach ($childs as $key => $section) {
-                if ($section->getDepthLevel() > 1) {
-                    $parent = (new CategoryQuery())->withFilter([
-                        '>LEFT_MARGIN'  => $section->getLeftMargin(),
-                        '<RIGHT_MARGIN' => $section->getRightMargin(),
-                        '=DEPTH_LEVEL'  => 1,
-                    ])->withNav(['nTopCount' => 1])->exec()->first();
-                    if ($parent instanceof Category && !\in_array($parent->getId(), $rootSections, true)) {
-                        $childs->add($parent);
-                        $rootSections[] = $parent->getId();
+            $sectionIds = [];
+            $res = SectionElementTable::query()
+                ->whereIn('IBLOCK_ELEMENT_ID', $productIds)->setSelect(['DISTINCT_SECTION_ID'])
+                ->registerRuntimeField(new ExpressionField('DISTINCT_SECTION_ID', 'distinct IBLOCK_SECTION_ID'))
+                ->exec();
+            while ($sect = $res->fetch()) {
+                $sectionIds[] = (int)$sect['DISTINCT_SECTION_ID'];
+            }
+            if (!empty($sectionIds)) {
+                $childs = (new CategoryQuery())->withFilter([
+                    '=ID'            => $sectionIds,
+                    '=ACTIVE'        => 'Y',
+                    '=GLOBAL_ACTIVE' => 'Y',
+                ])->withOrder(['DEPTH_LEVEL' => 'asc'])->exec();
+                /** @var Category $section */
+                $rootSections = [];
+                foreach ($childs as $key => $section) {
+                    if ($section->getDepthLevel() > 1) {
+                        $parent = (new CategoryQuery())->withFilter([
+                            '>LEFT_MARGIN'  => $section->getLeftMargin(),
+                            '<RIGHT_MARGIN' => $section->getRightMargin(),
+                            '=DEPTH_LEVEL'  => 1,
+                        ])->withNav(['nTopCount' => 1])->exec()->first();
+                        if ($parent instanceof Category && !\in_array($parent->getId(), $rootSections, true)) {
+                            $childs->add($parent);
+                            $rootSections[] = $parent->getId();
+                        }
+                        $childs->remove($key);
+                    } else {
+                        $rootSections[] = $section->getId();
                     }
-                    $childs->remove($key);
-                } else {
-                    $rootSections[] = $section->getId();
                 }
             }
-        }
 
-        $tagCache->end();
-        $cache->endDataCache(['childs' => $childs]);
+            $tagCache->end();
+            $cache->endDataCache(['childs' => $childs]);
+        }
     }
 } else {
     $childs = $category->getChild();

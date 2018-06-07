@@ -89,10 +89,12 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
         $outFile = realpath($fileName);
         if (!$outFile) {
             $outFile = realpath(__DIR__ . '/../' . $fileName);
+
             if (!$outFile) {
                 if (!isset($_SERVER['DOCUMENT_ROOT'])) {
                     $_SERVER['DOCUMENT_ROOT'] = realpath(__DIR__ . '/../..');
                 }
+
                 $outFile = realpath($_SERVER['DOCUMENT_ROOT'] . '/' . $fileName);
                 if (!$outFile) {
                     $outFile = $fileName;
@@ -124,7 +126,7 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
         $progressBar->start();
 
         $data = [];
-        while ([$oldUserId, $profileId, $profileName, $code, $value] = fgetcsv($fp)) {
+        while ([$oldUserId, $profileId, $profileName, $code, $value] = \fgetcsv($fp)) {
             if (!isset($data[$oldUserId][$profileId])) {
                 $data[$oldUserId][$profileId] = [
                     'PROFILE_NAME' => $profileName,
@@ -168,11 +170,18 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
             $i = 0;
             foreach ($profiles as $profileId => $profile) {
                 $i++;
+
+                foreach ($profile['FIELDS'] as &$field) {
+                    \addslashes($field);
+                }
+
+                unset($field);
+
                 if (!isset($users[$oldUserId])) {
                     $this->log()->warning(sprintf('user with externalId %s not found', $oldUserId));
                     $this->notFound++;
                 } else {
-                    $cityLocation = $profile['FIELDS']['DELIVERY_CITY	'] ? '"' . $profile['FIELDS']['DELIVERY_CITY	'] . '"' : '';
+                    $cityLocation = $profile['FIELDS']['DELIVERY_CITY'] ? '"' . $profile['FIELDS']['DELIVERY_CITY'] . '"' : '';
                     $city = $profile['FIELDS']['TOWN'] ? '"' . $profile['FIELDS']['TOWN'] . '"' : '';
                     if (empty($city) && !empty($cityLocation)) {
                         $res = \Bitrix\Sale\Location\Name\LocationTable::query()->setSelect(['NAME'])->where('LOCATION.CODE',
@@ -207,13 +216,16 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                         'UF_MAIN'          => $i === 1 ? 1 : 0,
                         'UF_DETAILS'       => $comments,
                     ];
-                    TrimArr($values, true);
+
+                    \TrimArr($values, true);
+
                     if (!empty($values)) {
-                        fwrite($fpo,
-                            sprintf('INSERT INTO %s (%s) VALUES(%s)',
+                        \fwrite($fpo,
+                            \sprintf('INSERT INTO %s (%s) VALUES(%s);%s',
                                 'adv_adress',
                                 implode(',', \array_keys($values)),
-                                implode(',', \array_values($values))
+                                implode(',', \array_values($values)),
+                                PHP_EOL
                             )
                         );
                     }

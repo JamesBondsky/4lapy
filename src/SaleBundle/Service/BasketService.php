@@ -22,17 +22,13 @@ use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
-use Bitrix\Sale\Result;
 use Exception;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
-use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
@@ -49,7 +45,6 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -607,40 +602,45 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $type
-     * @param bool   $renew
+     * @param string     $type
+     * @param Order|null $order
+     * @param bool       $renew
      *
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @return AdderInterface
      */
-    public function getAdder(string $type, bool $renew = false): AdderInterface
+    public function getAdder(string $type, ?Order $order = null, bool $renew = false): AdderInterface
     {
         static $storage;
         if (null === $storage || $renew) {
             $storage = [
-                'gift'   => null,
-                'detach' => null,
+                'gift'   => [],
+                'detach' => [],
             ];
         }
-        if (null === $order = $this->getBasket()->getOrder()) {
+
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        $order = $order instanceof Order ? $order : $this->getBasket()->getOrder();
+        if (null === $order) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
 
+        $orderInternalId = $order->getInternalId();
         if ($type === 'gift') {
-            if (null === $storage[$type]) {
+            if (null === $storage[$type][$orderInternalId]) {
                 $adder = new Utils\Gift\Adder($order, $this);
-                $storage[$type] = $adder;
+                $storage[$type][$orderInternalId] = $adder;
             } else {
-                $adder = $storage[$type];
+                $adder = $storage[$type][$orderInternalId];
             }
         } elseif ($type === 'detach') {
-            if (null === $storage[$type]) {
+            if (null === $storage[$type][$orderInternalId]) {
                 $adder = new Utils\Detach\Adder($order, $this);
-                $storage[$type] = $adder;
+                $storage[$type][$orderInternalId] = $adder;
             } else {
-                $adder = $storage[$type];
+                $adder = $storage[$type][$orderInternalId];
             }
         } else {
             throw new InvalidArgumentException('Передан неверный тип');
@@ -650,39 +650,45 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $type
-     * @param bool   $renew
+     * @param string     $type
+     * @param Order|null $order
+     * @param bool       $renew
      *
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @return CleanerInterface
      */
-    public function getCleaner(string $type, bool $renew = false): CleanerInterface
+    public function getCleaner(string $type, ?Order $order = null, bool $renew = false): CleanerInterface
     {
         static $storage;
         if (null === $storage || $renew) {
             $storage = [
-                'gift'   => null,
-                'detach' => null,
+                'gift'   => [],
+                'detach' => [],
             ];
         }
-        if (null === $order = $this->getBasket()->getOrder()) {
+
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        $order = $order instanceof Order ? $order : $this->getBasket()->getOrder();
+        if (null === $order) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
+
+        $orderInternalId = $order->getInternalId();
         if ($type === 'gift') {
-            if (null === $storage[$type]) {
+            if (null === $storage[$type][$orderInternalId]) {
                 $cleaner = new Utils\Gift\Cleaner($order, $this);
-                $storage[$type] = $cleaner;
+                $storage[$type][$orderInternalId] = $cleaner;
             } else {
-                $cleaner = $storage[$type];
+                $cleaner = $storage[$type][$orderInternalId];
             }
         } elseif ($type === 'detach') {
-            if (null === $storage[$type]) {
+            if (null === $storage[$type][$orderInternalId]) {
                 $cleaner = new Utils\Detach\Cleaner($order, $this);
-                $storage[$type] = $cleaner;
+                $storage[$type][$orderInternalId] = $cleaner;
             } else {
-                $cleaner = $storage[$type];
+                $cleaner = $storage[$type][$orderInternalId];
             }
         } else {
             throw new InvalidArgumentException('Передан неверный тип');

@@ -39,6 +39,10 @@ services:
         class: FourPaws\SaleBundle\Service\OrderPropertyService
         public: true
 
+    FourPaws\SaleBundle\Service\OrderSplitService:
+        class: FourPaws\SaleBundle\Service\OrderSplitService
+        public: true
+
     FourPaws\SaleBundle\Service\OrderStorageService:
         class: FourPaws\SaleBundle\Service\OrderStorageService
         public: true
