@@ -18,11 +18,13 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use CUser;
+use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
 use FourPaws\SaleBundle\Payment\Sberbank;
+use FourPaws\StoreBundle\Entity\Store;
 
 /**
  * Class PaymentService
@@ -48,6 +50,28 @@ class PaymentService
     public function __construct(BasketService $basketService)
     {
         $this->basketService = $basketService;
+    }
+
+    /**
+     * @param Store $store
+     * @return array
+     */
+    public function getAvailablePaymentsForStore(Store $store): array
+    {
+        $result = [OrderService::PAYMENT_ONLINE];
+        if ($store instanceof Terminal) {
+            if ($store->isNppAvailable()) {
+                if ($store->hasCardPayment()) {
+                    $result[] = OrderService::PAYMENT_CASH_OR_CARD;
+                } elseif ($store->hasCashPayment()) {
+                    $result[] = OrderService::PAYMENT_CASH;
+                }
+            }
+        } else {
+            $result[] = OrderService::PAYMENT_CASH_OR_CARD;
+        }
+
+        return $result;
     }
 
     /**
