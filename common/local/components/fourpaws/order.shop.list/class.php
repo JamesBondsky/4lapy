@@ -14,13 +14,13 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
-use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -47,8 +47,15 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected $orderSplitService;
 
-    /** @var DeliveryService $deliveryService */
+    /**
+     * @var DeliveryService
+     */
     protected $deliveryService;
+
+    /**
+     * @var PaymentService
+     */
+    protected $paymentService;
 
     /**
      * FourPawsOrderShopListComponent constructor.
@@ -69,6 +76,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
         $this->orderSplitService = $serviceContainer->get(OrderSplitService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->paymentService = $serviceContainer->get(PaymentService::class);
     }
 
     /**
@@ -151,7 +159,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             /** @var Store $store */
             $shopCount = 0;
-            $isDpd = $this->deliveryService->isDpdPickup($pickup);
             $storage = clone $this->orderStorageService->getStorage();
             $storage->setDeliveryPlaceCode('');
             $storage->setDeliveryId($pickup->getDeliveryId());
@@ -164,93 +171,59 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             foreach ($bestShops as $store) {
                 $fullResult = (clone $pickup)->setSelectedShop($store);
-                [$available, $delayed] = $this->orderSplitService->splitStockResult($fullResult);
-
                 if (!$fullResult->isSuccess()) {
                     continue;
                 }
                 $shopCount++;
 
-                $partialResult = $isDpd
-                    ? $fullResult
-                    : (clone $fullResult)->setStockResult($available);
+                [$available, $delayed] = $this->orderSplitService->splitStockResult($fullResult);
+                $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
+                $canSplit = $this->orderSplitService->canSplitOrder($fullResult);
+
+                $partialResult = $canGetPartial
+                    ? (clone $fullResult)->setStockResult($available)
+                    : $fullResult;
 
                 $metro = $store->getMetro();
                 $address = !empty($metro)
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
 
-                $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
-                if ($isDpd) {
-                    $orderType = !$delayed->isEmpty() ? 'delay' : 'full';
-                    if (!$delayed->isEmpty()) {
-                        $delayed = $fullResult->getStockResult()->getOrderable();
-                        $available = new StockResultCollection();
-                    }
-                } else {
-                    $orderType = 'parts';
-                    if ($delayed->isEmpty()) {
-                        $orderType = 'full';
-                    } elseif ($available->isEmpty()) {
-                        $orderType = 'delay';
-                    } elseif (!$canGetPartial) {
-                        $orderType = 'split';
-                    }
-                }
-
-                $partsDelayed = [];
-                /** @var StockResult $item */
-                foreach ($delayed as $item) {
-                    $partsDelayed[] = [
-                        'name' => $item->getOffer()->getName(),
-                        'quantity' => $item->getAmount(),
-                        'price' => $item->getPrice(),
-                        'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
-                    ];
-                }
-
-                $partsAvailable = [];
-                /** @var StockResult $item */
-                foreach ($available as $item) {
-                    $partsAvailable[] = [
-                        'name' => $item->getOffer()->getName(),
-                        'quantity' => $item->getAmount(),
-                        'price' => $item->getPrice(),
-                        'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
-                    ];
-                }
-
+                $orderType = 'full';
                 if ($canGetPartial) {
-                    $price = $available->isEmpty() ?
-                        $fullResult->getStockResult()->getPrice() :
-                        $available->getPrice();
-                } else {
-                    $price = $fullResult->getStockResult()->getPrice();
+                    $orderType = 'parts';
+                } elseif ($canSplit) {
+                    $orderType = 'split';
+                } elseif ($available->isEmpty()) {
+                    $orderType = 'delay';
                 }
+
+                $partsFull = $this->getItemData($fullResult->getStockResult());
+                $partsDelayed = $this->getItemData($delayed);
+
+                /**
+                 * пересчет корзины для частичного получения
+                 */
+                if ($canGetPartial) {
+                    $available = $this->orderSplitService->recalculateStockResult($available);
+                }
+                $partsAvailable = $this->getItemData($available);
+
+                $price = $canGetPartial ? $available->getPrice() : $fullResult->getStockResult()->getPrice();
 
                 $storePayments = [[
                     'name' => $paymentCodeToName[OrderService::PAYMENT_ONLINE],
-                    'code' => OrderService::PAYMENT_ONLINE
+                    'code' => OrderService::PAYMENT_ONLINE,
                 ]];
-                if ($store instanceof Terminal) {
-                    if ($store->isNppAvailable()) {
-                        if ($store->hasCardPayment()) {
-                            $storePayments[] = [
-                                'name' => $paymentCodeToName[OrderService::PAYMENT_CASH_OR_CARD],
-                                'code' => OrderService::PAYMENT_CASH_OR_CARD
-                            ];
-                        } elseif ($store->hasCashPayment()) {
-                            $storePayments[] = [
-                                'name' => $paymentCodeToName[OrderService::PAYMENT_CASH],
-                                'code' => OrderService::PAYMENT_CASH
-                            ];
-                        }
+
+                $paymentCodes = $this->paymentService->getAvailablePaymentsForStore($store);
+                foreach ($paymentCodes as $code) {
+                    if (isset($paymentCodeToName[$code])) {
+                        $storePayments[] = [
+                            'name' => $paymentCodeToName[$code],
+                            'code' => $code,
+                        ];
                     }
-                } else {
-                    $storePayments[] = [
-                        'name' => $paymentCodeToName[OrderService::PAYMENT_CASH_OR_CARD],
-                        'code' => OrderService::PAYMENT_CASH_OR_CARD
-                    ];
                 }
 
                 $result['items'][] = [
@@ -278,12 +251,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'order' => $orderType,
                     'parts_available' => $partsAvailable,
                     'parts_delayed' => $partsDelayed,
+                    'full' => $partsFull,
                     'price' => WordHelper::numberFormat($price),
                     'full_price' => WordHelper::numberFormat($fullResult->getStockResult()->getPrice()),
                     /* @todo поменять местами gps_s и gps_n */
                     'gps_n' => $store->getLongitude(),
                     'gps_s' => $store->getLatitude(),
-                    'payments' => $storePayments
+                    'payments' => $storePayments,
                 ];
                 $avgGpsN += $store->getLongitude();
                 $avgGpsS += $store->getLatitude();
@@ -374,5 +348,25 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         return $pickupDelivery;
+    }
+
+    /**
+     * @param StockResultCollection $stockResultCollection
+     * @return array
+     */
+    protected function getItemData(StockResultCollection $stockResultCollection): array
+    {
+        $result = [];
+        /** @var StockResult $item */
+        foreach ($stockResultCollection as $item) {
+            $result[] = [
+                'name' => $item->getOffer()->getName(),
+                'quantity' => $item->getAmount(),
+                'price' => $item->getPrice(),
+                'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
+            ];
+        }
+
+        return $result;
     }
 }
