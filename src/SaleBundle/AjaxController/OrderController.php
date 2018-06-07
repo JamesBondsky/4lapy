@@ -35,7 +35,6 @@ use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -64,11 +63,6 @@ class OrderController extends Controller
      * @var UserAuthorizationInterface
      */
     private $userAuthProvider;
-
-    /**
-     * @var StoreService
-     */
-    private $storeService;
 
     /**
      * @var DeliveryService
@@ -127,6 +121,35 @@ class OrderController extends Controller
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopListClass->getShopsInfo()
+        );
+    }
+
+    /**
+     * @Route("/store-info/", methods={"GET"})
+     *
+     * @param Request $request
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws \Exception
+     * @return JsonResponse
+     */
+    public function storeInfoAction(Request $request): JsonResponse
+    {
+        \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $shopListClass = new \FourPawsOrderShopListComponent();
+
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shopListClass->getShopInfo($request->get('shop') ?? '')
         );
     }
 

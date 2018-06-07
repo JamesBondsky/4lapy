@@ -179,6 +179,41 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     * @throws Exception
+     * @return array
+     */
+    public function getShopInfo(string $xmlId): array
+    {
+        $result = [];
+
+        if ($pickup = $this->getPickupResult()) {
+            $stores = $pickup->getBestShops();
+            $metroList = $this->getMetroInfo($stores);
+            /** @var Store $store */
+            foreach ($stores as $store) {
+                try {
+                    if ($store->getXmlId() === $xmlId) {
+                        $result['items'][] = $this->getShopData($pickup, $store, $metroList, true);
+                    }
+                } catch (DeliveryNotAvailableException $e) {
+                }
+            }
+        }
+
+        return $result;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
@@ -336,7 +371,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @throws \Exception
      * @return array
      */
-    public function getMetroInfo(StoreCollection $stores): array
+    protected function getMetroInfo(StoreCollection $stores): array
     {
         $metroIds = [];
         /** @var Store $store */
