@@ -60,7 +60,12 @@ if (null !== $pickup) {
     $selectedShop = $arResult['SELECTED_SHOP'];
     $stockResult = $pickup->getStockResult();
 
-    $available = $stockResult->getAvailable();
+    if ($arResult['PARTIAL_PICKUP_AVAILABLE']) {
+        $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
+    } else {
+        $available = $stockResult->getAvailable();
+    }
+
     // если нет доступных товаров, частичного получения не будет
     if ($available->isEmpty()) {
         $available = $stockResult->getDelayed();

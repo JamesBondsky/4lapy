@@ -85,19 +85,19 @@ class Manager
 
             // Автоматически добавляем подарки
             $basketService
-                ->getAdder('gift')
+                ->getAdder('gift', $order)
                 ->processOrder();
 
             // Удаляем подарки, акции которых не выполнились
             $basketService
-                ->getCleaner('gift')
+                ->getCleaner('gift', $order)
                 ->processOrder();
 
             // нужна дополнительная проверка так как иногда к этому моменту в корзине не остается товаров
             if (self::isOrderNotEmpty($order)) {
 
                 $basketService
-                    ->getAdder('detach')
+                    ->getAdder('detach', $order)
                     ->processOrder();
 
                 $promoCode = $couponStorage->getApplicableCoupon();

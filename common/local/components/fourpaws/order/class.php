@@ -35,6 +35,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
@@ -57,27 +58,64 @@ class FourPawsOrderComponent extends \CBitrixComponent
         OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#',
     ];
 
-    /** @var string */
+    /**
+     * @var string
+     */
     protected $currentStep;
-    /** @var OrderService */
+
+    /**
+     * @var OrderService
+     */
     protected $orderService;
-    /** @var OrderStorageService */
+
+    /**
+     * @var OrderSplitService
+     */
+    protected $orderSplitService;
+
+    /**
+     * @var OrderStorageService
+     */
     protected $orderStorageService;
-    /** @var DeliveryService */
+
+    /**
+     * @var DeliveryService
+     */
     protected $deliveryService;
-    /** @var StoreService */
+
+    /**
+     * @var StoreService
+     */
     protected $storeService;
-    /** @var CurrentUserProviderInterface */
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
     protected $currentUserProvider;
-    /** @var UserCitySelectInterface */
+
+    /**
+     * @var UserCitySelectInterface
+     */
     protected $userCityProvider;
-    /** @var BasketService $basketService */
+
+    /**
+     * @var BasketService $basketService
+     */
     protected $basketService;
-    /** @var UserAccountService */
+
+    /**
+     * @var UserAccountService
+     */
     protected $userAccountService;
-    /** @var LoggerInterface */
+
+    /**
+     * @var LoggerInterface
+     */
     protected $logger;
-    /** @var LocationService */
+
+    /**
+     * @var LocationService
+     */
     protected $locationService;
 
     /**
@@ -94,6 +132,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $serviceContainer = Application::getInstance()->getContainer();
         /** @noinspection PhpUndefinedMethodInspection */
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->orderSplitService = $serviceContainer->get(OrderSplitService::class);
         $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->storeService = $serviceContainer->get('store.service');
@@ -280,18 +319,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $this->deliveryService->isInnerPickup($selectedDelivery)
             ) {
                 $this->arResult['SELECTED_DELIVERY'] = $this->arResult['PARTIAL_PICKUP'];
+                /** @var Order $order1 */
+                $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
+                $basket = $order1->getBasket();
             }
 
-            $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
-                $basketForRequest = $basket;
-                if ($storage->isSplit() && $this->orderStorageService->canGetPartial($selectedDelivery)) {
-                    /** @var Order $order1 */
-                    $order1 = $this->arResult['SPLIT_RESULT']['1']['ORDER'];
-                    $basketForRequest = $order1->getBasket();
-                }
-
-                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basketForRequest);
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket);
             }
         }
 
@@ -338,13 +372,20 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage->setSplit(true);
             $storage->setDeliveryId($pickup->getDeliveryId());
             $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
-            [$available, $delayed] = $this->orderStorageService->splitStockResult($pickup);
+            [$available, $delayed] = $this->orderSplitService->splitStockResult($pickup);
+
+            $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
+
+            if ($canGetPartial) {
+                $available = $this->orderSplitService->recalculateStockResult($available);
+            }
+
             $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
                 ? null
                 : (clone $pickup)->setStockResult($available);
 
-            $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $this->orderStorageService->canGetPartial($pickup);
-            $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderStorageService->canSplitOrder($pickup);
+            $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $canGetPartial;
+            $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderSplitService->canSplitOrder($pickup);
             $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
             $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
             $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage);
@@ -375,7 +416,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     {
         $tmpStorage = clone $storage;
         $tmpStorage->setDeliveryId($delivery->getDeliveryId());
-        [$splitResult1, $splitResult2] = $this->orderService->splitOrder($tmpStorage);
+        [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($tmpStorage);
         $this->arResult['SPLIT_RESULT'] = [
             '1' => [
                 'ORDER' => $splitResult1->getOrder(),
