@@ -257,3 +257,8 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
         </button>
     </div>
 </div>
+<?php
+\CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
+$currentShopInfo = (new \FourPawsOrderShopListComponent())->getShopInfo($pickup ? $pickup->getSelectedShop()->getXmlId() : '', $pickup);
+?>
+<script>window.currentShop = <?= CUtil::PhpToJSObject($currentShopInfo) ?>;</script>

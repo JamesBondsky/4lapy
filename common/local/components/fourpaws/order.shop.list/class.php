@@ -182,24 +182,30 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @param string $xmlId
+     * @param string                     $xmlId
+     * @param PickupResultInterface|null $pickup
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws Exception
      * @throws NotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
      * @throws OrderStorageSaveException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
-     * @throws Exception
      * @return array
      */
-    public function getShopInfo(string $xmlId): array
+    public function getShopInfo(string $xmlId, ?PickupResultInterface $pickup): array
     {
         $result = [];
 
-        if ($pickup = $this->getPickupResult()) {
+        $pickup = $pickup instanceof PickupResultInterface ? $pickup : $this->getPickupResult();
+        if ($pickup) {
             $stores = $pickup->getBestShops();
             $metroList = $this->getMetroInfo($stores);
             /** @var Store $store */
