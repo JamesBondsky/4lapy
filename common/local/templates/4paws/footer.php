@@ -99,6 +99,10 @@ if ($template->hasMainWrapper()) {
         </div>
     </div>
 </footer>
+<?php /** @todo вангую - потом включить везде */
+if ($template->hasFilterInPage()) { ?>
+    <div class="b-shadow js-shadow"></div>
+<?php } ?>
 <div class="b-shadow b-shadow--popover js-open-shadow"></div>
 </div>
 <?php require_once __DIR__ . '/blocks/footer/popups.php' ?>
