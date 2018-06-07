@@ -52,7 +52,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
     <h1 class="b-title b-title--h1 b-title--order">
         <?php $APPLICATION->ShowTitle() ?>
     </h1>
-    <div class="b-order js-order-whole-block">
+    <div class="b-order js-order-whole-block js-order-step2">
         <div class="b-tab-list">
             <ul class="b-tab-list__list js-scroll-order">
                 <li class="b-tab-list__item completed">
