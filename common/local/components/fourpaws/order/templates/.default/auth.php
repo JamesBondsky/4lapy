@@ -253,8 +253,8 @@ foreach ($basket as $item) {
                     </form>
                 </article>
             </div>
-            <aside class="b-order__list">
-                <h4 class="b-title b-title--order-list js-popup-mobile-link">
+            <aside class="b-order__list js-order-step1">
+                <h4 class="b-title b-title--order-list js-popup-mobile-link js-order-title">
                     Заказ: <?= $basketQuantity ?> <?= (new Declension(
                         'товар',
                         'товара',
@@ -268,7 +268,7 @@ foreach ($basket as $item) {
                         false
                     ) ?>
                 </h4>
-                <div class="b-order-list js-popup-mobile">
+                <div class="b-order-list js-popup-mobile js-order-block">
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
                         заказе</a>
                     <ul class="b-order-list__list js-order-list-block">
