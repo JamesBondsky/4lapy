@@ -63,14 +63,41 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'isBrand'        => true,
                 ]
             ) ?>
+            <?php $filterToShow = $filterCollection->getFiltersToShow();
+            $filterActions = $filterCollection->getActionsFilter();?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterCollection->getFiltersToShow(),
+                    'filters' => $filterToShow,
                     'isBrand' => true,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
+                <?php
+                /**
+                 * @var FilterBase $filter
+                 */
+                foreach ($filterActions as $filter) {?>
+                    <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
+                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) {?>
+                            <li class="b-filter-link-list__item">
+                                <label class="b-filter-link-list__label">
+                                    <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
+                                           type="checkbox"
+                                           name="<?= $filter->getFilterCode() ?>"
+                                           value="<?= $variant->getValue() ?>"
+                                           id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
+                                        <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                    <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                       href="javascript:void(0);"
+                                       title="<?= $filter->getName() ?>">
+                                        <?= $filter->getName() ?>
+                                    </a>
+                                </label>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                <?php } ?>
             </div>
         </form>
     </div>
@@ -104,10 +131,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterCollection->getFiltersToShow() as $filter) {
-                        if (!($filter instanceof ActionsFilter)) {
-                            continue;
-                        } ?>
+                    foreach ($filterActions as $filter) {?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {

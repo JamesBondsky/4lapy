@@ -98,6 +98,18 @@ class FilterCollection extends ObjectArrayCollection
         });
     }
 
+    public function getActionsFilter()
+    {
+        return $this
+            ->getVisibleFilters()
+            ->filter(function (FilterInterface $filter) {
+                if (!($filter instanceof ActionsFilter) || !$filter->hasAvailableVariants()) {
+                    return false;
+                }
+                return $filter instanceof FilterBase;
+            });
+    }
+
     /**
      * @param mixed $filter
      */
