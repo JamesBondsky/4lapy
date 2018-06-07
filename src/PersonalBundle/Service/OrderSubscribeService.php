@@ -594,6 +594,8 @@ class OrderSubscribeService
         $copyOrderId = $params->getCopyOrderId();
         // флаг необходимости выполнения деактивации подписки
         $deactivateSubscription = false;
+        // текущая дата без времени
+        $currentDateNoTime = new \DateTime($currentDate->format('d.m.Y'));
 
         // Следующая ближайшая дата доставки по подписке
         $deliveryDate = null;
@@ -711,10 +713,11 @@ class OrderSubscribeService
             if ($deliveryCalculationResult) {
                 $notGetInTime = false;
                 try {
-                    // дата, когда нужно создать заказ, чтобы доставить его к сроку
+                    // дата, когда нужно создать заказ, чтобы доставить его к сроку,
+                    // дата возвращается без времени (00:00:00)
                     // (результат может быть меньше текущей даты)
                     $orderCreateDate = $params->getDateForOrderCreate();
-                    if ($orderCreateDate < $currentDate) {
+                    if ($orderCreateDate < $currentDateNoTime) {
                         // заказ не может быть доставлен к установленному сроку
                         $notGetInTime = true;
                     }
@@ -748,7 +751,8 @@ class OrderSubscribeService
                                 $deliveryDate,
                                 $currentDate
                             );
-                            if ($tmpOrderCreate < $currentDate) {
+
+                            if ($tmpOrderCreate < $currentDateNoTime) {
                                 $products[] = '['.$offer->getXmlId().'] '.$offer->getName();
                                 // работаем через внутренний метод, т.к. в нем учитывается дополнительное время по подписке
                                 $tmpDeliveryDate = $this->getOrderDeliveryDate(

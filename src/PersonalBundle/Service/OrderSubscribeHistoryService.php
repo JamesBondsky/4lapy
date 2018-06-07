@@ -189,6 +189,9 @@ class OrderSubscribeHistoryService
         if ($fields['UF_DATE_START'] && $fields['UF_DATE_START'] instanceof Date) {
             $fields['UF_DATE_START'] = $fields['UF_DATE_START']->toString();
         }
+        if ($fields['UF_LAST_CHECK'] && $fields['UF_LAST_CHECK'] instanceof Date) {
+            $fields['UF_LAST_CHECK'] = $fields['UF_LAST_CHECK']->toString();
+        }
 
         return serialize($fields);
     }
