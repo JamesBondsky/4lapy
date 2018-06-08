@@ -202,7 +202,7 @@ if (null !== $delivery) {
                     <?php } ?>
                 </ul>
             </div>
-            <div class="b-order__link-wrapper"
+            <div class="b-order__link-wrapper js-back-to-basket"
                 <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
                 <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
                    href="/cart"
@@ -217,7 +217,7 @@ if (null !== $delivery) {
         </div>
         <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
             <div class="two-deliveries__block<?= !$deliveryIsSplit ? '' : ' active activeBlock' ?>">
-                <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
+                <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link">
                     <span class="js-mobile-title-order">Заказ №1: <?= $deliveryResult1Quantity ?> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
                     сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price, false) ?>
@@ -246,12 +246,12 @@ if (null !== $delivery) {
                     </ul>
                 </div>
 
-                <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link js-full-list-title">
+                <h4 class="b-title b-title--order-list js-popup-mobile-link js-parts-list-title--order-list js-popup-mobile-link js-parts-list-title">
                     <span class="js-mobile-title-order">Заказ №2: <?= $deliveryResult2Quantity ?> <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
                     (<?= WordHelper::showWeight($deliveryResult2Weight, true) ?>) на
                     сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price, false) ?>
                 </h4>
-                <div class="b-order-list b-order-list--aside js-full-list js-popup-mobile js-popup-mobile--aside js-full-list">
+                <div class="b-order-list b-order-list--aside js-popup-mobile js-popup-mobile--aside js-parts-list">
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
                         заказе</a>
                     <ul class="b-order-list__list js-order-list-block">
@@ -274,7 +274,7 @@ if (null !== $delivery) {
                         <?php } ?>
                     </ul>
                 </div>
-                <h4 class="b-title b-title--order-list js-parts-list-title"
+                <h4 class="b-title b-title--order-list js-incart-title"
                     <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
                     <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
                     <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
@@ -284,7 +284,7 @@ if (null !== $delivery) {
                         false
                     ) ?>
                 </h4>
-                <div class="b-order-list b-order-list--aside js-popup-mobile js-parts-list"
+                <div class="b-order-list b-order-list--aside js-popup-mobile js-incart-block"
                     <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
                         заказе</a>
@@ -308,7 +308,7 @@ if (null !== $delivery) {
                         <?php } ?>
                     </ul>
                 </div>
-                <div class="b-order__link-wrapper"
+                <div class="b-order__link-wrapper js-back-to-basket"
                     <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
                     <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
                        href="/cart"

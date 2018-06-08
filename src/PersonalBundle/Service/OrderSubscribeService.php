@@ -468,8 +468,9 @@ class OrderSubscribeService
         $tmpDeliveryDate = $tmpCalculationResult->getDeliveryDate();
         $deliveryDate = clone $tmpDeliveryDate;
 
+        // 08.06.2018 Убрал - слишком много вопросов задается
         // добавляем 1 день для подстраховки
-        $deliveryDate->add(new \DateInterval('P1D'));
+        //$deliveryDate->add(new \DateInterval('P1D'));
 
         return $deliveryDate;
     }
@@ -759,13 +760,13 @@ class OrderSubscribeService
                                     $tmpDeliveryCalculationResult,
                                     $currentDate
                                 );
-                                if ($tmpDeliveryDate > $deliveryDate) {
+                                if ($tmpDeliveryDate > $resultDeliveryDate) {
                                     $resultDeliveryDate = $tmpDeliveryDate;
                                 }
                             }
                         }
-                        $orderComments .= 'Заказ должен быть готов к выдаче '.$deliveryDate->format('d.m.Y').', ';
-                        $orderComments .= 'плановая дата готовности '.$resultDeliveryDate->format('d.m.Y').' ';
+                        $orderComments .= 'Заказ должен быть готов к выдаче '.$deliveryDate->format('d.m.Y H:i:s').', ';
+                        $orderComments .= 'плановая дата готовности '.$resultDeliveryDate->format('d.m.Y H:i:s').' ';
                         $orderComments .= 'Причина: '.implode('; ', $products);
                     } catch (\Exception $exception) {
                         $result->addError(

@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use FourPaws\App\Application;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
@@ -36,6 +37,8 @@ class BasketMiniComponent extends FourPawsComponent
 
     /** @var array $images */
     private $images;
+    /** @var Basket */
+    private $basketItemsWithoutGifts;
 
 
     public function onPrepareComponentParams($params): array
@@ -72,11 +75,12 @@ class BasketMiniComponent extends FourPawsComponent
      */
     public function getOffer(int $offerId): ?Offer
     {
-        if($offerId <= 0){
+        if ($offerId <= 0) {
             return null;
         }
         if (!isset($this->offers[$offerId])) {
-            $this->offers[$offerId] = OfferQuery::getById($offerId);
+            $this->offers[$offerId] = OfferQuery::getById($offerId,
+                ['ID', 'IBLOCK_ID', 'PROPERTY_IMG', 'PROPERTY_CML2_LIK']);
         }
         return $this->offers[$offerId];
     }
@@ -88,7 +92,7 @@ class BasketMiniComponent extends FourPawsComponent
      */
     public function getImage(int $offerId): ?ResizeImageDecorator
     {
-        if($offerId <= 0){
+        if ($offerId <= 0) {
             return null;
         }
         if (!isset($this->images[$offerId])) {
@@ -100,6 +104,37 @@ class BasketMiniComponent extends FourPawsComponent
             }
         }
         return $this->images[$offerId];
+    }
+
+    /**
+     *
+     *
+     * @param Basket $basket
+     *
+     * @return int
+     */
+    public function getBasketCountWithoutGifts(Basket $basket): int
+    {
+        return $this->getBasketItemsWithoutGifts($basket)->count();
+    }
+
+    /**
+     * @param Basket $basket
+     *
+     * @return BasketBase
+     */
+    public function getBasketItemsWithoutGifts(Basket $basket): BasketBase
+    {
+        if ($this->basketItemsWithoutGifts === null) {
+            $this->basketItemsWithoutGifts = Basket::create($basket->getSiteId());
+            /** @var BasketItem $basketItem */
+            foreach ($basket->getBasketItems() as $basketItem) {
+                if ($this->basketService->isBasketPropEmpty($basketItem->getId(), 'IS_GIFT')) {
+                    $this->basketItemsWithoutGifts->addItem($basketItem);
+                }
+            }
+        }
+        return $this->basketItemsWithoutGifts;
     }
 
     /**
@@ -115,23 +150,5 @@ class BasketMiniComponent extends FourPawsComponent
             return false;
         }
         return true;
-    }
-
-    /**
-     *
-     *
-     * @param Basket $basket
-     *
-     * @return int
-     */
-    public function getBasketCountWithoutGifts(Basket $basket): int {
-        $result = 0;
-        /** @var BasketItem $basketItem */
-        foreach ($basket->getBasketItems() as $basketItem) {
-            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
-                ++$result;
-            }
-        }
-        return $result;
     }
 }

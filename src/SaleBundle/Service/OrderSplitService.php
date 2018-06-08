@@ -223,11 +223,15 @@ class OrderSplitService implements LoggerAwareInterface
         return [$availableItems, $delayedItems];
     }
 
-
     /**
      * Можно ли разделить заказ
      *
      * @param CalculationResultInterface $delivery
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
      *
      * @return bool
      */
@@ -235,13 +239,19 @@ class OrderSplitService implements LoggerAwareInterface
     {
         $result = false;
 
+        $orderable = $delivery->getStockResult()->getOrderable();
         if (!$this->deliveryService->isDpdPickup($delivery) &&
             \in_array($delivery->getDeliveryZone(), [DeliveryService::ZONE_1, DeliveryService::ZONE_2], true) &&
-            !$delivery->getStockResult()->getOrderable()->getByRequest(true)->isEmpty()
+            !$orderable->getByRequest(true)->isEmpty()
         ) {
-            [$available, $delayed] = $this->splitStockResult($delivery);
+            $available = $orderable->getRegular();
+            $delayed = $orderable->getByRequest();
 
-            $result = !$available->isEmpty() && !$delayed->isEmpty();
+            if ($result = (!$available->isEmpty() && !$delayed->isEmpty())) {
+                $fullDate = $delivery->getDeliveryDate();
+                $partialDate = (clone $delivery)->setStockResult($available)->getDeliveryDate();
+                $result = $fullDate !== $partialDate;
+            }
         }
 
         return $result;
@@ -270,12 +280,16 @@ class OrderSplitService implements LoggerAwareInterface
     /**
      * @param CalculationResultInterface $delivery
      *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
      * @return StockResultCollection[]
      */
     public function splitStockResult(CalculationResultInterface $delivery): array
     {
         $stockResultCollection = $delivery->getStockResult();
-        if ($delivery->getStockResult()->getByRequest(true)->isEmpty()) {
+        if ($this->canSplitOrder($delivery)) {
             $available = $stockResultCollection->getAvailable();
             $delayed = $stockResultCollection->getDelayed();
         } else {

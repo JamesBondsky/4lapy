@@ -47,8 +47,7 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
     public function onPrepareComponentParams($params) : array
     {
         if (!($params['PRODUCT'] instanceof Product) && !empty($params['PRODUCT_ID'])) {
-            $productQuery      = new \FourPaws\Catalog\Query\ProductQuery();
-            $params['PRODUCT'] = $productQuery->withFilter(['=ID' => $params['PRODUCT_ID']])->exec()->first();
+            $params['PRODUCT']      = \FourPaws\Catalog\Query\ProductQuery::getById((int)$params['PRODUCT_ID']);
         }
         
         if (empty($params['OFFER']) && !empty($params['OFFER_ID'])) {
