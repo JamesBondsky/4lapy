@@ -421,14 +421,6 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
-    public function hasFilterInPage(): bool
-    {
-        return $this->isSearchPage() || $this->isBrand() || $this->isCatalogList();
-    }
-
-    /**
-     * @return bool
-     */
     public function isSearchPage(): bool
     {
         return $this->isDir('/catalog/search');
