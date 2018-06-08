@@ -202,7 +202,7 @@ if (null !== $delivery) {
                     <?php } ?>
                 </ul>
             </div>
-            <div class="b-order__link-wrapper"
+            <div class="b-order__link-wrapper js-back-to-basket"
                 <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
                 <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
                    href="/cart"
@@ -308,7 +308,7 @@ if (null !== $delivery) {
                         <?php } ?>
                     </ul>
                 </div>
-                <div class="b-order__link-wrapper"
+                <div class="b-order__link-wrapper js-back-to-basket"
                     <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
                     <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
                        href="/cart"
