@@ -174,7 +174,7 @@ abstract class IblockElementRepository
 
         $data = $this->toArray($iblockElement);
         $properties = $data['PROPERTY_VALUES'];
-        unset($data['PROPERTY_VALUES'], $data['IBLOCK_ID']);
+        unset($data['PROPERTY_VALUES'], $data['IBLOCK_ID'], $data['IBLOCK_SECTION_ID']);
 
         if ($this->iblockElement->Update($iblockElement->getId(), $data)) {
             $this->setProperties($iblockElement->getId(), $properties);

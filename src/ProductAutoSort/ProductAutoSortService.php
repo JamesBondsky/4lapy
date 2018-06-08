@@ -453,7 +453,7 @@ class ProductAutoSortService implements LoggerAwareInterface
         $categories = SectionTable::getList(
             [
                 'filter' => [
-                    'ID' => array_keys($categoriesToProductIndex),
+                    'ID' => array_keys($productsToCategoryIndex),
                 ],
                 'select' => ['ID', 'DEPTH_LEVEL'],
             ]
@@ -465,7 +465,7 @@ class ProductAutoSortService implements LoggerAwareInterface
         uksort(
             $productsToCategoryIndex,
             function ($categoryId1, $categoryId2) use ($categoryDepthLevels) {
-                return $categoryDepthLevels[$categoryId1] > $categoryDepthLevels[$categoryId2] ? -1 : 1;
+                return $categoryDepthLevels[$categoryId2] <=> $categoryDepthLevels[$categoryId1];
             }
         );
 

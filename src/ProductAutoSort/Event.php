@@ -10,6 +10,7 @@ use CIBlockElement;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\ProductAutoSort\UserType\ElementPropertyConditionUserType;
@@ -22,6 +23,8 @@ use Psr\Log\LoggerInterface;
  */
 class Event extends BaseServiceHandler
 {
+    protected static $lockEvents = false;
+
     /**
      * @param EventManager $eventManager
      *
@@ -41,9 +44,32 @@ class Event extends BaseServiceHandler
         $module = 'iblock';
         static::initHandler('OnAfterIBlockSectionDelete', [self::class, 'deleteEPCValue'], $module);
 
-        foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventTYpe) {
-            static::initHandlerCompatible($eventTYpe, [self::class, 'autosortProduct'], $module);
-        }
+        static::initHandlerCompatible('OnAfterIBlockElementAdd', [self::class, 'autoSortProductOnCreate'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'autoSortProductOnUpdate'], $module);
+    }
+
+    /**
+     * Lock all events with cache
+     */
+    public static function lockEvents(): void
+    {
+        self::$lockEvents = true;
+    }
+
+    /**
+     * Unlock all events with cache
+     */
+    public static function unlockEvents(): void
+    {
+        self::$lockEvents = false;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function isLockEvents(): bool
+    {
+        return self::$lockEvents;
     }
 
     /**
@@ -51,6 +77,10 @@ class Event extends BaseServiceHandler
      */
     public static function includeJquery(): void
     {
+        if (static::isLockEvents()) {
+            return;
+        }
+
         if (!\defined('ADMIN_SECTION')) {
             return;
         }
@@ -62,10 +92,14 @@ class Event extends BaseServiceHandler
      *
      * @param $arFields
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public static function deleteEPCValue($arFields): void
     {
+        if (static::isLockEvents()) {
+            return;
+        }
+
         if (!isset($arFields['ID']) || $arFields['ID'] <= 0) {
             return;
         }
@@ -75,13 +109,50 @@ class Event extends BaseServiceHandler
         $productAutoSortService->deleteValue((int)$arFields['ID']);
     }
 
+    public static function autoSortProductOnCreate($arFields): void
+    {
+        if (static::isLockEvents()) {
+            return;
+        }
+
+        try {
+            $productIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
+
+            if (
+                !isset($arFields['IBLOCK_ID'], $arFields['ID'], $arFields['PROPERTY_VALUES']['APPLY_AUTOSORT'])
+                || (int)$arFields['IBLOCK_ID'] !== $productIblockId
+                //Не отмечен флажок "Автоматически определить категории"
+                || (int)$arFields['PROPERTY_VALUES']['APPLY_AUTOSORT'] === 0
+            ) {
+                return;
+            }
+
+            static::autoSortProduct($arFields['ID'], $arFields['IBLOCK_ID']);
+        } catch (Exception $exception) {
+            self::log()->error(
+                sprintf(
+                    "[%s] %s (%s)\n%s\n",
+                    \get_class($exception),
+                    $exception->getMessage(),
+                    $exception->getCode(),
+                    $exception->getTraceAsString()
+                )
+            );
+        }
+    }
+
+
     /**
      * Запустить автоматическое определение категорий для одного продукта.
      *
      * @param $arFields
      */
-    public static function autosortProduct($arFields): void
+    public static function autoSortProductOnUpdate($arFields): void
     {
+        if (static::isLockEvents()) {
+            return;
+        }
+
         try {
             $productIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
 
@@ -96,17 +167,7 @@ class Event extends BaseServiceHandler
                 return;
             }
 
-            /** @var \FourPaws\ProductAutoSort\ProductAutoSortService $autosort */
-            $autosort = Application::getInstance()->getContainer()->get('product.autosort.service');
-
-            $result = $autosort->defineProductsCategories([$arFields['ID']]);
-
-            //Результат вызова не имеет смысла, т.к. не позволяет определить ошибку
-            (new CIBlockElement())->SetElementSection($arFields['ID'], $result[$arFields['ID']], false, 0,
-                $result[$arFields['ID']][0]);
-
-            //Снятие флажка
-            CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], ['APPLY_AUTOSORT' => 0]);
+            static::autoSortProduct($arFields['ID'], $arFields['IBLOCK_ID']);
         } catch (Exception $exception) {
             self::log()->error(
                 sprintf(
@@ -118,6 +179,26 @@ class Event extends BaseServiceHandler
                 )
             );
         }
+    }
+
+    /**
+     * @param int $id
+     * @param int $iblockId
+     *
+     * @throws ApplicationCreateException
+     */
+    private static function autoSortProduct(int $id, int $iblockId) {
+        /** @var \FourPaws\ProductAutoSort\ProductAutoSortService $autosort */
+        $autosort = Application::getInstance()->getContainer()->get('product.autosort.service');
+
+        $result = $autosort->defineProductsCategories([$id]);
+
+        //Результат вызова не имеет смысла, т.к. не позволяет определить ошибку
+        (new CIBlockElement())->SetElementSection($id, $result[$id], false, 0,
+            $result[$id][0]);
+
+        //Снятие флажка
+        CIBlockElement::SetPropertyValuesEx($id, $iblockId, ['APPLY_AUTOSORT' => 0]);
     }
 
     /**

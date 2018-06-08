@@ -204,9 +204,9 @@ class ProductService
 
         $product->withActive(!$material->isNotUploadToIm());
 
-        if (!$product->getId()) {
+        if (!$product->getId() && mb_strpos($material->getOfferXmlId(), '1') === 0) {
             /**
-             * По умолчанию создающиеся товары должны быть деактивированными
+             * По умолчанию создающиеся товары должны быть деактивированными, если это не подарки
              */
             $product->withActive(false);
         }
@@ -254,7 +254,8 @@ class ProductService
                     SapProductProperty::PACKING_COMBINATION,
                     ['']
                 )->first()
-            );
+            )
+            ->withApplyAutoSort(!$product->getId());
         $this->fillReferenceProperties($product, $material);
         $this->fillCountry($product, $material);
     }
