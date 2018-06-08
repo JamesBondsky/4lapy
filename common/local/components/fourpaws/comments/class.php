@@ -183,6 +183,7 @@ class CCommentsComponent extends \CBitrixComponent
             $params['TYPE'] = 'iblock';
         }
 
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?: 'A';
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
 
         return $params;

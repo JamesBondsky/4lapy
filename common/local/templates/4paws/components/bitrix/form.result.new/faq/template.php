@@ -75,6 +75,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
         } ?>
         <div class="b-checkbox b-checkbox--agree">
             <input class="b-checkbox__input" type="checkbox" name="agree" id="checkbox1" value="" required="required"/>
+            <span class="b-error"><span class="js-message"></span></span>
             <label class="b-checkbox__name b-checkbox__name--agree" for="checkbox1">
                 <span class="b-checkbox__text-agree">Я ознакомлен(а) и соглашаюсь с условиями
                     <a class="b-checkbox__link-agree" href="/company/user-agreement/" target='_blank'
@@ -85,7 +86,6 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                        href="/company/confidenciality/" target='_blank'
                        title="обработку персональных данных">обработку персональных данных.</a>
                 </span>
-                <span class="b-error"><span class="js-message"></span></span>
             </label>
         </div>
         <div class="b-checkbox b-checkbox--agree">
