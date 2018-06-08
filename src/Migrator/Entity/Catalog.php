@@ -5,7 +5,9 @@ namespace FourPaws\Migrator\Entity;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\SectionTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\SystemException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
@@ -79,7 +81,7 @@ class Catalog extends IBlockElement
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
      * @throws \InvalidArgumentException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Exception
      *
@@ -106,11 +108,11 @@ class Catalog extends IBlockElement
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws Exceptions\UpdateException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Exception
      * @throws \InvalidArgumentException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
@@ -156,10 +158,10 @@ class Catalog extends IBlockElement
      * @param string $primary
      * @param array $data
      *
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws SystemException
+     * @throws Exceptions\UpdateException
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Exception
      *
@@ -238,7 +240,7 @@ class Catalog extends IBlockElement
     /**
      * @param $skuExternalIds
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      *
      * @return int
      */
@@ -254,17 +256,19 @@ class Catalog extends IBlockElement
         
         return (int)array_shift($result);
     }
-    
+
     /**
-     * @param int   $productId
+     * @param int $productId
      * @param array $skuList
      *
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws Exceptions\UpdateException
      */
-    public function addSku(int $productId, array $skuList)
+    public function addSku(int $productId, array $skuList): void
     {
         foreach ($skuList as $skuExternalId) {
+            /** @noinspection PhpAssignmentInConditionInspection */
             if ($skuInternalId = MapTable::getInternalIdByExternalId($skuExternalId, $this->entity)) {
                 $this->setFieldValue('PROPERTY_CML2_LINK', $skuInternalId, $productId);
             }
@@ -284,20 +288,25 @@ class Catalog extends IBlockElement
     /**
      * @return int
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function getUnsortedSectionIdByCode() : int
     {
         static $sectionId;
         
         if (!$sectionId) {
+            /**
+             * @var array $sectionId
+             */
             $sectionId = SectionTable::getList([
                                                    'filter' => [
                                                        'CODE'      => self::UNSORTED_SECTION_CODE,
                                                        'IBLOCK_ID' => $this->catalogId,
                                                    ],
                                                    'select' => ['ID'],
-                                               ])->fetch()['ID'];
+                                               ])->fetch();
+
+            $sectionId = $sectionId['ID'];
         }
         
         return (int)$sectionId;
