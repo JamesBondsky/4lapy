@@ -356,6 +356,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_LOW_TEMPERATURE = false;
 
     /**
+     * @var bool
+     */
+    protected $PROPERTY_APPLY_AUTOSORT = false;
+
+    /**
      * @var string
      * @Type("string")
      * @Groups({"elastic"})
@@ -1317,6 +1322,25 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function withLowTemperatureRequired($isLowTemperature = false): self
     {
         $this->PROPERTY_LOW_TEMPERATURE = $isLowTemperature;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isApplyAutoSort(): bool
+    {
+        return $this->PROPERTY_APPLY_AUTOSORT;
+    }
+
+    /**
+     * @param bool $applyAutoSort
+     * @return Product
+     */
+    public function withApplyAutoSort(bool $applyAutoSort): self
+    {
+        $this->PROPERTY_APPLY_AUTOSORT = $applyAutoSort;
 
         return $this;
     }

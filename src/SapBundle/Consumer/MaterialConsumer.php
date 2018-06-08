@@ -68,11 +68,11 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * MaterialConsumer constructor..
-     * @param ReferenceService $referenceService
-     * @param OfferService $offerService
-     * @param ProductService $productService
+     * @param ReferenceService      $referenceService
+     * @param OfferService          $offerService
+     * @param ProductService        $productService
      * @param CatalogProductService $catalogProductService
-     * @param BrandRepository $brandRepository
+     * @param BrandRepository       $brandRepository
      */
     public function __construct(
         ReferenceService $referenceService,
@@ -80,7 +80,8 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
         ProductService $productService,
         CatalogProductService $catalogProductService,
         BrandRepository $brandRepository
-    ) {
+    )
+    {
         $this->connection = Application::getConnection();
         $this->referenceService = $referenceService;
         $this->offerService = $offerService;
@@ -101,20 +102,22 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             return false;
         }
 
-        /**
-         * Костыль! Уровень изоляции кривой.
-         */
-        Event::lockEvents();
+        $this->connection->startTransaction();
 
         try {
             if ($material->isNotUploadToIm()) {
-                return $this->offerService->deactivate($material->getOfferXmlId());
+                $result = $this->offerService->deactivate($material->getOfferXmlId());
+                $this->connection->commitTransaction();
+                return $result;
             }
 
-            $this->connection->startTransaction();
+            /**
+             * Костыль! Уровень изоляции кривой.
+             */
+            Event::lockEvents();
+
             $this->referenceService->fillFromMaterial($material);
             $this->connection->commitTransaction();
-
 
             $this->connection->startTransaction();
             $brand = $this->getBrand($material);
@@ -134,13 +137,13 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
                 sprintf('Undefined exception: %s [%s]', $exception->getMessage(), $exception->getCode()),
                 $exception->getTrace()
             );
+        } finally {
+            /**
+             * Костыль! Уровень изоляции кривой.
+             */
+            Event::unlockEvents();
         }
         $this->connection->rollbackTransaction();
-
-        /**
-         * Костыль! Уровень изоляции кривой.
-         */
-        Event::unlockEvents();
 
         return false;
     }
@@ -198,7 +201,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param Material $material
      *
-     * @param Brand $brand
+     * @param Brand    $brand
      *
      * @throws NotFoundReferenceRepositoryException
      * @throws NotFoundDataManagerException
@@ -243,7 +246,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param Material $material
-     * @param Product $product
+     * @param Product  $product
      *
      * @throws BaseRuntimeException
      * @throws NotFoundDataManagerException
@@ -289,7 +292,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param Material $material
-     * @param Offer $offer
+     * @param Offer    $offer
      *
      * @throws NotFoundBasicUomException
      * @throws BaseRuntimeException
