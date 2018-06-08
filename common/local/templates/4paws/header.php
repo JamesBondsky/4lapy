@@ -35,9 +35,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru'); ?>
 </head>
 <body>
-<?php $APPLICATION->ShowPanel();
-/** @todo вангую - потом включить везде */
-if ($template->hasFilterInPage()) { ?>
+<?php $APPLICATION->ShowPanel(); ?>
     <header class="b-header <?= $template->getHeaderClass() ?> js-header">
         <div class="b-container">
             <?php if ($template->hasShortHeaderFooter()) { ?>
@@ -146,119 +144,7 @@ if ($template->hasFilterInPage()) { ?>
      * Основное меню. dropdown
      */
     $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
-<?php } ?>
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
-    <?php /** @todo вангую - потом отключить везде */
-    if (!$template->hasFilterInPage()) { ?>
-        <header class="b-header <?= $template->getHeaderClass() ?> js-header">
-            <div class="b-container">
-                <?php if ($template->hasShortHeaderFooter()) { ?>
-                    <div class="b-header__info b-header__info--short-header">
-                        <a class="b-logo"
-                           href="/"
-                           title="">
-                            <img src="/static/build/images/inhtml/logo.svg"
-                                 alt="Четыре лапы"
-                                 title="Четыре лапы"/>
-                        </a>
-                        <span class="b-header__phone-short-header">
-                        <?php $APPLICATION->IncludeComponent('fourpaws:city.phone',
-                            'template.header.short',
-                            [],
-                            false,
-                            ['HIDE_ICONS' => 'Y']) ?>
-                    </span>
-                        <div class="b-header-info b-header-info--short-header js-hide-open-menu">
-                            <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
-                        </div>
-                    </div>
-                <?php } else { ?>
-                    <div class="b-header__info">
-                        <a class="b-hamburger b-hamburger--mobile-menu js-hamburger-menu-mobile"
-                           href="javascript:void(0);"
-                           title="">
-                            <span class="b-hamburger__hamburger-icon"></span>
-                        </a>
-                        <a class="b-hamburger js-hamburger-menu-main" href="javascript:void(0);" title="">
-                    <span class="b-icon b-icon--hamburger">
-                        <?= new SvgDecorator('icon-hamburger', 24, 18) ?>
-                    </span>
-                        </a>
-                        <a class="b-logo" href="/" title="">
-                            <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы"/>
-                        </a>
-                        <?php
-                        $APPLICATION->IncludeComponent('fourpaws:catalog.search.form',
-                            '',
-                            [],
-                            false,
-                            ['HIDE_ICONS' => 'Y']);
-                        ?>
-                        <div class="b-header-info">
-                            <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
-                            <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
-                                '',
-                                [],
-                                false,
-                                ['HIDE_ICONS' => 'Y']);
-
-                            echo PawsApplication::getInstance()
-                                ->getContainer()
-                                ->get(BasketViewService::class)
-                                ->getMiniBasketHtml(); ?>
-                        </div>
-                    </div>
-                    <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
-                        <?php
-                        /**
-                         * Основное меню.
-                         * dropdown передается через header_dropdown_menu
-                         */
-                        $APPLICATION->IncludeComponent(
-                            'fourpaws:iblock.main.menu',
-                            'fp.17.0.top',
-                            [
-                                'MENU_IBLOCK_TYPE'          => IblockType::MENU,
-                                'MENU_IBLOCK_CODE'          => IblockCode::MAIN_MENU,
-                                'PRODUCTS_IBLOCK_TYPE'      => IblockType::CATALOG,
-                                'PRODUCTS_IBLOCK_CODE'      => IblockCode::PRODUCTS,
-                                'CACHE_TIME'                => 3600,
-                                'CACHE_TYPE'                => 'A',
-                                'MAX_DEPTH_LEVEL'           => '4',
-                                // N - шаблон кэшируется
-                                'CACHE_SELECTED_ITEMS'      => 'N',
-                                'TEMPLATE_NO_CACHE'         => 'N',
-                                // количество популярных брендов в пункте меню "Товары по питомцу"
-                                'BRANDS_POPULAR_LIMIT'      => '6',
-                                // количество популярных брендов в пункте меню "По бренду"
-                                'BRANDS_MENU_POPULAR_LIMIT' => '8',
-                            ],
-                            null,
-                            [
-                                'HIDE_ICONS' => 'Y',
-                            ]
-                        );
-                        ?>
-                        <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
-                            '',
-                            [],
-                            false,
-                            ['HIDE_ICONS' => 'Y']) ?>
-                        <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                            'template.header',
-                            [],
-                            false,
-                            ['HIDE_ICONS' => 'Y']); ?>
-                    </div>
-                <?php } ?>
-            </div>
-        </header>
-        <?php
-        /**
-         * Основное меню. dropdown
-         */
-        $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
-    <?php } ?>
     <?php if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
