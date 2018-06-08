@@ -2,26 +2,26 @@
 $arUrlRewrite=array (
   1 => 
   array (
-    'CONDITION' => '#^/services/articles/#',
+    'CONDITION' => '#^/articles/#',
     'RULE' => '',
     'ID' => 'bitrix:news',
-    'PATH' => '/services/articles/index.php',
+    'PATH' => '/articles/index.php',
     'SORT' => 100,
   ),
   0 => 
   array (
-    'CONDITION' => '#^/customer/shares/#',
+    'CONDITION' => '#^/shares/#',
     'RULE' => '',
     'ID' => 'bitrix:news',
-    'PATH' => '/customer/shares/index.php',
+    'PATH' => '/shares/index.php',
     'SORT' => 100,
   ),
   2 => 
   array (
-    'CONDITION' => '#^/services/news/#',
+    'CONDITION' => '#^/news/#',
     'RULE' => '',
     'ID' => 'bitrix:news',
-    'PATH' => '/services/news/index.php',
+    'PATH' => '/news/index.php',
     'SORT' => 100,
   ),
   4 => 

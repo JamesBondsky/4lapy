@@ -143,7 +143,7 @@ class StoreService
         $result->setService($services);
         $result->setTitle($store->getTitle());
         /** @todo нет детального магазина - поставлен url на список */
-        $uri = new Uri('http://' . SITE_SERVER_NAME . '/company/shops/');
+        $uri = new Uri('http://' . SITE_SERVER_NAME . '/shops/');
         $uri->addParams(['city' => $store->getLocation(), 'id' => $store->getId()]);
         $result->setUrl($uri->getUri());
         $result->setWorkTime($store->getScheduleString());

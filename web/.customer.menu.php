@@ -2,7 +2,7 @@
 $aMenuLinks = Array(
 	Array(
 		"Акции", 
-		"/customer/shares/", 
+		"/shares/", 
 		Array(), 
 		Array(), 
 		"" 
@@ -16,28 +16,28 @@ $aMenuLinks = Array(
 	),
 	Array(
 		"Как купить", 
-		"/customer/how-to-buy/", 
+		"/how-to-buy/", 
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"Бонусная программа", 
-		"/customer/bonus-program/", 
+		"/bonus-program/", 
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"Доставка и оплата", 
-		"/customer/payment-and-delivery/", 
+		"/payment-and-delivery/", 
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"Подписка на доставку",
-		"/customer/podpiska/",
+		"/podpiska/",
 		Array(), 
 		Array(), 
 		"" 
