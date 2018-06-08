@@ -3,9 +3,13 @@
 namespace FourPaws\CatalogBundle\Dto;
 
 use FourPaws\Catalog\Model\Category;
-use FourPaws\CatalogBundle\Collection\SortsCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Class SearchRequest
+ *
+ * @package FourPaws\CatalogBundle\Dto
+ */
 class SearchRequest extends AbstractCatalogRequest implements CatalogCategorySearchRequestInterface
 {
     /**
@@ -16,9 +20,10 @@ class SearchRequest extends AbstractCatalogRequest implements CatalogCategorySea
     /**
      * @Assert\NotBlank()
      * @Assert\Length(min="3", max="100")
+     *
      * @var string
      */
-    protected $searchString = '';
+    protected $searchString;
 
     /**
      * @return Category
