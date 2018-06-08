@@ -3,28 +3,28 @@
 $aMenuLinks = Array(
 	Array(
 		"Магазины", 
-		"/company/shops/", 
+		"/shops/", 
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"О нас", 
-		"/company/about/", 
+		"/about/", 
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"Вакансии", 
-		"/company/jobs/", 
+		"/jobs/", 
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"Партнерам", 
-		"/company/partnership/", 
+		"/partnership/", 
 		Array(), 
 		Array(), 
 		"" 

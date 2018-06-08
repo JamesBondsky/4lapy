@@ -37,13 +37,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <dl class="b-app__item">
             <dt class="b-app__name">Способы оплаты</dt>
             <dd class="b-app__block">
-                <a class="b-app__link b-app__link--payment" href="/customer/payment-and-delivery/" title="">
+                <a class="b-app__link b-app__link--payment" href="/payment-and-delivery/" title="">
                     <img src="/static/build/images/inhtml/visa.png" title="" alt="" role="presentation" />
                 </a>
-                <a class="b-app__link b-app__link--payment" href="/customer/payment-and-delivery/" title="">
+                <a class="b-app__link b-app__link--payment" href="/payment-and-delivery/" title="">
                     <img src="/static/build/images/inhtml/master-card.png" title="" alt="" role="presentation" />
                 </a>
-                <a class="b-app__link b-app__link--payment" href="/customer/payment-and-delivery/" title="">
+                <a class="b-app__link b-app__link--payment" href="/payment-and-delivery/" title="">
                     <img src="/static/build/images/inhtml/mir.png" title="" alt="" role="presentation" />
                 </a>
             </dd>

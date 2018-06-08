@@ -33,7 +33,7 @@ $APPLICATION->IncludeComponent(
         </span>
     </span>
     <span class="b-footer-communication__item">
-        <a class="b-footer-communication__link" href="/company/feedback/" title="Обратная связь">
+        <a class="b-footer-communication__link" href="/feedback/" title="Обратная связь">
             <span class="b-icon b-icon--footer">
                 <?= new SvgDecorator('icon-feedback', 16, 11) ?>
             </span>

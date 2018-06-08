@@ -39,7 +39,7 @@ $this->setFrameMode(true);
                     зависит от Банка, который выдал Вашу банковскую карту).</p>
                 <?php
                 /** @see https://jira.adv.ru/browse/LP12-47
-                <a href="/customer/return-policy/">Правила возврата и обмена</a>
+                <a href="/return-policy/">Правила возврата и обмена</a>
                  */ ?>
             </div>
         </div>

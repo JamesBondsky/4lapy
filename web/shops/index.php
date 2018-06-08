@@ -6,7 +6,7 @@ $APPLICATION->SetTitle('Магазины');
     'fourpaws:shop',
     '',
     [
-        'SEF_FOLDER'        => '/company/shops/',
+        'SEF_FOLDER'        => '/shops/',
         'SEF_MODE'          => 'Y',
         'SEF_URL_TEMPLATES' => [
             'list'   => '',

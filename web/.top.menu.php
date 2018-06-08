@@ -1,32 +1,31 @@
 <?
 $aMenuLinks = Array(
 	Array(
-		"Каталог",
-		"/catalog/",
+        'Каталог',
+        '/catalog/',
 		Array(),
 		Array(),
-		""
+        ''
 	),
     Array(
-        "Покупателям",
-        "/customer/",
+        'Покупателям',
+        '',
         Array(),
-        Array(),
-        ""
+        Array('CHILDS_BY_MENU' => 'customer'),
+        ''
     ),
 	Array(
-		"Сервисы",
-		"/services/",
+        'Сервисы',
+        '',
 		Array(),
-		Array(),
-		""
+		Array('CHILDS_BY_MENU' => 'services'),
+        ''
 	),
 	Array(
-		"Компания",
-		"/company/",
+        'Компания',
+        '',
 		Array(),
-		Array(),
-		""
+		Array('CHILDS_BY_MENU' => 'company'),
+        ''
 	)
 );
-?>

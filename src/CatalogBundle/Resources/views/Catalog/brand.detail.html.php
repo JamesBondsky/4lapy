@@ -136,7 +136,7 @@ if (!$isAjax) { ?>
                     'SORT_ORDER2'                     => 'ASC',
                     'FIELD_CODE'                      => [],
                     'PROPERTY_CODE'                   => [],
-                    'DETAIL_URL'                      => '/customer/shares/#CODE#/',
+                    'DETAIL_URL'                      => '/shares/#CODE#/',
                     'SECTION_URL'                     => '',
                     'IBLOCK_URL'                      => '',
                     'DISPLAY_PANEL'                   => 'N',

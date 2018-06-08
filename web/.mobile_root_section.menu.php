@@ -10,10 +10,10 @@ $aMenuLinks = [
     ],
     [
         'Магазины',
-        '/company/shops/',
+        '/shops/',
     ],
     [
         'Акции',
-        '/customer/shares/',
+        '/shares/',
     ],
 ];
