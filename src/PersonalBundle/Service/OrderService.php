@@ -5,6 +5,7 @@ namespace FourPaws\PersonalBundle\Service;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -54,7 +55,6 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use Bitrix\Catalog\Product\CatalogProvider;
 
 /**
  * Class OrderService
@@ -421,44 +421,95 @@ class OrderService
         //CITY_CODE
         $props = $order->getProps();
         if (!$props->isEmpty()) {
-            $dpdTerminal = $props->get('DPD_TERMINAL_CODE');
-            $deliveryPlace = $props->get('DELIVERY_PLACE_CODE');
-            if ($dpdTerminal instanceof OrderProp && $dpdTerminal->getValue()) {
-                try {
-                    /** @var DeliveryService $deliveryService */
-                    $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+            /** получение и проверка доставки */
+            $deliveryCode = $order->getOrderService()->getOrderDeliveryCode($order->getBitrixOrder());
+            /** если самовывоз */
+            if (\in_array($deliveryCode, DeliveryService::PICKUP_CODES, true)) {
+                $dpdTerminal = $props->get('DPD_TERMINAL_CODE');
+                $cityCode = $props->get('CITY_CODE');
+                if ($cityCode instanceof OrderProp && $dpdTerminal instanceof OrderProp && $dpdTerminal->getValue() && $cityCode->getValue()) {
+                    try {
+                        /** @var DeliveryService $deliveryService */
+                        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
 
-                    return $deliveryService->getDpdTerminalByCode($dpdTerminal->getValue());
-                } catch (\Exception $exception) {
+                        $terminals = $deliveryService->getDpdTerminalsByLocation($cityCode->getValue());
+                        $store = $terminals[$dpdTerminal->getValue()];
+
+                        if ($store !== null && !$store->isActive()) {
+                            $store->setActive(true);
+                        }
+                        return $store;
+                    } catch (\Exception $exception) {
+                        return null;
+                    }
+                }
+                $deliveryPlace = $props->get('DELIVERY_PLACE_CODE');
+                if ($deliveryPlace instanceof OrderProp && $deliveryPlace->getValue()) {
+                    try {
+                        /** @var StoreService $storeService */
+                        $storeService = App::getInstance()->getContainer()->get('store.service');
+
+                        $store = $storeService->getStoreByXmlId($deliveryPlace->getValue());
+                        if (!$store->isActive()) {
+                            $store->setActive(true);
+                        }
+                        return $store;
+                    } catch (\Exception $exception) {
+                        return null;
+                    }
+                }
+            } elseif (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+                /** если не самовывоз значит доставка */
+
+                $store = new Store();
+                $address = [];
+                $street = trim($order->getPropValue('STREET'));
+                if (!empty($street)) {
+                    $address[] = $street;
+                }
+                $house = trim($order->getPropValue('HOUSE'));
+                $house = $house ? 'д.' . $house : '';
+                if (!empty($house)) {
+                    $address[] = $house;
+                }
+                $building = trim($order->getPropValue('BUILDING'));
+                $building = !empty($building) ? 'корпус/строение ' . $building : '';
+                if (!empty($building)) {
+                    $address[] = $building;
+                }
+                $porch = trim($order->getPropValue('PORCH'));
+                $porch = !empty($porch) ? 'подъезд. ' . $porch : '';
+                if (!empty($porch)) {
+                    $address[] = $porch;
+                }
+                $apartment = trim($order->getPropValue('APARTMENT'));
+                $apartment = !empty($apartment) ? 'кв. ' . $apartment : '';
+                if (!empty($apartment)) {
+                    $address[] = $apartment;
+                }
+                $floor = trim($order->getPropValue('FLOOR'));
+                $floor = !empty($floor) ? 'этаж ' . $floor : '';
+                if (!empty($floor)) {
+                    $address[] = $floor;
+                }
+                $city = trim($order->getPropValue('CITY'));
+                $city = !empty($city) ? 'г. ' . $city : '';
+                if (!empty($city)) {
+                    $address[] = $city;
+                }
+                if (!empty($address)) {
+                    $store->setAddress(trim(implode(', ', $address)));
+                    $store->setActive(true);
+                    $store->setIsShop(false);
+                } else {
                     return null;
                 }
-            }
-            if ($deliveryPlace instanceof OrderProp && $deliveryPlace->getValue()) {
-                try {
-                    /** @var StoreService $storeService */
-                    $storeService = App::getInstance()->getContainer()->get('store.service');
 
-                    return $storeService->getStoreByXmlId($deliveryPlace->getValue());
-                } catch (\Exception $exception) {
-                    return null;
-                }
+                return $store;
             }
         }
 
-        $store = new Store();
-        //$street = $order->getPropValue('STREET') . ' ул.';
-        $street = $order->getPropValue('STREET');
-        $house = ', д.' . $order->getPropValue('HOUSE');
-        $building = !empty($order->getPropValue('BUILDING')) ? ', корпус/строение ' . $order->getPropValue('BUILDING') : '';
-        $porch = !empty($order->getPropValue('PORCH')) ? ', подъезд. ' . $order->getPropValue('PORCH') : '';
-        $apartment = !empty($order->getPropValue('APARTMENT')) ? ', кв. ' . $order->getPropValue('APARTMENT') : '';
-        $floor = !empty($order->getPropValue('FLOOR')) ? ', этаж ' . $order->getPropValue('FLOOR') : '';
-        $city = ', г. ' . $order->getPropValue('CITY');
-        $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
-        $store->setActive(true);
-        $store->setIsShop(false);
-
-        return $store;
+        return null;
     }
 
     /**

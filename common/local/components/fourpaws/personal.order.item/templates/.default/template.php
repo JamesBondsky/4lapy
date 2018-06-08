@@ -181,7 +181,7 @@ if ($orderSubscribe) {
                     </div>
                 <?php }
                 $store = $order->getStore();
-                if($store !== null && $store->getId() > 0) {
+                if($store !== null && $store->isActive()) {
                     $address = trim($store->getAddress());
                     if (!empty($address)) { ?>
                         <div class="b-adress-info b-adress-info--order">
