@@ -418,7 +418,6 @@ class OrderService
     public function getStore(Order $order): ?Store
     {
         /** @var OrderProp $prop */
-        //CITY_CODE
         $props = $order->getProps();
         if (!$props->isEmpty()) {
             /** получение и проверка доставки */
