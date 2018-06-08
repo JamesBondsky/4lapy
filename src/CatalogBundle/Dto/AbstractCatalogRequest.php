@@ -6,6 +6,11 @@ use FourPaws\CatalogBundle\Collection\SortsCollection;
 use FourPaws\Search\Model\Navigation;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Class AbstractCatalogRequest
+ *
+ * @package FourPaws\CatalogBundle\Dto
+ */
 abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
 {
     /**
@@ -25,6 +30,7 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
 
     /**
      * @Assert\Length(min="0", max="100")
+     *
      * @var string
      */
     protected $searchString = '';
@@ -73,7 +79,7 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
      */
     public function getSearchString(): string
     {
-        return $this->searchString;
+        return \trim($this->searchString);
     }
 
     /**
@@ -83,7 +89,8 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
      */
     public function setSearchString(string $searchString): CatalogSearchRequestInterface
     {
-        $this->searchString = $searchString;
+        $this->searchString = \trim($searchString);
+
         return $this;
     }
 }

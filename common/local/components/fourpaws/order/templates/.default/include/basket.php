@@ -113,9 +113,9 @@ if (null !== $delivery) {
     $deliveryIsSplit = $isSplit && !empty($arResult['SPLIT_RESULT']);
     if (!empty($arResult['SPLIT_RESULT'])) {
         /** @var StockResultCollection $deliveryResult1 */
-        $deliveryResult1 = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getStockResult();
+        $deliveryResult1 = $arResult['SPLIT_RESULT']['1']['DELIVERY']->getStockResult()->getOrderable();
         /** @var StockResultCollection $deliveryResult2 */
-        $deliveryResult2 = $arResult['SPLIT_RESULT']['2']['DELIVERY']->getStockResult();
+        $deliveryResult2 = $arResult['SPLIT_RESULT']['2']['DELIVERY']->getStockResult()->getOrderable();
 
         $deliveryResult1Quantity = $deliveryResult1->getAmount();
         [$deliveryResult1Items, $deliveryResult1Weight] = $component->getOrderItemData($deliveryResult1);
@@ -134,7 +134,7 @@ if (null !== $delivery) {
     $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
     ?>
     <?php /* отображается на 2 шаге, когда выбрана курьерская доставка */ ?>
-    <aside class="b-order__list js-list-orders-static" <?= !$showPickupContainer ? '' : 'style="display:none"' ?>>
+    <aside class="b-order__list js-list-orders-static <?= $deliveryUnavailableResult->isEmpty() ? '' : 'parts-type' ?>" <?= !$showPickupContainer ? '' : 'style="display:none"' ?>>
         <div class="one-delivery__block<?= $deliveryIsSplit ? '' : ' active activeBlock' ?>">
             <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
                 <span class="js-mobile-title-order">Заказ: <?= $deliveryOrderableQuantity ?> <?= $productsDeclension->get($deliveryOrderableQuantity) ?>
@@ -167,6 +167,52 @@ if (null !== $delivery) {
                         </li>
                     <?php } ?>
                 </ul>
+            </div>
+            <h4 class="b-title b-title--order-list js-parts-list-title"
+                <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
+                <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
+                <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
+                (<?= WordHelper::showWeight($deliveryUnavailableWeight, true) ?>) на
+                сумму <?= CurrencyHelper::formatPrice(
+                    $deliveryUnavailablePrice,
+                    false
+                ) ?>
+            </h4>
+            <div class="b-order-list b-order-list--aside js-popup-mobile js-parts-list"
+                <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
+                <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
+                    заказе</a>
+                <ul class="b-order-list__list js-order-list-block">
+                    <?php foreach ($deliveryUnavailableItems as $item) { ?>
+                        <li class="b-order-list__item b-order-list__item--aside">
+                            <div class="b-order-list__order-text b-order-list__order-text--aside">
+                                <div class="b-order-list__clipped-text">
+                                    <div class="b-order-list__text-backed">
+                                        <?= $item['name'] ?>
+                                        <?php if ($item['quantity'] > 1) { ?>
+                                            (<?= $item['quantity'] ?> шт)
+                                        <?php } ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="b-order-list__order-value b-order-list__order-value--aside">
+                                <?= CurrencyHelper::formatPrice($item['price'], false) ?>
+                            </div>
+                        </li>
+                    <?php } ?>
+                </ul>
+            </div>
+            <div class="b-order__link-wrapper"
+                <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
+                <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
+                   href="/cart"
+                   title="Вернуться в корзину">
+            <span class="b-icon b-icon--order-busket">
+                <?= /** @noinspection PhpUnhandledExceptionInspection */
+                new SvgDecorator('icon-reason', 16, 16) ?>
+            </span>
+                    <span class="b-link__text b-link__text--order-gotobusket">Вернуться в корзину</span>
+                </a>
             </div>
         </div>
         <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
@@ -228,61 +274,62 @@ if (null !== $delivery) {
                         <?php } ?>
                     </ul>
                 </div>
+                <h4 class="b-title b-title--order-list js-parts-list-title"
+                    <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
+                    <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
+                    <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
+                    (<?= WordHelper::showWeight($deliveryUnavailableWeight, true) ?>) на
+                    сумму <?= CurrencyHelper::formatPrice(
+                        $deliveryUnavailablePrice,
+                        false
+                    ) ?>
+                </h4>
+                <div class="b-order-list b-order-list--aside js-popup-mobile js-parts-list"
+                    <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
+                    <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
+                        заказе</a>
+                    <ul class="b-order-list__list js-order-list-block">
+                        <?php foreach ($deliveryUnavailableItems as $item) { ?>
+                            <li class="b-order-list__item b-order-list__item--aside">
+                                <div class="b-order-list__order-text b-order-list__order-text--aside">
+                                    <div class="b-order-list__clipped-text">
+                                        <div class="b-order-list__text-backed">
+                                            <?= $item['name'] ?>
+                                            <?php if ($item['quantity'] > 1) { ?>
+                                                (<?= $item['quantity'] ?> шт)
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-order-list__order-value b-order-list__order-value--aside">
+                                    <?= CurrencyHelper::formatPrice($item['price'], false) ?>
+                                </div>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+                <div class="b-order__link-wrapper"
+                    <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
+                    <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
+                       href="/cart"
+                       title="Вернуться в корзину">
+                        <span class="b-icon b-icon--order-busket">
+                            <?= /** @noinspection PhpUnhandledExceptionInspection */
+                            new SvgDecorator('icon-reason', 16, 16) ?>
+                        </span>
+                        <span class="b-link__text b-link__text--order-gotobusket">Вернуться в корзину</span>
+                    </a>
+                </div>
             </div>
         <?php } ?>
         <div class="mobile-delivery__block"></div>
-        <h4 class="b-title b-title--order-list js-parts-list-title"
-            <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
-            <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
-            <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
-            (<?= WordHelper::showWeight($deliveryUnavailableWeight, true) ?>) на
-            сумму <?= CurrencyHelper::formatPrice(
-                $deliveryUnavailablePrice,
-                false
-            ) ?>
-        </h4>
-        <div class="b-order-list b-order-list--aside js-popup-mobile js-parts-list"
-            <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
-            <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
-                заказе</a>
-            <ul class="b-order-list__list js-order-list-block">
-                <?php foreach ($deliveryUnavailableItems as $item) { ?>
-                    <li class="b-order-list__item b-order-list__item--aside">
-                        <div class="b-order-list__order-text b-order-list__order-text--aside">
-                            <div class="b-order-list__clipped-text">
-                                <div class="b-order-list__text-backed">
-                                    <?= $item['name'] ?>
-                                    <?php if ($item['quantity'] > 1) { ?>
-                                        (<?= $item['quantity'] ?> шт)
-                                    <?php } ?>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="b-order-list__order-value b-order-list__order-value--aside">
-                            <?= CurrencyHelper::formatPrice($item['price'], false) ?>
-                        </div>
-                    </li>
-                <?php } ?>
-            </ul>
-        </div>
-        <div class="b-order__link-wrapper"
-            <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
-            <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
-               href="/cart"
-               title="Вернуться в корзину">
-            <span class="b-icon b-icon--order-busket">
-                <?= /** @noinspection PhpUnhandledExceptionInspection */
-                new SvgDecorator('icon-reason', 16, 16) ?>
-            </span>
-                <span class="b-link__text b-link__text--order-gotobusket">Вернуться в корзину</span>
-            </a>
-        </div>
     </aside>
 <?php } ?>
 <?php /* отображается на 2 шаге, когда выбран самовывоз */ ?>
 <aside class="b-order__list js-list-orders-cont" <?= $showPickupContainer ? '' : 'style="display:none"' ?>>
     <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
-        <?= $pickupCanSplit ? 'Заказ №1' : 'Заказ' ?>: <?= $availableQuantity ?> <?= $productsDeclension->get($availableQuantity) ?>
+        <?= $pickupCanSplit ? 'Заказ №1' : 'Заказ' ?>
+        : <?= $availableQuantity ?> <?= $productsDeclension->get($availableQuantity) ?>
         (<?= WordHelper::showWeight($availableWeight, true) ?>) на сумму <?= CurrencyHelper::formatPrice(
             $availablePrice,
             false
@@ -313,7 +360,8 @@ if (null !== $delivery) {
     </div>
     <h4 class="b-title b-title--order-list js-parts-list-title"
         <?= !($pickupCanSplit || $pickupCanGetPartial) ? 'style="display:none"' : '' ?>>
-        <span class="js-mobile-title-order"><?= $pickupCanSplit ? 'Заказ №2' : 'Останется в корзине' ?>: <?= $delayedQuantity ?></span>
+        <span class="js-mobile-title-order"><?= $pickupCanSplit ? 'Заказ №2' : 'Останется в корзине' ?>
+            : <?= $delayedQuantity ?></span>
         <?= $productsDeclension->get($delayedQuantity) ?> (<?= WordHelper::showWeight($delayedWeight, true) ?>) на
         сумму <?= CurrencyHelper::formatPrice(
             $delayedPrice,
