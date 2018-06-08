@@ -3,19 +3,57 @@
 namespace FourPaws\Catalog\Query;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\Catalog\Collection\ProductCollection;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use WebArch\BitrixCache\BitrixCache;
 
 class ProductQuery extends IblockElementQuery
 {
+    /** кешируем на неделю  */
+    protected const CACHE_TIME_BY_ID = 7 * 24 * 60 * 60;
+
     public static function getActiveAccessableElementsFilter(): array
     {
         $array = parent::getActiveAccessableElementsFilter();
         $array['SECTION_GLOBAL_ACTIVE'] = 'Y';
         return $array;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return Product|null
+     */
+    public static function getById(int $id = 0): ?Product
+    {
+        if ($id <= 0) {
+            /** @todo вместо null выбивать exception */
+            return null;
+        }
+        $query = new static();
+        $getProduct = function () use ($id, $query) {
+            $collection = $query->withFilter(['ID' => $id])->exec();
+
+            return !$collection->isEmpty() ? $collection->first() : null;
+        };
+        $bitrixCache = new BitrixCache();
+        $bitrixCache->withId('product_' . $id);
+        $bitrixCache->withTag('catalog:product:' . $id);
+        $bitrixCache->withTag('iblock:item:' . $id);
+        $bitrixCache->withTime(static::CACHE_TIME_BY_ID);
+        try {
+            return $bitrixCache->resultOf($getProduct)['result'];
+        } catch (\Exception $e) {
+            /** @todo вместо null выбивать exception */
+            $logger = LoggerFactory::create('product');
+            $logger->warning('ошибка получения товара по id - ' . $id . ': ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
