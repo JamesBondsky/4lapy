@@ -61,14 +61,14 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
         <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>"
               data-url="/ajax/catalog/product-info/count-by-filter-list/">
-            <div class="b-filter__block" style="display: none">
+            <div class="b-filter__block" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                 <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox"
-                    style="display: none">
-                    <li class="b-filter-link-list__item" style="display: none">
-                        <label class="b-filter-link-list__label" style="display: none">
+                    style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                    <li class="b-filter-link-list__item" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                        <label class="b-filter-link-list__label" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                             <input type="checkbox" name="section_id" value="<?= $category->getId() ?>" checked="checked"
                                    class="b-filter-link-list__checkbox js-filter-control js-checkbox-change"
-                                   style="display: none">
+                                   style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                         </label>
                     </li>
                 </ul>
