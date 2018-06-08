@@ -89,7 +89,8 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
      */
     public function setSearchString(string $searchString): CatalogSearchRequestInterface
     {
-        $this->searchString = $searchString;
+        $this->searchString = \trim($searchString);
+
         return $this;
     }
 }
