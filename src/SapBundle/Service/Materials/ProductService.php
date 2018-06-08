@@ -254,7 +254,8 @@ class ProductService
                     SapProductProperty::PACKING_COMBINATION,
                     ['']
                 )->first()
-            );
+            )
+            ->withApplyAutoSort(!$product->getId());
         $this->fillReferenceProperties($product, $material);
         $this->fillCountry($product, $material);
     }
