@@ -1204,7 +1204,7 @@ class Order extends BaseEntity
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
-    private function getOrderService(): SaleOrderService
+    public function getOrderService(): SaleOrderService
     {
         $appCont = Application::getInstance()->getContainer();
         return $appCont->get(SaleOrderService::class);
