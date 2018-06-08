@@ -7,13 +7,21 @@
 namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class SearchRequestConverter
+ *
+ * @package FourPaws\CatalogBundle\ParamConverter\Catalog
+ */
 class SearchRequestConverter extends AbstractCatalogRequestConverter
 {
     public const SORT_DEFAULT = 'relevance';
@@ -37,6 +45,7 @@ class SearchRequestConverter extends AbstractCatalogRequestConverter
     public function setCategoriesService(CategoriesService $categoriesService)
     {
         $this->categoriesService = $categoriesService;
+
         return $this;
     }
 
@@ -49,6 +58,7 @@ class SearchRequestConverter extends AbstractCatalogRequestConverter
     public function setFilterService(FilterService $filterService)
     {
         $this->filterService = $filterService;
+
         return $this;
     }
 
@@ -77,10 +87,11 @@ class SearchRequestConverter extends AbstractCatalogRequestConverter
      * @param ParamConverter $configuration
      * @param SearchRequest  $object
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws NotFoundHttpException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
+     *
      * @return bool
      */
     protected function configureCustom(Request $request, ParamConverter $configuration, $object): bool
@@ -90,12 +101,14 @@ class SearchRequestConverter extends AbstractCatalogRequestConverter
         } catch (IblockNotFoundException $e) {
             throw new NotFoundHttpException('Инфоблок каталога не найден');
         }
+
         try {
             $this->filterService->getFilterHelper()->initCategoryFilters($category, $request);
         } catch (\Exception $e) {
         }
 
         $object->setCategory($category);
+
         return true;
     }
 }
