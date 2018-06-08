@@ -51,7 +51,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-delivery__payment-type-row__info">
                 <p>Бонусы можно тратить на любые товары, включая акционные. Удобно! Бонусами можно оплатить до 90%
                     покупки. Экономно! Можно получать дополнительные подарочные бонусы.</p>
-                <a href="/customer/bonus-program/">Подробнее о бонусах</a>
+                <a href="/bonus-program/">Подробнее о бонусах</a>
             </div>
         </div>
         <div class="b-delivery__payment-type-row">

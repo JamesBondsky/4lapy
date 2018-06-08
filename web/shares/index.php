@@ -66,7 +66,7 @@ $APPLICATION->SetTitle("Акции");
         'PAGER_TEMPLATE' => 'pagination',
         'PAGER_TITLE' => 'Акции',
         'PREVIEW_TRUNCATE_LEN' => '0',
-        'SEF_FOLDER' => '/customer/shares/',
+        'SEF_FOLDER' => '/shares/',
         'SEF_MODE' => 'Y',
         'SEF_URL_TEMPLATES' => [
             'news' => '',

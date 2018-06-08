@@ -223,7 +223,7 @@ echo '</h1>
     </p>
     <p>
         7.4. Действующая Политика конфиденциальности размещена на странице по адресу
-        <a href="https://www.4lapy.ru/company/confidenciality/">https://www.4lapy.ru/company/confidenciality/</a>
+        <a href="https://www.4lapy.ru/confidenciality/">https://www.4lapy.ru/company/confidenciality/</a>
     </p>
 <?php
 

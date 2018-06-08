@@ -130,7 +130,7 @@ $bonus = $arResult['BONUS'];
                 <li class="b-account-bonus__item">Оплатить можно до 90% стоимости заказа</li>
             </ul>
         <?php } ?>
-        <a class="b-link b-link--bonus-info b-link--bonus-info" href="/customer/bonus-program/"
+        <a class="b-link b-link--bonus-info b-link--bonus-info" href="/bonus-program/"
            title="Подробнее о бонусной программе">
             <span class="b-link__text b-link__text--bonus-info">Подробнее о бонусной программе</span>
         </a>
