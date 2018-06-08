@@ -111,11 +111,9 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private function updateProduct(int $productId)
     {
-        $product = (new ProductQuery())->withFilter(['=ID' => $productId])
-                                       ->exec()
-                                       ->current();
+        $product = ProductQuery::getById($productId);
 
-        if (!($product instanceof Product)) {
+        if ($product === null) {
             $this->log()->error(
                 sprintf(
                     'Продукт #%d не найден',
