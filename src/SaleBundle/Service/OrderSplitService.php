@@ -267,13 +267,19 @@ class OrderSplitService implements LoggerAwareInterface
     public function canGetPartial(CalculationResultInterface $delivery): bool
     {
         $result = false;
-        if ($this->deliveryService->isInnerPickup($delivery) &&
-            $delivery->getStockResult()->getByRequest(true)->isEmpty() &&
-            !$delivery->getStockResult()->getAvailable()->isEmpty() &&
-            !$delivery->getStockResult()->getDelayed()->isEmpty()
+
+        $available = $delivery->getStockResult()->getAvailable();
+        $delayed = $delivery->getStockResult()->getDelayed();
+        if (!$available->isEmpty() &&
+            !$delayed->isEmpty() &&
+            $this->deliveryService->isInnerPickup($delivery) &&
+            $delivery->getStockResult()->getByRequest(true)->isEmpty()
         ) {
             $result = true;
         }
+
+        $result &= $available->getPrice() && $delayed->getPrice();
+
         return $result;
     }
 
