@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Location\Name\LocationTable;
 use FourPaws\AppBundle\Exception\InvalidArgumentException;
 use FourPaws\Migrator\Client\User;
 use FourPaws\Migrator\Entity\MapTable;
@@ -128,20 +129,26 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
         $data = [];
         while ([$oldUserId, $profileId, $profileName, $code, $value] = \fgetcsv($fp)) {
             if (!isset($data[$oldUserId][$profileId])) {
+                $main = isset($data[$oldUserId]) ? 0 : 1;
                 $data[$oldUserId][$profileId] = [
                     'PROFILE_NAME' => $profileName,
                     'OLD_USER_ID'  => $oldUserId,
                     'FIELDS'       => [],
                 ];
+                $data[$oldUserId][$profileId]['FIELDS']['UF_MAIN'] = $main;
             }
-            $data[$oldUserId][$profileId]['FIELDS'][$code] = $value;
-            if (\count($data) >= 10000) {
-                $this->processData($data, $fpo);
-                $progressBar->advance(10000);
-                $data = [];
+
+            if($code !== 'UF_MAIN') {
+                $data[$oldUserId][$profileId]['FIELDS'][$code] = $value;
             }
         }
-        $this->processData($data, $fpo);
+        $size = 10000;
+        $chunks = array_chunk($data, $size);
+        unset($data);
+        foreach ($chunks as $data) {
+            $this->processData($data, $fpo);
+            $progressBar->advance($size);
+        }
         $progressBar->finish();
 
         $this->log()->info(sprintf(
@@ -172,7 +179,7 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                 $i++;
 
                 foreach ($profile['FIELDS'] as &$field) {
-                    \addslashes($field);
+                    $field = \addslashes(trim($field));
                 }
 
                 unset($field);
@@ -184,7 +191,7 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                     $cityLocation = $profile['FIELDS']['DELIVERY_CITY'] ? '"' . $profile['FIELDS']['DELIVERY_CITY'] . '"' : '';
                     $city = $profile['FIELDS']['TOWN'] ? '"' . $profile['FIELDS']['TOWN'] . '"' : '';
                     if (empty($city) && !empty($cityLocation)) {
-                        $res = \Bitrix\Sale\Location\Name\LocationTable::query()->setSelect(['NAME'])->where('LOCATION.CODE',
+                        $res = LocationTable::query()->setSelect(['NAME'])->where('LOCATION.CODE',
                             $cityLocation)->setLimit(1)->exec();
                         if ($res->getSelectedRowsCount() > 0) {
                             $city = $res->fetch()['NAME'];
@@ -204,7 +211,7 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                     }
                     $values = [
                         'UF_USER_ID'       => '"' . $users[$oldUserId] . '"',
-                        'UF_NAME'          => '"' . $profile['PROFILE_NAME'] . '"',
+                        'UF_NAME'          => '"' . \addslashes(trim($profile['PROFILE_NAME'])) . '"',
                         'UF_CITY_LOCATION' => $cityLocation,
                         'UF_CITY'          => $city,
                         'UF_STREET'        => $profile['FIELDS']['STREET'] ? '"' . $profile['FIELDS']['STREET'] . '"' : '',
@@ -213,7 +220,7 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                         'UF_ENTRANCE'      => $profile['FIELDS']['POD'] ? '"' . $profile['FIELDS']['POD'] . '"' : '',
                         'UF_FLOOR'         => $profile['FIELDS']['ETAG'] ? '"' . $profile['FIELDS']['ETAG'] . '"' : '',
                         'UF_FLAT'          => $profile['FIELDS']['KVART'] ? '"' . $profile['FIELDS']['KVART'] . '"' : '',
-                        'UF_MAIN'          => $i === 1 ? 1 : 0,
+                        'UF_MAIN'          => $profile['FIELDS']['UF_MAIN'],
                         'UF_DETAILS'       => $comments,
                     ];
 
@@ -242,7 +249,7 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    protected function getUsers(array $externalIds)
+    protected function getUsers(array $externalIds): array
     {
         $result = [];
 

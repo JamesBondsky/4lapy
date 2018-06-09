@@ -202,33 +202,38 @@ class Address extends BaseEntity
      */
     public function getFullAddress(): string
     {
-        $housing = '';
-        if (!empty($this->getHousing())) {
-            $housing .= ', корпус ' . $this->getHousing();
+        $values = [
+            'street'       => $this->getStreet(),
+            'house'        => $this->getHouse(),
+            'housing'      => $this->getHousing(),
+            'entrance'     => $this->getEntrance(),
+            'floor'        => $this->getFloor(),
+            'flat'         => $this->getFlat(),
+            'intecomeCode' => $this->getIntercomCode(),
+            'city'         => $this->getCity(),
+        ];
+        $formatted = [
+            'house'        => ['begin' => 'д. '],
+            'housing'      => ['begin' => 'корпус '],
+            'entrance'     => ['begin' => 'подъезд '],
+            'floor'        => ['begin' => 'этаж '],
+            'flat'         => ['begin' => 'кв. '],
+            'intecomeCode' => ['begin' => 'код домофона '],
+        ];
+        TrimArr($values, true);
+        $implodeValues = [];
+        foreach ($values as  $key => $value) {
+            $implodeValues[$key] = '';
+            if($formatted[$key]['begin']){
+                $implodeValues[$key] .= $formatted[$key]['begin'];
+            }
+            $implodeValues[$key] .= $value;
+            if($formatted[$key]['end']){
+                $implodeValues[$key] .= $formatted[$key]['end'];
+            }
         }
-        $entrance = '';
-        if (!empty($this->getEntrance())) {
-            $entrance .= ', подъезд ' . $this->getEntrance();
-        }
-        $floor = '';
-        if (!empty($this->getFloor())) {
-            $floor .= ', этаж ' . $this->getFloor();
-        }
-        $flat = '';
-        if (!empty($this->getFlat())) {
-            $flat .= ', кв. ' . $this->getFlat();
-        }
-        $intercomCode = '';
-        if (!empty($this->getIntercomCode())) {
-            $intercomCode .= ', код домофона ' . $this->getIntercomCode();
-        }
-        $house = ', д. ' . $this->getHouse();
 
-        $res =
-            $this->getStreet() . $house . $housing . $entrance . $floor . $flat . $intercomCode . ', '
-            . $this->getCity();
-
-        return $res;
+        return implode(', ', array_values($implodeValues));
     }
 
     /**
@@ -433,6 +438,7 @@ class Address extends BaseEntity
 
     /**
      * @param string $details
+     *
      * @return Address
      */
     public function setDetails(string $details): Address
@@ -454,7 +460,7 @@ class Address extends BaseEntity
             ['value' => $this->entrance, 'prefix' => 'подъезд'],
             ['value' => $this->floor, 'prefix' => 'этаж'],
             ['value' => $this->flat, 'prefix' => 'кв.'],
-            ['value' => $this->intercomCode, 'prefix' => 'код домофона']
+            ['value' => $this->intercomCode, 'prefix' => 'код домофона'],
         ];
 
         $result = \array_filter(\array_map(function ($item) {
