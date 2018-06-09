@@ -16,10 +16,13 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
@@ -178,7 +181,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         } catch (\Exception $e) {
             try {
                 $this->logger->error(sprintf('Component execute error: %s: %s', \get_class($e), $e->getMessage()), [
-                    'trace' => $e->getTrace()
+                    'trace' => $e->getTrace(),
                 ]);
             } catch (\RuntimeException $e) {
             }
@@ -421,13 +424,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
             '1' => [
                 'ORDER' => $splitResult1->getOrder(),
                 'STORAGE' => $splitResult1->getOrderStorage(),
-                'DELIVERY' => $splitResult1->getDelivery()
+                'DELIVERY' => $splitResult1->getDelivery(),
             ],
             '2' => [
                 'ORDER' => $splitResult2->getOrder(),
                 'STORAGE' => $splitResult2->getOrderStorage(),
-                'DELIVERY' => $splitResult2->getDelivery()
-            ]
+                'DELIVERY' => $splitResult2->getDelivery(),
+            ],
         ];
     }
 
@@ -455,5 +458,25 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $itemData,
             $totalWeight,
         ];
+    }
+
+    public function getBasketItemData(Basket $basket) {
+        $itemData = [];
+        /** @var BasketItem $item */
+        foreach ($basket as $item) {
+            $offerId = (int)$item->getProductId();
+            /** @var Offer $offer */
+            foreach ($this->basketService->getOfferCollection() as $offer) {
+                if ($offer->getId() === $offerId) {
+                    $itemData[$offerId]['name'] = $item->getField('NAME');
+                    $itemData[$offerId]['quantity'] += $item->getQuantity();
+                    $itemData[$offerId]['price'] += $item->getPrice();
+                    $itemData[$offerId]['weight'] += $offer->getCatalogProduct()->getWeight() * $item->getQuantity();
+                    break;
+                }
+            }
+        }
+
+        return $itemData;
     }
 }
