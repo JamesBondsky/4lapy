@@ -2,7 +2,6 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Gift;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -124,34 +123,22 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             ]
         ];
 
-        try {
-            $basketItem = $this->basketService->addOfferToBasketWithoutPermission($offerId, $quantity > 0 ? $quantity : 1, $fields);
-            // внутри файнал экшена мы крашим файнал экшен, который вызывается на добавлении элемента,
-            // поэтому некоторые поля не устанавливаются
-            // http://lurkmore.so/images/5/50/Yo_sobaka.jpg
-            if ($basketItem->getPrice() > 0.0001) {
-                /** @noinspection PhpInternalEntityUsedInspection */
-                $basketItem->setFields(
-                    [
-                        'PRICE'        => 0,
-                        'CUSTOM_PRICE' => 'Y',
-                        'NOTES'        => 'Подарок',
-                    ]
-                );
-                //FU BX
-                BasketTable::update($basketItem->getId(),
-                    ['PRICE' => 0.0, 'CUSTOM_PRICE' => 'Y', 'NOTES' => 'Подарок']);
-            }
-        } catch(BitrixProxyException $e){
-            /** вторая попытка добавления в корзину но другим способом
-             * @todo необходимо проверить - возможны траблы с подаркаи - ибо событий нет
-             */
-//            $res = $this->basketService->addOfferToBasketCustom($offerId, $quantity > 0 ? $quantity : 1, $fields);
-//            if(!$res) {
-                /** @todo разобраться что за хрень */
-                $logger = LoggerFactory::create('gift');
-                $logger->error('Ошибка добавления подарка', $e->getTrace());
-//            }
+        $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity, $fields);
+        // внутри файнал экшена мы крашим файнал экшен, который вызывается на добавлении элемента,
+        // поэтому некоторые поля не устанавливаются
+        // http://lurkmore.so/images/5/50/Yo_sobaka.jpg
+        if ($basketItem->getPrice() > 0.0001) {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $basketItem->setFields(
+                [
+                    'PRICE'        => 0,
+                    'CUSTOM_PRICE' => 'Y',
+                    'NOTES'        => 'Подарок',
+                ]
+            );
+            //FU BX
+            BasketTable::update($basketItem->getId(),
+                ['PRICE' => 0.0, 'CUSTOM_PRICE' => 'Y', 'NOTES' => 'Подарок']);
         }
     }
 
