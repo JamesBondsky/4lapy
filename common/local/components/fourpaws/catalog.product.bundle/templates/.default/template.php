@@ -47,37 +47,38 @@ $bundle = $arResult['BUNDLE']; ?>
                                     role="presentation"/>
                         </div>
                         <span class="b-advice__block">
-                        <div class="product-link">
-                            <span class="b-clipped-text b-clipped-text--advice">
-                                <span>
-                                    <?= $offer->getName(); ?>
+                            <div class="product-link">
+                                <span class="b-clipped-text b-clipped-text--advice">
+                                    <span>
+                                        <?= $offer->getName(); ?>
+                                    </span>
                                 </span>
-                            </span>
-                        </div>
-                        <span class="b-advice__info">
-                            <?php $weight = $offer->getCatalogProduct()->getWeight();
-                            if ($weight > 0) { ?>
-                                <span class="b-advice__weight"><?= WordHelper::showWeight($weight) ?></span>
-                            <?php }
-                            $oldPrice = $offer->getOldPrice();
-                            $price = $offer->getPrice();
-                            if ($oldPrice > 0 && $oldPrice > $price) {
-                                ?>
-                                <span class="b-advice__old-price">
-                                    <span class="js-value"><?= $oldPrice ?></span>
-                                    <span class="b-ruble b-ruble--advice b-ruble--light">₽</span>
+                            </div>
+                            <span class="b-advice__info">
+                                <?php $weight = $offer->getCatalogProduct()->getWeight();
+                                if ($weight > 0) { ?>
+                                    <span class="b-advice__weight"><?= WordHelper::showWeight($weight) ?></span>
+                                <?php }
+                                $oldPrice = $offer->getOldPrice();
+                                $price = $offer->getPrice();
+                                if ($oldPrice > 0 && $oldPrice > $price) {
+                                    ?>
+                                    <span class="b-advice__old-price">
+                                        <span class="js-value"><?= $oldPrice ?></span>
+                                        <span class="b-ruble b-ruble--advice b-ruble--light">₽</span>
+                                    </span>
+                                    <?php /** делаем перевод на новую строку далее ибо не помещается - по красоте поправить верстку*/
+                                    ?>
+                                    <br/>
+                                <?php } ?>
+                                <span class="b-advice__cost">
+                                    <?= $price; ?>
+                                    <span class="b-ruble b-ruble--advice">₽</span>
                                 </span>
-                                <?php /** делаем перевод на новую строку далее ибо не помещается - по красоте поправить верстку*/
-                                ?>
-                                <br/>
-                            <?php } ?>
-                            <span class="b-advice__cost">
-                                <?= $price; ?>
-                                <span class="b-ruble b-ruble--advice">₽</span>
+                                <span> x <?= $product->getQuantity() ?></span>
                             </span>
-                            <span> x <?= $product->getQuantity() ?></span>
                         </span>
-                            <?php if ($i > 0){ ?>
+                        <?php if ($i > 0){ ?>
                     </a>
                 <?php } ?>
                 </div>
