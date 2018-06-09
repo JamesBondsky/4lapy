@@ -290,11 +290,11 @@ class OrderSplitService implements LoggerAwareInterface
     {
         $stockResultCollection = $delivery->getStockResult();
         if ($this->canSplitOrder($delivery)) {
-            $available = $stockResultCollection->getAvailable();
-            $delayed = $stockResultCollection->getDelayed();
-        } else {
             $available = $stockResultCollection->getRegular();
             $delayed = $stockResultCollection->getByRequest();
+        } else {
+            $available = $stockResultCollection->getAvailable();
+            $delayed = $stockResultCollection->getDelayed();
         }
 
         /**

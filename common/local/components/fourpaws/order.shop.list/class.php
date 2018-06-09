@@ -274,7 +274,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $orderType = 'parts';
         } elseif ($canSplit) {
             $orderType = 'split';
-        } elseif ($available->isEmpty()) {
+        } elseif (!$delayed->isEmpty()) {
             $orderType = 'delay';
         }
 
