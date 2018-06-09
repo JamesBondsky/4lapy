@@ -254,22 +254,22 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param int|null $discountId
+     * @param int|null    $discountId
+     * @param Basket|null $basket
      *
-     * @throws Exception
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      *
      * @return array
      */
-    public function getGiftGroupOfferCollection(?int $discountId = null): array
+    public function getGiftGroupOfferCollection(?int $discountId = null, ?Basket $basket = null): array
     {
         //todo эээ так можно или нельзя? определись, чувак)
         if (!$discountId || $discountId < 0) {
             throw new InvalidArgumentException('Отсутствует идентификатор скидки');
         }
 
-        $basket = $this->getBasket();
+        $basket = $basket ?? $this->getBasket();
         if (null === $order = $basket->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($basket);

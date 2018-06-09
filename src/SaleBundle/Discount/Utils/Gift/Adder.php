@@ -53,7 +53,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             }
 
             if (
-                ($group = $this->basketService->getGiftGroupOfferCollection($group['discountId']))
+                ($group = $this->basketService->getGiftGroupOfferCollection($group['discountId'], $this->order->getBasket()))
                 && $group['list'] && $group['list'] instanceof OfferCollection
             ) {
                 $existGiftsQuantity = $this->getExistGiftsQuantity($group);
