@@ -81,7 +81,7 @@ use FourPaws\Decorators\SvgDecorator;
             </div>
             <a class="b-button b-button--order-balloon js-shop-myself"
                href="javascript:void(0);"
-               data-url="/ajax/sale/order/store-info"
+               data-url="/ajax/sale/order/store-info/"
                title=""
                data-shopId="{{id}}">
                 Выбрать этот пункт самовывоза
