@@ -162,6 +162,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         $offerData = static::getBasketPrices($basket);
 
         foreach ($offerData as $offerId => $priceForAmountCollection) {
+            /**
+             * Если такое произошло, значит оффер был подарком и был удален из корзины
+             */
+            if (null === $offers[$offerId]) {
+                continue;
+            }
+
             static::getStocksForItem(
                 $offers[$offerId],
                 $priceForAmountCollection,
