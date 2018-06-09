@@ -18,6 +18,7 @@ use FourPaws\StoreBundle\Entity\Store;
  * @var array $arParams
  * @var array $arResult
  * @var CMain $APPLICATION
+ * @var FourPawsOrderComponent     $component
  */
 
 /** @var CalculationResultInterface $delivery */
@@ -261,4 +262,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
 \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
 $currentShopInfo = (new \FourPawsOrderShopListComponent())->getShopInfo($pickup ? $pickup->getSelectedShop()->getXmlId() : '', $pickup);
 ?>
-<script>window.currentShop = <?= CUtil::PhpToJSObject($currentShopInfo) ?>;</script>
+<script>
+    window.fullBasket = <?= CUtil::PhpToJSObject(array_values($component->getBasketItemData($basket))) ?>;
+    window.currentShop = <?= CUtil::PhpToJSObject($currentShopInfo) ?>;
+</script>
