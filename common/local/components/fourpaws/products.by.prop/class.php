@@ -116,7 +116,7 @@ class ProductsByProp extends CBitrixComponent
                         ]);
                     }
                 }
-                $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
+                $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products, 'ACTIVE' => 'Y'])->exec();
             }
 
             $this->includeComponentTemplate();
