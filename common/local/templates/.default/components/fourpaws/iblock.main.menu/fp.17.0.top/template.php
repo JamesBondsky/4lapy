@@ -232,7 +232,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
             <div class="b-menu-brands js-menu-brand-content">
                 <div class="b-back-link b-back-link--brands">
                     <a class="b-back-link__link js-close-popup js-close-brand-mobile"<?= $arFirstLevelItem['_LINK_ATTR2_'] ?>
-                       href="<?= $arFirstLevelItem['_URL_'] ?>">
+                       href="javascript:void(0);">
                         <?php echo $sArrowDownOrangeIco;
                         echo $arFirstLevelItem['_TEXT_']; ?>
                     </a>
