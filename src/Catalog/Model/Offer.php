@@ -1161,9 +1161,9 @@ class Offer extends IblockElement
     public function getProduct(): Product
     {
         if (null === $this->product) {
-            $this->product = (new ProductQuery())->withFilter(['=ID' => $this->getCml2Link()])->exec()->current();
+            $this->product = ProductQuery::getById($this->getCml2Link());
 
-            if (!($this->product instanceof Product)) {
+            if ($this->product === null) {
                 $this->product = new Product();
             }
         }

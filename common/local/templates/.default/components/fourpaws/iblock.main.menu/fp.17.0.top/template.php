@@ -112,7 +112,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                 <ul class="b-menu-main js-dropdown-menu js-permutation-second-menu js-step-mobile">
                     <li class="b-back-link">
                         <a class="b-back-link__link js-back-submenu"<?= $arFirstLevelItem['_LINK_ATTR2_'] ?>
-                           href="<?= $arFirstLevelItem['_URL_'] ?>">
+                           href="javascript:void(0);">
                             <?php echo $sArrowDownOrangeIco;
                             echo $arFirstLevelItem['_TEXT_']; ?>
                         </a>
@@ -130,7 +130,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                 <div class="b-menu-main__submenu js-submenu js-step-mobile">
                                     <div class="b-back-link">
                                         <a class="b-back-link__link js-back-submenu"<?= $arSecondLevelItem['_LINK_ATTR2_'] ?>
-                                           href="<?= $arSecondLevelItem['_URL_'] ?>">
+                                           href="javascript:void(0);">
                                             <?php echo $sArrowDownOrangeIco;
                                             echo $arSecondLevelItem['_TEXT_']; ?>
                                         </a>
@@ -149,7 +149,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                                     <ul class="b-submenu-column__list js-step-mobile">
                                                         <li class="b-back-link">
                                                             <a class="b-back-link__link js-back-submenu"<?= $arThirdLevelItem['_LINK_ATTR2_'] ?>
-                                                               href="<?= $arThirdLevelItem['_URL_'] ?>">
+                                                               href="javascript:void(0);">
                                                                 <?php echo $sArrowDownOrangeIco;
                                                                 echo $arThirdLevelItem['_TEXT_']; ?>
                                                             </a>
@@ -232,7 +232,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
             <div class="b-menu-brands js-menu-brand-content">
                 <div class="b-back-link b-back-link--brands">
                     <a class="b-back-link__link js-close-popup js-close-brand-mobile"<?= $arFirstLevelItem['_LINK_ATTR2_'] ?>
-                       href="<?= $arFirstLevelItem['_URL_'] ?>">
+                       href="javascript:void(0);">
                         <?php echo $sArrowDownOrangeIco;
                         echo $arFirstLevelItem['_TEXT_']; ?>
                     </a>

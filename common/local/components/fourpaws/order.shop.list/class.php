@@ -262,9 +262,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
         $canSplit = $this->orderSplitService->canSplitOrder($fullResult);
 
-        $partialResult = $canGetPartial
-            ? (clone $fullResult)->setStockResult($available)
-            : $fullResult;
+        $partialResult = ($canSplit || $canGetPartial) ? (clone $fullResult)->setStockResult($available) : $fullResult;
 
         $address = $store->getAddress();
         if ($store->getMetro()) {
@@ -276,7 +274,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $orderType = 'parts';
         } elseif ($canSplit) {
             $orderType = 'split';
-        } elseif ($available->isEmpty()) {
+        } elseif (!$delayed->isEmpty()) {
             $orderType = 'delay';
         }
 

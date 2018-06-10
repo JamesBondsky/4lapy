@@ -128,6 +128,10 @@ abstract class IBlockElement extends IBlock
             $cIBlockElement->SetPropertyValueCode($primary, $code, $value);
         }
 
+        if ($data['XML_ID']) {
+            $cIBlockElement->Update($primary, ['XML_ID', $data['XML_ID']]);
+        }
+
         return new UpdateResult(true, $primary);
 
         unset($data['PROPERTY_VALUES']);

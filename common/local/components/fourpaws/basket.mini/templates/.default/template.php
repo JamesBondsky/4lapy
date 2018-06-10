@@ -15,13 +15,12 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Components\BasketMiniComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-
 $basket = $arResult['BASKET'];
 /** @var Basket $orderableItems */
-$orderableItems = $basket->getOrderableItems();
+$orderableItems = $component->getBasketItemsWithoutGifts($basket->getOrderableItems());
 
-$hasItems = $component->getBasketCountWithoutGifts($orderableItems) > 0;
-
+$countWithoutGifts =  $component->getBasketCountWithoutGifts($orderableItems);
+$hasItems = $countWithoutGifts > 0;
 if (true !== $arParams['IS_AJAX']) {
     echo '<div class="b-header-info__item b-header-info__item--cart">';
 } ?>
@@ -32,16 +31,16 @@ if (true !== $arParams['IS_AJAX']) {
         </span>
         <span class="b-header-info__inner">Корзина</span>
         <span class="b-header-info__number js-count-products">
-            <?= $component->getBasketCountWithoutGifts($orderableItems); ?>
+            <?= $countWithoutGifts; ?>
         </span>
     </a>
-<?php if ($hasItems) { ?>
+<?php if ($hasItems) {?>
     <div class="b-popover b-popover--cart js-popover">
         <div class="b-cart-popover">
             <span class="b-cart-popover__amount">
-                <?= $component->getBasketCountWithoutGifts($orderableItems) ?>
+                <?= $countWithoutGifts ?>
                 <?= WordHelper::declension(
-                    $component->getBasketCountWithoutGifts($orderableItems), ['Товар', 'Товара', 'Товаров']
+                    $countWithoutGifts, ['Товар', 'Товара', 'Товаров']
                 ) ?>
             </span>
             <span class="b-cart-popover__link" style="width: 58%">
@@ -59,11 +58,7 @@ if (true !== $arParams['IS_AJAX']) {
             <?php
             if ($hasItems) {
                 /** @var BasketItem $basketItem */
-                foreach ($orderableItems as $basketItem) {
-                    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
-                        continue;
-                    }
-
+                foreach ($orderableItems->getBasketItems() as $basketItem) {
                     $offer = $component->getOffer((int)$basketItem->getProductId());
                     $image = $component->getImage((int)$basketItem->getProductId()); ?>
                     <div class="b-cart-item">

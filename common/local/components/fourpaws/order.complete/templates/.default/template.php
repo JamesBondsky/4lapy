@@ -50,7 +50,7 @@ if ($bonusCount > 0) {
                         'бонусных баллов'
                     ))->get($bonusCount) ?>.
                     <a class="b-link b-link--inherit b-link--orange"
-                       href="/customer/bonus-program/"
+                       href="/bonus-program/"
                        title="как получить и потратить баллы.">
                         Узнать, как получить и потратить баллы.
                     </a>

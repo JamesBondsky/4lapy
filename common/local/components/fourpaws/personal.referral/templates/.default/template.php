@@ -163,7 +163,7 @@ $showTab = !$noItems || !empty($arResult['search']) || !empty($arResult['referra
                         <a class="b-account-referal__link-phone"
                            href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
                        title="позвони"><?= tplvar('phone_main') ?></a> или
-                        <a class="b-account-referal__link" href="/company/partnership/"
+                        <a class="b-account-referal__link" href="/partnership/"
                            title="сайт">на сайте.</a>
                     </p>
                 </div>

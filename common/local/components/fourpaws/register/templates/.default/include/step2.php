@@ -153,13 +153,13 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
             <label class="b-checkbox__name b-checkbox__name--agree" for="registration-agree">
                 <span class="b-checkbox__text-agree">Я ознакомлен(а) и соглашаюсь с условиями
                     <a class="b-checkbox__link-agree"
-                       href="/company/user-agreement/"
+                       href="/user-agreement/"
                        title="пользовательского соглашения"
                        target="_blank">пользовательского соглашения.</a>
                 </span>
                 <span class="b-checkbox__text-agree">Я даю согласие на
                     <a class="b-checkbox__link-agree"
-                       href="/company/privacy-policy/"
+                       href="/privacy-policy/"
                        title="обработку персональных данных"
                        target="_blank">обработку персональных данных.</a>
                 </span>

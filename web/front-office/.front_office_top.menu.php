@@ -25,7 +25,7 @@ $aMenuLinks = [
 	*/
     [
         "Бонусы",
-        "http://corp.4lapy.ru/company/bonus.php",
+        "http://corp.4lapy.ru/bonus.php",
         [],
         [],
         "",

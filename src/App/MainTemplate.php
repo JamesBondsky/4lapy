@@ -101,7 +101,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isNews(): bool
     {
-        return $this->isPartitionDir('/services/news');
+        return $this->isPartitionDir('/news');
     }
 
     /**
@@ -109,7 +109,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListNews(): bool
     {
-        return $this->isDir('/services/news');
+        return $this->isDir('/news');
     }
 
     /**
@@ -117,7 +117,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isArticles(): bool
     {
-        return $this->isPartitionDir('/services/articles');
+        return $this->isPartitionDir('/articles');
     }
 
     /**
@@ -125,7 +125,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListArticles(): bool
     {
-        return $this->isDir('/services/articles');
+        return $this->isDir('/articles');
     }
 
     /**
@@ -133,7 +133,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isShares(): bool
     {
-        return $this->isPartitionDir('/customer/shares');
+        return $this->isPartitionDir('/shares');
     }
 
     /**
@@ -165,7 +165,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListShares(): bool
     {
-        return $this->isDir('/customer/shares');
+        return $this->isDir('/shares');
     }
 
     /**
@@ -173,7 +173,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListSharesFilter(): bool
     {
-        return $this->isPartitionDir('/customer/shares/by_pet');
+        return $this->isPartitionDir('/shares/by_pet');
     }
 
     /**
@@ -189,7 +189,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isDetailNews(): bool
     {
-        return $this->isPartitionDir('/services/news');
+        return $this->isPartitionDir('/news');
     }
 
     /**
@@ -197,7 +197,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isDetailArticles(): bool
     {
-        return $this->isPartitionDir('/services/articles');
+        return $this->isPartitionDir('/articles');
     }
 
     /**
@@ -205,7 +205,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isDetailShares(): bool
     {
-        return $this->isPartitionDir('/customer/shares') && !$this->isListShares() && !$this->isListSharesFilter();
+        return $this->isPartitionDir('/shares') && !$this->isListShares() && !$this->isListSharesFilter();
     }
 
     /**
@@ -262,7 +262,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isShopList(): bool
     {
-        return $this->isDir('/company/shops');
+        return $this->isDir('/shops');
     }
 
     /**
@@ -368,7 +368,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isFeedback(): bool
     {
-        return $this->isPage('/company/feedback');
+        return $this->isPage('/feedback');
     }
 
     /**
@@ -376,7 +376,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isPaymentAndDelivery(): bool
     {
-        return $this->isPage('/customer/payment-and-delivery/');
+        return $this->isPage('/payment-and-delivery/');
     }
 
     /**
@@ -416,14 +416,6 @@ class MainTemplate extends TemplateAbstract
     public function hasUserAuth(): bool
     {
         return $this->isPartitionDirByFilePath('/ajax/user/auth/login') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasFilterInPage(): bool
-    {
-        return $this->isSearchPage() || $this->isBrand() || $this->isCatalogList();
     }
 
     /**

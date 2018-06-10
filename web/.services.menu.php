@@ -24,14 +24,14 @@ $aMenuLinks = Array(
     ),
     Array(
         "Статьи",
-        "/services/articles/",
+        "/articles/",
         Array(),
         Array(),
         ""
     ),
     Array(
         "Новости",
-        "/services/news/",
+        "/news/",
         Array(),
         Array(),
         ""
