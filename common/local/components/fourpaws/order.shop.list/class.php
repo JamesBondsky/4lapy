@@ -200,7 +200,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @throws UserMessageException
      * @return array
      */
-    public function getShopInfo(string $xmlId, ?PickupResultInterface $pickup): array
+    public function getShopInfo(string $xmlId, ?PickupResultInterface $pickup = null): array
     {
         $result = [];
 
