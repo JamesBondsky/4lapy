@@ -129,7 +129,7 @@ class ExpertsenderService implements LoggerAwareInterface
         if (!isset($params['subscribe'])) {
             $params['subscribe'] = false;
         }
-        if (!empty($user->getEmail())) {
+        if ($user->hasEmail()) {
             $addUserToList = new AddUserToList();
             $addUserToList->setForce(true);
             $addUserToList->setMode(static::MAIN_LIST_MODE);
@@ -175,19 +175,17 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendChangePasswordByProfile(User $user): bool
     {
-        /** отключаем блокировку отправки если не подтвержден email */
-//        if (!$user->allowedEASend()) {
-//            throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
-//        }
-        try {
-            $receiver = new Receiver($user->getEmail());
-            $apiResult = $this->client->sendSystemTransactional(self::CHANGE_PASSWORD_LIST_ID, $receiver);
-            if ($apiResult->isOk()) {
-                return true;
+        if($user->hasEmail()) {
+            try {
+                $receiver = new Receiver($user->getEmail());
+                $apiResult = $this->client->sendSystemTransactional(self::CHANGE_PASSWORD_LIST_ID, $receiver);
+                if ($apiResult->isOk()) {
+                    return true;
+                }
+                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
+            } catch (ExpertSenderException|GuzzleException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
-            throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-        } catch (ExpertSenderException|GuzzleException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
     }
 
@@ -200,11 +198,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendForgotPassword(User $user, string $backUrl = ''): bool
     {
-        /** отключаем блокировку отправки если не подтвержден email */
-//        if (!$user->allowedEASend()) {
-//            throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
-//        }
-        if (!empty($user->getEmail())) {
+        if ($user->hasEmail()) {
             try {
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
@@ -213,7 +207,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 $receiver = new Receiver($user->getEmail());
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $user->getId() : '';
                 $snippets = [
-                    new Snippet('user_name', $user->getName(), true),
+                    new Snippet('user_name', $user->getName() ?: $user->getFullName(), true),
                     new Snippet('link',
                         (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
                         true),
@@ -256,10 +250,6 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         if ($oldUser->hasEmail()) {
-            /** отключаем блокировку отправки если не подтвержден email */
-//            if (!$oldUser->allowedEASend()) {
-//                throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
-//            }
 
             $continue = false;
             /** отправка почты на старый email */
@@ -347,12 +337,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $continue = true;
         $expertSenderId = 0;
         $hasExpertSenderId = false;
-        if (!empty($curUser->getEmail())) {
-            /** отключаем блокировку отправки если не подтвержден email */
-//            if (!$curUser->allowedEASend()) {
-//                throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
-//            }
-
+        if ($curUser->hasEmail()) {
             try {
                 /** получение id подписчика */
                 $userIdResult = $this->client->getUserId($curUser->getEmail());
@@ -366,7 +351,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
-        if ($continue && $hasExpertSenderId && !empty($curUser->getEmail())) {
+        if ($continue && $hasExpertSenderId && $curUser->hasEmail()) {
             try {
                 $addUserToList = new AddUserToList();
                 $addUserToList->setForce(true);
@@ -410,7 +395,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendEmailSubscribeNews(User $user): bool
     {
-        if (!empty($user->getEmail())) {
+        if ($user->hasEmail()) {
             try {
                 $expertSenderId = 0;
                 $hasExpertSenderId = false;
@@ -467,7 +452,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendEmailUnSubscribeNews(User $user): bool
     {
-        if (!empty($user->getEmail())) {
+        if ($user->hasEmail()) {
             try {
                 $expertSenderId = 0;
                 $hasExpertSenderId = false;
@@ -735,7 +720,7 @@ class ExpertsenderService implements LoggerAwareInterface
         /** @var BasketService $orderService */
         $basketService = $container->get(BasketService::class);
 
-        $snippets[] = new Snippet('user_name', !empty($user->getName()) ? $user->getName() : $user->getFullName());
+        $snippets[] = new Snippet('user_name', $user->getName() ?: $user->getFullName());
         $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
 
         $items = $this->getAltProductsItemsByBasket($basket);
