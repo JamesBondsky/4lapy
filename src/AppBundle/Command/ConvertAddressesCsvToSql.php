@@ -142,8 +142,8 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                 $data[$oldUserId][$profileId]['FIELDS'][$code] = $value;
             }
         }
-        $size = 10000;
-        $chunks = array_chunk($data, $size);
+        $size = 5000;
+        $chunks = array_chunk($data, $size, true);
         unset($data);
         foreach ($chunks as $data) {
             $this->processData($data, $fpo);
