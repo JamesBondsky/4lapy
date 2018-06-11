@@ -359,6 +359,7 @@ if (null === $offer) {
             </div>
         </div>
     </div>
+</div>
 <?php
 
 /**

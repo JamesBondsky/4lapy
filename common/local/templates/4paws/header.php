@@ -146,75 +146,75 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
     <?php if ($template->hasMainWrapper()) { ?>
-    <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
-        <?php if ($template->hasHeaderPublicationListContainer()) { ?>
-        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
-            'b-container b-container--news') ?>">
-            <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
-                <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
-                <?php
-                }
+        <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
+            <?php if ($template->hasHeaderPublicationListContainer()) { ?>
+            <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
+                'b-container b-container--news') ?>">
+                <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
+                    <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                    <?php
+                    }
 
-                if ($template->hasHeaderDetailPageContainer()) {
-                    ?>
-                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
-                        'b-container b-container--news-detail') ?>">
-                        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
-                            'b-detail-page') ?>">
-                            <?php
-                            $APPLICATION->IncludeComponent('bitrix:breadcrumb',
-                                'breadcrumb',
-                                [
-                                    'PATH'       => '',
-                                    'SITE_ID'    => SITE_ID,
-                                    'START_FROM' => '0',
-                                ]); ?>
-                            <h1 class="b-title b-title--h1">
-                                <?php $APPLICATION->ShowTitle(false) ?>
-                            </h1>
-                            <?php
-                            $APPLICATION->ShowViewContent('header_news_display_date'); ?>
-                        </div>
-                    </div>
-                <?php }
-
-                if ($template->hasHeaderPersonalContainer()) { ?>
-                <div class="b-account">
-                    <div class="b-container b-container--account">
-                        <div class="b-account__wrapper-title">
-                            <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
-                        </div>
-                        <?php $APPLICATION->IncludeComponent('bitrix:menu',
-                            'personal.menu',
+            if ($template->hasHeaderDetailPageContainer()) {
+                ?>
+                <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
+                    'b-container b-container--news-detail') ?>">
+                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
+                        'b-detail-page') ?>">
+                        <?php
+                        $APPLICATION->IncludeComponent('bitrix:breadcrumb',
+                            'breadcrumb',
                             [
-                                'COMPONENT_TEMPLATE'    => 'personal.menu',
-                                'ROOT_MENU_TYPE'        => 'personal_cab',
-                                'MENU_CACHE_TYPE'       => 'A',
-                                'MENU_CACHE_TIME'       => '360000',
-                                'MENU_CACHE_USE_GROUPS' => 'Y',
-                                'CACHE_SELECTED_ITEMS'  => 'N',
-                                'TEMPLATE_NO_CACHE'     => 'N',
-                                'MENU_CACHE_GET_VARS'   => [],
-                                'MAX_LEVEL'             => '1',
-                                'CHILD_MENU_TYPE'       => 'personal_cab',
-                                'USE_EXT'               => 'N',
-                                'DELAY'                 => 'N',
-                                'ALLOW_MULTI_SELECT'    => 'N',
-                            ],
-                            false); ?>
-                        <main class="b-account__content" role="main">
-                            <?php }
+                                'PATH'       => '',
+                                'SITE_ID'    => SITE_ID,
+                                'START_FROM' => '0',
+                            ]); ?>
+                        <h1 class="b-title b-title--h1">
+                            <?php $APPLICATION->ShowTitle(false) ?>
+                        </h1>
+                        <?php
+                        $APPLICATION->ShowViewContent('header_news_display_date'); ?>
+                    </div>
+                </div>
+            <?php }
 
-                            if ($template->hasHeaderBlockShopList()) { ?>
-                            <div class="b-stores">
-                                <div class="b-container">
-                                    <div class="b-stores__top">
-                                        <h1 class="b-title b-title--h1 b-title--stores-header"><?php $APPLICATION->ShowTitle(false) ?></h1>
-                                        <div class="b-stores__info">
-                                            <p><?= tplvar('shops_subtitle', true) ?></p>
-                                        </div>
+            if ($template->hasHeaderPersonalContainer()) { ?>
+            <div class="b-account">
+                <div class="b-container b-container--account">
+                    <div class="b-account__wrapper-title">
+                        <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                    </div>
+                    <?php $APPLICATION->IncludeComponent('bitrix:menu',
+                        'personal.menu',
+                        [
+                            'COMPONENT_TEMPLATE'    => 'personal.menu',
+                            'ROOT_MENU_TYPE'        => 'personal_cab',
+                            'MENU_CACHE_TYPE'       => 'A',
+                            'MENU_CACHE_TIME'       => '360000',
+                            'MENU_CACHE_USE_GROUPS' => 'Y',
+                            'CACHE_SELECTED_ITEMS'  => 'N',
+                            'TEMPLATE_NO_CACHE'     => 'N',
+                            'MENU_CACHE_GET_VARS'   => [],
+                            'MAX_LEVEL'             => '1',
+                            'CHILD_MENU_TYPE'       => 'personal_cab',
+                            'USE_EXT'               => 'N',
+                            'DELAY'                 => 'N',
+                            'ALLOW_MULTI_SELECT'    => 'N',
+                        ],
+                        false); ?>
+                    <main class="b-account__content" role="main">
+                        <?php }
+
+            if ($template->hasHeaderBlockShopList()) { ?>
+                        <div class="b-stores">
+                            <div class="b-container">
+                                <div class="b-stores__top">
+                                    <h1 class="b-title b-title--h1 b-title--stores-header"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                                    <div class="b-stores__info">
+                                        <p><?= tplvar('shops_subtitle', true) ?></p>
                                     </div>
-<?php }
+                                </div>
+    <?php }
 }
 
 if ($template->hasContent()) {

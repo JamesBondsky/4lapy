@@ -38,8 +38,8 @@ if ($template->hasMainWrapper()) {
     <?php }
     /** Основной прелоадер из gui */ ?>
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
+    </main>
 <?php } ?>
-</main>
 <footer class="b-footer <?= $template->getFooterClass() ?>">
     <?php if (!$template->hasShortHeaderFooter()) { ?>
         <div class="b-footer__communication">
