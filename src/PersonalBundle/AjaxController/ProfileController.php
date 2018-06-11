@@ -178,14 +178,9 @@ class ProfileController extends Controller
             try {
                 $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
                 $user = $this->currentUserProvider->getUserRepository()->find($id);
-                if ($user instanceof User && $user->allowedEASend()) {
-                    if (!$expertSenderService->sendChangePasswordByProfile($user)) {
-                        $logger = LoggerFactory::create('expertSender');
-                        $logger->error('Произошла ошибка при отправке письма - смена пароля');
-                    }
-                } elseif (!$user->allowedEASend()) {
+                if ($user instanceof User && $user->hasEmail() && !$expertSenderService->sendChangePasswordByProfile($user)) {
                     $logger = LoggerFactory::create('expertSender');
-                    $logger->info('email ' . $user->getEmail() . ' не подтвержден');
+                    $logger->error('Произошла ошибка при отправке письма - смена пароля');
                 }
             } catch (ExpertsenderServiceException $e) {
                 $logger = LoggerFactory::create('expertSender');
