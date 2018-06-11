@@ -453,7 +453,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         /** @var User $curUser */
         $curUser = current($users);
 
-        if ($curUser->allowedEASend()) {
+        if ($curUser->hasEmail()) {
             try {
                 $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
                 return $expertSenderService->sendForgotPassword($curUser, $backUrl);
@@ -474,7 +474,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             }
             return false;
         }
-        return $this->ajaxMess->getNotAllowedEASendError();
+        return $this->ajaxMess->getHaveEmailError();
     }
 
     /**

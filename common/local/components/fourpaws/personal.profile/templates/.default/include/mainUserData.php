@@ -69,18 +69,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
         </div>
-        <?php if (!empty($arResult['CUR_USER']['ADDRESS'])) { ?>
-            <div class="b-account-data">
-                <div class="b-account-data__title">
-                    Адрес доставки
-                </div>
-                <div class="b-account-data__value">
-                    <div class="b-account-data__text js-profile-date">
-                        <?= $arResult['CUR_USER']['ADDRESS'] ?>
-                    </div>
-                </div>
-            </div>
-        <?php } ?>
     </div>
     <div class="js-hidden-block"
          style="display: none;"
@@ -88,7 +76,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
          data-last-name="<?= $arResult['CUR_USER']['LAST_NAME'] ?>"
          data-name="<?= $arResult['CUR_USER']['SECOND_NAME'] ?>"
          data-phone="<?= $arResult['CUR_USER']['PERSONAL_PHONE'] ?>"
-         data-date="<?= $arResult['CUR_USER']['DATE_POPUP'] ?>"
+         <? if ($arResult['CUR_USER']['DATE_POPUP']) { ?>
+            data-date="<?= $arResult['CUR_USER']['DATE_POPUP'] ?>"
+         <? } ?>
          data-email="<?= $arResult['CUR_USER']['EMAIL'] ?>"
          data-male="<?= $arResult['CUR_USER']['GENDER'] === 'M' ? 1 : 0 ?>"
          data-female="<?= $arResult['CUR_USER']['GENDER'] === 'F' ? 1 : 0 ?>"

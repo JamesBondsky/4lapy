@@ -148,8 +148,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     'd.m.Y'
                 ) : '',
                 'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
-                'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
-                'ADDRESS'         => $curUser->getAddress(),
+                'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed()
             ];
 
             $this->includeComponentTemplate();
