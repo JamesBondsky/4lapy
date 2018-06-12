@@ -115,17 +115,6 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
             throw new InvalidArgumentException('cannot create output file');
         }
 
-        $lineCount = 0;
-        while (fgets($fp)) {
-            $lineCount++;
-        }
-
-        $progressBar = new ProgressBar($output, $lineCount);
-        $progressBar->setFormat(self::PROGRESS_BAR_FORMAT);
-
-        rewind($fp);
-        $progressBar->start();
-
         $data = [];
         while ([$oldUserId, $profileId, $profileName, $code, $value] = \fgetcsv($fp)) {
             if (!isset($data[$oldUserId][$profileId])) {
@@ -142,6 +131,10 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                 $data[$oldUserId][$profileId]['FIELDS'][$code] = $value;
             }
         }
+        $progressBar = new ProgressBar($output, \count($data));
+        $progressBar->setFormat(self::PROGRESS_BAR_FORMAT);
+        $progressBar->start();
+
         $size = 5000;
         $chunks = array_chunk($data, $size, true);
         unset($data);
@@ -172,29 +165,34 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
         }
 
         $users = $this->getUsers(array_keys($data));
-
+        $notFoundUsers = [];
         foreach ($data as $oldUserId => $profiles) {
             $i = 0;
             foreach ($profiles as $profileId => $profile) {
                 $i++;
 
                 foreach ($profile['FIELDS'] as &$field) {
-                    $field = \addslashes(trim($field));
+                    $field = trim($field);
+                    if(!empty($field)){
+                        $field = trim(\addslashes($field));
+                    }
                 }
 
                 unset($field);
 
+                $notFoundUsers[] = $oldUserId;
                 if (!isset($users[$oldUserId])) {
-                    $this->log()->warning(sprintf('user with externalId %s not found', $oldUserId));
                     $this->notFound++;
                 } else {
-                    $cityLocation = $profile['FIELDS']['DELIVERY_CITY'] ? '"' . $profile['FIELDS']['DELIVERY_CITY'] . '"' : '';
-                    $city = $profile['FIELDS']['TOWN'] ? '"' . $profile['FIELDS']['TOWN'] . '"' : '';
-                    if (empty($city) && !empty($cityLocation)) {
+                    $cityLocationUnFormatted = trim($profile['FIELDS']['DELIVERY_CITY']);
+                    $cityLocation = $cityLocationUnFormatted ? '"' . $cityLocationUnFormatted . '"' : '';
+                    $city = trim($profile['FIELDS']['TOWN']);
+                    $city = $city ? '"' . $city . '"' : '';
+                    if (empty($city) && !empty($cityLocationUnFormatted)) {
                         $res = LocationTable::query()->setSelect(['NAME'])->where('LOCATION.CODE',
-                            $cityLocation)->setLimit(1)->exec();
+                            $cityLocationUnFormatted)->setLimit(1)->exec();
                         if ($res->getSelectedRowsCount() > 0) {
-                            $city = $res->fetch()['NAME'];
+                            $city = '"' . $res->fetch()['NAME'] . '"';
                         }
                     }
                     $comments = '';
@@ -238,6 +236,9 @@ class ConvertAddressesCsvToSql extends Command implements LoggerAwareInterface
                     }
                 }
             }
+        }
+        if(!empty($notFoundUsers)) {
+            $this->log()->warning(sprintf('user with externalIds not found: %s', implode(', ', $notFoundUsers)));
         }
     }
 
