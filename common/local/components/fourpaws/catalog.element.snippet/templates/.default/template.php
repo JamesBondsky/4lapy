@@ -152,7 +152,7 @@ $countOffersInMobile = 3; ?>
                             }
                         }
 
-                        if (!empty($value) && $value !== $value) { ?>
+                        if (!empty($value) && $value !== $currentValue) { ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i > $countOffersInMobile ? ' mobile-hidden' : '' ?>"
