@@ -204,7 +204,6 @@ $APPLICATION->IncludeComponent('fourpaws:items.list',
         'IBLOCK_ID' => [
             IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
             IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
-            //IblockUtils::getIblockId(IblockType::PUBLICATION, 'cloubs_and_nurderis'),//Раскоментить когда добавится инфоблок
         ],
         'IBLOCK_TYPE' => IblockType::PUBLICATION,
         'NEWS_COUNT' => '7',
