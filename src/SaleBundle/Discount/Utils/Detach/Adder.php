@@ -55,8 +55,15 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
-            $lastBasketCode = ''; // @todo костыль. при частичном получении корзина заказа пересчитывается и для скидок basketCode приходят как ''
+
+            // @todo костыль. при частичном получении корзина заказа пересчитывается и для скидок basketCode приходят как ''
+            $basketItems = $this->order->getBasket()->getBasket()->getBasketItems();
+            /** @var BasketItem $firstItem */
+            $firstItem = reset($basketItems);
+            $lastBasketCode = $firstItem ? $firstItem->getBasketCode() : '';
+
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
+                $realBasketCode = $basketCode;
                 if ('' === $basketCode) {
                     $basketCode = $lastBasketCode;
                 }
@@ -145,7 +152,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         }
                     }
                 }
-                $lastBasketCode = ('' === $basketCode) ? $lastBasketCode : $basketCode;
+                $lastBasketCode = ('' === $realBasketCode) ? $lastBasketCode : $realBasketCode;
             }
         }
     }
