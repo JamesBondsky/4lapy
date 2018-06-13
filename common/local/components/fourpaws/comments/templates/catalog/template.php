@@ -184,7 +184,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                     <textarea class="b-form-review__textarea js-small-input-eight"
                               name="UF_TEXT"
                               placeholder="Оставьте ваш отзыв:"
-                              minlength="8"
                               maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
@@ -240,8 +239,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                             data-items_count="<?= $arParams['ITEMS_COUNT'] ?>"
                             data-page="1"
                             data-sort_desc="<?= $arParams['SORT_DESC'] ?>"
-                            data-active_date_format="<?= $arParams['ACTIVE_DATE_FORMAT'] ?>"
-                    >
+                            data-active_date_format="<?= $arParams['ACTIVE_DATE_FORMAT'] ?>">
                         Ещё отзывы
                     </button>
                 <?php } ?>
