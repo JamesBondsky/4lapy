@@ -34,7 +34,7 @@ class BonusBuy
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("START_DATE")
-     * @Serializer\Type("DateTime<'Ymd'>")
+     * @Serializer\Type("DateTimeNullable<'Ymd'>")
      *
      * @var \DateTime
      */
@@ -45,7 +45,7 @@ class BonusBuy
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("END_DATE")
-     * @Serializer\Type("DateTime<'Ymd'>")
+     * @Serializer\Type("DateTimeNullable<'Ymd'>")
      *
      * @var \DateTime
      */
