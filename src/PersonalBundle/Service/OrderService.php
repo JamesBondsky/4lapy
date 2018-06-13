@@ -231,7 +231,7 @@ class OrderService
                         }
                     }
                 } else {
-                    // пропускаем чеки без товаров
+                    // пропускаем чеки без товаров и те что уже на сайте
                     continue;
                 }
                 $order->setNewManzana($newManzana);
