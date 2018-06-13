@@ -146,6 +146,8 @@ class SmsLogDoc implements LoggerAwareInterface
                     $document = $documentCollection->first();
                 }
             }
+        } catch (\Elastica\Exception\NotFoundException $exception) {
+            // Ничего не делаем - просто не найден документ
         } catch (\Exception $exception) {
             $this->log()->error(
                 $exception->getMessage(),
