@@ -7,6 +7,7 @@ use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\NotImplementedException;
@@ -81,6 +82,8 @@ class Event extends BaseServiceHandler
         static::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction'], $module);
         static::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction'], $module);
 
+        /** генерация номера заказа */
+        static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [self::class, 'updateOrderAccountNumber'], $module);
         ###   Обработчики скидок EOF   ###
 
         /** отправка email */
@@ -317,6 +320,37 @@ class Event extends BaseServiceHandler
             $order->setField('CANCELED', 'Y');
             $order->save();
         }
+    }
+
+    /**
+     * @param $id
+     * @param $type
+     * @return false|string
+     */
+    public static function updateOrderAccountNumber($id, $type) {
+        if ($type === 'NUMBER') {
+            try {
+                $maxNumber = BitrixApplication::getConnection()->query(
+                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order'
+                )->fetch()['maxNumber'];
+
+                if ($defaultNumber = Option::get('sale', 'account_number_data', 0)) {
+                    return (int)$defaultNumber > (int)$maxNumber ? $defaultNumber : ($maxNumber + 1);
+                }
+            } catch (\Exception $e) {
+
+                static::$logger->error(
+                    sprintf(
+                        'failed to set order %s account number: %s: %s',
+                        $id,
+                        \get_class($e),
+                        $e->getMessage()
+                    )
+                );
+            }
+        }
+
+        return false;
     }
 
     /**
