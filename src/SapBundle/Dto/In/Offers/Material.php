@@ -211,6 +211,17 @@ class Material
     protected $retailPrice = 0;
 
     /**
+     * Масса нетто
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("WeightNetto")
+     * @Serializer\Type("float")
+     *
+     * @var float
+     */
+    protected $netWeight = 0;
+
+    /**
      * Единицы измерения
      *
      * @Serializer\XmlList(inline=true, entry="UOM")
@@ -532,6 +543,24 @@ class Material
     public function setRetailPrice(float $retailPrice): Material
     {
         $this->retailPrice = $retailPrice;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getNetWeight(): float
+    {
+        return $this->netWeight;
+    }
+
+    /**
+     * @param float $netWeight
+     * @return Material
+     */
+    public function setNetWeight(float $netWeight): Material
+    {
+        $this->netWeight = $netWeight;
         return $this;
     }
 
