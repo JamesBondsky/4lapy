@@ -309,6 +309,9 @@ class SharesService implements LoggerAwareInterface
                     'У акций типа Z006 должны быть одинаковые товары в группах за и на которые дают скидки'
                 );
             }
+
+            $multiplier = $itemsTo->getQuantity() ?: 1;
+
             $filtrationOperator = 'separate';
 
             $actions = [
@@ -325,7 +328,7 @@ class SharesService implements LoggerAwareInterface
                             'Count_operator' => $countOperator,
                             'All' => 'AND',
                             'Value' => $discountPercent,
-                            'Multiplier' => 1,
+                            'Multiplier' => $multiplier,
                         ],
                         'CHILDREN' => [
                             [
