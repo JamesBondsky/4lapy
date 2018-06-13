@@ -113,32 +113,32 @@ class SharesService implements LoggerAwareInterface
                 if ($share->isDelete()) {
                     $this->tryDeleteShare($share);
                     $this->tryDeleteBasketRule($share);
-                    continue;
-                }
-                /** работа с ПРСК */
-                $basketRule = $this->basketRuleFactory($share, $promo);
-                if ($existBasketRule = $this->basketRulesRepository->findOneByXmlId($share->getShareNumber())) {
-                    $basketRule->setId($existBasketRule->getId());
-                    $this->basketRulesRepository->update($basketRule);
                 } else {
-                    $this->basketRulesRepository->create($basketRule);
-                }
-                /** работа с ПРСК  конец*/
+                    /** работа с ПРСК */
+                    $basketRule = $this->basketRuleFactory($share, $promo);
+                    if ($existBasketRule = $this->basketRulesRepository->findOneByXmlId($share->getShareNumber())) {
+                        $basketRule->setId($existBasketRule->getId());
+                        $this->basketRulesRepository->update($basketRule);
+                    } else {
+                        $this->basketRulesRepository->create($basketRule);
+                    }
+                    /** работа с ПРСК  конец*/
 
-                $entity = $this->transformDtoToEntity($share, $promo, $basketRule);
+                    $entity = $this->transformDtoToEntity($share, $promo, $basketRule);
 
-                /** @noinspection BadExceptionsProcessingInspection */
-                try {
-                    $exists = $this->findShare($share);
-                    $existsEntityId = $exists->getId();
-                    $entity->withId($existsEntityId);
-                    $entity->withCode($exists->getCode());
+                    /** @noinspection BadExceptionsProcessingInspection */
+                    try {
+                        $exists = $this->findShare($share);
+                        $existsEntityId = $exists->getId();
+                        $entity->withId($existsEntityId);
+                        $entity->withCode($exists->getCode());
 
-                    $this->tryUpdateShare($entity);
+                        $this->tryUpdateShare($entity);
 
-                } /** @noinspection BadExceptionsProcessingInspection */
-                catch (NotFoundShareException $e) {
-                    $this->tryAddShare($entity);
+                    } /** @noinspection BadExceptionsProcessingInspection */
+                    catch (NotFoundShareException $e) {
+                        $this->tryAddShare($entity);
+                    }
                 }
 
                 $this->connection->commitTransaction();
