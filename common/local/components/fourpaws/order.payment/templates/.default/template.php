@@ -62,7 +62,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
                 <?php } ?>
                 <input type="hidden" name="PAY" value="Y">
                 <div class="b-order__ord-wrapper">
-                    <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $order->getId() ?>
+                    <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $order->getField('ACCOUNT_NUMBER') ?>
                     </h2>
                     <div class="b-order__text-block b-order__text-block--gotopay">
                         <p><?= $orderQuantity ?> <?= $declension->get($orderQuantity) ?>

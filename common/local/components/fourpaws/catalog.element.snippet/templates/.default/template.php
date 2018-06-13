@@ -126,9 +126,10 @@ $countOffersInMobile = 3; ?>
                             $value = WordHelper::showWeight($weight, true, 999);
                         }
                     }
-                }?>
-                <a class="b-weight-container__link js-mobile-select" href="javascript:void(0);" title=""><?=$value?></a>
-                <?php $value='';?>
+                } ?>
+                <a class="b-weight-container__link js-mobile-select" href="javascript:void(0);"
+                   title=""><?= $value ?></a>
+                <?php $value = ''; ?>
                 <ul class="b-weight-container__list">
                     <?php
                     $i = 0;
@@ -149,7 +150,7 @@ $countOffersInMobile = 3; ?>
                             }
                         }
 
-                        if (!empty($value)) { ?>
+                        if ($value) { ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i > $countOffersInMobile ? ' mobile-hidden' : '' ?>"

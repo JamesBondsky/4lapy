@@ -3,8 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Sale\Order;
 use Bitrix\Main\Grid\Declension;
+use Bitrix\Sale\Order;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -61,7 +61,7 @@ if ($bonusCount > 0) {
         <div class="b-order__block b-order__block--no-border">
             <div class="b-order__content b-order__content--no-border b-order__content--step-five">
                 <h2 class="b-title b-title--order-heading b-title--block">
-                    Заказ № <?= $order->getId() ?> оформлен
+                    Заказ № <?= $order->getField('ACCOUNT_NUMBER') ?> оформлен
                 </h2>
                 <div class="b-order__text-block">
                     <?php if ($arResult['ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_SMS) { ?>
