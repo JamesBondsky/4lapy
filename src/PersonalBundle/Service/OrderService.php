@@ -129,36 +129,11 @@ class OrderService
      */
     public function mergeAllClosedOrders(array $closedSiteOrders, array $manzanaOrders): ArrayCollection
     {
-        $closedSiteOrderDates = [];
-        /** @var Order $closedSiteOrder */
-        foreach ($closedSiteOrders as $closedSiteOrder) {
-            $timestamp = $closedSiteOrder->getDateInsert()->getTimestamp();
-            $closedSiteOrderDates[$timestamp] = $closedSiteOrder->getId();
-            /** учитываем рассинхрон в секунду */
-            $closedSiteOrderDates[$timestamp - 1] = $closedSiteOrder->getId();
-            $closedSiteOrderDates[$timestamp + 1] = $closedSiteOrder->getId();
-        }
-        /** @var Order $manzanaOrder */
         /** Очищаем дубли из манзаны */
+        /** @var Order $manzanaOrder */
         foreach ($manzanaOrders as $key => $manzanaOrder) {
-            $timestamp = $manzanaOrder->getDateInsert()->getTimestamp();
-            if (\in_array($timestamp, $closedSiteOrderDates, true)) {
-                /** заполняем бонусы по данным из манзаны */
-                /** @var Order $realOrder */
-                $realOrder =& $closedSiteOrders[$closedSiteOrderDates[$timestamp]];
-                /** @var OrderItem $item */
-                /** @var OrderItem $manzanaItem */
-                if ($realOrder instanceof Order) {
-                    foreach ($manzanaOrder->getItems() as $manzanaItem) {
-                        foreach ($realOrder->getItems() as &$item) {
-                            if ($item->getXmlId() === $manzanaItem->getXmlId() || $item->getName() === $manzanaItem->getName()) {
-                                $item->setBonus($manzanaItem->getBonus());
-                                break;
-                            }
-                        }
-                    }
-                }
-                unset($item, $manzanaOrders[$key]);
+            if (\in_array($manzanaOrder->getManzanaId(), $this->getSiteManzanaOrders($manzanaOrder->getUserId()), true)) {
+                unset($manzanaOrders[$key]);
             }
         }
         return new ArrayCollection(array_merge($closedSiteOrders, $manzanaOrders));
@@ -213,7 +188,8 @@ class OrderService
                 $order->setDeliveryId(SaleDeliveryServiceTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID']);
                 $items = [];
                 $newManzana = true;
-                if ($cheque->hasItemsBool()) {
+                /** если заказ уже на сайте то не делаем доп. запрос в манзану на получение твоаров */
+                if ($cheque->hasItemsBool() && !$this->hasOrderByManzana($order)) {
                     $chequeItems = new ArrayCollection($this->manzanaService->getItemsByCheque($cheque->chequeId));
                     if (!$chequeItems->isEmpty()) {
                         /** @var ChequeItem $chequeItem */
