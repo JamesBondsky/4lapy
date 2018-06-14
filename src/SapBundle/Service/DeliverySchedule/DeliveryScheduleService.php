@@ -74,7 +74,13 @@ class DeliveryScheduleService implements LoggerAwareInterface
     public function findSchedule(DeliverySchedule $schedule): DeliveryScheduleEntity
     {
         try {
-            $scheduleEntity = $this->repository->findBy(['=UF_XML_ID' => $schedule->getXmlId()])->first();
+            $scheduleEntity = $this->repository->findBy(
+                ['=UF_XML_ID' => $schedule->getXmlId()],
+                [],
+                null,
+                null,
+                false
+            )->first();
         } catch (SystemException $e) {
             /**
              * Обработка ниже. Всё сводится к отсутствию расписания.

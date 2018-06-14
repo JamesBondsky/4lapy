@@ -104,9 +104,6 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $cardNumber = $user->getDiscountCardNumber();
         $cache = $instance->getCache();
 
-        /** @todo здесь тоже можно делать обновление динамически, так как это влияет только на товары */
-        $this->currentUserProvider->refreshUserBonusPercent($user);
-
         $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $cachePath)) {
@@ -129,6 +126,10 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
                 $tagCache->abortTagCache();
                 return null;
             }
+
+            /** @todo здесь тоже можно делать обновление динамически, так как это влияет только на товары */
+            /** обновим толкьо когда получаем - когда закеширвоана - нафг нам постоянно обновлять и создавать нагрузку */
+            $this->currentUserProvider->refreshUserBonusPercent($user, $bonus);
 
             $tagCache->end();
             $cache->endDataCache(['bonus' => $bonus]);
