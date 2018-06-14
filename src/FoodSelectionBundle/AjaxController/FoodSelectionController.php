@@ -69,7 +69,7 @@ class FoodSelectionController extends Controller
             'food_spec',
             'food_consistence',
         ];
-        $sections = $this->foodSelectionService->getSectionIdByXmlId($sections, 1);
+        $sections = $this->foodSelectionService->getSectionsByXmlId($sections, 1);
         /** @var IblockSect[] $sect */
         $sect = $this->foodSelectionService->getSections([
             '=SECTION_ID' => array_keys($sections),
@@ -77,7 +77,14 @@ class FoodSelectionController extends Controller
         if (!empty($sect)) {
             /** @var IblockSect $sectItem */
             foreach ($sect as $sectItem) {
-                $all_sections[$sections[$sectItem->getIblockSectionId()]][] = $sectItem;
+                $xmlId = $sections[$sectItem->getIblockSectionId()]->getXmlId();
+                if (!isset($all_sections[$xmlId])) {
+                    $all_sections[$xmlId] = [
+                        'ITEMS'     => [],
+                        'SECT_NAME' => $sections[$sectItem->getIblockSectionId()]->getName(),
+                    ];
+                }
+                $all_sections[$xmlId]['ITEMS'][] = $sectItem;
             }
         }
 
@@ -126,7 +133,7 @@ class FoodSelectionController extends Controller
         }
 
         $sections = [];
-        $sections = $this->foodSelectionService->getSectionIdByXmlId($sections, 1);
+        $sections = $this->foodSelectionService->getSectionsByXmlId($sections, 1);
         /** @var IblockSect[] $sect */
         $sect = $this->foodSelectionService->getSections([
             '=SECTION_ID' => array_keys($sections),
@@ -134,7 +141,14 @@ class FoodSelectionController extends Controller
         if (!empty($sect)) {
             /** @var IblockSect $sectItem */
             foreach ($sect as $sectItem) {
-                $all_sections[$sections[$sectItem->getIblockSectionId()]][] = $sectItem;
+                $xmlId = $sections[$sectItem->getIblockSectionId()]->getXmlId();
+                if (!isset($all_sections[$xmlId])) {
+                    $all_sections[$xmlId] = [
+                        'ITEMS'     => [],
+                        'SECT_NAME' => $sections[$sectItem->getIblockSectionId()]->getName(),
+                    ];
+                }
+                $all_sections[$xmlId]['ITEMS'][] = $sectItem;
             }
         }
 

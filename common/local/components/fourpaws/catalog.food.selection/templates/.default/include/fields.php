@@ -22,33 +22,43 @@ $nextStep=1;
 $nextUrl = '/ajax/food_selection/show/step/begin/';
 
 /** Тип питомца */
-$val = (int)$values['pet_type'];
-$sections = $all_sections['pet_type'];
-require_once __DIR__.'/pet_type.php';
+$code = 'pet_type';
+$val = (int)$values[$code];
+$sections = $all_sections[$code]['ITEMS'];
+$sectionName = $all_sections[$code]['SECT_NAME'];
+require_once __DIR__.'/'.$code.'.php';
 
 $nextUrl='/ajax/food_selection/show/step/required/';  ?>
 <div class="b-quest b-quest--step-2 js-quest js-quest--step-2 js-block-required main-quest-block" data-step="2">
     <?php /** Возраст питомца */
-    $val = (int)$values['pet_age'];
-    $sections = $all_sections['pet_age'];
-    require_once __DIR__.'/pet_age.php';
+    $code = 'pet_age';
+    $val = (int)$values[$code];
+    $sections = $all_sections[$code]['ITEMS'];
+    $sectionName = $all_sections[$code]['SECT_NAME'];
+    require_once __DIR__.'/'.$code.'.php';
 
     /** Размер питомца */
     if($petTypeCode === 'dog') {
-        $val = (int)$values['pet_size'];
-        $sections = $all_sections['pet_size'];
-        require_once __DIR__ . '/pet_size.php';
+        $code = 'pet_size';
+        $val = (int)$values[$code];
+        $sections = $all_sections[$code]['ITEMS'];
+        $sectionName = $all_sections[$code]['SECT_NAME'];
+        require_once __DIR__ . '/'.$code.'.php';
     }
 
     /** Специализация */
-    $val = (int)$values['food_spec'];
-    $sections = $all_sections['food_spec'];
-    require_once __DIR__.'/food_spec.php';
+    $code = 'food_spec';
+    $val = (int)$values[$code];
+    $sections = $all_sections[$code]['ITEMS'];
+    $sectionName = $all_sections[$code]['SECT_NAME'];
+    require_once __DIR__.'/'.$code.'.php';
 
     /** Тип корма */
-    $val = (int)$values['food_consistence'];
-    $sections = $all_sections['food_consistence'];
-    require_once __DIR__.'/food_consistence.php'; ?>
+    $code = 'food_consistence';
+    $val = (int)$values[$code];
+    $sections = $all_sections[$code]['ITEMS'];
+    $sectionName = $all_sections[$code]['SECT_NAME'];
+    require_once __DIR__.'/'.$code.'.php'; ?>
 </div>
 <?php
 /** не обязательные поля */
@@ -59,13 +69,17 @@ if($full_fields){ ?>
         $nextStep=3;
 
         /** Особенности */
-        $val = (int)$values['food_ingridient'];
-        $sections = $all_sections['food_ingridient'];
-        require_once __DIR__.'/food_ingridient.php';
+        $code = 'food_ingridient';
+        $val = (int)$values[$code];
+        $sections = $all_sections[$code]['ITEMS'];
+        $sectionName = $all_sections[$code]['SECT_NAME'];
+        require_once __DIR__.'/'.$code.'.php';
 
         /** Вкус */
-        $val = (int)$values['food_flavour'];
-        $sections = $all_sections['food_flavour'];
-        require_once __DIR__.'/food_flavour.php';  ?>
+        $code = 'food_flavour';
+        $val = (int)$values[$code];
+        $sections = $all_sections[$code]['ITEMS'];
+        $sectionName = $all_sections[$code]['SECT_NAME'];
+        require_once __DIR__.'/'.$code.'.php';  ?>
     </div>
 <?php }

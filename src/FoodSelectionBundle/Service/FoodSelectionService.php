@@ -11,7 +11,9 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use FourPaws\BitrixOrm\Model\IblockSect;
+use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Model\IblockSection;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\FoodSelectionBundle\Repository\FoodSelectionRepository;
@@ -46,7 +48,7 @@ class FoodSelectionService
     /**
      * @param array $params
      *
-     * @return array
+     * @return array|IblockElement[]
      */
     public function getItems(array $params = []): array
     {
@@ -60,7 +62,7 @@ class FoodSelectionService
     /**
      * @param int $parentSectionID
      *
-     * @return array
+     * @return array|IblockSection[]
      */
     public function getSectionsByParentSectionId(
         int $parentSectionID
@@ -73,7 +75,7 @@ class FoodSelectionService
     /**
      * @param array $params
      *
-     * @return array
+     * @return array|IblockSection[]
      */
     public function getSections(array $params = []): array
     {
@@ -86,20 +88,72 @@ class FoodSelectionService
     }
 
     /**
-     * @param string|array $xmlId
-     * @param int          $depthLvl
+     * @param string $xmlId
+     * @param int    $depthLvl
      *
-     * @return int|array
+     * @return int|null
      */
-    public function getSectionIdByXmlId($xmlId, int $depthLvl = 0)
+    public function getSectionIdByXmlId(string $xmlId, int $depthLvl = 0): ?int
+    {
+        $res = $this->getSectionsByXmlId($xmlId, $depthLvl);
+        if (\is_array($res) && !empty($res)) {
+            return current($res)->getId();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param     $xmlId
+     * @param int $depthLvl
+     *
+     * @return array
+     */
+    public function getSectionIdsByXmlId($xmlId, int $depthLvl = 0): array
+    {
+        $res = $this->getSectionsByXmlId($xmlId, $depthLvl);
+        if (\is_array($res)) {
+            $ids = [];
+            foreach ($res as $iblockSection) {
+                $ids[$iblockSection->getId()] = $iblockSection->getXmlId();
+            }
+            return $ids;
+        }
+
+        return [];
+    }
+
+    /**
+     * @param     $xmlId
+     * @param int $depthLvl
+     *
+     * @return IblockSection|null
+     */
+    public function getSectionByXmlId($xmlId, int $depthLvl = 0): ?IblockSection
+    {
+        $res = $this->getSectionsByXmlId($xmlId, $depthLvl);
+        if (!\is_array($res)) {
+            return current($res);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param     $xmlId
+     * @param int $depthLvl
+     *
+     * @return array|IblockSection[]|null
+     */
+    public function getSectionsByXmlId($xmlId, int $depthLvl = 0): ?array
     {
         if (!\is_array($xmlId)) {
             $xmlId = (string)$xmlId;
-            if(!\is_string($xmlId) || empty($xmlId)) {
+            if (!\is_string($xmlId) || empty($xmlId)) {
                 return null;
             }
         }
-        if(!empty($xmlId)) {
+        if (!empty($xmlId)) {
             $filter = ['XML_ID' => $xmlId];
         }
         if ($depthLvl > 0) {
@@ -107,18 +161,11 @@ class FoodSelectionService
         }
         $items = $this->getSections(['filter' => $filter]);
         if (!empty($items)) {
-            /** @var IblockSect $item */
-            if (\is_array($xmlId)) {
-                $ids = [];
-                foreach ($items as $item) {
-                    $ids[$item->getId()] = $item->getXmlId();
-                }
-                return $ids;
+            $result = [];
+            foreach ($items as $item) {
+                $result[$item->getId()] = $item;
             }
-
-            $item = current($items);
-
-            return $item->getId();
+            return $result;
         }
 
         return null;
@@ -131,13 +178,14 @@ class FoodSelectionService
      *
      * @param int   $limit
      *
-     * @return array
+     * @return array|Product[]
      * @throws SystemException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      */
     public function getProductsBySections(array $sections, array $exceptionItems = [], int $limit = 6): array
     {
-        return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems, $limit);
+        return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems,
+            $limit);
     }
 }

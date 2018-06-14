@@ -16,9 +16,12 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Model\IblockSection;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Query\IblockSectQuery;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -33,7 +36,7 @@ class FoodSelectionRepository
     /**
      * @param array $params
      *
-     * @return array
+     * @return array|IblockElement[]
      */
     public function getItems(array $params = []): array
     {
@@ -74,7 +77,7 @@ class FoodSelectionRepository
     /**
      * @param array $params
      *
-     * @return array
+     * @return array|IblockSection[]
      */
     public function getSections(array $params = []): array
     {
@@ -121,13 +124,17 @@ class FoodSelectionRepository
      *
      * @param int   $limit
      *
-     * @return array
+     * @return array|Product[]
      * @throws ArgumentException
      * @throws SystemException
      * @throws ObjectPropertyException
      */
-    public function getProductsBySections(array $sections, int $iblockId, array $exceptionItems = [], int $limit = 6): array
-    {
+    public function getProductsBySections(
+        array $sections,
+        int $iblockId,
+        array $exceptionItems = [],
+        int $limit = 6
+    ): array {
         $countSections = \count($sections);
         $propId = PropertyTable::query()->setFilter(
             [
@@ -175,8 +182,8 @@ class FoodSelectionRepository
         $products = [];
         if (!empty($itemIds)) {
             $query = new ProductQuery();
-            $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE'=>'Y'])
-                ->withNav(['nTopCount'=>$limit])
+            $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE' => 'Y'])
+                ->withNav(['nTopCount' => $limit])
                 ->exec();
             $products = $res->toArray();
         }
