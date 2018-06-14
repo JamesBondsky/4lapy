@@ -117,27 +117,31 @@ abstract class BaseRepository implements RepositoryInterface
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param array $criteria
-     * @param array $orderBy
+     * @param array    $criteria
+     * @param array    $orderBy
      * @param int|null $limit
      * @param int|null $offset
+     * @param bool     $useDefaultFilter
      *
+     * @return BaseCollection
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @return BaseCollection
      */
     public function findBy(
         array $criteria = [],
         array $orderBy = [],
         int $limit = null,
-        int $offset = null
+        int $offset = null,
+        bool $useDefaultFilter = true
     ) {
         if (empty($orderBy)) {
             $orderBy = $this->getDefaultOrder();
         }
 
-        $criteria = array_merge($this->getDefaultFilter(), $criteria);
+        if ($useDefaultFilter) {
+            $criteria = array_merge($this->getDefaultFilter(), $criteria);
+        }
 
         $query = $this->table::query()
             ->setSelect(['*', 'UF_*'])
@@ -146,7 +150,11 @@ abstract class BaseRepository implements RepositoryInterface
             ->setLimit($limit)
             ->setOffset($offset);
 
-        $entities = $this->modifyQuery($query)->exec();
+        if ($useDefaultFilter) {
+            $query = $this->modifyQuery($query);
+        }
+
+        $entities = $query->exec();
 
         $result = [];
         while ($entity = $entities->fetch()) {
