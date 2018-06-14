@@ -1331,14 +1331,14 @@ class OrderService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws \RuntimeException
+     * @throws UserNotFoundException
      */
     public function getOrderBonusSum(Order $order, ?User $user = null): string
     {
         $propertyValue = $this->getOrderPropertyByCode($order, 'BONUS_COUNT');
 
         if (!$user) {
-            $user = $this->currentUserProvider->getUserRepository()->find($order->getUserId());
+            $user = $this->userProvider->findOne($order->getUserId());
         }
 
         if (null === $propertyValue->getValue()) {
@@ -1348,14 +1348,16 @@ class OrderService implements LoggerAwareInterface
                     /**
                      * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
                      */
-                    $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                        $this->manzanaPosService->buildRequestFromBasket(
-                            $order->getBasket(),
-                            $user->getDiscountCardNumber(),
-                            $this->basketService
-                        )
+
+                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
+                        $order->getBasket(),
+                        $user->getDiscountCardNumber(),
+                        $this->basketService
                     );
-                    $propertyValue->setValue($cheque->getChargedBonus());
+                    $chequeRequest->setPaidByBonus($order->getPaymentCollection()->getInnerPayment()->getSum());
+
+                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
+                    $propertyValue->setValue(floor($cheque->getChargedBonus()));
                 }
                 $order->save();
             } catch (ExecuteException $e) {
