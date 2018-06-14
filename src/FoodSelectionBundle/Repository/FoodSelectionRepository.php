@@ -17,7 +17,7 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\BitrixOrm\Model\IblockElement;
-use FourPaws\BitrixOrm\Model\IblockSection;
+use FourPaws\BitrixOrm\Model\IblockSect;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Query\IblockSectQuery;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
@@ -77,7 +77,7 @@ class FoodSelectionRepository
     /**
      * @param array $params
      *
-     * @return array|IblockSection[]
+     * @return array|IblockSect[]
      */
     public function getSections(array $params = []): array
     {

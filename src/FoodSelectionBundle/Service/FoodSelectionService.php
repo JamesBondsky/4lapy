@@ -12,7 +12,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\BitrixOrm\Model\IblockElement;
-use FourPaws\BitrixOrm\Model\IblockSection;
+use FourPaws\BitrixOrm\Model\IblockSect;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -62,7 +62,7 @@ class FoodSelectionService
     /**
      * @param int $parentSectionID
      *
-     * @return array|IblockSection[]
+     * @return array|IblockSect[]
      */
     public function getSectionsByParentSectionId(
         int $parentSectionID
@@ -75,7 +75,7 @@ class FoodSelectionService
     /**
      * @param array $params
      *
-     * @return array|IblockSection[]
+     * @return array|IblockSect[]
      */
     public function getSections(array $params = []): array
     {
@@ -114,8 +114,8 @@ class FoodSelectionService
         $res = $this->getSectionsByXmlId($xmlId, $depthLvl);
         if (\is_array($res)) {
             $ids = [];
-            foreach ($res as $iblockSection) {
-                $ids[$iblockSection->getId()] = $iblockSection->getXmlId();
+            foreach ($res as $IblockSect) {
+                $ids[$IblockSect->getId()] = $IblockSect->getXmlId();
             }
             return $ids;
         }
@@ -127,9 +127,9 @@ class FoodSelectionService
      * @param     $xmlId
      * @param int $depthLvl
      *
-     * @return IblockSection|null
+     * @return IblockSect|null
      */
-    public function getSectionByXmlId($xmlId, int $depthLvl = 0): ?IblockSection
+    public function getSectionByXmlId($xmlId, int $depthLvl = 0): ?IblockSect
     {
         $res = $this->getSectionsByXmlId($xmlId, $depthLvl);
         if (\is_array($res)) {
@@ -143,7 +143,7 @@ class FoodSelectionService
      * @param     $xmlId
      * @param int $depthLvl
      *
-     * @return array|IblockSection[]|null
+     * @return array|IblockSect[]|null
      */
     public function getSectionsByXmlId($xmlId, int $depthLvl = 0): ?array
     {
