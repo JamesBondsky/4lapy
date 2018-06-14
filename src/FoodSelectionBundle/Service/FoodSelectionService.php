@@ -132,7 +132,7 @@ class FoodSelectionService
     public function getSectionByXmlId($xmlId, int $depthLvl = 0): ?IblockSection
     {
         $res = $this->getSectionsByXmlId($xmlId, $depthLvl);
-        if (!\is_array($res)) {
+        if (\is_array($res)) {
             return current($res);
         }
 
@@ -161,11 +161,7 @@ class FoodSelectionService
         }
         $items = $this->getSections(['filter' => $filter]);
         if (!empty($items)) {
-            $result = [];
-            foreach ($items as $item) {
-                $result[$item->getId()] = $item;
-            }
-            return $result;
+            return $items;
         }
 
         return null;
