@@ -298,9 +298,15 @@ class OrderSplitService implements LoggerAwareInterface
         if ($this->canSplitOrder($delivery)) {
             $available = $stockResultCollection->getRegular();
             $delayed = $stockResultCollection->getByRequest();
-        } else {
+        } elseif ($this->canGetPartial($delivery)) {
             $available = $stockResultCollection->getAvailable();
             $delayed = $stockResultCollection->getDelayed();
+        } elseif (!$delivery->getStockResult()->getDelayed()->isEmpty()) {
+            $available = new StockResultCollection();
+            $delayed = $delivery->getStockResult();
+        } else {
+            $delayed = new StockResultCollection();
+            $available = $delivery->getStockResult();
         }
 
         /**
