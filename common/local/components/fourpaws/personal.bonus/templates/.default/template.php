@@ -96,12 +96,14 @@ $bonus = $arResult['BONUS'];
         </div>
 
         <ul class="b-account-bonus__list-info">
-            <li class="b-account-bonus__item-info">
-                <div class="b-account-bonus__title-info">Осталось до <?= $bonus->getNextDiscount() ?>% —</div>
-                <div class="b-account-bonus__text"><?= $bonus->getSumToNext() ?>
-                    <span class="b-ruble b-ruble--bonus">₽</span>
-                </div>
-            </li>
+            <?php if($bonus->getRealDiscount() >= $bonus->getStartDiscount() || $bonus->getRealDiscount() <= $bonus->getEndDiscount()){ ?>
+                <li class="b-account-bonus__item-info">
+                    <div class="b-account-bonus__title-info">Осталось до <?= $bonus->getNextDiscount() ?>% —</div>
+                    <div class="b-account-bonus__text"><?= $bonus->getSumToNext() ?>
+                        <span class="b-ruble b-ruble--bonus">₽</span>
+                    </div>
+                </li>
+            <?php } ?>
             <li class="b-account-bonus__item-info">
                 <div class="b-account-bonus__title-info">Всего потрачено бонусов —</div>
                 <div class="b-account-bonus__text"><?= $bonus->getCredit() ?></div>
