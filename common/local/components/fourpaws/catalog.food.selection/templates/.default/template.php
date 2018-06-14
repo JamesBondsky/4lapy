@@ -34,7 +34,8 @@ if (!\is_array($arResult['PET_TYPES']) || empty($arResult['PET_TYPES'])) {
        title="Изменить параметры">Изменить параметры</a>
     <form class="b-food__form js-food-selection">
         <div class="js-quest-food">
-            <?php $sections = $arResult['PET_TYPES'];
+            <?php $sections = $arResult['PET_TYPES']['ITEMS'];
+            $sectionName = $arResult['PET_TYPES']['SECT_NAME'];
             $nextUrl = '/ajax/food_selection/show/step/begin/';
             $required = true;
             $nextStep = 1;
