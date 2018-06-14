@@ -376,10 +376,10 @@ class BasketController extends Controller implements LoggerAwareInterface
                 ['reload' => $this->basketService->getBasket()->count() === 0]
             );
         } catch (NotFoundException | BaseExceptionInterface $e) {
-            $response = JsonErrorResponse::create(
+            $response = JsonErrorResponse::createWithData(
                 $e->getMessage(),
-                200,
                 [],
+                200,
                 ['reload' => true]
             );
         }
