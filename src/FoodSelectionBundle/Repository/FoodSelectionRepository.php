@@ -16,9 +16,12 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Model\IblockSect;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Query\IblockSectQuery;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -33,7 +36,7 @@ class FoodSelectionRepository
     /**
      * @param array $params
      *
-     * @return array
+     * @return array|IblockElement[]
      */
     public function getItems(array $params = []): array
     {
@@ -74,7 +77,7 @@ class FoodSelectionRepository
     /**
      * @param array $params
      *
-     * @return array
+     * @return array|IblockSect[]
      */
     public function getSections(array $params = []): array
     {
@@ -121,13 +124,20 @@ class FoodSelectionRepository
      *
      * @param int   $limit
      *
-     * @return array
+     * @param array   $excludeSections
+     *
+     * @return array|Product[]
      * @throws ArgumentException
-     * @throws SystemException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getProductsBySections(array $sections, int $iblockId, array $exceptionItems = [], int $limit = 6): array
-    {
+    public function getProductsBySections(
+        array $sections,
+        int $iblockId,
+        array $exceptionItems = [],
+        int $limit = 6,
+    array $excludeSections = []
+    ): array {
         $countSections = \count($sections);
         $propId = PropertyTable::query()->setFilter(
             [
@@ -147,15 +157,19 @@ class FoodSelectionRepository
         );
         $query->where('ACTIVE', 'Y');
         $query->where('IBLOCK_ID', $iblockId);
+        $subQuery = SectionElementTable::query()->setSelect(['IBLOCK_ELEMENT_ID'])
+            ->whereIn('IBLOCK_SECTION_ID', $sections)
+            ->where(
+                Query::expr()->count('IBLOCK_ELEMENT_ID'),
+                '>=',
+                $countSections
+            )->setGroup(['IBLOCK_ELEMENT_ID']);
+        if (!empty($excludeSections)) {
+            $subQuery->whereNotIn('IBLOCK_SECTION_ID', $excludeSections);
+        }
         $query->whereIn(
             'ID',
-            SectionElementTable::query()->setSelect(['IBLOCK_ELEMENT_ID'])
-                ->whereIn('IBLOCK_SECTION_ID', $sections)
-                ->where(
-                    Query::expr()->count('IBLOCK_ELEMENT_ID'),
-                    '>=',
-                    $countSections
-                )->setGroup(['IBLOCK_ELEMENT_ID'])
+            $subQuery
         );
         if (!empty($exceptionItems)) {
             $query->whereNotIn('PROP.PROPERTY_' . $propId, $exceptionItems);
@@ -175,8 +189,10 @@ class FoodSelectionRepository
         $products = [];
         if (!empty($itemIds)) {
             $query = new ProductQuery();
-            $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE'=>'Y'])
-                ->withNav(['nTopCount'=>$limit])
+            if($limit > 0){
+                $query->withNav(['nTopCount' => $limit]);
+            }
+            $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE' => 'Y'])
                 ->exec();
             $products = $res->toArray();
         }

@@ -9,13 +9,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $sections
  * @var string $nextUrl
  * @var string $val
+ * @var string $sectionName
  * @var bool $required
  */
 if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
 <div class="b-quest js-quest <?=$required ? ' js-block-required' : ''?>" style="display: block">
-    <h4 class="b-quest__subtitle">Вкус</h4>
+    <h4 class="b-quest__subtitle"><?=$sectionName?></h4>
     <div class="b-select b-select--recall b-select--q-food">
         <select class="b-select__block b-select__block--recall b-select__block--q-food"
                 name="food_flavour"

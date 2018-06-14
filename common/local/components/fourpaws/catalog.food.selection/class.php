@@ -63,9 +63,14 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
         if ($this->startResultCache()) {
             TaggedCacheHelper::addManagedCacheTag('catalog:food_selection');
 
-            $this->arResult['PET_TYPES'] = $this->foodSelectionService->getSectionsByParentSectionId(
-                    $this->foodSelectionService->getSectionIdByXmlId('pet_type', 1)
-                );
+            $sect = $this->foodSelectionService->getSectionByXmlId('pet_type', 1);
+            if($sect === null){
+                return false;
+            }
+            $this->arResult['PET_TYPES'] = [
+                'ITEMS' => $this->foodSelectionService->getSectionsByParentSectionId($sect->getId()),
+                'SECT_NAME' => $sect->getName()
+            ];
 
             $this->includeComponentTemplate();
         }
