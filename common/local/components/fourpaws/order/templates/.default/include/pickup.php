@@ -96,10 +96,10 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
             <span class="b-input-line__label js-parts-info">
                 <?php if ($canGetPartial || $canSplit) { ?>
                     Заказ в наличии частично
-                <?php } elseif ($available->isEmpty()) { ?>
-                    Требуется ждать поставки со склада
-                <?php } else { ?>
+                <?php } elseif ($delayed->isEmpty()) { ?>
                     Заказ доступен в полном составе
+                <?php } else { ?>
+                    Требуется ждать поставки со склада
                 <?php } ?>
             </span>
         </div>
