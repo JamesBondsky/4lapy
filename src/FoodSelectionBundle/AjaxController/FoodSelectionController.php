@@ -69,7 +69,7 @@ class FoodSelectionController extends Controller
             'food_spec',
             'food_consistence',
         ];
-        $sections = $this->foodSelectionService->getSectionIdByXmlId($sections, 1);
+        $sections = $this->foodSelectionService->getSectionsByXmlId($sections, 1);
         /** @var IblockSect[] $sect */
         $sect = $this->foodSelectionService->getSections([
             '=SECTION_ID' => array_keys($sections),
@@ -77,7 +77,17 @@ class FoodSelectionController extends Controller
         if (!empty($sect)) {
             /** @var IblockSect $sectItem */
             foreach ($sect as $sectItem) {
-                $all_sections[$sections[$sectItem->getIblockSectionId()]][] = $sectItem;
+                $parentId = $sectItem->getIblockSectionId();
+                if(isset($sections[$parentId])) {
+                    $xmlId = $sections[$parentId]->getXmlId();
+                    if (!isset($all_sections[$xmlId])) {
+                        $all_sections[$xmlId] = [
+                            'ITEMS'     => [],
+                            'SECT_NAME' => $sections[$parentId]->getName(),
+                        ];
+                    }
+                    $all_sections[$xmlId]['ITEMS'][] = $sectItem;
+                }
             }
         }
 
@@ -126,7 +136,7 @@ class FoodSelectionController extends Controller
         }
 
         $sections = [];
-        $sections = $this->foodSelectionService->getSectionIdByXmlId($sections, 1);
+        $sections = $this->foodSelectionService->getSectionsByXmlId($sections, 1);
         /** @var IblockSect[] $sect */
         $sect = $this->foodSelectionService->getSections([
             '=SECTION_ID' => array_keys($sections),
@@ -134,7 +144,17 @@ class FoodSelectionController extends Controller
         if (!empty($sect)) {
             /** @var IblockSect $sectItem */
             foreach ($sect as $sectItem) {
-                $all_sections[$sections[$sectItem->getIblockSectionId()]][] = $sectItem;
+                $parentId = $sectItem->getIblockSectionId();
+                if(isset($sections[$parentId])) {
+                    $xmlId = $sections[$parentId]->getXmlId();
+                    if (!isset($all_sections[$xmlId])) {
+                        $all_sections[$xmlId] = [
+                            'ITEMS'     => [],
+                            'SECT_NAME' => $sections[$parentId]->getName(),
+                        ];
+                    }
+                    $all_sections[$xmlId]['ITEMS'][] = $sectItem;
+                }
             }
         }
 
@@ -160,10 +180,25 @@ class FoodSelectionController extends Controller
                 $exceptionItems[] = $product->getId();
             }
         }
+        $excludeSections = [$values['food_consistence']];
         unset($values['food_consistence']);
         try {
             /** дополнительные итемы */
-            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, 3);
+            $limit = 3;
+            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, $limit, $excludeSections);
+            /** быстрый фикс на исключение итемов из раздела который был выбран, выбираем все */
+//            $i=0;
+//            $alsoItemsOld = $alsoItems;
+//            $alsoItems = [];
+//            foreach ($alsoItemsOld as $alsoItem) {
+//                if($i === $limit){
+//                    break;
+//                }
+//                if(!\in_array($excludeSections, $alsoItem->getSectionsIdList(), true)){
+//                    $alsoItems[] = $alsoItem;
+//                    $i++;
+//                }
+//            }
         } catch (ArgumentException|SystemException $e) {
             $alsoItems = [];
         }
