@@ -874,6 +874,24 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
+        $this->logger->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'orderId' => $personalOrder->getId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+
         try {
             $apiResult = $this->client->sendSystemTransactional(
                 $transactionId,
@@ -902,11 +920,9 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @param Order $order
      * @return int
-     * @throws \InvalidArgumentException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws Exception
      * @throws ExpertsenderServiceException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -951,6 +967,24 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
+
+        $this->logger->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'orderId' => $order->getId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
 
         try {
             $apiResult = $this->client->sendSystemTransactional(
