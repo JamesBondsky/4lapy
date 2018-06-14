@@ -9,6 +9,8 @@ namespace FourPaws\CatalogBundle\Console;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\Connection;
+use CIBlockElement;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Psr\Log\LoggerAwareInterface;
@@ -18,24 +20,34 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Class ImportDescriptionFromCsv
+ *
+ * @package FourPaws\CatalogBundle\Console
+ */
 class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
     /**
-     * @var \CIBlockElement
+     * @var CIBlockElement
      */
     private $cIblockElement;
 
     /**
-     * @var \Bitrix\Main\DB\Connection
+     * @var Connection
      */
     private $connect;
 
+    /**
+     * ImportDescriptionFromCsv constructor.
+     *
+     * @param string|null $name
+     */
     public function __construct(string $name = null)
     {
         parent::__construct($name);
-        $this->cIblockElement = new \CIBlockElement();
+        $this->cIblockElement = new CIBlockElement();
         $this->connect = Application::getConnection();
     }
 
@@ -100,8 +112,8 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
                     $this->connect->startTransaction();
 
                     $fields = [
-                        'NAME'        => $complectName ?: $name,
-                        'IBLOCK_ID'   => $iblockId,
+                        'NAME' => $complectName ?: $name,
+                        'IBLOCK_ID' => $iblockId,
                         'DETAIL_TEXT' => $detailText,
                     ];
                     if ($code) {
@@ -119,12 +131,12 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
                         continue;
                     }
 
-                    \CIBlockElement::SetPropertyValuesEx($productId, $iblockId, [
-                        'COMPOSITION'  => $composition,
+                    CIBlockElement::SetPropertyValuesEx($productId, $iblockId, [
+                        'COMPOSITION' => $composition,
                         'NORMS_OF_USE' => $normsOfUse,
                     ]);
                     $updatedProductId[$productId] = $xmlId;
-//                    $this->log()->debug(sprintf('Updated %s product with offer xml id %s', $productId, $xmlId));
+
                     $this->connect->commitTransaction();
                 } catch (\Exception $exception) {
                     $this->connect->rollbackTransaction();
@@ -142,11 +154,16 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
         return floor($current / ($total / 100));
     }
 
+    /**
+     * @param string $offerXmlId
+     *
+     * @return string|int|null
+     */
     protected function findProductId(string $offerXmlId)
     {
         $filter = [
-            'IBLOCK_ID'           => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-            'XML_ID'              => $offerXmlId,
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+            'XML_ID' => $offerXmlId,
             '!PROPERTY_CML2_LINK' => false,
         ];
 
@@ -154,7 +171,8 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
             'PROPERTY_CML2_LINK',
         ];
 
-        $product = \CIBlockElement::GetList([], $filter, false, ['nTopCount' => 1], $select)->Fetch();
+        $product = CIBlockElement::GetList([], $filter, false, ['nTopCount' => 1], $select)->Fetch();
+
         return $product['PROPERTY_CML2_LINK_VALUE'] ?? null;
     }
 }
