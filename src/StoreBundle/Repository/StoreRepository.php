@@ -25,21 +25,29 @@ class StoreRepository extends BaseRepository
      * @param array    $orderBy
      * @param null|int $limit
      * @param null|int $offset
+     * @param bool     $useDefaultFilter
      *
-     * @throws ArgumentException
      * @return StoreCollection
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
      */
     public function findBy(
         array $criteria = [],
         array $orderBy = [],
         int $limit = null,
-        int $offset = null
+        int $offset = null,
+        bool $useDefaultFilter = true
     ): StoreCollection {
         if (empty($orderBy)) {
             $orderBy = $this->getDefaultOrder();
         }
 
-        $criteria = array_merge($this->getDefaultFilter(), $criteria);
+        if ($useDefaultFilter) {
+            $criteria = array_merge($this->getDefaultFilter(), $criteria);
+        }
+
         $select = [
             '*',
             'UF_*',
