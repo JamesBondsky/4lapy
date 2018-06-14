@@ -68,9 +68,6 @@ class Order extends AbstractEntity
      */
     public function __construct($entity)
     {
-        DiscountManager::disableExtendsDiscount();
-        Event::disableEvents();
-        SaleEvent::disableEvents();
         $this->propertyMap = MapTable::getFullMapByEntity(OrderProperty::ENTITY_NAME);
 
         parent::__construct($entity);
@@ -109,6 +106,10 @@ class Order extends AbstractEntity
      */
     public function addItem(string $primary, array $data): AddResult
     {
+        DiscountManager::disableExtendsDiscount();
+        Event::disableEvents();
+        SaleEvent::disableEvents();
+
         $userId = MapTable::getInternalIdByExternalId($data['USER_ID'], User::ENTITY_NAME);
         unset($data['ACCOUNT_NUMBER']);
 
@@ -160,6 +161,10 @@ class Order extends AbstractEntity
      */
     public function updateItem(string $primary, array $data): UpdateResult
     {
+        DiscountManager::disableExtendsDiscount();
+        Event::disableEvents();
+        SaleEvent::disableEvents();
+
         $order = SaleOrder::load($primary);
 
         if (null === $order) {
