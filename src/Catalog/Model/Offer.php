@@ -1652,4 +1652,20 @@ class Offer extends IblockElement
 
         return $result;
     }
+
+    /**
+     * @return bool
+     */
+    public function hasDiscount(): bool
+    {
+        return $this->getOldPrice() > 0 && $this->getPrice() > 0 && $this->getOldPrice() > $this->getPrice();
+    }
+
+    /**
+     * @return float
+     */
+    public function getDiscountPrice(): float
+    {
+        return round($this->getOldPrice()-$this->getPrice());
+    }
 }
