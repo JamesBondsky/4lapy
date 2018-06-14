@@ -124,16 +124,19 @@ class FoodSelectionRepository
      *
      * @param int   $limit
      *
+     * @param array   $excludeSections
+     *
      * @return array|Product[]
      * @throws ArgumentException
-     * @throws SystemException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getProductsBySections(
         array $sections,
         int $iblockId,
         array $exceptionItems = [],
-        int $limit = 6
+        int $limit = 6,
+    array $excludeSections = []
     ): array {
         $countSections = \count($sections);
         $propId = PropertyTable::query()->setFilter(
@@ -154,15 +157,19 @@ class FoodSelectionRepository
         );
         $query->where('ACTIVE', 'Y');
         $query->where('IBLOCK_ID', $iblockId);
+        $subQuery = SectionElementTable::query()->setSelect(['IBLOCK_ELEMENT_ID'])
+            ->whereIn('IBLOCK_SECTION_ID', $sections)
+            ->where(
+                Query::expr()->count('IBLOCK_ELEMENT_ID'),
+                '>=',
+                $countSections
+            )->setGroup(['IBLOCK_ELEMENT_ID']);
+        if (!empty($excludeSections)) {
+            $subQuery->whereNotIn('IBLOCK_SECTION_ID', $excludeSections);
+        }
         $query->whereIn(
             'ID',
-            SectionElementTable::query()->setSelect(['IBLOCK_ELEMENT_ID'])
-                ->whereIn('IBLOCK_SECTION_ID', $sections)
-                ->where(
-                    Query::expr()->count('IBLOCK_ELEMENT_ID'),
-                    '>=',
-                    $countSections
-                )->setGroup(['IBLOCK_ELEMENT_ID'])
+            $subQuery
         );
         if (!empty($exceptionItems)) {
             $query->whereNotIn('PROP.PROPERTY_' . $propId, $exceptionItems);
@@ -182,8 +189,10 @@ class FoodSelectionRepository
         $products = [];
         if (!empty($itemIds)) {
             $query = new ProductQuery();
+            if($limit > 0){
+                $query->withNav(['nTopCount' => $limit]);
+            }
             $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE' => 'Y'])
-                ->withNav(['nTopCount' => $limit])
                 ->exec();
             $products = $res->toArray();
         }

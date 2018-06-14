@@ -180,10 +180,25 @@ class FoodSelectionController extends Controller
                 $exceptionItems[] = $product->getId();
             }
         }
+        $excludeSections = [$values['food_consistence']];
         unset($values['food_consistence']);
         try {
             /** дополнительные итемы */
-            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, 3);
+            $limit = 3;
+            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, $limit, $excludeSections);
+            /** быстрый фикс на исключение итемов из раздела который был выбран, выбираем все */
+//            $i=0;
+//            $alsoItemsOld = $alsoItems;
+//            $alsoItems = [];
+//            foreach ($alsoItemsOld as $alsoItem) {
+//                if($i === $limit){
+//                    break;
+//                }
+//                if(!\in_array($excludeSections, $alsoItem->getSectionsIdList(), true)){
+//                    $alsoItems[] = $alsoItem;
+//                    $i++;
+//                }
+//            }
         } catch (ArgumentException|SystemException $e) {
             $alsoItems = [];
         }
