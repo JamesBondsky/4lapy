@@ -328,6 +328,10 @@ class Event extends BaseServiceHandler
      * @return false|string
      */
     public static function updateOrderAccountNumber($id, $type) {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         if ($type === 'NUMBER') {
             try {
                 $maxNumber = BitrixApplication::getConnection()->query(
