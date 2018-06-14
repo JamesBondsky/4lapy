@@ -236,7 +236,16 @@ class BasketService implements LoggerAwareInterface
 
         $result = $basketItem->setField('QUANTITY', $quantity);
         if (!$result->isSuccess()) {
-            throw new BitrixProxyException($result);
+            // проверяем не специально ли было запорото
+            $found = false;
+            foreach ($result->getErrors() as $error) {
+                if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
+                    $found = true;
+                }
+            }
+            if (!$found) {
+                throw new BitrixProxyException($result);
+            }
         }
         if ($this->getBasket()->getOrder()) {
             $updateResult = BasketTable::update($basketItem->getId(), ['QUANTITY' => $quantity]);
