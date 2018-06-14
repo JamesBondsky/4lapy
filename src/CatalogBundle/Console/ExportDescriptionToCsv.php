@@ -144,7 +144,7 @@ class ExportDescriptionToCsv extends Command implements LoggerAwareInterface
             ]
         ];
 
-        $res = (new Query(ElementTable::getEntity()))->setFilter($filter)->setSelect($select)->setLimit(200)->exec();
+        $res = (new Query(ElementTable::getEntity()))->setFilter($filter)->setSelect($select)->exec();
 
         /** @var array $el */
         /** @noinspection PhpAssignmentInConditionInspection */
