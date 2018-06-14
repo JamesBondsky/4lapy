@@ -174,7 +174,7 @@ $countOffersInMobile = 3; ?>
                 <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > $countOffersInMobile ? ' _active' : '' ?>">
                     <?php if ($offers->count() > $countOffersInMobile) { ?>
                         <p class="js-show-weight" href="javascript:void(0)">
-                            Еще <?= $offers->count() - $countOffersInMobile ?></p>
+                            Еще <?= $offers->count() - $countOffersInMobile - 1 ?></p>
                     <?php } ?>
                     <div class="b-weight-container__dropdown-list"></div>
                 </div>
