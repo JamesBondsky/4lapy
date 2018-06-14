@@ -1421,6 +1421,22 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
+     * @param Order $order
+     * @return bool
+     */
+    public function isOldSiteOrder(Order $order): bool
+    {
+        try {
+            $propValue = $this->getOrderPropertyByCode($order, 'IS_OLD_SITE_ORDER')->getValue();
+            $result = $propValue === BitrixUtils::BX_BOOL_TRUE;
+        } catch (\Exception $exception) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return null|Service
      */
     public function getCashPaySystemService(): ?Service
