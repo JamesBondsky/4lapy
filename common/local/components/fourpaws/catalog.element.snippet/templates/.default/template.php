@@ -126,7 +126,7 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                         }
                     }
                 } ?>
-                <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select js-select-mobile-package" href="javascript:void(0);"
+                <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : ''?> js-mobile-select js-select-mobile-package" href="javascript:void(0);"
                    title=""><?= $value ?></a>
                 <div class="b-weight-container__dropdown-list__wrapper">
                     <div class="b-weight-container__dropdown-list"></div>
