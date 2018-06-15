@@ -13,7 +13,7 @@ use FourPaws\App\Response\JsonResponse;
  */
 class AjaxMess
 {
-    /** @var bool  */
+    /** @var bool */
     private $reloadRecaptcha = false;
 
     /**
@@ -24,8 +24,8 @@ class AjaxMess
     public function getOrderCreateError(string $text = ''): JsonResponse
     {
         $mess = 'Ошибка при создании заказа';
-        if(!empty($text)){
-            $mess.=' - '.$text;
+        if (!empty($text)) {
+            $mess .= ' - ' . $text;
         }
         return $this->getJsonError('orderCreateError', $mess);
     }
@@ -61,7 +61,7 @@ class AjaxMess
      */
     public function getNotIdError(string $mess = ''): JsonResponse
     {
-        return $this->getJsonError('notIdError', 'Не указан ID'.$mess);
+        return $this->getJsonError('notIdError', 'Не указан ID' . $mess);
     }
 
     /** error block */
@@ -100,12 +100,17 @@ class AjaxMess
      *
      * @param string $login
      *
+     * @param string $loginName
+     *
      * @return JsonResponse
      */
-    public function getTooManyUserFoundException(string $hotLinePhone = '', string $login = ''): JsonResponse
-    {
+    public function getTooManyUserFoundException(
+        string $hotLinePhone = '',
+        string $login = '',
+        string $loginName = 'логином'
+    ): JsonResponse {
         $hotLineText = $hotLinePhone ? ' по телефону ' . $hotLinePhone : '';
-        $loginText = !empty($login) ? ' с данным логином ' . $login : '';
+        $loginText = !empty($login) ? ' с данным ' . $loginName . ' ' . $login : '';
         $mes = 'Найдено больше одного пользователя' . $loginText . ', обратитесь на горячую линию' . $hotLineText;
         return $this->getJsonError('moreOneUser', $mes);
     }
@@ -325,7 +330,7 @@ class AjaxMess
      */
     public function getWrongPasswordError(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль',$additionalData);
+        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль', $additionalData);
     }
 
     /**
@@ -391,7 +396,7 @@ class AjaxMess
      */
     public function getFileSizeError(int $size): JsonResponse
     {
-        return $this->getJsonError('fileSizeError', 'Превышен максимально допустимый размер файла в '.$size.'Мб');
+        return $this->getJsonError('fileSizeError', 'Превышен максимально допустимый размер файла в ' . $size . 'Мб');
     }
 
     /**
@@ -401,13 +406,14 @@ class AjaxMess
      */
     public function getFileTypeError(array $valid_types): JsonResponse
     {
-        return $this->getJsonError('fileTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
+        return $this->getJsonError('fileTypeError',
+            'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
     }
 
     /**
      * @return bool
      */
-    public function isReloadRecaptcha() : bool
+    public function isReloadRecaptcha(): bool
     {
         return $this->reloadRecaptcha ?? false;
     }
