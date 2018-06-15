@@ -249,8 +249,8 @@ class ProductInfoController extends Controller
                 $product = $products[$offer->getCml2Link()];
 
                 $getResponseItem = function () use ($product, $offer) {
-                    $price = ceil($offer->getPrice());
-                    $oldPrice = $offer->getOldPrice() ? ceil($offer->getOldPrice()) : $price;
+                    $price = $offer->getPriceCeil();
+                    $oldPrice = $offer->getOldPrice() ? $offer->getOldPriceCeil() : $price;
                     $responseItem = [
                         'available' => $offer->isAvailable(),
                         'byRequest' => $offer->isByRequest(),

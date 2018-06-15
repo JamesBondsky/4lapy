@@ -82,8 +82,8 @@ if (!$arParams['ITEM_ATTR_ID']) {
                 ob_start();
                 ?>
                 <div class="b-weight-container b-weight-container--list">
-                    <?/*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
-                       href="javascript:void(0);"></a>*/?>
+                    <? /*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
+                       href="javascript:void(0);"></a>*/ ?>
                     <ul class="b-weight-container__list">
                         <?php
                         $countSizes = 0;
@@ -112,21 +112,28 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             $countSizes++;
                             $isOffersPrinted = true;
                             $addAttr = '';
-                            $addAttr .= ' data-price="' . ceil($offer->getPrice()) . '"';
+                            $addAttr .= ' data-price="' . $offer->getPriceCeil() . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
+
+                            $liAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
+                            $liAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
+//                            $liAttr .= ' data-pickup="' . $offer->() . '"';
+                            $liAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
+
                             $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : ''; ?>
-                            <li class="b-weight-container__item<?= $currentOffer->getId() === $offer->getId() ? '' : ' mobile-hidden' ?>">
+                            <li<?= $liAttr ?>
+                                    class="b-weight-container__item<?= $currentOffer->getId() === $offer->getId() ? '' : ' mobile-hidden' ?>">
                                 <a<?= $addAttr ?> href="javascript:void(0)"
-                                              class="b-weight-container__link js-price<?= $addClass ?>">
+                                                  class="b-weight-container__link js-price<?= $addClass ?>">
                                     <?= $value ?>
                                 </a>
                             </li>
                         <?php } ?>
                     </ul>
-                    <?php if($countSizes > 1){ ?>
+                    <?php if ($countSizes > 1) { ?>
                         <div class="b-weight-container__dropdown-list__wrapper _active">
                             <p class="js-show-weight b-weight-container__link b-weight-container__link--mobile"></p>
                             <div class="b-weight-container__dropdown-list">
@@ -155,15 +162,16 @@ if (!$arParams['ITEM_ATTR_ID']) {
                                     if (empty($value)) {
                                         continue;
                                     } ?>
-                                        <a class="b-weight-container__link js-price mobile-hidden ajaxSend select-hidden-weight"
-                                           href="javascript:void(0);"
-                                           data-price="<?= ceil($offer->getPrice()) ?>"
-                                           data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                                           data-offerid="<?= $offer->getId() ?>"
-                                           data-link="<?= $offer->getLink() ?>"
-                                           tabindex="<?= $i ?>">
-                                            <?= $value ?>
-                                        </a>
+                                    <a class="b-weight-container__link js-price mobile-hidden ajaxSend select-hidden-weight"
+                                       href="javascript:void(0);"
+                                       data-price="<?= $offer->getPriceCeil() ?>"
+                                       data-oldprice="<?= $offer->getOldPriceCeil() ?>"
+                                       data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                       data-offerid="<?= $offer->getId() ?>"
+                                       data-link="<?= $offer->getLink() ?>"
+                                       tabindex="<?= $i ?>">
+                                        <?= $value ?>
+                                    </a>
                                 <?php } ?>
                             </div>
                         </div>
@@ -177,10 +185,14 @@ if (!$arParams['ITEM_ATTR_ID']) {
             } else { ?>
                 <div class="b-weight-container b-weight-container--list">
                     <ul class="b-weight-container__list">
-                        <li class="b-weight-container__item">
+                        <li class="b-weight-container__item"
+                            data-discount="<?= $currentOffer->getDiscountPrice() ?>"
+                            data-pickup=""
+                            data-available="<?= !$offer->isAvailable() ? 'Нет в наличии' : '' ?>">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                               data-price="<?= ceil($currentOffer->getPrice()) ?>"
+                               data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
+                               data-price="<?= $currentOffer->getPriceCeil() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
                                data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                                data-link="<?= $currentOffer->getLink() ?>"></a>
@@ -202,7 +214,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             echo new SvgDecorator('icon-cart', 16, 16);
                             ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
                     <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                 </span>
                 <span class="b-common-item__incart">+1</span>
@@ -212,17 +224,29 @@ if (!$arParams['ITEM_ATTR_ID']) {
             // Информация об особенностях покупки товара
             //
             ob_start();
-
-            /** @todo инфо о скидке */
+            if ($currentOffer->hasDiscount()) {
+                ?>
+                <div class="b-common-item__benefin js-sale-block">
+                    <span class="b-common-item__prev-price js-sale-origin">
+                        <?= $currentOffer->getOldPrice() ?>
+                        <span class="b-ruble b-ruble--prev-price">₽</span>
+                    </span>
+                    <span class="b-common-item__discount">
+                        <span class="b-common-item__disc">Скидка</span>
+                        <span class="b-common-item__discount-price js-sale-sale"><?= $currentOffer->getDiscountPrice() ?></span>
+                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
+                    </span>
+                </div>
+            <?php }
 
             if ($currentOffer->isByRequest()) {
                 ?>
                 <div class="b-common-item__info-wrap">
-                <span class="b-common-item__text"><?= Loc::getMessage(
-                        'CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST'
-                    ) ?></span>
-                </div><?php
-            }
+                    <span class="b-common-item__text">
+                        <?= Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST') ?>
+                    </span>
+                </div>
+            <?php }
 
             /** @todo инфо о доставке/самовывозе */
             $addInfo = ob_get_clean();

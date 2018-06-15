@@ -6,8 +6,10 @@
 
 namespace FourPaws\AppBundle\Command;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
@@ -86,25 +88,38 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
         $date->setTimestamp(time() - $time);
         $maxDate = new \DateTime();
         $maxDate->setTimestamp(time() - $maxTime);
+
+        $filter = [
+            '<DATE_INSERT'        => $date->format('d.m.Y H:i:s'),
+            '>DATE_INSERT'        => $maxDate->format('d.m.Y H:i:s'),
+            '=PAYMENT_SYSTEM.CODE' => OrderService::PAYMENT_ONLINE,
+            '!CANCELED'           => 'Y',
+            '!PAYED'       => 'Y',
+        ];
+
         $orders = OrderTable::query()->setSelect(['ID'])
-            ->setFilter([
-                '<DATE_INSERT'        => $date->format('d.m.Y H:i:s'),
-                '>DATE_INSERT'        => $maxDate->format('d.m.Y H:i:s'),
-                '=PAYMENT_SYSTEM.CODE' => OrderService::PAYMENT_ONLINE,
-                '!CANCELED'           => 'Y',
-                '!PAYED'       => 'Y',
-            ])->registerRuntimeField(
+            ->setFilter($filter)
+            ->registerRuntimeField(
                 new ReferenceField(
                     'PAYMENT_SYSTEM',
                     PaySystemActionTable::class,
                     ['=this.PAY_SYSTEM_ID' => 'ref.ID'],
                     ['join_type' => 'INNER']
                 )
-            )->exec();
+            )
+            ->exec();
 
         while ($order = $orders->fetch()) {
-            $this->orderService->processPaymentError(Order::load($order['ID']));
-            $this->log()->info(sprintf('Changed payment system for order: %s', $order['ID']));
+            if (!$saleOrder = Order::load($order['ID'])) {
+                continue;
+            }
+
+            if ($this->orderService->isOldSiteOrder($saleOrder)) {
+                continue;
+            }
+
+            $this->orderService->processPaymentError($saleOrder);
+            $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()));
         }
 
         $this->log()->info('Task finished.');

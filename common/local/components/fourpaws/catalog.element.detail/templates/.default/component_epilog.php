@@ -60,9 +60,9 @@ foreach ($offers as $offer) {
         $(function () {
             var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
             if($offerLink.length > 0) {
-                $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getPrice(),
+                $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getPriceCeil(),
                     0) ?> <span class="b-ruble b-ruble--weight">₽</span>');
-                $offerLink.data('price', '<?=WordHelper::numberFormat($offer->getPrice(), 0)?>');
+                $offerLink.data('price', '<?=WordHelper::numberFormat($offer->getPriceCeil(), 0)?>');
                 <?php if(!$offer->isAvailable()) { ?>
                     $offerLink.addClass('unavailable-link');
                     $offerLink.find('.b-weight-container__not').html('Нет в наличии').css('display', 'inline-block');
@@ -72,7 +72,7 @@ foreach ($offers as $offer) {
                         $offerLink.find('.js-offer-action').html('Акция').css('display', 'inline-block');
                     <?php }
                     if($offer->getOldPrice() > $offer->getPrice()) {?>
-                        $offerLink.find('.b-weight-container__old-price--big').html('<?=WordHelper::numberFormat($offer->getOldPrice(),
+                        $offerLink.find('.b-weight-container__old-price--big').html('<?=WordHelper::numberFormat($offer->getOldPriceCeil(),
                             0)?> <span class="b-ruble b-ruble--old-weight-price">₽</span>').css('display', 'inline-block');
                     <?php }
                 }?>

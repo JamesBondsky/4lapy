@@ -104,6 +104,9 @@ final class MarkHelper
         if ($offer->isShare()) {
             /** @var Share $share */
             $share = $offer->getShare()->first();
+            if(!empty($share->getPropertyLabelImage())){
+                return '<img class="b-common-item__sticker" src="'.$share->getPropertyLabelImageFileSrc().'" alt="" role="presentation"/>';
+            }
             if (!empty($share->getPropertyLabel())) {
                 return $share->getPropertyLabel();
             }

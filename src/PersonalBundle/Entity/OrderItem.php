@@ -8,6 +8,7 @@ use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Helpers\WordHelper;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -309,7 +310,7 @@ class OrderItem extends BaseEntity
      */
     public function getFormattedPrice(): string
     {
-        return \number_format($this->getPrice(), 2, '.', ' ');
+        return WordHelper::numberFormat($this->getPrice());
     }
 
     /**

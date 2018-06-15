@@ -911,6 +911,11 @@ class Offer extends IblockElement
         return $this->price;
     }
 
+    public function getPriceCeil()
+    {
+        return ceil($this->getPrice());
+    }
+
     /**
      * @return bool
      */
@@ -1069,6 +1074,14 @@ class Offer extends IblockElement
         $this->checkOptimalPriceTmp();
 
         return $this->oldPrice;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOldPriceCeil(): float
+    {
+        return ceil($this->getOldPrice());
     }
 
     /**
@@ -1383,7 +1396,8 @@ class Offer extends IblockElement
                 'PREVIEW_TEXT',
                 'DATE_ACTIVE_FROM',
                 'DATE_ACTIVE_TO',
-                'PROPERTY_LABEL'
+                'PROPERTY_LABEL',
+                'PROPERTY_LABEL_IMAGE'
             ])->exec();
         }
         return $this->share;
@@ -1651,5 +1665,21 @@ class Offer extends IblockElement
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasDiscount(): bool
+    {
+        return $this->getOldPrice() > 0 && $this->getPrice() > 0 && $this->getOldPrice() > $this->getPrice();
+    }
+
+    /**
+     * @return float
+     */
+    public function getDiscountPrice(): float
+    {
+        return round($this->getOldPrice()-$this->getPrice());
     }
 }
