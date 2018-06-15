@@ -32,11 +32,9 @@ class DpdDeliveryResult extends BaseResult implements DeliveryResultInterface
         $modifier = $this->getInitialPeriod();
 
         /**
-         * дата доставки DPD для зоны 4 рассчитывается как "то, что вернуло DPD" + 1 день
+         * к любой доставке DPD прибавляем 1 день
          */
-        if ($this->getDeliveryZone() === DeliveryService::ZONE_4) {
-            $modifier++;
-        }
+        $modifier++;
 
         $modifier += $this->getDateOffset();
 
