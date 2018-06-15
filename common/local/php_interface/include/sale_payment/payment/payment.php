@@ -44,32 +44,16 @@ $rbs = new RBS(\compact('test_mode', 'two_stage', 'logging', 'user_name', 'passw
 $app = Application::getInstance();
 $request = $app->getContext()->getRequest();
 
-$orderNumber = $paySystemAction->GetParamValue('ORDER_NUMBER');
-
 $entityId = $paySystemAction->GetParamValue('ORDER_PAYMENT_ID');
+$amount = $paySystemAction->GetParamValue('AMOUNT') * 100;
 
 [$orderId, $paymentId] = Manager::getIdsByPayment($entityId);
 
-if (!$orderNumber) {
-    $orderNumber = $orderId;
-}
-if (!$orderNumber) {
-    $orderNumber = $GLOBALS['SALE_INPUT_PARAMS']['ID'];
-}
-
-if (!$orderNumber) {
-    $orderNumber = $_REQUEST['ORDER_ID'];
-}
-
 $order = Order::load($orderId);
 
-$currency = $order->getCurrency();
-
-$amount = $paySystemAction->GetParamValue('AMOUNT') * 100;
 if (is_float($amount)) {// Если сумма с плавающей точкой
     $amount = ceil($amount); // Производим округление в большую сторону
 }
-
 
 $returnUrl = '/sale/payment/result.php?ORDER_ID=' . $order->getId();
 $returnUrl .= '&HASH=' . $order->getHash();
@@ -99,10 +83,10 @@ if ($fiscalization['ENABLE'] === 'Y') {
 /* END Фискализация */
 for ($i = 0; $i <= 10; $i++) {
     $response = $rbs->register_order(
-        $orderNumber . '_' . $i,
+        $order->getField('ACCOUNT_NUMBER') . '_' . $i,
         $amount,
         (string)new FullHrefDecorator($returnUrl),
-        $currency,
+        $order->getCurrency(),
         $order->getField('USER_DESCRIPTION'),
         $fiscal
     );
