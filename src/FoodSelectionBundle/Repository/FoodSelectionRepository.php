@@ -124,7 +124,7 @@ class FoodSelectionRepository
      *
      * @param int   $limit
      *
-     * @param array   $excludeSections
+     * @param array $excludeSections
      *
      * @return array|Product[]
      * @throws ArgumentException
@@ -136,7 +136,7 @@ class FoodSelectionRepository
         int $iblockId,
         array $exceptionItems = [],
         int $limit = 6,
-    array $excludeSections = []
+        array $excludeSections = []
     ): array {
         $countSections = \count($sections);
         $propId = PropertyTable::query()->setFilter(
@@ -189,7 +189,7 @@ class FoodSelectionRepository
         $products = [];
         if (!empty($itemIds)) {
             $query = new ProductQuery();
-            if($limit > 0){
+            if ($limit > 0) {
                 $query->withNav(['nTopCount' => $limit]);
             }
             $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE' => 'Y'])

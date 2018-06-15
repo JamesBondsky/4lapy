@@ -78,7 +78,7 @@ class FoodSelectionController extends Controller
             /** @var IblockSect $sectItem */
             foreach ($sect as $sectItem) {
                 $parentId = $sectItem->getIblockSectionId();
-                if(isset($sections[$parentId])) {
+                if (isset($sections[$parentId])) {
                     $xmlId = $sections[$parentId]->getXmlId();
                     if (!isset($all_sections[$xmlId])) {
                         $all_sections[$xmlId] = [
@@ -145,7 +145,7 @@ class FoodSelectionController extends Controller
             /** @var IblockSect $sectItem */
             foreach ($sect as $sectItem) {
                 $parentId = $sectItem->getIblockSectionId();
-                if(isset($sections[$parentId])) {
+                if (isset($sections[$parentId])) {
                     $xmlId = $sections[$parentId]->getXmlId();
                     if (!isset($all_sections[$xmlId])) {
                         $all_sections[$xmlId] = [
@@ -180,12 +180,16 @@ class FoodSelectionController extends Controller
                 $exceptionItems[] = $product->getId();
             }
         }
-        $excludeSections = [$values['food_consistence']];
-        unset($values['food_consistence']);
+        $excludeSections = [];
+        if(!empty($values['food_consistence'])) {
+            $excludeSections[] = $values['food_consistence'];
+            unset($values['food_consistence']);
+        }
         try {
             /** дополнительные итемы */
             $limit = 3;
-            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, $limit, $excludeSections);
+            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems,
+                $limit, $excludeSections);
             /** быстрый фикс на исключение итемов из раздела который был выбран, выбираем все */
 //            $i=0;
 //            $alsoItemsOld = $alsoItems;
