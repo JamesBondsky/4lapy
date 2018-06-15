@@ -35,6 +35,21 @@ $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['I
 
 if (!$arParams['ITEM_ATTR_ID']) {
     $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
+}
+
+$value = '';
+if ($mainCombinationType === 'SIZE') {
+    if ($currentOffer->getClothingSize()) {
+        $value = $currentOffer->getClothingSize()->getName();
+    }
+} else {
+    if ($currentOffer->getVolumeReference()) {
+        $value = $currentOffer->getVolumeReference()->getName();
+    } elseif ($weight = $currentOffer->getCatalogProduct()->getWeight()) {
+        if ($weight > 0) {
+            $value = WordHelper::showWeight($weight, true, 999);
+        }
+    }
 } ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
          data-productid="<?= $product->getId() ?>">
@@ -82,8 +97,10 @@ if (!$arParams['ITEM_ATTR_ID']) {
                 ob_start();
                 ?>
                 <div class="b-weight-container b-weight-container--list">
-                    <? /*<a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
-                       href="javascript:void(0);"></a>*/ ?>
+                    <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select js-select-mobile-package" href="javascript:void(0);"><?= $value ?></a>
+                    <div class="b-weight-container__dropdown-list__wrapper">
+                        <div class="b-weight-container__dropdown-list"></div>
+                    </div>
                     <ul class="b-weight-container__list">
                         <?php
                         $countSizes = 0;
@@ -111,21 +128,18 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             }
                             $countSizes++;
                             $isOffersPrinted = true;
-                            $addAttr = '';
-                            $addAttr .= ' data-price="' . $offer->getPriceCeil() . '"';
+
+                            $addAttr = ' data-price="' . $offer->getPriceCeil() . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
-
-                            $liAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
-                            $liAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
-//                            $liAttr .= ' data-pickup="' . $offer->() . '"';
-                            $liAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
+                            $addAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
+                            $addAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
+                            $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
                             $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : ''; ?>
-                            <li<?= $liAttr ?>
-                                    class="b-weight-container__item<?= $currentOffer->getId() === $offer->getId() ? '' : ' mobile-hidden' ?>">
+                            <li class="b-weight-container__item<?= $currentOffer->getId() === $offer->getId() ? '' : ' mobile-hidden' ?>">
                                 <a<?= $addAttr ?> href="javascript:void(0)"
                                                   class="b-weight-container__link js-price<?= $addClass ?>">
                                     <?= $value ?>
@@ -185,12 +199,12 @@ if (!$arParams['ITEM_ATTR_ID']) {
             } else { ?>
                 <div class="b-weight-container b-weight-container--list">
                     <ul class="b-weight-container__list">
-                        <li class="b-weight-container__item"
-                            data-discount="<?= $currentOffer->getDiscountPrice() ?>"
-                            data-pickup=""
-                            data-available="<?= !$offer->isAvailable() ? 'Нет в наличии' : '' ?>">
+                        <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
+                               data-discount="<?= $currentOffer->getDiscountPrice() ?>"
+                               data-pickup=""
+                               data-available="<?= !$offer->isAvailable() ? 'Нет в наличии' : '' ?>"
                                data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
                                data-price="<?= $currentOffer->getPriceCeil() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
