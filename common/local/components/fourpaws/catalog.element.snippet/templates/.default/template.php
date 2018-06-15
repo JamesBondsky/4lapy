@@ -154,7 +154,7 @@ $countOffersInMobile = 4; ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i > $countOffersInMobile ? ' mobile-hidden' : '' ?>"
-                                   data-price="<?= ceil($offer->getPrice()) ?>"
+                                   data-price="<?= $offer->getPriceCeil() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
@@ -163,7 +163,7 @@ $countOffersInMobile = 4; ?>
                             <li class="b-weight-container__item" style="display: none">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price active-link"
-                                   data-price="<?= ceil($offer->getPrice()) ?>"
+                                   data-price="<?= $offer->getPriceCeil() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"></a>
@@ -186,7 +186,7 @@ $countOffersInMobile = 4; ?>
                     <li class="b-weight-container__item">
                         <a href="javascript:void(0)"
                            class="b-weight-container__link js-price active-link"
-                           data-price="<?= ceil($currentOffer->getPrice()) ?>"
+                           data-price="<?= $currentOffer->getPriceCeil() ?>"
                            data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                            data-link="<?= $currentOffer->getLink() ?>"></a>
@@ -220,7 +220,7 @@ $countOffersInMobile = 4; ?>
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>
@@ -233,7 +233,7 @@ $countOffersInMobile = 4; ?>
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>

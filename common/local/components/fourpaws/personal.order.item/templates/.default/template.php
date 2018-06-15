@@ -123,7 +123,7 @@ if ($orderSubscribe) {
                             $orderNumber = !empty($order->getAccountNumber()) ? $order->getAccountNumber() : $order->getId();
                         }?>
                         <span class="b-accordion-order-item__number-order">
-                            <?= ('№ ' . $orderNumber . ' от ' . $order->getFormatedDateInsert()) ?>
+                            <?= ('№ ' . $orderNumber . ' от ' . $order->getFormattedDateInsert()) ?>
                         </span>
                         <?php
                     }
@@ -168,7 +168,7 @@ if ($orderSubscribe) {
                             OrderStatus::STATUS_ISSUING_POINT,
                         ];
                         echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
-                        echo $order->getFormatedDateStatus();
+                        echo $order->getFormattedDateStatus();
                         echo ' ';
                         echo '</span>';
                     }
@@ -282,7 +282,7 @@ if ($orderSubscribe) {
 
                 ?>
                 <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
-                    <?= $order->getFormatedPrice() ?>
+                    <?= $order->getFormattedPrice() ?>
                     <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
                 </div>
                 <?php
@@ -408,7 +408,7 @@ if ($orderSubscribe) {
                             <div class="b-characteristics-tab__dots"></div>
                         </div>
                         <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account b-characteristics-tab__characteristics-value--last">
-                            <?= $order->getFormatedPrice() ?>
+                            <?= $order->getFormattedPrice() ?>
                             <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                         </div>
                     </li>
