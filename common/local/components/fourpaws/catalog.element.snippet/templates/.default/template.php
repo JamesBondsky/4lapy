@@ -32,7 +32,7 @@ $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
-$countOffersInMobile = 3; ?>
+$countOffersInMobile = 4; ?>
 
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">

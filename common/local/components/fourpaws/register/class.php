@@ -811,9 +811,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $id = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone);
         } catch (TooManyUserFoundException $e) {
             try {
-                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone);
+                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone, 'логином/телефоном');
             } catch (ApplicationCreateException $e) {
-                return $this->ajaxMess->getTooManyUserFoundException('', $phone);
+                return $this->ajaxMess->getTooManyUserFoundException('', $phone, 'логином/телефоном');
             }
         } catch (UsernameNotFoundException $e) {
             try {
@@ -823,9 +823,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 return $this->ajaxMess->getWrongPhoneNumberException();
             } catch (TooManyUserFoundException $e) {
                 try {
-                    return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone);
+                    return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone, 'логином/телефоном');
                 } catch (ApplicationCreateException $e) {
-                    return $this->ajaxMess->getTooManyUserFoundException('', $phone);
+                    return $this->ajaxMess->getTooManyUserFoundException('', $phone, 'логином/телефоном');
                 }
             } catch (UsernameNotFoundException $e) {
                 /** если пользователя не найдено регистрируем */
