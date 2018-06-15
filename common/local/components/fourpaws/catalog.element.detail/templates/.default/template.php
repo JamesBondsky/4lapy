@@ -247,12 +247,12 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     <div class="b-product-information__value b-product-information__value--price">
                         <?php if ($currentOffer->getOldPrice() > $currentOffer->getPrice()) {
                             ?>
-                            <span class="b-product-information__old-price"><?= ceil($currentOffer->getOldPrice()) ?> </span>
+                            <span class="b-product-information__old-price"><?= $currentOffer->getOldPriceCeil() ?> </span>
                             <span class="b-ruble b-ruble--old-price">₽</span>
                             <?php
                         } ?>
                         <span class="b-product-information__price js-price-product">
-                            <?= ceil($currentOffer->getPrice()) ?>
+                            <?= $currentOffer->getPriceCeil() ?>
                         </span>
                         <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
                         <span class="b-product-information__bonus js-bonus-<?= $currentOffer->getId() ?>"></span>

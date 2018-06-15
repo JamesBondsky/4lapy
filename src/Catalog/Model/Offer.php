@@ -911,6 +911,11 @@ class Offer extends IblockElement
         return $this->price;
     }
 
+    public function getPriceCeil()
+    {
+        return ceil($this->getPrice());
+    }
+
     /**
      * @return bool
      */
@@ -1069,6 +1074,14 @@ class Offer extends IblockElement
         $this->checkOptimalPriceTmp();
 
         return $this->oldPrice;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOldPriceCeil(): float
+    {
+        return ceil($this->getOldPrice());
     }
 
     /**

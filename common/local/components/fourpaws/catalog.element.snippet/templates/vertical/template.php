@@ -112,7 +112,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             $countSizes++;
                             $isOffersPrinted = true;
                             $addAttr = '';
-                            $addAttr .= ' data-price="' . ceil($offer->getPrice()) . '"';
+                            $addAttr .= ' data-price="' . $offer->getPriceCeil() . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
@@ -164,7 +164,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                                     } ?>
                                     <a class="b-weight-container__link js-price mobile-hidden ajaxSend select-hidden-weight"
                                        href="javascript:void(0);"
-                                       data-price="<?= ceil($offer->getPrice()) ?>"
+                                       data-price="<?= $offer->getPriceCeil() ?>"
                                        data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                        data-offerid="<?= $offer->getId() ?>"
                                        data-link="<?= $offer->getLink() ?>"
@@ -191,7 +191,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             data-available="<?= !$offer->isAvailable() ? 'Нет в наличии' : '' ?>">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                               data-price="<?= ceil($currentOffer->getPrice()) ?>"
+                               data-price="<?= $currentOffer->getPriceCeil() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
                                data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                                data-link="<?= $currentOffer->getLink() ?>"></a>
@@ -213,7 +213,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             echo new SvgDecorator('icon-cart', 16, 16);
                             ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
                     <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                 </span>
                 <span class="b-common-item__incart">+1</span>
