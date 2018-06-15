@@ -3,9 +3,6 @@
 namespace FourPaws\Adapter;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
 use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
@@ -75,22 +72,20 @@ class DaDataLocationAdapter extends BaseAdapter
 
         try {
             $cities = [];
+            $fullCities = $this->getFullCities($entity);
+            $region = $this->getRegion($entity);
             if (!empty($entity->getKladrId())) {
-                $city = !empty($entity->getCity()) ? $entity->getCity() : '';
-                $fullCities = [];
-                $fullCities[] = $fullCity = $this->getFullCity($entity);
-                if(strpos($fullCity, 'рабочий')){
-                    $fullCities[] = str_replace(' рабочий', '', $fullCity);
-                }
-                $region = $this->getRegion($entity);
+                $city = $this->getCityName($entity);
+
                 try {
-                    $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE, $entity->getKladrId());
+                    $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE,
+                        $entity->getKladrId());
                 } catch (\Exception $e) {
                     $cities = [];
                     $logger = LoggerFactory::create('dadataAdapter');
                     $logger->error($e->getMessage(), $e);
                 }
-                /** двухфакторный фикс - первый отбирает частичное соответствие населенного пунка, второй полное соответствие если рещультатов больше 1 */
+                /** двухфакторный фикс - первый отбирает частичное соответствие населенного пунка, второй полное соответствие если результатов больше 1 */
                 if (\count($cities) > 1) {
                     foreach ($cities as $key => $cityItem) {
                         if (strpos($cityItem['NAME'], $city) === false) {
@@ -99,6 +94,7 @@ class DaDataLocationAdapter extends BaseAdapter
                     }
                     /** если после частичного отбора все равно много местоположений - отбираем по полному совпадению */
                     if (\count($cities) > 1) {
+                        $fullCities = array_unique($fullCities);
                         foreach ($cities as $key => $cityItem) {
                             if (!\in_array($cityItem['NAME'], $fullCities, true)) {
                                 unset($cities[$key]);
@@ -109,13 +105,17 @@ class DaDataLocationAdapter extends BaseAdapter
             }
             if (empty($cities)) {
                 /** пока доставка в одной стране - убираем поиск по стране */
-                $city = !empty($entity->getCity()) ? $entity->getCity() : '';
-                $fullCity = $this->getFullCity($entity);
+                $city = $this->getCityName($entity);
 
-
-                $region = $this->getRegion($entity);
                 $fullRegion = $this->getFullRegion($entity);
-                $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true, true);
+                /** гребаный фикс - циклим поиск по нескольким местоположениям */
+                foreach ($fullCities as $fullCity) {
+                    $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true,
+                        true);
+                    if (!empty($cities)) {
+                        break;
+                    }
+                }
             }
             if (!empty($cities)) {
                 $selectedCity = reset($cities);
@@ -208,17 +208,23 @@ class DaDataLocationAdapter extends BaseAdapter
         $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
         $cityType = $entity->getCityTypeFull();
         $isCity = ToLower($cityType) === 'город';
-        if (empty($city)) {
+        if (!empty($entity->getSettlement())) {
             $city = $entity->getSettlement();
             $type = $entity->getSettlementTypeFull();
             if ($entity->getSettlementType() === 'рп') {
                 $type = 'рабочий посёлок';
+            }
+            if ($entity->getSettlementType() === 'дп') {
+                $type = 'дачный посёлок';
             }
             $fullCity = $city . ' ' . $type;
         } else {
             if (!$isCity) {
                 if ($entity->getCityType() === 'рп') {
                     $cityType = 'рабочий посёлок';
+                }
+                if ($entity->getCityType() === 'дп') {
+                    $cityType = 'дачный посёлок';
                 }
                 $fullCity = $city . ' ' . $cityType;
             }
@@ -265,5 +271,60 @@ class DaDataLocationAdapter extends BaseAdapter
         return trim(!empty($entity->getRegion()) && $entity->getCity() !== $entity->getRegion() ? sprintf(str_replace('/',
             '%s',
             $entity->getRegion()), '(', ')') : '');
+    }
+
+    /**
+     * @param DadataLocation $entity
+     *
+     * @return array
+     */
+    private function getFullCities(DadataLocation $entity): array
+    {
+        $fullCities = [];
+        $fullCities[] = $fullCity = $this->getFullCity($entity);
+        /** ищем поселок с буквой ё так же и наоборот */
+        if (strpos($fullCity, 'поселок')) {
+            $fullCities[] = trim(str_replace('поселок', 'посёлок', $fullCity));
+        }
+        if (strpos($fullCity, 'посёлок')) {
+            $fullCities[] = trim(str_replace('посёлок', 'поселок', $fullCity));
+        }
+        if (strpos($fullCity, 'рабочий')) {
+            $val = trim(str_replace(' рабочий', '', $fullCity));
+            $fullCities[] = $val;
+            /** ищем поселок с буквой ё так же */
+            if (strpos($val, 'поселок')) {
+                $fullCities[] = trim(str_replace('поселок', 'посёлок', $val));
+            }
+            if (strpos($val, 'посёлок')) {
+                $fullCities[] = trim(str_replace('посёлок', 'поселок', $val));
+            }
+        }
+        if (strpos($fullCity, 'дачный')) {
+            $val = trim(str_replace(' дачный', '', $fullCity));
+            $fullCities[] = $val;
+            /** ищем поселок с буквой ё так же */
+            if (strpos($val, 'поселок')) {
+                $fullCities[] = trim(str_replace('поселок', 'посёлок', $val));
+            }
+            if (strpos($val, 'посёлок')) {
+                $fullCities[] = trim(str_replace('посёлок', 'поселок', $val));
+            }
+        }
+        return array_unique($fullCities);
+    }
+
+    /**
+     * @param DadataLocation $entity
+     *
+     * @return string
+     */
+    private function getCityName(DadataLocation $entity): string
+    {
+        $city = !empty($entity->getSettlement()) ? $entity->getSettlement() : '';
+        if (empty($city)) {
+            $city = !empty($entity->getCity()) ? $entity->getCity() : '';
+        }
+        return $city;
     }
 }
