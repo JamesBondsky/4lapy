@@ -20,6 +20,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
+    <meta name="yandex-verification" content="6266e34669b85ed6">
 
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <script data-skip-moving="true">
@@ -33,8 +34,11 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     $asset->addCss($markup->getCssFile());
     $asset->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru'); ?>
+
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
 <body>
+<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
     <header class="b-header <?= $template->getHeaderClass() ?> js-header">
         <div class="b-container">
