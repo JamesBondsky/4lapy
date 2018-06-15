@@ -35,6 +35,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 {
     public const BASKET_BACK_URL = '/cart/';
@@ -162,7 +163,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         try {
             $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
         } catch (TooManyUserFoundException $e) {
-            return $this->ajaxMess->getTooManyUserFoundException('', $login);
+            return $this->ajaxMess->getTooManyUserFoundException('', $login, 'логином/email/телефоном');
         } catch (UsernameNotFoundException $e) {
             $userId = 0;
             try {
@@ -400,7 +401,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             ]
         );
         if (count($users) > 1) {
-            return $this->ajaxMess->getTooManyUserFoundException('', $phone);
+            return $this->ajaxMess->getTooManyUserFoundException('', $phone,'телефоном');
         }
 
         if (count($users) === 0) {
@@ -443,7 +444,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             ]
         );
         if (count($users) > 1) {
-            return $this->ajaxMess->getTooManyUserFoundException('', $email);
+            return $this->ajaxMess->getTooManyUserFoundException('', $email,'email');
         }
 
         if (count($users) === 0) {
@@ -503,7 +504,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (TooManyUserFoundException $e) {
-            return $this->ajaxMess->getTooManyUserFoundException('', $login);
+            return $this->ajaxMess->getTooManyUserFoundException('', $login,'логином/email/телефоном');
         } catch (UsernameNotFoundException $e) {
             try {
                 $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login, false);
