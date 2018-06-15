@@ -709,7 +709,7 @@ class StoreService implements LoggerAwareInterface
                             ->getTotalAmount();
                     $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     $item['pickup'] = DeliveryTimeHelper::showTime(
-                        $this->pickupDelivery,
+                        $tmpPickup,
                         [
                             'SHOW_TIME' => true,
                             'SHORT'     => true,
