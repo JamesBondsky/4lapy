@@ -32,8 +32,7 @@ $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
-$countOffersInMobile = 4; ?>
-
+?>
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
     <?= MarkHelper::getMark($currentOffer) ?>
@@ -127,14 +126,14 @@ $countOffersInMobile = 4; ?>
                         }
                     }
                 } ?>
-                <a class="b-weight-container__link js-mobile-select" href="javascript:void(0);"
+                <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select js-select-mobile-package" href="javascript:void(0);"
                    title=""><?= $value ?></a>
-                <?php $value = ''; ?>
+                <div class="b-weight-container__dropdown-list__wrapper">
+                    <div class="b-weight-container__dropdown-list"></div>
+                </div>
                 <ul class="b-weight-container__list">
                     <?php
-                    $i = 0;
                     foreach ($offers as $offer) {
-                        $i++;
                         $value = null;
                         if ($mainCombinationType === 'SIZE') {
                             if ($offer->getClothingSize()) {
@@ -153,8 +152,8 @@ $countOffersInMobile = 4; ?>
                         if ($value) { ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
-                                   class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i > $countOffersInMobile ? ' mobile-hidden' : '' ?>"
-                                   data-price="<?= $offer->getPriceCeil() ?>"
+                                   class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?>"
+                                   data-price="<?= ceil($offer->getPriceCeil()) ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
@@ -171,13 +170,6 @@ $countOffersInMobile = 4; ?>
                         <?php } ?>
                     <?php } ?>
                 </ul>
-                <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > $countOffersInMobile ? ' _active' : '' ?>">
-                    <?php if ($offers->count() > $countOffersInMobile) { ?>
-                        <p class="js-show-weight" href="javascript:void(0)">
-                            Еще <?= $offers->count() - $countOffersInMobile - 1 ?></p>
-                    <?php } ?>
-                    <div class="b-weight-container__dropdown-list"></div>
-                </div>
             </div>
             <?php
         } else { ?>
