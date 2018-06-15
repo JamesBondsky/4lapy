@@ -6,6 +6,8 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
+use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\FileTable;
 use DateTimeImmutable;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -42,6 +44,12 @@ class Share extends IblockElement
      * @Type("string")
      */
     protected $PROPERTY_LABEL = '';
+
+    /**
+     * @var int
+     * @Type("int")
+     */
+    protected $PROPERTY_LABEL_IMAGE = 0;
 
     /**
      * @var string
@@ -365,5 +373,59 @@ class Share extends IblockElement
     {
         $this->PROPERTY_JSON_GROUP_SET = $propertyJsonGroupSet;
         return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPropertyLabelImage(): int
+    {
+        return $this->PROPERTY_LABEL_IMAGE ?? 0;
+    }
+
+    /**
+     * @param int $image
+     */
+    public function setPropertyLabelImage(int $image): void
+    {
+        $this->PROPERTY_LABEL_IMAGE = $image;
+    }
+
+    public function getPropertyLabelImageFile($width = 0, $height = 0)
+    {
+        $file = $this->getPropertyLabelImage();
+        if ($file > 0) {
+            $resize = false;
+            if ($width > 0 || $height > 0) {
+                $resize = true;
+            }
+            $query = FileTable::query();
+            $query->setSelect(['ID', 'WIDTH', 'HEIGHT', 'CONTENT_TYPE', 'SRC']);
+            $file = $query->where('ID', $file)
+                ->registerRuntimeField(new ExpressionField('SRC', 'concat("/upload/",%s,"/",%s)', ['SUBDIR', 'FILE_NAME']))
+                ->exec()->fetch();
+            if ($resize && !\in_array($file['CONTENT_TYPE'], ['image/svg+xml', 'text/xml'], true)) {
+                $resizeFile = ResizeImageDecorator::createFromPrimary($file['ID']);
+                if($height > 0) {
+                    $resizeFile->setResizeHeight($height);
+                }
+                if($width > 0) {
+                    $resizeFile->setResizeWidth($width);
+                }
+                $file = [
+                    'ID'     => $file['ID'],
+                    'SRC'    => $resizeFile->getSrc(),
+                    'WIDTH'  => $resizeFile->getResizeWidth(),
+                    'HEIGHT' => $resizeFile->getResizeHeight(),
+                ];
+            }
+            return $file;
+        }
+        return [];
+    }
+
+    public function getPropertyLabelImageFileSrc($width = 0, $height = 0)
+    {
+        return $this->getPropertyLabelImageFile($width, $height)['SRC'];
     }
 }
