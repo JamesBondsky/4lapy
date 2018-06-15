@@ -118,7 +118,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
 
-                            $liAttr .= ' data-oldprice="' . $offer->getOldPrice() . '"';
+                            $liAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
                             $liAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
 //                            $liAttr .= ' data-pickup="' . $offer->() . '"';
                             $liAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
@@ -165,6 +165,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                                     <a class="b-weight-container__link js-price mobile-hidden ajaxSend select-hidden-weight"
                                        href="javascript:void(0);"
                                        data-price="<?= $offer->getPriceCeil() ?>"
+                                       data-oldprice="<?= $offer->getOldPriceCeil() ?>"
                                        data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                        data-offerid="<?= $offer->getId() ?>"
                                        data-link="<?= $offer->getLink() ?>"
@@ -185,12 +186,12 @@ if (!$arParams['ITEM_ATTR_ID']) {
                 <div class="b-weight-container b-weight-container--list">
                     <ul class="b-weight-container__list">
                         <li class="b-weight-container__item"
-                            data-oldprice="<?= $currentOffer->getOldPrice() ?>"
                             data-discount="<?= $currentOffer->getDiscountPrice() ?>"
                             data-pickup=""
                             data-available="<?= !$offer->isAvailable() ? 'Нет в наличии' : '' ?>">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
+                               data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
                                data-price="<?= $currentOffer->getPriceCeil() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
                                data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
