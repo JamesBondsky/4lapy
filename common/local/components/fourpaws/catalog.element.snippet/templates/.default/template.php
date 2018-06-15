@@ -153,7 +153,7 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?>"
-                                   data-price="<?= ceil($offer->getPriceCeil()) ?>"
+                                   data-price="<?= $offer->getPriceCeil() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
