@@ -181,28 +181,24 @@ class FoodSelectionController extends Controller
             }
         }
         $excludeSections = [];
-        if(!empty($values['food_consistence'])) {
-            $excludeSections[] = $values['food_consistence'];
+        if (!empty($values['food_consistence'])) {
+            $exclude = (int)$values['food_consistence'];
             unset($values['food_consistence']);
+            if (isset($all_sections)) {
+                foreach ($all_sections['food_consistence']['ITEMS'] as $item) {
+                    /** @var IblockSect $item */
+                    if ($exclude !== $item->getId()) {
+                        $values['food_consistence'] = $item->getId();
+                        break;
+                    }
+                }
+            }
+            $excludeSections[] = $exclude;
         }
         try {
             /** дополнительные итемы */
-            $limit = 3;
             $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems,
-                $limit, $excludeSections);
-            /** быстрый фикс на исключение итемов из раздела который был выбран, выбираем все */
-//            $i=0;
-//            $alsoItemsOld = $alsoItems;
-//            $alsoItems = [];
-//            foreach ($alsoItemsOld as $alsoItem) {
-//                if($i === $limit){
-//                    break;
-//                }
-//                if(!\in_array($excludeSections, $alsoItem->getSectionsIdList(), true)){
-//                    $alsoItems[] = $alsoItem;
-//                    $i++;
-//                }
-//            }
+                3, $excludeSections);
         } catch (ArgumentException|SystemException $e) {
             $alsoItems = [];
         }
@@ -252,6 +248,29 @@ class FoodSelectionController extends Controller
             $recommendedItems = [];
         }
 
+        $sections = [];
+        $sections = $this->foodSelectionService->getSectionsByXmlId($sections, 1);
+        /** @var IblockSect[] $sect */
+        $sect = $this->foodSelectionService->getSections([
+            '=SECTION_ID' => array_keys($sections),
+        ]);
+        if (!empty($sect)) {
+            /** @var IblockSect $sectItem */
+            foreach ($sect as $sectItem) {
+                $parentId = $sectItem->getIblockSectionId();
+                if (isset($sections[$parentId])) {
+                    $xmlId = $sections[$parentId]->getXmlId();
+                    if (!isset($all_sections[$xmlId])) {
+                        $all_sections[$xmlId] = [
+                            'ITEMS'     => [],
+                            'SECT_NAME' => $sections[$parentId]->getName(),
+                        ];
+                    }
+                    $all_sections[$xmlId]['ITEMS'][] = $sectItem;
+                }
+            }
+        }
+
         /** @var Product $product */
         $exceptionItems = [];
         if (\is_array($recommendedItems) && !empty($recommendedItems)) {
@@ -260,9 +279,24 @@ class FoodSelectionController extends Controller
                 $exceptionItems[] = $product->getId();
             }
         }
-        unset($values['food_consistence']);
+        $excludeSections = [];
+        if (!empty($values['food_consistence'])) {
+            $exclude = (int)$values['food_consistence'];
+            unset($values['food_consistence']);
+            if (isset($all_sections)) {
+                foreach ($all_sections['food_consistence']['ITEMS'] as $item) {
+                    /** @var IblockSect $item */
+                    if ($exclude !== $item->getId()) {
+                        $values['food_consistence'] = $item->getId();
+                        break;
+                    }
+                }
+            }
+            $excludeSections[] = $exclude;
+        }
         try {
-            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, 3);
+            $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($values), $exceptionItems, 3,
+                $excludeSections);
         } catch (ArgumentException|SystemException $e) {
             $alsoItems = [];
         }
