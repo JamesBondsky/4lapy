@@ -22,6 +22,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -605,7 +606,7 @@ class Order extends BaseEntity
     /**
      * @return string
      */
-    public function getFormatedDateInsert(): string
+    public function getFormattedDateInsert(): string
     {
         return DateHelper::replaceRuMonth($this->getDateInsert()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
@@ -613,7 +614,7 @@ class Order extends BaseEntity
     /**
      * @return string
      */
-    public function getFormatedDateStatus(): string
+    public function getFormattedDateStatus(): string
     {
         return DateHelper::replaceRuMonth($this->getDateStatus()->format('j #n# Y'), DateHelper::GENITIVE, true);
     }
@@ -628,9 +629,9 @@ class Order extends BaseEntity
      * @throws NotImplementedException
      * @throws ObjectNotFoundException
      */
-    public function getFormatedPrice(): string
+    public function getFormattedPrice(): string
     {
-        return number_format(round($this->getPrice() - $this->getBonusPay(), 2), 2, '.', ' ');
+        return WordHelper::numberFormat(round($this->getPrice() - $this->getBonusPay(), 2));
     }
 
     /**
@@ -679,7 +680,7 @@ class Order extends BaseEntity
      * @throws SystemException
      * @throws \Exception
      */
-    public function getFormatedAllWeight(): float
+    public function getFormattedAllWeight(): float
     {
         $allWeight = $this->getAllWeight();
 
