@@ -64,26 +64,26 @@ class CallBackController extends Controller
                 'phone',
                 'time_call',
             ];
-            $formatedFields = $formService->getRealNamesFields(
+            $formattedFields = $formService->getRealNamesFields(
                 (int)$data['WEB_FORM_ID']
             );
             if (!$formService->checkRequiredFields($data,
-                array_intersect_key($formatedFields, array_flip($requiredFields)))) {
+                array_intersect_key($formattedFields, array_flip($requiredFields)))) {
                 return $this->ajaxMess->getEmptyDataError();
             }
 
             try {
-                $data[$formatedFields['phone']] = PhoneHelper::normalizePhone($data[$formatedFields['phone']]);
+                $data[$formattedFields['phone']] = PhoneHelper::normalizePhone($data[$formattedFields['phone']]);
             } catch (WrongPhoneNumberException $e) {
                 return $this->ajaxMess->getWrongPhoneNumberException();
             }
 
             if ($formService->addResult($data)) {
-                if (!empty($data['phone'])) {
+                if (!empty($data[$formattedFields['phone']])) {
                     /** @noinspection PhpUnhandledExceptionInspection */
                     Loader::includeModule('form');
                     $answer = new \CFormAnswer();
-                    $arAnswer = $answer->GetByID($data[$formatedFields['time_call']])->Fetch();
+                    $arAnswer = $answer->GetByID($data[$formattedFields['time_call']])->Fetch();
                     $timeout = $arAnswer['FIELD_PARAM'] ?? 0;
                     /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                     $date = new DateTime();
@@ -91,15 +91,15 @@ class CallBackController extends Controller
                     /** @var CallbackService $callbackService */
                     $callbackService = $container->get('callback.service');
                     $callbackService->send(
-                        $data['phone'],
+                        $data[$formattedFields['phone']],
                         $date->format('Y-m-d H:i:s'),
                         $timeout
                     );
                 }
-                JsonSuccessResponse::create('Ваша завка принята');
-            } else {
-                return $this->ajaxMess->getUpdateError();
+                return JsonSuccessResponse::create('Ваша завка принята');
             }
+
+            return $this->ajaxMess->getUpdateError();
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|ObjectException|LoaderException $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
