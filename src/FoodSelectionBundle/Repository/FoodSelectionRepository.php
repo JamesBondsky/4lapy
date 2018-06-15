@@ -124,7 +124,7 @@ class FoodSelectionRepository
      *
      * @param int   $limit
      *
-     * @param array   $excludeSections
+     * @param array $excludeSections
      *
      * @return array|Product[]
      * @throws ArgumentException
@@ -136,9 +136,29 @@ class FoodSelectionRepository
         int $iblockId,
         array $exceptionItems = [],
         int $limit = 6,
-    array $excludeSections = []
+        array $excludeSections = []
     ): array {
         $countSections = \count($sections);
+
+        $subQuery = SectionElementTable::query()->setSelect(['IBLOCK_ELEMENT_ID'])
+            ->whereIn('IBLOCK_SECTION_ID', $sections)
+            ->where(
+                Query::expr()->count('IBLOCK_ELEMENT_ID'),
+                '>=',
+                $countSections
+            )->setGroup(['IBLOCK_ELEMENT_ID']);
+        if (!empty($excludeSections)) {
+            $subQuery->whereNotIn('IBLOCK_SECTION_ID', $excludeSections);
+        }
+        $ids = [];
+        $resSubQuery = $subQuery->exec();
+        while ($item = $resSubQuery->fetch()){
+            $ids[] = $item['IBLOCK_ELEMENT_ID'];
+        }
+        if(empty($ids)){
+            return [];
+        }
+
         $propId = PropertyTable::query()->setFilter(
             [
                 'IBLOCK_ID' => $iblockId,
@@ -157,19 +177,9 @@ class FoodSelectionRepository
         );
         $query->where('ACTIVE', 'Y');
         $query->where('IBLOCK_ID', $iblockId);
-        $subQuery = SectionElementTable::query()->setSelect(['IBLOCK_ELEMENT_ID'])
-            ->whereIn('IBLOCK_SECTION_ID', $sections)
-            ->where(
-                Query::expr()->count('IBLOCK_ELEMENT_ID'),
-                '>=',
-                $countSections
-            )->setGroup(['IBLOCK_ELEMENT_ID']);
-        if (!empty($excludeSections)) {
-            $subQuery->whereNotIn('IBLOCK_SECTION_ID', $excludeSections);
-        }
         $query->whereIn(
             'ID',
-            $subQuery
+            $ids
         );
         if (!empty($exceptionItems)) {
             $query->whereNotIn('PROP.PROPERTY_' . $propId, $exceptionItems);
@@ -189,7 +199,7 @@ class FoodSelectionRepository
         $products = [];
         if (!empty($itemIds)) {
             $query = new ProductQuery();
-            if($limit > 0){
+            if ($limit > 0) {
                 $query->withNav(['nTopCount' => $limit]);
             }
             $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE' => 'Y'])

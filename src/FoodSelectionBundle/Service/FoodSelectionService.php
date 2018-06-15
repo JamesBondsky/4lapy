@@ -174,15 +174,19 @@ class FoodSelectionService
      *
      * @param int   $limit
      *
-     * @param array   $excludeSections
+     * @param array $excludeSections
      *
      * @return array|Product[]
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getProductsBySections(array $sections, array $exceptionItems = [], int $limit = 6, array $excludeSections = []): array
-    {
+    public function getProductsBySections(
+        array $sections,
+        array $exceptionItems = [],
+        int $limit = 6,
+        array $excludeSections = []
+    ): array {
         return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems,
             $limit, $excludeSections);
     }
