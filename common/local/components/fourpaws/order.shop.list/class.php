@@ -19,8 +19,8 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
+use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -305,6 +305,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         return [
             'id'                => $store->getXmlId(),
             'adress'            => $address,
+            'name'              => $address,
             'phone'             => $store->getPhone(),
             'schedule'          => $store->getScheduleString(),
             'pickup'            => DeliveryTimeHelper::showTime(
