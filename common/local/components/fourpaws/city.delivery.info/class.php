@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -44,7 +45,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      *
      * @param CBitrixComponent|null $component
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -94,7 +95,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      * @return $this
      * @throws CityNotFoundException
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
@@ -211,9 +212,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * @param string $locationCode
-     * @param array $possibleDeliveryCodes
+     * @param array  $possibleDeliveryCodes
      *
-     * @return null|CalculationResultInterface[]
+     * @throws ApplicationCreateException
+     * @return CalculationResultInterface[]
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
