@@ -72,7 +72,8 @@ class DeliveryTimeHelper
         $currentDate = new \DateTime();
 
         $options = array_merge($defaultOptions, $options);
-        if ($options['SHOW_TIME'] && abs($date->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
+
+        if ($options['SHOW_TIME'] && abs($date->getTimestamp() - $currentDate->getTimestamp()) <= 2 * 3600) {
             if ($options['HOUR_FORMAT']) {
                 if ($options['HOUR_FORMAT'] instanceof \Closure) {
                     $options['HOUR_FORMAT'] = $options['HOUR_FORMAT']($date);

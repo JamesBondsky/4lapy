@@ -105,7 +105,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         foreach ($deliveries as $delivery) {
             $delivery->setStockResult(
                 $this->deliveryService->getStockResultForOffer($this->arParams['OFFER'], $delivery)
-            );
+            )->setCurrentDate(new \DateTime());
             if ($delivery->isSuccess()) {
                 $result[] = $delivery;
             }
