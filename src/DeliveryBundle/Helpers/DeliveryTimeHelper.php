@@ -22,8 +22,7 @@ class DeliveryTimeHelper
      *                  - SHOW_TIME - отображать ли время
      *                  - SHOW_PRICE - отображать стоимость доставки
      *                  - SHORT - короткий формат вывода
-     *                  - DAY_FORMAT - формат или \Closure, вызывается если тип периода доставки "день"
-     *                  - HOUR_FORMAT - формат или \Closure, вызывается если тип периода доставки "час"
+     *                  - DATE_FORMAT - формат вывода даты
      * @return string
      * @throws ArgumentException
      * @throws ApplicationCreateException
@@ -34,19 +33,11 @@ class DeliveryTimeHelper
         CalculationResultInterface $calculationResult,
         array $options = []
     ): string {
-        $defaultOptions = [
-            'SHOW_TIME' => false,
-            'SHORT' => false,
-            'SHOW_PRICE' => false,
-            'DAY_FORMAT' => null,
-            'HOUR_FORMAT' => null,
-        ];
-
-        $options = array_merge($defaultOptions, $options);
-
-        $date = clone $calculationResult->getDeliveryDate();
-
-        return static::showByDate($date, $calculationResult->getPrice(), $options);
+        return static::showByDate(
+            clone $calculationResult->getDeliveryDate(),
+            $calculationResult->getPrice(),
+            $options
+        );
     }
 
     /**
@@ -56,8 +47,7 @@ class DeliveryTimeHelper
      *                  - SHOW_TIME - отображать ли время
      *                  - SHOW_PRICE - отображать стоимость доставки
      *                  - SHORT - короткий формат вывода
-     *                  - DAY_FORMAT - формат или \Closure, вызывается если тип периода доставки "день"
-     *                  - HOUR_FORMAT - формат или \Closure, вызывается если тип периода доставки "час"
+     *                  - DATE_FORMAT - формат вывода даты
      * @return string
      */
     public static function showByDate(\DateTime $date, $price = 0, array $options = []): string
@@ -66,41 +56,30 @@ class DeliveryTimeHelper
             'SHOW_TIME' => false,
             'SHORT' => false,
             'SHOW_PRICE' => false,
-            'DAY_FORMAT' => null,
-            'HOUR_FORMAT' => null,
+            'DATE_FORMAT' => null,
         ];
         $currentDate = new \DateTime();
 
         $options = array_merge($defaultOptions, $options);
-        if ($options['SHOW_TIME'] && abs($date->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
-            if ($options['HOUR_FORMAT']) {
-                if ($options['HOUR_FORMAT'] instanceof \Closure) {
-                    $options['HOUR_FORMAT'] = $options['HOUR_FORMAT']($date);
-                }
 
-                $result = DateHelper::formatDate($options['HOUR_FORMAT'], $date->getTimestamp());
-            } else {
-                $result = 'через час';
-            }
+        if ($options['SHOW_TIME'] && abs($date->getTimestamp() - $currentDate->getTimestamp()) <= 2 * 3600) {
+            $result = 'через час';
         } else {
-            if ($options['DAY_FORMAT']) {
-                $options['DAY_FORMAT'] = ($options['DAY_FORMAT'] instanceof \Closure)
-                    ? $options['DAY_FORMAT']($date)
-                    : $options['DAY_FORMAT'];
-
-                $result = DateHelper::formatDate($options['DAY_FORMAT'], $date->getTimestamp());
-            } else {
+            if (!$options['DATE_FORMAT']) {
                 if ($options['SHORT']) {
                     $dateFormat = 'D, j M';
                 } else {
                     $dateFormat = 'll, j F';
                 }
-                if ($options['SHOW_TIME']) {
-                    $dateFormat .= ' с H:00';
-                }
-
-                $result = DateHelper::formatDate($dateFormat, $date->getTimestamp());
+            } else {
+                $dateFormat = $options['DATE_FORMAT'];
             }
+
+            if ($options['SHOW_TIME']) {
+                $dateFormat .= ' с H:00';
+            }
+
+            $result = DateHelper::formatDate($dateFormat, $date->getTimestamp());
         }
 
         if ($options['SHOW_PRICE']) {

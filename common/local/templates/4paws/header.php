@@ -136,7 +136,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
                         ['HIDE_ICONS' => 'Y']) ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
                         'template.header',
-                        [],
+                        ['CACHE_TIME' => 3600 * 24],
                         false,
                         ['HIDE_ICONS' => 'Y']); ?>
                 </div>
