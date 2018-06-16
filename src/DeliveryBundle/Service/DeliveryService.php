@@ -839,8 +839,8 @@ class DeliveryService implements LoggerAwareInterface
     {
         $priceForAmountCollection = new PriceForAmountCollection();
         $priceForAmountCollection->add((new PriceForAmount())
-            ->setAmount($quantity)
-            ->setPrice($price)
+            ->setAmount($quantity ?? 1)
+            ->setPrice($price ?? $offer->getPrice())
         );
 
         return DeliveryHandlerBase::getStocksForItem(

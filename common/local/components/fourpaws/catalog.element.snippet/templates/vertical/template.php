@@ -97,7 +97,7 @@ if ($mainCombinationType === 'SIZE') {
                 ob_start();
                 ?>
                 <div class="b-weight-container b-weight-container--list">
-                    <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select js-select-mobile-package" href="javascript:void(0);"><?= $value ?></a>
+                    <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : ''?>js-mobile-select js-select-mobile-package" href="javascript:void(0);"><?= $value ?></a>
                     <div class="b-weight-container__dropdown-list__wrapper">
                         <div class="b-weight-container__dropdown-list"></div>
                     </div>
@@ -149,7 +149,7 @@ if ($mainCombinationType === 'SIZE') {
                     </ul>
                     <?php if ($countSizes > 1) { ?>
                         <div class="b-weight-container__dropdown-list__wrapper _active">
-                            <p class="js-show-weight b-weight-container__link b-weight-container__link--mobile"></p>
+                            <p class="js-show-weight b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : ''?>"></p>
                             <div class="b-weight-container__dropdown-list">
                                 <?php
                                 $i = 0;
