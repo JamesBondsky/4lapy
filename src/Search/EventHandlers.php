@@ -67,7 +67,13 @@ class EventHandlers extends BaseServiceHandler
     public static function updateInElastic($arFields): void
     {
         try {
-            self::doActionInElastic(CatalogSyncMsg::ACTION_UPDATE, $arFields);
+            if ($arFields['ACTIVE'] === 'N' &&
+                $arFields['IBLOCK_ID'] === IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)
+            ) {
+                self::deleteInElastic($arFields);
+            } else {
+                self::doActionInElastic(CatalogSyncMsg::ACTION_UPDATE, $arFields);
+            }
         } catch (Exception $exception) {
             self::logException($exception);
         }
@@ -114,7 +120,7 @@ class EventHandlers extends BaseServiceHandler
     /**
      * @param $arFields
      */
-    public function deleteInElastic($arFields): void
+    public static function deleteInElastic($arFields): void
     {
         try {
             self::doActionInElastic(CatalogSyncMsg::ACTION_DELETE, $arFields);

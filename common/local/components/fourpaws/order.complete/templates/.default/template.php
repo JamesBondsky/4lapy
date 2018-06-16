@@ -171,7 +171,7 @@ if ($bonusCount > 0) {
             <div class="b-order__content b-order__content--no-border b-order__content--no-padding b-order__content--no-flex">
                 <?php if ($relatedOrder) { ?>
                     <hr class="b-hr b-hr--order b-hr--step-five"/>
-                    <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $relatedOrder->getId() ?>
+                    <h2 class="b-title b-title--order-heading b-title--block">Заказ №<?= $relatedOrder->getField('ACCOUNT_NUMBER') ?>
                         оформлен</h2>
                     <div class="b-order__text-block">
                         <p>В нем находятся товары "под заказ".
