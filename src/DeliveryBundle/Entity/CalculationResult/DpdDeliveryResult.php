@@ -32,9 +32,9 @@ class DpdDeliveryResult extends BaseResult implements DeliveryResultInterface
         $modifier = $this->getInitialPeriod();
 
         /**
-         * к любой доставке DPD прибавляем 1 день
+         * к любой доставке DPD прибавляем 2 дня
          */
-        $modifier++;
+        $modifier += 2;
 
         $modifier += $this->getDateOffset();
 
