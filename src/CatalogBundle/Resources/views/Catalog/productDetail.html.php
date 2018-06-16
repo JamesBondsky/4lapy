@@ -227,6 +227,7 @@ if (null === $offer) {
                         'catalog.detail.tab',
                         [
                             'DELIVERY_CODES' => [DeliveryService::INNER_DELIVERY_CODE],
+                            'CACHE_TIME' => 3600
                         ],
                         false,
                         ['HIDE_ICONS' => 'Y']
