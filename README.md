@@ -38,8 +38,8 @@
 ## Запуск пересчета графиков доставок
 
 ```
-- ./bin/symfony_console f:s:s # на сегодняший день
-- ./bin/symfony_console f:s:s --date="$(date --date="tomorrow" +\%Y-\%m-\%d)" # на завтра
+- ./bin/symfony_console f:s:s # на завтрашний день
+- ./bin/symfony_console f:s:s --date="2000.01.01" # на конкретную дату
 ```
 
 ## Запуск импорта местоположений DPD
