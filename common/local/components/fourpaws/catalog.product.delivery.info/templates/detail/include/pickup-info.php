@@ -18,9 +18,8 @@ use FourPaws\Helpers\WordHelper;
     <div class="b-product-information__title-info">Самовывоз</div>
     <div class="b-product-information__value">
         <?php if ($pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
-            <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE']->modify('+1 hour'), 0, [
-                    'HOUR_FORMAT' => 'XX с H:00',
-                    'DAY_FORMAT' => 'j F',
+            <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
+                    'DATE_FORMAT' => 'XX',
                     'SHOW_TIME' => true
             ]) ?>
             <?php if ($pickup['SHOP_COUNT']) { ?>
@@ -30,7 +29,7 @@ use FourPaws\Helpers\WordHelper;
                 ); ?>
             <?php } ?>
         <?php } else { ?>
-            <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, ['DAY_FORMAT' => 'j F']) ?>
+            <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, ['DATE_FORMAT' => 'XX']) ?>
         <?php } ?>
     </div>
 </li>
