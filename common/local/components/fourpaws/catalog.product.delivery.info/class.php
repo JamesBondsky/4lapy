@@ -4,10 +4,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\LoaderException;
-use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -69,7 +65,6 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
     }
 
     /**
-     * @return $this|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
@@ -81,35 +76,16 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         if (!$this->arParams['OFFER']) {
             throw new \InvalidArgumentException('Invalid component parameters');
         }
-        /** @var Offer $currentOffer */
-        $currentOffer = $this->arParams['OFFER'];
-        $this->arParams['OFFER_ID'] = $currentOffer->getId();
-        $this->arParams['IS_AVAILABLE'] = $currentOffer->isAvailable();
-        $this->arParams['BY_REQUEST'] = $currentOffer->isByRequest();
-        if($this->arParams['IS_AVAILABLE']) {
-            parent::prepareResult();
 
-            if (isset($this->arResult['CURRENT']['PICKUP']) &&
-                $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
-            ) {
-                $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
-                    $this->arResult['CURRENT']['PICKUP']['RESULT']
-                );
-            }
-            if($this->arResult['CURRENT']['PICKUP'] || $this->arResult['CURRENT']['DELIVERY']){
-                $this->arParams['CACHE_TIME'] = 0;
-                $this->arParams['CACHE_TYPE'] = 'N';
-                return $this;
-            }
+        parent::prepareResult();
 
-            $this->arParams['CACHE_TIME'] = 360000;
-            $this->arParams['CACHE_TYPE'] = 'A';
-            return null;
+        if (isset($this->arResult['CURRENT']['PICKUP']) &&
+            $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
+        ) {
+            $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
+                $this->arResult['CURRENT']['PICKUP']['RESULT']
+            );
         }
-        $this->arParams['CACHE_TIME'] = 360000;
-        $this->arParams['CACHE_TYPE'] = 'A';
-
-        return null;
     }
 
     /**
@@ -119,20 +95,23 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws UserMessageException
      * @throws DeliveryNotFoundException
-     * @return CalculationResultInterface[]|null
+     * @return CalculationResultInterface[]
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
-        return $this->deliveryService->getByProduct(
-            $this->arParams['OFFER'],
-            $locationCode,
-            $possibleDeliveryCodes
-        );
+        $result = [];
+        $deliveries = parent::getDeliveries($locationCode, $possibleDeliveryCodes);
+        foreach ($deliveries as $delivery) {
+            $delivery->setStockResult(
+                $this->deliveryService->getStockResultForOffer($this->arParams['OFFER'], $delivery)
+            )->setCurrentDate(new \DateTime());
+            if ($delivery->isSuccess()) {
+                $result[] = $delivery;
+            }
+        }
+
+        return $result;
     }
 
     /**
