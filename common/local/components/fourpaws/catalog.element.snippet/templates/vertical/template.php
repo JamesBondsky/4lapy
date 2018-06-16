@@ -139,7 +139,7 @@ if ($mainCombinationType === 'SIZE') {
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
                             $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : ''; ?>
-                            <li class="b-weight-container__item<?= $currentOffer->getId() === $offer->getId() ? '' : ' mobile-hidden' ?>">
+                            <li class="b-weight-container__item">
                                 <a<?= $addAttr ?> href="javascript:void(0)"
                                                   class="b-weight-container__link js-price<?= $addClass ?>">
                                     <?= $value ?>
