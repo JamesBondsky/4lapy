@@ -16,6 +16,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Shipment as BitrixShipment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -177,6 +178,11 @@ class Calculator extends DPD
                     $terminals = $shipment->getDpdTerminals();
                 }
             }
+
+            /**
+             * Отнимаем 4% суммы корзины от стоимости доставки
+             */
+            $result['VALUE'] -= $basket->getPrice() * 0.04;
         }
 
         $cacheKey = CalculationResultFactory::getDpdCacheKey($order);
@@ -187,7 +193,7 @@ class Calculator extends DPD
             'DELIVERY_ZONE' => $deliveryZone,
         ];
 
-        $result['VALUE'] = floor($result['VALUE']);
+        $result['VALUE'] = ($result['VALUE'] > 0) ? floor($result['VALUE']) : 0;
 
         return $result;
     }
