@@ -249,7 +249,7 @@ class BasketComponent extends CBitrixComponent
             $image = null;
             if ($offer !== null) {
                 $images = $offer->getResizeImages(110, 110);
-                $this->images[$offerId] = $images->last();
+                $this->images[$offerId] = $images->first();
             }
         }
         return $this->images[$offerId];
