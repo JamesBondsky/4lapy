@@ -30,6 +30,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
@@ -790,42 +791,41 @@ class ExpertsenderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     *
      * @return array
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \InvalidArgumentException
      * @throws ApplicationCreateException
+     * @throws ObjectNotFoundException
      * @throws ExpertsenderServiceException
      */
     protected function getAltProductsItems(Order $order): array
     {
+        /** @var PaymentService $paymentService */
+        $paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $offers = $orderService->getOrderProducts($order);
+
+        $fiscal = $paymentService->getFiscalization($order, null, 0);
         $items = [];
         try {
-            /** @var OrderService $orderService */
-            $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-            $offers = $orderService->getOrderProducts($order);
-            $basket = $order->getBasket();
-            /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
+            $basketItems = $fiscal['fiscal']['orderBundle']['cartItems']['items'];
+            foreach ($basketItems as $basketItem) {
                 $currentOffer = null;
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
-                    if ($offer->getId() === (int)$basketItem->getProductId()) {
+                    if ($offer->getId() === (int)$basketItem['itemCode']) {
                         $currentOffer = $offer;
                     }
                 }
                 if (!$currentOffer) {
-                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getProductId()));
+                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem['itemCode']));
                 }
                 $item = '';
                 $item .= '<Product>';
-                $item .= '<Name>' . $basketItem->getField('NAME') . '</Name>';
-                $item .= '<PicUrl>' . new FullHrefDecorator((string)$offer->getImages()->first()) . '</PicUrl>';
-                $item .= '<Link>' . new FullHrefDecorator($offer->getDetailPageUrl()) . '</Link>';
-                $item .= '<Price1>' . $basketItem->getBasePrice() . '</Price1>';
-                $item .= '<Price2>' . $basketItem->getPrice() . '</Price2>';
-                $item .= '<Amount>' . $basketItem->getQuantity() . '</Amount>';
+                $item .= '<Name>' . $currentOffer->getName(). '</Name>';
+                $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
+                $item .= '<Link>' . new FullHrefDecorator($currentOffer->getDetailPageUrl()) . '</Link>';
+                $item .= '<Price1>' . $currentOffer->getPrice() . '</Price1>';
+                $item .= '<Price2>' . ($basketItem['itemPrice'] / 100) . '</Price2>';
+                $item .= '<Amount>' . $basketItem['quantity']['value'] . '</Amount>';
                 $item .= '</Product>';
                 $items[] = $item;
             }
