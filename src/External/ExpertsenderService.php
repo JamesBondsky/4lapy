@@ -62,10 +62,10 @@ class ExpertsenderService implements LoggerAwareInterface
 
     protected const MAIN_LIST_MODE = 'AddAndUpdate';
     protected const MAIN_LIST_ID = 178;
+    protected const MAIN_LIST_PROP_HASH_ID = 10;
     protected const MAIN_LIST_PROP_SUBSCRIBE_ID = 23;
     protected const MAIN_LIST_PROP_REGISTER_ID = 47;
     protected const MAIN_LIST_PROP_IP_ID = 48;
-    protected const MAIN_LIST_PROP_HASH_ID = 10;
 
     protected $client;
     private $guzzleClient;
@@ -140,9 +140,9 @@ class ExpertsenderService implements LoggerAwareInterface
             $addUserToList->setLastName($user->getLastName());
             /** флаг подписки на новости */
             $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean',
-                $params['subscribe']));
+                json_encode($params['subscribe'])));
             /** флаг регистрации */
-            $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_REGISTER_ID, 'boolean', $params['isReg']));
+            $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_REGISTER_ID, 'boolean', json_encode($params['isReg'])));
             try {
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
@@ -417,7 +417,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setId($expertSenderId);
 
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', true));
+                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(true)));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -473,7 +473,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setId($expertSenderId);
                     $addUserToList->setEmail($user->getEmail());
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', false));
+                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(false)));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
