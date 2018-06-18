@@ -872,12 +872,13 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         $order = $personalOrder->getBitrixOrder();
 
-        $snippets[] = new Snippet('user_name', $personalOrder->getPropValue('NAME'));
-        $snippets[] = new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order));
-        $snippets[] = new Snippet('delivery_date', $orderSubscribe->getDateStartFormatted());
-        $snippets[] = new Snippet('delivery_period', $orderSubscribe->getDeliveryTimeFormattedRu());
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
+        $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getDateStartFormatted()));
+        $snippets[] = new Snippet('delivery_period', htmlspecialcharsbx($orderSubscribe->getDeliveryTimeFormattedRu()));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
+        $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
 
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';
@@ -966,12 +967,13 @@ class ExpertsenderService implements LoggerAwareInterface
             throw new ExpertsenderServiceException('order email is empty');
         }
 
-        $snippets[] = new Snippet('user_name', $properties['NAME']);
-        $snippets[] = new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order));
-        $snippets[] = new Snippet('delivery_date', $properties['DELIVERY_DATE']);
-        $snippets[] = new Snippet('delivery_time', $properties['DELIVERY_INTERVAL']);
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($properties['NAME']));
+        $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($properties['DELIVERY_DATE']));
+        $snippets[] = new Snippet('delivery_time', htmlspecialcharsbx($properties['DELIVERY_INTERVAL']));
         $snippets[] = new Snippet('tel_number', $properties['PHONE'] !== '' ? PhoneHelper::formatPhone($properties['PHONE']) : '');
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
+        $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
 
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';
