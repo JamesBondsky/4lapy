@@ -119,7 +119,15 @@ class Share extends IblockElement
      */
     public function getPropertyLabel(): string
     {
-        return $this->PROPERTY_LABEL;
+        return trim((string)$this->PROPERTY_LABEL);
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasLabel(): bool
+    {
+        return !empty($this->getPropertyLabel());
     }
 
     /**
@@ -381,6 +389,14 @@ class Share extends IblockElement
     public function getPropertyLabelImage(): int
     {
         return $this->PROPERTY_LABEL_IMAGE ?? 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasLabelImage(): bool
+    {
+        return $this->getPropertyLabelImage() > 0;
     }
 
     /**
