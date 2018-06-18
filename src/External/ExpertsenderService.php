@@ -20,7 +20,10 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
+use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -687,6 +690,9 @@ class ExpertsenderService implements LoggerAwareInterface
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ExpertsenderUserNotFoundException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderBasketEmptyException
      * @throws ExpertsenderServiceException
      */
     public function sendForgotBasket(Basket $basket, int $type):bool
@@ -711,10 +717,10 @@ class ExpertsenderService implements LoggerAwareInterface
         $userService = $container->get(CurrentUserProviderInterface::class);
         $user = $userService->getUserRepository()->find(FuserTable::getUserById($basket->getFUserId()));
         if($user === null){
-            throw new ExpertsenderServiceException('user not found');
+            throw new ExpertsenderUserNotFoundException('user not found');
         }
         if (!$user->hasEmail()) {
-            throw new ExpertsenderServiceException('email is empty');
+            throw new ExpertsenderEmptyEmailException('email is empty');
         }
 
         /** @var BasketService $orderService */
@@ -724,6 +730,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
 
         $items = $this->getAltProductsItemsByBasket($basket);
+        if(empty($items)){
+            throw new ExpertsenderBasketEmptyException('basket is empty');
+        }
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
