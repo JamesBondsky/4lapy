@@ -5,9 +5,10 @@
  * @var string $phone
  * @var string $email
  * @var float $price
+ * @var float $bonusSum
  * @var \DateTime $deliveryDate
  * @var string $deliveryCode
  * @var array $shop
  */
 ?>
-Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price ?> руб. оформлен! И будет доставлен <?= $deliveryDate->format('d.m.Y') ?> в магазин: <?= $shop['address'] ?>.
+Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price - $bonusSum ?> руб. оформлен! И будет доставлен <?= $deliveryDate->format('d.m.Y') ?> в магазин: <?= $shop['address'] ?>.
