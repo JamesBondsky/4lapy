@@ -332,8 +332,7 @@ class NotificationService implements LoggerAwareInterface
             $this->smsService->sendSms($text, $parameters['phone']);
         }
         $this->log()->info(sprintf('sent sms "%s" to %s', $tpl, $parameters['phone']), [
-            'order' => $parameters['accountNumber'],
-            'parameters' => $parameters
+            'order' => $parameters['accountNumber']
         ]);
     }
 
@@ -364,6 +363,7 @@ class NotificationService implements LoggerAwareInterface
             $result['phone'] = $properties['PHONE'];
             $result['email'] = $properties['EMAIL'];
             $result['price'] = $order->getPrice();
+            $result['bonusSum'] = $order->getPaymentCollection()->getInnerPayment()->getSum();
             $result['deliveryDate'] = \DateTime::createFromFormat(
                 'd.m.Y',
                 $properties['DELIVERY_DATE']
