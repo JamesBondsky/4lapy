@@ -724,6 +724,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
 
         $items = $this->getAltProductsItemsByBasket($basket);
+        if(empty($items)){
+            throw new ExpertsenderServiceException('basket is empty');
+        }
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
