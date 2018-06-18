@@ -1,22 +1,19 @@
 <?php
 /**
- * @var array $arParams
- * @var array $arResult
+ * @var array           $arParams
+ * @var array           $arResult
  *
- * @var ProductsByProp $component
+ * @var ProductsByProp  $component
  *
- * @var Offer $offer
+ * @var Offer           $offer
  * @var OfferCollection $offers
  *
- * @global \CMain $APPLICATION
+ * @global \CMain       $APPLICATION
  */
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\ProductsByProp;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -36,7 +33,7 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
                 if ($arParams['SLIDER'] === 'Y') {
                     $params['NOT_CATALOG_ITEM_CLASS'] = 'Y';
                 }
-                if($arParams['IS_SHARE']) {
+                if ($arParams['IS_SHARE']) {
                     $params['SHARE_ID'] = $arParams['ITEM_ID'];
                 }
                 $APPLICATION->IncludeComponent(
@@ -53,11 +50,11 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
             'bitrix:system.pagenavigation',
             'pagination',
             [
-                'NAV_TITLE' => '',
-                'NAV_RESULT' => $offers->getCdbResult(),
-                'SHOW_ALWAYS' => false,
+                'NAV_TITLE'      => '',
+                'NAV_RESULT'     => $offers->getCdbResult(),
+                'SHOW_ALWAYS'    => false,
                 'PAGE_PARAMETER' => 'page',
-                'AJAX_MODE' => 'N',
+                'AJAX_MODE'      => 'N',
             ],
             null,
             [
