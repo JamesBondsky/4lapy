@@ -252,7 +252,7 @@ class DateHelper
                     $str = 'Завтра';
                     break;
                 default:
-                    $str = $date->format('d.m.Y');
+                    $str = 'j F';
             }
             $dateFormat = str_replace('XX', $str, $dateFormat);
         }

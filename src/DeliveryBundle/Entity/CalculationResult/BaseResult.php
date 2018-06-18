@@ -437,6 +437,20 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             }
         }
 
+        if ($store->isShop()) {
+            /**
+             * Добавляем "срок поставки" к дате доставки
+             * (он должен быть не менее 1 дня)
+             */
+            $modifier = $store->getDeliveryTime();
+            if ($store->getDeliveryTime() < 1) {
+                $modifier = 1;
+            }
+            $date->modify(sprintf('+%s days', $modifier));
+        } else {
+            $date->modify('+1 day');
+        }
+
         return $date;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
@@ -571,28 +585,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->getDeliveryDate();
         }
         return parent::isSuccess($internalCall);
-    }
-
-    /**
-     * Изменяет дату доставки в соответствии с графиком работы магазина
-     *
-     * @param \DateTime $date
-     * @param Store     $store
-     */
-    protected function calculateWithStoreSchedule(\DateTime $date, Store $store): void
-    {
-        $schedule = $store->getSchedule();
-        $hour = (int)$date->format('G') + 1;
-        if ($hour < $schedule->getFrom()) {
-            $date->setTime($schedule->getFrom() + 1, 0);
-        } elseif ($schedule->getTo() && $hour > $schedule->getTo()) {
-            $date->modify('+1 day');
-            $date->setTime($schedule->getFrom() + 1, 0);
-        } elseif ($date->format('z') !== $this->getCurrentDate()->format('z')) {
-            $date->setTime($schedule->getFrom() + 1, 0);
-        } else {
-            $date->modify('+1 hour');
-        }
     }
 
     /**

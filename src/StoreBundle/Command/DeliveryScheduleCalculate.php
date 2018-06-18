@@ -91,6 +91,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             }
         } else {
             $date = new \DateTime();
+            $date->modify('+1 day');
         }
 
         /** @noinspection TypeUnsafeComparisonInspection */

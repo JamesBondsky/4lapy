@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -44,7 +45,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      *
      * @param CBitrixComponent|null $component
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -66,9 +67,6 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $params['DELIVERY_CODES'] = [];
         }
 
-        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
-        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
-
         return parent::onPrepareComponentParams($params);
     }
 
@@ -76,10 +74,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     public function executeComponent()
     {
         try {
-            parent::executeComponent();
-            $this->prepareResult();
-
             if ($this->startResultCache()) {
+                parent::executeComponent();
+                $this->prepareResult();
+
                 $this->includeComponentTemplate();
             }
         } catch (\Exception $e) {
@@ -97,7 +95,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      * @return $this
      * @throws CityNotFoundException
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
@@ -209,17 +207,15 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             ];
         }
 
-        $this->arParams['NOT_AVAILABLE'] = false;
-        $this->arParams['CACHE_TYPE'] = 'N';
-
         return $this;
     }
 
     /**
      * @param string $locationCode
-     * @param array $possibleDeliveryCodes
+     * @param array  $possibleDeliveryCodes
      *
-     * @return null|CalculationResultInterface[]
+     * @throws ApplicationCreateException
+     * @return CalculationResultInterface[]
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {

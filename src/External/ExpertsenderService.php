@@ -20,7 +20,10 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
+use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -62,10 +65,10 @@ class ExpertsenderService implements LoggerAwareInterface
 
     protected const MAIN_LIST_MODE = 'AddAndUpdate';
     protected const MAIN_LIST_ID = 178;
+    protected const MAIN_LIST_PROP_HASH_ID = 10;
     protected const MAIN_LIST_PROP_SUBSCRIBE_ID = 23;
     protected const MAIN_LIST_PROP_REGISTER_ID = 47;
     protected const MAIN_LIST_PROP_IP_ID = 48;
-    protected const MAIN_LIST_PROP_HASH_ID = 10;
 
     protected $client;
     private $guzzleClient;
@@ -140,9 +143,9 @@ class ExpertsenderService implements LoggerAwareInterface
             $addUserToList->setLastName($user->getLastName());
             /** флаг подписки на новости */
             $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean',
-                $params['subscribe']));
+                json_encode($params['subscribe'])));
             /** флаг регистрации */
-            $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_REGISTER_ID, 'boolean', $params['isReg']));
+            $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_REGISTER_ID, 'boolean', json_encode($params['isReg'])));
             try {
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
@@ -417,7 +420,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setId($expertSenderId);
 
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', true));
+                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(true)));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -473,7 +476,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setId($expertSenderId);
                     $addUserToList->setEmail($user->getEmail());
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', false));
+                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(false)));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -687,6 +690,9 @@ class ExpertsenderService implements LoggerAwareInterface
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ExpertsenderUserNotFoundException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderBasketEmptyException
      * @throws ExpertsenderServiceException
      */
     public function sendForgotBasket(Basket $basket, int $type):bool
@@ -711,10 +717,10 @@ class ExpertsenderService implements LoggerAwareInterface
         $userService = $container->get(CurrentUserProviderInterface::class);
         $user = $userService->getUserRepository()->find(FuserTable::getUserById($basket->getFUserId()));
         if($user === null){
-            throw new ExpertsenderServiceException('user not found');
+            throw new ExpertsenderUserNotFoundException('user not found');
         }
         if (!$user->hasEmail()) {
-            throw new ExpertsenderServiceException('email is empty');
+            throw new ExpertsenderEmptyEmailException('email is empty');
         }
 
         /** @var BasketService $orderService */
@@ -724,6 +730,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
 
         $items = $this->getAltProductsItemsByBasket($basket);
+        if(empty($items)){
+            throw new ExpertsenderBasketEmptyException('basket is empty');
+        }
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 

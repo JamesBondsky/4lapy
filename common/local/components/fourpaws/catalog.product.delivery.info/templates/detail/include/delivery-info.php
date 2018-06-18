@@ -20,17 +20,7 @@ $offer = $arParams['OFFER'];
     <div class="b-product-information__title-info">Доставка
     </div>
     <div class="b-product-information__value">
-        <?= DeliveryTimeHelper::showByDate($delivery['DELIVERY_DATE'], 0, [
-            'DAY_FORMAT' => function (\DateTime $date) {
-                $date = (clone $date)->setTime(0,0,0,0);
-                $currentDate = (new \DateTime())->setTime(0,0,0,0);
-                if ($date->diff($currentDate)->days <= 1) {
-                    return 'XX';
-                }
-
-                return 'j F';
-            }
-        ]) ?>
+        <?= DeliveryTimeHelper::showByDate($delivery['DELIVERY_DATE'], 0, ['DATE_FORMAT' => 'XX']) ?>
         <?php if ($offer->isByRequest()) { ?>
             ближайшая
         <?php } elseif ($delivery['FREE_FROM']) { ?>

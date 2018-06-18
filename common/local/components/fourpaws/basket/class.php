@@ -243,6 +243,7 @@ class BasketComponent extends CBitrixComponent
         if ($offerId <= 0) {
             return null;
         }
+
         if (!isset($this->images[$offerId])) {
             $offer = $this->getOffer($offerId);
             $image = null;

@@ -41,7 +41,14 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
      */
     public function getDeliveryDate(): \DateTime
     {
-        return (clone parent::getDeliveryDate())->modify(sprintf('+%s days', $this->getInitialPeriod()));
+        $modifier = $this->getInitialPeriod();
+
+        /**
+         * к любой доставке DPD прибавляем 2 дня
+         */
+        $modifier += 2;
+
+        return (clone parent::getDeliveryDate())->modify(sprintf('+%s days', $modifier));
     }
 
     /**

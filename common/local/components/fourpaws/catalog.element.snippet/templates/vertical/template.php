@@ -97,7 +97,7 @@ if ($mainCombinationType === 'SIZE') {
                 ob_start();
                 ?>
                 <div class="b-weight-container b-weight-container--list">
-                    <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select js-select-mobile-package" href="javascript:void(0);"><?= $value ?></a>
+                    <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : ''?>js-mobile-select js-select-mobile-package" href="javascript:void(0);"><?= $value ?></a>
                     <div class="b-weight-container__dropdown-list__wrapper">
                         <div class="b-weight-container__dropdown-list"></div>
                     </div>
@@ -139,7 +139,7 @@ if ($mainCombinationType === 'SIZE') {
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
                             $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : ''; ?>
-                            <li class="b-weight-container__item<?= $currentOffer->getId() === $offer->getId() ? '' : ' mobile-hidden' ?>">
+                            <li class="b-weight-container__item">
                                 <a<?= $addAttr ?> href="javascript:void(0)"
                                                   class="b-weight-container__link js-price<?= $addClass ?>">
                                     <?= $value ?>
@@ -147,49 +147,6 @@ if ($mainCombinationType === 'SIZE') {
                             </li>
                         <?php } ?>
                     </ul>
-                    <?php if ($countSizes > 1) { ?>
-                        <div class="b-weight-container__dropdown-list__wrapper _active">
-                            <p class="js-show-weight b-weight-container__link b-weight-container__link--mobile"></p>
-                            <div class="b-weight-container__dropdown-list">
-                                <?php
-                                $i = 0;
-                                foreach ($offers as $offer) {
-                                    $i++;
-                                    $value = '';
-                                    switch ($mainCombinationType) {
-                                        case 'SIZE':
-                                            $value = $offer->getClothingSize()->getName();
-                                            break;
-
-                                        case 'VOLUME':
-                                            $value = $offer->getVolumeReference()->getName();
-                                            break;
-
-                                        case 'WEIGHT':
-                                            $catalogProduct = $offer->getCatalogProduct();
-                                            $weightGrams = $catalogProduct->getWeight();
-                                            if ($weightGrams > 0) {
-                                                $value = WordHelper::showWeight($weightGrams);
-                                            }
-                                            break;
-                                    }
-                                    if (empty($value)) {
-                                        continue;
-                                    } ?>
-                                    <a class="b-weight-container__link js-price mobile-hidden ajaxSend select-hidden-weight"
-                                       href="javascript:void(0);"
-                                       data-price="<?= $offer->getPriceCeil() ?>"
-                                       data-oldprice="<?= $offer->getOldPriceCeil() ?>"
-                                       data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                                       data-offerid="<?= $offer->getId() ?>"
-                                       data-link="<?= $offer->getLink() ?>"
-                                       tabindex="<?= $i ?>">
-                                        <?= $value ?>
-                                    </a>
-                                <?php } ?>
-                            </div>
-                        </div>
-                    <?php } ?>
                 </div>
                 <?php if ($isOffersPrinted) {
                     echo ob_get_clean();

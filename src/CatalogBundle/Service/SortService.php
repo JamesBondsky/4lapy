@@ -41,7 +41,10 @@ class SortService
         return [
             (new Sorting())->withValue('popular')
                 ->withName('популярности')
-                ->withRule(['SORT' => ['order' => 'asc']]),
+                ->withRule([
+                    'SORT' => ['order' => 'asc'],
+                    'ID' => ['order' => 'desc']
+                ]),
 
             (new Sorting())->withValue('up-price')
                 ->withName('возрастанию цены')

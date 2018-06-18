@@ -16,7 +16,7 @@ $APPLICATION->SetTitle("Доставка и оплата");
     <?php $APPLICATION->IncludeComponent(
         'fourpaws:city.delivery.info',
         'delivery.page',
-        [],
+        ['CACHE_TIME' => 3600],
         false,
         ['HIDE_ICONS' => 'Y']
     );
