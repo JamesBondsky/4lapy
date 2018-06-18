@@ -88,7 +88,7 @@ class Event extends BaseServiceHandler
 
         /** отправка email */
         // новый заказ
-        static::initHandler('OnSaleOrderSaved', [self::class, 'sendNewOrderMessage'], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'sendNewOrderMessage'], $module);
         // смена платежной системы у заказа
         static::initHandler('OnSalePaymentEntitySaved', [self::class, 'sendNewOrderMessage'], $module);
         // оплата заказа
@@ -329,14 +329,14 @@ class Event extends BaseServiceHandler
      */
     public static function updateOrderAccountNumber($id, $type) {
         if (self::$isEventsDisable) {
-            return;
+            return false;
         }
 
         if ($type === 'NUMBER') {
             try {
                 /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
                 $maxNumber = BitrixApplication::getConnection()->query(
-                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 99999999'
+                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 999999999'
                 )->fetch()['maxNumber'];
 
                 if ($defaultNumber = Option::get('sale', 'account_number_data', 0)) {
