@@ -33,6 +33,10 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     public const SMS_LIFE_TIME = 30 * 60;
     /** Email коды храним неделю */
     public const EMAIL_LIFE_TIME = 7 * 24 * 60 * 60;
+    /** Email регистрации */
+    public const EMAIL_REGISTER_LIFE_TIME = 7 * 24 * 60 * 60;
+    /** Email забытого пароля */
+    public const EMAIL_FORGOT_LIFE_TIME = 7 * 24 * 60 * 60;
     /** все остальное храним час */
     public const ANOTHER_LIFE_TIME = 60 * 60;
 
@@ -228,7 +232,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
         if (!($confirmCode instanceof ConfirmCode)) {
             throw new NotFoundConfirmedCodeException('не найден код');
         }
-        if (static::isExpire($confirmCode)) {
+        if (static::isExpire($confirmCode, $type)) {
             static::delCurrentCode();
             throw new ExpiredConfirmCodeException('истек срок действия кода');
         }
