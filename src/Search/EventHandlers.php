@@ -68,7 +68,7 @@ class EventHandlers extends BaseServiceHandler
     {
         try {
             if ($arFields['ACTIVE'] === 'N' &&
-                $arFields['IBLOCK_ID'] === IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)
+                (int)$arFields['IBLOCK_ID'] === IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)
             ) {
                 self::deleteInElastic($arFields);
             } else {

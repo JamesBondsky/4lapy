@@ -75,8 +75,8 @@ class Manager
          */
         $order = $event->getParameter('ENTITY');
 
+        self::setCalculation(true);
         if (self::isOrderNotEmpty($order) && !self::$extendCalculated) {
-            self::setCalculation(true);
             self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
             $basketService = $container->get(BasketService::class);
@@ -114,9 +114,10 @@ class Manager
             }
 
             self::enableExtendsDiscount();
-            self::setCalculation(false);
+
             self::$extendCalculated = true;
         }
+        self::setCalculation(false);
     }
 
     /**
