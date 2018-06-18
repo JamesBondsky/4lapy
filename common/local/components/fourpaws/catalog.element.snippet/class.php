@@ -36,6 +36,8 @@ class CatalogElementSnippet extends CBitrixComponent
         $params['CACHE_TYPE'] = $params['CACHE_TIME'] === 0 ? 'N' : $params['CACHE_TYPE'];
 
         $params['OFFER_FILTER'] = $params['OFFER_FILTER'] ?? [];
+        $params['SHARE_ID'] = $params['SHARE_ID'] ?? 0;
+        $params['SHARE_ID'] = (int)$params['SHARE_ID'];
 
         return parent::onPrepareComponentParams($params);
     }
