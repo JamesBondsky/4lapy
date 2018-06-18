@@ -332,7 +332,8 @@ class NotificationService implements LoggerAwareInterface
             $this->smsService->sendSms($text, $parameters['phone']);
         }
         $this->log()->info(sprintf('sent sms "%s" to %s', $tpl, $parameters['phone']), [
-            'order' => $parameters['accountNumber']
+            'order' => $parameters['accountNumber'],
+            'parameters' => $parameters
         ]);
     }
 
