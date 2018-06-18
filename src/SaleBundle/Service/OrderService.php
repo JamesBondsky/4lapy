@@ -928,6 +928,7 @@ class OrderService implements LoggerAwareInterface
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
             'order:item:' . $order->getId(),
+            'personal:bonus:' . $order->getField('USER_ID')
         ]);
     }
 
