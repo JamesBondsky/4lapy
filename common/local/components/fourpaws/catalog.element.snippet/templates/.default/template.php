@@ -35,7 +35,7 @@ $currentOffer = $arResult['CURRENT_OFFER'];
 ?>
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
-    <?= MarkHelper::getMark($currentOffer) ?>
+    <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
             <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">

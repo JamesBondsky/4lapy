@@ -53,7 +53,7 @@ if ($mainCombinationType === 'SIZE') {
 } ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
          data-productid="<?= $product->getId() ?>">
-        <?= MarkHelper::getMark($currentOffer) ?>
+        <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
                 <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">

@@ -20,13 +20,17 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
+use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
@@ -62,10 +66,10 @@ class ExpertsenderService implements LoggerAwareInterface
 
     protected const MAIN_LIST_MODE = 'AddAndUpdate';
     protected const MAIN_LIST_ID = 178;
+    protected const MAIN_LIST_PROP_HASH_ID = 10;
     protected const MAIN_LIST_PROP_SUBSCRIBE_ID = 23;
     protected const MAIN_LIST_PROP_REGISTER_ID = 47;
     protected const MAIN_LIST_PROP_IP_ID = 48;
-    protected const MAIN_LIST_PROP_HASH_ID = 10;
 
     protected $client;
     private $guzzleClient;
@@ -140,9 +144,9 @@ class ExpertsenderService implements LoggerAwareInterface
             $addUserToList->setLastName($user->getLastName());
             /** флаг подписки на новости */
             $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean',
-                $params['subscribe']));
+                json_encode($params['subscribe'])));
             /** флаг регистрации */
-            $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_REGISTER_ID, 'boolean', $params['isReg']));
+            $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_REGISTER_ID, 'boolean', json_encode($params['isReg'])));
             try {
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
@@ -417,7 +421,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setId($expertSenderId);
 
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', true));
+                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(true)));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -473,7 +477,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     $addUserToList->setId($expertSenderId);
                     $addUserToList->setEmail($user->getEmail());
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', false));
+                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(false)));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -687,6 +691,9 @@ class ExpertsenderService implements LoggerAwareInterface
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ExpertsenderUserNotFoundException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderBasketEmptyException
      * @throws ExpertsenderServiceException
      */
     public function sendForgotBasket(Basket $basket, int $type):bool
@@ -711,10 +718,10 @@ class ExpertsenderService implements LoggerAwareInterface
         $userService = $container->get(CurrentUserProviderInterface::class);
         $user = $userService->getUserRepository()->find(FuserTable::getUserById($basket->getFUserId()));
         if($user === null){
-            throw new ExpertsenderServiceException('user not found');
+            throw new ExpertsenderUserNotFoundException('user not found');
         }
         if (!$user->hasEmail()) {
-            throw new ExpertsenderServiceException('email is empty');
+            throw new ExpertsenderEmptyEmailException('email is empty');
         }
 
         /** @var BasketService $orderService */
@@ -724,6 +731,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
 
         $items = $this->getAltProductsItemsByBasket($basket);
+        if(empty($items)){
+            throw new ExpertsenderBasketEmptyException('basket is empty');
+        }
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
@@ -781,42 +791,41 @@ class ExpertsenderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     *
      * @return array
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \InvalidArgumentException
      * @throws ApplicationCreateException
+     * @throws ObjectNotFoundException
      * @throws ExpertsenderServiceException
      */
     protected function getAltProductsItems(Order $order): array
     {
+        /** @var PaymentService $paymentService */
+        $paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $offers = $orderService->getOrderProducts($order);
+
+        $fiscal = $paymentService->getFiscalization($order, null, 0);
         $items = [];
         try {
-            /** @var OrderService $orderService */
-            $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-            $offers = $orderService->getOrderProducts($order);
-            $basket = $order->getBasket();
-            /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
+            $basketItems = $fiscal['fiscal']['orderBundle']['cartItems']['items'];
+            foreach ($basketItems as $basketItem) {
                 $currentOffer = null;
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
-                    if ($offer->getId() === (int)$basketItem->getProductId()) {
+                    if ($offer->getId() === (int)$basketItem['itemCode']) {
                         $currentOffer = $offer;
                     }
                 }
                 if (!$currentOffer) {
-                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getProductId()));
+                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem['itemCode']));
                 }
                 $item = '';
                 $item .= '<Product>';
-                $item .= '<Name>' . $basketItem->getField('NAME') . '</Name>';
-                $item .= '<PicUrl>' . new FullHrefDecorator((string)$offer->getImages()->first()) . '</PicUrl>';
-                $item .= '<Link>' . new FullHrefDecorator($offer->getDetailPageUrl()) . '</Link>';
-                $item .= '<Price1>' . $basketItem->getBasePrice() . '</Price1>';
-                $item .= '<Price2>' . $basketItem->getPrice() . '</Price2>';
-                $item .= '<Amount>' . $basketItem->getQuantity() . '</Amount>';
+                $item .= '<Name>' . $currentOffer->getName(). '</Name>';
+                $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
+                $item .= '<Link>' . new FullHrefDecorator($currentOffer->getDetailPageUrl()) . '</Link>';
+                $item .= '<Price1>' . $currentOffer->getPrice() . '</Price1>';
+                $item .= '<Price2>' . ($basketItem['itemPrice'] / 100) . '</Price2>';
+                $item .= '<Amount>' . $basketItem['quantity']['value'] . '</Amount>';
                 $item .= '</Product>';
                 $items[] = $item;
             }
@@ -863,12 +872,13 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         $order = $personalOrder->getBitrixOrder();
 
-        $snippets[] = new Snippet('user_name', $personalOrder->getPropValue('NAME'));
-        $snippets[] = new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order));
-        $snippets[] = new Snippet('delivery_date', $orderSubscribe->getDateStartFormatted());
-        $snippets[] = new Snippet('delivery_period', $orderSubscribe->getDeliveryTimeFormattedRu());
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
+        $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getDateStartFormatted()));
+        $snippets[] = new Snippet('delivery_period', htmlspecialcharsbx($orderSubscribe->getDeliveryTimeFormattedRu()));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
+        $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
 
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';
@@ -957,12 +967,13 @@ class ExpertsenderService implements LoggerAwareInterface
             throw new ExpertsenderServiceException('order email is empty');
         }
 
-        $snippets[] = new Snippet('user_name', $properties['NAME']);
-        $snippets[] = new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order));
-        $snippets[] = new Snippet('delivery_date', $properties['DELIVERY_DATE']);
-        $snippets[] = new Snippet('delivery_time', $properties['DELIVERY_INTERVAL']);
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($properties['NAME']));
+        $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($properties['DELIVERY_DATE']));
+        $snippets[] = new Snippet('delivery_time', htmlspecialcharsbx($properties['DELIVERY_INTERVAL']));
         $snippets[] = new Snippet('tel_number', $properties['PHONE'] !== '' ? PhoneHelper::formatPhone($properties['PHONE']) : '');
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
+        $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
 
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';

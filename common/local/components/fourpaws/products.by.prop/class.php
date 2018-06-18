@@ -52,6 +52,14 @@ class ProductsByProp extends CBitrixComponent
         $params['IBLOCK_ID'] = (int)$params['IBLOCK_ID'];
         $params['ITEM_ID'] = (int)$params['ITEM_ID'];
         $params['SLIDER'] = $params['SLIDER'] ?? 'N';
+        $params['IS_SHARE'] = $params['IS_SHARE'] ?? false;
+        if(!\is_bool($params['IS_SHARE'])){
+            if(!empty($params['IS_SHARE']) && $params['IS_SHARE'] === 'Y'){
+                $params['IS_SHARE'] = true;
+            } else {
+                $params['IS_SHARE'] = false;
+            }
+        }
         $params['COUNT_ON_PAGE'] = (int)$params['COUNT_ON_PAGE'];
         if ($params['COUNT_ON_PAGE'] === 0) {
             $params['COUNT_ON_PAGE'] = 20;
@@ -116,7 +124,11 @@ class ProductsByProp extends CBitrixComponent
                         ]);
                     }
                 }
-                $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products, 'ACTIVE' => 'Y'])->exec();
+                $this->arResult['OFFERS'] = $query->withFilter([
+                    '=' . $this->arParams['FILTER_FIELD'] => $products,
+                    'ACTIVE' => 'Y',
+                    '>CATALOG_PRICE_2' => 0
+                ])->exec();
             }
 
             $this->includeComponentTemplate();
