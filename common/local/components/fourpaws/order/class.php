@@ -29,6 +29,8 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\ManzanaService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -122,6 +124,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
     protected $locationService;
 
     /**
+     * @var ManzanaService
+     */
+    protected $manzanaService;
+
+    /**
      * FourPawsOrderComponent constructor.
      *
      * @param $component
@@ -144,6 +151,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->basketService = $serviceContainer->get(BasketService::class);
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
         $this->locationService = $serviceContainer->get('location.service');
+        $this->manzanaService = $serviceContainer->get('manzana.service');
         $this->logger = LoggerFactory::create('component_order');
 
         parent::__construct($component);
@@ -314,6 +322,25 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             } catch (OrderSplitException $e) {
                 $this->logger->error(sprintf('failed to split order: %s', $e->getMessage()));
+            }
+
+            if ($user && !$user->getDiscountCardNumber()) {
+                try {
+                    $bonus = \FourPaws\PersonalBundle\Service\BonusService::getManzanaBonusInfo($user);
+                    if (!$bonus->isEmpty()) {
+                        $cardNumber = $this->manzanaService->prepareCardNumber($bonus->getCard()->getCardNumber());
+                        $this->manzanaService->prepareCardNumber($bonus->getCard()->getCardNumber());
+                        $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                            $user->getId(),
+                            $cardNumber
+                        );
+                        $user->setDiscountCardNumber($cardNumber);
+                    }
+                } catch (ManzanaServiceException $e) {
+                    $this->logger->error(sprintf('failed to get user discount card: %s', $e->getMessage()), [
+                        'user' => $user->getId()
+                    ]);
+                }
             }
 
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
