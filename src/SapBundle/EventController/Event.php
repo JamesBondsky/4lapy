@@ -56,7 +56,7 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         $module = 'sale';
-        static::initHandler('OnSaleOrderSaved', [self::class, 'consumeOrderAfterSaveOrder'], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'consumeOrderAfterSaveOrder'], $module);
         static::initHandler('OnSalePaymentEntitySaved', [self::class,'consumeOrderAfterSavePayment'], $module);
     }
 
