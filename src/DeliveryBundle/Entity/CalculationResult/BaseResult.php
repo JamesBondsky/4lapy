@@ -451,8 +451,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $date->modify('+1 day');
         }
 
-        $date->setTime(0,0,0,0);
-
         return $date;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
