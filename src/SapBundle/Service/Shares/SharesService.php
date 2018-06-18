@@ -132,7 +132,9 @@ class SharesService implements LoggerAwareInterface
                         $existsEntityId = $exists->getId();
                         $entity->withId($existsEntityId);
                         $entity->withCode($exists->getCode());
-
+                        $entity->withName($exists->getName());
+                        $entity->withDetailText($exists->getDetailText());
+                        $entity->withPreviewText($exists->getPreviewText());
                         $this->tryUpdateShare($entity);
 
                     } /** @noinspection BadExceptionsProcessingInspection */
