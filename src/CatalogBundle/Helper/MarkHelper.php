@@ -31,12 +31,14 @@ final class MarkHelper
      * @param Offer  $offer
      * @param string $content
      *
+     * @param int    $shareId
+     *
      * @return string
      */
-    public static function getMark(Offer $offer, $content = ''): string
+    public static function getMark(Offer $offer, $content = '', int $shareId = 0): string
     {
         if (!$content) {
-            $content = self::getMarkImage($offer);
+            $content = self::getMarkImage($offer, $shareId);
         }
 
         if ($content) {
@@ -89,9 +91,11 @@ final class MarkHelper
     /**
      * @param Offer $offer
      *
+     * @param int   $shareId
+     *
      * @return string
      */
-    private static function getMarkImage(Offer $offer): string
+    private static function getMarkImage(Offer $offer, int $shareId = 0): string
     {
         if ($offer->isHit() || $offer->isPopular()) {
             return self::MARK_HIT_IMAGE;
@@ -102,12 +106,25 @@ final class MarkHelper
         }
 
         if ($offer->isShare()) {
-            /** @var Share $share */
-            $share = $offer->getShare()->first();
-            if(!empty($share->getPropertyLabelImage())){
+            /** @var Share $share
+             * @var Share $shareItem
+             */
+            $share = null;
+            if($shareId > 0){
+                foreach ($offer->getShare() as $shareItem) {
+                    if($shareItem->getId() === $shareId) {
+                        $share = $shareItem;
+                    }
+                }
+            }
+            if($share === null) {
+                $share = $offer->getShare()->first();
+            }
+
+            if($share->hasLabelImage()){
                 return '<img class="b-common-item__sticker" src="'.$share->getPropertyLabelImageFileSrc().'" alt="" role="presentation"/>';
             }
-            if (!empty($share->getPropertyLabel())) {
+            if ($share->hasLabel()) {
                 return $share->getPropertyLabel();
             }
 
