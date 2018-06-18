@@ -53,7 +53,7 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         if (null === $this->intervalOffset) {
             $this->intervalOffset = 0;
             if ($interval = $this->getSelectedInterval()) {
-                $defaultDate = clone ($this->deliveryDate ?? $this->getCurrentDate());
+                $defaultDate = clone $this->getCurrentDate();
                 $date = clone $defaultDate;
                 foreach ($interval->getRules() as $rule) {
                     if (!$rule instanceof TimeRuleInterface) {
@@ -86,12 +86,16 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
      */
     protected function getFullOffset(): int
     {
-        $result = $this->getDateOffset();
+        $result = 0;
+        $dateOffset = $this->getDateOffset();
         if (!$this->getIntervals()->isEmpty()) {
-            $result += (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
+            $result = (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
+            $result += $dateOffset;
         }
 
-        return $result;
+        $dateDiff = $this->deliveryDate->diff($this->getCurrentDate())->days;
+
+        return $result > $dateDiff ? $result : $dateOffset;
     }
 
     /**
