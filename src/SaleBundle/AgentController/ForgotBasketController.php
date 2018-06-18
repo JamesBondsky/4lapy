@@ -18,7 +18,10 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\BasketTable;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
+use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\SaleBundle\Service\BasketService;
 
@@ -97,7 +100,7 @@ class ForgotBasketController
                                     /** апдейтим дату корзины - чтобы отсчет шел как по тз после отправки первого письма */
                                     BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
                                 } catch (\Exception $e) {
-                                    $logger->error('Ошибка при обновлении итема корзины ' . $e->getMessage(),
+                                    $logger->error('Ошибка при обновлении дат элементов корзины ' . $e->getMessage(),
                                         $e->getTrace());
                                 }
                             }
@@ -107,6 +110,10 @@ class ForgotBasketController
                     } catch (ApplicationCreateException $e) {
                         $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
                         return $returnString;
+                    } catch (ExpertsenderUserNotFoundException $e) {
+                        $logger->info('Не найден пользователь ' . $e->getMessage(), $e->getTrace());
+                    } catch (ExpertsenderEmptyEmailException|ExpertsenderBasketEmptyException $e) {
+                        /** при пустой корзине или пустом email логирвоание не нужно */
                     } catch (ExpertsenderServiceException $e) {
                         $logger->error('Ошибка при отправке сообщения ' . $e->getMessage(), $e->getTrace());
                     }
@@ -171,7 +178,7 @@ class ForgotBasketController
                                 /** апдейтим дату корзины чтобы не циклился обработчик */
                                 BasketTable::update($basketItem->getId(), ['DATE_UPDATE' => $curDate]);
                             } catch (\Exception $e) {
-                                $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
+                                $logger->error('Ошибка при обновлении дат элементов корзины ' . $e->getMessage(), $e->getTrace());
                             }
                         }
                     }
@@ -181,6 +188,10 @@ class ForgotBasketController
                 } catch (ApplicationCreateException $e) {
                     $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
                     return;
+                } catch (ExpertsenderUserNotFoundException $e) {
+                    $logger->info('Не найден пользователь ' . $e->getMessage(), $e->getTrace());
+                } catch (ExpertsenderEmptyEmailException|ExpertsenderBasketEmptyException $e) {
+                    /** при пустой корзине или пустом email логирвоание не нужно */
                 } catch (ExpertsenderServiceException $e) {
                     $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
                     return;
