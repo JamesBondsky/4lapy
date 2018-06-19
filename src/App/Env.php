@@ -2,17 +2,18 @@
 
 namespace FourPaws\App;
 
+/**
+ * Class Env
+ *
+ * @package FourPaws\App
+ */
 class Env
 {
-    const PROD   = 'prod';
-    
-    const DEV    = 'dev';
-    
-    const STAGE  = 'stage';
-    
-    const TEST   = 'test';
-    
-    const MOBILE = 'mobile';
+    public const PROD   = 'prod';
+    public const DEV    = 'dev';
+    public const STAGE  = 'stage';
+    public const TEST   = 'test';
+    public const MOBILE = 'mobile';
     
     /**
      * @return string
