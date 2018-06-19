@@ -806,6 +806,9 @@ class ExpertsenderService implements LoggerAwareInterface
         try {
             $basketItems = $fiscal['fiscal']['orderBundle']['cartItems']['items'];
             foreach ($basketItems as $basketItem) {
+                if (mb_strpos($basketItem['itemCode'], 'DELIVERY') !== false) {
+                    continue;
+                }
                 $currentOffer = null;
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
