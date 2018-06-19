@@ -53,8 +53,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 /**
  * Class ExpertsenderService
  *
- * @todo    переписать нахер
- *
  * @package FourPaws\External
  */
 class ExpertsenderService implements LoggerAwareInterface
