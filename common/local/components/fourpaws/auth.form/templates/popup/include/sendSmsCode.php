@@ -36,7 +36,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <a class="b-link-gray"
+            <a class="b-link-gray js-resend-sms"
                href="javascript:void(0);"
                data-url="/ajax/user/auth/register/"
                data-method="post"
