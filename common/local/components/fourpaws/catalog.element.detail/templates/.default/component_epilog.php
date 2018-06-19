@@ -66,15 +66,17 @@ foreach ($offers as $offer) {
                 <?php if(!$offer->isAvailable()) { ?>
                     $offerLink.addClass('unavailable-link');
                     $offerLink.find('.b-weight-container__not').html('Нет в наличии').css('display', 'inline-block');
-                <?php }
-                else { ?>
+                <?php } else { ?>
                     <?php if($offer->isShare()) { ?>
                         $offerLink.find('.js-offer-action').html('Акция').css('display', 'inline-block');
                     <?php }
-                    if($offer->getOldPrice() > $offer->getPrice()) {?>
-                        $offerLink.find('.b-weight-container__old-price--big').html('<?=WordHelper::numberFormat($offer->getOldPriceCeil(),
-                            0)?> <span class="b-ruble b-ruble--old-weight-price">₽</span>').css('display', 'inline-block');
-                    <?php }
+
+                    /* if($offer->getOldPrice() > $offer->getPrice()) { ?>
+                        if ($offerLink.find('.b-weight-container__old-price--big').length > 0) {
+                            $offerLink.find('.b-weight-container__old-price--big').html('<?=WordHelper::numberFormat($offer->getOldPriceCeil(),
+                                0)?> <span class="b-ruble b-ruble--old-weight-price">₽</span>').css('display', 'inline-block');
+                        }
+                    <?php } */
                 }?>
             }
         });

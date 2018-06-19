@@ -181,13 +181,12 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                           style="display: none"><? /** подгрузка */ ?></span>
                                     <span class="b-weight-container__action js-offer-action"
                                           style="display: none"><? /** подгрузка */ ?></span>
-                                    <span class="b-weight-container__old-price b-weight-container__old-price--big"
+                                    <?php /* <span class="b-weight-container__old-price b-weight-container__old-price--big"
                                           style="display: none">
-                                        <? /** подгрузка */ ?>
-                                    </span>
+                                    </span> <?php */ ?>
                                     <span class="b-weight-container__cart js-offer-in-cart-<?= $offer->getId() ?>"
                                           style="display: none">
-                                        <? /** подгрузка */ ?>
+                                        <?php /** подгрузка */ ?>
                                         <span class="b-cart b-cart--cart-product">
                                             <span class="b-icon b-icon--cart-product">
                                                 <?= new SvgDecorator('icon-cart', 16, 16) ?>
