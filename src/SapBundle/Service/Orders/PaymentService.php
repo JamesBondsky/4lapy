@@ -256,8 +256,8 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                 ) {
                     $newItem = $item;
                     $newItem['quantity']['value'] = $v->getQuantity();
-                    $newItem['itemPrice'] = $v->getPrice() * 100;
-                    $newItem['itemAmount'] = $v->getSumPrice() * 100;
+                    $newItem['itemPrice'] = (int)($v->getPrice() * 100);
+                    $newItem['itemAmount'] = (int)($v->getSumPrice() * 100);
 
                     return $newItem;
                 }
@@ -279,7 +279,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
             return $to;
         });
-        $fiscalization['amount'] = $amount;
+        $fiscalization['amount'] = (int)$amount;
 
         return $fiscalization;
     }
