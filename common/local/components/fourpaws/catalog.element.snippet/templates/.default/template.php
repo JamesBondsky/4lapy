@@ -41,8 +41,8 @@ $currentOffer = $arResult['CURRENT_OFFER'];
             <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
                 <img class="b-common-item__image js-weight-img"
                      src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
-                     alt="<?= $currentOffer->getName() ?>"
-                     title="<?= $currentOffer->getName() ?>"/>
+                     alt="<?= $product->getName() ?>"
+                     title="<?= $product->getName() ?>"/>
             </a>
         </span>
     <?php } ?>
