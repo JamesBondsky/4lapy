@@ -66,6 +66,8 @@ class FastOrderController extends Controller
 
     /** @var CurrentUserProviderInterface */
     private $currentUserProvider;
+    /** @var UserCitySelectInterface */
+    private $citySelectProvider;
     /** @var AjaxMess */
     private $ajaxMess;
     /** @var BasketService */
@@ -81,15 +83,17 @@ class FastOrderController extends Controller
      * @param OrderService                 $orderService
      * @param UserAuthorizationInterface   $userAuthProvider
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param UserCitySelectInterface      $cityUserProvider
+     * @param UserCitySelectInterface      $citySelectProvider
      * @param AjaxMess                     $ajaxMess
      * @param BasketService                $basketService
      * @param BasketViewService            $basketViewService
+     * @param StoreService                 $storeService
      */
     public function __construct(
         OrderService $orderService,
         UserAuthorizationInterface $userAuthProvider,
         CurrentUserProviderInterface $currentUserProvider,
+        UserCitySelectInterface $citySelectProvider,
         AjaxMess $ajaxMess,
         BasketService $basketService,
         BasketViewService $basketViewService,
@@ -98,6 +102,7 @@ class FastOrderController extends Controller
         $this->orderService = $orderService;
         $this->userAuthProvider = $userAuthProvider;
         $this->currentUserProvider = $currentUserProvider;
+        $this->citySelectProvider = $citySelectProvider;
         $this->ajaxMess = $ajaxMess;
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
@@ -182,6 +187,7 @@ class FastOrderController extends Controller
             $currentStore = $stores->first();
         }
 
+        $selectedCity = $this->citySelectProvider->getSelectedCity();
         $orderStorage
             ->setSplit(false)
             ->setFastOrder(true) // быстрый заказ теперь определяется через storage
@@ -192,6 +198,8 @@ class FastOrderController extends Controller
             ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID'])
             ->setDeliveryId(DeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'])
             ->setDeliveryPlaceCode($currentStore->getCode())
+            ->setCity($selectedCity['NAME'])
+            ->setCityCode($selectedCity['CODE'])
         ;
 
         if ($this->userAuthProvider->isAuthorized()) {

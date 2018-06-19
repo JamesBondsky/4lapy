@@ -28,6 +28,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -95,23 +96,31 @@ class OrderStorageService
     protected $deliveries;
 
     /**
+     * @var StoreService
+     */
+    protected $storeService;
+
+    /**
      * OrderStorageService constructor.
      *
-     * @param BasketService $basketService
+     * @param BasketService                $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param DatabaseStorageRepository $storageRepository
-     * @param DeliveryService $deliveryService
+     * @param DatabaseStorageRepository    $storageRepository
+     * @param DeliveryService              $deliveryService
+     * @param StoreService                 $storeService
      */
     public function __construct(
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
         DatabaseStorageRepository $storageRepository,
-        DeliveryService $deliveryService
+        DeliveryService $deliveryService,
+        StoreService $storeService
     ) {
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->storageRepository = $storageRepository;
         $this->deliveryService = $deliveryService;
+        $this->storeService = $storeService;
     }
 
     /**
@@ -492,7 +501,7 @@ class OrderStorageService
 
             $this->deliveries = $this->deliveryService->getByBasket(
                 $basket,
-                '',
+                $storage->getCityCode(),
                 [],
                 $storage->getCurrentDate()
             );
@@ -532,7 +541,22 @@ class OrderStorageService
             throw new NotFoundException('No deliveries available');
         }
 
+        if ($selectedDelivery instanceof PickupResultInterface && $storage->getDeliveryPlaceCode()) {
+            $selectedDelivery->setSelectedShop($this->getSelectedShop($storage));
+        }
+
         return $selectedDelivery;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     *
+     * @throws StoreNotFoundException
+     * @return Store
+     */
+    public function getSelectedShop(OrderStorage $storage): Store
+    {
+        return $this->storeService->getStoreByXmlId($storage->getDeliveryPlaceCode());
     }
 
     /**
