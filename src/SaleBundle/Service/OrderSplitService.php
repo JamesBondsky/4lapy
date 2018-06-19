@@ -24,6 +24,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -135,6 +136,15 @@ class OrderSplitService implements LoggerAwareInterface
         );
         if (!$delivery1 = reset($tmpDeliveries)) {
             throw new OrderSplitException('Delivery for order1 is unavailable');
+        }
+
+        if ($delivery1 instanceof PickupResultInterface) {
+            $delivery1->setSelectedShop($this->orderStorageService->getSelectedShop($storage));
+            if (!$delivery1->isSuccess()) {
+                throw new OrderSplitException(
+                    sprintf('Delivery for order1 is unavailable: %s', \implode($delivery1->getErrorMessages()))
+                );
+            }
         }
 
         $order1 = $this->getOrderService()->initOrder($storage1, $basket1, $delivery1);
