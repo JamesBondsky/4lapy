@@ -73,7 +73,7 @@ if ($mainCombinationType === 'SIZE') {
                             echo '<strong>' . $product->getBrand()->getName() . '</strong>';
                             echo ' ';
                         }
-                        echo $currentOffer->getName(); ?>
+                        echo $product->getName(); ?>
                     </span>
                 </span>
             </a><?php
