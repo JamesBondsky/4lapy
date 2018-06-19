@@ -542,21 +542,38 @@ class OrderStorageService
         }
 
         if ($selectedDelivery instanceof PickupResultInterface && $storage->getDeliveryPlaceCode()) {
-            $selectedDelivery->setSelectedShop($this->getSelectedShop($storage));
+            $selectedDelivery->setSelectedShop($this->getSelectedShop($storage, $selectedDelivery));
         }
 
         return $selectedDelivery;
     }
 
     /**
-     * @param OrderStorage $storage
+     * @param OrderStorage          $storage
+     * @param PickupResultInterface $delivery
      *
+     * @throws ArgumentException
      * @throws StoreNotFoundException
      * @return Store
      */
-    public function getSelectedShop(OrderStorage $storage): Store
+    public function getSelectedShop(OrderStorage $storage, PickupResultInterface $delivery): Store
     {
-        return $this->storeService->getStoreByXmlId($storage->getDeliveryPlaceCode());
+        $result = null;
+        if ($storage->getDeliveryPlaceCode()) {
+            if ($this->deliveryService->isDpdPickup($delivery)) {
+                $stores = $this->deliveryService->getDpdTerminalsByLocation($storage->getCityCode());
+                $selectedStore = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode());
+            } else {
+                $stores = $this->storeService->getStoresByLocation($storage->getCityCode());
+                $selectedStore = $this->storeService->getStoreByXmlId($storage->getDeliveryPlaceCode());
+            }
+
+            if ($stores->hasStore($selectedStore)) {
+                $result = $selectedStore;
+            }
+        }
+
+        return $result ?? $delivery->getBestShops()->first();
     }
 
     /**
