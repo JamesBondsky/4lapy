@@ -64,7 +64,7 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
                 'Ошибка обработки задания на оплату: %s: %s',
                 \get_class($e),
                 $e->getMessage()),
-                ['order' => $paymentInfo->getBitrixOrderId()]
+                ['order' => $paymentInfo->getBitrixOrderId(), 'sapOrderId' => $paymentInfo->getSapOrderId()]
             );
         }
 
