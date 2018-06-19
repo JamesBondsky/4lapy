@@ -187,6 +187,10 @@ class OrderSplitService implements LoggerAwareInterface
         $delayedItems = new BasketSplitItemCollection();
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
+            if ($basketItem->isDelay()) {
+                continue;
+            }
+
             if ($availableResult = $available->filterByOfferId($basketItem->getProductId())->first()) {
                 /** @var StockResult $availableResult */
                 if (($priceForAmount = $availableResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) &&
