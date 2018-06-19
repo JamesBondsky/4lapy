@@ -492,7 +492,7 @@ class OrderStorageService
 
             $this->deliveries = $this->deliveryService->getByBasket(
                 $basket,
-                '',
+                $storage->getCityCode(),
                 [],
                 $storage->getCurrentDate()
             );
