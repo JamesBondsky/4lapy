@@ -1404,6 +1404,10 @@ class OrderService implements LoggerAwareInterface
             $propValue = $this->getOrderPropertyByCode($order, 'MANZANA_NUMBER')->getValue();
             $result = !empty($propValue);
         } catch (\Exception $exception) {
+            $this->log()->critical(\sprintf(
+                'Order mail send error: %s',
+                $exception->getMessage()
+            ));
             $result = false;
         }
 

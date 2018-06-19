@@ -276,6 +276,7 @@ class Event extends BaseServiceHandler
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
         );
+
         if ($orderService->isManzanaOrder($order)) {
             return;
         }
