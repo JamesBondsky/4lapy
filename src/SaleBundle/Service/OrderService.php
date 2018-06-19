@@ -385,9 +385,7 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        /** @noinspection PhpParamsInspection */
-        $order->setBasket($basket->getOrderableItems());
-
+        $order->setBasket($basket);
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Корзина пуста');
         }
@@ -964,6 +962,7 @@ class OrderService implements LoggerAwareInterface
      * @throws SystemException
      * @throws UserMessageException
      * @return Order
+     * @throws \Exception
      */
     public function createOrder(OrderStorage $storage): Order
     {
@@ -1025,7 +1024,7 @@ class OrderService implements LoggerAwareInterface
                 $basket2 = $order2->getBasket();
                 /** @var BasketItem $basketItem */
                 foreach ($basket2 as $basketItem) {
-                    $basketItem->setFieldNoDemand('DELAY', BitrixUtils::BX_BOOL_TRUE);
+                    $basketItem->setField('DELAY', BitrixUtils::BX_BOOL_TRUE);
 
                     $this->basketService->setBasketItemPropertyValue(
                         $basketItem,
