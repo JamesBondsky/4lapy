@@ -866,7 +866,16 @@ class OrderService implements LoggerAwareInterface
                 $shop = $selectedDelivery->getSelectedShop();
                 $addressString = $this->getOrderPropertyByCode($order, 'CITY')->getValue() . ', ' . $shop->getAddress();
                 try {
-                    $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                    if ($shop->getXmlId() === 'R034') {
+                        /** @todo костыль. У этого магазина адрес не распознается дадатой */
+                        $address = (new Address())
+                            ->setCity($storage->getCity())
+                            ->setLocation($storage->getCityCode())
+                            ->setHouse(1)
+                            ->setStreet('пос. Красный бор');
+                    } else {
+                        $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                    }
                     $this->setOrderAddress($order, $address);
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to save shop address: %s', $e->getMessage()), [

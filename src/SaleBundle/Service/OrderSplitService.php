@@ -139,7 +139,8 @@ class OrderSplitService implements LoggerAwareInterface
         }
 
         if ($delivery1 instanceof PickupResultInterface) {
-            $delivery1->setSelectedShop($this->orderStorageService->getSelectedShop($storage));
+            /** @var PickupResultInterface $delivery */
+            $delivery1->setSelectedShop($delivery->getSelectedShop());
             if (!$delivery1->isSuccess()) {
                 throw new OrderSplitException(
                     sprintf('Delivery for order1 is unavailable: %s', \implode($delivery1->getErrorMessages()))
