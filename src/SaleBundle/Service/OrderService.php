@@ -76,7 +76,6 @@ use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAvatarAuthorizationInterface;
-use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -143,11 +142,6 @@ class OrderService implements LoggerAwareInterface
     protected $orderSplitService;
 
     /**
-     * @var UserCitySelectInterface
-     */
-    protected $userCityProvider;
-
-    /**
      * @var UserRegistrationProviderInterface
      */
     protected $userRegistrationProvider;
@@ -193,7 +187,6 @@ class OrderService implements LoggerAwareInterface
      * @param StoreService                      $storeService
      * @param OrderStorageService               $orderStorageService
      * @param OrderSplitService                 $orderSplitService
-     * @param UserCitySelectInterface           $userCityProvider
      * @param UserAvatarAuthorizationInterface  $userAvatarAuthorization
      * @param UserRegistrationProviderInterface $userRegistrationProvider
      * @param ManzanaPosService                 $manzanaPosService
@@ -210,7 +203,6 @@ class OrderService implements LoggerAwareInterface
         StoreService $storeService,
         OrderStorageService $orderStorageService,
         OrderSplitService $orderSplitService,
-        UserCitySelectInterface $userCityProvider,
         UserAvatarAuthorizationInterface $userAvatarAuthorization,
         UserRegistrationProviderInterface $userRegistrationProvider,
         ManzanaPosService $manzanaPosService,
@@ -225,7 +217,6 @@ class OrderService implements LoggerAwareInterface
         $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
         $this->orderSplitService = $orderSplitService;
-        $this->userCityProvider = $userCityProvider;
         $this->userAvatarAuthorization = $userAvatarAuthorization;
         $this->userRegistrationProvider = $userRegistrationProvider;
         $this->locationService = $locationService;
@@ -305,7 +296,6 @@ class OrderService implements LoggerAwareInterface
         $fastOrder = $storage->isFastOrder();
 
         $order = Order::create(SITE_ID);
-        $selectedCity = $this->userCityProvider->getSelectedCity();
 
         $checkAvailability = false;
         if (null === $basket) {
@@ -398,7 +388,7 @@ class OrderService implements LoggerAwareInterface
         if (!$locationProp) {
             throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
         }
-        $locationProp->setValue($selectedCity['CODE']);
+        $locationProp->setValue($storage->getCityCode());
 
         if ($this->deliveryService->isDelivery($selectedDelivery)) {
             /** @var DeliveryResultInterface $selectedDelivery */
@@ -666,10 +656,10 @@ class OrderService implements LoggerAwareInterface
                             $value = 'Y';
                             break;
                         case 'CITY':
-                            $value = $selectedCity['NAME'];
+                            $value = $storage->getCity();
                             break;
                         case 'CITY_CODE':
-                            $value = $selectedCity['CODE'];
+                            $value = $storage->getCityCode();
                             break;
                     }
                 }
