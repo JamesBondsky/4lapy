@@ -94,7 +94,7 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         }
 
         $deliveryDate = (clone $this->deliveryDate)->setTime(0,0,0,0);
-        $currentDate = clone $this->getCurrentDate()->setTime(0,0,0,0);
+        $currentDate = (clone $this->getCurrentDate())->setTime(0,0,0,0);
         $dateDiff = $deliveryDate->diff($currentDate)->days;
 
         return $result > $dateDiff ? $result : $dateOffset;
