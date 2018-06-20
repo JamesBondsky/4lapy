@@ -26,6 +26,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\AuthException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -51,6 +52,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsRegisterComponent extends \CBitrixComponent
 {
     public const BASKET_BACK_URL = '/cart/';
@@ -121,50 +123,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $emailGet = (string)$request->get('email');
             $hash = (string)$request->get('hash');
             if (!empty($emailGet) && !empty($hash)) {
-                /** @var ConfirmCodeService $confirmService */
-                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+
                 try {
-                    if ($confirmService::checkCode($hash, 'email_register')) {
-                        try {
-                            $userRepository = $this->currentUserProvider->getUserRepository();
-                            $userId = $userRepository->findIdentifierByRawLogin($emailGet);
-                            if ($userId > 0) {
-                                $user = null;
-                                if($this->userAuthorizationService->isAuthorized()){
-                                    $isAuthorized = true;
-                                    $curUser = $this->currentUserProvider->getCurrentUser();
-                                    if($curUser->getId() === $userId){
-                                        $user = $curUser;
-                                    }
-                                }
-                                else{
-                                    $isAuthorized = false;
-                                    $user = $userRepository->find($userId);
-                                }
-                                if ($user !== null) {
-                                    $user->setEmailConfirmed(true);
-                                    $res = $userRepository->update($user);
-                                    if ($res) {
-                                        if(!$isAuthorized){
-                                            $this->userAuthorizationService->authorize($userId);
-                                        }
-                                    } else {
-                                        $this->showError('Не удалось подтвердить эл. почту');
-                                        return false;
-                                    }
-                                } else {
-                                    $this->showError('Не найден пользователь');
-                                    return false;
-                                }
-                            } else {
-                                $this->showError('Не найден активный пользователь c эл. почтой ' . $emailGet);
-                                return false;
-                            }
-                        } catch (TooManyUserFoundException $e) {
-                            $this->showError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
-                            return false;
-                        } catch (UsernameNotFoundException $e) {
-                            $this->showError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                    $res = $this->currentUserProvider->authByHash($hash, $emailGet, 'email_register');
+                    if ($res) {
+                        $user = $this->currentUserProvider->getCurrentUser();
+                        $user->setEmailConfirmed(true);
+                        $res = $this->currentUserProvider->getUserRepository()->update($user);
+                        if (!$res) {
+                            $this->showError('Не удалось подтвердить эл. почту');
                             return false;
                         }
                         if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
@@ -176,12 +143,18 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         } else {
                             LocalRedirect(static::PERSONAL_URL);
                         }
-                    } else {
-                        $this->showError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
-                        return false;
                     }
+                } catch (TooManyUserFoundException $e) {
+                    $this->showError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                    return false;
+                } catch (UsernameNotFoundException $e) {
+                    $this->showError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                    return false;
                 } catch (ExpiredConfirmCodeException|NotFoundConfirmedCodeException $e) {
                     $this->showError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
+                    return false;
+                } catch (AuthException $e) {
+                    $this->showError($e->getMessage());
                     return false;
                 }
             }
@@ -491,7 +464,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 try {
                     $contactId = $manzanaService->getContactIdByUser();
                     $client = new Client();
-                    if(!empty($contactId)) {
+                    if (!empty($contactId)) {
                         $client->contactId = $contactId;
                     }
                 } catch (ManzanaServiceException $e) {
@@ -770,7 +743,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         /** @var ManzanaService $manzanaService */
         $manzanaItem = null;
         try {
-            if(!empty($phone)) {
+            if (!empty($phone)) {
                 $manzanaService = $container->get('manzana.service');
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($phone));
@@ -811,7 +784,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $id = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone);
         } catch (TooManyUserFoundException $e) {
             try {
-                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone, 'логином/телефоном');
+                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone,
+                    'логином/телефоном');
             } catch (ApplicationCreateException $e) {
                 return $this->ajaxMess->getTooManyUserFoundException('', $phone, 'логином/телефоном');
             }
@@ -823,7 +797,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 return $this->ajaxMess->getWrongPhoneNumberException();
             } catch (TooManyUserFoundException $e) {
                 try {
-                    return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone, 'логином/телефоном');
+                    return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone,
+                        'логином/телефоном');
                 } catch (ApplicationCreateException $e) {
                     return $this->ajaxMess->getTooManyUserFoundException('', $phone, 'логином/телефоном');
                 }
