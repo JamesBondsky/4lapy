@@ -447,9 +447,12 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 $modifier = 1;
             }
             $date->modify(sprintf('+%s days', $modifier));
-        } else {
-            $date->modify('+1 day');
         }
+
+        /**
+         * Устанавливаем время доставки 9 утра
+         */
+        $date->setTime(9,0,0,0);
 
         return $date;
     }/** @noinspection MoreThanThreeArgumentsInspection */
