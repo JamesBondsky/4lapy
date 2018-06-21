@@ -2,6 +2,8 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+
 interface TimeRuleInterface
 {
     /**
@@ -20,10 +22,11 @@ interface TimeRuleInterface
     public function getValue(): int;
 
     /**
-     * @param \DateTime $date
+     * @param \DateTime                  $date
+     * @param CalculationResultInterface $delivery
      * @return bool
      */
-    public function isSuitable(\DateTime $date): bool;
+    public function isSuitable(\DateTime $date, CalculationResultInterface $delivery): bool;
 
     /**
      * @param \DateTime $date

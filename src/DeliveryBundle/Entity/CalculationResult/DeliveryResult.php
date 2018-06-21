@@ -60,7 +60,7 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                         continue;
                     }
 
-                    if (!$rule->isSuitable($defaultDate)) {
+                    if (!$rule->isSuitable($defaultDate, $this)) {
                         continue;
                     }
 
