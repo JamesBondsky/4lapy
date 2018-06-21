@@ -52,7 +52,7 @@ class SortService
                     [
                         'offers.price' => [
                             'order'       => 'asc',
-                            'mode'        => 'min',
+                            'mode'        => 'max',//ибо по умолчанию выбирается максимальная фасовка
                             'nested_path' => 'offers',
                         ],
                         //                        'offers.prices.PRICE' => [
