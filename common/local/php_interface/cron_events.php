@@ -21,6 +21,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.
 @ignore_user_abort(true);
 
 CEvent::CheckEvents();
+CAgent::CheckAgents();
 
 if (CModule::IncludeModule('sender')) {
     MailingManager::checkPeriod(false);
