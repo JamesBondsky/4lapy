@@ -29,6 +29,7 @@ if ($env) {
  */
 if ($input->getFirstArgument() === 'bitrix:cronevents') {
     define('BX_CRONTAB', true);
+    define('CHK_EVENT', true);
     /** @noinspection PhpUsageOfSilenceOperatorInspection */
     @ignore_user_abort(true);
 }
