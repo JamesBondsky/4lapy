@@ -106,9 +106,9 @@ if ($template->hasMainWrapper()) {
 <script src="<?= $markup->getJsFile() ?>"></script>
 <script>
     <?php /** хз насколько кросбраузерно */?>
-    /* window.onbeforeunload = function () {
+    window.onbeforeunload = function () {
         $.get('/ajax/sale/forgot_basket_close_page/');
-    } */
+    }
 </script>
 </body>
 </html>
