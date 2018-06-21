@@ -31,6 +31,21 @@ class ScheduleResultService implements LoggerAwareInterface
     public const MAX_TRANSITION_COUNT = 1;
 
     /**
+     * Кол-во дней, добавляемых к дате доставки при отправке товара со склада поставщика
+     */
+    public const SUPPLIER_DATE_MODIFIER = 2;
+
+    /**
+     * Кол-во дней, добавляемых к дате доставки перед поиском графиков поставок
+     */
+    public const SCHEDULE_DATE_MODIFIER = 1;
+
+    /**
+     * Кол-во дней на обработку товара на РЦ
+     */
+    public const DC_PROCESSING_DATE_MODIFIER = 2;
+
+    /**
      * @var DeliveryScheduleService
      */
     protected $deliveryScheduleService;
@@ -395,16 +410,10 @@ class ScheduleResultService implements LoggerAwareInterface
                     $maxTransitions++;
                 }
 
-                /**
-                 * Для товаров под заказ добавляем два дня к дате доставки
-                 */
-                $modifier = 2;
+                $modifier += static::SUPPLIER_DATE_MODIFIER;
             }
 
-            /**
-             * Добавляем один день к дате доставки
-             */
-            $modifier++;
+            $modifier += static::SCHEDULE_DATE_MODIFIER;
 
             if (null === $route) {
                 $route = new StoreCollection();
@@ -430,9 +439,15 @@ class ScheduleResultService implements LoggerAwareInterface
                      */
                     $nextDelivery = $schedule->getNextDelivery($shipmentDate);
 
-                    if (null !== $nextDelivery) {
-                        $nextDeliveries[$hour] = $nextDelivery;
+                    if (null === $nextDelivery) {
+                        continue;
                     }
+
+                    if ($sender->isSupplier()) {
+                        $nextDelivery->modify(sprintf('+%s days', static::DC_PROCESSING_DATE_MODIFIER));
+                    }
+
+                    $nextDeliveries[$hour] = $nextDelivery;
                 }
 
                 if (empty($nextDeliveries)) {

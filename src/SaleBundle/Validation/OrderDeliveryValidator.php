@@ -112,7 +112,7 @@ class OrderDeliveryValidator extends ConstraintValidator
 
         $dateDiff = $entity->getCurrentDate()->getTimestamp() - (new \DateTime())->getTimestamp();
         if (abs($dateDiff) > static::MAX_DATE_DIFF) {
-            $this->context->buildViolation($constraint->deliveryPlaceCodeMessage)
+            $this->context->buildViolation($constraint->deliveryDateExpiredMessage)
                 ->setCode(OrderStorageService::SESSION_EXPIRED_VIOLATION)->addViolation();
             return;
         }
