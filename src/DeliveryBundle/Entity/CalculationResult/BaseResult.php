@@ -108,7 +108,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function setCurrentDate(\DateTime $currentDate): CalculationResultInterface
     {
         $this->resetResult();
-        $this->currentDate = $currentDate;
+        $this->currentDate = clone $currentDate;
 
         return $this;
     }
