@@ -349,7 +349,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function doCalculatePeriod(): void
     {
-        $this->setPeriodFrom($this->getDeliveryDate()->diff($this->getCurrentDate())->days);
+        $currentDate = clone $this->getCurrentDate();
+        $deliveryDate = clone $this->getDeliveryDate();
+        $currentDate->setTime(0,0,0,0);
+        $deliveryDate->setTime(0,0,0,0);
+        $this->setPeriodFrom($deliveryDate->diff($currentDate)->days);
         $this->setPeriodType(self::PERIOD_TYPE_DAY);
     }
 
