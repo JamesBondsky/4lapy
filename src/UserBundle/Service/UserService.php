@@ -31,12 +31,15 @@ use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\AuthException;
 use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
@@ -93,11 +96,11 @@ class UserService implements
          * todo move to factory service
          */
         global $USER;
-        if(\is_object($USER)) {
+        if (\is_object($USER)) {
             $this->bitrixUserService = $USER;
         } else {
             $USER = new \CUser();
-            if(\is_object($USER)) {
+            if (\is_object($USER)) {
                 $this->bitrixUserService = $USER;
             } else {
                 $this->bitrixUserService = null;
@@ -121,7 +124,7 @@ class UserService implements
     public function login(string $rawLogin, string $password): bool
     {
         $login = $this->userRepository->findLoginByRawLogin($rawLogin);
-        if($this->bitrixUserService !== null) {
+        if ($this->bitrixUserService !== null) {
             $result = $this->bitrixUserService->Login($login, $password);
             if ($result === true) {
                 return true;
@@ -137,7 +140,7 @@ class UserService implements
      */
     public function logout(): bool
     {
-        if($this->bitrixUserService !== null) {
+        if ($this->bitrixUserService !== null) {
             $this->bitrixUserService->Logout();
 
 
@@ -151,7 +154,7 @@ class UserService implements
      */
     public function isAuthorized(): bool
     {
-        if($this->bitrixUserService !== null) {
+        if ($this->bitrixUserService !== null) {
             return $this->bitrixUserService->IsAuthorized();
         }
         return false;
@@ -164,7 +167,7 @@ class UserService implements
      */
     public function authorize(int $id): bool
     {
-        if($this->bitrixUserService !== null) {
+        if ($this->bitrixUserService !== null) {
             $this->bitrixUserService->Authorize($id);
 
             return $this->isAuthorized();
@@ -182,12 +185,12 @@ class UserService implements
     public function getCurrentUser(): User
     {
         $userId = $this->getCurrentUserId();
-        if($userId <= 0){
+        if ($userId <= 0) {
             throw new NotAuthorizedException('не авторизованы');
         }
         $user = $this->userRepository->find($userId);
-        if($user === null){
-            throw new UsernameNotFoundException('пользователь c id - '.$userId.' не найден');
+        if ($user === null) {
+            throw new UsernameNotFoundException('пользователь c id - ' . $userId . ' не найден');
         }
         return $user;
     }
@@ -206,7 +209,7 @@ class UserService implements
      */
     public function getCurrentUserId(): int
     {
-        if($this->bitrixUserService !== null) {
+        if ($this->bitrixUserService !== null) {
             $id = (int)$this->bitrixUserService->GetID();
             if ($id > 0) {
                 return $id;
@@ -242,7 +245,7 @@ class UserService implements
         try {
             $_SESSION['SEND_REGISTER_EMAIL'] = true;
             /** регистрируем битровым методом регистрации*/
-            if($this->bitrixUserService !== null) {
+            if ($this->bitrixUserService !== null) {
                 $result = $this->bitrixUserService->Register(
                     $user->getLogin() ?? $user->getEmail(),
                     $user->getName() ?? '',
@@ -267,7 +270,7 @@ class UserService implements
         if ($id <= 0) {
             Application::getConnection()->rollbackTransaction();
             $_SESSION = $session;
-            if($this->bitrixUserService !== null) {
+            if ($this->bitrixUserService !== null) {
                 throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
             }
 
@@ -295,8 +298,8 @@ class UserService implements
     }
 
     /**
-     * @param string $code
-     * @param string $name
+     * @param string            $code
+     * @param string            $name
      * @param string|array|null $parentName
      *
      * @throws \Exception
@@ -320,7 +323,7 @@ class UserService implements
 
         if ($city && $this->isAuthorized()) {
             $userId = $this->getCurrentUserId();
-            if($userId > 0) {
+            if ($userId > 0) {
                 $this->userRepository->updateData($userId, ['UF_LOCATION' => $city['CODE']]);
             } else {
                 return false;
@@ -685,7 +688,7 @@ class UserService implements
      */
     public function refreshUserOpt(User $user): bool
     {
-        if(empty($user->getPersonalPhone())){
+        if (empty($user->getPersonalPhone())) {
             return false;
         }
         try {
@@ -701,7 +704,7 @@ class UserService implements
             $this->log()->error('ошибка загрузки сервиса', $e->getTrace());
             return false;
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $this->log()->error('найдено больше одного пользователя с телефоном '.$user->getPersonalPhone());
+            $this->log()->error('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
             return false;
         } catch (ManzanaServiceContactSearchNullException $e) {
             /** ошибка нам не нужна */
@@ -821,6 +824,62 @@ class UserService implements
         }
 
         return current($users);
+    }
+
+    /**
+     * @todo для того чтобы заработал перед отправкой письма, необходимо сгенерирвоать и передать хеш в пиьсмо с типом auth_by_hash
+     * @param string $hash
+     * @param string $email
+     * @param string $type
+     * @param ConfirmCodeService $confirmService
+     *
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws WrongPhoneNumberException
+     * @throws TooManyUserFoundException
+     * @throws UsernameNotFoundException
+     * @throws ExpiredConfirmCodeException
+     * @throws NotFoundConfirmedCodeException
+     * @throws AuthException
+     */
+    public function authByHash(string $hash, string $email, string $type='auth_by_hash', ConfirmCodeService $confirmService=null): bool
+    {
+        if (!empty($email) && !empty($hash)) {
+            /** @var ConfirmCodeService $confirmService */
+            if($confirmService === null) {
+                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            }
+            if ($confirmService::checkCode($hash, $type)) {
+                $userRepository = $this->getUserRepository();
+                $userId = $userRepository->findIdentifierByRawLogin($email);
+                if ($userId > 0) {
+                    $user = null;
+                    if ($this->isAuthorized()) {
+                        $isAuthorized = true;
+                        $curUser = $this->getCurrentUser();
+                        if ($curUser->getId() === $userId) {
+                            $user = $curUser;
+                        }
+                    } else {
+                        $isAuthorized = false;
+                        $user = $userRepository->find($userId);
+                    }
+                    if ($user !== null) {
+                        if(!$isAuthorized) {
+                            $this->authorize($userId);
+                        }
+                    } else {
+                        throw new AuthException('Не найден пользователь');
+                    }
+                } else {
+                    throw new AuthException('Не найден активный пользователь c эл. почтой ' . $email);
+                }
+                return true;
+            }
+
+            throw new AuthException('Проверка не пройдена');
+        }
+        return false;
     }
 
     /**
