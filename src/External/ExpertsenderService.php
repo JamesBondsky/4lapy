@@ -824,7 +824,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 $item .= '<Name>' . $currentOffer->getName(). '</Name>';
                 $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
                 $item .= '<Link>' . new FullHrefDecorator($currentOffer->getDetailPageUrl()) . '</Link>';
-                $item .= '<Price1>' . $currentOffer->getPrice() . '</Price1>';
+                $item .= '<Price1>' . $currentOffer->getOldPrice() . '</Price1>';
                 $item .= '<Price2>' . ($basketItem['itemPrice'] / 100) . '</Price2>';
                 $item .= '<Amount>' . $basketItem['quantity']['value'] . '</Amount>';
                 $item .= '</Product>';
