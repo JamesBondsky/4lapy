@@ -90,16 +90,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 $signCharge = 1;
             }
 
-            try {
-                $item->getPropertyCollection()->createItem()->setFields([
-                    'CODE' => 'HAS_BONUS',
-                    'VALUE' => (bool)$signCharge
-                ]);
-            } catch (\Exception $e) {
-                /**
-                 * Да не может быть
-                 */
-            }
+            $basketService->setBasketItemPropertyValue($item, 'HAS_BONUS', $signCharge);
 
             $chequePosition->setSignCharge($signCharge);
 
