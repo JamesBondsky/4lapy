@@ -139,7 +139,7 @@ trait DeliveryResultTrait
 
         $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
         if (($dateIndex >= 0) && ($dateIndex <= $diff)) {
-            $days = $this->getDeliveryDate()->diff($this->getCurrentDate())->days + $dateIndex;
+            $days = $this->getIntervalOffset() + $dateIndex;
             $tmpDelivery = clone $this;
             /** @var Interval $interval */
             foreach ($this->getIntervals() as $interval) {
