@@ -1,6 +1,8 @@
 <?php
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 
 /**
  * Правило, добавляющее $value дней к дате доставки,
@@ -99,16 +101,24 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
     }
 
     /**
-     * @param \DateTime $date
-     *
+     * @param \DateTime                  $date
+     * @param CalculationResultInterface $delivery
      * @return bool
      */
-    public function isSuitable(\DateTime $date): bool
+    public function isSuitable(\DateTime $date, CalculationResultInterface $delivery): bool
     {
-        $hour = $date->format('G');
+        /** Не применять для второй зоны с поставкой с другого склада */
+        if (($delivery->getDeliveryZone() === DeliveryService::ZONE_2) &&
+            (bool)$delivery->getShipmentResults()
+        ) {
+            $result = false;
+        } else {
+            $hour = $date->format('G');
+            $to = ($this->getTo() === 0) ? 24 : $this->getTo();
+            $result = ($hour >= $this->getFrom()) && ($hour < $to);
+        }
 
-        $to = ($this->getTo() === 0) ? 24 : $this->getTo();
-        return ($hour >= $this->getFrom()) && ($hour < $to);
+        return $result;
     }
 
     /**
@@ -119,9 +129,8 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
     public function apply(\DateTime $date): \DateTime
     {
         $result = clone $date;
-        if ($this->isSuitable($date) && ($this->getValue() > 0)) {
-            $result->modify(sprintf('+%s days', $this->getValue()));
-        }
+
+        $result->modify(sprintf('+%s days', $this->getValue()));
 
         return $result;
     }

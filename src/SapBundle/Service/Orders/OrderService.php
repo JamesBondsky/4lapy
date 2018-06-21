@@ -459,12 +459,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($order->getBasket() as $basketItem) {
-            try {
-                $chargeBonus = $this->basketService->isItemWithBonusAwarding($basketItem, $order);
-            } catch (InvalidArgumentException $e) {
-                $chargeBonus = true;
-            }
-
             $offer = (new OrderOffer())
                 ->setPosition($position)
                 ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
@@ -474,7 +468,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                  * Только штуки
                  */
                 ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
-                ->setChargeBonus($chargeBonus)
+                ->setChargeBonus((bool)$this->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS'))
                 ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 

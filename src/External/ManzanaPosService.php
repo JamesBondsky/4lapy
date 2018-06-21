@@ -57,11 +57,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         /** @var BasketItem $item */
         $hasItems = false;
         foreach ($basket->getBasketItems() as $k => $item) {
-            $xmlId = $item->getField('PRODUCT_XML_ID');
-
-            if (\strpos($xmlId, '#')) {
-                $xmlId = \explode('#', $xmlId)[1];
-            }
+            $xmlId = $basketService->getBasketItemXmlId($item);
 
             if (null === $xmlId) {
                 continue;
@@ -90,16 +86,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 $signCharge = 1;
             }
 
-            try {
-                $item->getPropertyCollection()->createItem()->setFields([
-                    'CODE' => 'HAS_BONUS',
-                    'VALUE' => (bool)$signCharge
-                ]);
-            } catch (\Exception $e) {
-                /**
-                 * Да не может быть
-                 */
-            }
+            $basketService->setBasketItemPropertyValue($item, 'HAS_BONUS', $signCharge);
 
             $chequePosition->setSignCharge($signCharge);
 

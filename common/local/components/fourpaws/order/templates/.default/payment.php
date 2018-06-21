@@ -56,7 +56,7 @@ if (!$selectedPayment) {
     $selectedPayment = current($payments);
 }
 
-$basketPrice = $basket->getPrice();
+$basketPrice = $basket->getOrderableItems()->getPrice();
 
 /** @var User $user */
 $user = $arResult['USER'];
