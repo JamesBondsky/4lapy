@@ -53,14 +53,14 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         if (null === $this->intervalOffset) {
             $this->intervalOffset = 0;
             if ($interval = $this->getSelectedInterval()) {
-                $defaultDate = clone $this->getCurrentDate();
+                $defaultDate = clone ($this->deliveryDate ?? $this->getCurrentDate());
                 $date = clone $defaultDate;
                 foreach ($interval->getRules() as $rule) {
                     if (!$rule instanceof TimeRuleInterface) {
                         continue;
                     }
 
-                    if (!$rule->isSuitable($defaultDate)) {
+                    if (!$rule->isSuitable($defaultDate, $this)) {
                         continue;
                     }
 
@@ -68,8 +68,8 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                     break;
                 }
 
-                $this->intervalOffset = (clone $date)->setTime(0,0,0,0)
-                    ->diff((clone $defaultDate)->setTime(0,0,0,0))
+                $this->intervalOffset = (clone $date)->setTime(0, 0, 0, 0)
+                    ->diff((clone $defaultDate)->setTime(0, 0, 0, 0))
                     ->days;
             }
         }
@@ -86,18 +86,12 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
      */
     protected function getFullOffset(): int
     {
-        $result = 0;
-        $dateOffset = $this->getDateOffset();
+        $result = $this->getDateOffset();
         if (!$this->getIntervals()->isEmpty()) {
-            $result = (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
-            $result += $dateOffset;
+            $result += (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
         }
 
-        $deliveryDate = (clone $this->deliveryDate)->setTime(0,0,0,0);
-        $currentDate = (clone $this->getCurrentDate())->setTime(0,0,0,0);
-        $dateDiff = $deliveryDate->diff($currentDate)->days;
-
-        return $result > $dateDiff ? $result : $dateOffset;
+        return $result;
     }
 
     /**
