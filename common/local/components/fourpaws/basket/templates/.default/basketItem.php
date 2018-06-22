@@ -48,9 +48,9 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                             <?= new SvgDecorator('icon-arrow-down', 10, 6); ?>
                         </span>
                         <span class="b-gift-order__dash js-dash">- </span>
-                        <span class="b-gift-order__text-additional js-dropdown-gift">
+                        <a href="<?= $oneLink['url']; ?>" class="b-gift-order__text-additional js-dropdown-gift">
                             <?= $oneLink['name']; ?>
-                        </span>
+                        </a>
                     </span>
                 </div>
             </div>
