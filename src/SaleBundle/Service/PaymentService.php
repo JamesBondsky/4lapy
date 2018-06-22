@@ -81,11 +81,12 @@ class PaymentService
      * @param Order       $order
      * @param CUser|array $user
      * @param int         $taxSystem
+     * @param bool        $skipGifts
      *
      * @throws ObjectNotFoundException
      * @return array
      */
-    public function getFiscalization(Order $order, $user, int $taxSystem): array
+    public function getFiscalization(Order $order, $user, int $taxSystem, $skipGifts = true): array
     {
         $amount = 0; //Для фискализации общая сумма берется путем суммирования округленных позиций.
         if ($user instanceof \CUser) {
@@ -155,7 +156,7 @@ class PaymentService
         /** @var \Bitrix\Sale\BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
             // пропускаем подарки
-            if ($this->basketService->getBasketItemXmlId($basketItem)[0] === '3') {
+            if ($skipGifts && $this->basketService->getBasketItemXmlId($basketItem)[0] === '3') {
                 continue;
             }
 
