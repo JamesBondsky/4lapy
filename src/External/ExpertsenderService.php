@@ -801,7 +801,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         $offers = $orderService->getOrderProducts($order);
 
-        $fiscal = $paymentService->getFiscalization($order, null, 0);
+        $fiscal = $paymentService->getFiscalization($order, null, 0, false);
         $items = [];
         try {
             $basketItems = $fiscal['fiscal']['orderBundle']['cartItems']['items'];
@@ -819,11 +819,12 @@ class ExpertsenderService implements LoggerAwareInterface
                 if (!$currentOffer) {
                     throw new NotFoundException(sprintf('Не найден товар %s', $basketItem['itemCode']));
                 }
+                $link = ($currentOffer->getXmlId()[0] === '3') ? '' : new FullHrefDecorator($currentOffer->getDetailPageUrl());
                 $item = '';
                 $item .= '<Product>';
                 $item .= '<Name>' . $currentOffer->getName(). '</Name>';
                 $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
-                $item .= '<Link>' . new FullHrefDecorator($currentOffer->getDetailPageUrl()) . '</Link>';
+                $item .= '<Link>' . $link . '</Link>';
                 $item .= '<Price1>' . $currentOffer->getOldPrice() . '</Price1>';
                 $item .= '<Price2>' . ($basketItem['itemPrice'] / 100) . '</Price2>';
                 $item .= '<Amount>' . $basketItem['quantity']['value'] . '</Amount>';
