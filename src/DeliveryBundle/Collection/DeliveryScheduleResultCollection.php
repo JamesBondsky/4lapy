@@ -190,7 +190,15 @@ class DeliveryScheduleResultCollection extends ArrayCollection
 
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
-            $xmlId = $item->getScheduleResult()->getLastSender()->getXmlId();
+            if (!$item->getScheduleResult()->getReceiver()->isShop()) {
+                /**
+                 * Если поставка напрямую на нужный склад, то искать кратчайший маршрут не нужно
+                 */
+                $xmlId = $item->getScheduleResult()->getReceiver()->getXmlId();
+            } else {
+                $xmlId = $item->getScheduleResult()->getLastSender()->getXmlId();
+            }
+
             /** @var DeliveryScheduleResultCollection $res */
             $result = $results[$xmlId] ?? new static();
 
