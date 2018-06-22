@@ -399,6 +399,7 @@ class ScheduleResultService implements LoggerAwareInterface
         $result = new ScheduleResultCollection();
 
         if ($transitionCount < $maxTransitions) {
+            /** @var \DateTime[] $from */
             $from = [];
             foreach ($dates as $hour => $date) {
                 $from[$hour] = clone $date;
@@ -408,6 +409,10 @@ class ScheduleResultService implements LoggerAwareInterface
             if ($sender->isSupplier()) {
                 if ($transitionCount === 0) {
                     $maxTransitions++;
+                }
+
+                foreach ($from as $date) {
+                    $date->setTime(9, 0, 0, 0);
                 }
 
                 $modifier += static::SUPPLIER_DATE_MODIFIER;
