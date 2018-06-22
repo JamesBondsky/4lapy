@@ -146,7 +146,7 @@ class ScheduleResult extends Base implements \Serializable
     public function getReceiver(): Store
     {
         if (null === $this->receiver) {
-            $this->receiver = $this->storeService->getStoreByXmlId($this->getSenderCode());
+            $this->receiver = $this->storeService->getStoreByXmlId($this->getReceiverCode());
         }
 
         return $this->receiver;
