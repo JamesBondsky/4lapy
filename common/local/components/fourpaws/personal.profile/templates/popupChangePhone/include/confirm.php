@@ -38,7 +38,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <a class="b-link-gray"
+            <a class="b-link-gray js-resend-sms"
                href="javascript:void(0);"
                title="Отправить снова"
                data-url="/ajax/personal/profile/changePhone/"

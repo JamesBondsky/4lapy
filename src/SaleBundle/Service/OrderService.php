@@ -20,6 +20,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
@@ -349,20 +350,13 @@ class OrderService implements LoggerAwareInterface
                 } elseif ($diff > 0) {
                     $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
 
-                    $props = $basketItem->getPropertyCollection()->getPropertyValues();
-                    $props[] = [
-                        'NAME'  => 'IS_TEMPORARY',
-                        'CODE'  => 'IS_TEMPORARY',
-                        'VALUE' => 'Y',
-                    ];
-
                     $this->basketService->addOfferToBasket(
                         $basketItem->getProductId(),
                         $diff,
                         [
                             'CUSTOM_PRICE' => 'Y',
                             'DELAY' => BitrixUtils::BX_BOOL_TRUE,
-                            'PROPS' => $props,
+                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
                         ],
                         false,
                         $basket
@@ -972,6 +966,7 @@ class OrderService implements LoggerAwareInterface
         /**
          * Разделение заказов
          */
+        $toDelete = [];
         if ($storage->isSplit()) {
             [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($storage);
 
@@ -979,17 +974,12 @@ class OrderService implements LoggerAwareInterface
             $storage1 = $splitResult1->getOrderStorage();
             $order2 = $splitResult2->getOrder();
             $storage2 = $splitResult2->getOrderStorage();
-            $basket = $this->basketService->getBasket();
-
-            /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
-                if (!$basketItem->isDelay()) {
-                    $basketItem->delete();
-                }
-            }
-            $basket->save();
 
             $this->saveOrder($order, $storage1, $splitResult1->getDelivery());
+            /** @var BasketItem $basketItem */
+            foreach ($order->getBasket() as $basketItem) {
+                $toDelete[$basketItem->getProductId()] += $basketItem->getQuantity();
+            }
             /**
              * Если выбрано частичное получение, то второй заказ не создается
              */
@@ -1001,6 +991,9 @@ class OrderService implements LoggerAwareInterface
                 $storage2->setAddressId($storage1->getAddressId());
 
                 $this->saveOrder($order2, $storage2, $splitResult2->getDelivery());
+                foreach ($order2->getBasket() as $basketItem) {
+                    $toDelete[$basketItem->getProductId()] += $basketItem->getQuantity();
+                }
                 $this->setOrderPropertyByCode($order2, 'RELATED_ORDER_ID', $order->getId());
                 try {
                     $order2->save();
@@ -1019,19 +1012,6 @@ class OrderService implements LoggerAwareInterface
                         'relatedOrder' => $order2->getId(),
                     ]);
                 }
-            } else {
-                $basket2 = $order2->getBasket();
-                /** @var BasketItem $basketItem */
-                foreach ($basket2 as $basketItem) {
-                    $basketItem->setField('DELAY', BitrixUtils::BX_BOOL_TRUE);
-
-                    $this->basketService->setBasketItemPropertyValue(
-                        $basketItem,
-                        'IS_TEMPORARY',
-                        BitrixUtils::BX_BOOL_TRUE
-                    );
-                }
-                $basket2->save();
             }
         } else {
             $order = $this->initOrder($storage);
@@ -1043,7 +1023,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $this->orderStorageService->clearStorage($storage);
-        $this->basketService->resetCustomPrices();
+        $this->resetBasket($toDelete);
 
         return $order;
     }
@@ -1624,5 +1604,67 @@ class OrderService implements LoggerAwareInterface
         ];
 
         return $this->setOrderPropertiesByCode($order, $properties);
+    }
+
+    /**
+     * @param array $toDelete
+     */
+    protected function resetBasket(array $toDelete = [])
+    {
+        $basket = $this->basketService->getBasket();
+        $allowedProperties = ['PRODUCT.XML_ID', 'CATALOG.XML_ID'];
+        try {
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                /** @var Basket $parentBasket */
+                $parentBasket = $basketItem->getCollection();
+                $parentOrder = $parentBasket->getOrder();
+                if ($parentOrder && $parentOrder->getId()) {
+                    continue;
+                }
+
+                $newQuantity = null;
+                $currentQuantity = $basketItem->getQuantity();
+                if (isset($toDelete[$basketItem->getProductId()]) &&
+                    $toDelete[$basketItem->getProductId()] > 0
+                ) {
+                    $newQuantity = $currentQuantity > $toDelete[$basketItem->getProductId()]
+                        ? $currentQuantity - $toDelete[$basketItem->getProductId()]
+                        : 0;
+                    $toDelete[$basketItem->getProductId()] -= $currentQuantity;
+                }
+
+                if (0 === $newQuantity) {
+                    $basketItem->delete();
+                    continue;
+                }
+
+                /** @var BasketPropertyItem $basketProperty */
+                foreach ($basketItem->getPropertyCollection() as $basketProperty) {
+                    if (!\in_array($basketProperty->getField('CODE'), $allowedProperties, true)) {
+                        $basketProperty->delete();
+                    }
+                }
+
+                $fields = [
+                    'CUSTOM_PRICE' => 'N',
+                    'DELAY' => 'N',
+                ];
+                if (null !== $newQuantity) {
+                    $fields['QUANTITY'] = $newQuantity;
+                }
+
+                $basketItem->setFieldsNoDemand($fields);
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to reset basketItem fields: %s: %s', \get_class($e), $e->getMessage()),
+                [
+                    'fuserId' => $basket->getFUserId(),
+                    'id'      => $basketItem->getId(),
+                ]
+            );
+        }
+        $basket->save();
     }
 }

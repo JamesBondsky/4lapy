@@ -380,40 +380,14 @@ class BasketService implements LoggerAwareInterface
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws ObjectNotFoundException
      * @return Basket
      */
     public function refreshAvailability(Basket $basket): Basket
     {
         $updateIds = false;
-        $isTemporary = function (BasketItem $basketItem): bool {
-            $property = $this->getBasketPropByCode($basketItem->getId(), 'IS_TEMPORARY');
-            return $property !== null && $property['VALUE'] === BitrixUtils::BX_BOOL_TRUE;
-        };
-
-        $normalItems = [];
-        $temporaryItems = [];
-        /** @var BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
-            if ($isTemporary($basketItem)) {
-                $temporaryItems[$basketItem->getProductId()] = $basketItem;
-            } else {
-                $normalItems[$basketItem->getProductId()] = $basketItem;
-            }
-        }
 
         /** @var BasketItem $basketItem */
         foreach ($basket->getBasketItems() as $basketItem) {
-            $isTemporaryItem = $isTemporary($basketItem);
-            if ($isTemporaryItem) {
-                if (isset($normalItems[$basketItem->getProductId()])) {
-                    $basketItem->delete();
-                    $updateIds = true;
-                    continue;
-                }
-
-                $this->setBasketItemPropertyValue($basketItem, 'IS_TEMPORARY', BitrixUtils::BX_BOOL_FALSE);
-            }
             /** @var Offer $offer */
             $offer = OfferQuery::getById((int)$basketItem->getProductId());
             $temporaryItem = null;
@@ -435,7 +409,6 @@ class BasketService implements LoggerAwareInterface
                 $updateIds = true;
                 $basketItem->setFields($toUpdate);
             }
-
         }
 
         if ($updateIds) {
@@ -810,24 +783,6 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $xmlId;
-    }
-
-    public function resetCustomPrices()
-    {
-        $basket = $this->getBasket(true);
-
-        try {
-            /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
-                $basketItem->setField('CUSTOM_PRICE', 'N');
-            }
-        } catch (\Exception $e) {
-            $this->log()->error('failed to disable custom price', [
-                'fuserId' => $basket->getFUserId(),
-                'id'      => $basketItem->getId(),
-            ]);
-        }
-        $basket->save();
     }
 
     /**

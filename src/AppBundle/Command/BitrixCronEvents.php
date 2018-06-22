@@ -9,6 +9,7 @@ namespace FourPaws\AppBundle\Command;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Loader;
 use Bitrix\Sender\MailingManager;
+use CAgent;
 use CEvent;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
@@ -46,6 +47,7 @@ class BitrixCronEvents extends Command implements LoggerAwareInterface
     public function execute(InputInterface $input, OutputInterface $output): void
     {
         CEvent::CheckEvents();
+        CAgent::CheckAgents();
 
         try {
             if (Loader::includeModule('sender')) {
