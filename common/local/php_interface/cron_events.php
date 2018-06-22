@@ -13,6 +13,7 @@ define('NO_KEEP_STATISTIC', true);
 define('NOT_CHECK_PERMISSIONS', true);
 define('BX_CRONTAB', true);
 define('BX_NO_ACCELERATOR_RESET', true);
+define('CHK_EVENT', true);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
 
@@ -20,6 +21,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.
 @ignore_user_abort(true);
 
 CEvent::CheckEvents();
+CAgent::CheckAgents();
 
 if (CModule::IncludeModule('sender')) {
     MailingManager::checkPeriod(false);

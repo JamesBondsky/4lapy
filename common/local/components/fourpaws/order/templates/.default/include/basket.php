@@ -168,7 +168,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                 <?php } ?>
             </ul>
         </div>
-        <h4 class="b-title b-title--order-list js-parts-list-title"
+        <h4 class="b-title b-title--order-list js-parts-list-title" data-count="<?= $deliveryUnavailableQuantity ?>"
             <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
             <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
             <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
