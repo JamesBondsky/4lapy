@@ -59,6 +59,10 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         foreach ($basket->getBasketItems() as $k => $item) {
             $xmlId = $basketService->getBasketItemXmlId($item);
 
+            if (mb_strpos($xmlId, '3') === 0) {
+                continue;
+            }
+
             if (null === $xmlId) {
                 continue;
             }
