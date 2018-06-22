@@ -385,7 +385,10 @@ class BasketComponent extends CBitrixComponent
     /**
      *
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws ApplicationCreateException
      */
     private function calcTemplateFields(): void
     {
@@ -399,11 +402,46 @@ class BasketComponent extends CBitrixComponent
             $itemQuantity = (int)$basketItem->getQuantity();
             $weight += (float)$basketItem->getWeight() * $itemQuantity;
             $quantity += $itemQuantity;
+            //если не подарок
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                 $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
                 $price += (float)$basketItem->getPrice() * $itemQuantity;
+                // Слияние строчек с одинаковыми sku
+                $offer = $this->getOffer((int)$basketItem->getProductId());
+                if (!$offer || $offer->isByRequest()) {
+                    continue;
+                }
+                $this->arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] += $basketItem->getQuantity();
+                /** @var BasketItem $tItem */
+                foreach ($orderableBasket as $tItem) {
+                    if (
+                        (int)$basketItem->getProductId() === (int)$tItem->getProductId()
+                        &&
+                        $basketItem->getBasketCode() !== $tItem->getBasketCode()
+                        &&
+                        !$this->arResult['ROWS_MAP'][$tItem->getBasketCode()]
+                    ) {
+                        $this->arResult['ROWS_MAP'][$basketItem->getBasketCode()]['ROWS'][] = $tItem->getBasketCode();
+                        $this->arResult['SKIP_ROWS'][] = $tItem->getBasketCode();
+                    }
+                }
             }
         }
+
+        //Количества и цены для слияния
+        foreach ($this->arResult['ROWS_MAP'] as $code => &$values) {
+            $tItem = $basket->getItemByBasketCode($code);
+            $values['TOTAL_PRICE'] = $tItem->getQuantity() * $tItem->getPrice();
+            $values['BASE_PRICE'] = $tItem->getQuantity() * $tItem->getBasePrice();
+
+            foreach ($values['ROWS'] as $rCode) {
+                $tItem = $basket->getItemByBasketCode($rCode);
+                $values['TOTAL_PRICE'] += $tItem->getQuantity() * $tItem->getPrice();
+                $values['BASE_PRICE'] += $tItem->getQuantity() * $tItem->getBasePrice();
+            }
+        }
+        unset($values);
+
 
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
