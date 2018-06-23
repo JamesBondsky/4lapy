@@ -719,12 +719,8 @@ class BasketService implements LoggerAwareInterface
          *       (не являющихся предпосылкой/подарком)
          */
         $resultQuantity = (int)$basketItem->getQuantity();
-        // debug
-        if ($resultQuantity > 1) {
-            $resultQuantity--;
-        }
 
-        return (bool)$basketDiscounts ? $resultQuantity : 0;
+        return (bool)$basketDiscounts ? 0 : $resultQuantity;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection
