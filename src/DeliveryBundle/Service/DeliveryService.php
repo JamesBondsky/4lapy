@@ -35,6 +35,7 @@ use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
@@ -799,7 +800,7 @@ class DeliveryService implements LoggerAwareInterface
                 )
                 ->exec()->fetch();
             if (!$terminal) {
-                throw new NotFoundException('Терминал не найден');
+                throw new TerminalNotFoundException(sprintf('Terminal with code %s not found', $code));
             }
 
             return ['result' => $terminal];

@@ -26,7 +26,12 @@ class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
      * @var PaymentService
      */
     private $paymentService;
-    
+
+    /**
+     * PaymentOutConsumer constructor.
+     *
+     * @param PaymentService $paymentService
+     */
     public function __construct(PaymentService $paymentService)
     {
         $this->paymentService = $paymentService;
@@ -39,7 +44,6 @@ class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @throws RuntimeException
      * @return bool
-     *
      */
     public function consume($debit): bool
     {
@@ -56,7 +60,7 @@ class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
         } catch (\Exception $e) {
             $success = false;
             
-            $this->log()->log(LogLevel::CRITICAL, sprintf('Ошибка экспорта оплаты: %s', $e->getMessage()));
+            $this->log()->log(LogLevel::CRITICAL, \sprintf('Ошибка экспорта оплаты: %s', $e->getMessage()));
         }
         
         return $success;
