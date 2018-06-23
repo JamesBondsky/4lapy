@@ -651,12 +651,11 @@ class BasketService implements LoggerAwareInterface
      *
      *
      * @param BasketItem $basketItem
+     * @param Order|null $order
      *
-     * @throws InvalidArgumentException
-     *
-     * @return bool
+     * @return int
      */
-    public function isItemWithBonusAwarding(BasketItem $basketItem, ?Order $order = null): bool
+    public function getBonusAvardingQuantity(BasketItem $basketItem, ?Order $order = null): int
     {
         /**
          * @var BasketItemCollection $basketItemCollection
@@ -715,7 +714,17 @@ class BasketService implements LoggerAwareInterface
             $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
         }
 
-        return (bool)$basketDiscounts;
+        /**
+         * @todo должно возвращать кол-во товаров данной позиции корзины, не задействованных в акции
+         *       (не являющихся предпосылкой/подарком)
+         */
+        $resultQuantity = (int)$basketItem->getQuantity();
+        // debug
+        if ($resultQuantity > 1) {
+            $resultQuantity--;
+        }
+
+        return (bool)$basketDiscounts ? $resultQuantity : 0;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection
