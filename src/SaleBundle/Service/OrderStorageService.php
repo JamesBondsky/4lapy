@@ -20,6 +20,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -560,16 +561,23 @@ class OrderStorageService
     {
         $result = null;
         if ($storage->getDeliveryPlaceCode()) {
-            if ($this->deliveryService->isDpdPickup($delivery)) {
-                $stores = $this->deliveryService->getDpdTerminalsByLocation($storage->getCityCode());
-                $selectedStore = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode());
-            } else {
-                $stores = $this->storeService->getStoresByLocation($storage->getCityCode());
-                $selectedStore = $this->storeService->getStoreByXmlId($storage->getDeliveryPlaceCode());
-            }
+            try {
+                /* @todo сделать так, чтобы при смене зоны доставки с той, где самовывоз DPD
+                 *       на ту, где самовывоз из магазина, не писалась в лог ошибка "Склад не найден"
+                 */
+                if ($this->deliveryService->isDpdPickup($delivery)) {
+                    $stores = $this->deliveryService->getDpdTerminalsByLocation($storage->getCityCode());
+                    $selectedStore = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode());
+                } else {
+                    $stores = $this->storeService->getStoresByLocation($storage->getCityCode());
+                    $selectedStore = $this->storeService->getStoreByXmlId($storage->getDeliveryPlaceCode());
+                }
 
-            if ($stores->hasStore($selectedStore)) {
-                $result = $selectedStore;
+                if ($selectedStore && $stores->hasStore($selectedStore)) {
+                    $result = $selectedStore;
+                }
+            } catch (StoreNotFoundException | TerminalNotFoundException $e) {
+                // обработка не требуется. срабатывает при смене зоны доставки / деактивации склада
             }
         }
 
