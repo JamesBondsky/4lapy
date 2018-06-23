@@ -244,9 +244,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $map = $fiscalization['itemMap'];
         $itemsAfter = [];
 
-        $items = $fiscalization['fiscal']['orderBundle']['cartItems']['items'];
-        $itemsAfter[] = $paymentTask->getItems()->map(function (Item $v) use ($map, $items) {
-            foreach ($items as $i => $item) {
+        /** @noinspection ForeachSourceInspection */
+        foreach ($fiscalization['fiscal']['orderBundle']['cartItems']['items'] as $item) {
+            $itemsAfter[] = $paymentTask->getItems()->map(function (Item $v) use ($map, $item) {
                 if ($v->getQuantity() && (
                         /* Доставка */
                         ($v->getOfferXmlId() >= 2000000 && $item['name'] === null)
@@ -259,15 +259,14 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     $newItem['itemPrice'] = (int)($v->getPrice() * 100);
                     $newItem['itemAmount'] = (int)($v->getSumPrice() * 100);
 
-                    unset($items[$i]);
                     return $newItem;
                 }
-            }
 
-            return null;
-        })->filter(function ($v) {
-            return null !== $v;
-        })->toArray();
+                return null;
+            })->filter(function ($v) {
+                return null !== $v;
+            })->toArray();
+        }
 
         $amount = 0;
         $fiscalization['fiscal']['orderBundle']['cartItems']['items'] = \array_reduce($itemsAfter, function ($to, $from) use (&$amount) {
