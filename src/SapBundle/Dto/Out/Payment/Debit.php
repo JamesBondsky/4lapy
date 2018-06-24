@@ -13,6 +13,8 @@ use JMS\Serializer\Annotation as Serializer;
  * Class Debit
  *
  * @package FourPaws\SapBundle\Dto\Out\Payment
+ *
+ * @Serializer\XmlRoot(name="ns0:mt_OrdersIM_PC")
  */
 class Debit
 {

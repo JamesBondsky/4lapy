@@ -460,10 +460,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          */
         foreach ($order->getBasket() as $basketItem) {
             $offer = (new OrderOffer())
-                ->setPosition($position)
                 ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
                 ->setUnitPrice($basketItem->getPrice())
-                ->setQuantity($basketItem->getQuantity())
                 /**
                  * Только штуки
                  */
@@ -472,6 +470,23 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
+            $hasBonus = $this->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS');
+            $quantity = $basketItem->getQuantity();
+            if ($hasBonus && $hasBonus < $quantity) {
+                $quantity -= $hasBonus;
+                $detachedOffer = clone $offer;
+                $detachedOffer
+                    ->setQuantity($hasBonus)
+                    ->setChargeBonus((bool)$hasBonus)
+                    ->setPosition($position);
+                $collection->add($detachedOffer);
+                $hasBonus = 0;
+                $position++;
+            }
+
+            $offer->setQuantity($quantity);
+            $offer->setChargeBonus((bool)$hasBonus);
+            $offer->setPosition($position);
             $collection->add($offer);
             $position++;
         }
