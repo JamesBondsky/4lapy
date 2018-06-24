@@ -15,6 +15,7 @@ use JMS\Serializer\Annotation as Serializer;
  * @package FourPaws\SapBundle\Dto\Out\Payment
  *
  * @Serializer\XmlRoot(name="ns0:mt_OrdersIM_PC")
+ * @Serializer\XmlNamespace(uri="urn:4lapy.ru:BITRIX_2_ERP:DataExchange", prefix="ns0")
  */
 class Debit
 {
