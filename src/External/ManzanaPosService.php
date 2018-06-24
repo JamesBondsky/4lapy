@@ -85,14 +85,14 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     ->setChequeItemId($item->getId());
 
             try {
-                $signCharge = $basketService->isItemWithBonusAwarding($item, $basket->getOrder()) ? 0 : 1;
+                $signCharge = $basketService->getBonusAvardingQuantity($item, $basket->getOrder());
             } catch (InvalidArgumentException $e) {
                 $signCharge = 1;
             }
 
             $basketService->setBasketItemPropertyValue($item, 'HAS_BONUS', $signCharge);
 
-            $chequePosition->setSignCharge($signCharge);
+            $chequePosition->setSignCharge((bool)$signCharge ? 1 : 0);
 
             $request->addItem($chequePosition);
             $hasItems = true;

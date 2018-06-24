@@ -105,7 +105,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             <?php if ($propertyValues['HAS_BONUS']['VALUE'] && $useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?= $offer->getId() ?>">
                     <?php if ($arParams['IS_AJAX']) {
-                        echo $offer->getBonusFormattedText((int)$userDiscount, $basketItem->getQuantity(), 0);
+                        echo $offer->getBonusFormattedText((int)$userDiscount, $propertyValues['HAS_BONUS']['VALUE'], 0);
                     } ?>
                 </span>
             <?php } ?>
