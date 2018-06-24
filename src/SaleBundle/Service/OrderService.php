@@ -1238,6 +1238,11 @@ class OrderService implements LoggerAwareInterface
             $this->log()->error('cash payment not found');
             return;
         }
+
+        if ($discountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
+
         $paySystemId = $payment['ID'];
         $sapConsumer = Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
         $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer) {
@@ -1271,6 +1276,10 @@ class OrderService implements LoggerAwareInterface
             if (!$relatedOrder->isPaid()) {
                 $updateOrder($relatedOrder);
             }
+        }
+
+        if ($discountEnabled) {
+            Manager::enableExtendsDiscount();
         }
     }
 
