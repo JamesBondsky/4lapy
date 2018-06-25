@@ -37,9 +37,9 @@ class Debit
      * @Serializer\SerializedName("Order_SAP")
      * @Serializer\XmlAttribute()
      *
-     * @var int
+     * @var string
      */
-    protected $sapOrderId = 0;
+    protected $sapOrderId = '0';
 
     /**
      * Номер заказа Сайт
@@ -203,7 +203,7 @@ class Debit
      * @param int $sapOrderId
      * @return Debit
      */
-    public function setSapOrderId(int $sapOrderId): Debit
+    public function setSapOrderId(string $sapOrderId): Debit
     {
         $this->sapOrderId = $sapOrderId;
 
