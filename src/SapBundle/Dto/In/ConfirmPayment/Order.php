@@ -19,13 +19,13 @@ class Order
     /**
      * Номер заказа SAP
      *
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Order_SAP")
      * @Serializer\XmlAttribute()
      *
-     * @var int
+     * @var string
      */
-    protected $sapOrderId = 0;
+    protected $sapOrderId = '';
 
     /**
      * Номер заказа Сайт
@@ -114,18 +114,18 @@ class Order
     protected $items;
 
     /**
-     * @return int
+     * @return string
      */
-    public function getSapOrderId(): int
+    public function getSapOrderId(): string
     {
         return $this->sapOrderId;
     }
 
     /**
-     * @param int $sapOrderId
+     * @param string $sapOrderId
      * @return $this
      */
-    public function setSapOrderId(int $sapOrderId): Order
+    public function setSapOrderId(string $sapOrderId): Order
     {
         $this->sapOrderId = $sapOrderId;
         return $this;
