@@ -969,4 +969,20 @@ class BasketService implements LoggerAwareInterface
         $value = $this->getBasketPropByCode($basketItemId, $propCode);
         return $value === null || empty($value);
     }
+
+    /**
+     * @param Basket|null $basket
+     * @return array
+     */
+    public function getBasketProducts(?Basket $basket = null): array
+    {
+        $result = [];
+        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $result[$basketItem->getProductId()] += $basketItem->getQuantity();
+        }
+
+        return $result;
+    }
 }
