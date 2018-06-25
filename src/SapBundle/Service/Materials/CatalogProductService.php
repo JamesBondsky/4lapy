@@ -20,19 +20,11 @@ class CatalogProductService
     /**
      * @var int
      */
-    private $defaultVatId;
+    private $defaultVatId = 2;
 
     public function __construct(CatalogProductRepository $catalogProductRepository)
     {
         $this->catalogProductRepository = $catalogProductRepository;
-
-        $vatList = \CCatalogVat::GetListEx();
-        while ($vat = $vatList->Fetch()) {
-            if ((int)$vat['RATE'] === 18) {
-                $this->defaultVatId = $vat['ID'];
-                break;
-            }
-        }
     }
 
     /**
@@ -70,11 +62,8 @@ class CatalogProductService
             ->setWidth($basicUom->getWidth() * 1000)
             ->setHeight($basicUom->getHeight() * 1000)
             ->setLength($basicUom->getLength() * 1000)
-            ->setWeight(($material->getNetWeight() ?: $basicUom->getGrossWeight()) * 1000);
-
-        if (null !== $this->defaultVatId) {
-            $result->setVatId($this->defaultVatId);
-        }
+            ->setWeight(($material->getNetWeight() ?: $basicUom->getGrossWeight()) * 1000)
+            ->setVatId($this->defaultVatId);
 
         return $result;
     }
