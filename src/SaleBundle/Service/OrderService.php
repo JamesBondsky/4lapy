@@ -294,8 +294,6 @@ class OrderService implements LoggerAwareInterface
         ?Basket $basket = null,
         ?CalculationResultInterface $selectedDelivery = null
     ): Order {
-        $fastOrder = $storage->isFastOrder();
-
         $order = Order::create(SITE_ID);
 
         $checkAvailability = false;
@@ -305,19 +303,34 @@ class OrderService implements LoggerAwareInterface
         }
 
         if ($basket->getOrderableItems()->isEmpty()) {
-            throw new OrderCreateException('Корзина пуста');
+            throw new OrderCreateException('Basket is empty');
         }
 
         if (null === $selectedDelivery) {
             try {
                 $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
             } catch (NotFoundException $e) {
-                throw new DeliveryNotAvailableException('Нет доступных доставок');
+                $this->log()->error('No available deliveries', [
+                    'fuserId' => $storage->getFuserId(),
+                    'userId' => $storage->getUserId(),
+                    'location' => $storage->getCityCode(),
+                    'basket' => $this->basketService->getBasketProducts($basket)
+                ]);
+
+                throw new DeliveryNotAvailableException('No available deliveries');
             }
         }
+
         $selectedDelivery = clone $selectedDelivery;
         if (!$selectedDelivery->isSuccess()) {
-            throw new DeliveryNotAvailableException('Нет доступных доставок');
+            $this->log()->error('Selected delivery is not available', [
+                'fuserId' => $storage->getFuserId(),
+                'userId' => $storage->getUserId(),
+                'location' => $storage->getCityCode(),
+                'basket' => $this->basketService->getBasketProducts($basket)
+            ]);
+
+            throw new DeliveryNotAvailableException('Selected delivery is not available');
         }
 
         if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
@@ -371,7 +384,7 @@ class OrderService implements LoggerAwareInterface
 
         $order->setBasket($basket);
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
-            throw new OrderCreateException('Корзина пуста');
+            throw new OrderCreateException('Basket is empty');
         }
 
         /**
@@ -380,7 +393,8 @@ class OrderService implements LoggerAwareInterface
         $propertyValueCollection = $order->getPropertyCollection();
         $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
         if (!$locationProp) {
-            throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
+            $this->log()->critical('Order location property is not defined');
+            throw new OrderCreateException('Order location property is not defined');
         }
         $locationProp->setValue($storage->getCityCode());
 
@@ -420,7 +434,7 @@ class OrderService implements LoggerAwareInterface
             $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
                 'deliveryId' => $selectedDelivery->getDeliveryId(),
             ]);
-            throw new OrderCreateException('Ошибка при создании отгрузки');
+            throw new OrderCreateException('Failed to create order shipment');
         }
 
         $shipmentCollection->calculateDelivery();
@@ -565,6 +579,7 @@ class OrderService implements LoggerAwareInterface
                 $this->log()->error(sprintf('order payment failed: %s', $e->getMessage()), [
                     'userId'  => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
+                    'paymentId' => $storage->getPaymentId()
                 ]);
                 throw new OrderCreateException('Order payment failed');
             }
@@ -625,7 +640,7 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        if ($fastOrder) {
+        if ($storage->isFastOrder()) {
             $fastOrderProperties = [
                 'NAME',
                 'EMAIL',
@@ -664,8 +679,6 @@ class OrderService implements LoggerAwareInterface
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
-        } else {
-            Manager::disableExtendsDiscount();
         }
 
         return $order;
