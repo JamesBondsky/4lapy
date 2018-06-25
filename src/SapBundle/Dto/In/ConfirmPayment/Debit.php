@@ -19,7 +19,7 @@ class Debit
     /**
      * Номер заказа SAP
      *
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Order_SAP")
      * @Serializer\XmlAttribute()
      *
