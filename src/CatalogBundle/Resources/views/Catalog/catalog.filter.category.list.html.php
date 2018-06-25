@@ -100,7 +100,7 @@ if ($childs !== null && $childs->count()) { ?>
         <h3 class="b-title b-title--filter-header">
             Категория
         </h3>
-        <div class="b-select b-select--filter">
+        <div class="b-select js-filter-select b-select--filter">
             <ul class="b-filter-link-list b-filter-link-list--filter b-filter-link-list--select-filter js-accordion-filter-select js-filter-checkbox">
                 <?php foreach ($childs as $child) { ?>
                     <li class="b-filter-link-list__item">
