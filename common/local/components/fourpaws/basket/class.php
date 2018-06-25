@@ -78,6 +78,8 @@ class BasketComponent extends CBitrixComponent
 
     private $promoDescriptions = [];
 
+    private $offer2promoMap = [];
+
     /**
      * BasketComponent constructor.
      *
@@ -172,7 +174,7 @@ class BasketComponent extends CBitrixComponent
     /**
      *
      * @param BasketItem $basketItem
-     * @param bool       $onlyApplied
+     * @param bool $onlyApplied
      *
      * @return array
      */
@@ -181,7 +183,7 @@ class BasketComponent extends CBitrixComponent
         $result = [];
         /**
          * @var BasketItemCollection $basketItemCollection
-         * @var Order                $order
+         * @var Order $order
          */
         $applyResult = $this->arResult['DISCOUNT_RESULT'];
         $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
@@ -201,11 +203,22 @@ class BasketComponent extends CBitrixComponent
                     continue;
                 }
                 if ($this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']]) {
-                    $result[] = $this->promoDescriptions[$applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID']];
+                    $k = $applyResult['DISCOUNT_LIST'][$fakeId]['REAL_DISCOUNT_ID'];
+                    $result[$k] = $this->promoDescriptions[$k];
                 }
             }
         }
-
+        if (
+            !$onlyApplied
+            &&
+            $discountIds = $this->offer2promoMap[$this->getOffer((int)$basketItem->getProductId())->getXmlId()]
+        ) {
+            foreach ($discountIds as $id) {
+                if (!$result[$id]) {
+                    $result[$id] = $this->promoDescriptions[$id];
+                }
+            }
+        }
         return $result;
     }
 
@@ -385,7 +398,10 @@ class BasketComponent extends CBitrixComponent
     /**
      *
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws ApplicationCreateException
      */
     private function calcTemplateFields(): void
     {
@@ -399,11 +415,46 @@ class BasketComponent extends CBitrixComponent
             $itemQuantity = (int)$basketItem->getQuantity();
             $weight += (float)$basketItem->getWeight() * $itemQuantity;
             $quantity += $itemQuantity;
+            //если не подарок
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                 $basePrice += (float)$basketItem->getBasePrice() * $itemQuantity;
                 $price += (float)$basketItem->getPrice() * $itemQuantity;
+                // Слияние строчек с одинаковыми sku
+                $offer = $this->getOffer((int)$basketItem->getProductId());
+                if (!$offer || $offer->isByRequest()) {
+                    continue;
+                }
+                $this->arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] += $basketItem->getQuantity();
+                /** @var BasketItem $tItem */
+                foreach ($orderableBasket as $tItem) {
+                    if (
+                        (int)$basketItem->getProductId() === (int)$tItem->getProductId()
+                        &&
+                        $basketItem->getBasketCode() !== $tItem->getBasketCode()
+                        &&
+                        !$this->arResult['ROWS_MAP'][$tItem->getBasketCode()]
+                    ) {
+                        $this->arResult['ROWS_MAP'][$basketItem->getBasketCode()]['ROWS'][] = $tItem->getBasketCode();
+                        $this->arResult['SKIP_ROWS'][] = $tItem->getBasketCode();
+                    }
+                }
             }
         }
+
+        //Количества и цены для слияния
+        foreach ($this->arResult['ROWS_MAP'] as $code => &$values) {
+            $tItem = $basket->getItemByBasketCode($code);
+            $values['TOTAL_PRICE'] = $tItem->getQuantity() * $tItem->getPrice();
+            $values['BASE_PRICE'] = $tItem->getQuantity() * $tItem->getBasePrice();
+
+            foreach ($values['ROWS'] as $rCode) {
+                $tItem = $basket->getItemByBasketCode($rCode);
+                $values['TOTAL_PRICE'] += $tItem->getQuantity() * $tItem->getPrice();
+                $values['BASE_PRICE'] += $tItem->getQuantity() * $tItem->getBasePrice();
+            }
+        }
+        unset($values);
+
 
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
@@ -440,30 +491,60 @@ class BasketComponent extends CBitrixComponent
         $applyResult = $order->getDiscount()->getApplyResult(true);
         $this->arResult['DISCOUNT_RESULT'] = $applyResult;
 
-        if (\is_array($applyResult['DISCOUNT_LIST'])) {
+        $offerXmlIds = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if ($offer = $this->getOffer((int)$basketItem->getProductId())) {
+                $offerXmlIds[] = $offer->getXmlId();
+            }
+        }
+        $offerXmlIds = array_flip(array_flip($offerXmlIds));
+
+        if (\is_array($applyResult['DISCOUNT_LIST']) || $offerXmlIds) {
             $discountMap = \array_column($applyResult['DISCOUNT_LIST'], 'REAL_DISCOUNT_ID', 'ID');
             $res = \CIBlockElement::GetList(
                 ['ID' => 'ASC'],
                 [
-                    'PROPERTY_BASKET_RULES' => \array_values($discountMap),
-                    'IBLOCK_CODE'           => IblockCode::SHARES,
-                    'IBLOCK_TYPE'           => IblockType::PUBLICATION,
+                    [
+                        'LOGIC' => 'OR',
+                        'PROPERTY_PRODUCTS' => $offerXmlIds,
+                        'PROPERTY_BASKET_RULES' => \array_values($discountMap),
+                    ],
+                    'ACTIVE' => 'Y',
+                    'ACTIVE_DATE' => 'Y',
+                    'IBLOCK_CODE' => IblockCode::SHARES,
+                    'IBLOCK_TYPE' => IblockType::PUBLICATION,
                 ],
                 false,
                 false,
-                ['NAME', 'DETAIL_PAGE_URL', 'PROPERTY_BASKET_RULES']
+                ['NAME', 'DETAIL_PAGE_URL', 'PROPERTY_BASKET_RULES', 'PROPERTY_PRODUCTS']
             );
             /** @noinspection PhpAssignmentInConditionInspection */
             while ($elem = $res->GetNext()) {
                 if (\is_array($elem['PROPERTY_BASKET_RULES_VALUE'])) {
+                    // описания акций
                     foreach ($elem['PROPERTY_BASKET_RULES_VALUE'] as $ruleId) {
                         $this->promoDescriptions[$ruleId] = [
-                            'url'  => $elem['DETAIL_PAGE_URL'],
+                            'url' => $elem['DETAIL_PAGE_URL'],
                             'name' => $elem['NAME'],
                         ];
                     }
+                    // связки товаров и акций
+                    foreach ($elem['PROPERTY_PRODUCTS_VALUE'] as $offerXmlId) {
+                        if ($this->offer2promoMap[$offerXmlId]) {
+                            $this->offer2promoMap[$offerXmlId]
+                                = array_merge($this->offer2promoMap[$offerXmlId], $elem['PROPERTY_BASKET_RULES_VALUE']);
+                        } else {
+                            $this->offer2promoMap[$offerXmlId] = $elem['PROPERTY_BASKET_RULES_VALUE'];
+                        }
+                    }
                 }
             }
+            //array unique
+            foreach ($this->offer2promoMap as &$value) {
+                $value = array_flip(array_flip($value));
+            }
+            unset($value);
         }
     }
 

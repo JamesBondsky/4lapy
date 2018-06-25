@@ -55,6 +55,7 @@ class OfferService implements LoggerAwareInterface
      *
      * @param ReferenceService $referenceService
      * @param OfferRepository $offerRepository
+     * @param ProductRepository $productRepository
      */
     public function __construct(
         ReferenceService $referenceService,
@@ -116,6 +117,7 @@ class OfferService implements LoggerAwareInterface
     public function deactivate(string $xmlId): bool
     {
         /** @var Offer $offer */
+        /** @noinspection PhpAssignmentInConditionInspection */
         if ($offer = $this->offerRepository->findByXmlId($xmlId)) {
             $result = $this->offerRepository->setActive($offer->getId(), false);
 

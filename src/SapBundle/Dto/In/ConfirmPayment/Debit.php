@@ -16,6 +16,8 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class Debit
 {
+    private const SAP_NUMBER_LENGTH = 10;
+
     /**
      * Номер заказа SAP
      *
@@ -23,9 +25,9 @@ class Debit
      * @Serializer\SerializedName("Order_SAP")
      * @Serializer\XmlAttribute()
      *
-     * @var int
+     * @var string
      */
-    protected $sapOrderId = 0;
+    protected $sapOrderId = '0';
 
     /**
      * Номер заказа Сайт
@@ -103,9 +105,9 @@ class Debit
     protected $items;
 
     /**
-     * @return int
+     * @return string
      */
-    public function getSapOrderId(): int
+    public function getSapOrderId(): string
     {
         return $this->sapOrderId;
     }
@@ -115,9 +117,10 @@ class Debit
      *
      * @return $this
      */
-    public function setSapOrderId(int $sapOrderId): Debit
+    public function setSapOrderId(string $sapOrderId): Debit
     {
-        $this->sapOrderId = $sapOrderId;
+        $this->sapOrderId = \str_pad($sapOrderId, self::SAP_NUMBER_LENGTH, '0', \STR_PAD_LEFT);
+
         return $this;
     }
 
@@ -137,6 +140,7 @@ class Debit
     public function setBitrixOrderId(int $bitrixOrderId): Debit
     {
         $this->bitrixOrderId = $bitrixOrderId;
+
         return $this;
     }
 
@@ -156,6 +160,7 @@ class Debit
     public function setPayType(string $payType): Debit
     {
         $this->payType = $payType;
+
         return $this;
     }
 
@@ -175,6 +180,7 @@ class Debit
     public function setPayTypeText(string $payTypeText): Debit
     {
         $this->payTypeText = $payTypeText;
+
         return $this;
     }
 
@@ -194,6 +200,7 @@ class Debit
     public function setSumTotal(float $sumTotal): Debit
     {
         $this->sumTotal = $sumTotal;
+
         return $this;
     }
 
@@ -213,6 +220,7 @@ class Debit
     public function setSumPayed(float $sumPayed): Debit
     {
         $this->sumPayed = $sumPayed;
+
         return $this;
     }
 
@@ -232,6 +240,7 @@ class Debit
     public function setItems(Collection $items): Debit
     {
         $this->items = $items;
+
         return $this;
     }
 }
