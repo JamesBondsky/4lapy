@@ -544,6 +544,9 @@ class OrderStorageService
 
         if ($selectedDelivery instanceof PickupResultInterface && $storage->getDeliveryPlaceCode()) {
             $selectedDelivery->setSelectedShop($this->getSelectedShop($storage, $selectedDelivery));
+            if (!$selectedDelivery->isSuccess()) {
+                $selectedDelivery->setSelectedShop($selectedDelivery->getBestShops()->first());
+            }
         }
 
         return $selectedDelivery;
@@ -554,7 +557,6 @@ class OrderStorageService
      * @param PickupResultInterface $delivery
      *
      * @throws ArgumentException
-     * @throws StoreNotFoundException
      * @return Store
      */
     public function getSelectedShop(OrderStorage $storage, PickupResultInterface $delivery): Store
