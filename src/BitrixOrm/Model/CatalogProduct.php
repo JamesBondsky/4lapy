@@ -4,6 +4,11 @@ namespace FourPaws\BitrixOrm\Model;
 
 use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * Class CatalogProduct
+ *
+ * @package FourPaws\BitrixOrm\Model
+ */
 class CatalogProduct
 {
     /**
@@ -113,6 +118,17 @@ class CatalogProduct
      * @var int
      */
     protected $vatId;
+
+    /**
+     * НДС включен в цену
+     *
+     * @Serializer\SerializedName("VAT_INCLUDED")
+     * @Serializer\Type("bitrix_bool")
+     * @Serializer\Groups({"create","read","update"})
+     *
+     * @var bool
+     */
+    protected $vatIncluded = true;
 
     /**
      * @var bool
@@ -289,6 +305,7 @@ class CatalogProduct
     public function setVatId(int $vatId): CatalogProduct
     {
         $this->vatId = $vatId;
+
         return $this;
     }
 
@@ -307,6 +324,7 @@ class CatalogProduct
     public function setAvailable(bool $available): CatalogProduct
     {
         $this->available = $available;
+
         return $this;
     }
 
@@ -325,6 +343,27 @@ class CatalogProduct
     public function setCanBuyZero(bool $canBuyZero): CatalogProduct
     {
         $this->canBuyZero = $canBuyZero;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getVatIncluded(): bool
+    {
+        return $this->vatIncluded;
+    }
+
+    /**
+     * @param bool $vatIncluded
+     *
+     * @return CatalogProduct
+     */
+    public function setVatIncluded(bool $vatIncluded): CatalogProduct
+    {
+        $this->vatIncluded = $vatIncluded;
+
         return $this;
     }
 }

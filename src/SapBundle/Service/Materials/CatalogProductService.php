@@ -70,7 +70,8 @@ class CatalogProductService
             ->setWidth($basicUom->getWidth() * 1000)
             ->setHeight($basicUom->getHeight() * 1000)
             ->setLength($basicUom->getLength() * 1000)
-            ->setWeight(($material->getNetWeight() ?: $basicUom->getGrossWeight()) * 1000);
+            ->setWeight(($material->getNetWeight() ?: $basicUom->getGrossWeight()) * 1000)
+            ->setVatIncluded(true);
 
         if (null !== $this->defaultVatId) {
             $result->setVatId($this->defaultVatId);
