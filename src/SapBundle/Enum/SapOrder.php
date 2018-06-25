@@ -46,7 +46,7 @@ final class SapOrder
     public const DELIVERY_ZONE_3_ARTICLE = '2000001';
     public const DELIVERY_ZONE_4_ARTICLE = '2000001';
 
-    public const ORDER_PAYMENT_ONLINE_MERCHANT_ID = '850000314610';
+    public const ORDER_PAYMENT_ONLINE_MERCHANT_ID = '851000018943';
     public const ORDER_PAYMENT_ONLINE_CODE = '05';
     public const ORDER_PAYMENT_STATUS_PAYED = '01';
     public const ORDER_PAYMENT_STATUS_NOT_PAYED = '02';

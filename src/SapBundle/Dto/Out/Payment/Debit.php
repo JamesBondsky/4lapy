@@ -13,6 +13,9 @@ use JMS\Serializer\Annotation as Serializer;
  * Class Debit
  *
  * @package FourPaws\SapBundle\Dto\Out\Payment
+ *
+ * @Serializer\XmlRoot(name="ns0:mt_OrdersIM_PC")
+ * @Serializer\XmlNamespace(uri="urn:4lapy.ru:BITRIX_2_ERP:DataExchange", prefix="ns0")
  */
 class Debit
 {
@@ -30,7 +33,7 @@ class Debit
     /**
      * Номер заказа SAP
      *
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Order_SAP")
      * @Serializer\XmlAttribute()
      *
