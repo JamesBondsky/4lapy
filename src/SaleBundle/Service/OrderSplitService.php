@@ -265,7 +265,7 @@ class OrderSplitService implements LoggerAwareInterface
             if ($result = (!$available->isEmpty() && !$delayed->isEmpty())) {
                 $fullDate = $delivery->getDeliveryDate();
                 $partialDate = (clone $delivery)->setStockResult($available)->getDeliveryDate();
-                $result = $fullDate !== $partialDate;
+                $result = $fullDate->getTimestamp() !== $partialDate->getTimestamp();
             }
         }
 
