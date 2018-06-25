@@ -190,7 +190,11 @@ if ($arParams['IS_AJAX']) {
 
                         $offer = $component->getOffer((int)$basketItem->getProductId());
 
-                        if ($offer->isByRequest()) {
+                        if (
+                            $offer->isByRequest()
+                            ||
+                            in_array($basketItem->getBasketCode(),$arResult['SKIP_ROWS'], true)
+                        ) {
                             continue;
                         }
 
