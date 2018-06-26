@@ -73,7 +73,8 @@ class CallBackController extends Controller
             }
 
             try {
-                $data[$formattedFields['phone']] = PhoneHelper::normalizePhone($data[$formattedFields['phone']]);
+                /** добавляем 8 спереди */
+                $data[$formattedFields['phone']] = '8'.PhoneHelper::normalizePhone($data[$formattedFields['phone']]);
             } catch (WrongPhoneNumberException $e) {
                 return $this->ajaxMess->getWrongPhoneNumberException();
             }
