@@ -12,6 +12,8 @@ class PhoneHelper
 
     public const FORMAT_INTERNATIONAL = '+7%s%s%s%s%s%s%s%s%s%s';
 
+    public const FORMAT_SHORT = '%s%s%s%s%s%s%s%s%s%s';
+
     /**
      * Проверяет телефон по правилам нормализации. Допускаются 10только десятизначные номера с ведущими 7 или 8
      *

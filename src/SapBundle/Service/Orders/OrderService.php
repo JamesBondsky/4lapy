@@ -628,8 +628,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($orderDto->getClientFio()) {
             $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
         }
-        $this->setPropertyValue($propertyCollection, 'PHONE', $orderDto->getClientPhone());
-        $this->setPropertyValue($propertyCollection, 'PHONE_ALT', $orderDto->getClientOrderPhone());
+        $this->setPropertyValue(
+            $propertyCollection,
+            'PHONE',
+            PhoneHelper::formatPhone($orderDto->getClientPhone(), PhoneHelper::FORMAT_SHORT)
+        );
+        $this->setPropertyValue(
+            $propertyCollection,
+            'PHONE_ALT',
+            PhoneHelper::formatPhone($orderDto->getClientOrderPhone(), PhoneHelper::FORMAT_SHORT)
+        );
         $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('d.m.Y'));
 
         try {
