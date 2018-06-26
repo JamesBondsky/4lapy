@@ -39,6 +39,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -232,8 +233,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
             ->setClientId($order->getUserId())
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
-            ->setClientPhone($this->getPropertyValueByCode($order, 'PHONE'))
-            ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
+            ->setClientPhone(PhoneHelper::formatPhone(
+                $this->getPropertyValueByCode($order, 'PHONE'),
+                PhoneHelper::FORMAT_INTERNATIONAL
+            ))
+            ->setClientOrderPhone(PhoneHelper::formatPhone(
+                $this->getPropertyValueByCode($order, 'PHONE_ALT'),
+                PhoneHelper::FORMAT_INTERNATIONAL
+            ))
             ->setClientComment($description)
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'));
