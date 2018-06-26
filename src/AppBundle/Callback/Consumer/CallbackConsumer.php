@@ -12,8 +12,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use PhpAmqpLib\Message\AMQPMessage;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class CallbackConsumer
@@ -22,31 +20,37 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class CallbackConsumer extends CallbackConsumerBase
 {
-    const SUCCESS = 4;
-    
+    public const SUCCESS = 4;
+
     /**
      * @param AMQPMessage $msg The message
      *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws GuzzleException
-     * @throws \RuntimeException
-     * @throws \LogicException
      * @return bool
      */
-    public function execute(AMQPMessage $msg) : bool
+    public function execute(AMQPMessage $msg): bool
     {
         $href = $msg->getBody();
-        if(!empty($href)) {
-            $res = $this->guzzle->send(new Request('get', $href));
+        if (!empty($href)) {
+            try {
+                $res = $this->guzzle->send(new Request('get', $href));
+            } catch (GuzzleException $e) {
+                $this->log()->error('Сервис обартного звонка ответил ошибкой' . $e->getMessage() . ' на ссылку ' . $href);
+                return false;
+            }
             $data = json_decode($res->getBody()->getContents());
 
             if ((int)$data->result !== static::SUCCESS || $res->getStatusCode() !== 200) {
-                $this->log()->error('Сервис обартного звонка ответил ошибкой на ссылку ' . $href, (array)$data);
+                $this->log()->error('Сервис обартного звонка ответил ошибкой на ссылку ' . $href . ' - ' . implode('|',
+                        (array)$data), (array)$data);
                 //публикуем заного с задержкой в 30 секунд
                 sleep(30);
-                $callBackProducer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_set_producer');
+                try {
+                    $container = App::getInstance()->getContainer();
+                } catch (ApplicationCreateException $e) {
+                    $this->log()->error('Ошибка загрузки контейнера');
+                    return false;
+                }
+                $callBackProducer = $container->get('old_sound_rabbit_mq.callback_set_producer');
                 /** @var Producer $callBackProducer */
                 $callBackProducer->publish($href);
             }
