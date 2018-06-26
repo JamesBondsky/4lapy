@@ -235,11 +235,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
             ->setClientPhone(PhoneHelper::formatPhone(
                 $this->getPropertyValueByCode($order, 'PHONE'),
-                PhoneHelper::FORMAT_INTERNATIONAL
+                PhoneHelper::FORMAT_URL
             ))
             ->setClientOrderPhone(PhoneHelper::formatPhone(
                 $this->getPropertyValueByCode($order, 'PHONE_ALT'),
-                PhoneHelper::FORMAT_INTERNATIONAL
+                PhoneHelper::FORMAT_URL
             ))
             ->setClientComment($description)
             ->setOrderSource($orderSource)
