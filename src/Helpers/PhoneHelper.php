@@ -6,11 +6,15 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 
 class PhoneHelper
 {
+    public const FORMAT_FULL = '+7 (%s%s%s) %s%s%s-%s%s-%s%s';
+
     public const FORMAT_DEFAULT = '+7 %s%s%s %s%s%s-%s%s-%s%s';
 
     public const FORMAT_URL = '8%s%s%s%s%s%s%s%s%s%s';
 
     public const FORMAT_INTERNATIONAL = '+7%s%s%s%s%s%s%s%s%s%s';
+
+    public const FORMAT_MANZANA = '7%s%s%s%s%s%s%s%s%s%s';
 
     public const FORMAT_SHORT = '%s%s%s%s%s%s%s%s%s%s';
 
@@ -21,7 +25,7 @@ class PhoneHelper
      *
      * @return bool
      */
-    public static function isPhone(string $phone)
+    public static function isPhone(string $phone): bool
     {
         try {
             self::normalizePhone($phone);
@@ -64,7 +68,7 @@ class PhoneHelper
      */
     public static function getManzanaPhone(string $rawPhone): string
     {
-        return '7' . static::normalizePhone($rawPhone);
+        return vsprintf(static::FORMAT_MANZANA, str_split(static::normalizePhone($rawPhone)));
     }
 
     /**

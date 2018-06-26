@@ -625,7 +625,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
                 break;
         }
-        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
+        $phone = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_FULL);
         $html = $this->getHtml($step, $title, ['phone' => $phone, 'step' => $step, 'backurl' => $backUrl]);
 
         return JsonSuccessResponse::createWithData(
