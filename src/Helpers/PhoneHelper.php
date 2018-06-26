@@ -6,9 +6,13 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 
 class PhoneHelper
 {
-    const FORMAT_DEFAULT = '+7 %s%s%s %s%s%s-%s%s-%s%s';
+    public const FORMAT_DEFAULT = '+7 %s%s%s %s%s%s-%s%s-%s%s';
 
-    const FORMAT_URL = '8%s%s%s%s%s%s%s%s%s%s';
+    public const FORMAT_URL = '8%s%s%s%s%s%s%s%s%s%s';
+
+    public const FORMAT_INTERNATIONAL = '+7%s%s%s%s%s%s%s%s%s%s';
+
+    public const FORMAT_SHORT = '%s%s%s%s%s%s%s%s%s%s';
 
     /**
      * Проверяет телефон по правилам нормализации. Допускаются 10только десятизначные номера с ведущими 7 или 8
