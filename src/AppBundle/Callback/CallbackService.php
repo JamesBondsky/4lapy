@@ -118,6 +118,7 @@ class CallbackService
         if (empty($curDate)) {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $date = new DateTime();
+            $date->add('+30seconds'); // добавляем 30 секунд, роли не играет, но еслио тправка задержится спасет
             $curDate = $date->format('Y-m-d H:i:s');
         }
         $uri = new Uri($this->parameters['baseUri']);
