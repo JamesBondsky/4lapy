@@ -235,11 +235,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
             ->setClientPhone(PhoneHelper::formatPhone(
                 $this->getPropertyValueByCode($order, 'PHONE'),
-                PhoneHelper::FORMAT_INTERNATIONAL
+                PhoneHelper::FORMAT_URL
             ))
             ->setClientOrderPhone(PhoneHelper::formatPhone(
                 $this->getPropertyValueByCode($order, 'PHONE_ALT'),
-                PhoneHelper::FORMAT_INTERNATIONAL
+                PhoneHelper::FORMAT_URL
             ))
             ->setClientComment($description)
             ->setOrderSource($orderSource)
@@ -628,8 +628,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($orderDto->getClientFio()) {
             $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
         }
-        $this->setPropertyValue($propertyCollection, 'PHONE', $orderDto->getClientPhone());
-        $this->setPropertyValue($propertyCollection, 'PHONE_ALT', $orderDto->getClientOrderPhone());
+        $this->setPropertyValue(
+            $propertyCollection,
+            'PHONE',
+            PhoneHelper::formatPhone($orderDto->getClientPhone(), PhoneHelper::FORMAT_SHORT)
+        );
+        $this->setPropertyValue(
+            $propertyCollection,
+            'PHONE_ALT',
+            PhoneHelper::formatPhone($orderDto->getClientOrderPhone(), PhoneHelper::FORMAT_SHORT)
+        );
         $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('d.m.Y'));
 
         try {

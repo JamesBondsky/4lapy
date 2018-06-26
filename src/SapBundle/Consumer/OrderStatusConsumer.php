@@ -55,17 +55,18 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     public function consume($order): bool
     {
+        /** @var Order $order */
         if (!$this->support($order)) {
             return false;
         }
-        
-        $this->log()->log(LogLevel::INFO, 'Импортируется статус заказа');
+
+        $this->log()->log(LogLevel::INFO, 'Импортируется статус заказа', ['orderId' => $order->getId()]);
         
         try {
             $success = true;
 
-            $order = $this->orderService->transformDtoToOrder($order);
-            $result = $order->save();
+            $saleOrder = $this->orderService->transformDtoToOrder($order);
+            $result = $saleOrder->save();
 
             if (!$result->isSuccess()) {
                 throw new CantUpdateOrderException(sprintf(
@@ -78,14 +79,17 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
             if ($warnings = $result->getWarningMessages()) {
                 $this->log()->error(sprintf(
                     'Ошибки обновлении заказа #%s: %s',
-                    $order->getId(),
+                    $saleOrder->getId(),
                     implode(', ', $warnings)
                 ));
             }
         } catch (\Exception $e) {
             $success = false;
 
-            $this->log()->log(LogLevel::ERROR, sprintf('Ошибка импорта статуса заказа: %s', $e->getMessage()));
+            $this->log()->log(LogLevel::ERROR, sprintf(
+                'Ошибка импорта статуса заказа: %s: %s', \get_class($e), $e->getMessage()),
+                ['orderId' => $order->getId()]
+            );
         }
         
         return $success;
