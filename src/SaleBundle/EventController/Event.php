@@ -337,7 +337,7 @@ class Event extends BaseServiceHandler
             try {
                 /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
                 $maxNumber = BitrixApplication::getConnection()->query(
-                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 999999999'
+                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 9999999'
                 )->fetch()['maxNumber'];
 
                 if ($defaultNumber = Option::get('sale', 'account_number_data', 0)) {
