@@ -308,7 +308,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 break;
         }
 
-        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
+        $phone = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_FULL);
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
