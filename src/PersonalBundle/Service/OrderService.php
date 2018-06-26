@@ -584,6 +584,7 @@ class OrderService
         /** @var OrderItem $item */
         $allBonuses = 0;
         $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+        $bitrixOrder->setBasket($orderBasket);
         foreach ($order->getItems() as $item) {
             $productId = $item->getId();
             /** @var Offer $offer */
@@ -602,7 +603,6 @@ class OrderService
             $basketItem->setFieldNoDemand('PRODUCT_XML_ID', $item->getArticle());
             $allBonuses += $item->getBonus();
         }
-        $bitrixOrder->setBasket($orderBasket);
 
         /** свойства */
         $orderProps = $bitrixOrder->getPropertyCollection();
