@@ -26,7 +26,7 @@ services:
 
     callback.service:
         class: FourPaws\AppBundle\Callback\CallbackService
-        arguments: ['%callback%']
+        arguments: ['%callback%','@callback.guzzle']
 
     ajax.mess:
         class: FourPaws\AppBundle\Service\AjaxMess

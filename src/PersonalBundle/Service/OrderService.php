@@ -183,7 +183,7 @@ class OrderService
                 $order->setStatusId(static::$manzanaFinalStatus);
                 $order->setPrice($cheque->sum);
                 $order->setItemsSum($cheque->sum);
-                $order->setManzanaId($cheque->chequeNumber);
+                $order->setManzanaId('' . $cheque->chequeNumber);
                 $order->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID']);
                 $order->setDeliveryId(SaleDeliveryServiceTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID']);
                 $items = [];
@@ -577,13 +577,14 @@ class OrderService
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
         /** ставим account_number = id чека с обрезкой в 100 символов на всякий случай */
-        $bitrixOrder->setFieldNoDemand('ACCOUNT_NUMBER', substr($order->getManzanaId(), 0, 100));
+        $bitrixOrder->setFieldNoDemand('ACCOUNT_NUMBER', \sprintf('%sm', \substr($order->getManzanaId(), 0, 100)));
 
         /** корзина */
         $orderBasket = Basket::create(SITE_ID);
         /** @var OrderItem $item */
         $allBonuses = 0;
         $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+        $bitrixOrder->setBasket($orderBasket);
         foreach ($order->getItems() as $item) {
             $productId = $item->getId();
             /** @var Offer $offer */
@@ -602,7 +603,6 @@ class OrderService
             $basketItem->setFieldNoDemand('PRODUCT_XML_ID', $item->getArticle());
             $allBonuses += $item->getBonus();
         }
-        $bitrixOrder->setBasket($orderBasket);
 
         /** свойства */
         $orderProps = $bitrixOrder->getPropertyCollection();
