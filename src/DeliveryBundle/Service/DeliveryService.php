@@ -56,27 +56,18 @@ class DeliveryService implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     public const INNER_DELIVERY_CODE = '4lapy_delivery';
-
     public const INNER_PICKUP_CODE = '4lapy_pickup';
-
     public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
-
     public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
-
     public const DPD_PICKUP_CODE = self::DPD_DELIVERY_GROUP_CODE . ':PICKUP';
-
     public const ORDER_LOCATION_PROP_CODE = 'CITY_CODE';
 
     public const LOCATION_RESTRICTION_TYPE_LOCATION = 'L';
-
     public const LOCATION_RESTRICTION_TYPE_GROUP = 'G';
 
     public const ZONE_1 = 'ZONE_1';
-
     public const ZONE_2 = 'ZONE_2';
-
     public const ZONE_3 = 'ZONE_3';
-
     public const ZONE_4 = 'ZONE_4';
 
     public const PICKUP_CODES = [
