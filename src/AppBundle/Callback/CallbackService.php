@@ -6,6 +6,7 @@
 
 namespace FourPaws\AppBundle\Callback;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
@@ -40,13 +41,19 @@ class CallbackService
      * @param string $curDate
      * @param int    $timeout
      *
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      * @throws ObjectException
      */
     public function send(string $phone, string $curDate = '', int $timeout = 0): void
     {
+        $logger = LoggerFactory::create('callback');
+        if(empty($this->parameters['baseUri']) || empty($this->parameters['pass']) || empty($this->parameters['login'])){
+            $logger->error('не заданы параметры');
+            return;
+        }
+        if(empty($phone)){
+            $logger->info('не указан телефон');
+            return;
+        }
         if (empty($curDate)) {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $date    = new DateTime();
@@ -65,9 +72,13 @@ class CallbackService
         $uri->setPass($this->parameters['pass']);
         $uri->setUser($this->parameters['login']);
         $uri->setHost($uri->getUser() . ':' . $uri->getPass() . '@' . $uri->getHost());
-        
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $callBackProducer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_set_producer');
+
+        try {
+            $container = App::getInstance()->getContainer();
+            $callBackProducer = $container->get('old_sound_rabbit_mq.callback_set_producer');
+        } catch (ApplicationCreateException $e) {
+            $logger->error('ошибка получения продюсера');
+        }
         /** @var Producer $callBackProducer */
         $callBackProducer->publish($uri->getUri());
     }

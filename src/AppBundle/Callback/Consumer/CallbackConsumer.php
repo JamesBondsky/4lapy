@@ -43,7 +43,7 @@ class CallbackConsumer extends CallbackConsumerBase
             $data = json_decode($res->getBody()->getContents());
 
             if ((int)$data->result !== static::SUCCESS || $res->getStatusCode() !== 200) {
-                $this->log()->critical('Сервис обартного звонка ответил ошибкой на ссылку ' . $href, (array)$data);
+                $this->log()->error('Сервис обартного звонка ответил ошибкой на ссылку ' . $href, (array)$data);
                 //публикуем заного с задержкой в 30 секунд
                 sleep(30);
                 $callBackProducer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_set_producer');
