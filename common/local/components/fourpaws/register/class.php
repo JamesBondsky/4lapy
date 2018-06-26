@@ -547,7 +547,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
                 break;
         }
-        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
+        $phone = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_FULL);
         ob_start(); ?>
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
