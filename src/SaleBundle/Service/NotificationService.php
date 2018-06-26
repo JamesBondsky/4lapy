@@ -349,7 +349,7 @@ class NotificationService implements LoggerAwareInterface
             $properties = $this->orderService->getOrderPropertiesByCode(
                 $order,
                 [
-                    'REGION_COURIER_FROM_DC',
+                    'SHIPMENT_PLACE_CODE',
                     'PHONE',
                     'EMAIL',
                     'DELIVERY_DATE',
@@ -359,7 +359,7 @@ class NotificationService implements LoggerAwareInterface
             );
 
             $result['accountNumber'] = $order->getField('ACCOUNT_NUMBER');
-            $result['dcDelivery'] = $properties['REGION_COURIER_FROM_DC'] === BitrixUtils::BX_BOOL_TRUE;
+            $result['dcDelivery'] = (bool)$properties['SHIPMENT_PLACE_CODE'];
             $result['phone'] = $properties['PHONE'];
             $result['email'] = $properties['EMAIL'];
             $result['price'] = $order->getPrice();
