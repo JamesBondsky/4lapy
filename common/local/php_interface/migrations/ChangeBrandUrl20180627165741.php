@@ -15,14 +15,12 @@ class ChangeBrandUrl20180627165741 extends SprintMigrationBase
 
     public function up()
     {
-        $helper = new HelperManager();
-
         $iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS);
-        $helper->Iblock()->updateIblockFields($iblockId,
+        (new\CIblock())->Update($iblockId,
             [
                 'DETAIL_PAGE_URL'    => '/brands/#CODE#/',
                 'CANONICAL_PAGE_URL' => 'https://#SERVER_NAME#/brands/#CODE#/',
-            ]);
-
+            ]
+        );
     }
 }
