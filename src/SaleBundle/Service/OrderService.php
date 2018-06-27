@@ -382,8 +382,8 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $order->setBasket($basket);
-        if ($order->getBasket()->getOrderableItems()->isEmpty()) {
+        $order->setBasket($basket->getOrderableItems());
+        if ($order->getBasket()->isEmpty()) {
             throw new OrderCreateException('Basket is empty');
         }
 
@@ -416,7 +416,7 @@ class OrderService implements LoggerAwareInterface
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
         try {
             /** @var BasketItem $item */
-            foreach ($order->getBasket()->getOrderableItems() as $item) {
+            foreach ($order->getBasket() as $item) {
                 $shipmentItem = $shipmentItemCollection->createItem($item);
                 $shipmentItem->setQuantity($item->getQuantity());
             }
