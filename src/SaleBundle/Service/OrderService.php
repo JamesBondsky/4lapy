@@ -490,9 +490,9 @@ class OrderService implements LoggerAwareInterface
 
                     break;
                 case 'REGION_COURIER_FROM_DC':
-                    $value = ($this->deliveryService->isDelivery($selectedDelivery) && $selectedDelivery->getStockResult()->getDelayed()->isEmpty())
-                        ? BitrixUtils::BX_BOOL_FALSE
-                        : BitrixUtils::BX_BOOL_TRUE;
+                    $value = ($this->deliveryService->isDelivery($selectedDelivery) && !$selectedDelivery->getStockResult()->getDelayed()->isEmpty())
+                        ? BitrixUtils::BX_BOOL_TRUE
+                        : BitrixUtils::BX_BOOL_FALSE;
                     break;
                 default:
                     continue 2;
