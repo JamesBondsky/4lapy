@@ -29,8 +29,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $product = $arResult['PRODUCT'];
-$offers = $product->getOffers();
+$offers = $product->getOffers(true, false, $arParams['OFFER_FILTER']);
 /** @var Offer $currentOffer */
+
 $currentOffer = $arResult['CURRENT_OFFER'];
 ?>
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
@@ -126,7 +127,8 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                         }
                     }
                 } ?>
-                <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : ''?> js-mobile-select js-select-mobile-package" href="javascript:void(0);"
+                <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : '' ?> js-mobile-select js-select-mobile-package"
+                   href="javascript:void(0);"
                    title=""><?= $value ?></a>
                 <div class="b-weight-container__dropdown-list__wrapper">
                     <div class="b-weight-container__dropdown-list"></div>
