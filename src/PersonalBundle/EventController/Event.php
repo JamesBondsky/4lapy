@@ -101,6 +101,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
         static::hlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
@@ -122,6 +123,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
 
         $fields = static::getHlItemFieldsById('Address', $id);
 
@@ -152,6 +154,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
         static::hlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
@@ -173,7 +176,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
-
+        $id = (int)$id;
         $fields = static::getHlItemFieldsById('Pet', $id);
 
         if (!empty($fields['UF_USER_ID'])) {
@@ -203,6 +206,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
         static::hlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_USER_ID'])) {
@@ -224,6 +228,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
 
         $fields = static::getHlItemFieldsById('Referral', $id);
 
@@ -254,6 +259,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
         static::hlItemClearCache($id);
         $fields = $event->getParameter('fields');
         if (!isset($fields['UF_OBJECT_ID'])) {
@@ -275,6 +281,7 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
 
         $fields = static::getHlItemFieldsById('Comments', $id);
 
@@ -298,6 +305,8 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
+
         if (!empty($id) && !empty($_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id])) {
             /** для удаления */
             $fields = $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id];
@@ -403,6 +412,8 @@ class Event extends BaseServiceHandler
         if (\is_array($id)) {
             $id = $id['ID'];
         }
+        $id = (int)$id;
+
         $_SESSION['EVENT_UPDATE_MANZANA_PET_FIELDS_' . $id] = static::getHlItemFieldsById('Pet', $id);
     }
 
