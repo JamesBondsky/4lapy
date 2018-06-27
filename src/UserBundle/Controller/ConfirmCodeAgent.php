@@ -7,13 +7,10 @@
 namespace FourPaws\UserBundle\Controller;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlQueryException;
+use Exception;
 use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use RuntimeException;
 
 /**
  * Class ConfirmCodeAgents
@@ -24,18 +21,17 @@ class ConfirmCodeAgent
 {
     /**
      * @return string
+     *
+     * @throws RuntimeException
      */
     public static function delExpiredCodes(): string
     {
         try {
-            $ConfirmCodeService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $ConfirmCodeService::delExpiredCodes();
-        } catch (ArgumentException|SqlQueryException $e) {
-            $logger = LoggerFactory::create('sql');
-            $logger->error('sql error - ' . $e->getMessage());
-        } catch (ApplicationCreateException|ServiceCircularReferenceException|ServiceNotFoundException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->error('system error - ' . $e->getMessage());
+            $confirmCodeService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $confirmCodeService::delExpiredCodes();
+        } catch (Exception $e) {
+            $logger = LoggerFactory::create('ConfirmCodeAgent');
+            $logger->error('Error - ' . $e->getMessage());
         }
 
         return '\\' . __METHOD__ . '();';
