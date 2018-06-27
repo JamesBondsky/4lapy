@@ -156,10 +156,6 @@ class Event extends BaseServiceHandler
         $entity = $event->getParameter('ENTITY');
 
         if ($entity instanceof Order) {
-            $isNew = $event->getParameter('IS_NEW');
-            if (!$isNew) {
-                return;
-            }
             $order = $entity;
         } elseif ($entity instanceof Payment) {
             /** @var PaymentCollection $collection */
