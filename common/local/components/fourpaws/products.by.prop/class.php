@@ -9,7 +9,6 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use FourPaws\Catalog\Collection\ProductCollection;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Helpers\TaggedCacheHelper;
 
@@ -53,8 +52,8 @@ class ProductsByProp extends CBitrixComponent
         $params['ITEM_ID'] = (int)$params['ITEM_ID'];
         $params['SLIDER'] = $params['SLIDER'] ?? 'N';
         $params['IS_SHARE'] = $params['IS_SHARE'] ?? false;
-        if(!\is_bool($params['IS_SHARE'])){
-            if(!empty($params['IS_SHARE']) && $params['IS_SHARE'] === 'Y'){
+        if (!\is_bool($params['IS_SHARE'])) {
+            if (!empty($params['IS_SHARE']) && $params['IS_SHARE'] === 'Y') {
                 $params['IS_SHARE'] = true;
             } else {
                 $params['IS_SHARE'] = false;
@@ -96,8 +95,8 @@ class ProductsByProp extends CBitrixComponent
         if ($this->startResultCache()) {
             TaggedCacheHelper::addManagedCacheTags([
                 'product:by:prop',
-                'product:by:prop:'.$this->arParams['ITEM_ID'],
-                'iblock:item:'.$this->arParams['ITEM_ID']
+                'product:by:prop:' . $this->arParams['ITEM_ID'],
+                'iblock:item:' . $this->arParams['ITEM_ID'],
             ]);
 
             parent::executeComponent();
@@ -110,6 +109,7 @@ class ProductsByProp extends CBitrixComponent
                     $products[] = $item['VALUE'];
                 }
             }
+            $this->arResult['OFFERS_IDS'] = $products;
             if (!empty($products)) {
                 $query = new OfferQuery();
                 if ($this->arParams['COUNT_ON_PAGE'] > 0) {
@@ -126,8 +126,8 @@ class ProductsByProp extends CBitrixComponent
                 }
                 $this->arResult['OFFERS'] = $query->withFilter([
                     '=' . $this->arParams['FILTER_FIELD'] => $products,
-                    'ACTIVE' => 'Y',
-                    '>CATALOG_PRICE_2' => 0
+                    'ACTIVE'                              => 'Y',
+                    '>CATALOG_PRICE_2'                    => 0,
                 ])->exec();
             }
 

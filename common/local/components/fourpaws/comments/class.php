@@ -226,7 +226,6 @@ class CCommentsComponent extends \CBitrixComponent
             return false;
         }
 
-        /** @todo кеширование комментариев */
         if ($this->startResultCache()) {
             $tagCache = new TaggedCacheHelper();
             $tagCache->addTags([

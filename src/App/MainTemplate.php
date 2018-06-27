@@ -431,7 +431,7 @@ class MainTemplate extends TemplateAbstract
      */
     private function isBrand(): bool
     {
-        return $this->isPartitionDir('/brand');
+        return $this->isPartitionDir('/brands') && !$this->isDir('/brands');
     }
 
     /**
