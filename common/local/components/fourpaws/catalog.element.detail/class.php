@@ -109,6 +109,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             Tools::process404([], true, true, true);
         }
 
+        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($this->startResultCache()) {
             parent::executeComponent();
 
