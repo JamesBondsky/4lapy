@@ -35,6 +35,7 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
                 }
                 if ($arParams['IS_SHARE']) {
                     $params['SHARE_ID'] = $arParams['ITEM_ID'];
+                    $params['OFFER_FILTER'] = ['=' . $arParams['FILTER_FIELD'] => $arResult['OFFERS_IDS']];
                 }
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.element.snippet',
