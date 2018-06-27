@@ -466,6 +466,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($order->getBasket() as $basketItem) {
+            if ($basketItem->isDelay()) {
+                continue;
+            }
+
             $offer = (new OrderOffer())
                 ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
                 ->setUnitPrice($basketItem->getPrice())

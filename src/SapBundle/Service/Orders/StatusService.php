@@ -58,6 +58,20 @@ class StatusService implements LoggerAwareInterface
         DeliveryService::DPD_DELIVERY_CODE => self::STATUS_COURIER_MAP,
         DeliveryService::DPD_PICKUP_CODE => self::STATUS_PICKUP_MAP,
         DeliveryService::INNER_PICKUP_CODE => self::STATUS_PICKUP_MAP,
+        /**@todo remove - it`s from old site */
+        16 => self::STATUS_PICKUP_MAP,
+        17 => self::STATUS_COURIER_MAP,
+        18 => self::STATUS_COURIER_MAP,
+        19 => self::STATUS_COURIER_MAP,
+        20 => self::STATUS_COURIER_MAP,
+        21 => self::STATUS_COURIER_MAP,
+        22 => self::STATUS_COURIER_MAP,
+        23 => self::STATUS_COURIER_MAP,
+        24 => self::STATUS_COURIER_MAP,
+        25 => self::STATUS_COURIER_MAP,
+        26 => self::STATUS_PICKUP_MAP,
+        27 => self::STATUS_PICKUP_MAP,
+        28 => self::STATUS_PICKUP_MAP,
     ];
 
     /**
@@ -79,7 +93,7 @@ class StatusService implements LoggerAwareInterface
         if (null === $orderStatus) {
             throw new NotFoundOrderStatusException(
                 \sprintf(
-                    'Не найден статус %s для службы доставка %s',
+                    'Не найден статус %s для службы доставки %s',
                     $sapStatus,
                     $deliveryType
                 )
