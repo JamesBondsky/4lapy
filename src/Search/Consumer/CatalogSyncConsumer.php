@@ -20,6 +20,11 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
+/**
+ * Class CatalogSyncConsumer
+ *
+ * @package FourPaws\Search\Consumer
+ */
 class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
@@ -58,11 +63,11 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     public function execute(AMQPMessage $msg)
     {
-        /** @var CatalogSyncMsg $cagalogSyncMessage */
-        $cagalogSyncMessage = $this->extractMessageBody($msg);
+        /** @var CatalogSyncMsg $catalogSyncMessage */
+        $catalogSyncMessage = $this->extractMessageBody($msg);
 
         //Если сообщение свежее
-        if (time() === $cagalogSyncMessage->getTimestamp()) {
+        if (time() === $catalogSyncMessage->getTimestamp()) {
             /**
              * Добавить задержку, чтобы MySQL успел закомитить все изменения по товару
              * и избежать ситуации, когда из базы будет прочитано неактуальное состояние.
@@ -73,32 +78,32 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
         }
 
         if (
-            $cagalogSyncMessage->isForProductEntity()
-            && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
+            $catalogSyncMessage->isForProductEntity()
+            && ($catalogSyncMessage->isForAddAction() || $catalogSyncMessage->isForUpdateAction())
         ) {
-            $this->updateProduct($cagalogSyncMessage->getEntityId());
-        } elseif ($cagalogSyncMessage->isForProductEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-            $this->deleteProduct($cagalogSyncMessage->getEntityId());
+            $this->updateProduct($catalogSyncMessage->getEntityId());
+        } elseif ($catalogSyncMessage->isForProductEntity() && $catalogSyncMessage->isForDeleteAction()) {
+            $this->deleteProduct($catalogSyncMessage->getEntityId());
         } elseif (
-            $cagalogSyncMessage->isForOfferEntity()
-            && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
+            $catalogSyncMessage->isForOfferEntity()
+            && ($catalogSyncMessage->isForAddAction() || $catalogSyncMessage->isForUpdateAction())
         ) {
-            $this->updateOffer($cagalogSyncMessage->getEntityId());
-        } elseif ($cagalogSyncMessage->isForOfferEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-            $this->deleteOffer($cagalogSyncMessage->getEntityId());
+            $this->updateOffer($catalogSyncMessage->getEntityId());
+        } elseif ($catalogSyncMessage->isForOfferEntity() && $catalogSyncMessage->isForDeleteAction()) {
+            $this->deleteOffer($catalogSyncMessage->getEntityId());
         } elseif (
-            $cagalogSyncMessage->isForBrandEntity()
-            && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
+            $catalogSyncMessage->isForBrandEntity()
+            && ($catalogSyncMessage->isForAddAction() || $catalogSyncMessage->isForUpdateAction())
         ) {
-            $this->updateBrand($cagalogSyncMessage->getEntityId());
-        } elseif ($cagalogSyncMessage->isForBrandEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-            $this->deleteBrand($cagalogSyncMessage->getEntityId());
+            $this->updateBrand($catalogSyncMessage->getEntityId());
+        } elseif ($catalogSyncMessage->isForBrandEntity() && $catalogSyncMessage->isForDeleteAction()) {
+            $this->deleteBrand($catalogSyncMessage->getEntityId());
         } else {
             $this->log()->alert(
                 sprintf(
                     'Неподдерживаемый тип синхронизационного сообщения: type= %s , action = %s',
-                    $cagalogSyncMessage->getEntityType(),
-                    $cagalogSyncMessage->getAction()
+                    $catalogSyncMessage->getEntityType(),
+                    $catalogSyncMessage->getAction()
                 )
             );
         }
@@ -289,7 +294,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @return CatalogSyncMsg
      */
-    protected function extractMessageBody(AMQPMessage $msg)
+    protected function extractMessageBody(AMQPMessage $msg): CatalogSyncMsg
     {
         return $this->serializer->deserialize(
             $msg->getBody(),
@@ -318,7 +323,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @return LoggerInterface
      */
-    protected function log()
+    protected function log(): LoggerInterface
     {
         return $this->logger;
     }
