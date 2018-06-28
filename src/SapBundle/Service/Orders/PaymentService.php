@@ -212,9 +212,8 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     public function getFileName($debit): string
     {
         return \sprintf(
-            '/%s/%s-%s_%s.xml',
+            '/%s/%s%s.xml',
             \trim($this->outPath, '/'),
-            $debit->getPaymentDate()->format('Ymd'),
             $this->outPrefix,
             $debit->getBitrixOrderId()
         );
