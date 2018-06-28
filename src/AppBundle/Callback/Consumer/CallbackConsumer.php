@@ -40,19 +40,27 @@ class CallbackConsumer extends CallbackConsumerBase
                 $uri = new Uri($href);
                 $explodeList = explode('&', $uri->getQuery());
                 $dateParams = null;
+
                 foreach ($explodeList as $item) {
                     [$name, $val] = explode('=', $item);
-                    if($name === 'startparam2'){
-                        $dateParams = new DateTime($val,'Y-m-d H:i:s');
+                    if ($name === 'startparam2') {
+                        $dateParams = new DateTime(urldecode($val), 'Y-m-d H:i:s');
                         break;
                     }
+
+                    if ($name === 'startparam1') {
+                        if (preg_match('~^[78+]~', $val) == 0) {
+                            return;
+                        }
+                    }
                 }
-                if($dateParams === null || $date->getTimestamp() >= $dateParams->getTimestamp()){
+
+                if ($dateParams === null || $date->getTimestamp() >= $dateParams->getTimestamp()) {
                     $date->add('+30seconds'); // добавляем 30 секунд, роли не играет, но еслио тправка задержится спасет
                     $curDate = $date->format('Y-m-d H:i:s');
                 }
 
-                if($curDate !== null) {
+                if ($curDate !== null) {
                     preg_match_all('/^https?:\/\/(.*):(.*)@' . $uri->getHost() . '/', $href, $matches);
                     $uri->deleteParams(['startparam2']);
                     $uri->addParams(['startparam2' => $curDate]);
@@ -64,9 +72,12 @@ class CallbackConsumer extends CallbackConsumerBase
 
                 $res = $this->guzzle->send(new Request('get', $href));
             } catch (GuzzleException $e) {
-                $this->log()->error('Сервис обартного звонка ответил ошибкой' . $e->getMessage() . ' на ссылку ' . $href);
-                return false;
+                $this->log()->error('Сервис обартного звонка ответил ошибкой' . $e->getMessage() . ' на ссылку ' . $href);die;
+                return true;
+            } catch (\Exception $e) {
+                $this->log()->error('Ошибка: ' . $e->getMessage() . ' на ссылку ' . $href);
             }
+
             $data = json_decode($res->getBody()->getContents());
 
             if ((int)$data->result !== static::SUCCESS || $res->getStatusCode() !== 200) {

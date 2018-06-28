@@ -55,6 +55,7 @@ four_paws_sap:
       order: '%sap.directory.out%'
       payment: '%sap.directory.out%'
     prefix:
+      order: 'ORD_'
       payment: 'PC_'
   pipelines:
     catalog:
