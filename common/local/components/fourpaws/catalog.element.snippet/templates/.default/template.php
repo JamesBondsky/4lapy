@@ -152,7 +152,7 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                                 $value = $offer->getVolumeReference()->getName();
                             } else {
                                 try {
-                                    $weight = $currentOffer->getCatalogProduct()->getWeight();
+                                    $weight = $offer->getCatalogProduct()->getWeight();
                                 } catch (\Throwable $e) {
                                     $weight = 0;
                                 }
