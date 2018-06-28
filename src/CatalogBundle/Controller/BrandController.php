@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Class BrandController
  * @package FourPaws\CatalogBundle\Controller
- * @Route("/brands")
+ * @Route("/brand")
  */
 class BrandController extends Controller
 {
@@ -24,14 +24,8 @@ class BrandController extends Controller
      * @Route("/")
      *
      * @return Response
-     * @throws ServiceNotFoundException
-     * @throws Exception
-     * @throws RuntimeException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
      */
-    public function listAction(
-    ): Response {
+    public function listAction(): Response {
         return $this->render('FourPawsCatalogBundle:Catalog:brand.list.html.php', []);
     }
 

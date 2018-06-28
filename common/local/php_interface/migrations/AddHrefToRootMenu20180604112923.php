@@ -36,7 +36,7 @@ class AddHrefToRootMenu20180604112923 extends SprintMigrationBase
             if (\is_array($sections) && \count($sections) > 0) {
                 $sectId = (int)reset($sections)['ID'];
                 if ($sectId > 0) {
-                    $iblockHelper->updateSection($sectId, ['CODE' => 'brands', 'UF_HREF' => '/brands/']);
+                    $iblockHelper->updateSection($sectId, ['CODE' => 'brands', 'UF_HREF' => '/brand/']);
                 }
             }
         }

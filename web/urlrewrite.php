@@ -40,14 +40,6 @@ $arUrlRewrite=array (
     'PATH' => '/personal/index.php',
     'SORT' => 100,
   ),
-  5 => 
-  array (
-    'CONDITION' => '#^/brands/#',
-    'RULE' => '',
-    'ID' => 'fourpaws:brands',
-    'PATH' => '/brands/index.php',
-    'SORT' => 100,
-  ),
   6 => 
   array (
     'CONDITION' => '##',
