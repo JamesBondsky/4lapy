@@ -15,11 +15,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
-use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Type\Date;
@@ -199,14 +197,12 @@ class CItemsListComponent extends CBitrixComponent
 
             $this->setItems();
 
-            $tags = ['items:list'];
+            $tags = [];
             if (\is_array($this->arParams['IBLOCK_ID'])) {
                 foreach ($this->arParams['IBLOCK_ID'] as $iblockId) {
-                    $tags['items:list:' . $iblockId];
                     $tags['iblock_id_' . $iblockId];
                 }
             } else {
-                $tags['items:list:' . $this->arParams['IBLOCK_ID']];
                 $tags['iblock_id_' . $this->arParams['IBLOCK_ID']];
             }
             TaggedCacheHelper::addManagedCacheTags($tags);

@@ -94,8 +94,6 @@ class ProductsByProp extends CBitrixComponent
         $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
         if ($this->startResultCache()) {
             TaggedCacheHelper::addManagedCacheTags([
-                'product:by:prop',
-                'product:by:prop:' . $this->arParams['ITEM_ID'],
                 'iblock:item:' . $this->arParams['ITEM_ID'],
             ]);
 

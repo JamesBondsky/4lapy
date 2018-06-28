@@ -10,7 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
@@ -98,15 +97,12 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             return null;
         }
 
-        $instance = Application::getInstance();
-
         $this->setFrameMode(true);
 
-        if ($this->startResultCache($this->arParams['CACHE_TIME'], ['user_id'=>$this->currentUserProvider->getCurrentUserId()])) {
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], ['user_id' => $this->currentUserProvider->getCurrentUserId()])) {
             TaggedCacheHelper::addManagedCacheTags([
-                'personal:pets:'. $this->currentUserProvider->getCurrentUserId(),
-                'personal:pets',
-                'hlb:field:pets_user:'. $this->currentUserProvider->getCurrentUserId()
+                'personal:pets:' . $this->currentUserProvider->getCurrentUserId(),
+                'hlb:field:pets_user:' . $this->currentUserProvider->getCurrentUserId()
             ]);
 
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
@@ -132,7 +128,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
             [
                 'FIELD_NAME' => 'UF_GENDER',
-                'ENTITY_ID'  => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
             ]
         )->exec()->fetch()['ID'];
         $userFieldEnum = new \CUserFieldEnum();
