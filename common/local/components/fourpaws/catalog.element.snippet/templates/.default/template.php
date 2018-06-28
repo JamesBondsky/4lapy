@@ -121,7 +121,13 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                 } else {
                     if ($currentOffer->getVolumeReference()) {
                         $value = $currentOffer->getVolumeReference()->getName();
-                    } elseif ($weight = $currentOffer->getCatalogProduct()->getWeight()) {
+                    } else {
+                        try {
+                            $weight = $currentOffer->getCatalogProduct()->getWeight();
+                        } catch (\Throwable $e) {
+                            $weight = 0;
+                        }
+
                         if ($weight > 0) {
                             $value = WordHelper::showWeight($weight, true, 999);
                         }
@@ -144,7 +150,13 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                         } else {
                             if ($offer->getVolumeReference()) {
                                 $value = $offer->getVolumeReference()->getName();
-                            } elseif ($weight = $offer->getCatalogProduct()->getWeight()) {
+                            } else {
+                                try {
+                                    $weight = $currentOffer->getCatalogProduct()->getWeight();
+                                } catch (\Throwable $e) {
+                                    $weight = 0;
+                                }
+
                                 if ($weight > 0) {
                                     $value = WordHelper::showWeight($weight, true, 999);
                                 }
