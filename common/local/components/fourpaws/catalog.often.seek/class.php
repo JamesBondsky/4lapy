@@ -4,7 +4,6 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-use Bitrix\Main\Application as BitrixApplication;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
@@ -77,7 +76,6 @@ class CatalogOftenSeekComponent extends CBitrixComponent
         if ($this->startResultCache()) {
             TaggedCacheHelper::addManagedCacheTags([
                 'catalog:often_seek:'.$this->arParams['SECTION_ID'],
-                'catalog:often_seek'
             ]);
 
             $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
