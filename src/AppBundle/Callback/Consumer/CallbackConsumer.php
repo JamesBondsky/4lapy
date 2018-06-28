@@ -50,7 +50,7 @@ class CallbackConsumer extends CallbackConsumerBase
 
                     if ($name === 'startparam1') {
                         if (preg_match('~^[78+]~', $val) == 0) {
-                            return;
+                            return true;
                         }
                     }
                 }
