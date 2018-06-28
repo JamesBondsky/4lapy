@@ -1035,7 +1035,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
                 ->setChargeBonus(false)
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
-                ->setDeliveryShipmentPoint('');
+                ->setDeliveryShipmentPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
             $collection->add($offer);
         }
     }
