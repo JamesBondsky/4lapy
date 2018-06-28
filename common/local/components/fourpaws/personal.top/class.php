@@ -14,7 +14,6 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Collection;
@@ -214,7 +213,6 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             }
 
             $tagCache->addTags([
-                'personal:top',
                 'personal:top:'. $userId,
                 'order:'. $userId
             ]);
@@ -241,7 +239,6 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             $cachePath
         )) {
             TaggedCacheHelper::addManagedCacheTags([
-                'personal:top',
                 'personal:top:'. $userId,
                 'order:'. $userId
             ]);

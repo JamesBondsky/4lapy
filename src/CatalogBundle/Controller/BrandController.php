@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Class BrandController
  * @package FourPaws\CatalogBundle\Controller
- * @Route("/brands")
+ * @Route("/brand")
  */
 class BrandController extends Controller
 {

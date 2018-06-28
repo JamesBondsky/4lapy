@@ -10,7 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\GroupTable;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
@@ -209,7 +208,6 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
 
             $tagCache->addTags([
-                'personal:referral',
                 'personal:referral:' . $curUser->getId(),
                 'hlb:field:referral_user:' . $curUser->getId(),
             ]);
