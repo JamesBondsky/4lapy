@@ -156,7 +156,7 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
                 if (!$isOk) {
                     $this->orderService->processPaymentError($order);
                     $this->arResult['ERRORS'][] = $e->getMessage();
-                    $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
+                    $url = new \Bitrix\Main\Web\Uri(sprintf('/sale/order/complete/%s/', $order->getId()));
 
                     if (!empty($this->arParams['HASH'])) {
                         $url->addParams(['HASH' => $this->arParams['HASH']]);

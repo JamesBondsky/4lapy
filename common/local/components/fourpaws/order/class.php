@@ -60,7 +60,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         OrderStorageService::AUTH_STEP => 'index.php',
         OrderStorageService::DELIVERY_STEP => 'delivery/',
         OrderStorageService::PAYMENT_STEP => 'payment/',
-        OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#',
+        OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#/',
     ];
 
     /**

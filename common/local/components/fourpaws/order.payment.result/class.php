@@ -96,7 +96,7 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
         }
 
         $actionFile = $payment->getPaySystem()->getFieldsValues()['ACTION_FILE'];
-        $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
+        $url = new \Bitrix\Main\Web\Uri(sprintf('/sale/order/complete/%s/', $order->getId()));
 
         if (!empty($this->arParams['HASH'])) {
             $url->addParams(['HASH' => $this->arParams['HASH']]);
