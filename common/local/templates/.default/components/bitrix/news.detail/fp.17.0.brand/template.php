@@ -14,7 +14,7 @@ $this->setFrameMode(true);
     <ul class="b-breadcrumbs__list">
         <li class="b-breadcrumbs__item">
             <a class="b-breadcrumbs__link"
-               href="/brands/"
+               href="/brand/"
                title="<?= Loc::getMessage('BRAND_DETAIL.ALL_LINK_TITLE') ?>"><?php
                 echo Loc::getMessage('BRAND_DETAIL.ALL_LINK');
                 ?></a>

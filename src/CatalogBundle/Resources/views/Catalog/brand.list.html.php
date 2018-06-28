@@ -10,7 +10,7 @@ $APPLICATION->IncludeComponent(
         'CACHE_TYPE' => 'A',
         'CACHE_TIME' => '43200',
         'SEF_MODE' => 'Y',
-        'SEF_FOLDER' => '/brands/',
+        'SEF_FOLDER' => '/brand/',
         'SEF_URL_TEMPLATES' => array(
             'index' => 'index.php',
             //'letter' => '#LETTER_REDUCED#/'
