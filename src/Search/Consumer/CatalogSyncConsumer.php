@@ -3,9 +3,9 @@
 namespace FourPaws\Search\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Elastica\Exception\InvalidException;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
@@ -42,7 +42,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * CatalogSyncConsumer constructor.
      *
-     * @param Serializer $serializer
+     * @param Serializer    $serializer
      * @param SearchService $searchService
      *
      * @throws RuntimeException
@@ -129,7 +129,18 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             return;
         }
 
-        $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
+        try {
+            $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
+
+            return;
+        }
 
         TaggedCacheHelper::clearManagedCache([
             'iblock:item:' . $product->getId(),
@@ -151,7 +162,18 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private function deleteProduct(int $productId)
     {
-        $deleteProductResult = $this->searchService->getIndexHelper()->deleteProduct($productId);
+        try {
+            $deleteProductResult = $this->searchService->getIndexHelper()->deleteProduct($productId);
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
+
+            return;
+        }
 
         TaggedCacheHelper::clearManagedCache([
             'iblock:item:' . $productId,
@@ -199,10 +221,22 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             return;
         }
 
-        $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
+        try {
+            $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
+
+            return;
+        }
+
         TaggedCacheHelper::clearManagedCache([
             'iblock:item:' . $offer->getId(),
-            'iblock:item:' . $product->getId()
+            'iblock:item:' . $product->getId(),
         ]);
 
         $this->log()->debug(
@@ -252,14 +286,25 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
         );
 
         $dbProductList = (new ProductQuery())->withSelect(['ID'])
-                                             ->withFilter(['=PROPERTY_BRAND' => $brand->getId()])
-                                             ->doExec();
+            ->withFilter(['=PROPERTY_BRAND' => $brand->getId()])
+            ->doExec();
         while ($arProduct = $dbProductList->Fetch()) {
             $productId = (int)$arProduct['ID'];
 
             $catSyncMsg->withEntityId($productId);
 
-            $this->searchService->getIndexHelper()->publishSyncMessage($catSyncMsg);
+            try {
+                $this->searchService->getIndexHelper()->publishSyncMessage($catSyncMsg);
+            } catch (InvalidException $e) {
+                $this->log()->error(
+                    sprintf(
+                        'Ошибка: %s',
+                        $e->getMessage()
+                    )
+                );
+
+                return;
+            }
 
             $this->log()->debug(
                 sprintf(
@@ -278,7 +323,18 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     public function deleteBrand(int $brandId)
     {
-        $deleteBrandResult = $this->searchService->getIndexHelper()->deleteBrand($brandId);
+        try {
+            $deleteBrandResult = $this->searchService->getIndexHelper()->deleteBrand($brandId);
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
+
+            return;
+        }
 
         $this->log()->debug(
             sprintf(
