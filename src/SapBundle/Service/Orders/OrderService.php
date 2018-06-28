@@ -516,9 +516,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     public function getDeliveryAddress(Order $order)
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
+        $deliveryPlaceCode = '';
+        $deliveryCode = $this->getDeliveryCode($order);
+        if ($deliveryCode === DeliveryService::INNER_PICKUP_CODE) {
+            $deliveryPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
+        }
 
         return (new OutDeliveryAddress())
-            ->setDeliveryPlaceCode($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
+            ->setDeliveryPlaceCode($deliveryPlaceCode)
             ->setRegionCode($this->locationService->getRegionNumberCode($city))
             ->setPostCode('')
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
@@ -542,18 +547,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function getDeliveryTypeCode(Order $order): string
     {
-        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
-
-        if (null === $shipment) {
-            throw new NotFoundOrderShipmentException(
-                \sprintf(
-                    'Отгрузка для заказа #%s не найдена',
-                    $order->getId()
-                )
-            );
-        }
-
-        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+        $code = $this->getDeliveryCode($order);
         $deliveryZone = $this->getDeliveryZone($order);
 
         if (
@@ -564,7 +558,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         $isFastOrder = $this->getPropertyValueByCode($order, 'IS_FAST_ORDER') === 'Y';
-        $code = $isFastOrder ? '' : $shipment->getDelivery()->getCode();
+        if ($isFastOrder) {
+            $code = '';
+        }
 
         switch ($code) {
             case DeliveryService::INNER_DELIVERY_CODE:
@@ -603,6 +599,25 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             'Не найден тип доставки для заказа #%s',
             $order->getId()
         ));
+    }
+
+    /**
+     * @param Order $order
+     * @return string
+     */
+    private function getDeliveryCode(Order $order): string {
+        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+
+        if (null === $shipment) {
+            throw new NotFoundOrderShipmentException(
+                \sprintf(
+                    'Отгрузка для заказа #%s не найдена',
+                    $order->getId()
+                )
+            );
+        }
+
+        return $shipment->getDelivery()->getCode();
     }
 
     /**
