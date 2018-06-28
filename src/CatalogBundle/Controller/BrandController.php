@@ -24,14 +24,8 @@ class BrandController extends Controller
      * @Route("/")
      *
      * @return Response
-     * @throws ServiceNotFoundException
-     * @throws Exception
-     * @throws RuntimeException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
      */
-    public function listAction(
-    ): Response {
+    public function listAction(): Response {
         return $this->render('FourPawsCatalogBundle:Catalog:brand.list.html.php', []);
     }
 
