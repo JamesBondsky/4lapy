@@ -127,8 +127,6 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
 
             TaggedCacheHelper::addManagedCacheTags([
-                'catalog:offer:' . $currentOffer->getId(),
-                'catalog:product:' . $product->getId(),
                 'iblock:item:' . $product->getId(),
             ]);
 
