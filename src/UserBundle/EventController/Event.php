@@ -8,14 +8,16 @@ namespace FourPaws\UserBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
-use FourPaws\App\Application;
+use Bitrix\main\Application as BitrixApplication;
 use FourPaws\App\Application as App;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\MainTemplate;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -82,6 +84,11 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserLogin', [self::class,'clearUserCache'], $module);
         static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class,'clearUserCache'], $module);
 
+        /** действия при авторизации(обновление группы оптовиков, обновление карты) */
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class,'refreshUserOnAuth'], $module);
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class,'refreshUserOnAuth'], $module);
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class,'refreshUserOnAuth'], $module);
+
         /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
         static::initHandlerCompatible('OnBeforeUserLogin', [self::class,'logoutBeforeAuth'], $module);
         static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class,'logoutBeforeAuth'], $module);
@@ -124,7 +131,7 @@ class Event extends BaseServiceHandler
     public static function replaceLogin(array $fields): void
     {
         global $APPLICATION;
-        $userService = Application::getInstance()->getContainer()->get(UserRegistrationProviderInterface::class);
+        $userService = App::getInstance()->getContainer()->get(UserRegistrationProviderInterface::class);
         if (!empty($fields['LOGIN'])) {
             $fields['LOGIN'] = $userService->getLoginByRawLogin((string)$fields['LOGIN']);
         } else {
@@ -287,7 +294,7 @@ class Event extends BaseServiceHandler
     {
         /** @var UserAuthorizationInterface $userService */
         try {
-            $userService = Application::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+            $userService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
             if ($userService->isAuthorized()) {
                 $userService->logout();
             }
@@ -300,6 +307,32 @@ class Event extends BaseServiceHandler
             if($USER->IsAuthorized()){
                 $USER->Logout();
             }
+        }
+    }
+
+    public function refreshUserOnAuth(): void
+    {
+        try {
+            /** @var MainTemplate $template */
+            $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
+            /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal)
+             *  так же чекаем что это не страница заказа
+             */
+            if (!$template->hasUserAuth()) {
+                return;
+            }
+            $container = App::getInstance()->getContainer();
+            $userService = $container->get(CurrentUserProviderInterface::class);
+
+            /** обновление номера карты на авторизации */
+            $userService->refreshUserCard($userService->getCurrentUser());
+            /** обновление группы оптовиков */
+            $userService->refreshUserOpt($userService->getCurrentUser());
+        } catch (NotAuthorizedException $e) {
+            // обработка не требуется
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('failed to update user account balance: ' . $e->getMessage());
         }
     }
 }

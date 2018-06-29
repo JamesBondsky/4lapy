@@ -755,6 +755,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
     /**
      * @param Client $client
+     * @throws TooManyUserFoundException
+     * @throws UsernameNotFoundException
+     * @throws TooManyActiveCardFound
+     * @throws ManzanaServiceException
+     * @throws ManzanaCardIsNotFound
+     * @throws \Exception
      */
     public function updateUserCardByClient(Client $client)
     {

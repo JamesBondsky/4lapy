@@ -19,9 +19,11 @@ use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\UserGroup;
+use FourPaws\External\Exception\ManzanaCardIsNotFound;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Exception\TooManyActiveCardFound;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -686,7 +688,7 @@ class UserService implements
      *
      * @return bool
      */
-    public function refreshUserOpt(User $user): bool
+    public function refreshUserOpt(User $user)
     {
         if (empty($user->getPersonalPhone())) {
             return false;
@@ -741,6 +743,55 @@ class UserService implements
             $this->authorize($user->getId());
             TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return bool
+     */
+    public function refreshUserCard(User $user): bool
+    {
+        if (empty($user->getPersonalPhone())) {
+            return false;
+        }
+        try {
+            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        } catch (ApplicationCreateException $e) {
+            $this->log()->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
+            return false;
+        }
+        try {
+            $contact = $manzanaService->getContactByUser($user);
+        } catch (ApplicationCreateException $e) {
+            /** не должно сюда доходить, так как передаем объект юзера */
+            $this->log()->error('ошибка загрузки сервиса', $e->getTrace());
+            return false;
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            $this->log()->error('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+            return false;
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            /** ошибка нам не нужна */
+            return false;
+        } catch (ManzanaServiceException $e) {
+            $this->log()->error('ошибка манзаны', $e->getTrace());
+            return false;
+        }
+        try {
+            $manzanaService->updateUserCardByClient($contact);
+            return true;
+        } catch (ManzanaCardIsNotFound $e) {
+            $this->log()->error('активных карт не найдено', $e->getTrace());
+        } catch (TooManyUserFoundException $e) {
+            $this->log()->error('найдено больше одного пользователя', $e->getTrace());
+        } catch (UsernameNotFoundException $e) {
+            $this->log()->error('пользователей в манзане не найдено по телефону', $e->getTrace());
+        } catch (TooManyActiveCardFound $e) {
+            $this->log()->error('найдено больше одной активной карты', $e->getTrace());
+        } catch (ManzanaServiceException|\Exception $e) {
+            $this->log()->error('ошибка манзаны', $e->getTrace());
         }
         return false;
     }
