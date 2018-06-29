@@ -555,7 +555,9 @@ class OrderService implements LoggerAwareInterface
 
             try {
                 if ($storage->getBonus()) {
-                    $innerPayment = $paymentCollection->getInnerPayment();
+                    if (!$innerPayment = $paymentCollection->getInnerPayment()) {
+                        $innerPayment = $paymentCollection->createInnerPayment();
+                    }
                     $innerPayment->setField('SUM', $storage->getBonus());
                     $innerPayment->setPaid('Y');
                     $sum -= $storage->getBonus();
@@ -1355,8 +1357,9 @@ class OrderService implements LoggerAwareInterface
                         $user->getDiscountCardNumber(),
                         $this->basketService
                     );
-                    $chequeRequest->setPaidByBonus($order->getPaymentCollection()->getInnerPayment()->getSum());
-
+                    if ($order->getPaymentCollection()->getInnerPayment()) {
+                        $chequeRequest->setPaidByBonus($order->getPaymentCollection()->getInnerPayment()->getSum());
+                    }
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
                     $propertyValue->setValue(floor($cheque->getChargedBonus()));
                 }
