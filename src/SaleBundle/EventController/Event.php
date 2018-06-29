@@ -128,7 +128,6 @@ class Event extends BaseServiceHandler
             $user = $userService->getCurrentUser();
             [, $bonus] = $userAccountService->refreshUserBalance($user);
             $userService->refreshUserBonusPercent($user, $bonus);
-            $userService->refreshUserOpt($user);
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
         } catch (\Exception $e) {
