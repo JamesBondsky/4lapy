@@ -72,7 +72,8 @@ class CallbackConsumer extends CallbackConsumerBase
 
                 $res = $this->guzzle->send(new Request('get', $href));
             } catch (GuzzleException $e) {
-                $this->log()->error('Сервис обартного звонка ответил ошибкой' . $e->getMessage() . ' на ссылку ' . $href);die;
+                $this->log()->error('Сервис обартного звонка ответил ошибкой' . $e->getMessage() . ' на ссылку ' . $href);
+
                 return true;
             } catch (\Exception $e) {
                 $this->log()->error('Ошибка: ' . $e->getMessage() . ' на ссылку ' . $href);
