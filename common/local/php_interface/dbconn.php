@@ -33,6 +33,8 @@ define('BX_COMP_MANAGED_CACHE', true);
 
 define('BX_MEMCACHE_HOST', getenv('BX_MEMCACHE_HOST'));
 define('BX_MEMCACHE_PORT', getenv('BX_MEMCACHE_PORT'));
+define('BX_SECURITY_SESSION_MEMCACHE_HOST', getenv('BX_MEMCACHE_HOST'));
+define('BX_SECURITY_SESSION_MEMCACHE_PORT', getenv('BX_MEMCACHE_PORT'));
 
 define('BX_UTF', true);
 define('BX_FILE_PERMISSIONS', 0664);
