@@ -363,7 +363,9 @@ class NotificationService implements LoggerAwareInterface
             $result['phone'] = $properties['PHONE'];
             $result['email'] = $properties['EMAIL'];
             $result['price'] = $order->getPrice();
-            $result['bonusSum'] = $order->getPaymentCollection()->getInnerPayment()->getSum();
+            $result['bonusSum'] = $order->getPaymentCollection()->getInnerPayment()
+                ? $order->getPaymentCollection()->getInnerPayment()->getSum()
+                : 0;
             $result['deliveryDate'] = \DateTime::createFromFormat(
                 'd.m.Y',
                 $properties['DELIVERY_DATE']
