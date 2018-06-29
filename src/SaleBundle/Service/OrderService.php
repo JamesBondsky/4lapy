@@ -920,6 +920,15 @@ class OrderService implements LoggerAwareInterface
             if (!$result->isSuccess()) {
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
             }
+            if (!empty($result->getWarnings())) {
+                $this->log()->warning(
+                    sprintf(
+                        'Order %s warnings : %s',
+                        $order->getId(),
+                        implode(', ', $result->getWarningMessages())
+                    )
+                );
+            }
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
             if ($order->getId() > 0) {
