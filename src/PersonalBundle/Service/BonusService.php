@@ -230,8 +230,8 @@ class BonusService
         }
 
         $validCardResult = $this->manzanaService->validateCardByNumberRaw($bonusCard);
-        if (!$validCardResult->isValid) {
-            throw new CardNotValidException('Карта не привязывается');
+        if (!$validCardResult->cardId) {
+            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
         }
 
         $bonusCardId = $validCardResult->cardId;
@@ -267,8 +267,7 @@ class BonusService
             $isChange = false;
             if(!empty($oldCardId) && !empty($bonusCardId)) {
                 $isChange = $this->manzanaService->changeCard($oldCardId, $bonusCardId);
-            }
-            elseif (empty($oldCardId)){
+            } elseif (empty($oldCardId)){
                 $this->manzanaService->updateContact($contact);
                 $isChange = true;
             }
@@ -279,7 +278,8 @@ class BonusService
                 TaggedCacheHelper::clearManagedCache([
                     'personal:bonus:' . $user->getId(),
                 ]);
-
+            } else {
+                throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
             }
 
             return $isChange;
