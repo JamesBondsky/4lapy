@@ -608,7 +608,7 @@ class UserService implements
                     )
                 );
             } catch (EmptyPhoneException $e) {
-                $this->log()->info('у пользователя не задан телефон');
+                $this->log()->info('Нет телефона у пользователя - ' . $user->getId());
             } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException | ConstraintDefinitionException | InvalidIdentifierException | ManzanaServiceException $e) {
                 $this->log()->error(
                     \sprintf(

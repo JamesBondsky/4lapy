@@ -14,6 +14,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Client;
@@ -96,6 +97,8 @@ class BonusService
             $this->logger->info(
                 'Найдено больше одного пользователя в манзане по телефону ' . $user->getPersonalPhone()
             );
+        } catch (EmptyPhoneException $e) {
+            $this->logger->info('Нет телефона у пользователя - ' . $user->getId());
         } catch (ManzanaServiceContactSearchNullException $e) {
             $this->logger->info('Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone());
         } /** сбрасываем исключения связанные с ошибкой сервиса и возвращаем пустой объект */
@@ -220,6 +223,8 @@ class BonusService
      * @throws NotAuthorizedException
      * @throws CardNotValidException
      * @throws ManzanaServiceException
+     * @throws EmptyPhoneException
+     * @throws ExecuteException
      */
     public function activateBonusCard(string $bonusCard, User $user = null): bool
     {
@@ -228,7 +233,7 @@ class BonusService
         }
 
         if(!$user->hasPhone()){
-            throw new ManzanaServiceException('телефона нет - выполнить запрос нельзя');
+            throw new EmptyPhoneException('телефона нет - выполнить запрос нельзя');
         }
 
         $validCardResult = $this->manzanaService->validateCardByNumberRaw($bonusCard);
