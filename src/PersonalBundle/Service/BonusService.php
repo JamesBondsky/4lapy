@@ -26,6 +26,7 @@ use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -106,7 +107,7 @@ class BonusService
     }
 
     /**
-     * @param User $user
+     * @param User                $user
      * @param null|ManzanaService $manzanaService
      *
      * @return UserBonus
@@ -119,6 +120,7 @@ class BonusService
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
+     * @throws EmptyPhoneException
      */
     public static function getManzanaBonusInfo(User $user, ?ManzanaService $manzanaService = null): UserBonus
     {
@@ -134,7 +136,7 @@ class BonusService
         }
 
         if(!$user->hasPhone()){
-            throw new ManzanaServiceException('телефона нет - выполнить запрос нельзя');
+            throw new EmptyPhoneException('телефона нет - выполнить запрос нельзя');
         }
 
         /** @var Contact $contact */
