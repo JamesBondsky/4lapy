@@ -341,7 +341,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $logger = LoggerFactory::create('auth');
-            $logger->critical('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
+            $logger->info('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
 
             try {
                 return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin, 'логином/email/телефоном');
