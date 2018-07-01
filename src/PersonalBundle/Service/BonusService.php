@@ -133,12 +133,12 @@ class BonusService
             throw new ManzanaServiceException('хрень - объект не установлен');
         }
 
-        if(empty($user->getPersonalPhone())){
+        if(!$user->hasPhone()){
             throw new ManzanaServiceException('телефона нет - выполнить запрос нельзя');
         }
 
         /** @var Contact $contact */
-        if(!empty($user->getPersonalPhone())) {
+        if($user->hasPhone()) {
             $contact = $manzanaService->getContactByUser($user);
         }
         else{
@@ -225,7 +225,7 @@ class BonusService
             $user = $this->currentUserProvider->getCurrentUser();
         }
 
-        if(empty($user->getPersonalPhone())){
+        if(!$user->hasPhone()){
             throw new ManzanaServiceException('телефона нет - выполнить запрос нельзя');
         }
 

@@ -433,7 +433,7 @@ class User implements UserInterface
      */
     public function getNormalizePersonalPhone(): string
     {
-        if (!empty($this->getPersonalPhone())) {
+        if ($this->hasPhone()) {
             try {
                 return PhoneHelper::normalizePhone($this->getPersonalPhone());
             } catch (WrongPhoneNumberException $e) {
@@ -477,7 +477,7 @@ class User implements UserInterface
         return $this;
     }
 
-    public function havePersonalPhone(): bool
+    public function hasPhone(): bool
     {
         return !empty($this->getPersonalPhone()) ? true : false;
     }

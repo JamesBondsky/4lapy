@@ -109,7 +109,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             if ($this->userAuthorizationService->isAuthorized()) {
                 $curUser = $this->currentUserProvider->getCurrentUser();
-                if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
+                if (!empty($curUser->getExternalAuthId() && !$curUser->hasEmail())) {
                     $this->arResult['STEP'] = 'addPhone';
                 } else {
                     $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
@@ -298,7 +298,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         try {
             $this->userAuthorizationService->login($rawLogin, $password);
-            if ($this->userAuthorizationService->isAuthorized() && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
+            if ($this->userAuthorizationService->isAuthorized() && !$this->currentUserProvider->getCurrentUser()->hasPhone()) {
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {

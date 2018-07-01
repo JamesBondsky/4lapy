@@ -185,7 +185,7 @@ class ReferralUpdateAgent
                                                         ],
                                                     ]
                                                 );
-                                            } elseif (!empty($user->getPersonalPhone())) {
+                                            } elseif ($user->hasPhone()) {
                                                 $smsService = $container->get('sms.service');
                                                 $smsService->sendSms('Реферал с номером карты ' . $referral->getCard() . ' не прошел модерацию',
                                                     $user->getNormalizePersonalPhone());

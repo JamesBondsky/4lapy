@@ -688,9 +688,9 @@ class UserService implements
      *
      * @return bool
      */
-    public function refreshUserOpt(User $user)
+    public function refreshUserOpt(User $user): bool
     {
-        if (empty($user->getPersonalPhone())) {
+        if (!$user->hasPhone()) {
             return false;
         }
         try {
@@ -754,7 +754,7 @@ class UserService implements
      */
     public function refreshUserCard(User $user): bool
     {
-        if (empty($user->getPersonalPhone())) {
+        if (!$user->hasPhone()) {
             return false;
         }
         try {
