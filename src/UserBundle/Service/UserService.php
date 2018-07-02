@@ -37,6 +37,7 @@ use FourPaws\UserBundle\Exception\AuthException;
 use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -606,6 +607,8 @@ class UserService implements
                         $user->getPersonalPhone()
                     )
                 );
+            } catch (EmptyPhoneException $e) {
+                $this->log()->info('Нет телефона у пользователя - ' . $user->getId());
             } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException | ConstraintDefinitionException | InvalidIdentifierException | ManzanaServiceException $e) {
                 $this->log()->error(
                     \sprintf(
@@ -688,9 +691,9 @@ class UserService implements
      *
      * @return bool
      */
-    public function refreshUserOpt(User $user)
+    public function refreshUserOpt(User $user): bool
     {
-        if (empty($user->getPersonalPhone())) {
+        if (!$user->hasPhone()) {
             return false;
         }
         try {
@@ -754,7 +757,7 @@ class UserService implements
      */
     public function refreshUserCard(User $user): bool
     {
-        if (empty($user->getPersonalPhone())) {
+        if (!$user->hasPhone()) {
             return false;
         }
         try {

@@ -7,15 +7,18 @@
 namespace FourPaws\PersonalBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
@@ -99,6 +102,11 @@ class BonusController extends Controller
         catch (ConstraintDefinitionException|InvalidIdentifierException $e){
             $logger = LoggerFactory::create('params');
             $logger->critical('Ошибка параметров '. $e->getMessage());
+        } catch (EmptyPhoneException $e) {
+            $logger = LoggerFactory::create('user');
+            $logger->info('Нет телефона у пользователя с картой - ' . $card);
+        } catch (SystemException|ExecuteException $e) {
+            /** покпазываем сстемную ошибку */
         }
 
         return $this->ajaxMess->getSystemError();
