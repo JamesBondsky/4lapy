@@ -33,6 +33,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
@@ -46,10 +47,12 @@ use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -244,7 +247,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
         ];
 
-        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
+        /** @var Router $router */
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
         $routeCollection = $router->getRouteCollection();
@@ -326,7 +329,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             if ($user && !$user->getDiscountCardNumber()) {
                 try {
-                    $bonus = \FourPaws\PersonalBundle\Service\BonusService::getManzanaBonusInfo($user);
+                    $bonus = BonusService::getManzanaBonusInfo($user);
                     if (!$bonus->isEmpty()) {
                         $cardNumber = $this->manzanaService->prepareCardNumber($bonus->getCard()->getCardNumber());
                         $this->manzanaService->prepareCardNumber($bonus->getCard()->getCardNumber());
@@ -336,6 +339,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
                         );
                         $user->setDiscountCardNumber($cardNumber);
                     }
+                } catch (EmptyPhoneException $e) {
+                    $this->logger->info('Нет телефона у пользователя - ' . $user->getId());
                 } catch (ManzanaServiceException $e) {
                     $this->logger->error(sprintf('failed to get user discount card: %s', $e->getMessage()), [
                         'user' => $user->getId()

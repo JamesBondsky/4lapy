@@ -38,20 +38,18 @@ class CallbackConsumer extends CallbackConsumerBase
                 $curDate = null;
                 $date = new DateTime();
                 $uri = new Uri($href);
-                $explodeList = explode('&', $uri->getQuery());
+                $explodeList = explode('&', urldecode($uri->getQuery()));
                 $dateParams = null;
 
                 foreach ($explodeList as $item) {
                     [$name, $val] = explode('=', $item);
                     if ($name === 'startparam2') {
-                        $dateParams = new DateTime(urldecode($val), 'Y-m-d H:i:s');
-                        break;
+                        $dateParams = new DateTime($val, 'Y-m-d H:i:s');
+                        /** убираем прерывание если не по порядку параметры */
                     }
 
-                    if ($name === 'startparam1') {
-                        if (preg_match('~^[78+]~', $val) == 0) {
-                            return true;
-                        }
+                    if ($name === 'startparam1' && preg_match('~^[78+]+~', $val) === false) {
+                        return true;
                     }
                 }
 
