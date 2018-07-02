@@ -1159,7 +1159,7 @@ class Offer extends IblockElement
 
             $this->link = $productUrl ? \sprintf(
                 '%s?offer=%s',
-                $this,
+                $productUrl,
                 $this->getId()
             ) : 'javascript:void(0)';
         }
