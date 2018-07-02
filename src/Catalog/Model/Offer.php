@@ -40,7 +40,6 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Helpers\JmsSerializerHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
@@ -54,7 +53,6 @@ use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializerInterface;
-use JMS\SerializerBundle\Templating\SerializerHelper;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -1135,11 +1133,10 @@ class Offer extends IblockElement
             return $bonusText;
         }
 
-        if($precision > 0 ){
+        if ($precision > 0) {
             $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
             $floorBonus = \floor($bonus);
-        }
-        else{
+        } else {
             $floorBonus = $bonus = \floor($bonus);
         }
 
@@ -1158,11 +1155,13 @@ class Offer extends IblockElement
     public function getLink(): string
     {
         if (!$this->link) {
-            $this->link = \sprintf(
+            $productUrl = $this->getProduct()->getDetailPageUrl();
+
+            $this->link = $productUrl ? \sprintf(
                 '%s?offer=%s',
-                $this->getProduct()->getDetailPageUrl(),
+                $this,
                 $this->getId()
-            );
+            ) : 'javascript:void(0)';
         }
 
         return $this->link;
@@ -1366,7 +1365,7 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
-    public function isPopular():bool
+    public function isPopular(): bool
     {
         return $this->getPropertyPopular();
     }
@@ -1386,8 +1385,8 @@ class Offer extends IblockElement
     {
         if ($this->share === null) {
             $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter([
-                'ACTIVE'            => 'Y',
-                'ACTIVE_DATE'       => 'Y',
+                'ACTIVE' => 'Y',
+                'ACTIVE_DATE' => 'Y',
                 'PROPERTY_PRODUCTS' => $this->getXmlId(),
             ])->withSelect([
                 'ID',
@@ -1488,9 +1487,9 @@ class Offer extends IblockElement
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
         $fields = [
-            'PRODUCT_ID'             => $this->getId(),
-            'QUANTITY'               => 1,
-            'MODULE'                 => 'catalog',
+            'PRODUCT_ID' => $this->getId(),
+            'QUANTITY' => 1,
+            'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
 
@@ -1570,9 +1569,9 @@ class Offer extends IblockElement
             ->setOrder(['RAND'])
             ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
             ->exec();
-        while($break === false){
+        while ($break === false) {
             $bundleItem = $resBundleItems->fetch();
-            if(!$bundleItem){
+            if (!$bundleItem) {
                 $break = true;
                 continue;
             }
@@ -1588,14 +1587,14 @@ class Offer extends IblockElement
                 ->exec();
 
 
-            if($resBundle->getSelectedRowsCount() === 0){
+            if ($resBundle->getSelectedRowsCount() === 0) {
                 continue;
             }
             $breakBundle = false;
             $hasItems = false;
             while ($breakBundle === false) {
                 $setItem = $resBundle->fetch();
-                if(!$setItem){
+                if (!$setItem) {
                     $breakBundle = true;
                     continue;
                 }
@@ -1619,17 +1618,17 @@ class Offer extends IblockElement
                 $result = [
 //                'ID'  => $setItem['ID'],
 //                'ACTIVE'  => $setItem['UF_ACTIVE'],
-                    'NAME'        => $setItem['UF_NAME'],
+                    'NAME' => $setItem['UF_NAME'],
                     'COUNT_ITEMS' => $countItems,
-                    'PRODUCTS'    => [],
+                    'PRODUCTS' => [],
                 ];
                 while ($item = $res->fetch()) {
                     $itemFields = [
 //                    'ID' => $item['ID'],
 //                    'ACTIVE' => $item['UF_ACTIVE'],
-                        'PRODUCT'    => null,
+                        'PRODUCT' => null,
                         'PRODUCT_ID' => $item['UF_PRODUCT'],
-                        'QUANTITY'   => $item['UF_QUANTITY']
+                        'QUANTITY' => $item['UF_QUANTITY']
                     ];
                     if ($offerId === (int)$item['UF_PRODUCT']) {
                         $itemFields['PRODUCT'] = $this;
@@ -1642,21 +1641,21 @@ class Offer extends IblockElement
                 $breakBundle = true;
                 $hasItems = true;
             }
-            if(!$hasItems){
+            if (!$hasItems) {
                 continue;
             }
             $break = true;
         }
-        if($result !== null){
+        if ($result !== null) {
             $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
             $result = $serializer->fromArray($result, Bundle::class, DeserializationContext::create()->setGroups(['read']));
-            if(!empty($productIds)){
-                $offerCollection = (new OfferQuery())->withFilter(['=ID'=>$productIds])->exec();
+            if (!empty($productIds)) {
+                $offerCollection = (new OfferQuery())->withFilter(['=ID' => $productIds])->exec();
                 /** @var Offer $offer */
                 foreach ($offerCollection as $offer) {
                     /** @var BundleItem $product */
                     foreach ($result->getProducts() as &$product) {
-                        if($product->getOfferId() === $offer->getId()){
+                        if ($product->getOfferId() === $offer->getId()) {
                             $product->setOffer($offer);
                         }
                     }
@@ -1680,6 +1679,6 @@ class Offer extends IblockElement
      */
     public function getDiscountPrice(): float
     {
-        return round($this->getOldPrice()-$this->getPrice());
+        return round($this->getOldPrice() - $this->getPrice());
     }
 }
