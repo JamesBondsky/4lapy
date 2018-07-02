@@ -871,6 +871,11 @@ class OrderService implements LoggerAwareInterface
 
                 try {
                     $address = $this->locationService->splitAddress((string)$address, $storage->getCityCode());
+                    $this->setOrderPropertiesByCode($order, [
+                        'STREET' => $address->getStreet(),
+                        'STREET_PREFIX' => $address->getStreetPrefix(),
+                        'ZIP_CODE' => $address->getZipCode()
+                    ]);
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
@@ -1650,6 +1655,7 @@ class OrderService implements LoggerAwareInterface
             'PORCH'       => $address->getEntrance(),
             'FLOOR'       => $address->getFloor(),
             'APARTMENT'   => $address->getFlat(),
+            'ZIP_CODE'    => $address->getZipCode()
         ];
 
         return $this->setOrderPropertiesByCode($order, $properties);
