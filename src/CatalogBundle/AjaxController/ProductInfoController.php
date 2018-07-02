@@ -212,15 +212,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 return $products;
             };
 
-            /** не кешируем выборку, если будет свободная оператива в memcache можно кешануть на день */
-//            $bitrixCache = new BitrixCache();
-//            $bitrixCache
-//                ->withId(__METHOD__ . '_location_' . '_product_' . implode('-', $productIds).'_location_'.$location);
-//            foreach ($productIds as $productId) {
-//                $bitrixCache->withTag('catalog:product:' . $productId);
-//                $bitrixCache->withTag('iblock:item:' . $productId);
-//            }
-//            $products = $bitrixCache->resultOf($getProducts);
             $products = $getProducts();
 
             /** кешировать нельзя так как мы не знаем id для сброса кеша */
@@ -232,52 +223,17 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
             /** @var Offer $offer */
             /** @var Product $product */
             /** добавляем офферы чтобы е было запроса по всем офферам */
-            foreach ($offerCollection as &$offer) {
+            foreach ($offerCollection as $offer) {
                 $product = $products[$offer->getCml2Link()];
                 $product->addOffer($offer);
                 $offer->setProduct($product);
             }
-            unset($product, $offer);
 
-            try {
-                foreach ($offerCollection as $offer) {
-                    $product = $products[$offer->getCml2Link()];
-
-                    $getResponseItem = function () use ($product, $offer) {
-                        $price = $offer->getPriceCeil();
-                        $oldPrice = $offer->getOldPrice() ? $offer->getOldPriceCeil() : $price;
-                        $responseItem = [
-                            'available' => $offer->isAvailable(),
-                            'byRequest' => $offer->isByRequest(),
-                            'price'     => $price,
-                            'oldPrice'  => $oldPrice,
-                            'pickup'    => false,
-                        ];
-                        if ($responseItem['available']) {
-                            $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
-                        }
-                        return $responseItem;
-                    };
-
-                    $bitrixCache = new BitrixCache();
-                    $bitrixCache
-                        ->withId(__METHOD__ . '_product_' . $offer->getCml2Link() . '_offer_' . $offer->getId() . '_location_' . $location);
-                    $bitrixCache->withTag('catalog:product:' . $product->getId());
-                    $bitrixCache->withTag('iblock:item:' . $product->getId());
-                    $bitrixCache->withTag('catalog:offer:' . $offer->getId());
-                    $bitrixCache->withTag('iblock:item:' . $offer->getId());
-                    $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
-                    $responseItem = $bitrixCache->resultOf($getResponseItem);
-
-                    $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
-
-                    $response['products'][$product->getId()][$offer->getId()] = $responseItem;
-                }
-            } catch (\Exception $e) {
-                $this->log()->error(
-                    sprintf('Failed to get product list: %s: %s', \get_class($e), $e->getMessage()),
-                    ['productIds' => $productIds]
-                );
+            foreach ($offerCollection as $offer) {
+                $product = $products[$offer->getCml2Link()];
+                $responseItem = $this->getProductInfo($product, $offer, $location);
+                $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
+                $response['products'][$product->getId()][$offer->getId()] = $responseItem;
             }
         }
         return JsonSuccessResponse::createWithData('', $response);
@@ -300,41 +256,18 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         /** @var LocationService $locationService */
         $location = $this->locationService->getCurrentLocation();
 
-        $currentOffer = OfferQuery::getById($offerId);
+        $offer = OfferQuery::getById($offerId);
 
         $response = [
             'products' => [],
         ];
 
-        if ($currentOffer !== null) {
-            try {
-                $getResponse = function () use ($currentOffer, $response) {
-                    /** @var Offer $offer */
-                    /** @var Offer $currentOffer */
-                    if ($currentOffer !== null) {
-                        $response['products'][$currentOffer->getCml2Link()][$currentOffer->getId()] = [
-                            'available' => $currentOffer->isAvailable(),
-                        ];
-                    }
-
-                    return $response;
-                };
-
-                $bitrixCache = new BitrixCache();
-                $bitrixCache
-                    ->withId('available_response_offer_' . $offerId . '_location_' . $location);
-                if ($offerId > 0) {
-                    $bitrixCache->withTag('catalog:offer:' . $offerId);
-                    $bitrixCache->withTag('iblock:item:' . $offerId);
-                    $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
-                }
-                $response = $bitrixCache->resultOf($getResponse);
-            } catch (\Exception $e) {
-                $this->log()->error(
-                    sprintf('Failed to get product list: %s: %s', \get_class($e), $e->getMessage()),
-                    ['offer' => $currentOffer->getId()]
-                );
-            }
+        if ($offer !== null) {
+            $response['products'][$offer->getCml2Link()][$offer->getId()] = $this->getProductInfo(
+                $offer->getProduct(),
+                $offer,
+                $location
+            );
         }
 
         return JsonSuccessResponse::createWithData('', $response);
@@ -558,5 +491,52 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
                         ['товар', 'товара', 'товаров']),
             ]);
+    }
+
+    /**
+     * @param Product $product
+     * @param Offer   $offer
+     * @param string  $location
+     * @return array
+     */
+    private function getProductInfo(Product $product, Offer $offer, string $location)
+    {
+        $result = [];
+        $getResult = function () use ($product, $offer) {
+            $available = $offer->isAvailable();
+            $price = $offer->getPriceCeil();
+            $oldPrice = $offer->getOldPrice() ? $offer->getOldPriceCeil() : $price;
+
+            $responseItem = [
+                'available' => $available,
+                'byRequest' => $offer->isByRequest(),
+                'price'     => $price,
+                'oldPrice'  => $oldPrice,
+                'pickup'    => $available && $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
+            ];
+
+            return $responseItem;
+        };
+
+        try {
+            $result = (new BitrixCache())
+                ->withId(__METHOD__ . '_' . $product->getId() . '_' . $offer->getId() . '_' . $location)
+                ->withTag('iblock:item:' . $product->getId())
+                ->withTag('iblock:item:' . $offer->getId())
+                ->withTag('catalog:offer:' . $offer->getId())
+                ->withTime(24 * 60 * 60)//кешируем на сутки
+                ->resultOf($getResult);
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('Failed to get product info: %s: %s', \get_class($e), $e->getMessage()),
+                [
+                    'offer'    => $offer->getId(),
+                    'product'  => $product->getId(),
+                    'location' => $location
+                ]
+            );
+        }
+
+        return $result;
     }
 }
