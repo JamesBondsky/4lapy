@@ -528,7 +528,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setPostCode('')
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
             ->setStreetName($this->getPropertyValueByCode($order, 'STREET'))
-            ->setStreetPrefix('')
+            ->setStreetPrefix($this->getPropertyValueByCode($order, 'STREET_PREFIX'))
             ->setHouse($this->getPropertyValueByCode($order, 'HOUSE'))
             ->setHousing($this->getPropertyValueByCode($order, 'BUILDING'))
             ->setBuilding('')
