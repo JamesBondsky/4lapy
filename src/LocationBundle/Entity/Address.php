@@ -31,6 +31,11 @@ class Address
     /**
      * @var string
      */
+    protected $streetPrefix = '';
+
+    /**
+     * @var string
+     */
     protected $house = '';
 
     /**
@@ -136,6 +141,24 @@ class Address
     public function setStreet(string $street): Address
     {
         $this->street = $street;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStreetPrefix(): string
+    {
+        return $this->streetPrefix;
+    }
+
+    /**
+     * @param string $streetPrefix
+     * @return Address
+     */
+    public function setStreetPrefix(string $streetPrefix): Address
+    {
+        $this->streetPrefix = $streetPrefix;
         return $this;
     }
 
@@ -279,6 +302,7 @@ class Address
     {
         $map = [
             ['value' => $this->city, 'prefix' => ''],
+            ['value' => $this->streetPrefix, 'prefix' => ''],
             ['value' => $this->street, 'prefix' => ''],
             ['value' => $this->house, 'prefix' => 'дом'],
             ['value' => $this->housing, 'prefix' => 'корпус'],
