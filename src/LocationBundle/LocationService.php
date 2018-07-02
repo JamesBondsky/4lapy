@@ -911,11 +911,11 @@ class LocationService
             $result->setLocation($locationCode)
                 ->setCity($dadataLocation->getCity() ?: $dadataLocation->getRegion())
                 ->setValid($this->daDataService->isValidAddress($dadataLocation))
-                ->setStreet($dadataLocation->getStreetWithType())
+                ->setStreetPrefix($dadataLocation->getStreetType())
+                ->setStreet($dadataLocation->getStreet())
                 ->setHouse($dadataLocation->getHouse())
                 ->setFlat($dadataLocation->getFlat())
                 ->setZipCode($dadataLocation->getPostalCode());
-
         } catch (DaDataExecuteException $e) {
             $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
                 'address' => $address,
