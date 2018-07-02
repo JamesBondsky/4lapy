@@ -186,7 +186,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             } else {
                 if ($this->userAuthorizationService->isAuthorized()) {
                     $curUser = $this->currentUserProvider->getCurrentUser();
-                    if (!empty($curUser->getExternalAuthId()) && empty($curUser->getPersonalPhone())) {
+                    if (!empty($curUser->getExternalAuthId()) && !$curUser->hasPhone()) {
                         $this->arResult['STEP'] = 'addPhone';
                     } else {
                         LocalRedirect(static::PERSONAL_URL);

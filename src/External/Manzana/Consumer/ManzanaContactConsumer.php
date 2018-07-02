@@ -6,12 +6,16 @@
 
 namespace FourPaws\External\Manzana\Consumer;
 
+use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\WrongContactMessageException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\UserBundle\Exception\TooManyUserFoundException;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use PhpAmqpLib\Message\AMQPMessage;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -25,6 +29,11 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
 {
     /**
      * @inheritdoc
+     *
+     * @throws Exception
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
+     * @throws WrongContactMessageException
      */
     public function execute(AMQPMessage $message): bool
     {
@@ -33,16 +42,12 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
 
             if (null === $contact || (empty($contact->phone) && empty($contact->contactId))) {
-                throw new ContactUpdateException('Неожиданное сообщение');
+                throw new WrongContactMessageException('Неожиданное сообщение: контакт пуст.');
             }
 
             if (empty($contact->contactId)) {
                 try {
-                    if(!empty($contact->phone)) {
-                        $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
-                    } else {
-                        throw new ContactUpdateException('Неожиданное сообщение');
-                    }
+                    $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
                     /** иначе создание пользователя */
                 } catch (ManzanaServiceContactSearchNullException $e) {
                     /**
@@ -52,13 +57,14 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             }
 
             $contact = $this->manzanaService->updateContact($contact);
-            /** скипаем если нет телефона - ибо не найден пользователя для привзяки,
-             * так же скипаем если нет маназановского id
+            /**
+             * Пропускаем если нет телефона - ибо не найден пользователя для привзяки,
+             * также пропускаем, если нет маназановского id
              */
-            if(!empty($contact->phone) && !empty($contact->contactId)) {
+            if ($contact->phone && $contact->contactId) {
                 $this->manzanaService->updateUserCardByClient($contact);
             }
-        } catch (ContactUpdateException $e) {
+        } catch (ContactUpdateException | WrongContactMessageException $e) {
             $this->log()->error(sprintf(
                 'Contact update error: %s',
                 $e->getMessage()
@@ -76,10 +82,11 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
                 $message->getBody()
             ));
 
-            sleep(30);
+            sleep(5);
+
             try {
                 $this->manzanaService->updateContactAsync($contact);
-            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+            } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException $e) {
                 $this->log()->error(sprintf(
                     'Manzana contact consumer /service/ error: %s, message: %s',
                     $e->getMessage(),
