@@ -497,16 +497,20 @@ class LocationService
         $res = [];
         $value = substr($value, 0 ,11);
         $locations = ExternalTable::query()
+            ->setOrder(['LOCATION.DEPTH_LEVEL'])
             ->where('SERVICE_ID', $this->getExternalServiceIdByCode($code))
             ->where('XML_ID', $value)
             ->setSelect(['LOCATION_ID'])
             ->exec()
             ->fetchAll();
+
         if (!empty($locations)) {
             $locationsIds = [];
+
             foreach ($locations as $location) {
                 $locationsIds[] = $location['LOCATION_ID'];
             }
+
             if (!empty($locationsIds)) {
                 $res = $this->findLocationNew(['=ID' => $locationsIds]);
             }
