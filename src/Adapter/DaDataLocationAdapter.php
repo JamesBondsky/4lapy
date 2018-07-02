@@ -103,6 +103,7 @@ class DaDataLocationAdapter extends BaseAdapter
                     }
                 }
             }
+
             if (empty($cities)) {
                 /** пока доставка в одной стране - убираем поиск по стране */
                 $city = $this->getCityName($entity);
@@ -141,10 +142,7 @@ class DaDataLocationAdapter extends BaseAdapter
             /** не нашли - возвращаем пустой объект - должно быть сведено к 0*/
             $logger = LoggerFactory::create('dadataAdapter');
             $logger->error('не найдено');
-        } catch (ApplicationCreateException $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->error('системная ошибка загрузки сервисов');
-        }
+        } catch (ApplicationCreateException $e) {}
 
         return $bitrixLocation;
     }
