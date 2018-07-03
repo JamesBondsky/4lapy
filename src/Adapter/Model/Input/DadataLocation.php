@@ -397,8 +397,8 @@ class DadataLocation
      */
     protected $postalBox = '';
     /**
-     * @var int
-     * @Serializer\Type("int")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("postal_code")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -1398,17 +1398,17 @@ class DadataLocation
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getPostalCode(): int
+    public function getPostalCode(): string
     {
         return $this->postalCode ?? '';
     }
 
     /**
-     * @param int $postalCode
+     * @param string $postalCode
      */
-    public function setPostalCode(int $postalCode): void
+    public function setPostalCode(string $postalCode): void
     {
         $this->postalCode = $postalCode;
     }

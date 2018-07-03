@@ -1043,7 +1043,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             }
 
             $deliveryPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
-            $shipmentPlaceCode = $this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE');
+            $deliveryShipmentPoint = $deliveryPlaceCode;
+            if (\in_array($this->getDeliveryTypeCode($order), [
+                    SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE,
+                    SapOrder::DELIVERY_TYPE_COURIER_SHOP
+                ], true)
+            ) {
+                $deliveryShipmentPoint = '';
+            }
+
             $offer = (new OrderOffer())
                 ->setPosition($collection->count() + 1)
                 ->setOfferXmlId($xmlId)
@@ -1052,7 +1060,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
                 ->setChargeBonus(false)
                 ->setDeliveryFromPoint($deliveryPlaceCode)
-                ->setDeliveryShipmentPoint($shipmentPlaceCode ? $deliveryPlaceCode : '');
+                ->setDeliveryShipmentPoint($deliveryShipmentPoint);
             $collection->add($offer);
         }
     }
