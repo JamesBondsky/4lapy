@@ -977,10 +977,18 @@ class BasketService implements LoggerAwareInterface
     public function getBasketProducts(?Basket $basket = null): array
     {
         $result = [];
-        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
-        /** @var BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
-            $result[$basketItem->getProductId()] += $basketItem->getQuantity();
+
+        try {
+            $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $result[$basketItem->getProductId()] += $basketItem->getQuantity();
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('Failed to get basket products: %s: %s', \get_class($e), $e->getMessage()),
+                ['trace' => $e->getTrace()]
+            );
         }
 
         return $result;

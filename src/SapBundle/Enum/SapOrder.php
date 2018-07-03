@@ -37,8 +37,8 @@ final class SapOrder
      * ТД – от терминала до двери покупателя;
      * ТТ – от терминала до пункта выдачи заказов.
      */
-    public const DELIVERY_TYPE_CONTRACTOR_DELIVERY = 'ТД';
-    public const DELIVERY_TYPE_CONTRACTOR_PICKUP = 'ТТ';
+    public const DELIVERY_TYPE_CONTRACTOR_DELIVERY = 'ДД';
+    public const DELIVERY_TYPE_CONTRACTOR_PICKUP = 'ДТ';
     public const DELIVERY_CONTRACTOR_CODE = '0000802070';
 
     public const DELIVERY_ZONE_1_ARTICLE = '2000282';

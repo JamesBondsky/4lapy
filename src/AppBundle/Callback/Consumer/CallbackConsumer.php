@@ -38,20 +38,18 @@ class CallbackConsumer extends CallbackConsumerBase
                 $curDate = null;
                 $date = new DateTime();
                 $uri = new Uri($href);
-                $explodeList = explode('&', $uri->getQuery());
+                $explodeList = explode('&', urldecode($uri->getQuery()));
                 $dateParams = null;
 
                 foreach ($explodeList as $item) {
                     [$name, $val] = explode('=', $item);
                     if ($name === 'startparam2') {
-                        $dateParams = new DateTime(urldecode($val), 'Y-m-d H:i:s');
-                        break;
+                        $dateParams = new DateTime($val, 'Y-m-d H:i:s');
+                        /** убираем прерывание если не по порядку параметры */
                     }
 
-                    if ($name === 'startparam1') {
-                        if (preg_match('~^[78+]~', $val) == 0) {
-                            return true;
-                        }
+                    if ($name === 'startparam1' && preg_match('~^[78+]+~', $val) === false) {
+                        return true;
                     }
                 }
 
@@ -72,7 +70,8 @@ class CallbackConsumer extends CallbackConsumerBase
 
                 $res = $this->guzzle->send(new Request('get', $href));
             } catch (GuzzleException $e) {
-                $this->log()->error('Сервис обартного звонка ответил ошибкой' . $e->getMessage() . ' на ссылку ' . $href);die;
+                $this->log()->error('Сервис обартного звонка ответил ошибкой' . $e->getMessage() . ' на ссылку ' . $href);
+
                 return true;
             } catch (\Exception $e) {
                 $this->log()->error('Ошибка: ' . $e->getMessage() . ' на ссылку ' . $href);

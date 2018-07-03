@@ -297,7 +297,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $allItems = [];
         /** @var User $user */
         $user = $this->curUserProvider->getUserRepository()->find($this->arParams['USER_ID']);
-        if ($user !== null && !empty($user->getPersonalPhone())) {
+        if ($user !== null && $user->hasPhone()) {
             try {
                 $manzanaContactId = $this->manzanaService->getContactIdByUser($user);
                 if (!empty($manzanaContactId)) {

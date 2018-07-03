@@ -249,8 +249,9 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      */
     public static function isExpire(ConfirmCode $confirmCode, string $type = 'sms'): bool
     {
-        $constName = ToUpper($type) . '_LIFE_TIME';
-        return $confirmCode->getDate()->getTimestamp() < (time() - \constant('self::' . $constName));
+        $constName = static::getPrefixByType($type, true) . '_LIFE_TIME';
+        $time = (int)\constant('static::' . $constName);
+        return $confirmCode->getDate()->getTimestamp() < (time() - $time);
     }
 
     /**

@@ -10,6 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
@@ -186,7 +188,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             } else {
                 if ($this->userAuthorizationService->isAuthorized()) {
                     $curUser = $this->currentUserProvider->getCurrentUser();
-                    if (!empty($curUser->getExternalAuthId()) && empty($curUser->getPersonalPhone())) {
+                    if (!empty($curUser->getExternalAuthId()) && !$curUser->hasPhone()) {
                         $this->arResult['STEP'] = 'addPhone';
                     } else {
                         LocalRedirect(static::PERSONAL_URL);
@@ -303,6 +305,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             User::class,
             DeserializationContext::create()->setGroups('create')
         );
+        $logger = LoggerFactory::create('register');
         try {
             $isBasketBackUrl = !empty($data['backurl']) && $data['backurl'] === static::BASKET_BACK_URL;
             if ($isBasketBackUrl) {
@@ -313,7 +316,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $this->userAuthorizationService->authorize($regUser->getId());
 
                 try {
-                    $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                    $container = App::getInstance()->getContainer();
+                    $confirmService = $container->get(ConfirmCodeInterface::class);
                     $confirmService::setGeneratedCode('confirm_' . $regUser->getId(), 'confirm_register');
                     $uri = new Uri('/personal/register/');
                     $uri->addParams([
@@ -328,12 +332,22 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         [],
                         ['redirect' => $uri->getUri()]
                     );
+                } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                    $logger->error('ошибка загрузки сервисов');
+                } catch (ArgumentException $e) {
+                    $logger->error('ошибка аргументов - '.$e->getMessage());
                 } catch (\Exception $e) {
-                    return $this->ajaxMess->getSystemError();
+                    $logger->error('ошибка - '.$e->getMessage());
                 }
             }
         } catch (UserRuntimeException $exception) {
             return $this->ajaxMess->getRegisterError($exception->getMessage());
+        } catch (SqlQueryException $e) {
+            $logger->error('ошибка sql - '.$e->getMessage());
+        } catch (SystemException $e) {
+            $logger->error('ошибка system - '.$e->getMessage());
+        } catch (Exception $e) {
+            $logger->error('ошибка - '.$e->getMessage());
         }
 
         return $this->ajaxMess->getSystemError();

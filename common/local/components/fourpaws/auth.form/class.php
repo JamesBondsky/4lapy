@@ -32,10 +32,8 @@ use FourPaws\LocationBundle\Model\City;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
@@ -86,13 +84,14 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
             $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
             $this->ajaxMess = $container->get('ajax.mess');
-        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+        } catch (Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
+            } catch (RuntimeException $e) {
                 /** оч. плохо - логи мы не получим */
             }
+
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
@@ -109,7 +108,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             if ($this->userAuthorizationService->isAuthorized()) {
                 $curUser = $this->currentUserProvider->getCurrentUser();
-                if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
+                if (!empty($curUser->getExternalAuthId() && !$curUser->hasEmail())) {
                     $this->arResult['STEP'] = 'addPhone';
                 } else {
                     $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
@@ -118,12 +117,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->setSocial();
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             $this->includeComponentTemplate();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
+            } catch (RuntimeException $e) {
             }
         }
     }
@@ -164,12 +162,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
             return $this->ajaxMess->getSystemError();
         }
         $needWritePhone = false;
@@ -190,15 +182,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             try {
                 $recaptchaService = $container->get('recaptcha.service');
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
-            } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
-                try {
-                    $logger = LoggerFactory::create('system');
-                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-
-                    return $this->ajaxMess->getSystemError();
-                } catch (\RuntimeException $e) {
-                    /** оч. плохо - логи мы не получим */
-                }
+            } catch (Exception $e) {
+                return $this->ajaxMess->getSystemError();
             }
         }
         if (!$checkedCaptcha) {
@@ -208,15 +193,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $needConfirmBasket = false;
         try {
             $basketService = $container->get(BasketService::class);
-        } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
+        } catch (Exception $e) {
             return $this->ajaxMess->getSystemError();
         }
+
         $curBasket = $basketService->getBasket();
         $userBasket = null;
         $delBasketIds = [];
@@ -292,13 +272,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         }
                     }
                 }
-            } catch (WrongPhoneNumberException|TooManyUserFoundException|UsernameNotFoundException $e) {
-                /** обработка ниже, поэтому скипаем */
-            }
+            } catch (Exception $e) {/** обработка ниже */}
         }
+
         try {
             $this->userAuthorizationService->login($rawLogin, $password);
-            if ($this->userAuthorizationService->isAuthorized() && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
+            if ($this->userAuthorizationService->isAuthorized() && !$this->currentUserProvider->getCurrentUser()->hasPhone()) {
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
@@ -312,12 +291,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     );
 
                     return $this->ajaxMess->getWrongPasswordError(['html' => $html]);
-                } catch (SystemException|LoaderException $e) {
-                    $logger = LoggerFactory::create('system');
-                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                } catch (Exception $e) {
                     return $this->ajaxMess->getSystemError();
                 }
             }
+
             return $this->ajaxMess->getWrongPasswordError();
         } catch (InvalidCredentialException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
@@ -330,24 +308,21 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     );
 
                     return $this->ajaxMess->getWrongPasswordError(['html' => $html]);
-                } catch (SystemException|LoaderException $e) {
-                    $logger = LoggerFactory::create('system');
-                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                } catch (Exception $e) {
                     return $this->ajaxMess->getSystemError();
                 }
             }
+
             return $this->ajaxMess->getWrongPasswordError();
         } catch (TooManyUserFoundException $e) {
             /** @noinspection PhpUnhandledExceptionInspection */
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $logger = LoggerFactory::create('auth');
-            $logger->critical('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
+            $logger->info('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
 
             try {
                 return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin, 'логином/email/телефоном');
             } catch (ApplicationCreateException $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
             }
         }
@@ -358,14 +333,14 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 'unionBasket',
                 'Объединение корзины',
                 [
-                    'backurl'             => $backUrl,
-                    'needAddPhone'        => $needWritePhone ? 'Y' : 'N',
-                    'delBasketIds'        => $delBasketIds,
-                    'delBasketKeys'       => $delBasketKeys,
-                    'delItemsByUnion'     => $delItemsByUnionIds,
+                    'backurl' => $backUrl,
+                    'needAddPhone' => $needWritePhone ? 'Y' : 'N',
+                    'delBasketIds' => $delBasketIds,
+                    'delBasketKeys' => $delBasketKeys,
+                    'delItemsByUnion' => $delItemsByUnionIds,
                     'delItemsByUnionKeys' => $delItemsByUnionKeys,
-                    'addQuantityByUnion'  => $addQuantityBasketIds,
-                    'sum'                 => $basketPrice,
+                    'addQuantityByUnion' => $addQuantityBasketIds,
+                    'sum' => $basketPrice,
                 ]
             );
 
@@ -377,10 +352,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона',
                 ['html' => $html, 'backurl' => $backUrl]);
         }
+
         $options = ['reload' => true];
         if (!empty($backUrl)) {
             $options = ['redirect' => $backUrl];
         }
+
         return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], $options);
     }
 
@@ -406,13 +383,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
-        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|RuntimeException|Exception $e) {
             return $this->ajaxMess->getSystemError();
         }
 
@@ -433,14 +404,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
             return $this->ajaxMess->getSystemError();
         }
+
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
@@ -457,13 +423,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             try {
                 $recaptchaService = $container->get('recaptcha.service');
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
-            } catch (ServiceNotFoundException|ServiceCircularReferenceException|SystemException|\RuntimeException|\Exception $e) {
-                try {
-                    $logger = LoggerFactory::create('system');
-                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-                } catch (\RuntimeException $e) {
-                    /** оч. плохо - логи мы не получим */
-                }
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException|SystemException|RuntimeException|Exception $e) {
                 return $this->ajaxMess->getFailCaptchaCheckError();
             }
         }
@@ -514,19 +474,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
-        } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
+        } catch (ServiceNotFoundException | ServiceCircularReferenceException | RuntimeException | Exception $e) {
+            /**
+             * @skip
+             */
         }
 
         unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
         $data = [
             'UF_PHONE_CONFIRMED' => true,
-            'PERSONAL_PHONE'     => $phone,
+            'PERSONAL_PHONE' => $phone,
         ];
 
         try {
@@ -542,7 +499,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         $manzanaPhone = PhoneHelper::getManzanaPhone($phone);
                         $contactId = $manzanaService->getContactIdByPhone($manzanaPhone);
                         $client = new Client();
-                        if(!empty($contactId)) {
+                        if (!empty($contactId)) {
                             $client->contactId = $contactId;
                         }
                         $client->phone = $manzanaPhone;
@@ -563,28 +520,19 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 if ($client instanceof Client) {
                     try {
                         $manzanaService->updateContactAsync($client);
-                    } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
-                        $logger = LoggerFactory::create('system');
-                        $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                    } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException $e) {
+                        /**
+                         * @skip
+                         */
                     }
                 }
             }
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
-            try {
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка параметров - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
-        } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
+        } catch (Exception $e) {
+            /**
+             * @skip
+             */
         }
 
         $options = ['reload' => true];
@@ -631,8 +579,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         return JsonSuccessResponse::createWithData(
             $mess,
             [
-                'html'  => $html,
-                'step'  => $step,
+                'html' => $html,
+                'step' => $step,
                 'phone' => $phone ?? '',
             ]
         );
@@ -648,12 +596,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -675,13 +617,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!empty($delItemsByUnion) || !empty($addQuantityByUnion) || !empty($delItemsByUnionKeys)) {
             try {
                 $basketService = $container->get(BasketService::class);
-            } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
-                try {
-                    $logger = LoggerFactory::create('system');
-                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-                } catch (\RuntimeException $e) {
-                    /** оч. плохо - логи мы не получим */
-                }
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException|RuntimeException $e) {
                 return $this->ajaxMess->getSystemError();
             }
 
@@ -689,19 +625,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 foreach ($delItemsByUnionKeys as $key) {
                     try {
                         $basketItem = $basketService->getBasket()->getItemByIndex($key);
-                        if($basketItem !== null) {
+                        if ($basketItem !== null) {
                             $id = $basketItem->getId();
                             if ($id > 0) {
                                 $basketService->deleteOfferFromBasket($id);
                             }
                         }
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
-                        try {
-                            $logger = LoggerFactory::create('basket');
-                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
-                        } catch (\RuntimeException $e) {
-                            /** оч. плохо - логи мы не получим */
-                        }
                         return $this->ajaxMess->getSystemError();
                     }
                 }
@@ -712,12 +642,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     try {
                         $basketService->deleteOfferFromBasket($id);
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
-                        try {
-                            $logger = LoggerFactory::create('basket');
-                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
-                        } catch (\RuntimeException $e) {
-                            /** оч. плохо - логи мы не получим */
-                        }
                         return $this->ajaxMess->getSystemError();
                     }
                 }
@@ -734,13 +658,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                             $oldQuantity = $basketItem->getQuantity();
                         }
                         $basketService->updateBasketQuantity($id, $oldQuantity + $quantity);
-                    } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
-                        try {
-                            $logger = LoggerFactory::create('basket');
-                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
-                        } catch (\RuntimeException $e) {
-                            /** оч. плохо - логи мы не получим */
-                        }
+                    } catch (ObjectNotFoundException | BitrixProxyException | Exception $e) {
                         return $this->ajaxMess->getSystemError();
                     }
                 }
@@ -756,10 +674,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if ($needAddPhone === 'Y') {
             $data = ['html' => $this->getHtml('addPhone', 'Добавление телефона'), ['backurl' => $backUrl]];
         } else {
-            if (!empty($backUrl)) {
+            $options = ['reload' => true];
+
+            if ($backUrl) {
                 $options = ['redirect' => $backUrl];
-            } else {
-                $options = ['reload' => true];
             }
         }
 
@@ -776,12 +694,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -798,13 +710,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!empty($delBasketItems) || !empty($delBasketItems)) {
             try {
                 $basketService = $container->get(BasketService::class);
-            } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
-                try {
-                    $logger = LoggerFactory::create('system');
-                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-                } catch (\RuntimeException $e) {
-                    /** оч. плохо - логи мы не получим */
-                }
+            } catch (ServiceNotFoundException | ServiceCircularReferenceException | RuntimeException $e) {
                 return $this->ajaxMess->getSystemError();
             }
 
@@ -812,7 +718,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 foreach ($delItemsByKeys as $key) {
                     try {
                         $basketItem = $basketService->getBasket()->getItemByIndex($key);
-                        if($basketItem !== null) {
+                        if ($basketItem !== null) {
                             $id = $basketItem->getId();
                             if ($id > 0) {
                                 $basketService->deleteOfferFromBasket($id);
@@ -822,7 +728,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         try {
                             $logger = LoggerFactory::create('basket');
                             $logger->critical('Ошибка удаления - ' . $e->getMessage());
-                        } catch (\RuntimeException $e) {
+                        } catch (RuntimeException $e) {
                             /** оч. плохо - логи мы не получим */
                         }
                         return $this->ajaxMess->getSystemError();
@@ -830,17 +736,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
             }
 
-            if(\is_array($delBasketItems) && !empty($delBasketItems)) {
+            if (\is_array($delBasketItems) && !empty($delBasketItems)) {
                 foreach ($delBasketItems as $id) {
                     try {
                         $basketService->deleteOfferFromBasket($id);
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
-                        try {
-                            $logger = LoggerFactory::create('basket');
-                            $logger->critical('Ошибка удаления - ' . $e->getMessage());
-                        } catch (\RuntimeException $e) {
-                            /** оч. плохо - логи мы не получим */
-                        }
                         return $this->ajaxMess->getSystemError();
                     }
                 }
@@ -855,10 +755,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if ($needAddPhone === 'Y') {
             $data = ['html' => $this->getHtml('addPhone', 'Добавление телефона'), ['backurl' => $backUrl]];
         } else {
-            if (!empty($backUrl)) {
+            $options = ['reload' => true];
+
+            if ($backUrl) {
                 $options = ['redirect' => $backUrl];
-            } else {
-                $options = ['reload' => true];
             }
         }
 
@@ -925,7 +825,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $page
      * @param string $title
-     * @param array  $params
+     * @param array $params
      *
      * @return string
      */
@@ -978,13 +878,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
-        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
+        } catch (Exception $e) {
             return $this->ajaxMess->getSystemError();
         }
 
@@ -999,17 +893,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             )) {
                 return $this->ajaxMess->getUpdateError();
             }
-        } catch (SystemException $e) {
-            return $this->ajaxMess->getSystemError();
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
-            try {
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка параметров - ' . $e->getMessage());
-            } catch (\RuntimeException $e) {
-                /** оч. плохо - логи мы не получим */
-            }
+        } catch (Exception $e) {
             return $this->ajaxMess->getSystemError();
         }
 
