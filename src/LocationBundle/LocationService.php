@@ -731,26 +731,29 @@ class LocationService
     /**
      * Получение кода текущего местоположения
      *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
      * @return string
      */
     public function getCurrentLocation(): string
     {
-        /** @var UserService $userService */
-        $userService = Application::getInstance()
-            ->getContainer()
-            ->get(UserCitySelectInterface::class);
+        try {
+            /** @var UserService $userService */
+            $userService = Application::getInstance()
+                ->getContainer()
+                ->get(UserCitySelectInterface::class);
 
-        if ($location = $userService->getSelectedCity()) {
-            return $location['CODE'];
+            if ($location = $userService->getSelectedCity()) {
+                $result = $location['CODE'];
+            } else {
+                $result = (string)$this->getDefaultLocation()['CODE'];
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('Failed to get product list: %s: %s', \get_class($e), $e->getMessage())
+            );
+            $result = static::LOCATION_CODE_MOSCOW;
         }
 
-        return (string)$this->getDefaultLocation()['CODE'];
+        return $result;
     }
 
     /**
