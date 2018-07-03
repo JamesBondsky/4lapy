@@ -10,6 +10,7 @@ use Bitrix\Sale\OrderDiscountManager;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\SaleBundle\Discount\Utils\DiscountDisjunction;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -21,6 +22,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Gift extends \CSaleActionCtrlAction
 {
+    use DiscountDisjunction;
     /**
      * @return array
      */
@@ -108,6 +110,13 @@ class Gift extends \CSaleActionCtrlAction
             foreach ($arSubs as $sub) {
                 $result .= '$count = ' . $sub . PHP_EOL;
                 $result .= 'if ($count) {' . PHP_EOL;
+                if ($parameters['All'] === 'OR') {
+                    // $arOrder = self::discountDisjunction()
+                    $result .= $orderVar . '[\'BASKET_ITEMS\'] = ' . static::class
+                        . '::discountDisjunction($filteredOrder[\'BASKET_ITEMS\'], '
+                        . $orderVar . '[\'BASKET_ITEMS\']);' . PHP_EOL;
+                }
+                // !!! ПРОДПОЛАГАЕТСЯ ЧТО ТОВАРЫ В ГРУППАХ ПРЕДПОСЛОК РАЗНЫЕ !!!
                 $result .= '$filteredOrder[\'BASKET_ITEMS\'] += ' . $orderVar . '[\'BASKET_ITEMS\'];' . PHP_EOL;
                 $result .= '};' . PHP_EOL;
                 $result .= '$counts[] = $count;' . PHP_EOL;
@@ -120,7 +129,6 @@ class Gift extends \CSaleActionCtrlAction
         }
         return $result;
     }
-
 
     /**
      * @param               $order
@@ -142,7 +150,7 @@ class Gift extends \CSaleActionCtrlAction
         int $applyCount
     ) {
         $applyBasket = null;
-        $actionDescription = null;
+        $actionDescription = true;
         if (!empty($order['BASKET_ITEMS']) && \is_array($order['BASKET_ITEMS']) && $applyCount) {
             $giftsSoldOut = true;
             if (!empty($params) && ($params = json_decode($params, true)) && \is_array($params)) {
@@ -154,36 +162,49 @@ class Gift extends \CSaleActionCtrlAction
                     $param['list'] = [];
                     /** @var Offer $offer */
                     foreach ($offerCollection as $k => $offer) {
-                        if($offer->isAvailable()) {
+                        if ($offer->isAvailable()) {
                             $param['list'][] = $k;
                         }
                     }
-                    if(!$param['list']) {
+                    if (!$param['list']) {
                         $giftsSoldOut = true;
                     }
                 }
                 unset($param);
                 $params['discountType'] = 'GIFT';
             }
-            if($giftsSoldOut) {
+            if ($giftsSoldOut) {
                 $actionDescription = false;
-            } else {
-                $actionDescription = [
-                    'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
-                    'ACTION_DESCRIPTION' => \json_encode($params),
-                ];
-                Actions::increaseApplyCounter();
-                Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
-
-                /** @var array $applyBasket */
-                $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
             }
-
         }
+        /**
+         * @todo подобные фильтры должны быть в фильтре
+         */
+        /** @var array $applyBasket */
+        $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
 
         if (!$applyBasket || !$actionDescription) {
             return;
         }
+
+        $premises = [];
+        foreach ($applyBasket as $basketCode => $basketItem) {
+            foreach ($basketItem['DISCOUNT_GROUPS'] as $groupId => $p) {
+                if($groupId > $applyCount) {
+                    break;
+                }
+                $premises[$basketItem['PRODUCT_ID']] += $p;
+            }
+        }
+        $params['premises'] = $premises;
+
+        $actionDescription = [
+            'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
+            'ACTION_DESCRIPTION' => \json_encode($params),
+        ];
+        Actions::increaseApplyCounter();
+        Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
+
 
         foreach ($applyBasket as $basketCode => $basketRow) {
             $rowActionDescription = $actionDescription;

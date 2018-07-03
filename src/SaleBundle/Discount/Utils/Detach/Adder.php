@@ -57,6 +57,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
 
             // @todo костыль. при частичном получении корзина заказа пересчитывается и для скидок basketCode приходят как ''
+            // меня всеж беспокоит то что костыль какой-то странный, особенно момент с "приходят".
+            // Как в массиве может быть несколько элементов с одинаковым ключом?
             $basketItems = $this->order->getBasket()->getBasket()->getBasketItems();
             /** @var BasketItem $firstItem */
             $firstItem = reset($basketItems);
