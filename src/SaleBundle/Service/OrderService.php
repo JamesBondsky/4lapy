@@ -651,6 +651,7 @@ class OrderService implements LoggerAwareInterface
                 'CITY',
                 'CITY_CODE',
                 'COM_WAY',
+                'DELIVERY_PLACE_CODE',
                 'IS_FAST_ORDER',
             ];
 
@@ -672,6 +673,20 @@ class OrderService implements LoggerAwareInterface
                         case 'CITY_CODE':
                             $value = $storage->getCityCode();
                             break;
+                        case 'DELIVERY_PLACE_CODE':
+                            switch ($selectedDelivery->getDeliveryZone()) {
+                                case DeliveryService::ZONE_1:
+                                case DeliveryService::ZONE_3:
+                                    $value = 'DC01';
+                                    break;
+                                case DeliveryService::ZONE_2:
+                                    if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                                        $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                    } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
+                                        $value = $baseShop->getXmlId();
+                                    }
+                                    break;
+                            }
                     }
                 }
 
