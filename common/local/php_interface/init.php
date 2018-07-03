@@ -3,7 +3,6 @@
 use Adv\Bitrixtools\IBlockPropertyType\YesNoPropertyType;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Page\Asset;
-use Bitrix\Main\Web\Cookie;
 use FourPaws\App\EventInitializer;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
 
@@ -29,7 +28,6 @@ CUtil::InitJSCore(['popup', 'fx']);
 $cookieEnv = explode(':', getenv('ADDITIONAL_COOKIE'));
 
 if ($cookieEnv) {
-    $cookie = new Cookie($cookieEnv[0], $cookieEnv[1]);
     $cookieScript = <<<SCR
     <script>
         var date = new Date();
