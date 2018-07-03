@@ -15,3 +15,8 @@ YesNoPropertyType::init();
  * Регистрируем события
  */
 (new EventInitializer())(EventManager::getInstance());
+
+/**
+ * Инициализируем скрипты ядра, использующиеся для стандартных js-методов
+ */
+CJSCore::Init();
