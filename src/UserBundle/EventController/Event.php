@@ -7,8 +7,8 @@
 namespace FourPaws\UserBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\EventManager;
 use Bitrix\main\Application as BitrixApplication;
+use Bitrix\Main\EventManager;
 use FourPaws\App\Application as App;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -17,7 +17,6 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -52,46 +51,46 @@ class Event extends BaseServiceHandler
 
         $module = 'main';
         /** установка обязательного поля при регистрации через соц. сеть */
-        static::initHandlerCompatible('OnBeforeUserAdd', [self::class,'checkSocserviseRegisterHandler'], $module);
+        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkSocserviseRegisterHandler'], $module);
 
         /** События форматирования телефона */
-        static::initHandlerCompatible('OnBeforeUserAdd', [self::class,'checkPhoneFormat'], $module);
-        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class,'checkPhoneFormat'], $module);
+        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkPhoneFormat'], $module);
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], $module);
 
         /** замена логина */
-        static::initHandlerCompatible('OnBeforeUserLogon', [self::class,'replaceLogin'], $module);
+        static::initHandlerCompatible('OnBeforeUserLogon', [self::class, 'replaceLogin'], $module);
 
         /** фикс базовой авторизации */
-        static::initHandlerCompatible('onBeforeUserLoginByHttpAuth', [self::class,'deleteBasicAuth'], $module);
+        static::initHandlerCompatible('onBeforeUserLoginByHttpAuth', [self::class, 'deleteBasicAuth'], $module);
 
         /** деактивация перед регистрацией */
-        static::initHandlerCompatible('OnBeforeUserRegister', [self::class,'preventAuthorizationOnRegister'], $module);
+        static::initHandlerCompatible('OnBeforeUserRegister', [self::class, 'preventAuthorizationOnRegister'], $module);
 
         /** отправка email после регистрации */
-        static::initHandlerCompatible('OnAfterUserRegister', [self::class,'sendEmail'], $module);
+        static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'sendEmail'], $module);
 
         /** обновление данных в манзане */
-        static::initHandlerCompatible('OnAfterUserUpdate', [self::class,'updateManzana'], $module);
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], $module);
 
         /** обновляем логин если он равняется телефону или email */
-        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class,'replaceLoginOnUpdate'], $module);
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], $module);
 
         /** очистка кеша пользователя */
-        static::initHandlerCompatible('OnAfterUserUpdate', [self::class,'clearUserCache'], $module);
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], $module);
 
         /** чистим кеш юзера при авторизации */
-        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class,'clearUserCache'], $module);
-        static::initHandlerCompatible('OnAfterUserLogin', [self::class,'clearUserCache'], $module);
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class,'clearUserCache'], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], $module);
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'clearUserCache'], $module);
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], $module);
 
         /** действия при авторизации(обновление группы оптовиков, обновление карты) */
-        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class,'refreshUserOnAuth'], $module);
-        static::initHandlerCompatible('OnAfterUserLogin', [self::class,'refreshUserOnAuth'], $module);
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class,'refreshUserOnAuth'], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], $module);
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], $module);
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'refreshUserOnAuth'], $module);
 
         /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
-        static::initHandlerCompatible('OnBeforeUserLogin', [self::class,'logoutBeforeAuth'], $module);
-        static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class,'logoutBeforeAuth'], $module);
+        static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], $module);
+        static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], $module);
     }
 
     /**
@@ -298,19 +297,19 @@ class Event extends BaseServiceHandler
             if ($userService->isAuthorized()) {
                 $userService->logout();
             }
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             //ошибка сервиса - попробуем через глобальный объект
             global $USER;
-            if(!\is_object($USER)){
+            if (!\is_object($USER)) {
                 $USER = new \CUser();
             }
-            if($USER->IsAuthorized()){
+            if ($USER->IsAuthorized()) {
                 $USER->Logout();
             }
         }
     }
 
-    public function refreshUserOnAuth(): void
+    public static function refreshUserOnAuth(): void
     {
         try {
             /** @var MainTemplate $template */
