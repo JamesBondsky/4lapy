@@ -651,6 +651,7 @@ class OrderService implements LoggerAwareInterface
                 'CITY',
                 'CITY_CODE',
                 'COM_WAY',
+                'DELIVERY_PLACE_CODE',
                 'IS_FAST_ORDER',
             ];
 
@@ -672,6 +673,20 @@ class OrderService implements LoggerAwareInterface
                         case 'CITY_CODE':
                             $value = $storage->getCityCode();
                             break;
+                        case 'DELIVERY_PLACE_CODE':
+                            switch ($selectedDelivery->getDeliveryZone()) {
+                                case DeliveryService::ZONE_1:
+                                case DeliveryService::ZONE_3:
+                                    $value = 'DC01';
+                                    break;
+                                case DeliveryService::ZONE_2:
+                                    if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                                        $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                    } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
+                                        $value = $baseShop->getXmlId();
+                                    }
+                                    break;
+                            }
                     }
                 }
 
@@ -871,6 +886,11 @@ class OrderService implements LoggerAwareInterface
 
                 try {
                     $address = $this->locationService->splitAddress((string)$address, $storage->getCityCode());
+                    $this->setOrderPropertiesByCode($order, [
+                        'STREET' => $address->getStreet(),
+                        'STREET_PREFIX' => $address->getStreetPrefix(),
+                        'ZIP_CODE' => $address->getZipCode()
+                    ]);
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
@@ -1650,6 +1670,7 @@ class OrderService implements LoggerAwareInterface
             'PORCH'       => $address->getEntrance(),
             'FLOOR'       => $address->getFloor(),
             'APARTMENT'   => $address->getFlat(),
+            'ZIP_CODE'    => $address->getZipCode()
         ];
 
         return $this->setOrderPropertiesByCode($order, $properties);

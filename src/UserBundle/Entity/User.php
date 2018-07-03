@@ -405,7 +405,7 @@ class User implements UserInterface
      */
     public function getEmail(): string
     {
-        return $this->email;
+        return $this->email ?? '';
     }
 
     /**
