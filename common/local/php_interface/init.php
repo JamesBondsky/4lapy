@@ -1,9 +1,8 @@
 <?php
 
 use Adv\Bitrixtools\IBlockPropertyType\YesNoPropertyType;
-use Bitrix\Main\Application;
 use Bitrix\Main\EventManager;
-use Bitrix\Main\Web\Cookie;
+use Bitrix\Main\Page\Asset;
 use FourPaws\App\EventInitializer;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
 
@@ -29,6 +28,13 @@ CUtil::InitJSCore(['popup', 'fx']);
 $cookieEnv = explode(':', getenv('ADDITIONAL_COOKIE'));
 
 if ($cookieEnv) {
-    $cookie = new Cookie($cookieEnv[0], $cookieEnv[1]);
-    Application::getInstance()->getContext()->getResponse()->addCookie($cookie);
+    $cookieScript = <<<SCR
+    <script>
+        var date = new Date();
+        date.setDate(date.getDate() + 30);
+        document.cookie = "{$cookieEnv[0]}={$cookieEnv[1]}; path=/; expires=" + date;
+    </script>
+SCR;
+
+    Asset::getInstance()->addString($cookieScript);
 }
