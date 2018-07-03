@@ -785,7 +785,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (ManzanaCardIsNotFound $e) {
             $this->logger->error($e->getMessage());
         } catch (Exception $e) {
-            $this->logger->error(sprintf('Manzana user card update error: %s', $e->getMessage()));
+            $this->logger->error(sprintf('Manzana user %s card update error: %s', $client->phone, $e->getMessage()));
         }
     }
 
