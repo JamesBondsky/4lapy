@@ -2,6 +2,7 @@
 
 use Adv\Bitrixtools\IBlockPropertyType\YesNoPropertyType;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Web\Cookie;
 use FourPaws\App\EventInitializer;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
@@ -35,8 +36,7 @@ if ($cookieEnv) {
         date.setDate(date.getDate() + 30);
         document.cookie = "{$cookieEnv[0]}={$cookieEnv[1]}; path=/; expires=" + date;
     </script>
-
 SCR;
 
-    \Bitrix\Main\Page\Asset::getInstance()->addString($cookieScript);
+    Asset::getInstance()->addString($cookieScript);
 }
