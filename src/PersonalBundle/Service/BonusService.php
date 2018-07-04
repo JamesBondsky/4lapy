@@ -281,10 +281,6 @@ class BonusService
 
             if($isChange) {
                 $this->currentUserProvider->getUserRepository()->updateDiscountCard($user->getId(), $bonusCard);
-
-                TaggedCacheHelper::clearManagedCache([
-                    'personal:bonus:' . $user->getId(),
-                ]);
             } else {
                 throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
             }
