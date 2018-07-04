@@ -10,6 +10,7 @@
 namespace FourPaws\SaleBundle\Discount\Action\Condition;
 
 use Bitrix\Sale\Discount\Actions;
+use FourPaws\SaleBundle\Discount\Utils\SortByKeyTrait;
 use FourPaws\SaleBundle\Discount\Utils\ValidateAtoms;
 
 
@@ -19,6 +20,7 @@ use FourPaws\SaleBundle\Discount\Utils\ValidateAtoms;
  */
 class BasketFilter extends \CSaleCondCtrlBasketGroup
 {
+    use SortByKeyTrait;
     use ValidateAtoms;
 
     /**
@@ -403,6 +405,10 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
             $basket = (\is_callable($filter) ? array_filter($order['BASKET_ITEMS'], $filter) : $order['BASKET_ITEMS']);
             if (!empty($basket)) {
 
+                foreach ($basket as &$basketItem) {
+                    $basketItem['DISCOUNT_GROUPS'] = [];
+                }
+                unset($basketItem);
                 $clearBasket = array_filter($basket, '\CSaleBasketFilter::ClearBasket');
                 $clearBasket = array_filter($clearBasket, [Actions::class, 'filterBasketForAction']);
                 $clearBasket = array_filter(
@@ -429,6 +435,7 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
                     }
                 }
             }
+            self::sortByKey($clearBasket, ['BASE_PRICE']);
             $order['BASKET_ITEMS'] = $clearBasket;
         }
         switch ($returnParam) {
@@ -442,6 +449,90 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
                 break;
             default:
                 $result = 0;
+        }
+        if ($result) {
+            $limit = $limitValue;
+            $groupIndex = 1;
+            foreach ($order['BASKET_ITEMS'] as &$basketItem) {
+                $totalPrice = (float)$basketItem['QUANTITY'] * (float)$basketItem['BASE_PRICE'];
+
+                //if ($field === 'PRICE' && $returnParam === 'more') { // Этого варианта не бывает
+                if ($field === 'BASE_PRICE' && $returnParam === 'ratio') {
+
+                    if ($limit >= $totalPrice) {
+                        $basketItem['DISCOUNT_GROUPS'][$groupIndex] = (int)$basketItem['QUANTITY'];
+                        $limit -= $totalPrice;
+                        if ($limit < 1) {
+                            if ($groupIndex === $result) {
+                                break;
+                            }
+                            ++$groupIndex;
+                            $limit = $limitValue;
+                        }
+                    } else {
+                        while (($totalPrice - $limit) >= 0) {
+                            $basketItem['DISCOUNT_GROUPS'][$groupIndex++] = (int)ceil($limit / (float)$basketItem['BASE_PRICE']);
+                            if ($groupIndex > $result) {
+                                break 2;
+                            }
+                            $totalPrice -= $limit;
+                            $limit = $limitValue;
+                        }
+                        $limit = $limitValue - $totalPrice;
+                    }
+
+                } elseif ($field === 'QUANTITY' && $returnParam === 'more') {
+
+                    ++$limit;
+                    if ($limit >= (int)$basketItem['QUANTITY']) {
+                        $basketItem['DISCOUNT_GROUPS'][$groupIndex] = (int)$basketItem['QUANTITY'];
+                        $limit -= (int)$basketItem['QUANTITY'];
+                        if ($limit === 0) {
+                            if ($groupIndex === $result) {
+                                break;
+                            }
+                            ++$groupIndex;
+                            $limit = 1;
+                        }
+                    } else {
+                        if ($groupIndex === 1) {
+                            $basketItem['DISCOUNT_GROUPS'][$groupIndex++] = (int)$limit;
+                            $remainQuantity = (int)$basketItem['QUANTITY'] - $limit;
+                        } else {
+                            $remainQuantity = (int)$basketItem['QUANTITY'];
+                        }
+                        $basketItem['DISCOUNT_GROUPS'] += array_fill($groupIndex, $remainQuantity, 1);
+                        $limit = 1;
+                    }
+
+                } elseif ($field === 'QUANTITY' && $returnParam === 'ratio') {
+
+                    if ($limit >= (int)$basketItem['QUANTITY']) {
+                        $basketItem['DISCOUNT_GROUPS'][$groupIndex] = (int)$basketItem['QUANTITY'];
+                        $limit -= (int)$basketItem['QUANTITY'];
+                        if ($limit < 1) {
+                            if ($groupIndex === $result) {
+                                break;
+                            }
+                            ++$groupIndex;
+                            $limit = $limitValue;
+                        }
+                    } else {
+                        $remainQuantity = (int)$basketItem['QUANTITY'];
+                        while (($remainQuantity - $limit) >= 0) {
+                            $basketItem['DISCOUNT_GROUPS'][$groupIndex++] = (int)$limit;
+                            if ($groupIndex > $result) {
+                                break 2;
+                            }
+                            $remainQuantity -= $limit;
+                            $limit = $limitValue;
+                        }
+                        $limit = $limitValue - $remainQuantity;
+                    }
+
+                }
+            }
+            unset($basketItem);
         }
         return $result;
     }
