@@ -20,7 +20,7 @@ YesNoPropertyType::init();
 /**
  * Инициализируем скрипты ядра, использующиеся для стандартных js-методов
  */
-CUtil::InitJSCore(['popup', 'fx']);
+CUtil::InitJSCore(['core', 'popup', 'fx', 'ui']);
 
 /**
  * Устанавливаем cookie из ENV - для того, чтобы отфильтровать
