@@ -654,15 +654,15 @@ class BasketService implements LoggerAwareInterface
      * @param Order|null $order
      *
      * @return int
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      */
-    public function getBonusAvardingQuantity(BasketItem $basketItem, ?Order $order = null): int
+    public function getBonusAwardingQuantity(BasketItem $basketItem, ?Order $order = null): int
     {
         /**
          * @var BasketItemCollection $basketItemCollection
-         * @var Order                $order
-         * @var Basket               $basket
+         * @var Order $order
+         * @var Basket $basket
          */
-
         if (
             !$order
             &&
@@ -687,21 +687,20 @@ class BasketService implements LoggerAwareInterface
         $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
 
         if (!$basketDiscounts) {
+            $basketDiscounts = [];
             /** @var BasketPropertyItem $basketPropertyItem */
             foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
                 $propCode = $basketPropertyItem->getField('CODE');
-                if ($propCode === 'DETACH_FROM') {
-                    $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
-                } elseif ($propCode === 'IS_GIFT') {
+                if ($propCode === 'IS_GIFT') {
                     $discountId = $basketPropertyItem->getField('VALUE');
                     if (\is_iterable($applyResult['DISCOUNT_LIST'])) {
                         foreach ($applyResult['DISCOUNT_LIST'] as $appliedDiscount) {
                             if ((int)$appliedDiscount['REAL_DISCOUNT_ID'] === (int)$discountId) {
-                                $basketDiscounts = [
+                                $basketDiscounts[] = [
                                     'DISCOUNT_ID' => $appliedDiscount['ID'],
-                                    'COUPON_ID'   => '',
-                                    'APPLY'       => 'Y',
-                                    'DESCR'       => $appliedDiscount['ACTIONS_DESCR']['BASKET'],
+                                    'COUPON_ID' => '',
+                                    'APPLY' => 'Y',
+                                    'DESCR' => $appliedDiscount['ACTIONS_DESCR']['BASKET'],
                                 ];
                             }
                         }
@@ -714,13 +713,70 @@ class BasketService implements LoggerAwareInterface
             $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
         }
 
-        /**
-         * @todo должно возвращать кол-во товаров данной позиции корзины, не задействованных в акции
-         *       (не являющихся предпосылкой/подарком)
-         */
-        $resultQuantity = (int)$basketItem->getQuantity();
+        $resultQuantity = (int)$basketItem->getQuantity() - $this->getPremisesQuantity($applyResult, $basketItem, $order);
 
         return (bool)$basketDiscounts ? 0 : $resultQuantity;
+    }
+
+    /**
+     *
+     *
+     * @param array $applyResult
+     * @param BasketItem $basketItem
+     * @param Order $order
+     *
+     * @return int
+     */
+    public function getPremisesQuantity(array $applyResult, BasketItem $basketItem, Order $order): int
+    {
+        $allPremises = [];
+        foreach ($applyResult['DISCOUNT_LIST'] as $fakeId => $discountDesc) {
+            if (
+                $discountDesc['ACTIONS_DESCR']['BASKET']
+                &&
+                ($params = json_decode($discountDesc['ACTIONS_DESCR']['BASKET'], true))
+                &&
+                \is_array($params)
+            ) {
+                if ($params['discountType'] === 'DETACH') {
+                    $premises = (array)$params['params']['premises'];
+                } elseif ($params['discountType'] === 'GIFT') {
+                    $premises = (array)$params['premises'];
+                }
+                foreach ($premises as $productId => $quantity) {
+                    $allPremises[$productId] += $quantity;
+                }
+            }
+        }
+        $productId = (int)$basketItem->getProductId();
+        $productPremiseQty = (int)($allPremises[$productId] ?? 0);
+        $basketCode = $basketItem->getBasketCode();
+        $result = 0;
+        if ($productPremiseQty) {
+            /** @var BasketItem $item */
+            foreach ($order->getBasket()->getBasketItems() as $item) {
+                foreach ($item->getPropertyCollection() as $basketPropertyItem) {
+                    if ($basketPropertyItem->getField('CODE') === 'IS_GIFT') {
+                        continue 2;
+                    }
+                }
+                if ((int)$item->getProductId() !== $productId) {
+                    continue;
+                }
+                if ($basketCode === $item->getBasketCode()) {
+                    if ($productPremiseQty <= 0) {
+                        $result = 0;
+                    } elseif ($productPremiseQty >= (int)$item->getQuantity()) {
+                        $result = (int)$item->getQuantity();
+                    } else {
+                        $result = $productPremiseQty;
+                    }
+                } else {
+                    $productPremiseQty -= (int)$item->getQuantity();
+                }
+            }
+        }
+        return $result;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection
@@ -894,8 +950,8 @@ class BasketService implements LoggerAwareInterface
         }
 
         if (null !== $order = $basket->getOrder()) {
-            /** @noinspection AdditionOperationOnArraysInspection */
             $gifts = Gift::getPossibleGifts($order);
+            /** @noinspection AdditionOperationOnArraysInspection */
             $this->basketProductIds += $gifts;
             if (!empty($gifts)) {
                 $hasGifts = true;
@@ -904,8 +960,7 @@ class BasketService implements LoggerAwareInterface
 
         if (!empty($this->basketProductIds)) {
             $this->basketProductIds = \array_flip(\array_flip(\array_filter($this->basketProductIds)));
-            $this->basketProductIds = array_unique($this->basketProductIds);
-            sort($this->basketProductIds);
+            sort($this->basketProductIds); // зачем?
         }
         return $hasGifts;
     }
