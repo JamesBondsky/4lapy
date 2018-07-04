@@ -748,14 +748,19 @@ class BasketService implements LoggerAwareInterface
                 }
             }
         }
-        $productId = $basketItem->getProductId();
+        $productId = (int)$basketItem->getProductId();
         $productPremiseQty = (int)($allPremises[$productId] ?? 0);
         $basketCode = $basketItem->getBasketCode();
         $result = 0;
         if ($productPremiseQty) {
             /** @var BasketItem $item */
             foreach ($order->getBasket()->getBasketItems() as $item) {
-                if ($item->getProductId() !== $productId) {
+                foreach ($item->getPropertyCollection() as $basketPropertyItem) {
+                    if ($basketPropertyItem->getField('CODE') === 'IS_GIFT') {
+                        continue 2;
+                    }
+                }
+                if ((int)$item->getProductId() !== $productId) {
                     continue;
                 }
                 if ($basketCode === $item->getBasketCode()) {

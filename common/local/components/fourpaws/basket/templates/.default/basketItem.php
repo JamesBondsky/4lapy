@@ -10,6 +10,7 @@
  */
 
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketPropertyItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
@@ -103,12 +104,30 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 } ?>
             </a>
             <?php
-            /** @todo проверить, правильно ли работают бонусы */
-            if ($propertyValues['HAS_BONUS']['VALUE'] && $useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) {
+            $basketCodes = [];
+            $basketCodes[] = $basketItem->getBasketCode();
+            if ($arResult['ROWS_MAP'][$basketItem->getBasketCode()]) {
+                $basketCodes = array_merge($basketCodes, $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['ROWS']);
+            }
+
+            $bonusQty = 0;
+            foreach ($basketCodes as $code) {
+                /** @var BasketItem $tItem */
+                $tItem = $arResult['BASKET']->getItemByBasketCode($code);
+                /** @var BasketPropertyItem $basketPropertyItem */
+                foreach($tItem->getPropertyCollection() as $basketPropertyItem) {
+                    if($basketPropertyItem->getField('CODE') === 'HAS_BONUS') {
+                        $bonusQty+= (int)$basketPropertyItem->getField('VALUE');
+                    }
+                }
+            }
+
+
+            if ($bonusQty && $useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) {
                 ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?= $offer->getId() ?>">
                     <?php if ($arParams['IS_AJAX']) {
-                        echo $offer->getBonusFormattedText((int)$userDiscount, $propertyValues['HAS_BONUS']['VALUE'], 0);
+                        echo $offer->getBonusFormattedText((int)$userDiscount, $bonusQty, 0);
                     } ?>
                 </span>
                 <?php
