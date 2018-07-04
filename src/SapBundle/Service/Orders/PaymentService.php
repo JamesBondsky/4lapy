@@ -212,9 +212,8 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     public function getFileName($debit): string
     {
         return \sprintf(
-            '/%s/%s-%s_%s.xml',
+            '/%s/%s%s.xml',
             \trim($this->outPath, '/'),
-            $debit->getPaymentDate()->format('Ymd'),
             $this->outPrefix,
             $debit->getBitrixOrderId()
         );
@@ -246,12 +245,12 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         /** @noinspection ForeachSourceInspection */
         foreach ($fiscalization['fiscal']['orderBundle']['cartItems']['items'] as $item) {
-            $itemsAfter[] = $paymentTask->getItems()->map(function (Item $v) use ($map, $item) {
+            $itemsAfter[] = $paymentTask->getItems()->map(function (Item $v) use (&$map, $item) {
                 if ($v->getQuantity() && (
                         /* Доставка */
                         ($v->getOfferXmlId() >= 2000000 && $item['name'] === null)
                         /* или товар */
-                        || $map[$v->getOfferXmlId()] === $item['itemCode']
+                        || (int)$map[$v->getOfferXmlId()]['id'] === $item['itemCode']
                     )
                 ) {
                     $newItem = $item;
@@ -259,7 +258,16 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     $newItem['itemPrice'] = (int)($v->getPrice() * 100);
                     $newItem['itemAmount'] = (int)($v->getSumPrice() * 100);
 
-                    return $newItem;
+                    if (($newItem['itemAmount'] <= $item['itemAmount']) &&
+                        ($newItem['quantity']['value'] <= $item['quantity']['value'])
+                    ) {
+                        $map[$v->getOfferXmlId()]['count']--;
+                        if ($map[$v->getOfferXmlId()]['count'] < 0) {
+                            unset($map[$v->getOfferXmlId()]);
+                        } else {
+                            return $newItem;
+                        }
+                    }
                 }
 
                 return null;

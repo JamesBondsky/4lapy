@@ -755,6 +755,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
     /**
      * @param Client $client
+     * @throws TooManyUserFoundException
+     * @throws UsernameNotFoundException
+     * @throws TooManyActiveCardFound
+     * @throws ManzanaServiceException
+     * @throws ManzanaCardIsNotFound
+     * @throws \Exception
      */
     public function updateUserCardByClient(Client $client)
     {
@@ -773,13 +779,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
             $card = $this->getActiveCardByContactId($client->contactId);
 
-            if($user->getDiscountCardNumber() !== $card->cardNumber) {
-                $userRepository->updateDiscountCard($user->getId(), $card->cardNumber);
+            if($user->getDiscountCardNumber() !== (string)$card->cardNumber) {
+                $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
             }
         } catch (ManzanaCardIsNotFound $e) {
             $this->logger->error($e->getMessage());
         } catch (Exception $e) {
-            $this->logger->error(sprintf('Manzana user card update error: %s', $e->getMessage()));
+            $this->logger->error(sprintf('Manzana user %s card update error: %s', $client->phone, $e->getMessage()));
         }
     }
 

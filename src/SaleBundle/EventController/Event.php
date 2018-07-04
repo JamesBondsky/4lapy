@@ -128,7 +128,6 @@ class Event extends BaseServiceHandler
             $user = $userService->getCurrentUser();
             [, $bonus] = $userAccountService->refreshUserBalance($user);
             $userService->refreshUserBonusPercent($user, $bonus);
-            $userService->refreshUserOpt($user);
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
         } catch (\Exception $e) {
@@ -156,10 +155,6 @@ class Event extends BaseServiceHandler
         $entity = $event->getParameter('ENTITY');
 
         if ($entity instanceof Order) {
-            $isNew = $event->getParameter('IS_NEW');
-            if (!$isNew) {
-                return;
-            }
             $order = $entity;
         } elseif ($entity instanceof Payment) {
             /** @var PaymentCollection $collection */
@@ -337,7 +332,7 @@ class Event extends BaseServiceHandler
             try {
                 /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
                 $maxNumber = BitrixApplication::getConnection()->query(
-                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 999999999'
+                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 9999999'
                 )->fetch()['maxNumber'];
 
                 if ($defaultNumber = Option::get('sale', 'account_number_data', 0)) {

@@ -425,20 +425,4 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isDir('/catalog/search');
     }
-
-    /**
-     * @return bool
-     */
-    private function isBrand(): bool
-    {
-        return $this->isPartitionDir('/brand');
-    }
-
-    /**
-     * @return bool
-     */
-    private function isCatalogList(): bool
-    {
-        return $this->isPartitionDir('/catalog') && !$this->isPartitionPage('.html') && !$this->isSearchPage();
-    }
 }

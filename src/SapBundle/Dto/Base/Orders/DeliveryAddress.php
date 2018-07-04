@@ -437,7 +437,6 @@ class DeliveryAddress
                     $this->ownerShip ? 'владение ' . $this->ownerShip : '',
                     $this->floor ? 'этаж ' . $this->floor : '',
                     $this->roomNumber,
-                    $this->deliveryPointCode,
                 ]
             )
         );

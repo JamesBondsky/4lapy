@@ -226,14 +226,11 @@ class CCommentsComponent extends \CBitrixComponent
             return false;
         }
 
-        /** @todo кеширование комментариев */
-        if ($this->startResultCache()) {
-            $tagCache = new TaggedCacheHelper();
+        $cachePath = $this->getCachePath() ?: $this->getPath();
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], false, $cachePath)) {
+            $tagCache = new TaggedCacheHelper($cachePath);
             $tagCache->addTags([
-                'comments:objectId:' . $this->arParams['OBJECT_ID'],
-                'comments:type:' . $this->arParams['TYPE'],
                 'hlb:field:comments_objectId:' . $this->arParams['OBJECT_ID'],
-                'catalog:comments',
             ]);
 
             try {

@@ -497,16 +497,20 @@ class LocationService
         $res = [];
         $value = substr($value, 0 ,11);
         $locations = ExternalTable::query()
+            ->setOrder(['LOCATION.DEPTH_LEVEL'])
             ->where('SERVICE_ID', $this->getExternalServiceIdByCode($code))
             ->where('XML_ID', $value)
             ->setSelect(['LOCATION_ID'])
             ->exec()
             ->fetchAll();
+
         if (!empty($locations)) {
             $locationsIds = [];
+
             foreach ($locations as $location) {
                 $locationsIds[] = $location['LOCATION_ID'];
             }
+
             if (!empty($locationsIds)) {
                 $res = $this->findLocationNew(['=ID' => $locationsIds]);
             }
@@ -727,26 +731,29 @@ class LocationService
     /**
      * Получение кода текущего местоположения
      *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
      * @return string
      */
     public function getCurrentLocation(): string
     {
-        /** @var UserService $userService */
-        $userService = Application::getInstance()
-            ->getContainer()
-            ->get(UserCitySelectInterface::class);
+        try {
+            /** @var UserService $userService */
+            $userService = Application::getInstance()
+                ->getContainer()
+                ->get(UserCitySelectInterface::class);
 
-        if ($location = $userService->getSelectedCity()) {
-            return $location['CODE'];
+            if ($location = $userService->getSelectedCity()) {
+                $result = $location['CODE'];
+            } else {
+                $result = (string)$this->getDefaultLocation()['CODE'];
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('Failed to get product list: %s: %s', \get_class($e), $e->getMessage())
+            );
+            $result = static::LOCATION_CODE_MOSCOW;
         }
 
-        return (string)$this->getDefaultLocation()['CODE'];
+        return $result;
     }
 
     /**
@@ -905,13 +912,13 @@ class LocationService
 
             $result = new Address();
             $result->setLocation($locationCode)
-                ->setCity($dadataLocation->getCity())
+                ->setCity($dadataLocation->getCity() ?: $dadataLocation->getRegion())
                 ->setValid($this->daDataService->isValidAddress($dadataLocation))
-                ->setStreet($dadataLocation->getStreetWithType())
+                ->setStreetPrefix($dadataLocation->getStreetType())
+                ->setStreet($dadataLocation->getStreet())
                 ->setHouse($dadataLocation->getHouse())
                 ->setFlat($dadataLocation->getFlat())
                 ->setZipCode($dadataLocation->getPostalCode());
-
         } catch (DaDataExecuteException $e) {
             $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
                 'address' => $address,

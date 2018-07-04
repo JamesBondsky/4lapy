@@ -96,7 +96,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             return null;
         }
 
-        if (!$user->havePersonalPhone()) {
+        if (!$user->hasPhone()) {
             $this->includeComponentTemplate('notPhone');
             return false;
         }
@@ -113,7 +113,6 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             $tagCache = new TaggedCacheHelper($cachePath);
             $tagCache->addTags([
                 'personal:bonus:' . $user->getId(),
-                'order:' . $user->getId(),
                 'user:' . $user->getId(),
             ]);
 

@@ -353,7 +353,7 @@ class OrderController extends Controller
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
-        $url = new Uri('/sale/order/' . OrderStorageService::COMPLETE_STEP . '/' . $order->getId());
+        $url = new Uri('/sale/order/' . OrderStorageService::COMPLETE_STEP . '/' . $order->getId() . '/');
 
         /** @var Payment $payment */
         foreach ($order->getPaymentCollection() as $payment) {

@@ -56,9 +56,10 @@ class EventHandlers extends BaseServiceHandler
             static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnPriceChange'], $module);
         }
 
+        /** Не переиндексируем на обновлении продукта каталога
         foreach (['OnProductUpdate', 'OnProductAdd'] as $eventType) {
             static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnCatalogProductChange'], $module);
-        }
+        } */
     }
 
     /**

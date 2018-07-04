@@ -87,7 +87,7 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
                 );
             }
 
-            if (!($id % 100)) {
+            if (!($id % 1000)) {
                 $this->log()->info(
                     \sprintf(
                         'Проимпортировано остатков %d, ошибок: %d, успешно %d',

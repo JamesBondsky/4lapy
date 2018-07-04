@@ -162,7 +162,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             }
 
             $tagCache->addTags([
-                'personal:orders',
                 'personal:orders:' . $userId,
                 'order:' . $userId,
             ]);

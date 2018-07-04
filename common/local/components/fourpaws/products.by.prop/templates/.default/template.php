@@ -28,13 +28,20 @@ if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
             <h2 class="b-title b-title--sale"><?= $arParams['TITLE'] ?></h2>
         </div>
         <div class="<?= $arParams['SLIDER'] === 'Y' ? 'b-common-section__content b-common-section__content--sale js-popular-product' : 'b-common-wrapper b-common-wrapper--visible js-catalog-wrapper' ?>">
-            <?php foreach ($offers as $offer) {
+            <?php  $products=[];
+            foreach ($offers as $offer) {
+                /** скипаем если такой товар уже был */
+                if(\in_array($offer->getProduct(), $products, true)){
+                    continue;
+                }
+                $products[]=$offer->getProduct();
                 $params = ['PRODUCT' => $offer->getProduct(), 'CURRENT_OFFER' => $offer];
                 if ($arParams['SLIDER'] === 'Y') {
                     $params['NOT_CATALOG_ITEM_CLASS'] = 'Y';
                 }
                 if ($arParams['IS_SHARE']) {
                     $params['SHARE_ID'] = $arParams['ITEM_ID'];
+                    $params['OFFER_FILTER'] = ['=' . $arParams['FILTER_FIELD'] => $arResult['OFFERS_IDS']];
                 }
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.element.snippet',

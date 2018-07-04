@@ -1,15 +1,16 @@
 <?php
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
-$APPLICATION->SetTitle("Бренды");
-?>
-<?$APPLICATION->IncludeComponent(
+require $_SERVER['DOCUMENT_ROOT']. '/bitrix/header.php';
+
+$APPLICATION->SetTitle('Бренды');
+
+$APPLICATION->IncludeComponent(
     'fourpaws:brands',
     'fp.17.0',
     array(
         'CACHE_TYPE' => 'A',
         'CACHE_TIME' => '43200',
         'SEF_MODE' => 'Y',
-        'SEF_FOLDER' => '/brands/',
+        'SEF_FOLDER' => '/brand/',
         'SEF_URL_TEMPLATES' => array(
             'index' => 'index.php',
             //'letter' => '#LETTER_REDUCED#/'
@@ -19,5 +20,7 @@ $APPLICATION->SetTitle("Бренды");
     array(
         'HIDE_ICONS' => 'Y'
     )
-);?>
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+);
+
+require $_SERVER['DOCUMENT_ROOT']. '/bitrix/footer.php';
+die();

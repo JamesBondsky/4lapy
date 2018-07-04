@@ -3,13 +3,12 @@
 namespace FourPaws\Search\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Elastica\Exception\InvalidException;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Search\Model\CatalogSyncMsg;
 use FourPaws\Search\SearchService;
 use JMS\Serializer\Serializer;
@@ -20,6 +19,11 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
+/**
+ * Class CatalogSyncConsumer
+ *
+ * @package FourPaws\Search\Consumer
+ */
 class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
@@ -54,54 +58,56 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param AMQPMessage $msg
      *
      * @throws RuntimeException
-     * @return mixed|void
+     *
+     * @return int
      */
     public function execute(AMQPMessage $msg)
     {
-        /** @var CatalogSyncMsg $cagalogSyncMessage */
-        $cagalogSyncMessage = $this->extractMessageBody($msg);
+        /** @var CatalogSyncMsg $catalogSyncMessage */
+        $catalogSyncMessage = $this->extractMessageBody($msg);
 
         //Если сообщение свежее
-        if (time() === $cagalogSyncMessage->getTimestamp()) {
+        if (time() === $catalogSyncMessage->getTimestamp()) {
             /**
              * Добавить задержку, чтобы MySQL успел закомитить все изменения по товару
              * и избежать ситуации, когда из базы будет прочитано неактуальное состояние.
              */
             $sleepSeconds = 1;
-            $this->log()->debug(sprintf('Sleep for %ss', $sleepSeconds));
             sleep($sleepSeconds);
         }
 
         if (
-            $cagalogSyncMessage->isForProductEntity()
-            && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
+            $catalogSyncMessage->isForProductEntity()
+            && ($catalogSyncMessage->isForAddAction() || $catalogSyncMessage->isForUpdateAction())
         ) {
-            $this->updateProduct($cagalogSyncMessage->getEntityId());
-        } elseif ($cagalogSyncMessage->isForProductEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-            $this->deleteProduct($cagalogSyncMessage->getEntityId());
+            $this->updateProduct($catalogSyncMessage->getEntityId());
+        } elseif ($catalogSyncMessage->isForProductEntity() && $catalogSyncMessage->isForDeleteAction()) {
+            $this->deleteProduct($catalogSyncMessage->getEntityId());
         } elseif (
-            $cagalogSyncMessage->isForOfferEntity()
-            && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
+            $catalogSyncMessage->isForOfferEntity()
+            && ($catalogSyncMessage->isForAddAction() || $catalogSyncMessage->isForUpdateAction())
         ) {
-            $this->updateOffer($cagalogSyncMessage->getEntityId());
-        } elseif ($cagalogSyncMessage->isForOfferEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-            $this->deleteOffer($cagalogSyncMessage->getEntityId());
+            $this->updateOffer($catalogSyncMessage->getEntityId());
+        } elseif ($catalogSyncMessage->isForOfferEntity() && $catalogSyncMessage->isForDeleteAction()) {
+            $this->deleteOffer($catalogSyncMessage->getEntityId());
         } elseif (
-            $cagalogSyncMessage->isForBrandEntity()
-            && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
+            $catalogSyncMessage->isForBrandEntity()
+            && ($catalogSyncMessage->isForAddAction() || $catalogSyncMessage->isForUpdateAction())
         ) {
-            $this->updateBrand($cagalogSyncMessage->getEntityId());
-        } elseif ($cagalogSyncMessage->isForBrandEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-            $this->deleteBrand($cagalogSyncMessage->getEntityId());
+            $this->updateBrand($catalogSyncMessage->getEntityId());
+        } elseif ($catalogSyncMessage->isForBrandEntity() && $catalogSyncMessage->isForDeleteAction()) {
+            $this->deleteBrand($catalogSyncMessage->getEntityId());
         } else {
-            $this->log()->alert(
+            $this->log()->error(
                 sprintf(
                     'Неподдерживаемый тип синхронизационного сообщения: type= %s , action = %s',
-                    $cagalogSyncMessage->getEntityType(),
-                    $cagalogSyncMessage->getAction()
+                    $catalogSyncMessage->getEntityType(),
+                    $catalogSyncMessage->getAction()
                 )
             );
         }
+
+        return static::MSG_ACK;
     }
 
     /**
@@ -124,41 +130,63 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             return;
         }
 
-        $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
+        try {
+            $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
 
-        TaggedCacheHelper::clearManagedCache([
-            'iblock:item:' . $product->getId(),
-        ]);
+            return;
+        }
 
-        $this->log()->debug(
-            sprintf(
-                'Обновление продукта #%d: %s',
-                $productId,
-                $indexProductResult ? 'успех' : 'ошибка'
-            )
-        );
+        if ($indexProductResult) {
+            /* TaggedCacheHelper::clearManagedCache([
+                'iblock:item:' . $product->getId(),
+            ]); */
+        } else {
+            $this->log()->error(
+                sprintf(
+                    'Обновление продукта #%d: ошибка',
+                    $productId
+                )
+            );
+        }
     }
 
     /**
      * @param int $productId
-     *
-     * @throws RuntimeException
+     * @return void
      */
-    private function deleteProduct(int $productId)
+    private function deleteProduct(int $productId):void
     {
-        $deleteProductResult = $this->searchService->getIndexHelper()->deleteProduct($productId);
+        try {
+            $deleteProductResult = $this->searchService->getIndexHelper()->deleteProduct($productId);
 
-        TaggedCacheHelper::clearManagedCache([
-            'iblock:item:' . $productId,
-        ]);
+            if ($deleteProductResult) {
+                /* TaggedCacheHelper::clearManagedCache([
+                    'iblock:item:' . $productId,
+                ]); */
 
-        $this->log()->debug(
-            sprintf(
-                'Удаление продукта #%d: %s',
-                $productId,
-                ($deleteProductResult ? 'успех' : 'ошибка')
-            )
-        );
+            } else {
+                $this->log()->error(
+                    sprintf(
+                        'Удаление продукта #%d: ошибка',
+                        $productId
+                    )
+                );
+            }
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
+        }
     }
 
     /**
@@ -194,20 +222,31 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             return;
         }
 
-        $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
-        TaggedCacheHelper::clearManagedCache([
-            'iblock:item:' . $offer->getId(),
-            'iblock:item:' . $product->getId()
-        ]);
+        try {
+            $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
 
-        $this->log()->debug(
-            sprintf(
-                'Обновление продукта #%d по офферу #%d: %s',
-                $product->getId(),
-                $offerId,
-                $indexProductResult ? 'успех' : 'ошибка'
-            )
-        );
+            if ($indexProductResult) {
+                /* TaggedCacheHelper::clearManagedCache([
+                    'iblock:item:' . $offerId,
+                    'iblock:item:' . $product->getId(),
+                ]); */
+            } else {
+                $this->log()->error(
+                    sprintf(
+                        'Обновление продукта #%d по офферу #%d: ошибка',
+                        $product->getId(),
+                        $offerId
+                    )
+                );
+            }
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
+        }
     }
 
     /**
@@ -247,41 +286,57 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
         );
 
         $dbProductList = (new ProductQuery())->withSelect(['ID'])
-                                             ->withFilter(['=PROPERTY_BRAND' => $brand->getId()])
-                                             ->doExec();
+            ->withFilter(['=PROPERTY_BRAND' => $brand->getId()])
+            ->doExec();
         while ($arProduct = $dbProductList->Fetch()) {
             $productId = (int)$arProduct['ID'];
 
             $catSyncMsg->withEntityId($productId);
 
-            $this->searchService->getIndexHelper()->publishSyncMessage($catSyncMsg);
+            try {
+                $this->searchService->getIndexHelper()->publishSyncMessage($catSyncMsg);
+            } catch (InvalidException $e) {
+                $this->log()->error(
+                    sprintf(
+                        'Ошибка: %s',
+                        $e->getMessage()
+                    )
+                );
 
-            $this->log()->debug(
-                sprintf(
-                    'Обновление продукта #%d по бренду #%d поставлено в очередь',
-                    $productId,
-                    $brandId
-                )
-            );
+                return;
+            }
         }
     }
 
     /**
      * @param int $brandId
      *
+     * @return void
+     *
      * @throws RuntimeException
      */
-    public function deleteBrand(int $brandId)
+    public function deleteBrand(int $brandId): void
     {
-        $deleteBrandResult = $this->searchService->getIndexHelper()->deleteBrand($brandId);
+        try {
+            $deleteBrandResult = $this->searchService->getIndexHelper()->deleteBrand($brandId);
 
-        $this->log()->debug(
-            sprintf(
-                'Удаление бренда #%d: %s',
-                $brandId,
-                ($deleteBrandResult ? 'успех' : 'ошибка')
-            )
-        );
+            if (!$deleteBrandResult) {
+                $this->log()->error(
+                    sprintf(
+                        'Удаление бренда #%d: %s',
+                        $brandId,
+                        ($deleteBrandResult ? 'успех' : 'ошибка')
+                    )
+                );
+            }
+        } catch (InvalidException $e) {
+            $this->log()->error(
+                sprintf(
+                    'Ошибка: %s',
+                    $e->getMessage()
+                )
+            );
+        }
     }
 
     /**
@@ -289,7 +344,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @return CatalogSyncMsg
      */
-    protected function extractMessageBody(AMQPMessage $msg)
+    protected function extractMessageBody(AMQPMessage $msg): CatalogSyncMsg
     {
         return $this->serializer->deserialize(
             $msg->getBody(),
@@ -304,6 +359,8 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
         \defined('NOT_CHECK_PERMISSIONS') || \define('NOT_CHECK_PERMISSIONS', true);
         \defined('NO_AGENT_CHECK') || \define('NO_AGENT_CHECK', true);
         \defined('PUBLIC_AJAX_MODE') || \define('PUBLIC_AJAX_MODE', true);
+        \defined('BX_WITH_ON_AFTER_EPILOG') || \define('BX_WITH_ON_AFTER_EPILOG', true);
+        \defined('BX_NO_ACCELERATOR_RESET') || \define('BX_NO_ACCELERATOR_RESET', true);
 
         if (empty($_SERVER['DOCUMENT_ROOT'])) {
             $_SERVER['DOCUMENT_ROOT'] = \dirname(__DIR__, 5) . '/';
@@ -318,7 +375,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @return LoggerInterface
      */
-    protected function log()
+    protected function log(): LoggerInterface
     {
         return $this->logger;
     }

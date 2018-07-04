@@ -2,14 +2,10 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\Fuser;
-use Bitrix\Sale\Internals\BasketTable;
-use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -25,13 +21,13 @@ use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
+use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use WebArch\BitrixCache\BitrixCache;
@@ -42,8 +38,10 @@ use WebArch\BitrixCache\BitrixCache;
  * @package FourPaws\CatalogBundle\Controller
  * @Route("/product-info")
  */
-class ProductInfoController extends Controller
+class ProductInfoController extends Controller implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     public const MAX_PRODUCTS_PER_REQUEST = 30;
 
     /**
@@ -57,6 +55,16 @@ class ProductInfoController extends Controller
     protected $searchService;
 
     /**
+     * @var BasketService
+     */
+    protected $basketService;
+
+    /**
+     * @var LocationService
+     */
+    protected $locationService;
+
+    /**
      * @var BasketRulesRepository
      */
     protected $basketRulesRepository;
@@ -66,15 +74,21 @@ class ProductInfoController extends Controller
      *
      * @param ValidatorInterface    $validator
      * @param SearchService         $searchService
+     * @param LocationService       $locationService
+     * @param BasketService         $basketService
      * @param BasketRulesRepository $basketRulesRepository
      */
     public function __construct(
         ValidatorInterface $validator,
         SearchService $searchService,
+        LocationService $locationService,
+        BasketService $basketService,
         BasketRulesRepository $basketRulesRepository
     ) {
         $this->validator = $validator;
         $this->searchService = $searchService;
+        $this->locationService = $locationService;
+        $this->basketService = $basketService;
         $this->basketRulesRepository = $basketRulesRepository;
     }
 
@@ -160,22 +174,13 @@ class ProductInfoController extends Controller
     /**
      * @Route("/", methods={"GET"})
      *
-     * @param Request            $request
      * @param ProductListRequest $productListRequest
      *
      * @return JsonResponse
-     * @throws \InvalidArgumentException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws \Exception
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @global \CMain            $APPLICATION
      *
+     * @global \CMain            $APPLICATION
      */
-    public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
+    public function infoAction(ProductListRequest $productListRequest): JsonResponse
     {
         $response = [
             'products' => [],
@@ -183,19 +188,8 @@ class ProductInfoController extends Controller
 
         $currentOffer = null;
 
-        $cartItems = [];
-        $res = BasketTable::query()->setSelect(['PRODUCT_ID', 'QUANTITY'])->setFilter([
-            'FUSER_ID' => Fuser::getId(),
-            'ORDER_ID' => null,
-            'LID'      => SITE_ID,
-        ])->exec();
-        while ($basketItem = $res->fetch()) {
-            $cartItems[(int)$basketItem['PRODUCT_ID']] = (float)$basketItem['QUANTITY'];
-        }
-
-        /** @var LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-        $location = $locationService->getCurrentLocation();
+        $cartItems = $this->basketService->getBasketProducts();
+        $location = $this->locationService->getCurrentLocation();
 
         if (!$this->validator->validate($productListRequest)->count()) {
             /** @var ProductSearchResult $result */
@@ -218,15 +212,6 @@ class ProductInfoController extends Controller
                 return $products;
             };
 
-            /** не кешируем выборку, если будет свободная оператива в memcache можно кешануть на день */
-//            $bitrixCache = new BitrixCache();
-//            $bitrixCache
-//                ->withId(__METHOD__ . '_location_' . '_product_' . implode('-', $productIds).'_location_'.$location);
-//            foreach ($productIds as $productId) {
-//                $bitrixCache->withTag('catalog:product:' . $productId);
-//                $bitrixCache->withTag('iblock:item:' . $productId);
-//            }
-//            $products = $bitrixCache->resultOf($getProducts);
             $products = $getProducts();
 
             /** кешировать нельзя так как мы не знаем id для сброса кеша */
@@ -238,44 +223,16 @@ class ProductInfoController extends Controller
             /** @var Offer $offer */
             /** @var Product $product */
             /** добавляем офферы чтобы е было запроса по всем офферам */
-            foreach ($offerCollection as &$offer) {
+            foreach ($offerCollection as $offer) {
                 $product = $products[$offer->getCml2Link()];
                 $product->addOffer($offer);
                 $offer->setProduct($product);
             }
-            unset($product, $offer);
 
             foreach ($offerCollection as $offer) {
                 $product = $products[$offer->getCml2Link()];
-
-                $getResponseItem = function () use ($product, $offer) {
-                    $price = $offer->getPriceCeil();
-                    $oldPrice = $offer->getOldPrice() ? $offer->getOldPriceCeil() : $price;
-                    $responseItem = [
-                        'available' => $offer->isAvailable(),
-                        'byRequest' => $offer->isByRequest(),
-                        'price'     => $price,
-                        'oldPrice'  => $oldPrice,
-                        'pickup'    => false,
-                    ];
-                    if ($responseItem['available']) {
-                        $responseItem['pickup'] = $product->isPickupAvailable() && !$product->isDeliveryAvailable();
-                    }
-                    return $responseItem;
-                };
-
-                $bitrixCache = new BitrixCache();
-                $bitrixCache
-                    ->withId(__METHOD__ . '_product_' . $offer->getCml2Link() . '_offer_' . $offer->getId() . '_location_' . $location);
-                $bitrixCache->withTag('catalog:product:' . $product->getId());
-                $bitrixCache->withTag('iblock:item:' . $product->getId());
-                $bitrixCache->withTag('catalog:offer:' . $offer->getId());
-                $bitrixCache->withTag('iblock:item:' . $offer->getId());
-                $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
-                $responseItem = $bitrixCache->resultOf($getResponseItem);
-
+                $responseItem = $this->getProductInfo($product, $offer, $location);
                 $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
-
                 $response['products'][$product->getId()][$offer->getId()] = $responseItem;
             }
         }
@@ -288,7 +245,7 @@ class ProductInfoController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws \Exception
+     *
      * @global \CMain $APPLICATION
      */
     public function infoProductAction(Request $request): JsonResponse
@@ -297,41 +254,20 @@ class ProductInfoController extends Controller
         $offerId = (int)$request->get('offer', 0);
 
         /** @var LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-        $location = $locationService->getCurrentLocation();
+        $location = $this->locationService->getCurrentLocation();
 
-        $currentOffer = OfferQuery::getById($offerId);
+        $offer = OfferQuery::getById($offerId);
 
-        if ($currentOffer !== null) {
-            $getResponse = function () use ($currentOffer) {
-                $response = [
-                    'products' => [],
-                ];
+        $response = [
+            'products' => [],
+        ];
 
-                /** @var Offer $offer */
-                /** @var Offer $currentOffer */
-                if ($currentOffer !== null) {
-                    $response['products'][$currentOffer->getCml2Link()][$currentOffer->getId()] = [
-                        'available' => $currentOffer->isAvailable(),
-                    ];
-                }
-
-                return $response;
-            };
-
-            $bitrixCache = new BitrixCache();
-            $bitrixCache
-                ->withId('available_response_offer_' . $offerId . '_location_' . $location);
-            if ($offerId > 0) {
-                $bitrixCache->withTag('catalog:offer:' . $offerId);
-                $bitrixCache->withTag('iblock:item:' . $offerId);
-                $bitrixCache->withTime(24 * 60 * 60);//кешируем на сутки
-            }
-            $response = $bitrixCache->resultOf($getResponse);
-        } else {
-            $response = [
-                'products' => [],
-            ];
+        if ($offer !== null) {
+            $response['products'][$offer->getCml2Link()][$offer->getId()] = $this->getProductInfo(
+                $offer->getProduct(),
+                $offer,
+                $location
+            );
         }
 
         return JsonSuccessResponse::createWithData('', $response);
@@ -555,5 +491,52 @@ class ProductInfoController extends Controller
                 'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
                         ['товар', 'товара', 'товаров']),
             ]);
+    }
+
+    /**
+     * @param Product $product
+     * @param Offer   $offer
+     * @param string  $location
+     * @return array
+     */
+    private function getProductInfo(Product $product, Offer $offer, string $location)
+    {
+        $result = [];
+        $getResult = function () use ($product, $offer) {
+            $available = $offer->isAvailable();
+            $price = $offer->getPriceCeil();
+            $oldPrice = $offer->getOldPrice() ? $offer->getOldPriceCeil() : $price;
+
+            $responseItem = [
+                'available' => $available,
+                'byRequest' => $offer->isByRequest(),
+                'price'     => $price,
+                'oldPrice'  => $oldPrice,
+                'pickup'    => $available && $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
+            ];
+
+            return $responseItem;
+        };
+
+        try {
+            $result = (new BitrixCache())
+                ->withId(__METHOD__ . '_' . $product->getId() . '_' . $offer->getId() . '_' . $location)
+                ->withTag('iblock:item:' . $product->getId())
+                ->withTag('iblock:item:' . $offer->getId())
+                ->withTag('catalog:offer:' . $offer->getId())
+                ->withTime(24 * 60 * 60)//кешируем на сутки
+                ->resultOf($getResult);
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('Failed to get product info: %s: %s', \get_class($e), $e->getMessage()),
+                [
+                    'offer'    => $offer->getId(),
+                    'product'  => $product->getId(),
+                    'location' => $location
+                ]
+            );
+        }
+
+        return $result;
     }
 }

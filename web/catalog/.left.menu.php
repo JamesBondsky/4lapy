@@ -19,14 +19,14 @@ foreach ($sections as $section) {
 $aMenuLinks = array_merge($aMenuLinks, [
     [
         'Котята',
-        '/catalog/koshki/zaveli-kotenka22/',
+        '/catalog/koshki/zaveli-kotenka/',
         [],
         [],
         '',
     ],
     [
         'Щенки',
-        '/catalog/sobaki/zaveli-shchenka33/',
+        '/catalog/sobaki/zaveli-shchenka/',
         [],
         [],
         '',

@@ -39,6 +39,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -232,8 +233,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
             ->setClientId($order->getUserId())
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
-            ->setClientPhone($this->getPropertyValueByCode($order, 'PHONE'))
-            ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
+            ->setClientPhone(PhoneHelper::formatPhone(
+                $this->getPropertyValueByCode($order, 'PHONE'),
+                PhoneHelper::FORMAT_URL
+            ))
+            ->setClientOrderPhone(PhoneHelper::formatPhone(
+                $this->getPropertyValueByCode($order, 'PHONE_ALT'),
+                PhoneHelper::FORMAT_URL
+            ))
             ->setClientComment($description)
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'));
@@ -459,6 +466,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($order->getBasket() as $basketItem) {
+            if ($basketItem->isDelay()) {
+                continue;
+            }
+
             $offer = (new OrderOffer())
                 ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
                 ->setUnitPrice($basketItem->getPrice())
@@ -505,14 +516,19 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     public function getDeliveryAddress(Order $order)
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
+        $deliveryPlaceCode = '';
+        $deliveryCode = $this->getDeliveryCode($order);
+        if ($deliveryCode === DeliveryService::INNER_PICKUP_CODE) {
+            $deliveryPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
+        }
 
         return (new OutDeliveryAddress())
-            ->setDeliveryPlaceCode($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
+            ->setDeliveryPlaceCode($deliveryPlaceCode)
             ->setRegionCode($this->locationService->getRegionNumberCode($city))
-            ->setPostCode('')
+            ->setPostCode($this->getPropertyValueByCode($order, 'ZIP_CODE'))
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
             ->setStreetName($this->getPropertyValueByCode($order, 'STREET'))
-            ->setStreetPrefix('')
+            ->setStreetPrefix($this->getPropertyValueByCode($order, 'STREET_PREFIX'))
             ->setHouse($this->getPropertyValueByCode($order, 'HOUSE'))
             ->setHousing($this->getPropertyValueByCode($order, 'BUILDING'))
             ->setBuilding('')
@@ -531,18 +547,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function getDeliveryTypeCode(Order $order): string
     {
-        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
-
-        if (null === $shipment) {
-            throw new NotFoundOrderShipmentException(
-                \sprintf(
-                    'Отгрузка для заказа #%s не найдена',
-                    $order->getId()
-                )
-            );
-        }
-
-        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+        $code = $this->getDeliveryCode($order);
         $deliveryZone = $this->getDeliveryZone($order);
 
         if (
@@ -553,7 +558,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         $isFastOrder = $this->getPropertyValueByCode($order, 'IS_FAST_ORDER') === 'Y';
-        $code = $isFastOrder ? '' : $shipment->getDelivery()->getCode();
+        if ($isFastOrder) {
+            $code = '';
+        }
 
         switch ($code) {
             case DeliveryService::INNER_DELIVERY_CODE:
@@ -596,6 +603,25 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param Order $order
+     * @return string
+     */
+    private function getDeliveryCode(Order $order): string {
+        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+
+        if (null === $shipment) {
+            throw new NotFoundOrderShipmentException(
+                \sprintf(
+                    'Отгрузка для заказа #%s не найдена',
+                    $order->getId()
+                )
+            );
+        }
+
+        return $shipment->getDelivery()->getCode();
+    }
+
+    /**
+     * @param Order $order
      * @param string $code
      *
      * @return string
@@ -621,8 +647,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($orderDto->getClientFio()) {
             $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
         }
-        $this->setPropertyValue($propertyCollection, 'PHONE', $orderDto->getClientPhone());
-        $this->setPropertyValue($propertyCollection, 'PHONE_ALT', $orderDto->getClientOrderPhone());
+        $this->setPropertyValue(
+            $propertyCollection,
+            'PHONE',
+            PhoneHelper::formatPhone($orderDto->getClientPhone(), PhoneHelper::FORMAT_SHORT)
+        );
+        $this->setPropertyValue(
+            $propertyCollection,
+            'PHONE_ALT',
+            PhoneHelper::formatPhone($orderDto->getClientOrderPhone(), PhoneHelper::FORMAT_SHORT)
+        );
         $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('d.m.Y'));
 
         try {
@@ -1008,6 +1042,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     break;
             }
 
+            $deliveryPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
+            $deliveryShipmentPoint = $deliveryPlaceCode;
+            if (\in_array($this->getDeliveryTypeCode($order), [
+                    SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE,
+                    SapOrder::DELIVERY_TYPE_COURIER_SHOP
+                ], true)
+            ) {
+                $deliveryShipmentPoint = '';
+            }
+
             $offer = (new OrderOffer())
                 ->setPosition($collection->count() + 1)
                 ->setOfferXmlId($xmlId)
@@ -1015,7 +1059,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setQuantity(1)
                 ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
                 ->setChargeBonus(false)
-                ->setDeliveryShipmentPoint('');
+                ->setDeliveryFromPoint($deliveryPlaceCode)
+                ->setDeliveryShipmentPoint($deliveryShipmentPoint);
             $collection->add($offer);
         }
     }

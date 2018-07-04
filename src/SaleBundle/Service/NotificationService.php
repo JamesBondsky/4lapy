@@ -28,6 +28,11 @@ use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
 
+/**
+ * Class NotificationService
+ *
+ * @package FourPaws\SaleBundle\Service
+ */
 class NotificationService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -70,6 +75,7 @@ class NotificationService implements LoggerAwareInterface
      * @param SmsService $smsService
      * @param StoreService $storeService
      * @param ExpertsenderService $emailService
+     *
      * @throws ApplicationCreateException
      */
     public function __construct(
@@ -77,23 +83,16 @@ class NotificationService implements LoggerAwareInterface
         SmsService $smsService,
         StoreService $storeService,
         ExpertsenderService $emailService
-    ) {
+    )
+    {
         $this->orderService = $orderService;
         $this->smsService = $smsService;
         $this->storeService = $storeService;
         $this->emailService = $emailService;
 
         $container = Application::getInstance()->getContainer();
-        if ($container->has('templating')) {
-            /** @noinspection MissingService */
-            $this->renderer = $container->get('templating');
-        } elseif ($container->has('twig')) {
-            $this->renderer = $container->get('twig');
-        } else {
-            throw new \LogicException(
-                'You can not use the "render" method if the Templating Component or the Twig Bundle are not available.'
-            );
-        }
+        /** @noinspection MissingService */
+        $this->renderer = $container->get('templating');
 
         $this->withLogName('sale_notification');
     }
@@ -326,14 +325,12 @@ class NotificationService implements LoggerAwareInterface
         }
 
         $text = $this->renderer->render($tpl, $parameters);
+
         if ($immediate) {
             $this->smsService->sendSmsImmediate($text, $parameters['phone']);
         } else {
             $this->smsService->sendSms($text, $parameters['phone']);
         }
-        $this->log()->info(sprintf('sent sms "%s" to %s', $tpl, $parameters['phone']), [
-            'order' => $parameters['accountNumber']
-        ]);
     }
 
     /**
@@ -349,7 +346,7 @@ class NotificationService implements LoggerAwareInterface
             $properties = $this->orderService->getOrderPropertiesByCode(
                 $order,
                 [
-                    'REGION_COURIER_FROM_DC',
+                    'SHIPMENT_PLACE_CODE',
                     'PHONE',
                     'EMAIL',
                     'DELIVERY_DATE',
@@ -359,11 +356,13 @@ class NotificationService implements LoggerAwareInterface
             );
 
             $result['accountNumber'] = $order->getField('ACCOUNT_NUMBER');
-            $result['dcDelivery'] = $properties['REGION_COURIER_FROM_DC'] === BitrixUtils::BX_BOOL_TRUE;
+            $result['dcDelivery'] = (bool)$properties['SHIPMENT_PLACE_CODE'];
             $result['phone'] = $properties['PHONE'];
             $result['email'] = $properties['EMAIL'];
             $result['price'] = $order->getPrice();
-            $result['bonusSum'] = $order->getPaymentCollection()->getInnerPayment()->getSum();
+            $result['bonusSum'] = $order->getPaymentCollection()->getInnerPayment()
+                ? $order->getPaymentCollection()->getInnerPayment()->getSum()
+                : 0;
             $result['deliveryDate'] = \DateTime::createFromFormat(
                 'd.m.Y',
                 $properties['DELIVERY_DATE']
@@ -433,7 +432,7 @@ class NotificationService implements LoggerAwareInterface
     {
         $propValue = $this->orderService->getOrderPropertyByCode(
             $order,
-                $code
+            $code
         )->getValue();
 
         return ($propValue === BitrixUtils::BX_BOOL_TRUE) ? $propValue : BitrixUtils::BX_BOOL_FALSE;
@@ -551,8 +550,8 @@ class NotificationService implements LoggerAwareInterface
 
             $smsEventName = 'orderSubscribeUpcomingDelivery';
             $smsEventKey = $copyParams->getOriginOrderId();
-            $smsEventKey .= '~'.$deliveryDate->format('d.m.Y');
-            $smsEventKey .= '~'.$realDeliveryDate->format('d.m.Y');
+            $smsEventKey .= '~' . $deliveryDate->format('d.m.Y');
+            $smsEventKey .= '~' . $realDeliveryDate->format('d.m.Y');
             if (!$this->smsService->isAlreadySent($smsEventName, $smsEventKey)) {
                 $parameters = [];
                 $parameters['phone'] = '';

@@ -156,7 +156,8 @@ class PaymentService
         /** @var \Bitrix\Sale\BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
             // пропускаем подарки
-            if ($skipGifts && $this->basketService->getBasketItemXmlId($basketItem)[0] === '3') {
+            $xmlId = $this->basketService->getBasketItemXmlId($basketItem);
+            if ($skipGifts && $xmlId[0] === '3') {
                 continue;
             }
 
@@ -174,18 +175,24 @@ class PaymentService
                 'positionId' => ++$itemsCnt,
                 'name'       => $basketItem->getField('NAME'),
                 'quantity'   => [
-                    'value'   => $basketItem->getQuantity(),
+                    'value'   => (int)$basketItem->getQuantity(),
                     'measure' => $measureList[$arProduct['MEASURE']],
                 ],
-                'itemAmount' => $itemAmount * $basketItem->getQuantity(),
-                'itemCode'   => $basketItem->getProductId(),
-                'itemPrice'  => $itemAmount,
+                'itemAmount' => (int)($itemAmount * $basketItem->getQuantity()),
+                'itemCode'   => (int)$basketItem->getProductId(),
+                'itemPrice'  => (int)$itemAmount,
                 'tax'        => [
                     'taxType' => $vatGateway[$taxType],
                 ],
             ];
 
-            $itemMap[(int)\preg_replace('~^(.*#)~', '', $basketItem->getField('PRODUCT_XML_ID'))] = $basketItem->getProductId();
+            if (!isset($itemMap[$xmlId])) {
+                $itemMap[$xmlId] = [
+                    'id' => (int)$basketItem->getProductId(),
+                    'count' => 0
+                ];
+            }
+            $itemMap[$xmlId]['count']++;
         }
 
         $delivery = null;

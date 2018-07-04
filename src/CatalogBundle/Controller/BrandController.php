@@ -21,6 +21,15 @@ use Symfony\Component\HttpFoundation\Response;
 class BrandController extends Controller
 {
     /**
+     * @Route("/")
+     *
+     * @return Response
+     */
+    public function listAction(): Response {
+        return $this->render('FourPawsCatalogBundle:Catalog:brand.list.html.php', []);
+    }
+
+    /**
      * @Route("/{brand}/")
      *
      * @param Request             $request

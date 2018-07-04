@@ -3872,16 +3872,16 @@
         },
         {
             "name": "webarchitect609/bitrix-cache",
-            "version": "v1.0.3",
+            "version": "v1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webarchitect609/bitrix-cache.git",
-                "reference": "843078f8148123599a105e30c5d0dcaa81046e68"
+                "reference": "3e839b14a306e37c59354ea05f9faca47bb59361"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webarchitect609/bitrix-cache/zipball/843078f8148123599a105e30c5d0dcaa81046e68",
-                "reference": "843078f8148123599a105e30c5d0dcaa81046e68",
+                "url": "https://api.github.com/repos/webarchitect609/bitrix-cache/zipball/3e839b14a306e37c59354ea05f9faca47bb59361",
+                "reference": "3e839b14a306e37c59354ea05f9faca47bb59361",
                 "shasum": ""
             },
             "require": {
@@ -3901,6 +3901,10 @@
                 {
                     "name": "Sergey Gripinskiy",
                     "email": "web-architect@mail.ru"
+                },
+                {
+                    "name": "Oleg Maksimenko",
+                    "email": "oleg.39style@gmail.com"
                 }
             ],
             "description": "Comfortable fluent-interface for Bitrix cache.",
@@ -3909,7 +3913,7 @@
                 "bitrix",
                 "cache"
             ],
-            "time": "2018-03-27T10:00:56+00:00"
+            "time": "2018-06-05T09:35:54+00:00"
         },
         {
             "name": "webarchitect609/bitrix-neverinclude",
