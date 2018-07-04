@@ -96,6 +96,7 @@ if ($request->offsetExists('phone')) {
                 $imageSrc = $image->getSrc();
             }
             $offer = $component->getOffer((int)$basketItem->getProductId());
+            $basketId = $basketItem->getId() ?: $basketItem->getPropertyCollection()->getPropertyValues()['DETACH_FROM']['VALUE'];
             $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             <div class="b-item-shopping b-item-shopping--one-click <?= $countItems === $i ? ' b-item-shopping--last' : '' ?> js-remove-shopping">
                 <?php /** @todo акция
@@ -172,7 +173,7 @@ if ($request->offsetExists('phone')) {
                                value="<?= WordHelper::numberFormat($basketItem->getQuantity(), 0) ?>"
                                data-cont-max="<?= $maxQuantity ?>"
                                data-one-price="<?= $basketItem->getPrice() ?>"
-                               data-basketid="<?= $basketItem->getId(); ?>"
+                               data-basketid="<?= $basketId ?>"
                                data-url="<?=$basketUpdateUrl?>"
                                type="text"
                                title=""/>
@@ -206,7 +207,7 @@ if ($request->offsetExists('phone')) {
                         <?php } ?>
                     </div>
                     <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-                       data-url="<?=$basketDeleteUrl?>" data-basketId="<?= $basketItem->getId(); ?>">
+                       data-url="<?=$basketDeleteUrl?>" data-basketId="<?= $basketId ?>">
                     <span class="b-icon b-icon--delete-one-click">
                         <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
                     </span>
