@@ -99,14 +99,17 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             } catch (\Exception $exception) {}
         }
 
-        $params['CACHE_TYPE'] = isset($params['CACHE_TYPE']) ? $params['CACHE_TYPE'] : 'A';
-        $params['CACHE_TIME'] = isset($params['CACHE_TIME']) ? $params['CACHE_TIME'] : 3600;
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
 
         $params = parent::onPrepareComponentParams($params);
 
         return $params;
     }
 
+    /**
+     * @throws Exception
+     */
     public function executeComponent()
     {
         try {
@@ -120,7 +123,6 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
 
     /**
      * @param string $action
-     * @return void
      */
     protected function setAction($action)
     {
@@ -819,7 +821,8 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     protected function getFormFieldValue($fieldName, $getSafeValue = false)
     {
         $key = $getSafeValue ? 'FIELD_VALUES' : '~FIELD_VALUES';
-        return isset($this->arResult[$key][$fieldName]) ? $this->arResult[$key][$fieldName] : null;
+
+        return $this->arResult[$key][$fieldName] ?? null;
     }
 
     /**
