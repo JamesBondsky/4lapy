@@ -17,7 +17,7 @@ namespace FourPaws\SaleBundle\Discount\Utils;
 trait SortByKeyTrait
 {
     /**
-     * Сортирует массив $array по одному или нескольким ключам $keys
+     * Сортирует массив $array по одному или нескольким ключам $keys = key | [key1, ...] | [key1 => 'asc'|'desc', ...]
      *
      * @param array $array
      * @param array|string $keys
