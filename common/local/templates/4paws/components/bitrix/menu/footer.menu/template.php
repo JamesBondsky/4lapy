@@ -1,4 +1,5 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
@@ -19,9 +20,17 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
     foreach ($menu as $index => $item) {
         $outString .= '<div class="b-footer-nav__list">';
         $outString .= '<h4 class="b-footer-nav__header">';
-        $outString .= '<a href="' . ($item['LINK'] ?: 'javascript:void(0)') . '" class="b-footer-nav__header-link" title="' . $item['TEXT'] . '">';
+        if ($item['LINK']) {
+            $outString .= '<a href="' . $item['LINK'] . '" class="b-footer-nav__header-link" title="' . $item['TEXT'] . '">';
+        } else {
+            $outString .= '<span class="b-footer-nav__header-link__title">';
+        }
         $outString .= $item['TEXT'];
-        $outString .= '</a>';
+        if ($item['LINK']) {
+            $outString .= '</a>';
+        } else {
+            $outString .= '</span>';
+        }
         $outString .= '</h4>';
         if ($item['PARAMS']['CHILDS_BY_MENU']) {
             $menu = new \CMenu($item['PARAMS']['CHILDS_BY_MENU']);
