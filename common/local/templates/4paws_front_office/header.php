@@ -16,7 +16,14 @@ use Bitrix\Main\Page\Asset;
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <link type="image/x-icon" href="<?=SITE_DIR.'favicon.ico'?>" rel="icon">
+        <?php
+        // больше недоступен этот файл
+        /*
+        ?>
         <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script><![endif]-->
+        <?php
+        */
+        ?>
         <title><?php
             $APPLICATION->ShowTitle();
         ?></title><?php
