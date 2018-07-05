@@ -1,0 +1,14 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    FourPaws\EcommerceBundle\:
+        resource: '../../*'
+        exclude: '../../{Dto,Tests}'
+
+    # Необходимо вынести, тк используется в Битрикс
+    FourPaws\EcommerceBundle\Service\GoogleEcommerceService:
+        class: FourPaws\EcommerceBundle\Service\GoogleEcommerceService
+        public: true
