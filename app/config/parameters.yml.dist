@@ -77,8 +77,8 @@ parameters:
   sap.bonus_buy.directory.out: '%sap.directory%/BB/'
   sap.bonus_buy.directory.error: '%sap.directory%/BB_Errors/'
 
-  dadata.token: '0dcef0791577b221d3334ca85082e2d505e35d70'
-  dadata.secret: 'f798e4ebee26ac9806f48297a67db0265e72497a'
+  dadata.token: '0acd592d5661f7d34e73ad9af6962775f2b60850'
+  dadata.secret: 'b0ff4801ed9efb96df9b20c284976c8a5c3ff622'
 
   dpd.ftp.host: 'ftp.dpd.ru'
   dpd.ftp.port: '21'

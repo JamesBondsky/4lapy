@@ -759,7 +759,11 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
                 $userManzana = clone $user;
                 if ($updateUser) {
-                    $this->startTransaction();
+                    /**
+                     * С транзакциями вылетает ошибка "MySQL server has gone away", вероятно, из-за долгих запросов к ML.
+                     * Отключил нафиг.
+                     **/
+                    //$this->startTransaction();
                     $updateResult = $this->updateUserByFormFields($userId);
                     if ($updateResult->isSuccess()) {
                         // для отправки в Манзану берем обновленную карточку из базы
@@ -771,7 +775,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                         }
                     } else {
                         // откатываем транзакцию БД
-                        $this->rollbackTransaction();
+                        //$this->rollbackTransaction();
                         $result->addErrors($updateResult->getErrors());
                         $userManzana = null;
                     }
@@ -782,13 +786,13 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     $updateManzanaResult = $this->doManzanaUpdateContact($userManzana);
                     if (!$updateManzanaResult->isSuccess()) {
                         // в Манзану данные не ушли - откатываемся
-                        $this->rollbackTransaction();
+                        //$this->rollbackTransaction();
                         $result->addErrors($updateManzanaResult->getErrors());
                     }
                     $resultData['updateUserResults'][$userId]['manzana'] = $updateManzanaResult;
                 }
                 // внутри метода проверяется открыта ли транзакциия, поэтому его можно здесь вызывать
-                $this->commitTransaction();
+                //$this->commitTransaction();
             }
 
             if ($createNewUser) {
@@ -797,7 +801,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 // Бонусная карта привязывается к профилю пользователя.
                 $userSms = null;
                 $userManzana = null;
-                $this->startTransaction();
+                //$this->startTransaction();
                 $createResult = $this->createUserByFormFields();
                 if ($createResult->isSuccess()) {
                     $createResultData = $createResult->getData();
@@ -816,7 +820,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     }
                 } else {
                     // откатываем транзакцию БД
-                    $this->rollbackTransaction();
+                    //$this->rollbackTransaction();
                     $result->addErrors($createResult->getErrors());
                 }
                 $resultData['createUserResults'][0]['result'] = $createResult;
@@ -826,14 +830,14 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     $updateManzanaResult = $this->doManzanaUpdateContact($userManzana);
                     if (!$updateManzanaResult->isSuccess()) {
                         // в Манзану данные не ушли - откатываемся
-                        $this->rollbackTransaction();
+                        //$this->rollbackTransaction();
                         $result->addErrors($updateManzanaResult->getErrors());
                         // не будем отправлять sms
                         $userSms = null;
                     }
                     $resultData['createUserResults'][0]['manzana'] = $updateManzanaResult;
                 }
-                $this->commitTransaction();
+                //$this->commitTransaction();
 
                 if ($userSms) {
                     // отправка юзеру sms о регистрации на сайте
@@ -1201,7 +1205,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                         $currentActiveCardId = '';
                         /** @var \Doctrine\Common\Collections\ArrayCollection $contactCards */
                         $contactCards = $contact->cards;
-                        if (!$contactCards->isEmpty()) {
+                        if ($contactCards && is_object($contactCards) && !$contactCards->isEmpty()) {
                             foreach ($contactCards as $tmpContactCard) {
                                 $tmpCard = $manzanaService->getCardInfo($tmpContactCard->cardNumber, $contactId);
                                 if ($tmpCard && $tmpCard->isActive()) {
