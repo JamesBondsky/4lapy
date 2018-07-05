@@ -433,15 +433,15 @@ class OrderSplitService implements LoggerAwareInterface
                     false,
                     $basket
                 );
-//                @todo частичное получение
-//                if ($recalculateDiscounts) {
-//                    /** @var BasketPropertyItem $propertyValue */
-//                    foreach ($basketItem->getPropertyCollection()->getPropertyValues() as $propertyValue) {
-//                        if ($propertyValue->getField('CODE') === 'HAS_BONUS') {
-//                            $propertyValue->delete();
-//                        }
-//                    }
-//                }
+                if ($recalculateDiscounts) {
+                    /** @var BasketPropertyItem $propertyValue */
+                    foreach ($basketItem->getPropertyCollection() as $propertyValue) {
+                        if ($propertyValue->getField('CODE') === 'HAS_BONUS') {
+                            $propertyValue->delete();
+                        }
+                    }
+                }
+
             }
         } catch (\Exception $e) {
             $this->log()->error(
