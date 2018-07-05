@@ -16,6 +16,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
@@ -202,18 +203,30 @@ class OrderSplitService implements LoggerAwareInterface
                 continue;
             }
 
+            $properties = $basketItem->getPropertyCollection()->getPropertyValues();
+            $hasBonus = $properties['HAS_BONUS']['VALUE'];
             if ($availableResult = $available->filterByOfferId($basketItem->getProductId())->first()) {
                 /** @var StockResult $availableResult */
                 if (($priceForAmount = $availableResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) &&
                     $priceForAmount->getAmount()
                 ) {
+                    if ($hasBonus) {
+                        if ($hasBonus > $priceForAmount->getAmount()) {
+                            $properties['HAS_BONUS']['VALUE'] = $priceForAmount->getAmount();
+                            $hasBonus -= $priceForAmount->getAmount();
+                        } else {
+                            $properties['HAS_BONUS']['VALUE'] = $hasBonus;
+                            $hasBonus = 0;
+                        }
+                    }
+
                     $availableItems->add((new BasketSplitItem())
                         ->setAmount($priceForAmount->getAmount())
                         ->setProductId($basketItem->getProductId())
                         ->setPrice($basketItem->getPrice())
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
-                        ->setProperties($basketItem->getPropertyCollection()->getPropertyValues())
+                        ->setProperties($properties)
                     );
                 }
             }
@@ -223,13 +236,16 @@ class OrderSplitService implements LoggerAwareInterface
                 if (($priceForAmount = $delayedResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) &&
                     $priceForAmount->getAmount()
                 ) {
+                    if (null !== $hasBonus) {
+                        $properties['HAS_BONUS']['VALUE'] = (int)$hasBonus;
+                    }
                     $delayedItems->add((new BasketSplitItem())
                         ->setAmount($priceForAmount->getAmount())
                         ->setProductId($basketItem->getProductId())
                         ->setPrice($basketItem->getPrice())
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
-                        ->setProperties($basketItem->getPropertyCollection()->getPropertyValues())
+                        ->setProperties($properties)
                     );
                 }
             }
@@ -410,13 +426,22 @@ class OrderSplitService implements LoggerAwareInterface
                     ];
                 }
 
-                $this->basketService->addOfferToBasket(
+                $basketItem = $this->basketService->addOfferToBasket(
                     $item->getProductId(),
                     $item->getAmount(),
                     $rewriteFields,
                     false,
                     $basket
                 );
+//                @todo частичное получение
+//                if ($recalculateDiscounts) {
+//                    /** @var BasketPropertyItem $propertyValue */
+//                    foreach ($basketItem->getPropertyCollection()->getPropertyValues() as $propertyValue) {
+//                        if ($propertyValue->getField('CODE') === 'HAS_BONUS') {
+//                            $propertyValue->delete();
+//                        }
+//                    }
+//                }
             }
         } catch (\Exception $e) {
             $this->log()->error(
