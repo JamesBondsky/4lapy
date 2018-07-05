@@ -62,7 +62,11 @@ class FullHrefDecorator
     public function getFullPublicPath() : string
     {
         $context = Application::getInstance()->getContext();
-        $host    = $context->getServer()->getHttpHost();
+        $host = $context->getServer()->getHttpHost();
+        // в cli нет HTTP_HOST
+        if (!$host && defined('SITE_SERVER_NAME')) {
+            $host = SITE_SERVER_NAME;
+        }
         $prefix  = 'http';
         if ($context->getRequest()->isHttps()) {
             $prefix .= 's';
