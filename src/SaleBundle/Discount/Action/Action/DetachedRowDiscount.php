@@ -13,6 +13,7 @@ namespace FourPaws\SaleBundle\Discount\Action\Action;
 use Bitrix\Sale\Discount\Actions;
 use Bitrix\Sale\OrderDiscountManager;
 use CSaleActionCtrlAction;
+use FourPaws\SaleBundle\Discount\Utils\DiscountDisjunction;
 use FourPaws\SaleBundle\Discount\Utils\SortByKeyTrait;
 use FourPaws\SaleBundle\Discount\Utils\ValidateAtoms;
 
@@ -24,6 +25,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
 {
     use ValidateAtoms;
     use SortByKeyTrait;
+    use DiscountDisjunction;
 
     /**
      *
@@ -271,14 +273,14 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
     /**
      * Черт ногу сломит. Есть мнение что стоит генерировать что-то типа self::check($arOneCondition)
      *
-     * @param $arOneCondition
+     * @param $parameters
      * @param $arParams
      * @param $arControl
      * @param array|bool $arSubs
      *
      * @return string
      */
-    public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false): string
+    public static function Generate($parameters, $arParams, $arControl, $arSubs = false): string
     {
         $result = '';
 
@@ -286,48 +288,84 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
          * @todo обработать все варианты параметров
          */
         if (
-            \in_array($arOneCondition['Filtration_operator'], ['separate', 'union', 'only_first'], true)
-            && \in_array($arOneCondition['Count_operator'], ['min', 'max', 'single', 'array_sum'], true)
+            \in_array($parameters['Filtration_operator'], ['separate', 'union', 'only_first'], true)
+            && \in_array($parameters['Count_operator'], ['min', 'max', 'single', 'array_sum'], true)
             && \is_array($arSubs) && \count($arSubs) >= 1
         ) {
-            if ($arOneCondition['Count_operator'] === 'single') {
+            if ($parameters['Count_operator'] === 'single') {
                 $countOperator = '(int)(bool)array_sum';
-                if ($arOneCondition['All'] === 'AND') {
+                if ($parameters['All'] === 'AND') {
                     $countOperator = '(int)(bool)min';
                 }
             } else {
-                $countOperator = $arOneCondition['Count_operator'];
+                $countOperator = $parameters['Count_operator'];
             }
-            $result = '$counts = []; $i = 0; $originalOrder = ' . $arParams['ORDER'] . ';' . PHP_EOL;
+            $orderVar = $arParams['ORDER'];
+            $result = '$counts = []; $i = 0; $originalOrder = ' . $orderVar . ';' . PHP_EOL;
             foreach ($arSubs as $sub) {
                 $result .= '$counts[$i][\'cnt\'] = ' . $sub . PHP_EOL;
-                $result .= '$counts[$i++][\'res\'] = ' . $arParams['ORDER'] . ';' . PHP_EOL;
-                $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
+                $result .= '$counts[$i++][\'res\'] = ' . $orderVar . ';' . PHP_EOL;
+                $result .= $orderVar . ' = $originalOrder;' . PHP_EOL;
             }
             $result .= '$applyCount = ' . $countOperator . '(array_column($counts, \'cnt\'));' . PHP_EOL;
 
-            if ($arOneCondition['All'] === 'AND') {
+            if ($parameters['All'] === 'AND') {
                 $result .= '$minCount = min(array_column($counts, \'cnt\'));' . PHP_EOL;
                 $result .= '$applyCount = $minCount > 0 ? $applyCount : 0;' . PHP_EOL;
             }
 
-            if ($arOneCondition['Filtration_operator'] === 'union') {
+            if ($parameters['Filtration_operator'] === 'union') {
                 $result .= static::class . '::unionFilterResults($counts);' . PHP_EOL;
             }
+
+            $result .= '$premises = ' . static::class . '::calcPremises($counts, \'' . $parameters['All'] . '\', $applyCount);' . PHP_EOL;
+
             $result .= 'foreach($counts as $k => $elem) {' . PHP_EOL;
-            $result .= '    ' . $arParams['ORDER'] . ' = $elem[\'res\'];' . PHP_EOL;
-            $result .= '    ' . static::class . '::apply(' . $arParams['ORDER'] . ', ';
-            $result .= var_export($arOneCondition['Value'], true) . ', ';
-            $result .= var_export($arOneCondition['Type'] === 'percent', true) . ', ';
-            $result .= '$applyCount * (int)' . var_export($arOneCondition['Multiplier'], true) . ');' . PHP_EOL;
-            if ($arOneCondition['Filtration_operator'] === 'only_first') {
+            $result .= '    ' . $orderVar . ' = $elem[\'res\'];' . PHP_EOL;
+            $result .= '    ' . static::class . '::apply(' . $orderVar . ', ';
+            $result .= var_export($parameters['Value'], true) . ', ';
+            $result .= var_export($parameters['Type'] === 'percent', true) . ', ';
+            $result .= '$applyCount * (int)' . var_export($parameters['Multiplier'], true) . ', $premises);' . PHP_EOL;
+            if ($parameters['Filtration_operator'] === 'only_first') {
                 $result .= 'break;' . PHP_EOL;
             }
             $result .= '}' . PHP_EOL;
-            $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
+            $result .= $orderVar . ' = $originalOrder;' . PHP_EOL;
         }
 
         return $result;
+    }
+
+    /**
+     *
+     *
+     * @param array $results
+     * @param string $operator
+     * @param int $applyCount
+     *
+     * @return array
+     */
+    public static function calcPremises(array $results, string $operator, int $applyCount): array
+    {
+        $previousItems = $premises = [];
+        if ($operator === 'OR') {
+            foreach ($results as &$res) {
+                $previousItems = self::discountDisjunction($previousItems, $res['res']['BASKET_ITEMS']);
+                $res['res']['BASKET_ITEMS'] = $previousItems;
+            }
+        }
+        unset($res);
+        foreach ($results as $res) {
+            foreach ($res['res']['BASKET_ITEMS'] as $basketCode => $basketItem) {
+                foreach ($basketItem['DISCOUNT_GROUPS'] as $groupId => $p) {
+                    if ($groupId > $applyCount) {
+                        break;
+                    }
+                    $premises[$basketItem['PRODUCT_ID']] += $p;
+                }
+            }
+        }
+        return $premises;
     }
 
     /**
@@ -356,8 +394,9 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
      * @param float $discountValue
      * @param bool $percent
      * @param int $applyCount
+     * @param array $premises
      */
-    public static function apply(array $order, float $discountValue, bool $percent, int $applyCount)
+    public static function apply(array $order, float $discountValue, bool $percent, int $applyCount, array $premises)
     {
 
         $applyBasket = null;
@@ -371,13 +410,14 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                     'params' => [
                         'discount_value' => $discountValue,
                         'percent' => $percent,
-                        'apply_count' => $applyCount
+                        'apply_count' => $applyCount,
+                        'premises' => $premises,
                     ]
                 ]),
             ];
-            Actions::increaseApplyCounter();
-            Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
-
+            /**
+             * @todo подобные фильтры должны быть в фильтре
+             */
             /** @var array $applyBasket */
             $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
         }
@@ -385,6 +425,10 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
         if (!$applyBasket || !$actionDescription) {
             return;
         }
+
+        Actions::increaseApplyCounter();
+        Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
+
         self::sortByKey($applyBasket, 'PRICE');
         foreach ($applyBasket as $basketCode => $basketRow) {
             $quantity = (int)$basketRow['QUANTITY'];
@@ -395,6 +439,9 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 $detachQuantity = $quantity;
                 $applyCount -= $quantity;
             }
+            if($detachQuantity <= 0) {
+                break;
+            };
             $rowActionDescription = [
                 'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
                 'ACTION_DESCRIPTION' => json_encode([

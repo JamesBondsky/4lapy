@@ -903,7 +903,7 @@ class LocationService
      */
     public function splitAddress(string $address, string $locationCode = ''): Address
     {
-        try {
+        $splitAddress = function () use ($address, $locationCode) {
             $dadataLocation = $this->daDataService->splitAddress($address);
 
             if (!$locationCode) {
@@ -919,10 +919,20 @@ class LocationService
                 ->setHouse($dadataLocation->getHouse())
                 ->setFlat($dadataLocation->getFlat())
                 ->setZipCode($dadataLocation->getPostalCode());
-        } catch (DaDataExecuteException $e) {
-            $this->log()->error(sprintf('failed to validate address: %s', $e->getMessage()), [
-                'address' => $address,
-            ]);
+
+            return ['result' => $result];
+        };
+
+        try {
+            $result = (new BitrixCache())
+                ->withId($address . '_' . $locationCode)
+                ->withTime(360000)
+                ->resultOf($splitAddress)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to split address: %s: %s', \get_class($e), $e->getMessage()),
+                ['address' => $address,]
+            );
 
             throw new AddressSplitException($e->getMessage(), $e->getCode());
         }
