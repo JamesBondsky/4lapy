@@ -1205,7 +1205,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                         $currentActiveCardId = '';
                         /** @var \Doctrine\Common\Collections\ArrayCollection $contactCards */
                         $contactCards = $contact->cards;
-                        if (!$contactCards->isEmpty()) {
+                        if ($contactCards && is_object($contactCards) && !$contactCards->isEmpty()) {
                             foreach ($contactCards as $tmpContactCard) {
                                 $tmpCard = $manzanaService->getCardInfo($tmpContactCard->cardNumber, $contactId);
                                 if ($tmpCard && $tmpCard->isActive()) {
