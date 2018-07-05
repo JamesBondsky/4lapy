@@ -126,7 +126,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                         /** никогда не сработает */
                     }
                 }
-                $basket = $this->basketService->getBasket(true);
+                $basket = $this->basketService->getBasket();
                 $this->offerCollection = $this->basketService->getOfferCollection(true);
                 // привязывать к заказу нужно для расчета скидок
                 if (null === $order = $basket->getOrder()) {

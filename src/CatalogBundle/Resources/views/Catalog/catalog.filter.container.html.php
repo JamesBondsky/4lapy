@@ -10,7 +10,6 @@
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
-use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
@@ -50,7 +49,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     );
     ?>
     <h1 class="b-title b-title--h1 b-title--catalog-filter">
-        <?= implode(' ', [$category->getName(), $category->getParent()->getSuffix()]) ?>
+        <?= in_array($category->getId(), [148, 332], true) ? $category->getName() : implode(' ', [$category->getName(), $category->getParent()->getSuffix()]) ?>
     </h1>
 </div>
 <aside class="b-filter b-filter--popup js-filter-popup">
