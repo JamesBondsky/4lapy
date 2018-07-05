@@ -39,6 +39,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     protected $results = [];
 
     /**
+     * @var string[]
+     */
+    protected $bonusCache = [];
+
+    /**
      * @param BasketBase $basket
      * @param string $card
      * @param BasketService $basketService
@@ -56,6 +61,15 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
         /** @var BasketItem $item */
         $hasItems = false;
+
+        /**
+         * @todo костыль, не дает перезаписать HAS_BONUS у товаров корзины, т.к. верно он рассчитывается только в первый раз
+         */
+        $cacheKey = null;
+        if ($basket->getOrder()) {
+            $cacheKey = json_encode($basket->getQuantityList());
+        }
+
         foreach ($basket->getBasketItems() as $k => $item) {
             $xmlId = $basketService->getBasketItemXmlId($item);
 
@@ -90,12 +104,18 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 $signCharge = $item->getQuantity();
             }
 
-            $basketService->setBasketItemPropertyValue($item, 'HAS_BONUS', $signCharge);
+            if ($cacheKey && (null === $this->bonusCache[$cacheKey])) {
+                $basketService->setBasketItemPropertyValue($item, 'HAS_BONUS', $signCharge);
+            }
 
             $chequePosition->setSignCharge((bool)$signCharge ? 1 : 0);
 
             $request->addItem($chequePosition);
             $hasItems = true;
+        }
+
+        if ($cacheKey && (null === $this->bonusCache[$cacheKey])) {
+            $this->bonusCache[$cacheKey] = $basket->getOrder()->getInternalId();
         }
 
         if(!$hasItems){
@@ -253,7 +273,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
          */
         if (!empty($rawResult['Item']) && !isset($rawResult['Item'][0])) {
             $rawResult['Item'] = [
-                $rawResult['Item']
+                $rawResult['Item'],
             ];
         }
         return $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
