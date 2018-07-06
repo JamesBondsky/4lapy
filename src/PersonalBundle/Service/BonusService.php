@@ -14,13 +14,14 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Enum\Card;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\ManzanaService;
-use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
@@ -241,6 +242,19 @@ class BonusService
             throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
         }
 
+        try {
+            $newCard = $this->manzanaService->getCardInfo(
+                $bonusCard,
+                $this->manzanaService->searchCardByNumber($bonusCard)->contactId
+            );
+        } catch (CardNotFoundException $e) {
+            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+        }
+
+        if (!$newCard || !\in_array($newCard->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {
+            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+        }
+
         $bonusCardId = $validCardResult->cardId;
 
         $contact = new Client();
@@ -275,16 +289,14 @@ class BonusService
             if(!empty($oldCardId) && !empty($bonusCardId)) {
                 $isChange = $this->manzanaService->changeCard($oldCardId, $bonusCardId);
             } elseif (empty($oldCardId)){
+                $contact->setLoyaltyProgramContact(true);
+                $contact->setActualContact(true);
                 $this->manzanaService->updateContact($contact);
                 $isChange = true;
             }
 
             if($isChange) {
                 $this->currentUserProvider->getUserRepository()->updateDiscountCard($user->getId(), $bonusCard);
-
-                TaggedCacheHelper::clearManagedCache([
-                    'personal:bonus:' . $user->getId(),
-                ]);
             } else {
                 throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
             }
