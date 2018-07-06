@@ -38,7 +38,7 @@ class ForgotBasketController
          */
         $date = DateTime::createFromTimestamp(time());
         $date->add('- 3 days'); //-3 дня
-        $logger = LoggerFactory::create('forgot_basket_agent');
+        $logger = LoggerFactory::create('forgot_basket_agent_3days');
         $returnString = '\\' . __METHOD__ . '();';
         try {
             $res = BasketTable::query()
@@ -140,7 +140,7 @@ class ForgotBasketController
         $date = DateTime::createFromTimestamp(time());
         $date->add('- 3 hours'); //-3 часа
         /** получаем измененные итемы */
-        $logger = LoggerFactory::create('forgot_basket_agent');
+        $logger = LoggerFactory::create('forgot_basket_agent_3hours');
         try {
             $res = BasketTable::query()
                 ->where('DATE_UPDATE', '>', $date)
