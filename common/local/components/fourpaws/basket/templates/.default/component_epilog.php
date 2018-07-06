@@ -12,24 +12,41 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if ($arParams['IS_AJAX']) {
     return;
 }
-$offers = $templateData['OFFERS'];
-if (\is_array($offers) && !empty($offers)) {
-    $userDiscount = $component->getCurrentUserService()->getDiscount();
-    foreach ($offers as $offerFields) {
-        $offer = $component->getOffer((int)$offerFields['ID']);
-        if ($offer === null) {
-            continue;
-        }
 
-        /** @var Offer $offer */
-        $bonus = $offer->getBonusFormattedText($userDiscount, (int)$offerFields['QUANTITY'], 0);
-        if (!empty($bonus)) {
-            ?>
-            <script type="text/javascript">
-                $(function () {
-                    $('.js-bonus-<?=$offer->getId()?>').html('<?=$bonus?>');
-                });
-            </script>
-        <?php }
+/** @var Bitrix\Sale\Basket\ $basket */
+$basket = $arResult['BASKET']->getOrderableItems();
+$userDiscount = $component->getCurrentUserService()->getDiscount();
+$offers = $templateData['OFFERS'];
+$bonus = [];
+if (\is_array($offers) && !empty($offers)) {
+    /** @var \Bitrix\Sale\BasketItem $basketItem */
+    $bonusAwardingQuantity = [];
+    foreach ($basket as $basketItem) {
+        $bonusAwardingQuantity[$basketItem->getProductId()] += $basketItem->getPropertyCollection()->getPropertyValues()['HAS_BONUS']['VALUE'];
     }
+
+    $bonusAwardingQuantity = \array_filter($bonusAwardingQuantity);
+    foreach ($bonusAwardingQuantity as $productId => $quantity) {
+        /** @var Offer $offer */
+        $offer = $component->getOffer($productId);
+
+        $bonus[$productId] = $offer->getBonusFormattedText(
+            $userDiscount,
+            $quantity,
+            0
+        );
+    }
+}
+
+if ($bonus) {
+    ?>
+    <script>
+        $(document).ready(function() {
+            let bonus = <?= CUtil::PhpToJSObject($bonus) ?>;
+            for (let productId in bonus) {
+                $('.js-bonus-' + productId).text(bonus[productId]);
+            }
+        })
+    </script>
+    <?php
 }

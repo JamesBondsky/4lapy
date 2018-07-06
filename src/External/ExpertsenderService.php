@@ -32,6 +32,7 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -189,6 +190,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
         }
+        return false;
     }
 
     /**
@@ -527,15 +529,18 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @throws \InvalidArgumentException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws ApplicationCreateException
+     * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderServiceException
      * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws SystemException
+     * @throws UserNotFoundException
+     *
      * @return int
      */
     public function sendOrderNewEmail(Order $order): int
@@ -559,8 +564,9 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
 
-        if (!$email = $properties['EMAIL']) {
-            throw new ExpertsenderServiceException('order email is empty');
+        $email = $properties['EMAIL'];
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
         }
 
         $properties['BONUS_COUNT'] = $orderService->getOrderBonusSum($order);
@@ -624,11 +630,12 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @return int
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderServiceException
      * @throws SystemException
      * @throws ObjectPropertyException
@@ -645,9 +652,9 @@ class ExpertsenderService implements LoggerAwareInterface
                 'COM_WAY')->getValue() === OrderPropertyService::COMMUNICATION_ONE_CLICK) {
             return 0;
         }
-
-        if (!$email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue()) {
-            throw new ExpertsenderServiceException('order email is empty');
+        $email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue();
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
         }
 
         $snippets = [
@@ -743,13 +750,13 @@ class ExpertsenderService implements LoggerAwareInterface
             );
             if (!$apiResult->isOk()) {
                 throw new ExpertsenderServiceException(
-                    $apiResult->getErrorMessage(),
+                    var_export($snippets, true). ' - Ошибка - '.$apiResult->getErrorMessage(),
                     $apiResult->getErrorCode()
                 );
             }
         } catch (GuzzleException|Exception $exception) {
             throw new ExpertsenderServiceException(
-                $exception->getMessage(),
+                var_export($snippets, true). ' - Ошибка - '.$exception->getMessage(),
                 $exception->getCode(),
                 $exception
             );
@@ -845,11 +852,12 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @return int
      * @throws \InvalidArgumentException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws Exception
+     * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderServiceException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -866,8 +874,8 @@ class ExpertsenderService implements LoggerAwareInterface
 
         $personalOrder = $orderSubscribe->getOrder();
         $email = $personalOrder->getPropValue('EMAIL');
-        if ($email === '') {
-            throw new ExpertsenderServiceException('order email is empty');
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
         }
 
         /** @var OrderService $orderService */
@@ -935,6 +943,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws Exception
+     * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderServiceException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -965,8 +974,8 @@ class ExpertsenderService implements LoggerAwareInterface
         $properties['PHONE'] = $properties['PHONE'] ?? '';
 
         $email = $properties['EMAIL'];
-        if ($email === '') {
-            throw new ExpertsenderServiceException('order email is empty');
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
         }
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($properties['NAME']));

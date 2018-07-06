@@ -38,7 +38,7 @@ class ForgotBasketController
          */
         $date = DateTime::createFromTimestamp(time());
         $date->add('- 3 days'); //-3 дня
-        $logger = LoggerFactory::create('forgot_basket_agent');
+        $logger = LoggerFactory::create('forgot_basket_agent_3days');
         $returnString = '\\' . __METHOD__ . '();';
         try {
             $res = BasketTable::query()
@@ -47,13 +47,17 @@ class ForgotBasketController
                 ->whereNull('ORDER_ID')
                 ->setSelect(['FUSER_ID'])
                 ->exec();
-        } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+        } catch (ObjectPropertyException|ArgumentException|SystemException|\Exception $e) {
             $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e->getTrace());
             return $returnString;
         }
         $fUserIds = [];
         while ($basketItem = $res->fetch()) {
             $fUserIds[] = $basketItem['FUSER_ID'];
+        }
+        if(empty($fUserIds)){
+            /** Обновлять нечего */
+            return $returnString;
         }
         $fUserIds = array_unique($fUserIds);
         /** ищем среди найденых корзин обновленные элементы */
@@ -65,7 +69,7 @@ class ForgotBasketController
                 ->whereNull('ORDER_ID')
                 ->setSelect(['FUSER_ID'])
                 ->exec();
-        } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+        } catch (ObjectPropertyException|ArgumentException|SystemException|\Exception $e) {
             $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e->getTrace());
             return $returnString;
         }
@@ -140,7 +144,7 @@ class ForgotBasketController
         $date = DateTime::createFromTimestamp(time());
         $date->add('- 3 hours'); //-3 часа
         /** получаем измененные итемы */
-        $logger = LoggerFactory::create('forgot_basket_agent');
+        $logger = LoggerFactory::create('forgot_basket_agent_3hours');
         try {
             $res = BasketTable::query()
                 ->where('DATE_UPDATE', '>', $date)
