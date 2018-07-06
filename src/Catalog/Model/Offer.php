@@ -1133,7 +1133,9 @@ class Offer extends IblockElement
      */
     public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if (!$this->bonus) {
+        if($this->isBonusExclude()) {
+            $this->bonus = 0;
+        } elseif (!$this->bonus) {
             $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
         }
 

@@ -13,11 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** установка бонусов за товар */
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
-if ($currentOffer->isBonusExclude()) {
-    $bonus = 0;
-} else {
-    $bonus = $currentOffer->getBonusFormattedText((int)$component->getCurrentUserService()->getDiscount());
-}
+$bonus = $currentOffer->getBonusFormattedText((int)$component->getCurrentUserService()->getDiscount());
 if (!empty($bonus)) { ?>
     <script type="text/javascript">
         $(function () {
