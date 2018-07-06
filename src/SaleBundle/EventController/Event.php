@@ -7,6 +7,7 @@ use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
@@ -22,6 +23,7 @@ use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
+use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -48,6 +50,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Event extends BaseServiceHandler
 {
+    use StaticLoggerTrait;
+
     protected static $isEventsDisable = false;
 
     public static function disableEvents(): void
@@ -82,9 +86,11 @@ class Event extends BaseServiceHandler
         static::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction'], $module);
         static::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction'], $module);
 
+        ###   Обработчики скидок EOF   ###
+
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [self::class, 'updateOrderAccountNumber'], $module);
-        ###   Обработчики скидок EOF   ###
+        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'unlockOrderTables'], $module);
 
         /** отправка email */
         // новый заказ
@@ -323,24 +329,26 @@ class Event extends BaseServiceHandler
      * @param $type
      * @return false|string
      */
-    public static function updateOrderAccountNumber($id, $type) {
+    public static function updateOrderAccountNumber($id, $type)
+    {
+        $result = false;
         if (self::$isEventsDisable) {
-            return false;
+            return $result;
         }
 
         if ($type === 'NUMBER') {
             try {
+                BitrixApplication::getConnection()->query('LOCK TABLE b_sale_order WRITE');
                 /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
                 $maxNumber = BitrixApplication::getConnection()->query(
                     'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 9999999'
                 )->fetch()['maxNumber'];
 
                 if ($defaultNumber = Option::get('sale', 'account_number_data', 0)) {
-                    return (int)$defaultNumber > (int)$maxNumber ? $defaultNumber : ($maxNumber + 1);
+                    $result = (int)$defaultNumber > (int)$maxNumber ? $defaultNumber : ($maxNumber + 1);
                 }
             } catch (\Exception $e) {
-
-                static::$logger->error(
+                static::getLogger()->error(
                     sprintf(
                         'failed to set order %s account number: %s: %s',
                         $id,
@@ -351,7 +359,22 @@ class Event extends BaseServiceHandler
             }
         }
 
-        return false;
+        return $result;
+    }
+
+    /**
+     * @param BitrixEvent $event
+     * @throws ArgumentTypeException
+     */
+    public static function unlockOrderTables(BitrixEvent $event) {
+        try {
+            BitrixApplication::getConnection()->query('UNLOCK TABLES');
+        } catch (\Exception $e) {
+            /** @noinspection NullPointerExceptionInspection */
+            static::getLogger()->error('failed to unlock order tables', [
+                'order' => $event->getParameter('ENTITY')->getId(),
+            ]);
+        }
     }
 
     /**
