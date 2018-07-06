@@ -7,6 +7,7 @@ use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
@@ -85,9 +86,11 @@ class Event extends BaseServiceHandler
         static::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction'], $module);
         static::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction'], $module);
 
+        ###   Обработчики скидок EOF   ###
+
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [self::class, 'updateOrderAccountNumber'], $module);
-        ###   Обработчики скидок EOF   ###
+        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'unlockOrderTables'], $module);
 
         /** отправка email */
         // новый заказ
@@ -335,6 +338,7 @@ class Event extends BaseServiceHandler
 
         if ($type === 'NUMBER') {
             try {
+                BitrixApplication::getConnection()->query('LOCK TABLE b_sale_order WRITE');
                 /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
                 $maxNumber = BitrixApplication::getConnection()->query(
                     'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 9999999'
@@ -355,14 +359,22 @@ class Event extends BaseServiceHandler
             }
         }
 
-        if (false === $result) {
-            static::getLogger()->warning('order account number not changed', [
-                'order' => $id,
-                'numberTemplate' => $type
+        return $result;
+    }
+
+    /**
+     * @param BitrixEvent $event
+     * @throws ArgumentTypeException
+     */
+    public static function unlockOrderTables(BitrixEvent $event) {
+        try {
+            BitrixApplication::getConnection()->query('UNLOCK TABLES');
+        } catch (\Exception $e) {
+            /** @noinspection NullPointerExceptionInspection */
+            static::getLogger()->error('failed to unlock order tables', [
+                'order' => $event->getParameter('ENTITY')->getId(),
             ]);
         }
-
-        return $result;
     }
 
     /**
