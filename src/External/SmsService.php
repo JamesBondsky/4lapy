@@ -104,6 +104,8 @@ class SmsService implements LoggerAwareInterface
             } catch (SmsTrafficApiException $e) {
                 throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
             }
+        } catch (WrongPhoneNumberException $e) {
+            $this->logger->info($e->getMessage());
         } catch (SmsSendErrorException $e) {
             $this->logger->error(\sprintf('Sms send error: %s.', $e->getMessage()));
         }
@@ -112,23 +114,35 @@ class SmsService implements LoggerAwareInterface
     /**
      * @param string $phone
      *
+     * @throws WrongPhoneNumberException
      * @throws SmsSendErrorException
      * @return string
      *
      */
     protected function clearPhone(string $phone): string
     {
-        try {
-            $formattedPhone = PhoneHelper::normalizePhone($phone);
-            $phone = '7' . $formattedPhone;
+        $phone = $this->clearPhoneWithPhoneException($phone);
 
-            if (\mb_strlen($phone) === 11) {
-                return $phone;
-            }
-        } catch (WrongPhoneNumberException $e) {
+        if (\mb_strlen($phone) === 11) {
+            return $phone;
         }
 
         throw new SmsSendErrorException(\sprintf('Неверный формат номера телефона (%s)', $phone));
+    }
+
+    /**
+     * @param string $phone
+     *
+     * @throws WrongPhoneNumberException
+     * @return string
+     *
+     */
+    protected function clearPhoneWithPhoneException(string $phone): string
+    {
+        if(PhoneHelper::isPhone($phone)) {
+            return PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_MANZANA);
+        }
+        throw new WrongPhoneNumberException(\sprintf('Неверный формат номера телефона (%s)', $phone));
     }
 
     /**
