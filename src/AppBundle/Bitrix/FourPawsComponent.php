@@ -50,7 +50,7 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
      */
     public function executeComponent(): ?array
     {
-        if ($eee = $this->startResultCache()) {
+        if ($this->startResultCache()) {
 
             try {
                 parent::executeComponent();
