@@ -18,7 +18,11 @@ use Bitrix\Main\SystemException;
 class FullHrefDecorator
 {
     private $path;
-    
+    /** @var string Домен */
+    private static $host = null;
+    /** @var string Протокол: http|https */
+    private static $proto = null;
+
     /**
      * FullHrefDecorator constructor.
      *
@@ -61,17 +65,9 @@ class FullHrefDecorator
      */
     public function getFullPublicPath() : string
     {
-        $context = Application::getInstance()->getContext();
-        $host = $context->getServer()->getHttpHost();
-        // в cli нет HTTP_HOST
-        if (!$host && defined('SITE_SERVER_NAME')) {
-            $host = SITE_SERVER_NAME;
-        }
-        $prefix  = 'http';
-        if ($context->getRequest()->isHttps()) {
-            $prefix .= 's';
-        }
-        
+        $prefix = $this->getProto();
+        $host = $this->getHost();
+
         return $prefix . '://' . $host . $this->path;
     }
     
@@ -81,5 +77,72 @@ class FullHrefDecorator
     public function getStartPath() : string
     {
         return $this->path;
+    }
+
+    /**
+     * @return string
+     * @throws SystemException
+     */
+    public function getProto() : string
+    {
+        if (static::$proto === null) {
+            static::$proto  = 'http';
+            $context = Application::getInstance()->getContext();
+            if ($context->getRequest()->isHttps()) {
+                static::$proto .= 's';
+            }
+        }
+
+        return static::$proto;
+    }
+
+    /**
+     * Сброс значения протокола
+     */
+    public function flushProto() : void
+    {
+        static::$proto = null;
+    }
+
+    /**
+     * @return string
+     * @throws SystemException
+     */
+    public function getHost() : string
+    {
+        if (static::$host === null) {
+            $context = Application::getInstance()->getContext();
+            static::$host = $context->getServer()->getHttpHost();
+            static::$host = static::$host ? trim(static::$host) : '';
+
+            // в cli нет HTTP_HOST, пробуем через константу
+            if (static::$host === '' && defined('SITE_SERVER_NAME')) {
+                static::$host = trim(SITE_SERVER_NAME);
+            }
+            // ... или через сайт
+            if (static::$host === '') {
+                $site = \CSite::GetList(
+                    $by = 'SORT',
+                    $order = 'ASC',
+                    [
+                        'ACTIVE' => 'Y',
+                        //'DEFAULT' => 'Y',
+                    ]
+                )->Fetch();
+                if ($site) {
+                    static::$host = $site['SERVER_NAME'];
+                }
+            }
+        }
+
+        return static::$host;
+    }
+
+    /**
+     * Сброс значения хоста
+     */
+    public function flushHost() : void
+    {
+        static::$host = null;
     }
 }
