@@ -525,8 +525,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $cardNumber
      *
      * @return CardValidateResult
-     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
-     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function validateCardByNumberRaw(string $cardNumber): CardValidateResult
