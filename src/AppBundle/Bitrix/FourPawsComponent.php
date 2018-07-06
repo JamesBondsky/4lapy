@@ -19,6 +19,11 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
     use LazyLoggerAwareTrait;
 
     /**
+     * @var string
+     */
+    private $templatePage = '';
+
+    /**
      * @param $params
      *
      * @return array
@@ -52,7 +57,7 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
 
                 $this->prepareResult();
 
-                $this->includeComponentTemplate();
+                $this->includeComponentTemplate($this->templatePage);
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('%s: %s', \get_class($e), $e->getMessage()), [
                     'trace' => $e->getTrace()
@@ -81,5 +86,12 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
     public function getResultCacheKeys(): array
     {
         return [];
+    }
+
+    /**
+     * @param string $page
+     */
+    protected function setTemplatePage(string $page) {
+        $this->templatePage = $page;
     }
 }
