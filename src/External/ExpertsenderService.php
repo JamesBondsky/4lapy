@@ -174,13 +174,28 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @return bool
      * @throws ExpertsenderServiceException
+     * @throws GuzzleException
      */
     public function sendChangePasswordByProfile(User $user): bool
     {
         if($user->hasEmail()) {
             try {
-                $receiver = new Receiver($user->getEmail());
-                $apiResult = $this->client->sendSystemTransactional(self::CHANGE_PASSWORD_LIST_ID, $receiver);
+                $transactionId = self::CHANGE_PASSWORD_LIST_ID;
+
+                $email = $user->getEmail();
+                $userId = $user->getId();
+
+                $this->logger->info(
+                    __FUNCTION__,
+                    [
+                        'email' => $email,
+                        'transactionId' => $transactionId,
+                        'userId' => $userId,
+                    ]
+                );
+
+                $receiver = new Receiver($email);
+                $apiResult = $this->client->sendSystemTransactional($transactionId, $receiver);
                 if ($apiResult->isOk()) {
                     return true;
                 }
@@ -189,32 +204,64 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
         }
+
+        return false;
     }
 
     /**
-     * @param User   $user
+     * @param User $user
      * @param string $backUrl
      *
      * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws Exception
      * @throws ExpertsenderServiceException
+     * @throws GuzzleException
+     * @throws SystemException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
     public function sendForgotPassword(User $user, string $backUrl = ''): bool
     {
         if ($user->hasEmail()) {
             try {
+                $transactionId = self::FORGOT_PASSWORD_LIST_ID;
+
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $confirmService::setGeneratedHash($user->getEmail(), 'email_forgot');
-                $receiver = new Receiver($user->getEmail());
-                $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $user->getId() : '';
+                $email = $user->getEmail();
+                $userId = $user->getId();
+                $confirmService::setGeneratedHash($email, 'email_forgot');
+                $receiver = new Receiver($email);
+                $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $userId : '';
                 $snippets = [
                     new Snippet('user_name', $user->getName() ?: $user->getFullName(), true),
                     new Snippet('link',
-                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
+                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $email . $backUrlText))->getFullPublicPath(),
                         true),
                 ];
-                $apiResult = $this->client->sendSystemTransactional(self::FORGOT_PASSWORD_LIST_ID, $receiver, $snippets);
+
+                $this->logger->info(
+                    __FUNCTION__,
+                    [
+                        'email' => $email,
+                        'transactionId' => $transactionId,
+                        'userId' => $userId,
+                        'snippets' => implode(
+                            '; ',
+                            array_map(
+                                function($snp) {
+                                    return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                                },
+                                $snippets
+                            )
+                        ),
+                    ]
+                );
+
+                $apiResult = $this->client->sendSystemTransactional($transactionId, $receiver, $snippets);
                 if ($apiResult->isOk()) {
                     return true;
                 }
@@ -223,15 +270,16 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
+
         return false;
     }
 
     /**
      * @param User $oldUser
      * @param User $curUser
-     *
      * @return bool
      * @throws ExpertsenderServiceException
+     * @throws SystemException
      */
     public function sendChangeEmail(User $oldUser, User $curUser): bool
     {
@@ -239,10 +287,14 @@ class ExpertsenderService implements LoggerAwareInterface
         $expertSenderId = 0;
         $hasExpertSenderId = false;
         $hasNewEmailInSender = false;
+        $transactionIdOld = self::CHANGE_EMAIL_LIST_ID;
+        $transactionIdNew = self::CHANGE_EMAIL_TO_NEW_EMAIL_LIST;
+
         /** проверяем наличие новой почты в сендере */
-        if($curUser->hasEmail()) {
+        $curUserEmail = $curUser->getEmail();
+        if ($curUser->hasEmail()) {
             try {
-                $userIdResult = $this->client->getUserId($curUser->getEmail());
+                $userIdResult = $this->client->getUserId($curUserEmail);
                 if ($userIdResult->isOk()) {
                     $hasNewEmailInSender = true;
                 }
@@ -251,20 +303,32 @@ class ExpertsenderService implements LoggerAwareInterface
             }
         }
 
+        $oldUserEmail = $oldUser->hasEmail();
         if ($oldUser->hasEmail()) {
+
+            $this->logger->info(
+                __FUNCTION__,
+                [
+                    'curUserEmail' => $curUserEmail,
+                    'oldUserEmail' => $oldUserEmail,
+                    'transactionIdOld' => $transactionIdOld,
+                    'oldUserId' => $oldUser->getId(),
+                    'curUserId' => $curUser->getId(),
+                ]
+            );
 
             $continue = false;
             /** отправка почты на старый email */
             try {
-                $receiver = new Receiver($oldUser->getEmail());
-                $apiResult = $this->client->sendSystemTransactional(self::CHANGE_EMAIL_LIST_ID, $receiver);
+                $receiver = new Receiver($oldUserEmail);
+                $apiResult = $this->client->sendSystemTransactional($transactionIdOld, $receiver);
                 if ($apiResult->isOk()) {
                     $continue = true;
                 }
 
-                if(!$hasNewEmailInSender) {
+                if (!$hasNewEmailInSender) {
                     /** получение id подписчика по старому email */
-                    $userIdResult = $this->client->getUserId($oldUser->getEmail());
+                    $userIdResult = $this->client->getUserId($oldUserEmail);
                     if ($userIdResult->isOk()) {
                         $expertSenderId = $userIdResult->getId();
                         if (!empty($expertSenderId)) {
@@ -276,9 +340,10 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
+
         if ($continue && $curUser->hasEmail()) {
             try {
-                if(!$hasNewEmailInSender) {
+                if (!$hasNewEmailInSender) {
                     $continue = false;
                     if ($hasExpertSenderId) {
                         $addUserToList = new AddUserToList();
@@ -286,7 +351,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         $addUserToList->setMode(static::MAIN_LIST_MODE);
                         $addUserToList->setTrackingCode('change_email');
                         $addUserToList->setListId(static::MAIN_LIST_ID);
-                        $addUserToList->setEmail($curUser->getEmail());
+                        $addUserToList->setEmail($curUserEmail);
                         $addUserToList->setId($expertSenderId);
 
                         $addUserToList->setName($curUser->getName());
@@ -311,9 +376,21 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 if ($continue) {
+
+                    $this->logger->info(
+                        __FUNCTION__,
+                        [
+                            'curUserEmail' => $curUserEmail,
+                            'oldUserEmail' => $oldUserEmail,
+                            'transactionIdNew' => $transactionIdNew,
+                            'oldUserId' => $oldUser->getId(),
+                            'curUserId' => $curUser->getId(),
+                        ]
+                    );
+
                     /** отправка почты на новый email, отправляем именно при смене и при регистрации */
-                    $receiver = new Receiver($curUser->getEmail());
-                    $apiResult = $this->client->sendSystemTransactional(self::CHANGE_EMAIL_TO_NEW_EMAIL_LIST, $receiver);
+                    $receiver = new Receiver($curUserEmail);
+                    $apiResult = $this->client->sendSystemTransactional($transactionIdNew, $receiver);
                     if ($apiResult->isOk()) {
                         return true;
                     }
@@ -525,18 +602,15 @@ class ExpertsenderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     *
-     * @throws \InvalidArgumentException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws ApplicationCreateException
-     * @throws ExpertsenderServiceException
-     * @throws ArgumentException
-     * @throws ObjectNotFoundException
-     * @throws SystemException
      * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws Exception
+     * @throws ExpertsenderServiceException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundException
      */
     public function sendOrderNewEmail(Order $order): int
     {
@@ -557,7 +631,6 @@ class ExpertsenderService implements LoggerAwareInterface
         if ($properties['COM_WAY'] === OrderPropertyService::COMMUNICATION_ONE_CLICK) {
             return 0;
         }
-
 
         if (!$email = $properties['EMAIL']) {
             throw new ExpertsenderServiceException('order email is empty');
@@ -609,6 +682,24 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
+        $this->logger->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'orderId' => $order->getId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+
         try {
             $apiResult = $this->client->sendSystemTransactional($transactionId, new Receiver($email), $snippets);
             if (!$apiResult->isOk()) {
@@ -622,16 +713,13 @@ class ExpertsenderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     *
      * @return int
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws Exception
      * @throws ExpertsenderServiceException
-     * @throws SystemException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function sendOrderCompleteEmail(Order $order): int
     {
@@ -667,6 +755,24 @@ class ExpertsenderService implements LoggerAwareInterface
 
         $transactionId = self::COMPLETE_ORDER_LIST_ID;
 
+        $this->logger->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'orderId' => $order->getId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+
         try {
             $apiResult = $this->client->sendSystemTransactional($transactionId, new Receiver($email), $snippets);
             if (!$apiResult->isOk()) {
@@ -680,8 +786,9 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Basket $basket
+     * Брошенная корзина
      *
+     * @param Basket $basket
      * @param int    $type
      * type = 1 - отправка после закрытия спустя 3 часа
      * type = 2 - отправка спустя 3 дня если не было измениней после типа 1
@@ -696,7 +803,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendForgotBasket(Basket $basket, int $type):bool
     {
-        switch ($type){
+        switch ($type) {
             case static::FORGOT_BASKET_TO_CLOSE_SITE:
                 $transactionId = self::FORGOT_BASKET_LIST_ID;
                 break;
@@ -706,21 +813,26 @@ class ExpertsenderService implements LoggerAwareInterface
             default:
                 $transactionId = 0;
         }
-        if($transactionId === 0){
+        if ($transactionId === 0) {
             throw new ExpertsenderServiceException('unknown forgotBasket time');
         }
         $snippets = [];
 
         $container = Application::getInstance()->getContainer();
-
+        /** @var CurrentUserProviderInterface $userService */
         $userService = $container->get(CurrentUserProviderInterface::class);
-        $user = $userService->getUserRepository()->find(FuserTable::getUserById($basket->getFUserId()));
-        if($user === null){
+
+        $fuserId = $basket->getFUserId();
+
+        $user = $userService->getUserRepository()->find(FuserTable::getUserById($fuserId));
+        if ($user === null) {
             throw new ExpertsenderUserNotFoundException('user not found');
         }
         if (!$user->hasEmail()) {
             throw new ExpertsenderEmptyEmailException('email is empty');
         }
+
+        $email = $user->getEmail();
 
         /** @var BasketService $orderService */
         $basketService = $container->get(BasketService::class);
@@ -729,16 +841,34 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
 
         $items = $this->getAltProductsItemsByBasket($basket);
-        if(empty($items)){
+        if (empty($items)) {
             throw new ExpertsenderBasketEmptyException('basket is empty');
         }
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
+        $this->logger->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'fuserId' => $fuserId,
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+
         try {
             $apiResult = $this->client->sendSystemTransactional(
                 $transactionId,
-                new Receiver($user->getEmail()),
+                new Receiver($email),
                 $snippets
             );
             if (!$apiResult->isOk()) {
