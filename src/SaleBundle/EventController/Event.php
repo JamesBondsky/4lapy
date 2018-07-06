@@ -22,6 +22,7 @@ use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
+use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -48,6 +49,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Event extends BaseServiceHandler
 {
+    use StaticLoggerTrait;
+
     protected static $isEventsDisable = false;
 
     public static function disableEvents(): void
@@ -323,9 +326,11 @@ class Event extends BaseServiceHandler
      * @param $type
      * @return false|string
      */
-    public static function updateOrderAccountNumber($id, $type) {
+    public static function updateOrderAccountNumber($id, $type)
+    {
+        $result = false;
         if (self::$isEventsDisable) {
-            return false;
+            return $result;
         }
 
         if ($type === 'NUMBER') {
@@ -336,11 +341,10 @@ class Event extends BaseServiceHandler
                 )->fetch()['maxNumber'];
 
                 if ($defaultNumber = Option::get('sale', 'account_number_data', 0)) {
-                    return (int)$defaultNumber > (int)$maxNumber ? $defaultNumber : ($maxNumber + 1);
+                    $result = (int)$defaultNumber > (int)$maxNumber ? $defaultNumber : ($maxNumber + 1);
                 }
             } catch (\Exception $e) {
-
-                static::$logger->error(
+                static::getLogger()->error(
                     sprintf(
                         'failed to set order %s account number: %s: %s',
                         $id,
@@ -351,7 +355,14 @@ class Event extends BaseServiceHandler
             }
         }
 
-        return false;
+        if (false === $result) {
+            static::getLogger()->warning('order account number not changed', [
+                'order' => $id,
+                'numberTemplate' => $type
+            ]);
+        }
+
+        return $result;
     }
 
     /**

@@ -11,14 +11,13 @@ namespace FourPaws\App;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
+use FourPaws\App\Tools\StaticLoggerTrait;
 use Psr\Log\LoggerInterface;
 
 abstract class BaseServiceHandler implements ServiceHandlerInterface
 {
-    /** @var LoggerInterface */
-    protected static $logger;
-    /** @var string  */
-    protected static $loggerName = 'event_main';
+    use StaticLoggerTrait;
+
     /** @var EventManager */
     protected static $eventManager;
 
@@ -26,7 +25,6 @@ abstract class BaseServiceHandler implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;
-        static::$logger = LoggerFactory::create('CatalogEvent');
     }
 
     /**

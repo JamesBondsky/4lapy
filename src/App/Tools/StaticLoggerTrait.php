@@ -11,12 +11,6 @@ use Psr\Log\LoggerInterface;
 trait StaticLoggerTrait
 {
     protected static function getLogger(): LoggerInterface {
-        try {
-            $name = (new \ReflectionClass(static::class))->getShortName();
-        } catch (\ReflectionException $e) {
-            $name = \basename(\str_replace('\\', '/', static::class));
-        }
-
-        return LoggerFactory::create($name);
+        return LoggerFactory::create(str_replace('\\', '_', static::class));
     }
 }

@@ -157,7 +157,7 @@ class EventHandlers extends BaseServiceHandler
      */
     protected static function logException(Throwable $exception): void
     {
-        static::$logger->error(
+        static::getLogger()->error(
             sprintf(
                 "[%s] %s (%s)\n%s\n",
                 \get_class($exception),
