@@ -18,6 +18,7 @@ use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
@@ -25,6 +26,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
 
@@ -100,8 +102,6 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws SystemException
      */
@@ -136,7 +136,9 @@ class NotificationService implements LoggerAwareInterface
             if ($transactionId) {
                 $this->logMessage($order, $transactionId);
             }
-        } catch (ExpertsenderServiceException $e) {
+        } catch (ExpertsenderEmptyEmailException $e) {
+            $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
+        } catch (ExpertsenderServiceException|\Exception $e) {
             $this->log()->error($e->getMessage());
         }
 
@@ -173,9 +175,7 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws ArgumentException
      * @throws ObjectNotFoundException
-     * @throws ApplicationCreateException
      * @throws SystemException
      */
     public function sendOrderPaymentMessage(Order $order): void
@@ -207,7 +207,9 @@ class NotificationService implements LoggerAwareInterface
             if ($transactionId) {
                 $this->logMessage($order, $transactionId);
             }
-        } catch (ExpertsenderServiceException $e) {
+        } catch (ExpertsenderEmptyEmailException $e) {
+            $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
+        } catch (ExpertsenderServiceException|\Exception $e) {
             $this->log()->error($e->getMessage());
         }
         $parameters = $this->getOrderData($order);
@@ -242,11 +244,6 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws ObjectPropertyException
      */
     public function sendOrderStatusMessage(Order $order): void
     {
@@ -298,7 +295,9 @@ class NotificationService implements LoggerAwareInterface
                 if ($transactionId) {
                     $this->logMessage($order, $transactionId);
                 }
-            } catch (ExpertsenderServiceException $e) {
+            } catch (ExpertsenderEmptyEmailException $e) {
+                $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
+            } catch (ExpertsenderServiceException|\Exception $e) {
                 $this->log()->error($e->getMessage());
             }
         }
@@ -517,8 +516,10 @@ class NotificationService implements LoggerAwareInterface
     {
         try {
             $this->emailService->sendOrderSubscribedEmail($orderSubscribe);
-        } catch (\Exception $exception) {
-            $this->log()->error($exception->getMessage());
+        } catch (ExpertsenderEmptyEmailException $e) {
+            $this->log()->info('не установлен email для отправки у заказа - '.$orderSubscribe->getId());
+        } catch (ExpertsenderServiceException|\Exception $e) {
+            $this->log()->error($e->getMessage());
         }
     }
 
@@ -531,8 +532,10 @@ class NotificationService implements LoggerAwareInterface
     {
         try {
             $this->emailService->sendOrderSubscribeOrderNewEmail($order);
-        } catch (\Exception $exception) {
-            $this->log()->error($exception->getMessage());
+        } catch (ExpertsenderEmptyEmailException $e) {
+            $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
+        } catch (ExpertsenderServiceException|\Exception $e) {
+            $this->log()->error($e->getMessage());
         }
     }
 
