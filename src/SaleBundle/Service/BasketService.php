@@ -658,63 +658,80 @@ class BasketService implements LoggerAwareInterface
      */
     public function getBonusAwardingQuantity(BasketItem $basketItem, ?Order $order = null): int
     {
-        /**
-         * @var BasketItemCollection $basketItemCollection
-         * @var Order $order
-         * @var Basket $basket
-         */
-        if (
-            !$order
-            &&
-            (
-                !($basketItemCollection = $basketItem->getCollection())
-                ||
-                !($basket = $basketItemCollection->getBasket())
-                ||
-                !($order = $basket->getOrder())
-            )
-        ) {
-            throw new InvalidArgumentException('У элемента корзины не установлен заказ');
+        /** @var Offer $offer */
+        $offer = $this->getOfferCollection()->getById($basketItem->getProductId());
+        if($offer === null) {
+            $offer = (new OfferQuery())
+                ->withFilter(['=ID' => $basketItem->getProductId()])
+                ->exec()
+                ->getById($basketItem->getProductId());
+            if($offer === null) {
+                throw new InvalidArgumentException('Предложение не найдено');
+            }
+            $this->getOfferCollection()->add($offer);
         }
+        if($offer->isBonusExclude()) {
+            $resultQuantity = 0;
+            $basketDiscounts = true;
+        } else {
+            /**
+             * @var BasketItemCollection $basketItemCollection
+             * @var Order $order
+             * @var Basket $basket
+             */
+            if (
+                !$order
+                &&
+                (
+                    !($basketItemCollection = $basketItem->getCollection())
+                    ||
+                    !($basket = $basketItemCollection->getBasket())
+                    ||
+                    !($order = $basket->getOrder())
+                )
+            ) {
+                throw new InvalidArgumentException('У элемента корзины не установлен заказ');
+            }
 
-        if (
-            !($discount = $order->getDiscount())
-            ||
-            !($applyResult = $discount->getApplyResult(true))
-        ) {
-            throw new InvalidArgumentException('У элемента корзины не расчитаны скидки');
-        }
-        $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
+            if (
+                !($discount = $order->getDiscount())
+                ||
+                !($applyResult = $discount->getApplyResult(true))
+            ) {
+                throw new InvalidArgumentException('У элемента корзины не расчитаны скидки');
+            }
+            $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
 
-        if (!$basketDiscounts) {
-            $basketDiscounts = [];
-            /** @var BasketPropertyItem $basketPropertyItem */
-            foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
-                $propCode = $basketPropertyItem->getField('CODE');
-                if ($propCode === 'IS_GIFT') {
-                    $discountId = $basketPropertyItem->getField('VALUE');
-                    if (\is_iterable($applyResult['DISCOUNT_LIST'])) {
-                        foreach ($applyResult['DISCOUNT_LIST'] as $appliedDiscount) {
-                            if ((int)$appliedDiscount['REAL_DISCOUNT_ID'] === (int)$discountId) {
-                                $basketDiscounts[] = [
-                                    'DISCOUNT_ID' => $appliedDiscount['ID'],
-                                    'COUPON_ID' => '',
-                                    'APPLY' => 'Y',
-                                    'DESCR' => $appliedDiscount['ACTIONS_DESCR']['BASKET'],
-                                ];
+            if (!$basketDiscounts) {
+                $basketDiscounts = [];
+                /** @var BasketPropertyItem $basketPropertyItem */
+                foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
+                    $propCode = $basketPropertyItem->getField('CODE');
+                    if ($propCode === 'IS_GIFT') {
+                        $discountId = $basketPropertyItem->getField('VALUE');
+                        if (\is_iterable($applyResult['DISCOUNT_LIST'])) {
+                            foreach ($applyResult['DISCOUNT_LIST'] as $appliedDiscount) {
+                                if ((int)$appliedDiscount['REAL_DISCOUNT_ID'] === (int)$discountId) {
+                                    $basketDiscounts[] = [
+                                        'DISCOUNT_ID' => $appliedDiscount['ID'],
+                                        'COUPON_ID' => '',
+                                        'APPLY' => 'Y',
+                                        'DESCR' => $appliedDiscount['ACTIONS_DESCR']['BASKET'],
+                                    ];
+                                }
                             }
                         }
                     }
                 }
             }
+
+            if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
+                $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
+            }
+
+            $resultQuantity
+                = (int)$basketItem->getQuantity() - $this->getPremisesQuantity($applyResult, $basketItem, $order);
         }
-
-        if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
-            $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
-        }
-
-        $resultQuantity = (int)$basketItem->getQuantity() - $this->getPremisesQuantity($applyResult, $basketItem, $order);
-
         return (bool)$basketDiscounts ? 0 : $resultQuantity;
     }
 
