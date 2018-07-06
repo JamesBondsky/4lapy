@@ -89,6 +89,7 @@ class OfferQuery extends IblockElementQuery
             'PROPERTY_COND_VALUE',
             'PROPERTY_PRICE_ACTION',
             'PROPERTY_COND_FOR_ACTION',
+            'PROPERTY_BONUS_EXCLUDE',
         ];
     }
 

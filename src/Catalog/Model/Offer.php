@@ -249,6 +249,12 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
+     * @var bool
+     * @Type("bool")
+     */
+    protected $PROPERTY_BONUS_EXCLUDE = false;
+
+    /**
      * Цена по акции - простая акция из SAP
      *
      * @var float
@@ -641,6 +647,25 @@ class Offer extends IblockElement
         $this->PROPERTY_CLOTHING_SIZE = $xmlId;
         $this->clothingSize = null;
 
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBonusExclude(): bool
+    {
+        return (bool)(int)$this->PROPERTY_BONUS_EXCLUDE;
+    }
+
+    /**
+     * @param bool $exclude
+     *
+     * @return Offer
+     */
+    public function setBonusExclude(bool $exclude): Offer
+    {
+        $this->PROPERTY_BONUS_EXCLUDE = $exclude;
         return $this;
     }
 
@@ -1108,7 +1133,9 @@ class Offer extends IblockElement
      */
     public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if (!$this->bonus) {
+        if($this->isBonusExclude()) {
+            $this->bonus = 0;
+        } elseif (!$this->bonus) {
             $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
         }
 
