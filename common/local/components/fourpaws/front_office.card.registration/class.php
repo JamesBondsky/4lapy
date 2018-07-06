@@ -11,9 +11,12 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\External\SmsService;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -59,7 +62,14 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     private $userGroups;
     /** @var bool $isUserAdmin */
     private $isUserAdmin;
+    /** @var array $validateCardCache */
+    private $validateCardCache = [];
 
+    /**
+     * FourPawsFrontOfficeCardRegistrationComponent constructor.
+     *
+     * @param null|\CBitrixComponent $component
+     */
     public function __construct($component = null)
     {
         // LazyLoggerAwareTrait не умеет присваивать имя по классам без неймспейса
@@ -70,6 +80,10 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $this->connection = \Bitrix\Main\Application::getConnection();
     }
 
+    /**
+     * @param array $params
+     * @return array
+     */
     public function onPrepareComponentParams($params)
     {
         $params['CURRENT_PAGE'] = isset($params['CURRENT_PAGE']) ? trim($params['CURRENT_PAGE']) : '';
@@ -107,7 +121,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         if (!$params['REGISTRATION_SMS_TEXT']) {
             $params['REGISTRATION_SMS_TEXT'] = 'Спасибо за регистрацию на сайте 4lapy.ru! 
             Теперь Вам доступны все возможности личного кабинета! Номер вашего телефона является логином, пароль для доступа #PASSWORD#. 
-            Для авторизации перейдите по ссылке http://4lapy.ru/personal/.';
+            Для авторизации перейдите по ссылке https://4lapy.ru/personal/.';
         }
 
         $params['SHOP_OF_ACTIVATION'] = isset($params['SHOP_OF_ACTIVATION']) ? trim($params['SHOP_OF_ACTIVATION']) : 'UpdatedByСassa';
@@ -117,6 +131,9 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         return $params;
     }
 
+    /**
+     * @throws Exception
+     */
     public function executeComponent()
     {
         try {
@@ -225,28 +242,33 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
     /**
      * @return ManzanaService
+     * @throws ApplicationCreateException
      */
     protected function getManzanaService()
     {
         if (!$this->manzanaService) {
             $this->manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
         }
+
         return $this->manzanaService;
     }
 
     /**
      * @return UserService
+     * @throws ApplicationCreateException
      */
     public function getUserService()
     {
         if (!$this->userCurrentUserService) {
             $this->userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
         }
+
         return $this->userCurrentUserService;
     }
 
     /**
      * @return UserRepository
+     * @throws ApplicationCreateException
      */
     public function getUserRepository()
     {
@@ -297,6 +319,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
             $this->serializer = $container->get(SerializerInterface::class);
         }
+
         return $this->serializer;
     }
 
@@ -340,7 +363,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     public function getBitrixGenderByExternalGender(string $externalGenderCode)
     {
         $result = '';
-        $externalGenderCode = intval($externalGenderCode);
+        $externalGenderCode = (int)$externalGenderCode;
         if ($externalGenderCode === static::EXTERNAL_GENDER_CODE_M) {
             $result = static::BITRIX_GENDER_CODE_M;
         } elseif ($externalGenderCode === static::EXTERNAL_GENDER_CODE_F) {
@@ -540,10 +563,15 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
     /**
      * @param string $cardNumber
+     * @param bool $getFromCache
      * @return Result
      */
-    public function validateCardByNumber(string $cardNumber)
+    public function validateCardByNumber(string $cardNumber, bool $getFromCache = false)
     {
+        if ($getFromCache && isset($this->validateCardCache[$cardNumber])) {
+            return $this->validateCardCache[$cardNumber];
+        }
+
         $result = new Result();
 
         if ($cardNumber === '') {
@@ -585,6 +613,8 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 'validateRaw' => $validateRaw,
             ]
         );
+
+        $this->validateCardCache[$cardNumber] = $result;
 
         return $result;
     }
@@ -652,6 +682,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
     /**
      * @return Result
+     * @throws ApplicationCreateException
      */
     protected function doCardRegistration()
     {
@@ -728,7 +759,11 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
                 $userManzana = clone $user;
                 if ($updateUser) {
-                    $this->startTransaction();
+                    /**
+                     * С транзакциями вылетает ошибка "MySQL server has gone away", вероятно, из-за долгих запросов к ML.
+                     * Отключил нафиг.
+                     **/
+                    //$this->startTransaction();
                     $updateResult = $this->updateUserByFormFields($userId);
                     if ($updateResult->isSuccess()) {
                         // для отправки в Манзану берем обновленную карточку из базы
@@ -740,7 +775,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                         }
                     } else {
                         // откатываем транзакцию БД
-                        $this->rollbackTransaction();
+                        //$this->rollbackTransaction();
                         $result->addErrors($updateResult->getErrors());
                         $userManzana = null;
                     }
@@ -751,13 +786,13 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     $updateManzanaResult = $this->doManzanaUpdateContact($userManzana);
                     if (!$updateManzanaResult->isSuccess()) {
                         // в Манзану данные не ушли - откатываемся
-                        $this->rollbackTransaction();
+                        //$this->rollbackTransaction();
                         $result->addErrors($updateManzanaResult->getErrors());
                     }
                     $resultData['updateUserResults'][$userId]['manzana'] = $updateManzanaResult;
                 }
                 // внутри метода проверяется открыта ли транзакциия, поэтому его можно здесь вызывать
-                $this->commitTransaction();
+                //$this->commitTransaction();
             }
 
             if ($createNewUser) {
@@ -766,7 +801,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 // Бонусная карта привязывается к профилю пользователя.
                 $userSms = null;
                 $userManzana = null;
-                $this->startTransaction();
+                //$this->startTransaction();
                 $createResult = $this->createUserByFormFields();
                 if ($createResult->isSuccess()) {
                     $createResultData = $createResult->getData();
@@ -785,7 +820,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     }
                 } else {
                     // откатываем транзакцию БД
-                    $this->rollbackTransaction();
+                    //$this->rollbackTransaction();
                     $result->addErrors($createResult->getErrors());
                 }
                 $resultData['createUserResults'][0]['result'] = $createResult;
@@ -795,14 +830,14 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     $updateManzanaResult = $this->doManzanaUpdateContact($userManzana);
                     if (!$updateManzanaResult->isSuccess()) {
                         // в Манзану данные не ушли - откатываемся
-                        $this->rollbackTransaction();
+                        //$this->rollbackTransaction();
                         $result->addErrors($updateManzanaResult->getErrors());
                         // не будем отправлять sms
                         $userSms = null;
                     }
                     $resultData['createUserResults'][0]['manzana'] = $updateManzanaResult;
                 }
-                $this->commitTransaction();
+                //$this->commitTransaction();
 
                 if ($userSms) {
                     // отправка юзеру sms о регистрации на сайте
@@ -929,6 +964,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param User $user
      * @return array
+     * @throws SystemException
      */
     protected function convertUserToArray(User $user)
     {
@@ -938,6 +974,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param array $fields
      * @return User
+     * @throws SystemException
      */
     protected function convertUserFromArray(array $fields)
     {
@@ -1040,6 +1077,13 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             }
         }
 
+        // сброс тегированного кеша, относящегося к юзеру, используемого в компонентах сайта
+        $clearTags = [];
+        $clearTags[] = 'user:'.$userId;
+        if ($clearTags) {
+            TaggedCacheHelper::clearManagedCache($clearTags);
+        }
+
         $result->setData(
             [
                 'userId' => $userId,
@@ -1060,10 +1104,12 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
     /**
      * @return string
+     * @throws ApplicationCreateException
      */
     protected function getShopRegistration()
     {
         $currentUser = $this->searchUserById($this->arParams['USER_ID']);
+
         return $currentUser ? $currentUser->getShopCode() : '';
     }
 
@@ -1085,6 +1131,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param User $user
      * @return Result
+     * @throws ApplicationCreateException
      */
     protected function doManzanaUpdateContact(User $user)
     {
@@ -1099,13 +1146,16 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         $manzanaClient = null;
         $contactId = '';
+        $userId = $user->getId();
 
         if ($result->isSuccess()) {
             $manzanaService = $this->getManzanaService();
             // поиск контакта в Манзане по телефону (в старой реализации поиск делалася по номеру карты)
+            $contact = null;
             try {
-                if(!empty($phoneManzana)) {
-                    $contactId = $manzanaService->getContactIdByPhone($phoneManzana);
+                if (!empty($phoneManzana)) {
+                    $contact = $manzanaService->getContactByPhone($phoneManzana);
+                    $contactId = $contact->contactId;
                 }
             } catch (ManzanaServiceContactSearchNullException $exception) {
                 // контакта с заданным номером телефона в Манзане нет - будет создан
@@ -1118,12 +1168,23 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             }
 
             if ($result->isSuccess()) {
+                $cardNumber = $user->getDiscountCardNumber();
+                $logContext = [
+                    'userId' => $userId,
+                    'phoneManzana' => $phoneManzana,
+                    'contactId' => $contactId,
+                    'cardNumber' => $cardNumber,
+                ];
+
                 try {
                     $manzanaClient = new Client();
                     $this->getUserService()->setClientPersonalDataByCurUser($manzanaClient, $user);
                     if ($contactId !== '') {
                         $manzanaClient->contactId = $contactId;
                     }
+
+                    $manzanaClient->cardnumber = $cardNumber;
+
                     // Код места активации карты
                     $val = $this->getShopOfActivation();
                     if ($val !== '') {
@@ -1138,14 +1199,94 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     if ($this->shouldSetActualContact()) {
                         $manzanaClient->setActualContact(true);
                     }
+
+                    // ML: установка введенной карты в качестве активной карты контакта
+                    if ($cardNumber) {
+                        $currentActiveCardId = '';
+                        /** @var \Doctrine\Common\Collections\ArrayCollection $contactCards */
+                        $contactCards = $contact->cards;
+                        if ($contactCards && is_object($contactCards) && !$contactCards->isEmpty()) {
+                            foreach ($contactCards as $tmpContactCard) {
+                                $tmpCard = $manzanaService->getCardInfo($tmpContactCard->cardNumber, $contactId);
+                                if ($tmpCard && $tmpCard->isActive()) {
+                                    $currentActiveCardId = $tmpCard->cardId;
+                                    break;
+                                }
+                            }
+                        }
+
+                        $this->log()->debug(
+                            sprintf(
+                                '%s currentActiveCardId: %s',
+                                __FUNCTION__,
+                                $currentActiveCardId
+                            ),
+                            $logContext
+                        );
+
+                        if ($currentActiveCardId) {
+                            $validateResultData = $this->validateCardByNumber($cardNumber, true)->getData();
+                            if (isset($validateResultData['validate']['CARD_ID'])) {
+                                $newActivateCardId = $validateResultData['validate']['CARD_ID'];
+                                $this->log()->debug(
+                                    sprintf(
+                                        '%s newActivateCardId: %s',
+                                        __FUNCTION__,
+                                        $newActivateCardId
+                                    ),
+                                    $logContext
+                                );
+
+                                if ($currentActiveCardId !== $newActivateCardId) {
+                                    $tmpRes = $manzanaService->changeCard($currentActiveCardId, $newActivateCardId);
+                                    $this->log()->debug(
+                                        sprintf(
+                                            '%s changeCard: %s',
+                                            __FUNCTION__,
+                                            $tmpRes ? 'success' : 'fail'
+                                        ),
+                                        $logContext
+                                    );
+                                    if (!$tmpRes) {
+                                        throw new ContactUpdateException('Не удалось привязать карту');
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     $manzanaService->updateContact($manzanaClient);
+
+                    $this->log()->debug(
+                        sprintf(
+                            '%s updateContact: %s',
+                            __FUNCTION__,
+                            'success'
+                        ),
+                        $logContext
+                    );
+
                 } catch (\Exception $exception) {
                     $result->addError(
                         new Error($exception->getMessage(), 'manzanaUpdateContactException')
                     );
-                    $this->log()->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+                    $this->log()->error(
+                        sprintf(
+                            '%s exception: %s',
+                            __FUNCTION__,
+                            $exception->getMessage()
+                        ),
+                        $logContext
+                    );
                 }
             }
+        }
+
+        // сброс тегированного кеша, относящегося к юзеру, используемого в компонентах сайта
+        $clearTags = [];
+        $clearTags[] = 'personal:bonus:'.$userId;
+        if ($clearTags) {
+            TaggedCacheHelper::clearManagedCache($clearTags);
         }
 
         $result->setData(
@@ -1199,6 +1340,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         if ($result->isSuccess()) {
             try {
+                /** @var SmsService $smsService */
                 $smsService = Application::getInstance()->getContainer()->get('sms.service');
                 $smsService->sendSmsImmediate($text, $phone);
             } catch (\Exception $exception) {
@@ -1223,15 +1365,16 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param array $params
      * @return array
+     * @throws ApplicationCreateException
      */
     protected function getUserListByParams($params)
     {
-        $filter = isset($params['filter']) ? $params['filter'] : [];
+        $filter = $params['filter'] ?? [];
 
         $users = $this->getUserRepository()->findBy(
             $filter,
-            (isset($params['order']) ? $params['order'] : []),
-            (isset($params['limit']) ? $params['limit'] : null)
+            ($params['order'] ?? []),
+            ($params['limit'] ?? null)
         );
 
         return $users;
@@ -1240,6 +1383,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param string $phone
      * @return User|null
+     * @throws ApplicationCreateException
      */
     protected function searchUserByPhoneNumber(string $phone)
     {
@@ -1277,6 +1421,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param string $email
      * @return User|null
+     * @throws ApplicationCreateException
      */
     protected function searchUserByEmail(string $email)
     {
@@ -1309,6 +1454,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param string $cardNumber
      * @return User|null
+     * @throws ApplicationCreateException
      */
     protected function searchUserByCardNumber(string $cardNumber)
     {
@@ -1341,6 +1487,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /**
      * @param int $userId
      * @return User|null
+     * @throws ApplicationCreateException
      */
     protected function searchUserById(int $userId)
     {
@@ -1368,17 +1515,28 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         return $user;
     }
 
+    /**
+     * @param $fieldName
+     * @param bool $getSafeValue
+     * @return string|null
+     */
     protected function getFormFieldValue($fieldName, $getSafeValue = false)
     {
         $key = $getSafeValue ? 'FIELD_VALUES' : '~FIELD_VALUES';
-        return isset($this->arResult[$key][$fieldName]) ? $this->arResult[$key][$fieldName] : null;
+
+        return $this->arResult[$key][$fieldName] ?? null;
     }
 
+    /**
+     * @param $value
+     * @return string
+     */
     protected function trimValue($value)
     {
         if (is_null($value)) {
             return '';
         }
+
         return is_scalar($value) ? trim($value) : '';
     }
 
@@ -1403,6 +1561,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         } elseif (is_scalar($errorMsg)) {
             $result = $errorMsg;
         }
+
         return $result;
     }
 
@@ -1430,6 +1589,10 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
     }
 
+    /**
+     * @param $value
+     * @return array|mixed|string
+     */
     protected function walkRequestValues($value)
     {
         if (is_scalar($value)) {
@@ -1440,6 +1603,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 $value
             );
         }
+
         return $value;
     }
 }

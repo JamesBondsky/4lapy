@@ -108,7 +108,8 @@ class AjaxMess
         string $hotLinePhone = '',
         string $login = '',
         string $loginName = 'логином'
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $hotLineText = $hotLinePhone ? ' по телефону ' . $hotLinePhone : '';
         $loginText = !empty($login) ? ' с данным ' . $loginName . ' ' . $login : '';
         $mes = 'Найдено больше одного пользователя' . $loginText . ', обратитесь на горячую линию' . $hotLineText;
@@ -370,7 +371,7 @@ class AjaxMess
      */
     public function getCardNotValidError(): JsonResponse
     {
-        return $this->getJsonError('cardNotValid', 'Карта не привязывается');
+        return $this->getJsonError('cardNotValid', \sprintf('Ваша карта не привязана. Пожалуйста, обратитесь на Горячую линию по телефону %s', \tplvar('phone_main')));
     }
 
     /**
@@ -430,7 +431,7 @@ class AjaxMess
      * @param string $code
      * @param string $mes
      *
-     * @param array  $additionalData
+     * @param array $additionalData
      *
      * @return JsonResponse
      */

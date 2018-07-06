@@ -10,6 +10,11 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
+/**
+ * Class OrderBonusCardValidator
+ *
+ * @package FourPaws\SaleBundle\Validation
+ */
 class OrderBonusCardValidator extends ConstraintValidator
 {
     /**
@@ -22,10 +27,17 @@ class OrderBonusCardValidator extends ConstraintValidator
      */
     protected $currentUserProvider;
 
+    /**
+     * OrderBonusCardValidator constructor.
+     *
+     * @param ManzanaService $manzanaService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     */
     public function __construct(
         ManzanaService $manzanaService,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
+    )
+    {
         $this->manzanaService = $manzanaService;
         $this->currentUserProvider = $currentUserProvider;
     }
@@ -50,10 +62,10 @@ class OrderBonusCardValidator extends ConstraintValidator
         } else {
             try {
                 if (!$this->manzanaService->searchCardByNumber($entity->getDiscountCardNumber())) {
-                    $this->context->addViolation($constraint->cardNotValidMessage);
+                    $this->context->addViolation(\sprintf($constraint->cardNotValidMessage, \tplvar('phone_main')));
                 }
-            } catch (ManzanaServiceException|CardNotFoundException $e) {
-                $this->context->addViolation($constraint->cardNotValidMessage);
+            } catch (ManzanaServiceException | CardNotFoundException $e) {
+                $this->context->addViolation(\sprintf($constraint->cardNotValidMessage, \tplvar('phone_main')));
             }
         }
     }

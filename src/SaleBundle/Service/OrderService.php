@@ -1577,7 +1577,7 @@ class OrderService implements LoggerAwareInterface
                 case $this->isSubscribe($order):
                     $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
                     break;
-                case $address && !$address->isValid():
+                case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
                 // способ получения 07

@@ -439,6 +439,9 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 $detachQuantity = $quantity;
                 $applyCount -= $quantity;
             }
+            if($detachQuantity <= 0) {
+                break;
+            };
             $rowActionDescription = [
                 'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
                 'ACTION_DESCRIPTION' => json_encode([
