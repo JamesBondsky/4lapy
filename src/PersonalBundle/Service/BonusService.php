@@ -14,6 +14,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Enum\Card;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\CardByContractCards;
@@ -237,6 +239,19 @@ class BonusService
 
         $validCardResult = $this->manzanaService->validateCardByNumberRaw($bonusCard);
         if (!$validCardResult->cardId) {
+            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+        }
+
+        try {
+            $newCard = $this->manzanaService->getCardInfo(
+                $bonusCard,
+                $this->manzanaService->searchCardByNumber($bonusCard)->contactId
+            );
+        } catch (CardNotFoundException $e) {
+            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+        }
+
+        if (!$newCard || !\in_array($newCard->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {
             throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
         }
 
