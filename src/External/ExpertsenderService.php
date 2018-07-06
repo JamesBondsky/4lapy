@@ -743,13 +743,13 @@ class ExpertsenderService implements LoggerAwareInterface
             );
             if (!$apiResult->isOk()) {
                 throw new ExpertsenderServiceException(
-                    $apiResult->getErrorMessage(),
+                    var_export($snippets, true). ' - Ошибка - '.$apiResult->getErrorMessage(),
                     $apiResult->getErrorCode()
                 );
             }
         } catch (GuzzleException|Exception $exception) {
             throw new ExpertsenderServiceException(
-                $exception->getMessage(),
+                var_export($snippets, true). ' - Ошибка - '.$exception->getMessage(),
                 $exception->getCode(),
                 $exception
             );

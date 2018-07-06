@@ -47,13 +47,17 @@ class ForgotBasketController
                 ->whereNull('ORDER_ID')
                 ->setSelect(['FUSER_ID'])
                 ->exec();
-        } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+        } catch (ObjectPropertyException|ArgumentException|SystemException|\Exception $e) {
             $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e->getTrace());
             return $returnString;
         }
         $fUserIds = [];
         while ($basketItem = $res->fetch()) {
             $fUserIds[] = $basketItem['FUSER_ID'];
+        }
+        if(empty($fUserIds)){
+            /** Обновлять нечего */
+            return $returnString;
         }
         $fUserIds = array_unique($fUserIds);
         /** ищем среди найденых корзин обновленные элементы */
@@ -65,7 +69,7 @@ class ForgotBasketController
                 ->whereNull('ORDER_ID')
                 ->setSelect(['FUSER_ID'])
                 ->exec();
-        } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+        } catch (ObjectPropertyException|ArgumentException|SystemException|\Exception $e) {
             $logger->error('Ошибка при получении корзины ' . $e->getMessage(), $e->getTrace());
             return $returnString;
         }
