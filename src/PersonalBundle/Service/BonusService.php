@@ -20,7 +20,6 @@ use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\ManzanaService;
-use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
@@ -275,6 +274,8 @@ class BonusService
             if(!empty($oldCardId) && !empty($bonusCardId)) {
                 $isChange = $this->manzanaService->changeCard($oldCardId, $bonusCardId);
             } elseif (empty($oldCardId)){
+                $contact->setLoyaltyProgramContact(true);
+                $contact->setActualContact(true);
                 $this->manzanaService->updateContact($contact);
                 $isChange = true;
             }
