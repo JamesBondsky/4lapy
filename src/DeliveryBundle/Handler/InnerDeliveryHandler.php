@@ -153,9 +153,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
                 $data['FREE_FROM'] = (int)$this->config['FREE_FROM'][$deliveryZone];
-                if ($basket->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
-                    $result->setDeliveryPrice(0);
-                }
             }
         } else {
             $result->addError(new Error('Не задана стоимость доставки'));
