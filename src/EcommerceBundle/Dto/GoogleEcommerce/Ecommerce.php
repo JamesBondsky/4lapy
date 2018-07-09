@@ -127,7 +127,7 @@ class Ecommerce
      *
      * @return Ecommerce
      */
-    public function setImpressions($impressions): Ecommerce
+    public function setImpressions(Collection $impressions): Ecommerce
     {
         $this->impressions = $impressions;
 

@@ -57,7 +57,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
-     * @param string $data
+     * @param object $data
      * @param bool $addScriptTag
      *
      * @return string
@@ -129,6 +129,22 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         });
 
         return $productCollection;
+    }
+
+    /**
+     * @param ProductCollection $collection
+     * @param string $list
+     *
+     * @return GoogleEcommerce
+     */
+    public function buildImpressionsFromProductCollection(ProductCollection $collection, string $list = ''): GoogleEcommerce
+    {
+        $ecommerce = (new GoogleEcommerce())->setEcommerce(new Ecommerce());
+        $ecommerce->getEcommerce()
+            ->setCurrencyCode('RUB')
+            ->setImpressions($this->buildProductsFromProductsCollection($collection, $list));
+
+        return $ecommerce;
     }
 
     /**
