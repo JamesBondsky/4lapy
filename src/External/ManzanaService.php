@@ -311,7 +311,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
 
         if ($countClients > 1) {
-            $this->logger->critical('Найдено больше одного пользователя с телефоном ' . $phone);
+            $this->logger->info('Найдено больше одного пользователя с телефоном ' . $phone);
             throw new ManzanaServiceContactSearchMoreOneException('Найдено больше одного пользователя');
         }
 
@@ -781,7 +781,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
             }
         } catch (ManzanaCardIsNotFound $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->info($e->getMessage());
         } catch (Exception $e) {
             $this->logger->error(sprintf('Manzana user %s card update error: %s', $client->phone, $e->getMessage()));
         }

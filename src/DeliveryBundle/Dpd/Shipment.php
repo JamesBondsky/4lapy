@@ -101,7 +101,7 @@ class Shipment extends \Ipolh\DPD\Shipment
         return $deliveryService->getDpdTerminalsByLocation(
             $this->locationTo['CODE'],
             $isPaymentOnDelivery,
-            $this->getPrice()
+            0
         );
     }
 
@@ -119,10 +119,7 @@ class Shipment extends \Ipolh\DPD\Shipment
 
     public function isPaymentOnDelivery()
     {
-        /**
-         * У пунктов самовывоза DPD должна быть возможность оплаты на месте
-         */
-        return true;
+        return false;
     }
 
     public function calculator()

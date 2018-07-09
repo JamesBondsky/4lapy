@@ -238,7 +238,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         /** @noinspection PhpUndefinedVariableInspection */
         $basket = $this->currentStep === OrderStorageService::AUTH_STEP
-            ? $this->basketService->getBasket()
+            ? $this->basketService->getBasket()->getOrderableItems()
             : $order->getBasket();
 
         $this->arResult['URL'] = [
@@ -317,7 +317,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
         } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
-            $payments = $this->orderStorageService->getAvailablePayments($storage, true);
 
             try {
                 if ($storage->isSplit()) {
@@ -362,6 +361,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
             if ($user) {
                 $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket);
             }
+
+            $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
         }
 
         $this->arResult['BASKET'] = $basket;
@@ -423,7 +424,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderSplitService->canSplitOrder($pickup);
             $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
             $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
-            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage);
+            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()->getPrice());
         }
     }
 

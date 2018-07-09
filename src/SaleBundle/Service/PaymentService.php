@@ -54,13 +54,14 @@ class PaymentService
 
     /**
      * @param Store $store
+     * @param float $paymentSum
      * @return array
      */
-    public function getAvailablePaymentsForStore(Store $store): array
+    public function getAvailablePaymentsForStore(Store $store, float $paymentSum = 0): array
     {
         $result = [OrderService::PAYMENT_ONLINE];
         if ($store instanceof Terminal) {
-            if ($store->isNppAvailable()) {
+            if ($store->isNppAvailable() && $store->getNppValue() >= $paymentSum) {
                 if ($store->hasCardPayment()) {
                     $result[] = OrderService::PAYMENT_CASH_OR_CARD;
                 } elseif ($store->hasCashPayment()) {
