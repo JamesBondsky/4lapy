@@ -5,6 +5,7 @@ namespace FourPaws\Helpers;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\TaggedCache;
 use Bitrix\Main\SystemException;
+use FourPaws\App\Tools\StaticLoggerTrait;
 
 /**
  * Class TaggedCacheHelper
@@ -13,6 +14,7 @@ use Bitrix\Main\SystemException;
  */
 class TaggedCacheHelper
 {
+    use StaticLoggerTrait;
 
     /** @var TaggedCache */
     protected $tagCacheInstance;
@@ -23,8 +25,6 @@ class TaggedCacheHelper
     }
 
     /**
-     * @param string $cachePath
-     *
      * @return TaggedCache|null
      */
     public static function getTagCacheInstance(): ?TaggedCache
@@ -76,7 +76,11 @@ class TaggedCacheHelper
         }
 
         foreach ($tags as $tag) {
-            $tagCache->clearByTag($tag);
+            try {
+                $tagCache->clearByTag($tag);
+            } catch (\Exception $e) {
+                static::getLogger()->error(sprintf('%s: %s', \get_class($e), $e->getMessage()));
+            }
         }
     }
 
