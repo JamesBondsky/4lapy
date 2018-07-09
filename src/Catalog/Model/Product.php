@@ -1922,6 +1922,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if (!($this->offers instanceof ArrayCollection)) {
             $this->offers = new ArrayCollection();
         }
+
         $this->offers->add($offer);
     }
 
@@ -2024,6 +2025,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
         return $this->getFullDeliveryAvailability()[$deliveryService->getCurrentDeliveryZone()] ?? [];
     }
 
@@ -2069,6 +2071,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function withTransportOnlyRefrigerator(bool $onlyRefrigerator = true): Product
     {
         $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = $onlyRefrigerator;
+
         return $this;
     }
 
@@ -2088,6 +2091,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function withDeliveryAreaRestrict(bool $restrict = true): Product
     {
         $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
+
         return $this;
     }
 

@@ -34,7 +34,7 @@ class ArrayMapper
     public function map(array $array, $key = 0): array
     {
         return \array_reduce(\iterator_to_array($this->mapInternal($array, $key)), function ($carry, $item){
-            return array_merge($carry, $item);
+            return \array_merge($carry, $item);
         }, []);
     }
 

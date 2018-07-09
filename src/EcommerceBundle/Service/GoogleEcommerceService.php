@@ -4,9 +4,14 @@ namespace FourPaws\EcommerceBundle\Service;
 
 
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Collection\ProductCollection;
+use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Model\Product as ProductModel;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Action;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Ecommerce;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\GoogleEcommerce;
+use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Product;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion;
 use FourPaws\EcommerceBundle\Exception\InvalidArgumentException;
 use FourPaws\EcommerceBundle\Utils\ArrayMapper;
@@ -94,6 +99,36 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         }
 
         return $ecommerce;
+    }
+
+    /**
+     * @param ProductCollection $collection
+     * @param string $list
+     *
+     * @return ArrayCollection
+     */
+    public function buildProductsFromProductsCollection(ProductCollection $collection, string $list = ''): ArrayCollection
+    {
+        $productCollection = new ArrayCollection();
+
+        $collection->map(function (ProductModel $product) use ($productCollection, $list) {
+            $product->getOffers()->map(function (Offer $offer) use ($productCollection, $product, $list) {
+                $productCollection->add(
+                    (new Product())
+                        ->setId($offer->getId())
+                        ->setName($offer->getName())
+                        ->setBrand($product->getBrandName())
+                        ->setPrice($offer->getPrice())
+                        ->setCategory(\implode('|', \array_reverse($product->getFullPathCollection()->map(function (Category $category) {
+                            return $category->getName();
+                        })->toArray())))
+                        ->setList($list)
+                        ->setPosition($productCollection->count() + 1)
+                );
+            });
+        });
+
+        return $productCollection;
     }
 
     /**
