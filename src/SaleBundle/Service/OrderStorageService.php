@@ -400,9 +400,11 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param bool $withInner
-     * @param bool $filter
+     * @param bool         $withInner
+     * @param bool         $filter
+     * @param float        $basketPrice
      *
+     * @return array
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
@@ -410,9 +412,8 @@ class OrderStorageService
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @return array
      */
-    public function getAvailablePayments(OrderStorage $storage, $withInner = false, $filter = true): array
+    public function getAvailablePayments(OrderStorage $storage, $withInner = false, $filter = true, float $basketPrice = 0): array
     {
         $paymentCollection = $this->getPayments($storage);
 
@@ -435,14 +436,16 @@ class OrderStorageService
                 $terminal = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode())
             ) {
                 foreach ($payments as $id => $payment) {
-                    $delete = false;
+                    $delete = $basketPrice > $terminal->getNppValue();
                     switch ($payment['CODE']) {
                         case OrderService::PAYMENT_CASH_OR_CARD:
-                            $delete = !$terminal->hasCardPayment();
+                            $delete |= !$terminal->hasCardPayment();
                             break;
                         case OrderService::PAYMENT_CASH:
-                            $delete = !$terminal->hasCashPayment();
+                            $delete |= !$terminal->hasCashPayment();
                             break;
+                        default:
+                            $delete = false;
                     }
 
                     if ($delete) {
