@@ -180,7 +180,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     public function getStockResult(): StockResultCollection
     {
         if (null === $this->stockResult) {
-            $this->stockResult = clone $this->getFullStockResult()->filterByStore($this->getSelectedStore());
+            $this->stockResult = $this->getFullStockResult()->isEmpty() ?
+                $this->getFullStockResult() :
+                clone $this->getFullStockResult()->filterByStore($this->getSelectedStore());
         }
 
         return $this->stockResult;
@@ -592,6 +594,23 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->getDeliveryDate();
         }
         return parent::isSuccess($internalCall);
+    }
+
+    /**
+     * @return float
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     */
+    public function getPrice(): float
+    {
+        $price = parent::getPrice();
+
+        if ($this->getFreeFrom()) {
+            $price = $this->getStockResult()->getPrice() >= $this->getFreeFrom() ? 0 : $price;
+        }
+
+        return $price;
     }
 
     /**
