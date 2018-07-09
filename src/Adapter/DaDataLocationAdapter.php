@@ -206,7 +206,7 @@ class DaDataLocationAdapter extends BaseAdapter
         $fullCity = $city = !empty($entity->getCity()) ? $entity->getCity() : '';
         $cityType = $entity->getCityTypeFull();
         $isCity = ToLower($cityType) === 'город';
-        if (!empty($entity->getSettlement())) {
+        if (!empty($entity->getSettlement()) && $entity->getSettlementType() !== 'мкр') {
             $city = $entity->getSettlement();
             $type = $entity->getSettlementTypeFull();
             if ($entity->getSettlementType() === 'рп') {
@@ -319,7 +319,7 @@ class DaDataLocationAdapter extends BaseAdapter
      */
     private function getCityName(DadataLocation $entity): string
     {
-        $city = !empty($entity->getSettlement()) ? $entity->getSettlement() : '';
+        $city = !empty($entity->getSettlement()) && $entity->getSettlementType() !== 'мкр' ? $entity->getSettlement() : '';
         if (empty($city)) {
             $city = !empty($entity->getCity()) ? $entity->getCity() : '';
         }
