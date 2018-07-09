@@ -21,6 +21,7 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
@@ -91,6 +92,10 @@ class Event extends BaseServiceHandler
         /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
         static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], $module);
         static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], $module);
+
+        $module = 'socialservices';
+        /** поиск юзера по email при регистрации из соцсетей */
+        static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'], $module);
     }
 
     /**
@@ -333,5 +338,23 @@ class Event extends BaseServiceHandler
             $logger = LoggerFactory::create('system');
             $logger->critical('failed to update user account balance: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * @param array $fields
+     * @return int
+     * @throws ApplicationCreateException
+     */
+    public static function findSocialServicesUser(array $fields): int {
+        $result = 0;
+        if ($fields['EMAIL']) {
+            /** @var UserSearchInterface $userSearchService */
+            $userSearchService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
+            try {
+                $result = $userSearchService->findOneByEmail($fields['EMAIL'])->getId();
+            } catch (NotFoundException $e) {}
+        }
+
+        return $result;
     }
 }
