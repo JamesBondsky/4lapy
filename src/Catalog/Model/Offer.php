@@ -57,6 +57,11 @@ use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/**
+ * Class Offer
+ *
+ * @package FourPaws\Catalog\Model
+ */
 class Offer extends IblockElement
 {
     public const SIMPLE_SHARE_SALE_CODE = 'VKA0';
@@ -394,6 +399,11 @@ class Offer extends IblockElement
     /** @var ShareCollection */
     protected $share;
 
+    /**
+     * Offer constructor.
+     *
+     * @param array $fields
+     */
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
@@ -610,7 +620,12 @@ class Offer extends IblockElement
         return (float)$this->PROPERTY_VOLUME;
     }
 
-    public function withVolume(float $volume)
+    /**
+     * @param float $volume
+     *
+     * @return $this
+     */
+    public function withVolume(float $volume): self
     {
         $this->PROPERTY_VOLUME = $volume;
 
@@ -637,12 +652,20 @@ class Offer extends IblockElement
         return $this->clothingSize;
     }
 
+    /**
+     * @return string
+     */
     public function getClothingSizeXmlId(): string
     {
         return (string)$this->PROPERTY_CLOTHING_SIZE;
     }
 
-    public function withClothingSizeXmlId(string $xmlId)
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withClothingSizeXmlId(string $xmlId): self
     {
         $this->PROPERTY_CLOTHING_SIZE = $xmlId;
         $this->clothingSize = null;
@@ -849,7 +872,12 @@ class Offer extends IblockElement
         return (string)$this->PROPERTY_COLOUR_COMBINATION;
     }
 
-    public function withColourCombination(string $colourCombination)
+    /**
+     * @param string $colourCombination
+     *
+     * @return $this
+     */
+    public function withColourCombination(string $colourCombination): self
     {
         $this->PROPERTY_COLOUR_COMBINATION = $colourCombination;
 
@@ -864,7 +892,12 @@ class Offer extends IblockElement
         return (string)$this->PROPERTY_FLAVOUR_COMBINATION;
     }
 
-    public function withFlavourCombination(string $flavourCombination)
+    /**
+     * @param string $flavourCombination
+     *
+     * @return $this
+     */
+    public function withFlavourCombination(string $flavourCombination): self
     {
         $this->PROPERTY_FLAVOUR_COMBINATION = $flavourCombination;
 
@@ -909,7 +942,12 @@ class Offer extends IblockElement
         return $this->isByRequest;
     }
 
-    public function withByRequest(bool $byRequest)
+    /**
+     * @param bool $byRequest
+     *
+     * @return $this
+     */
+    public function withByRequest(bool $byRequest): self
     {
         $this->isByRequest = $byRequest;
 
@@ -934,7 +972,10 @@ class Offer extends IblockElement
         return $this->price;
     }
 
-    public function getPriceCeil()
+    /**
+     * @return float
+     */
+    public function getPriceCeil(): float
     {
         return ceil($this->getPrice());
     }
@@ -1057,7 +1098,12 @@ class Offer extends IblockElement
         return $this;
     }
 
-    public function withImagesIds(array $ids)
+    /**
+     * @param array $ids
+     *
+     * @return $this
+     */
+    public function withImagesIds(array $ids): self
     {
         $this->PROPERTY_IMG = $ids;
 
@@ -1133,7 +1179,7 @@ class Offer extends IblockElement
      */
     public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if($this->isBonusExclude()) {
+        if ($this->isBonusExclude()) {
             $this->bonus = 0;
         } elseif (!$this->bonus) {
             $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
@@ -1258,6 +1304,9 @@ class Offer extends IblockElement
      * @todo заменить getQuantity() на этот метод после оптимизации расчета доставок
      *
      * @return int
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws LoaderException
@@ -1597,6 +1646,10 @@ class Offer extends IblockElement
             ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
             ->exec();
         while ($break === false) {
+            /**
+             * @var array $bundleItem
+             */
+
             $bundleItem = $resBundleItems->fetch();
             if (!$bundleItem) {
                 $break = true;
@@ -1607,8 +1660,6 @@ class Offer extends IblockElement
                 ->where('UF_ACTIVE', true)
                 ->where('UF_PRODUCTS', $bundleItem['ID'])
                 ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
-//                ->addSelect('UF_ACTIVE')
-//                ->addSelect('ID')
                 ->setOrder(['RAND'])
                 ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
                 ->exec();
@@ -1617,14 +1668,20 @@ class Offer extends IblockElement
             if ($resBundle->getSelectedRowsCount() === 0) {
                 continue;
             }
+
             $breakBundle = false;
             $hasItems = false;
+
             while ($breakBundle === false) {
+                /**
+                 * @var array $setItem
+                 */
                 $setItem = $resBundle->fetch();
                 if (!$setItem) {
                     $breakBundle = true;
                     continue;
                 }
+
                 $countItems = 2;
                 if ($setItem['UF_COUNT_ITEMS']) {
                     $enumField = (new UserFieldEnumService())->getEnumValueEntity((int)$setItem['UF_COUNT_ITEMS']);
@@ -1636,23 +1693,22 @@ class Offer extends IblockElement
                     ->whereIn('ID', $setItem['UF_PRODUCTS'])
                     ->setLimit($countItems)
                     ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
-//                ->addSelect('ID')
-//                ->addSelect('UF_ACTIVE')
                     ->exec();
                 if ($res->getSelectedRowsCount() === 0) {
                     continue;
                 }
                 $result = [
-//                'ID'  => $setItem['ID'],
-//                'ACTIVE'  => $setItem['UF_ACTIVE'],
                     'NAME' => $setItem['UF_NAME'],
                     'COUNT_ITEMS' => $countItems,
                     'PRODUCTS' => [],
                 ];
+
+                /** @noinspection PhpAssignmentInConditionInspection */
                 while ($item = $res->fetch()) {
+                    /**
+                     * @var array $item
+                     */
                     $itemFields = [
-//                    'ID' => $item['ID'],
-//                    'ACTIVE' => $item['UF_ACTIVE'],
                         'PRODUCT' => null,
                         'PRODUCT_ID' => $item['UF_PRODUCT'],
                         'QUANTITY' => $item['UF_QUANTITY']
@@ -1668,11 +1724,14 @@ class Offer extends IblockElement
                 $breakBundle = true;
                 $hasItems = true;
             }
+
             if (!$hasItems) {
                 continue;
             }
+
             $break = true;
         }
+
         if ($result !== null) {
             $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
             $result = $serializer->fromArray($result, Bundle::class, DeserializationContext::create()->setGroups(['read']));
@@ -1681,6 +1740,7 @@ class Offer extends IblockElement
                 /** @var Offer $offer */
                 foreach ($offerCollection as $offer) {
                     /** @var BundleItem $product */
+                    /** @noinspection ForeachSourceInspection */
                     foreach ($result->getProducts() as &$product) {
                         if ($product->getOfferId() === $offer->getId()) {
                             $product->setOffer($offer);
