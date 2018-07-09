@@ -7,6 +7,7 @@
 namespace FourPaws\LocationBundle;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
@@ -235,7 +236,11 @@ class LocationService
             $storeService = Application::getInstance()->getContainer()->get('store.service');
 
             $result = [];
-            $filter = ['IBLOCK_ID' => $iblockId, 'SECTION_CODE' => CitiesSectionCode::POPULAR];
+            $filter = [
+                'IBLOCK_ID' => $iblockId,
+                'SECTION_CODE' => CitiesSectionCode::POPULAR,
+                'ACTIVE' => BitrixUtils::BX_BOOL_TRUE
+            ];
             $select = ['ID', 'NAME', 'PROPERTY_LOCATION'];
 
             // При выборе популярных городов учитываем сортировку
