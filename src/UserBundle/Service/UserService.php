@@ -709,7 +709,7 @@ class UserService implements
             $this->log()->error('ошибка загрузки сервиса', $e->getTrace());
             return false;
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $this->log()->error('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+            $this->log()->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
             return false;
         } catch (ManzanaServiceContactSearchNullException $e) {
             /** ошибка нам не нужна */
@@ -773,7 +773,7 @@ class UserService implements
             $this->log()->error('ошибка загрузки сервиса', $e->getTrace());
             return false;
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $this->log()->error('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+            $this->log()->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
             return false;
         } catch (ManzanaServiceContactSearchNullException $e) {
             /** ошибка нам не нужна */
@@ -786,13 +786,13 @@ class UserService implements
             $manzanaService->updateUserCardByClient($contact);
             return true;
         } catch (ManzanaCardIsNotFound $e) {
-            $this->log()->error('активных карт не найдено', $e->getTrace());
+            $this->log()->info('активных карт не найдено', $e->getTrace());
         } catch (TooManyUserFoundException $e) {
-            $this->log()->error('найдено больше одного пользователя', $e->getTrace());
+            $this->log()->info('найдено больше одного пользователя', $e->getTrace());
         } catch (UsernameNotFoundException $e) {
-            $this->log()->error('пользователей в манзане не найдено по телефону', $e->getTrace());
+            $this->log()->info('пользователей в манзане не найдено по телефону', $e->getTrace());
         } catch (TooManyActiveCardFound $e) {
-            $this->log()->error('найдено больше одной активной карты', $e->getTrace());
+            $this->log()->info('найдено больше одной активной карты', $e->getTrace());
         } catch (ManzanaServiceException|\Exception $e) {
             $this->log()->error('ошибка манзаны', $e->getTrace());
         }
