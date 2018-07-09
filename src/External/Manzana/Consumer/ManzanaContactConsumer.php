@@ -70,7 +70,7 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
                 $e->getMessage()
             ));
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $this->log()->error(sprintf(
+            $this->log()->info(sprintf(
                 'Too many user`s found: %s',
                 $e->getMessage()
             ));
