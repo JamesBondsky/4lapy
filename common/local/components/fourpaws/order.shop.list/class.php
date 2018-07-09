@@ -292,7 +292,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $price = $canGetPartial ? $available->getPrice() : $fullResult->getStockResult()->getPrice();
 
         $storePayments = [];
-        $paymentCodes = $this->paymentService->getAvailablePaymentsForStore($store);
+        $paymentCodes = $this->paymentService->getAvailablePaymentsForStore($store, $price);
         foreach ($paymentCodes as $code) {
             if (isset($paymentCodeToName[$code])) {
                 $storePayments[] = [
