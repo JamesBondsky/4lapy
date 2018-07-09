@@ -13,13 +13,14 @@ use JMS\Serializer\Annotation as Serializer;
 class Ecommerce
 {
     /**
-     * Код валюты. По умолчанию - RUB
+     * Код валюты.
      *
      * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var string
      */
-    protected $currencyCode = 'RUB';
+    protected $currencyCode;
 
     /**
      * @Serializer\Type("ArrayCollection<FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Product>")
@@ -69,7 +70,6 @@ class Ecommerce
      */
     protected $checkout;
 
-
     /**
      * @Serializer\Type("FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Action")
      * @Serializer\SkipWhenEmpty()
@@ -78,23 +78,21 @@ class Ecommerce
      */
     protected $purchase;
 
-
     /**
-     * @Serializer\Type("FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion")
+     * @Serializer\Type("FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Action")
      * @Serializer\SkipWhenEmpty()
      *
      * @var Action
      */
-    protected $promoClick;
-
+    public $promoClick;
 
     /**
-     * @Serializer\Type("FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion")
+     * @Serializer\Type("FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Action")
      * @Serializer\SkipWhenEmpty()
      *
      * @var Action
      */
-    protected $promoView;
+    public $promoView;
 
     /**
      * @return string

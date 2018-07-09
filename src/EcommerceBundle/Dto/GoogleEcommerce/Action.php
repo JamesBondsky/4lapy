@@ -5,7 +5,6 @@ namespace FourPaws\EcommerceBundle\Dto\GoogleEcommerce;
 use Doctrine\Common\Collections\ArrayCollection;
 use JMS\Serializer\Annotation as Serializer;
 
-
 /**
  * Class Action
  *
@@ -28,6 +27,14 @@ class Action
      * @var ArrayCollection|Product[]
      */
     protected $products;
+
+    /**
+     * @Serializer\Type("ArrayCollection<FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion>")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var ArrayCollection|Promotion[]
+     */
+    protected $promotions;
 
     /**
      * @return ActionField
@@ -65,5 +72,24 @@ class Action
         $this->products = $products;
 
         return $this;
+    }
+
+    /**
+     * @param ArrayCollection|Promotion[] $promotions
+     * @return Action
+     */
+    public function setPromotions($promotions): Action
+    {
+        $this->promotions = $promotions;
+
+        return $this;
+    }
+
+    /**
+     * @return ArrayCollection|Promotion[]
+     */
+    public function getPromotions()
+    {
+        return $this->promotions;
     }
 }
