@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -107,7 +108,7 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
      */
     public function validateAllStepsBefore(OrderStorage $storage, string $step): ConstraintViolationListInterface
     {
-        $steps = \array_reverse(OrderStorageService::STEP_ORDER);
+        $steps = \array_reverse(OrderStorageEnum::STEP_ORDER);
         $stepIndex = \array_search($step, $steps, true);
 
         if ($stepIndex !== false) {

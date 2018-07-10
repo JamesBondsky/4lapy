@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -34,7 +35,7 @@ class SessionStorageRepository extends StorageBaseRepository
      * @return bool
      * @throws OrderStorageValidationException
      */
-    public function save(OrderStorage $storage, string $step = OrderStorageService::AUTH_STEP): bool
+    public function save(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
         if (!$this->checkFuserId($storage->getFuserId())) {
             throw new NotFoundException('Wrong fuser id');
