@@ -18,32 +18,32 @@ class Result
      * @Serializer\Accessor(getter="getResult", setter="setResult")
      */
     protected $result;
-    
+
     /**
      * @Serializer\Exclude()
      */
     protected $error = false;
-    
+
     /**
      * @return string
      */
-    public function getResult() : string
+    public function getResult(): string
     {
         return $this->result;
     }
-    
+
     /**
      * @param string $result
      */
-    public function setResult(string $result = '')
+    public function setResult(string $result = ''): void
     {
         $this->result = $result;
     }
-    
+
     /**
      * @return bool
      */
-    public function isError() : bool
+    public function isError(): bool
     {
         return $this->error;
     }
