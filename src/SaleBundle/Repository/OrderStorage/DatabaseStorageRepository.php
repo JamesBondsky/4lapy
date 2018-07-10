@@ -27,7 +27,7 @@ class DatabaseStorageRepository extends StorageBaseRepository
     public function save(OrderStorage $storage, string $step = OrderStorageService::AUTH_STEP): bool
     {
         if ($step !== OrderStorageService::NOVALIDATE_STEP) {
-            $validationResult = $this->validate($storage, $step);
+            $validationResult = $this->validateAllStepsBefore($storage, $step);
             if ($validationResult->count() > 0) {
                 throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
             }

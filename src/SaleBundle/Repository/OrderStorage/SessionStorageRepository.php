@@ -28,13 +28,19 @@ class SessionStorageRepository extends StorageBaseRepository
         );
     }
 
+    /**
+     * @param OrderStorage $storage
+     * @param string       $step
+     * @return bool
+     * @throws OrderStorageValidationException
+     */
     public function save(OrderStorage $storage, string $step = OrderStorageService::AUTH_STEP): bool
     {
         if (!$this->checkFuserId($storage->getFuserId())) {
             throw new NotFoundException('Wrong fuser id');
         }
 
-        $validationResult = $this->validate($storage, $step);
+        $validationResult = $this->validateAllStepsBefore($storage, $step);
         if ($validationResult->count() > 0) {
             throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
         }

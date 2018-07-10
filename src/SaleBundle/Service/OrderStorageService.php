@@ -33,6 +33,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\ConstraintViolation;
 
 class OrderStorageService
 {
@@ -54,11 +55,11 @@ class OrderStorageService
      * Порядок оформления заказа
      * @var array
      */
-    protected $stepOrder = [
-        self::AUTH_STEP,
-        self::DELIVERY_STEP,
-        self::PAYMENT_STEP,
-        self::COMPLETE_STEP,
+    public const STEP_ORDER = [
+        OrderStorageService::AUTH_STEP,
+        OrderStorageService::DELIVERY_STEP,
+        OrderStorageService::PAYMENT_STEP,
+        OrderStorageService::COMPLETE_STEP,
     ];
 
     /**
@@ -134,15 +135,23 @@ class OrderStorageService
      */
     public function validateStorage(OrderStorage $storage, string $startStep = self::AUTH_STEP): string
     {
-        $steps = array_reverse($this->stepOrder);
+        $steps = array_reverse(static::STEP_ORDER);
         $stepIndex = array_search($startStep, $steps, true);
 
         $realStep = $startStep;
         if ($stepIndex !== false) {
             $steps = \array_slice($steps, $stepIndex);
-            foreach ($steps as $step) {
-                if ($this->storageRepository->validate($storage, $step)->count()) {
+            $errors = $this->storageRepository->validate($storage, $steps);
+            /** @var ConstraintViolation $error */
+            $groups = [];
+            foreach ($errors as $error) {
+                $groups += \array_flip($error->getConstraint()->groups);
+            }
+            $groups = \array_keys($groups);
+            foreach (static::STEP_ORDER as $step) {
+                if (\in_array($step, $groups, true)) {
                     $realStep = $step;
+                    break;
                 }
             }
         }
@@ -187,7 +196,7 @@ class OrderStorageService
             'order-pick-time' => 'split',
             'shopId' => 'deliveryPlaceCode',
             'pay-type' => 'paymentId',
-            'cardNumber' => 'discountCardNumber'
+            'cardNumber' => 'discountCardNumber',
         ];
 
         foreach ($data as $name => $value) {
@@ -290,7 +299,7 @@ class OrderStorageService
                     'split',
                     'secondDeliveryDate',
                     'secondDeliveryInterval',
-                    'secondComment'
+                    'secondComment',
                 ];
                 break;
             case self::PAYMENT_STEP:
@@ -301,7 +310,7 @@ class OrderStorageService
                 break;
             case self::PAYMENT_STEP_CARD:
                 $availableValues = [
-                    'discountCardNumber'
+                    'discountCardNumber',
                 ];
                 break;
         }

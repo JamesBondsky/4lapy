@@ -8,6 +8,7 @@ namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
@@ -89,13 +90,33 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
 
     /**
      * @param OrderStorage $storage
-     * @param string $step
+     * @param string[] $steps
      *
      * @return ConstraintViolationListInterface
      */
-    public function validate(OrderStorage $storage, string $step): ConstraintViolationListInterface
+    public function validate(OrderStorage $storage, array $steps): ConstraintViolationListInterface
     {
-        return $this->validator->validate($storage, null, [$step]);
+        return $this->validator->validate($storage, null, $steps);
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @param string       $step
+     *
+     * @return ConstraintViolationListInterface
+     */
+    public function validateAllStepsBefore(OrderStorage $storage, string $step): ConstraintViolationListInterface
+    {
+        $steps = \array_reverse(OrderStorageService::STEP_ORDER);
+        $stepIndex = \array_search($step, $steps, true);
+
+        if ($stepIndex !== false) {
+            $steps = \array_slice($steps, $stepIndex);
+        } else {
+            $steps = [$step];
+        }
+
+        return $this->validate($storage, $steps);
     }
 
     /**

@@ -284,13 +284,11 @@ class OrderController extends Controller
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
-        $storage = $this->orderStorageService->getStorage();
-        $currentStep = OrderStorageService::DELIVERY_STEP;
-        if ($this->orderStorageService->validateStorage($storage, $currentStep) !== $currentStep) {
-            return JsonErrorResponse::create('', 200, [], ['reload' => true]);
-        }
-
-        $validationErrors = $this->fillStorage($storage, $request, $currentStep);
+        $validationErrors = $this->fillStorage(
+            $this->orderStorageService->getStorage(),
+            $request,
+            OrderStorageService::DELIVERY_STEP
+        );
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
                 '',
@@ -332,12 +330,11 @@ class OrderController extends Controller
     public function validatePaymentAction(Request $request): JsonResponse
     {
         $storage = $this->orderStorageService->getStorage();
-        $currentStep = OrderStorageService::PAYMENT_STEP;
-        if ($this->orderStorageService->validateStorage($storage, $currentStep) !== $currentStep) {
-            return JsonErrorResponse::create('', 200, [], ['reload' => true]);
-        }
-
-        $validationErrors = $this->fillStorage($storage, $request, $currentStep);
+        $validationErrors = $this->fillStorage(
+            $storage,
+            $request,
+            OrderStorageService::PAYMENT_STEP
+        );
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
                 '',

@@ -36,11 +36,19 @@ interface StorageRepositoryInterface
 
     /**
      * @param OrderStorage $storage
-     * @param string $step
+     * @param string[] $steps
      *
      * @return ConstraintViolationListInterface
      */
-    public function validate(OrderStorage $storage, string $step): ConstraintViolationListInterface;
+    public function validate(OrderStorage $storage, array $steps): ConstraintViolationListInterface;
+
+    /**
+     * @param OrderStorage $storage
+     * @param string       $step
+     *
+     * @return ConstraintViolationListInterface
+     */
+    public function validateAllStepsBefore(OrderStorage $storage, string $step): ConstraintViolationListInterface;
 
     /**
      * @param OrderStorage $storage
