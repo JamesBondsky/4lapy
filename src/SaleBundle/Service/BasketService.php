@@ -77,7 +77,7 @@ class BasketService implements LoggerAwareInterface
      * BasketService constructor.
      *
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param ManzanaPosService            $manzanaPosService
+     * @param ManzanaPosService $manzanaPosService
      */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
@@ -88,10 +88,10 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param int         $offerId
-     * @param int|null    $quantity
-     * @param array       $rewriteFields
-     * @param bool        $save
+     * @param int $offerId
+     * @param int|null $quantity
+     * @param array $rewriteFields
+     * @param bool $save
      * @param Basket|null $basket
      *
      * @throws ArgumentNullException
@@ -118,9 +118,9 @@ class BasketService implements LoggerAwareInterface
             $quantity = 1;
         }
         $fields = [
-            'PRODUCT_ID'             => $offerId,
-            'QUANTITY'               => $quantity,
-            'MODULE'                 => 'catalog',
+            'PRODUCT_ID' => $offerId,
+            'QUANTITY' => $quantity,
+            'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
         if ($rewriteFields) {
@@ -147,7 +147,7 @@ class BasketService implements LoggerAwareInterface
         } else {
             // проверяем не специально ли было запорото
             $basketItem = $this->checkErrorActual($result, $basket, $oldBasketCodes);
-            if($basketItem === null){
+            if ($basketItem === null) {
                 throw new BitrixProxyException($result);
             }
         }
@@ -208,7 +208,7 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param int      $basketId
+     * @param int $basketId
      * @param int|null $quantity
      *
      * @throws Exception
@@ -631,7 +631,7 @@ class BasketService implements LoggerAwareInterface
     {
         $result = null;
         /** @var BasketPropertyItem $property */
-        if($basketItem->existsPropertyCollection()) {
+        if ($basketItem->existsPropertyCollection()) {
             foreach ($basketItem->getPropertyCollection() as $property) {
                 if ($property->getField('CODE') === $code) {
                     $result = $property->getField('VALUE');
@@ -639,7 +639,7 @@ class BasketService implements LoggerAwareInterface
             }
         } else {
             $prop = $this->getBasketPropByCode($basketItem->getId(), $code);
-            if($prop !== null){
+            if ($prop !== null) {
                 $result = $prop['VALUE'];
             }
         }
@@ -703,6 +703,9 @@ class BasketService implements LoggerAwareInterface
                 throw new InvalidArgumentException('У элемента корзины не расчитаны скидки');
             }
             $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
+            if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
+                $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
+            }
 
             if (!$basketDiscounts) {
                 $basketDiscounts = [];
@@ -727,9 +730,6 @@ class BasketService implements LoggerAwareInterface
                 }
             }
 
-            if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
-                $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
-            }
 
             $resultQuantity
                 = (int)$basketItem->getQuantity() - $this->getPremisesQuantity($applyResult, $basketItem, $order);
@@ -824,17 +824,17 @@ class BasketService implements LoggerAwareInterface
             if (!$found) {
                 $property = $basketItem->getPropertyCollection()->createItem();
                 $property->setFields([
-                    'NAME'  => $name ?: $code,
-                    'CODE'  => $code,
+                    'NAME' => $name ?: $code,
+                    'CODE' => $code,
                     'VALUE' => $value,
                 ]);
             }
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to update basket item property: %s', $e->getMessage()), [
-                'itemId'  => $basketItem->getId(),
+                'itemId' => $basketItem->getId(),
                 'offerId' => $basketItem->getProductId(),
-                'code'    => $code,
-                'value'   => $value,
+                'code' => $code,
+                'value' => $value,
             ]);
         }
     }
@@ -847,11 +847,11 @@ class BasketService implements LoggerAwareInterface
     public function getBasketItemXmlId(BasketItem $basketItem): string
     {
         if (!$xmlId = $basketItem->getField('PRODUCT_XML_ID')) {
-            if($basketItem->existsPropertyCollection()) {
+            if ($basketItem->existsPropertyCollection()) {
                 $xmlId = $basketItem->getPropertyCollection()->getPropertyValues()['PRODUCT.XML_ID']['VALUE'] ?? '';
             } else {
                 $prop = $this->getBasketPropByCode($basketItem->getId(), 'PRODUCT.XML_ID');
-                if($prop !== null) {
+                if ($prop !== null) {
                     $xmlId = $prop['VALUE'];
                 }
             }
@@ -908,6 +908,17 @@ class BasketService implements LoggerAwareInterface
     protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts): array
     {
         foreach ($appliedDiscounts as $k => $appliedDiscount) {
+            // Подарки нужно чистить потому что они вешаются на предпосылки.
+            if (
+                $appliedDiscount['DESCR']
+                &&
+                ($params = json_decode($appliedDiscount['DESCR'], true))
+                &&
+                $params['discountType'] === 'GIFT'
+            ) {
+                unset($appliedDiscounts[$k]);
+                continue;
+            }
             $id = $applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
             $settings = $applyResult['FULL_DISCOUNT_LIST'][$id]['ACTIONS']['CHILDREN'];
 
