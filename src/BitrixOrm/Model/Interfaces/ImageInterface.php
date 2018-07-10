@@ -15,21 +15,21 @@ interface ImageInterface extends FileInterface
      * @return static
      */
     public function setHeight($height);
-    
+
     /**
      * @return int
      */
-    public function getHeight() : int;
-    
+    public function getHeight(): int;
+
     /**
      * @param int $width
      *
      * @return static
      */
     public function setWidth($width);
-    
+
     /**
      * @return int
      */
-    public function getWidth() : int;
+    public function getWidth(): int;
 }

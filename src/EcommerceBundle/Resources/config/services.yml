@@ -9,6 +9,11 @@ services:
         exclude: '../../{Dto,Tests}'
 
     # Необходимо вынести, тк используется в Битрикс
+    FourPaws\EcommerceBundle\Preset\Bitrix\:
+        resource: '../../Preset/Bitrix/*'
+        public: true
+
+    # Необходимо вынести, тк используется в Битрикс
     FourPaws\EcommerceBundle\Service\GoogleEcommerceService:
         class: FourPaws\EcommerceBundle\Service\GoogleEcommerceService
         public: true

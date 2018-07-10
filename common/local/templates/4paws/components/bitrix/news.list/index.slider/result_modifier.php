@@ -2,6 +2,7 @@
 
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
+use FourPaws\EcommerceBundle\Preset\Bitrix\MapperPreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -17,20 +18,9 @@ if (empty($arResult['ITEMS']) || !\is_array($arResult['ITEMS'])) {
     return;
 }
 
-$ecommerceService = Application::getInstance()->getContainer()->get(GoogleEcommerceService::class);
-$mapper = $ecommerceService->getArrayMapper([
-    'id' => function ($item, $k) {
-        return $item['CODE'] ?: $item['ID'];
-    },
-    'name' => 'NAME',
-    'creative' => 'NAME',
-    'position' => function ($item, $k) {
-        return \sprintf(
-            'slot%d',
-            $k + 1
-        );
-    }
-]);
+$container = Application::getInstance()->getContainer();
+$ecommerceService = $container->get(GoogleEcommerceService::class);
+$mapper = $container->get(MapperPreset::class)->mapperSliderFactory();
 
 $arResult['ECOMMERCE_VIEW_SCRIPT'] = $ecommerceService->renderScript(
     $ecommerceService->buildPromotionFromArray($mapper, $arResult['ITEMS'], 'promoView'), true
@@ -40,7 +30,6 @@ foreach ($arResult['ITEMS'] as &$item) {
     $item['ECOMMERCE_CLICK_SCRIPT'] = $ecommerceService->renderScript(
         $ecommerceService->buildPromotionFromArray($mapper, [$item], 'promoClick'), false
     );
-    dump($item['ECOMMERCE_CLICK_SCRIPT']);
 
     // изображение для десктопа
     $image = null;

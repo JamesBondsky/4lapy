@@ -1,13 +1,15 @@
 <?php
 
-namespace FourPaws\EcommerceBundle\Utils;
+namespace FourPaws\EcommerceBundle\Mapper;
+
+use Generator;
 
 /**
  * Class ArrayMapper
  *
  * @package FourPaws\EcommerceBundle\Utils
  */
-class ArrayMapper
+class ArrayMapper implements ArrayMapperInterface
 {
     /**
      * @var array
@@ -41,9 +43,9 @@ class ArrayMapper
     /**
      * @param array $array
      *
-     * @return iterable
+     * @return array
      */
-    public function mapCollection(array $array) {
+    public function mapCollection(array $array): array {
         \array_walk($array, function(&$element, $key) {
             $element = $this->map($element, $key);
 
@@ -57,9 +59,9 @@ class ArrayMapper
      * @param $array
      * @param int $key
      *
-     * @return \Generator
+     * @return Generator
      */
-    protected function mapInternal($array, $key = 0): \Generator
+    protected function mapInternal($array, $key = 0): Generator
     {
         foreach ($this->map as $to => $from) {
             yield [$to => \is_callable($from) ? $from($array, $key) : $array[$from]];

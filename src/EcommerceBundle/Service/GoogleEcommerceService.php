@@ -14,7 +14,8 @@ use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\GoogleEcommerce;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Product;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion;
 use FourPaws\EcommerceBundle\Exception\InvalidArgumentException;
-use FourPaws\EcommerceBundle\Utils\ArrayMapper;
+use FourPaws\EcommerceBundle\Mapper\ArrayMapper;
+use FourPaws\EcommerceBundle\Mapper\ArrayMapperInterface;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use RuntimeException;
@@ -73,7 +74,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
-     * @param ArrayMapper $mapper
+     * @param ArrayMapperInterface $mapper
      * @param array $data
      * @param string $type
      *
@@ -81,7 +82,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
      *
      * @throws InvalidArgumentException
      */
-    public function buildPromotionFromArray(ArrayMapper $mapper, array $data, string $type): GoogleEcommerce
+    public function buildPromotionFromArray(ArrayMapperInterface $mapper, array $data, string $type): GoogleEcommerce
     {
         $ecommerce = (new GoogleEcommerce())->setEcommerce(new Ecommerce());
 
@@ -150,11 +151,13 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     /**
      * Array mapper factory method
      *
+     * @todo move mapper class to configuration
+     *
      * @param array $map
      *
-     * @return ArrayMapper
+     * @return ArrayMapperInterface
      */
-    public function getArrayMapper(array $map): ArrayMapper
+    public function getArrayMapper(array $map): ArrayMapperInterface
     {
         return new ArrayMapper($map);
     }
