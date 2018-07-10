@@ -76,9 +76,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
          data-last-name="<?= $arResult['CUR_USER']['LAST_NAME'] ?>"
          data-name="<?= $arResult['CUR_USER']['SECOND_NAME'] ?>"
          data-phone="<?= $arResult['CUR_USER']['PERSONAL_PHONE'] ?>"
-         <? if ($arResult['CUR_USER']['DATE_POPUP']) { ?>
-            data-date="<?= $arResult['CUR_USER']['DATE_POPUP'] ?>"
-         <? } ?>
+         data-date="<?= $arResult['CUR_USER']['BIRTHDAY_POPUP'] ?>"
          data-email="<?= $arResult['CUR_USER']['EMAIL'] ?>"
          data-male="<?= $arResult['CUR_USER']['GENDER'] === 'M' ? 1 : 0 ?>"
          data-female="<?= $arResult['CUR_USER']['GENDER'] === 'F' ? 1 : 0 ?>"
