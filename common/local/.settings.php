@@ -3,6 +3,7 @@
 use Adv\Bitrixtools\Tools\Log\ExceptionLogger;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\DB\MysqliConnection;
+use FourPaws\App\Env;
 
 /*
  * Обязательно нужно подключить vendor/autoload.php ,
@@ -90,6 +91,6 @@ return [
             'readonly' => true,
         ],
     'https_request' => [
-        'value' => true,
+        'value' => Env::getServerType() !== Env::DEV,
     ],
 ];
