@@ -1,10 +1,10 @@
 <?php
 
 /**
- * @var BasketItem         $basketItem
- * @var float              $userDiscount
- * @var Offer              $offer
- * @var bool               $isOnlyPickup
+ * @var BasketItem $basketItem
+ * @var float $userDiscount
+ * @var Offer $offer
+ * @var bool $isOnlyPickup
  *
  * @global BasketComponent $component
  */
@@ -29,7 +29,7 @@ if (!$basketItemId && $propertyValues['DETACH_FROM']) {
 $promoLinks = $component->getPromoLink($basketItem);
 $image = $component->getImage((int)$basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
-$isDiscounted = $basketItem->getBasePrice() !== $basketItem->getPrice();
+$isDiscounted = (float)$basketItem->getBasePrice() - (float)$basketItem->getPrice() >= 0.01;
 /**
  * @todo promo from property; after - promo from PromoLink;
  */
@@ -115,9 +115,9 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 /** @var BasketItem $tItem */
                 $tItem = $arResult['BASKET']->getItemByBasketCode($code);
                 /** @var BasketPropertyItem $basketPropertyItem */
-                foreach($tItem->getPropertyCollection() as $basketPropertyItem) {
-                    if($basketPropertyItem->getField('CODE') === 'HAS_BONUS') {
-                        $bonusQty+= (int)$basketPropertyItem->getField('VALUE');
+                foreach ($tItem->getPropertyCollection() as $basketPropertyItem) {
+                    if ($basketPropertyItem->getField('CODE') === 'HAS_BONUS') {
+                        $bonusQty += (int)$basketPropertyItem->getField('VALUE');
                     }
                 }
             }
@@ -184,7 +184,10 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     ) ?>
                 </span>
                 <span class="b-ruble">₽</span>
-                <?php if ($basketItem->getDiscountPrice() > 0) { ?>
+                <?php
+                //сюда же влетает округление до копеек при пересчете НДС, поэтому 0,01
+                if ($basketItem->getDiscountPrice() >= 0.01) {
+                    ?>
                     <span class="b-old-price b-old-price--crossed-out">
                     <span class="b-old-price__old">
                         <?= WordHelper::numberFormat(
@@ -195,7 +198,9 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     </span>
                     <span class="b-ruble b-ruble--old-weight-price">₽</span>
                 </span>
-                <?php } ?>
+                    <?php
+                }
+                ?>
             </div>
             <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
                 <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
@@ -227,12 +232,16 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 ?>
 
                 <div class="b-item-shopping__sale-info">
-                    <?php if ($tItem->getBasePrice() !== $tItem->getPrice()) { ?>
+                    <?php
+                    if ((float)$tItem->getBasePrice() - (float)$tItem->getPrice() >= 0.01) {
+                        ?>
                         <span class="b-old-price b-old-price--inline b-old-price--crossed-out">
                         <span class="b-old-price__old"><?= WordHelper::numberFormat($tItem->getBasePrice()) ?> </span>
                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                     </span>
-                    <?php } ?>
+                        <?php
+                    }
+                    ?>
                     <span class="b-old-price b-old-price--inline">
                     <span class="b-old-price__old"><?= WordHelper::numberFormat($tItem->getPrice()) ?> </span>
                     <span class="b-ruble b-ruble--old-weight-price">₽</span>
