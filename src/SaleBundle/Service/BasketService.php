@@ -660,17 +660,19 @@ class BasketService implements LoggerAwareInterface
     {
         /** @var Offer $offer */
         $offer = $this->getOfferCollection()->getById($basketItem->getProductId());
-        if($offer === null) {
+
+        if (!$offer) {
             $offer = (new OfferQuery())
                 ->withFilter(['=ID' => $basketItem->getProductId()])
                 ->exec()
                 ->getById($basketItem->getProductId());
-            if($offer === null) {
+            if (!$offer) {
                 throw new InvalidArgumentException('Предложение не найдено');
             }
             $this->getOfferCollection()->add($offer);
         }
-        if($offer->isBonusExclude()) {
+
+        if ($offer->isBonusExclude()) {
             $resultQuantity = 0;
             $basketDiscounts = true;
         } else {

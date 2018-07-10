@@ -44,6 +44,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -566,6 +567,7 @@ class OrderService
         if (!$order->isManzana() || empty($order->getManzanaId()) || $order->isItemsEmpty()) {
             return false;
         }
+        Manager::disableExtendsDiscount();
         $bitrixOrder = BitrixOrderService::create(SITE_ID, $order->getUserId(), $order->getCurrency());
 
         /** ставим даты */
@@ -693,6 +695,7 @@ class OrderService
                 'DATE_UPDATE' => $order->getDateInsert(),
             ]
         );
+        Manager::enableExtendsDiscount();
         return $result->isSuccess();
     }
 }

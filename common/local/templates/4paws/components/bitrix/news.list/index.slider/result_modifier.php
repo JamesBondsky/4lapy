@@ -64,7 +64,7 @@ foreach ($arResult['ITEMS'] as &$item) {
         $image = CropImageDecorator::createFromPrimary($item['~PREVIEW_PICTURE']);
     }
     if ($image instanceof CropImageDecorator) {
-        $image->setCropWidth(320)->setCropHeight(160);
+        $image->setCropWidth(414)->setCropHeight(207);
         $item['MOBILE_PICTURE'] = $image;
     }
 
@@ -89,6 +89,7 @@ foreach ($arResult['ITEMS'] as &$item) {
         /** @noinspection PhpUnhandledExceptionInspection */
         $image = CropImageDecorator::createFromPrimary($item['DISPLAY_PROPERTIES']['BACKGROUND']['VALUE']);
     }
+
     if ($image instanceof CropImageDecorator) {
         $image->setCropHeight(300);
         $item['BACKGROUND'] = $image;

@@ -119,9 +119,11 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $params['SEND_USER_REGISTRATION_SMS'] = isset($params['SEND_USER_REGISTRATION_SMS']) && $params['SEND_USER_REGISTRATION_SMS'] === 'N' ? 'N' : 'Y';
         $params['REGISTRATION_SMS_TEXT'] = $params['REGISTRATION_SMS_TEXT'] ?? '';
         if (!$params['REGISTRATION_SMS_TEXT']) {
-            $params['REGISTRATION_SMS_TEXT'] = 'Спасибо за регистрацию на сайте 4lapy.ru! 
-            Теперь Вам доступны все возможности личного кабинета! Номер вашего телефона является логином, пароль для доступа #PASSWORD#. 
-            Для авторизации перейдите по ссылке https://4lapy.ru/personal/.';
+            $params['REGISTRATION_SMS_TEXT'] = '';
+            // без переносов строк
+            $params['REGISTRATION_SMS_TEXT'] .= 'Спасибо за регистрацию на сайте 4lapy.ru!';
+            $params['REGISTRATION_SMS_TEXT'] .= ' Теперь Вам доступны все возможности личного кабинета! Номер вашего телефона является логином, пароль для доступа #PASSWORD#.';
+            $params['REGISTRATION_SMS_TEXT'] .= ' Для авторизации перейдите по ссылке https://4lapy.ru/personal/.';
         }
 
         $params['SHOP_OF_ACTIVATION'] = isset($params['SHOP_OF_ACTIVATION']) ? trim($params['SHOP_OF_ACTIVATION']) : 'UpdatedByСassa';
@@ -1306,7 +1308,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
      */
     protected function sendUserRegistrationSms(User $user)
     {
-        $phone = $user->getNormalizePersonalPhone();
+        $phone = trim($user->getNormalizePersonalPhone());
         $password = $user->getPassword();
         $login = $user->getLogin();
         $text = str_replace(
@@ -1337,6 +1339,14 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 new Error('Не задано сообщение SMS', 'sendSmsEmptyText')
             );
         }
+
+        $this->log()->info(
+            __FUNCTION__,
+            [
+                'phone' => $phone,
+                'resultSuccess' => $result->isSuccess()
+            ]
+        );
 
         if ($result->isSuccess()) {
             try {

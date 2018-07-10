@@ -230,6 +230,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->orderStorageService->updateStorage($storage, OrderStorageService::NOVALIDATE_STEP);
         }
 
+        $basket = $this->basketService->getBasket()->getOrderableItems();
         try {
             $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {
@@ -237,9 +238,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         /** @noinspection PhpUndefinedVariableInspection */
-        $basket = $this->currentStep === OrderStorageService::AUTH_STEP
-            ? $this->basketService->getBasket()->getOrderableItems()
-            : $order->getBasket();
+        if ($this->currentStep !== OrderStorageService::AUTH_STEP) {
+            $basket = $order->getBasket();
+        }
 
         $this->arResult['URL'] = [
             'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],

@@ -75,6 +75,10 @@ class SmsService implements LoggerAwareInterface
      */
     public function sendSms(string $text, string $number, bool $immediate = false): void
     {
+        $logContext = [
+            'number' => $number,
+            'immediate' => $immediate,
+        ];
         try {
             $sms = new IndividualSms(
                 [
@@ -100,14 +104,32 @@ class SmsService implements LoggerAwareInterface
             }
 
             try {
-                $this->client->send($sms);
+                $result = $this->client->send($sms);
+                $this->logger->info(
+                    \sprintf(
+                        'Sms was sent: %s.',
+                        $number
+                    ),
+                    array_merge(
+                        $logContext,
+                        [
+                            'result' => $result
+                        ]
+                    )
+                );
             } catch (SmsTrafficApiException $e) {
                 throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
             }
         } catch (WrongPhoneNumberException $e) {
-            $this->logger->info($e->getMessage());
+            $this->logger->info(
+                $e->getMessage(),
+                $logContext
+            );
         } catch (SmsSendErrorException $e) {
-            $this->logger->error(\sprintf('Sms send error: %s.', $e->getMessage()));
+            $this->logger->error(
+                \sprintf('Sms send error: %s.', $e->getMessage()),
+                $logContext
+            );
         }
     }
 
