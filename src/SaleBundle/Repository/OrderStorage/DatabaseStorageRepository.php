@@ -29,7 +29,7 @@ class DatabaseStorageRepository extends StorageBaseRepository
     {
         if ($step !== OrderStorageEnum::NOVALIDATE_STEP) {
             $validationResult = $this->validateAllStepsBefore($storage, $step);
-            if ($validationResult->count() > 0) {
+            if ($validationResult->getErrors()->count() > 0) {
                 throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
             }
         }

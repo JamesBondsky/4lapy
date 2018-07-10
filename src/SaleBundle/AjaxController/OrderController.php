@@ -213,7 +213,7 @@ class OrderController extends Controller
     public function validateBonusCardAction(Request $request): JsonResponse
     {
         $storage = $this->orderStorageService->getStorage();
-        $validationErrors = $this->fillStorage($storage, $request, OrderStorageEnum::PAYMENT_STEP_CARD);
+        [$validationErrors]= $this->fillStorage($storage, $request, OrderStorageEnum::PAYMENT_STEP_CARD);
 
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
@@ -247,7 +247,7 @@ class OrderController extends Controller
         if (!$this->userAuthProvider->isAuthorized() && !$storage->isCaptchaFilled()) {
             $request->request->add(['captchaFilled' => $this->recaptcha->checkCaptcha()]);
         }
-        $validationErrors = $this->fillStorage($storage, $request, $currentStep);
+        [$validationErrors] = $this->fillStorage($storage, $request, $currentStep);
 
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
@@ -280,7 +280,7 @@ class OrderController extends Controller
     public function validateDeliveryAction(Request $request): JsonResponse
     {
         $currentStep = OrderStorageEnum::DELIVERY_STEP;
-        $validationErrors = $this->fillStorage(
+        [$validationErrors, $realStep] = $this->fillStorage(
             $this->orderStorageService->getStorage(),
             $request,
             $currentStep
@@ -290,7 +290,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION])]
+                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION]) || ($realStep !== $currentStep)]
             );
         }
 
@@ -327,7 +327,7 @@ class OrderController extends Controller
     {
         $currentStep = OrderStorageEnum::PAYMENT_STEP;
         $storage = $this->orderStorageService->getStorage();
-        $validationErrors = $this->fillStorage(
+        [$validationErrors, $realStep] = $this->fillStorage(
             $storage,
             $request,
             $currentStep
@@ -337,7 +337,7 @@ class OrderController extends Controller
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION])]
+                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION]) || ($realStep !== $currentStep)]
             );
         }
 
@@ -412,8 +412,9 @@ class OrderController extends Controller
                 $key = $error->getPropertyPath() ?: $error->getCode() ?: $i;
                 $errors[$key] = $error->getMessage();
             }
+            $step = $e->getRealStep();
         }
 
-        return $errors;
+        return [$errors, $step];
     }
 }

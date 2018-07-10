@@ -7,9 +7,9 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Entity\OrderStorageValidationResult;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
-use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
@@ -104,9 +104,9 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
      * @param OrderStorage $storage
      * @param string       $step
      *
-     * @return ConstraintViolationListInterface
+     * @return OrderStorageValidationResult
      */
-    public function validateAllStepsBefore(OrderStorage $storage, string $step): ConstraintViolationListInterface
+    public function validateAllStepsBefore(OrderStorage $storage, string $step): OrderStorageValidationResult
     {
         $steps = \array_reverse(OrderStorageEnum::STEP_ORDER);
         $stepIndex = \array_search($step, $steps, true);
@@ -117,7 +117,11 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
             $steps = [$step];
         }
 
-        return $this->validate($storage, $steps);
+        $errors = $this->validate($storage, $steps);
+
+        return (new OrderStorageValidationResult())
+            ->setErrors($errors)
+            ->setStep($step);
     }
 
     /**

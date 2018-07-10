@@ -34,7 +34,6 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Validator\ConstraintViolation;
 
 class OrderStorageService
 {
@@ -113,28 +112,7 @@ class OrderStorageService
      */
     public function validateStorage(OrderStorage $storage, string $startStep = OrderStorageEnum::AUTH_STEP): string
     {
-        $steps = array_reverse(OrderStorageEnum::STEP_ORDER);
-        $stepIndex = array_search($startStep, $steps, true);
-
-        $realStep = $startStep;
-        if ($stepIndex !== false) {
-            $steps = \array_slice($steps, $stepIndex);
-            $errors = $this->storageRepository->validate($storage, $steps);
-            /** @var ConstraintViolation $error */
-            $groups = [];
-            foreach ($errors as $error) {
-                $groups += \array_flip($error->getConstraint()->groups);
-            }
-            $groups = \array_keys($groups);
-            foreach (OrderStorageEnum::STEP_ORDER as $step) {
-                if (\in_array($step, $groups, true)) {
-                    $realStep = $step;
-                    break;
-                }
-            }
-        }
-
-        return $realStep;
+        return $this->storageRepository->validateAllStepsBefore($storage, $startStep)->getRealStep();
     }
 
     /**
