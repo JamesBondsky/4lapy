@@ -1026,9 +1026,10 @@ class BasketService implements LoggerAwareInterface
                 return null;
             }
             return $res->fetch();
-        } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+        } catch (ObjectPropertyException | ArgumentException | SystemException $e) {
             /** @todo залогировать */
         }
+
         return null;
     }
 
@@ -1054,13 +1055,14 @@ class BasketService implements LoggerAwareInterface
 
         try {
             $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
                 $result[$basketItem->getProductId()] += $basketItem->getQuantity();
             }
         } catch (\Exception $e) {
             $this->log()->error(
-                sprintf('Failed to get basket products: %s: %s', \get_class($e), $e->getMessage()),
+                \sprintf('Failed to get basket products: %s: %s', \get_class($e), $e->getMessage()),
                 ['trace' => $e->getTrace()]
             );
         }

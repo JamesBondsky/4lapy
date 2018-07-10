@@ -2,7 +2,6 @@
 
 namespace FourPaws\EcommerceBundle\Service;
 
-
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\Category;
