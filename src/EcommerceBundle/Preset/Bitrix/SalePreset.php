@@ -159,6 +159,5 @@ class SalePreset
         }
 
         return $basketArrayCollection;
-
     }
 }

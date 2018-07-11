@@ -13,7 +13,7 @@ use JMS\Serializer\Annotation as Serializer;
 class Action
 {
     /**
-     * @Serializer\Type("ArrayCollection<FourPaws\EcommerceBundle\Dto\GoogleEcommerce\ActionField>")
+     * @Serializer\Type("FourPaws\EcommerceBundle\Dto\GoogleEcommerce\ActionField")
      * @Serializer\SkipWhenEmpty()
      *
      * @var ActionField

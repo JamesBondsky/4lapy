@@ -11,6 +11,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product as ProductModel;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Action;
+use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\ActionField;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Ecommerce;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\GoogleEcommerce;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Product;
@@ -27,7 +28,7 @@ use Symfony\Component\Templating\EngineInterface;
 /**
  * Class GoogleEcommerceService
  *
- * @todo добавить общий класс/trait; добавить настройки с магией
+ * @todo    добавить общий класс/trait; добавить настройки с магией
  *
  * @package FourPaws\EcommerceBundle\Service
  */
@@ -49,9 +50,9 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     /**
      * GoogleEcommerceService constructor.
      *
-     * @param SerializerInterface $serializer
+     * @param SerializerInterface       $serializer
      * @param ArrayTransformerInterface $arrayTransformer
-     * @param EngineInterface $renderer
+     * @param EngineInterface           $renderer
      */
     public function __construct(SerializerInterface $serializer, ArrayTransformerInterface $arrayTransformer, EngineInterface $renderer)
     {
@@ -62,7 +63,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param object $data
-     * @param bool $addScriptTag
+     * @param bool   $addScriptTag
      *
      * @return string
      *
@@ -78,8 +79,8 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ArrayMapperInterface $mapper
-     * @param array $data
-     * @param string $type
+     * @param array                $data
+     * @param string               $type
      *
      * @return GoogleEcommerce
      *
@@ -107,7 +108,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ProductCollection $collection
-     * @param string $list
+     * @param string            $list
      *
      * @return ArrayCollection
      */
@@ -137,7 +138,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param OfferCollection $collection
-     * @param string $list
+     * @param string          $list
      *
      * @return ArrayCollection
      */
@@ -165,7 +166,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ProductCollection $collection
-     * @param string $list
+     * @param string            $list
      *
      * @return GoogleEcommerce
      */
@@ -180,7 +181,33 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
-     * @param array $offerList
+     * @param Offer  $offer
+     * @param string $list
+     *
+     * @return GoogleEcommerce
+     */
+    public function buildDetailFromOffer(Offer $offer, string $list = ''): GoogleEcommerce
+    {
+        $offerCollection = new OfferCollection(new CDBResult());
+        $offerCollection->add($offer);
+
+        return (new GoogleEcommerce())
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode('RUB')
+                    ->setDetail(
+                        (new Action())
+                            ->setActionField(
+                                (new ActionField())
+                                    ->setList($list)
+                            )
+                            ->setProducts($this->buildProductsFromOfferCollection($offerCollection))
+                    )
+            );
+    }
+
+    /**
+     * @param array  $offerList
      * @param string $list
      *
      * @return GoogleEcommerce
