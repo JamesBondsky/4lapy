@@ -64,6 +64,7 @@ use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -172,6 +173,11 @@ class OrderService implements LoggerAwareInterface
      */
     protected $manzanaService;
 
+    /**
+     * @var CouponStorageInterface
+     */
+    protected $couponStorage;
+
     /** @var array $paySystemServiceCache */
     private $paySystemServiceCache = [];
 
@@ -192,6 +198,7 @@ class OrderService implements LoggerAwareInterface
      * @param UserRegistrationProviderInterface $userRegistrationProvider
      * @param ManzanaPosService                 $manzanaPosService
      * @param ManzanaService                    $manzanaService
+     * @param CouponStorageInterface            $couponStorage
      */
     public function __construct(
         AddressService $addressService,
@@ -207,7 +214,8 @@ class OrderService implements LoggerAwareInterface
         UserAvatarAuthorizationInterface $userAvatarAuthorization,
         UserRegistrationProviderInterface $userRegistrationProvider,
         ManzanaPosService $manzanaPosService,
-        ManzanaService $manzanaService
+        ManzanaService $manzanaService,
+        CouponStorageInterface $couponStorage
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
@@ -223,6 +231,8 @@ class OrderService implements LoggerAwareInterface
         $this->locationService = $locationService;
         $this->manzanaPosService = $manzanaPosService;
         $this->manzanaService = $manzanaService;
+        $this->couponStorage = $couponStorage;
+
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -635,7 +645,16 @@ class OrderService implements LoggerAwareInterface
 
             $key = 'PROPERTY_' . $code;
 
-            $value = $arrayStorage[$key] ?? null;
+            $value = null;
+            if (isset($arrayStorage[$key])) {
+                $value = $arrayStorage[$key];
+            } else {
+                switch($code) {
+                    case 'PROMOCODE':
+                        $value = $this->couponStorage->getApplicableCoupon();
+                        break;
+                }
+            }
 
             if (null !== $value) {
                 $propertyValue->setValue($value);

@@ -7,8 +7,8 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Entity\OrderStorageValidationResult;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
+use FourPaws\SaleBundle\Validation\Result\OrderStorageValidationResult;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 interface StorageRepositoryInterface

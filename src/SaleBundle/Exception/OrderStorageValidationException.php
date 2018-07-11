@@ -2,7 +2,7 @@
 
 namespace FourPaws\SaleBundle\Exception;
 
-use FourPaws\SaleBundle\Entity\OrderStorageValidationResult;
+use FourPaws\SaleBundle\Validation\Result\OrderStorageValidationResult;
 use Throwable;
 
 class OrderStorageValidationException extends ValidationException
