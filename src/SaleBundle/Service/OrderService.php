@@ -982,6 +982,11 @@ class OrderService implements LoggerAwareInterface
                     )
                 );
             }
+
+            $this->log()->info('Order created', [
+                'id' => $order->getId(),
+                'storage' => $this->orderStorageService->storageToArray($storage)
+            ]);
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
             if ($order->getId() > 0) {
