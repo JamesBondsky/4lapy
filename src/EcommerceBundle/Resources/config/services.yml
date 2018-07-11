@@ -6,7 +6,7 @@ services:
 
     FourPaws\EcommerceBundle\:
         resource: '../../*'
-        exclude: '../../{Dto,Tests}'
+        exclude: '../../{Dto,Tests,Storage}'
 
     # Необходимо вынести, тк используется в Битрикс
     FourPaws\EcommerceBundle\Preset\Bitrix\:

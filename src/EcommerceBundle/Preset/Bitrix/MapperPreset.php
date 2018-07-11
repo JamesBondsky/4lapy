@@ -48,4 +48,26 @@ class MapperPreset
             ]
         );
     }
+
+    /**
+     * @return ArrayMapperInterface
+     */
+    public function mapperProductFactory(): ArrayMapperInterface
+    {
+        return $this->googleEcommerceService->getArrayMapper(
+            [
+                'name' => 'NAME',
+                'id' => function($element, $key) {
+                    $offer = \array_shift($element['OFFERS']);
+
+                    return $offer['XML_ID'] ?: $element['XML_ID'];
+                },
+                'brand' => '',
+                'price' => '',
+                'category' => '',
+                'list' => '',
+                'position' => '',
+            ]
+        );
+    }
 }

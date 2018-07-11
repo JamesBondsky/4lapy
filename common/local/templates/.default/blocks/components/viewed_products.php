@@ -39,7 +39,6 @@ $APPLICATION->IncludeComponent('bitrix:catalog.products.viewed',
                                    'IBLOCK_ID'                                               => $arParams['PRODUCTS_IBLOCK_ID'],
                                    'SHOW_FROM_SECTION'                                       => 'N',
                                    'SECTION_ID'                                              => '',
-                                   //$GLOBALS['CATALOG_CURRENT_SECTION_ID'] ?? 0,
                                    'SECTION_CODE'                                            => '',
                                    // чтобы не показывался товар на собственной странице карточки товара
                                    'SECTION_ELEMENT_ID'                                      => $GLOBALS['CATALOG_CURRENT_ELEMENT_ID']
@@ -48,7 +47,7 @@ $APPLICATION->IncludeComponent('bitrix:catalog.products.viewed',
                                    'DEPTH'                                                   => '5',
                                    'HIDE_NOT_AVAILABLE'                                      => 'N',
                                    'HIDE_NOT_AVAILABLE_OFFERS'                               => 'N',
-                                   'CACHE_TYPE'                                              => 'A',
+                                   'CACHE_TYPE'                                              => 'N',
                                    'CACHE_TIME'                                              => '3600',
                                    'CACHE_GROUPS'                                            => 'N',
                                    // чтобы через дефолтные параметры умники не баловались

@@ -145,7 +145,7 @@ class SalePreset
                 [
                     'basketId' => $basketItem->getId(),
                     'id' => $basketItem->getProductId(),
-                    'price' => $basketItem->getPrice(),
+                    'price' => $offer->getXmlId(),
                     'discount' => $basketItem->getDiscountPrice(),
                     'tax' => $basketItem->getVat(),
                     'quantity' => $basketItem->getQuantity(),

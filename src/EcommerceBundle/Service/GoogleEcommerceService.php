@@ -2,11 +2,14 @@
 
 namespace FourPaws\EcommerceBundle\Service;
 
+use CDBResult;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product as ProductModel;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Action;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Ecommerce;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\GoogleEcommerce;
@@ -15,6 +18,7 @@ use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion;
 use FourPaws\EcommerceBundle\Exception\InvalidArgumentException;
 use FourPaws\EcommerceBundle\Mapper\ArrayMapper;
 use FourPaws\EcommerceBundle\Mapper\ArrayMapperInterface;
+use FourPaws\EcommerceBundle\Storage\KeyValueStaticStorage;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use RuntimeException;
@@ -115,7 +119,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
             $product->getOffers()->map(function (Offer $offer) use ($productCollection, $product, $list) {
                 $productCollection->add(
                     (new Product())
-                        ->setId($offer->getId())
+                        ->setId($offer->getXmlId())
                         ->setName($offer->getName())
                         ->setBrand($product->getBrandName())
                         ->setPrice($offer->getPrice())
@@ -126,6 +130,34 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                         ->setPosition($productCollection->count() + 1)
                 );
             });
+        });
+
+        return $productCollection;
+    }
+
+    /**
+     * @param OfferCollection $collection
+     * @param string $list
+     *
+     * @return ArrayCollection
+     */
+    public function buildProductsFromOfferCollection(OfferCollection $collection, string $list = ''): ArrayCollection
+    {
+        $productCollection = new ArrayCollection();
+
+        $collection->map(function (Offer $offer) use ($productCollection, $list) {
+            $productCollection->add(
+                (new Product())
+                    ->setId($offer->getId())
+                    ->setName($offer->getName())
+                    ->setBrand($offer->getProduct()->getBrandName())
+                    ->setPrice($offer->getPrice())
+                    ->setCategory(\implode('|', \array_reverse($offer->getProduct()->getFullPathCollection()->map(function (Category $category) {
+                        return $category->getName();
+                    })->toArray())))
+                    ->setList($list)
+                    ->setPosition($productCollection->count() + 1)
+            );
         });
 
         return $productCollection;
@@ -143,6 +175,46 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         $ecommerce->getEcommerce()
             ->setCurrencyCode('RUB')
             ->setImpressions($this->buildProductsFromProductsCollection($collection, $list));
+
+        return $ecommerce;
+    }
+
+    /**
+     * @param array $offerList
+     * @param string $list
+     *
+     * @return GoogleEcommerce
+     */
+    public function buildImpressionsFromOfferArray(array $offerList, string $list = ''): GoogleEcommerce
+    {
+        $storage = KeyValueStaticStorage::getInstance();
+        $collection = new OfferCollection(new CDBResult());
+
+        foreach ($offerList as $rawOffer) {
+            $key = \sprintf(
+                'offer_%d',
+                $rawOffer['ID']
+            );
+            $offer = $storage->get($key);
+
+            if ($offer) {
+                $collection->add($offer);
+            } else {
+                $offer = OfferQuery::getById($rawOffer['ID']);
+
+                if (!$offer) {
+                    continue;
+                }
+
+                $collection->add($offer);
+                $storage->set($key, $offer);
+            }
+        }
+
+        $ecommerce = (new GoogleEcommerce())->setEcommerce(new Ecommerce());
+        $ecommerce->getEcommerce()
+            ->setCurrencyCode('RUB')
+            ->setImpressions($this->buildProductsFromOfferCollection($collection, $list));
 
         return $ecommerce;
     }

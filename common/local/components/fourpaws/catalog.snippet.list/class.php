@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use CBitrixComponent;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Query\ProductQuery;
@@ -27,7 +28,8 @@ class CatalogSaleListComponent extends CBitrixComponent
 
     /**
      * CatalogSaleListComponent constructor.
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @throws ApplicationCreateException
      */
     public function __construct()
     {
