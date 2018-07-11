@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -24,11 +25,11 @@ class DatabaseStorageRepository extends StorageBaseRepository
      * @throws OrderStorageSaveException
      * @throws OrderStorageValidationException
      */
-    public function save(OrderStorage $storage, string $step = OrderStorageService::AUTH_STEP): bool
+    public function save(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
-        if ($step !== OrderStorageService::NOVALIDATE_STEP) {
-            $validationResult = $this->validate($storage, $step);
-            if ($validationResult->count() > 0) {
+        if ($step !== OrderStorageEnum::NOVALIDATE_STEP) {
+            $validationResult = $this->validateAllStepsBefore($storage, $step);
+            if ($validationResult->getErrors()->count() > 0) {
                 throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
             }
         }

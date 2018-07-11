@@ -35,6 +35,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -60,10 +61,10 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class FourPawsOrderComponent extends \CBitrixComponent
 {
     protected const DEFAULT_TEMPLATES_404 = [
-        OrderStorageService::AUTH_STEP => 'index.php',
-        OrderStorageService::DELIVERY_STEP => 'delivery/',
-        OrderStorageService::PAYMENT_STEP => 'payment/',
-        OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#/',
+        OrderStorageEnum::AUTH_STEP => 'index.php',
+        OrderStorageEnum::DELIVERY_STEP => 'delivery/',
+        OrderStorageEnum::PAYMENT_STEP => 'payment/',
+        OrderStorageEnum::COMPLETE_STEP => 'complete/#ORDER_ID#/',
     ];
 
     /**
@@ -212,7 +213,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     protected function prepareResult(): void
     {
-        if ($this->currentStep === OrderStorageService::COMPLETE_STEP) {
+        if ($this->currentStep === OrderStorageEnum::COMPLETE_STEP) {
             return;
         }
 
@@ -221,13 +222,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         $date = new \DateTime();
-        if (($this->currentStep === OrderStorageService::DELIVERY_STEP) &&
+        if (($this->currentStep === OrderStorageEnum::DELIVERY_STEP) &&
             (abs(
                 $storage->getCurrentDate()->getTimestamp() - $date->getTimestamp()
             ) > OrderDeliveryValidator::MAX_DATE_DIFF)
         ) {
             $storage->setCurrentDate($date);
-            $this->orderStorageService->updateStorage($storage, OrderStorageService::NOVALIDATE_STEP);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
         }
 
         $basket = $this->basketService->getBasket()->getOrderableItems();
@@ -238,14 +239,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         /** @noinspection PhpUndefinedVariableInspection */
-        if ($this->currentStep !== OrderStorageService::AUTH_STEP) {
+        if ($this->currentStep !== OrderStorageEnum::AUTH_STEP) {
             $basket = $order->getBasket();
         }
 
         $this->arResult['URL'] = [
-            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
-            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP],
-            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
+            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageEnum::AUTH_STEP],
+            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageEnum::DELIVERY_STEP],
+            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageEnum::PAYMENT_STEP],
         ];
 
         /** @var Router $router */
@@ -284,7 +285,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $deliveries = $this->orderStorageService->getDeliveries($storage);
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
-        if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
+        if ($this->currentStep === OrderStorageEnum::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
 
             $addresses = null;
@@ -316,7 +317,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['DELIVERY'] = $delivery;
             $this->arResult['ADDRESSES'] = $addresses;
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
-        } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
+        } elseif ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
 
             try {
