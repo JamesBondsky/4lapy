@@ -52,6 +52,10 @@ foreach ($notAllowedItems as $item) {
 /** @var Order $order */
 $order = $basket->getOrder();
 
+if ($arResult['ECOMMERCE_VIEW_BASKET']) {
+    echo $arResult['ECOMMERCE_VIEW_BASKET'];
+}
+
 if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) { ?>
     <div class="b-shopping-cart">
     <?php

@@ -27,6 +27,8 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
@@ -75,9 +77,15 @@ class BasketComponent extends CBitrixComponent
      * @var CouponSessionStorage
      */
     private $couponsStorage;
-
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+    /**
+     * @var SalePreset
+     */
+    private $ecommerceSalePreset;
     private $promoDescriptions = [];
-
     private $offer2promoMap = [];
 
     /**
@@ -98,6 +106,8 @@ class BasketComponent extends CBitrixComponent
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
         $this->couponsStorage = $container->get(CouponStorageInterface::class);
         $this->deliveryService = $container->get(DeliveryService::class);
+        $this->ecommerceService = $container->get(GoogleEcommerceService::class);
+        $this->ecommerceSalePreset = $container->get(SalePreset::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -159,6 +169,10 @@ class BasketComponent extends CBitrixComponent
         $this->calcTemplateFields();
         $this->checkSelectedGifts();
         $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
+        $this->arResult['ECOMMERCE_VIEW_BASKET'] = $this->ecommerceService->renderScript(
+            $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Корзина'),
+            true
+        );
 
         $this->includeComponentTemplate($this->getPage());
     }
