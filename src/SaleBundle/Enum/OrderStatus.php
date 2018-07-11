@@ -43,6 +43,11 @@ class OrderStatus
     public const STATUS_DELIVERING = 'Y';
 
     /**
+     * Заказ выполнен
+     */
+    public const STATUS_FINISHED = 'G';
+
+    /**
      * Заказ отменен (для курьерской доставки)
      */
     public const STATUS_CANCEL_COURIER = 'A';
