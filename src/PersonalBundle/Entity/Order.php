@@ -635,6 +635,14 @@ class Order extends BaseEntity
     }
 
     /**
+     * @return string
+     */
+    public function getFormattedPriceReal(): string
+    {
+        return WordHelper::numberFormat(round($this->getPrice(), 2));
+    }
+
+    /**
      * @return float
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException

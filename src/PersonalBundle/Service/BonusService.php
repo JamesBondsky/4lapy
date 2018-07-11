@@ -247,12 +247,12 @@ class BonusService
                 $bonusCard,
                 $this->manzanaService->searchCardByNumber($bonusCard)->contactId
             );
-        } catch (CardNotFoundException $e) {
-            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
-        }
 
-        if (!$newCard || !\in_array($newCard->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {
-            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            if (!$newCard || !\in_array($newCard->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {
+                throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            }
+        } catch (CardNotFoundException $e) {
+            // если не найдена - значит, еще не привязана ни к одному клиенту
         }
 
         $bonusCardId = $validCardResult->cardId;

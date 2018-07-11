@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
@@ -36,30 +37,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class OrderStorageService
 {
-    public const NOVALIDATE_STEP = 'novalidate';
-
-    public const AUTH_STEP = 'auth';
-
-    public const DELIVERY_STEP = 'delivery';
-
-    public const PAYMENT_STEP = 'payment';
-
-    public const PAYMENT_STEP_CARD = 'payment-card';
-
-    public const COMPLETE_STEP = 'complete';
-
     public const SESSION_EXPIRED_VIOLATION = 'session-expired';
-
-    /**
-     * Порядок оформления заказа
-     * @var array
-     */
-    protected $stepOrder = [
-        self::AUTH_STEP,
-        self::DELIVERY_STEP,
-        self::PAYMENT_STEP,
-        self::COMPLETE_STEP,
-    ];
 
     /**
      * @var BasketService
@@ -132,22 +110,9 @@ class OrderStorageService
      *
      * @return string
      */
-    public function validateStorage(OrderStorage $storage, string $startStep = self::AUTH_STEP): string
+    public function validateStorage(OrderStorage $storage, string $startStep = OrderStorageEnum::AUTH_STEP): string
     {
-        $steps = array_reverse($this->stepOrder);
-        $stepIndex = array_search($startStep, $steps, true);
-
-        $realStep = $startStep;
-        if ($stepIndex !== false) {
-            $steps = \array_slice($steps, $stepIndex);
-            foreach ($steps as $step) {
-                if ($this->storageRepository->validate($storage, $step)->count()) {
-                    $realStep = $step;
-                }
-            }
-        }
-
-        return $realStep;
+        return $this->storageRepository->validateAllStepsBefore($storage, $startStep)->getRealStep();
     }
 
     /**
@@ -187,7 +152,7 @@ class OrderStorageService
             'order-pick-time' => 'split',
             'shopId' => 'deliveryPlaceCode',
             'pay-type' => 'paymentId',
-            'cardNumber' => 'discountCardNumber'
+            'cardNumber' => 'discountCardNumber',
         ];
 
         foreach ($data as $name => $value) {
@@ -203,7 +168,7 @@ class OrderStorageService
          */
         $availableValues = [];
         switch ($step) {
-            case self::AUTH_STEP:
+            case OrderStorageEnum::AUTH_STEP:
                 $availableValues = [
                     'altPhone',
                     'communicationWay',
@@ -228,7 +193,7 @@ class OrderStorageService
                 }
 
                 break;
-            case self::DELIVERY_STEP:
+            case OrderStorageEnum::DELIVERY_STEP:
                 try {
                     $deliveryCode = $this->deliveryService->getDeliveryCodeById(
                         (int)$data['deliveryId']
@@ -290,18 +255,18 @@ class OrderStorageService
                     'split',
                     'secondDeliveryDate',
                     'secondDeliveryInterval',
-                    'secondComment'
+                    'secondComment',
                 ];
                 break;
-            case self::PAYMENT_STEP:
+            case OrderStorageEnum::PAYMENT_STEP:
                 $availableValues = [
                     'paymentId',
                     'bonus',
                 ];
                 break;
-            case self::PAYMENT_STEP_CARD:
+            case OrderStorageEnum::PAYMENT_STEP_CARD:
                 $availableValues = [
-                    'discountCardNumber'
+                    'discountCardNumber',
                 ];
                 break;
         }
@@ -335,7 +300,7 @@ class OrderStorageService
      * @throws OrderStorageValidationException
      * @return bool
      */
-    public function updateStorage(OrderStorage $storage, string $step = self::AUTH_STEP): bool
+    public function updateStorage(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
         try {
             return $this->storageRepository->save($storage, $step);

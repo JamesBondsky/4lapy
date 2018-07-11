@@ -27,6 +27,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
@@ -73,13 +74,6 @@ class OrderController extends Controller
      * @var ReCaptchaService
      */
     private $recaptcha;
-
-    protected $stepOrder = [
-        OrderStorageService::AUTH_STEP,
-        OrderStorageService::DELIVERY_STEP,
-        OrderStorageService::PAYMENT_STEP,
-        OrderStorageService::COMPLETE_STEP,
-    ];
 
     /**
      * OrderController constructor.
@@ -219,7 +213,7 @@ class OrderController extends Controller
     public function validateBonusCardAction(Request $request): JsonResponse
     {
         $storage = $this->orderStorageService->getStorage();
-        $validationErrors = $this->fillStorage($storage, $request, OrderStorageService::PAYMENT_STEP_CARD);
+        [$validationErrors]= $this->fillStorage($storage, $request, OrderStorageEnum::PAYMENT_STEP_CARD);
 
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
@@ -248,11 +242,12 @@ class OrderController extends Controller
      */
     public function validateAuthAction(Request $request): JsonResponse
     {
+        $currentStep = OrderStorageEnum::AUTH_STEP;
         $storage = $this->orderStorageService->getStorage();
         if (!$this->userAuthProvider->isAuthorized() && !$storage->isCaptchaFilled()) {
             $request->request->add(['captchaFilled' => $this->recaptcha->checkCaptcha()]);
         }
-        $validationErrors = $this->fillStorage($storage, $request, OrderStorageService::AUTH_STEP);
+        [$validationErrors] = $this->fillStorage($storage, $request, $currentStep);
 
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
@@ -267,7 +262,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderStorageService::DELIVERY_STEP . '/']
+            ['redirect' => '/sale/order/' . $this->getNextStep($currentStep) . '/']
         );
     }
 
@@ -284,19 +279,18 @@ class OrderController extends Controller
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
-        $storage = $this->orderStorageService->getStorage();
-        $currentStep = OrderStorageService::DELIVERY_STEP;
-        if ($this->orderStorageService->validateStorage($storage, $currentStep) !== $currentStep) {
-            return JsonErrorResponse::create('', 200, [], ['reload' => true]);
-        }
-
-        $validationErrors = $this->fillStorage($storage, $request, $currentStep);
+        $currentStep = OrderStorageEnum::DELIVERY_STEP;
+        [$validationErrors, $realStep] = $this->fillStorage(
+            $this->orderStorageService->getStorage(),
+            $request,
+            $currentStep
+        );
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION])]
+                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION]) || ($realStep !== $currentStep)]
             );
         }
 
@@ -304,7 +298,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderStorageService::PAYMENT_STEP . '/']
+            ['redirect' => '/sale/order/' . $this->getNextStep($currentStep) . '/']
         );
     }
 
@@ -331,19 +325,19 @@ class OrderController extends Controller
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
+        $currentStep = OrderStorageEnum::PAYMENT_STEP;
         $storage = $this->orderStorageService->getStorage();
-        $currentStep = OrderStorageService::PAYMENT_STEP;
-        if ($this->orderStorageService->validateStorage($storage, $currentStep) !== $currentStep) {
-            return JsonErrorResponse::create('', 200, [], ['reload' => true]);
-        }
-
-        $validationErrors = $this->fillStorage($storage, $request, $currentStep);
+        [$validationErrors, $realStep] = $this->fillStorage(
+            $storage,
+            $request,
+            $currentStep
+        );
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
                 '',
                 ['errors' => $validationErrors],
                 200,
-                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION])]
+                ['reload' => isset($validationErrors[OrderStorageService::SESSION_EXPIRED_VIOLATION]) || ($realStep !== $currentStep)]
             );
         }
 
@@ -353,7 +347,7 @@ class OrderController extends Controller
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
-        $url = new Uri('/sale/order/' . OrderStorageService::COMPLETE_STEP . '/' . $order->getId() . '/');
+        $url = new Uri('/sale/order/' . $this->getNextStep($currentStep) . '/' . $order->getId() . '/');
 
         /** @var Payment $payment */
         foreach ($order->getPaymentCollection() as $payment) {
@@ -382,13 +376,13 @@ class OrderController extends Controller
     /**
      * @param string $step
      *
-     * @return mixed
+     * @return string|null
      */
-    protected function getNextStep(string $step)
+    protected function getNextStep(string $step): ?string
     {
-        $key = array_search($step, $this->stepOrder, true);
+        $key = array_search($step, OrderStorageEnum::STEP_ORDER, true);
 
-        return $this->stepOrder[++$key];
+        return OrderStorageEnum::STEP_ORDER[++$key];
     }
 
     /**
@@ -418,8 +412,9 @@ class OrderController extends Controller
                 $key = $error->getPropertyPath() ?: $error->getCode() ?: $i;
                 $errors[$key] = $error->getMessage();
             }
+            $step = $e->getRealStep();
         }
 
-        return $errors;
+        return [$errors, $step];
     }
 }
