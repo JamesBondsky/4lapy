@@ -7,7 +7,8 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
+use FourPaws\SaleBundle\Validation\Result\OrderStorageValidationResult;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 interface StorageRepositoryInterface
@@ -25,7 +26,7 @@ interface StorageRepositoryInterface
      *
      * @return bool
      */
-    public function save(OrderStorage $storage, string $step = OrderStorageService::AUTH_STEP): bool;
+    public function save(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool;
 
     /**
      * @param OrderStorage $storage
@@ -36,11 +37,19 @@ interface StorageRepositoryInterface
 
     /**
      * @param OrderStorage $storage
-     * @param string $step
+     * @param string[] $steps
      *
      * @return ConstraintViolationListInterface
      */
-    public function validate(OrderStorage $storage, string $step): ConstraintViolationListInterface;
+    public function validate(OrderStorage $storage, array $steps): ConstraintViolationListInterface;
+
+    /**
+     * @param OrderStorage $storage
+     * @param string       $step
+     *
+     * @return OrderStorageValidationResult
+     */
+    public function validateAllStepsBefore(OrderStorage $storage, string $step): OrderStorageValidationResult;
 
     /**
      * @param OrderStorage $storage
