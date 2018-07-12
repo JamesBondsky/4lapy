@@ -149,7 +149,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
             );
 
             $this->arResult['ECOMMERCE_VIEW_SCRIPT_ORDER'] = $this->ecommerceService->renderScript(
-                $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
+                $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка через корзину'),
                 true
             );
 
@@ -162,7 +162,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                 }
 
                 $this->arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED'] = $this->ecommerceService->renderScript(
-                    $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
+                    $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка через корзину'),
                     true
                 );
             }
