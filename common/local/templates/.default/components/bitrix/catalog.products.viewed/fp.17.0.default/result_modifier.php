@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
@@ -25,17 +24,17 @@ $arParams['RESIZE_TYPE'] = $arParams['RESIZE_TYPE'] ?? 'BX_RESIZE_IMAGE_PROPORTI
 if (!$arResult['ITEMS']) {
     return;
 }
-dump($arResult['ITEMS'][0]);die;
+
 $container = Application::getInstance()->getContainer();
 $ecommerceService = $container->get(GoogleEcommerceService::class);
-$arResult['ECOMMERCE_VIEW_SCRIPT'] =
+/* $arResult['ECOMMERCE_VIEW_SCRIPT'] =
     $ecommerceService->renderScript(
         $ecommerceService->buildImpressionsFromOfferArray(
             $arResult['ITEMS'], Loc::getMessage('CVP_TPL_MESS_YOU_LOOKED')
         ), true
     );
 
-dump($arResult['ECOMMERCE_VIEW_SCRIPT']);die;
+dump($arResult['ECOMMERCE_VIEW_SCRIPT']);die; */
 
 foreach ($arResult['ITEMS'] as $item) {
     if (empty($item['OFFERS'])) {
