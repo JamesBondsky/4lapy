@@ -164,7 +164,7 @@ class BasketComponent extends CBitrixComponent
         $this->checkSelectedGifts();
         $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
         $this->arResult['ECOMMERCE_VIEW_BASKET'] = $this->ecommerceService->renderScript(
-            $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Корзина'),
+            $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Просмотр корзины'),
             true
         );
 
