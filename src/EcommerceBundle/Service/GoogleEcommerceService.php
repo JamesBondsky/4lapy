@@ -83,19 +83,19 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param object $data
-     * @param string $name
+     * @param string $presetName
      * @param bool $addScriptTag
      *
      * @return string
      *
      * @throws RuntimeException
      */
-    public function renderPreset($data, string $name, bool $addScriptTag): string
+    public function renderPreset($data, string $presetName, bool $addScriptTag): string
     {
         /** @noinspection PhpParamsInspection */
         $data = $this->serializer->serialize($data, 'json');
 
-        return \trim($this->renderer->render('EcommerceBundle:GoogleEcommerce:preset.inline.script.php', \compact('data', 'name', 'addScriptTag')));
+        return \trim($this->renderer->render('EcommerceBundle:GoogleEcommerce:preset.inline.script.php', \compact('data', 'presetName', 'addScriptTag')));
     }
 
     /**

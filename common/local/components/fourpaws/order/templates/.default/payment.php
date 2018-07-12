@@ -123,7 +123,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 ?>
                                 <input <?= (int)$payment['ID'] === (int)$selectedPayment['ID'] ? 'checked="checked"' : '' ?>
                                         data-name="<?= $payment['NAME'] ?>"
-                                        class="b-choice-recovery__input"
+                                        class="b-choice-recovery__input js-payment-type"
                                         id="order-payment-<?= $payment['ID'] ?>"
                                         type="radio"
                                         name="pay-type"
