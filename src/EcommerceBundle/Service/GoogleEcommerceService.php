@@ -95,7 +95,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         /** @noinspection PhpParamsInspection */
         $data = $this->serializer->serialize($data, 'json');
 
-        return \trim($this->renderer->render('EcommerceBundle:GoogleEcommerce:inline.script.php', \compact('data', 'name', 'addScriptTag')));
+        return \trim($this->renderer->render('EcommerceBundle:GoogleEcommerce:preset.inline.script.php', \compact('data', 'name', 'addScriptTag')));
     }
 
     /**

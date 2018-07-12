@@ -18,7 +18,7 @@ use FourPaws\StoreBundle\Entity\Store;
  * @var array $arParams
  * @var array $arResult
  * @var CMain $APPLICATION
- * @var FourPawsOrderComponent     $component
+ * @var FourPawsOrderComponent $component
  */
 
 /** @var CalculationResultInterface $delivery */
@@ -96,19 +96,20 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                value="<?= /** @noinspection PhpUnhandledExceptionInspection */
                                $pickup ? $pickup->getSelectedShop()->getXmlId() : '' ?>">
                         <input type="hidden" name="delyveryType"
-                               value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>" class="js-no-valid">
+                               value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
+                               class="js-no-valid">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
-                            <?php if ($delivery) {
-                                ?>
-                                <input class="b-choice-recovery__input js-recovery-telephone js-delivery"
-                                       id="order-delivery-address"
-                                       type="radio"
-                                       name="deliveryId"
-                                    <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
-                                       value="<?= $delivery->getDeliveryId() ?>"
-                                       data-delivery="<?= $delivery->getPrice() ?>"
-                                       data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
-                                       data-check="js-list-orders-static"/>
+                            <?php if ($delivery) { ?>
+                                <input <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                        class="b-choice-recovery__input js-recovery-telephone js-delivery"
+                                        id="order-delivery-address"
+                                        type="radio"
+                                        name="deliveryId"
+                                        data-text="Доставка курьером"
+                                        value="<?= $delivery->getDeliveryId() ?>"
+                                        data-delivery="<?= $delivery->getPrice() ?>"
+                                        data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
+                                        data-check="js-list-orders-static"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-delivery-address">
                                     <span class="b-choice-recovery__main-text">
@@ -127,27 +128,25 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
                                         <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                 </label>
-                                <?php
-                            } ?>
-                            <?php if ($pickup) {
-                                ?>
-                                <?php
+                            <?php }
+
+                            if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
                                 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
                                     $price = $available->getPrice();
                                 } else {
                                     $price = $pickup->getStockResult()->getPrice();
-                                }
-                                ?>
-                                <input class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
-                                       id="order-delivery-pick-up"
-                                       type="radio"
-                                       name="deliveryId"
-                                    <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
-                                       value="<?= $pickup->getDeliveryId() ?>"
-                                       data-delivery="<?= $pickup->getPrice() ?>"
-                                       data-full="<?= $price ?>"
-                                       data-check="js-list-orders-cont"/>
+                                } ?>
+                                <input <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                        class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
+                                        id="order-delivery-pick-up"
+                                        type="radio"
+                                        name="deliveryId"
+                                        data-text="Самовывоз"
+                                        value="<?= $pickup->getDeliveryId() ?>"
+                                        data-delivery="<?= $pickup->getPrice() ?>"
+                                        data-full="<?= $price ?>"
+                                        data-check="js-list-orders-cont"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step js-open-popup"
                                        for="order-delivery-pick-up"
                                        data-popup-id="popup-order-stores">
@@ -192,7 +191,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             <?php if ($pickup) {
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
-                                    <?= $selectedDelivery->getDeliveryId()  !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                                 <?php
