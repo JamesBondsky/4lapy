@@ -207,11 +207,13 @@ class FastOrderController extends Controller
     public function createAction(Request $request): JsonResponse
     {
         $orderStorage = new OrderStorage();
+
         try {
             $phone = PhoneHelper::normalizePhone($request->get('phone', ''));
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
+
         $name = $request->get('name', '');
 
         $currentStore = null;
@@ -258,14 +260,31 @@ class FastOrderController extends Controller
                         . '/local/components/fourpaws/fast.order/templates/.default/success.php';
                     $html = ob_get_clean();
 
-                    return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', [
+                    $data = [
                         'html' => $html,
                         'miniBasket' => $this->basketViewService->getMiniBasketHtml(),
-                    ]);
+                    ];
+
+                    $ecommerce = $this->ecommerceService->renderScript(
+                        $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
+                        true
+                    );
+
+                    if ($ecommerce) {
+                        $data['command'] = $ecommerce;
+                    }
+
+                    return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', $data);
                 }
 
-                return JsonSuccessResponse::create('Быстрый заказ успешно создан', 200, [],
-                    ['redirect' => '/cart/successFastOrder.php']);
+                return JsonSuccessResponse::create(
+                    'Быстрый заказ успешно создан',
+                    200,
+                    [],
+                    [
+                        'redirect' => \sprintf('/cart/successFastOrder.php?orderId=%d', $order->getId())
+                    ]
+                );
             }
         } catch (ArgumentOutOfRangeException|ArgumentTypeException|ArgumentException $e) {
             $logger = LoggerFactory::create('params');

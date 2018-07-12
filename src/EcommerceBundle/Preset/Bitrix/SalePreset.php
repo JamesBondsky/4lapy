@@ -129,7 +129,7 @@ class SalePreset
      *
      * @return GoogleEcommerce
      */
-    public function createEcommerceFromBitrixOrder(Order $order, string $affiliation): GoogleEcommerce
+    public function createPurchaseFromBitrixOrder(Order $order, string $affiliation): GoogleEcommerce
     {
         return (new GoogleEcommerce())->setEcommerce(
             (new Ecommerce())
@@ -251,6 +251,7 @@ class SalePreset
                     'quantity' => $basketItem->getQuantity(),
                     'name' => $offer ? $offer->getName() : $basketItem->getField('NAME'),
                     'brand' => $product ? $product->getBrandName() : '',
+                    'list' => '',
                     'category' => $product ? \implode('|', \array_reverse($product->getFullPathCollection()->map(function (Category $category) {
                         return $category->getName();
                     })->toArray())) : '',

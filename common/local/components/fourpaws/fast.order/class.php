@@ -11,16 +11,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\UserMessageException;
+use CBitrixComponent;
+use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -28,13 +34,22 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException as SaleInvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserService;
+use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -44,7 +59,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * Class FourPawsFastOrderComponent
  * @package FourPaws\Components
  */
-class FourPawsFastOrderComponent extends \CBitrixComponent
+class FourPawsFastOrderComponent extends CBitrixComponent
 {
     /** @var OfferCollection */
     public $offerCollection;
@@ -56,31 +71,42 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
     private $basketService;
     /** @var array $images */
     private $images;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+    /**
+     * @var SalePreset
+     */
+    private $salePreset;
+    /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
 
     /**
      * AutoloadingIssuesInspection constructor.
      *
-     * @param null|\CBitrixComponent $component
+     * @param null|CBitrixComponent $component
      *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws SystemException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      */
-    public function __construct(\CBitrixComponent $component = null)
+    public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
-        try {
-            $container = App::getInstance()->getContainer();
-        } catch (ApplicationCreateException $e) {
-            $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            /** @noinspection PhpUnhandledExceptionInspection */
-            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
-        }
+
+        $container = App::getInstance()->getContainer();
+
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         $this->basketService = $container->get(BasketService::class);
+        $this->ecommerceService = $container->get(GoogleEcommerceService::class);
+        $this->deliveryService = $container->get(DeliveryService::class);
+        $this->salePreset = $container->get(SalePreset::class);
     }
 
     /**
@@ -90,23 +116,31 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
      */
     public function onPrepareComponentParams($params): array
     {
+        $params = parent::onPrepareComponentParams($params);
+
         $params['PATH_TO_CATALOG'] = '/catalog/';
         $params['TYPE'] = !empty($params['TYPE']) ? $params['TYPE'] : '';
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
+
         return $params;
     }
 
     /**
      * {@inheritdoc}
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     *
+     * @throws NotImplementedException
+     * @throws ArgumentNullException
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws SaleInvalidArgumentException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      * @throws EmptyEntityClass
      * @throws SystemException
      * @throws IblockNotFoundException
      * @throws ObjectException
      * @throws ArgumentException
-     * @throws \Exception
+     * @throws Exception
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -116,13 +150,13 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
      */
     public function executeComponent()
     {
-        if (!empty($this->arParams['TYPE'])) {
+        if ($this->arParams['TYPE']) {
             if ($this->arParams['TYPE'] === 'innerForm') {
                 $this->arResult['IS_AUTH'] = $this->authUserProvider->isAuthorized();
                 if ($this->authUserProvider->isAuthorized()) {
                     try {
                         $this->arResult['CUR_USER'] = $this->currentUserProvider->getCurrentUser();
-                    } catch (NotAuthorizedException $e) {
+                    } catch (NotAuthorizedException | UsernameNotFoundException $e) {
                         /** никогда не сработает */
                     }
                 }
@@ -137,6 +171,16 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $this->loadImages();
                 $this->calcTemplateFields();
             }
+
+            $orderId = (int)$this->request->get('orderId');
+            if ($orderId) {
+                $order = Order::load($orderId);
+                $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->ecommerceService->renderScript(
+                    $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
+                    true
+                );
+            }
+
             $this->includeComponentTemplate($this->arParams['TYPE']);
         } else {
             if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
@@ -144,7 +188,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             }
         }
 
-        return true;
+        parent::executeComponent();
     }
 
     /**
@@ -177,19 +221,25 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
 
     /**
      * @param Offer $offer
-     *
-     * @param bool  $showToday
+     * @param bool $showToday
      *
      * @return string
+     *
+     * @throws UserMessageException
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws NotFoundException
+     * @throws DeliveryNotFoundException
+     * @throws ArgumentException
      * @throws ApplicationCreateException
      */
     public function getDeliveryDate(Offer $offer, $showToday = false): string
     {
         /** Если доставка сегодня не показываем */
-        $deliveryDate = '';
-        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
-        $res = $deliveryService->getByProduct($offer);
         $dates = [];
+        $deliveryDate = '';
+        $res = $this->deliveryService->getByProduct($offer);
+
         foreach ($res as $item) {
             $periodType = $item->getPeriodType();
             if ($periodType === CalculationResult::PERIOD_TYPE_DAY || $periodType === CalculationResult::PERIOD_TYPE_MONTH) {
@@ -226,7 +276,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
 
     /**
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     private function loadImages(): void
     {
@@ -239,14 +289,13 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             $images = $item->getResizeImages(110, 110);
             /** @var ResizeImageDecorator $image */
             foreach ($images as $image) {
-                if(empty($image->getSrc())){
+                if (empty($image->getSrc())) {
                     continue;
                 }
                 $this->images[$item->getId()] = $image;
                 break;
             }
         }
-        $a = 1;
     }
 
     private function calcTemplateFields(): void
