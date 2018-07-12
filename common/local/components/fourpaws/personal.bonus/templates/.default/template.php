@@ -96,7 +96,7 @@ $bonus = $arResult['BONUS'];
         </div>
 
         <ul class="b-account-bonus__list-info">
-            <?php if($bonus->getRealDiscount() >= $bonus->getStartDiscount() || $bonus->getRealDiscount() <= $bonus->getEndDiscount()){ ?>
+            <?php if (($bonus->getRealDiscount() >= $bonus->getStartDiscount()) && ($bonus->getRealDiscount() < $bonus->getEndDiscount())) { ?>
                 <li class="b-account-bonus__item-info">
                     <div class="b-account-bonus__title-info">Осталось до <?= $bonus->getNextDiscount() ?>% —</div>
                     <div class="b-account-bonus__text"><?= $bonus->getSumToNext() ?>
