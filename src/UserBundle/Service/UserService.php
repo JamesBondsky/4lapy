@@ -382,7 +382,7 @@ class UserService implements
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public function setClientPersonalDataByCurUser(Client $client, User $user = null)
+    public function setClientPersonalDataByCurUser(Client $client, User $user = null): void
     {
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();

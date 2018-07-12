@@ -28,6 +28,7 @@ use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
@@ -42,11 +43,15 @@ use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactNotFoundException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Card;
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
@@ -827,6 +832,21 @@ class OrderService implements LoggerAwareInterface
 
                 $_SESSION['SEND_REGISTER_EMAIL'] = true;
                 $user = $this->userRegistrationProvider->register($user);
+
+                try {
+                    $client = new Client();
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
+                    $this->manzanaService->updateContact($client)->contactId;
+                } catch (ContactUpdateException | ManzanaServiceException $e) {
+                    $this->log()->error(
+                        sprintf(
+                            'failed to create manzana contact: %s: %s',
+                            \get_class($e),
+                            $e->getMessage()
+                        ),
+                        ['user' => $user->getId()]
+                    );
+                }
 
                 /** @noinspection PhpInternalEntityUsedInspection */
                 $order->setFieldNoDemand('USER_ID', $user->getId());
