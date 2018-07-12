@@ -1768,4 +1768,14 @@ class Offer extends IblockElement
     {
         return round($this->getOldPrice() - $this->getPrice());
     }
+
+    /**
+     * @param string $primary
+     *
+     * @return Offer|null
+     */
+    public static function createFromPrimary(string $primary): ?Offer
+    {
+        return OfferQuery::getById((int)$primary);
+    }
 }

@@ -237,13 +237,15 @@ class SalePreset
             $offer = Offer::createFromPrimary($basketItem->getProductId());
             if ($offer) {
                 $product = $offer->getProduct();
+            } else {
+                continue;
             }
 
             $basketArrayCollection->add(
                 [
                     'basketId' => $basketItem->getId(),
-                    'id' => $basketItem->getProductId(),
-                    'price' => $offer->getXmlId(),
+                    'id' => $offer->getXmlId(),
+                    'price' => $basketItem->getPrice(),
                     'discount' => $basketItem->getDiscountPrice(),
                     'tax' => $basketItem->getVat(),
                     'quantity' => $basketItem->getQuantity(),
