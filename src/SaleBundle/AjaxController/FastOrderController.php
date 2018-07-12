@@ -8,6 +8,7 @@ namespace FourPaws\SaleBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\LoaderException;
@@ -15,22 +16,21 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Delivery\Services\Table as DeliveryTable;
-use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
+use Exception;
 use FourPaws\App\Application as App;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
-use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -74,20 +74,30 @@ class FastOrderController extends Controller
     private $basketService;
     /** @var BasketViewService */
     private $basketViewService;
-    /** @var StoreService  */
+    /** @var StoreService */
     private $storeService;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+    /**
+     * @var SalePreset
+     */
+    private $salePreset;
 
     /**
      * OrderController constructor.
      *
-     * @param OrderService                 $orderService
-     * @param UserAuthorizationInterface   $userAuthProvider
+     * @param OrderService $orderService
+     * @param UserAuthorizationInterface $userAuthProvider
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param UserCitySelectInterface      $citySelectProvider
-     * @param AjaxMess                     $ajaxMess
-     * @param BasketService                $basketService
-     * @param BasketViewService            $basketViewService
-     * @param StoreService                 $storeService
+     * @param UserCitySelectInterface $citySelectProvider
+     * @param AjaxMess $ajaxMess
+     * @param BasketService $basketService
+     * @param BasketViewService $basketViewService
+     * @param StoreService $storeService
+     * @param GoogleEcommerceService $ecommerceService
+     * @param SalePreset $salePreset
      */
     public function __construct(
         OrderService $orderService,
@@ -97,8 +107,11 @@ class FastOrderController extends Controller
         AjaxMess $ajaxMess,
         BasketService $basketService,
         BasketViewService $basketViewService,
-        StoreService $storeService
-    ) {
+        StoreService $storeService,
+        GoogleEcommerceService $ecommerceService,
+        SalePreset $salePreset
+    )
+    {
         $this->orderService = $orderService;
         $this->userAuthProvider = $userAuthProvider;
         $this->currentUserProvider = $currentUserProvider;
@@ -107,6 +120,8 @@ class FastOrderController extends Controller
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
         $this->storeService = $storeService;
+        $this->ecommerceService = $ecommerceService;
+        $this->salePreset = $salePreset;
     }
 
     /**
@@ -114,27 +129,42 @@ class FastOrderController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     *
+     * @throws Exception
+     * @throws ArgumentNullException
+     * @throws ArgumentException
      */
     public function loadAction(Request $request): JsonResponse
     {
-        $basketData = [];
         $addData = [];
         $requestType = $request->get('type', 'basket');
         if ($requestType === 'card') {
-            /** add to basket
+            /**
+             * add to basket
+             *
              * @see \FourPaws\SaleBundle\AjaxController\BasketController
              */
             $offerId = (int)$request->get('offerId', 0);
+
             if ($offerId === 0) {
                 $offerId = (int)$request->get('offerid', 0);
             }
+
             $quantity = (int)$request->get('quantity', 1);
 
             try {
-                $this->basketService->addOfferToBasket($offerId, $quantity);
+                $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity);
+
                 $addData = [
                     'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 ];
+
+                $temporaryItem = clone $basketItem;
+                $temporaryItem->setFieldNoDemand('QUANTITY', $quantity);
+                $addData['execution'] = $this->ecommerceService->renderScript(
+                    $this->salePreset->createProductsFromBitrixBasketItem($temporaryItem),
+                    false
+                );
 
             } catch (BaseExceptionInterface $e) {
                 return $this->ajaxMess->getSystemError();
@@ -144,13 +174,14 @@ class FastOrderController extends Controller
                 return $this->ajaxMess->getSystemError();
             }
         }
+
         global $APPLICATION;
         ob_start();
         $APPLICATION->IncludeComponent(
             'fourpaws:fast.order',
             '',
             [
-                'TYPE'         => 'innerForm',
+                'TYPE' => 'innerForm',
                 'REQUEST_TYPE' => $requestType,
             ],
             null,
@@ -182,7 +213,7 @@ class FastOrderController extends Controller
 
         $currentStore = null;
         $stores = $this->storeService->getStoresByCurrentLocation();
-        if(!$stores->isEmpty()) {
+        if (!$stores->isEmpty()) {
             /** @var Store $currentStore */
             $currentStore = $stores->first();
         }
@@ -190,7 +221,7 @@ class FastOrderController extends Controller
         $selectedCity = $this->citySelectProvider->getSelectedCity();
         $orderStorage
             ->setSplit(false)
-            ->setFastOrder(true) // быстрый заказ теперь определяется через storage
+            ->setFastOrder(true)// быстрый заказ теперь определяется через storage
             ->setPhone($phone)
             ->setName($name)
             ->setFuserId($this->currentUserProvider->getCurrentFUserId())
@@ -199,8 +230,7 @@ class FastOrderController extends Controller
             ->setDeliveryId(DeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'])
             ->setDeliveryPlaceCode($currentStore->getCode())
             ->setCity($selectedCity['NAME'])
-            ->setCityCode($selectedCity['CODE'])
-        ;
+            ->setCityCode($selectedCity['CODE']);
 
         if ($this->userAuthProvider->isAuthorized()) {
             try {
@@ -226,7 +256,7 @@ class FastOrderController extends Controller
                     $html = ob_get_clean();
 
                     return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', [
-                        'html'       => $html,
+                        'html' => $html,
                         'miniBasket' => $this->basketViewService->getMiniBasketHtml(),
                     ]);
                 }
@@ -242,7 +272,7 @@ class FastOrderController extends Controller
             return $this->ajaxMess->getOrderCreateError('Доставка выбранных позиций в вашем регионе недоступна, пожалуйста попробуйте заказать другие товары или дождитесь появления данных товаров в вашем регионе');
         } catch (OrderCreateException $e) {
             return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
-        } catch (NotImplementedException|NotSupportedException|ObjectNotFoundException|\Exception $e) {
+        } catch (NotImplementedException|NotSupportedException|ObjectNotFoundException|Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->error('Системная ошибка - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();

@@ -65,6 +65,65 @@ class SalePreset
     }
 
     /**
+     * @param BasketItem $basketItem
+     *
+     * @return GoogleEcommerce
+     */
+    public function createAddFromBasketItem(BasketItem $basketItem): GoogleEcommerce
+    {
+        return (new GoogleEcommerce())->setEcommerce(
+            (new Ecommerce())
+                ->setCurrencyCode($basketItem->getCurrency())
+                ->setAdd(
+                    (new Action())
+                        ->setProducts(
+                            $this->createProductsFromBitrixBasketItem($basketItem)
+                        )
+                )
+        );
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     *
+     * @return GoogleEcommerce
+     */
+    public function createRemoveFromBasketItem(BasketItem $basketItem): GoogleEcommerce
+    {
+        return (new GoogleEcommerce())->setEcommerce(
+            (new Ecommerce())
+                ->setCurrencyCode($basketItem->getCurrency())
+                ->setRemove(
+                    (new Action())
+                        ->setProducts(
+                            $this->createProductsFromBitrixBasketItem($basketItem)
+                        )
+                )
+        );
+    }
+
+    /**
+     * @param array|BasketItem[] $basketItemCollection
+     *
+     * @return GoogleEcommerce
+     */
+    public function createAddFromBasketItemCollection(array $basketItemCollection): GoogleEcommerce
+    {
+        $currency = $basketItemCollection[0] ? $basketItemCollection[0]->getCurrency() : 'RUB';
+
+        return (new GoogleEcommerce())->setEcommerce(
+            (new Ecommerce())
+                ->setCurrencyCode($currency)
+                ->setAdd(
+                    (new Action())
+                        ->setProducts(
+                            $this->createProductsFromBitrixBasketItemCollection($basketItemCollection)
+                        )
+                )
+        );
+    }
+
+    /**
      * @param Order $order
      * @param string $affiliation
      *
@@ -94,6 +153,45 @@ class SalePreset
                         )
                 )
         );
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     *
+     * @return ArrayCollection
+     *
+     * @internal param Basket $basket
+     */
+    public function createProductsFromBitrixBasketItem(BasketItem $basketItem): ArrayCollection
+    {
+        /**
+         * @var Basket $basket
+         */
+        $basket = Basket::create(\SITE_ID);
+        $basket->addItem($basketItem);
+
+        return $this->createProductsFromBitrixBasket($basket);
+    }
+
+    /**
+     * @param array|BasketItem[] $basketItemCollection
+     *
+     * @return ArrayCollection
+     *
+     * @internal param Basket $basket
+     */
+    public function createProductsFromBitrixBasketItemCollection(array $basketItemCollection): ArrayCollection
+    {
+        /**
+         * @var Basket $basket
+         */
+        $basket = Basket::create(\SITE_ID);
+
+        foreach ($basketItemCollection as $basketItem) {
+            $basket->addItem($basketItem);
+        }
+
+        return $this->createProductsFromBitrixBasket($basket);
     }
 
     /**

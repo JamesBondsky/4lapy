@@ -183,10 +183,13 @@ class BasketService implements LoggerAwareInterface
         }
         /** @var BasketItem $basketItem */
         $basketItem = $this->getBasket()->getItemById($basketId);
+
         if (null === $basketItem) {
             throw new NotFoundException('Не найден элемент корзины');
         }
+
         $result = $basketItem->delete();
+
         if (!$result->isSuccess()) {
             // проверяем не специально ли было запорото
             $found = false;
@@ -195,15 +198,18 @@ class BasketService implements LoggerAwareInterface
                     $found = true;
                 }
             }
+
             if (!$found) {
                 throw new BitrixProxyException($result);
             }
         }
+
         $res = BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
         if ($res) {
             //всегда перегружаем из-за подарков
             $this->setBasketIds();
         }
+
         return $res;
     }
 

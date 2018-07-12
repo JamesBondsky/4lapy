@@ -22,6 +22,8 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Discount\Manzana;
@@ -61,6 +63,14 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @var CouponStorageInterface
      */
     private $couponStorage;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+    /**
+     * @var SalePreset
+     */
+    private $salePreset;
 
     /**
      * BasketController constructor.
@@ -69,17 +79,24 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @param BasketViewService $basketViewService
      * @param Manzana $manzana
      * @param CouponStorageInterface $couponStorage
+     * @param GoogleEcommerceService $ecommerceService
+     * @param SalePreset $salePreset
      */
     public function __construct(
         BasketService $basketService,
         BasketViewService $basketViewService,
         Manzana $manzana,
-        CouponStorageInterface $couponStorage
-    ) {
+        CouponStorageInterface $couponStorage,
+        GoogleEcommerceService $ecommerceService,
+        SalePreset $salePreset
+    )
+    {
         $this->basketService = $basketService;
         $this->basketViewService = $basketViewService;
         $this->manzana = $manzana;
         $this->couponStorage = $couponStorage;
+        $this->ecommerceService = $ecommerceService;
+        $this->salePreset = $salePreset;
     }
 
     /**
@@ -105,8 +122,7 @@ class BasketController extends Controller implements LoggerAwareInterface
         $quantity = (int)$request->get('quantity', 1);
 
         try {
-
-            $this->basketService->addOfferToBasket($offerId, $quantity);
+            $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity);
             // @todo костыль - иначе в миникорзине не будет картинки нового товара
             $this->basketService->getOfferCollection(true);
             $data = [
@@ -114,6 +130,14 @@ class BasketController extends Controller implements LoggerAwareInterface
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 'disableAdd' => false
             ];
+
+            $temporaryItem = clone $basketItem;
+            $temporaryItem->setFieldNoDemand('QUANTITY', $quantity);
+            $data['execution'] = $this->ecommerceService->renderScript(
+                $this->salePreset->createAddFromBasketItem($temporaryItem),
+                false
+            );
+
             $response = JsonSuccessResponse::createWithData(
                 'Товар добавлен в корзину',
                 $data,
@@ -138,6 +162,8 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      * @throws ArgumentNullException
      * @throws Exception
      * @throws ArgumentException
@@ -149,7 +175,9 @@ class BasketController extends Controller implements LoggerAwareInterface
     public function bulkAddAction(Request $request): JsonResponse
     {
         $offers = (array)$request->get('offers', []);
-        $offers = array_filter(array_map('\intval', $offers));
+        $offers = \array_filter(\array_map('\intval', $offers));
+        $itemCollection = [];
+
         if (empty($offers)) {
             $response = JsonErrorResponse::createWithData(
                 'Не переданы товары',
@@ -160,7 +188,10 @@ class BasketController extends Controller implements LoggerAwareInterface
         } else {
             foreach ($offers as $offerId) {
                 try {
-                    $this->basketService->addOfferToBasket($offerId);
+                    $item = $this->basketService->addOfferToBasket($offerId);
+                    $temporary = clone $item;
+                    $temporary->setFieldNoDemand('QUANTITY', 1);
+                    $itemCollection[] = $temporary;
                 } catch (BaseExceptionInterface $e) {
                     $response = JsonErrorResponse::createWithData(
                         $e->getMessage(),
@@ -171,14 +202,23 @@ class BasketController extends Controller implements LoggerAwareInterface
                 }
             }
         }
+
         /** @noinspection UnSafeIsSetOverArrayInspection */
         if (!isset($response)) {
             // @todo костыль - иначе в миникорзине не будет картинки нового товара
             $this->basketService->getOfferCollection(true);
 
+            if ($itemCollection) {
+                $data['execution'] = $this->ecommerceService->renderScript(
+                    $this->salePreset->createAddFromBasketItemCollection($itemCollection),
+                    false
+                );
+            }
+
             $data = [
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
+
             $response = JsonSuccessResponse::createWithData(
                 'Набор добавлен в корзину',
                 $data,
@@ -195,6 +235,7 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws RuntimeException
      * @throws ArgumentNullException
      * @throws ArgumentException
      * @throws Exception
@@ -206,6 +247,7 @@ class BasketController extends Controller implements LoggerAwareInterface
     public function bulkAddBundleAction(Request $request): JsonResponse
     {
         $offers = (array)$request->get('offerId', []);
+        $itemCollection = [];
 
         if (empty($offers)) {
             $response = JsonErrorResponse::createWithData(
@@ -221,7 +263,10 @@ class BasketController extends Controller implements LoggerAwareInterface
                 $quantity = (int)$explode[1];
 
                 try {
-                    $this->basketService->addOfferToBasket($offerId, $quantity);
+                    $item = $this->basketService->addOfferToBasket($offerId, $quantity);
+                    $temporary = clone $item;
+                    $temporary->setFieldNoDemand('QUANTITY', $quantity);
+                    $itemCollection[] = $temporary;
                 } catch (BaseExceptionInterface $e) {
                     $response = JsonErrorResponse::createWithData(
                         $e->getMessage(),
@@ -232,6 +277,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                 }
             }
         }
+
         /** @noinspection UnSafeIsSetOverArrayInspection */
         if (!isset($response)) {
             // @todo костыль - иначе в миникорзине не будет картинки нового товара
@@ -240,6 +286,14 @@ class BasketController extends Controller implements LoggerAwareInterface
             $data = [
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
+
+            if ($itemCollection) {
+                $data['execution'] = $this->ecommerceService->renderScript(
+                    $this->salePreset->createAddFromBasketItemCollection($itemCollection),
+                    false
+                );
+            }
+
             $response = JsonSuccessResponse::createWithData(
                 'Комплект добавлен в корзину',
                 $data,
@@ -351,6 +405,9 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @throws \RuntimeException
+     * @throws ArgumentNullException
+     * @throws ArgumentException
      * @throws Exception
      * @throws ObjectNotFoundException
      *
@@ -362,12 +419,24 @@ class BasketController extends Controller implements LoggerAwareInterface
         $isFastOrder = $request->get('fastOrder', 'n') === 'y';
 
         try {
-            $this->basketService->deleteOfferFromBasket($basketId);
+            $basketItem = $this->basketService->getBasket()->getItemById($basketId);
+            if ($basketItem) {
+                $basketItem = clone $basketItem;
+            }
+
+            $result = $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
                 'basket' => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 'fastOrder' => $isFastOrder ? $this->basketViewService->getFastOrderHtml(true) : '',
             ];
+
+            if ($result) {
+                $data['execution'] = $this->ecommerceService->renderScript(
+                    $this->salePreset->createRemoveFromBasketItem($basketItem),
+                    false
+                );
+            }
 
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -575,8 +644,8 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws Exception
      * @throws ObjectNotFoundException
