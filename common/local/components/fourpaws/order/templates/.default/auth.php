@@ -8,8 +8,8 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Helpers\WordHelper;
 use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -54,6 +54,7 @@ $communicationWays = $orderPropertyService->getPropertyVariants($orderPropertySe
     );
 
 /** @var OrderPropertyVariant $currentCommWay */
+/** @var array $communicationWays */
 $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
 
 /** @var User $user */
@@ -67,7 +68,9 @@ foreach ($basket as $item) {
     $basketItems[$item->getProductId()]['totalPrice'] += $item->getQuantity() * $item->getPrice();
 }
 
-?>
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
+} ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
         <?php $APPLICATION->ShowTitle() ?>
@@ -75,13 +78,17 @@ foreach ($basket as $item) {
     <div class="b-order js-order-whole-block">
         <div class="b-tab-list">
             <ul class="b-tab-list__list">
-                <li class="b-tab-list__item active"><span class="b-tab-list__step">Шаг </span>1. Контактные данные
+                <li class="b-tab-list__item active">
+                    <span class="b-tab-list__step">Шаг </span>1. Контактные данные
                 </li>
-                <li class="b-tab-list__item"><span class="b-tab-list__step">Шаг </span>2. Выбор доставки
+                <li class="b-tab-list__item">
+                    <span class="b-tab-list__step">Шаг </span>2. Выбор доставки
                 </li>
-                <li class="b-tab-list__item"><span class="b-tab-list__step">Шаг </span>3. Выбор оплаты
+                <li class="b-tab-list__item">
+                    <span class="b-tab-list__step">Шаг </span>3. Выбор оплаты
                 </li>
-                <li class="b-tab-list__item">Завершение
+                <li class="b-tab-list__item">
+                    Завершение
                 </li>
             </ul>
         </div>

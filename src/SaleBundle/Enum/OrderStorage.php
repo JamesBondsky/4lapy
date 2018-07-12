@@ -1,23 +1,18 @@
 <?php
-/*
- * @copyright Copyright (c) ADV/web-engineering co.
- */
 
 namespace FourPaws\SaleBundle\Enum;
 
-
+/**
+ * Class OrderStorage
+ * @package FourPaws\SaleBundle\Enum
+ */
 class OrderStorage
 {
     public const NOVALIDATE_STEP = 'novalidate';
-
     public const AUTH_STEP = 'auth';
-
     public const DELIVERY_STEP = 'delivery';
-
     public const PAYMENT_STEP = 'payment';
-
     public const PAYMENT_STEP_CARD = 'payment-card';
-
     public const COMPLETE_STEP = 'complete';
 
     /**
