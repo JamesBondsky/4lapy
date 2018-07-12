@@ -168,6 +168,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'PERIOD_TYPE' => $currentDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
                 'DELIVERY_DATE' => $currentDeliveryResult->getDeliveryDate(),
                 'CODE' => $currentDeliveryResult->getDeliveryCode(),
+                'ZONE' => $currentDeliveryResult->getDeliveryZone(),
                 'RESULT' => $currentDeliveryResult
             ];
         }
@@ -181,6 +182,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'PERIOD_TYPE' => $defaultDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
                 'DELIVERY_DATE' => $defaultDeliveryResult->getDeliveryDate(),
                 'CODE' => $defaultDeliveryResult->getDeliveryCode(),
+                'ZONE' => $currentDeliveryResult->getDeliveryZone(),
                 'RESULT' => $defaultDeliveryResult
             ];
         }
