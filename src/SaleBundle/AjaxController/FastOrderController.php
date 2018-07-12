@@ -188,10 +188,13 @@ class FastOrderController extends Controller
             ['HIDE_ICONS' => 'Y']
         );
         $html = ob_get_clean();
+
         $data = ['html' => $html];
-        if (!empty($addData['miniBasket'])) {
-            $data['miniBasket'] = $addData['miniBasket'];
+
+        if ($addData) {
+            $data = \array_merge($data, $addData);
         }
+
         return JsonSuccessResponse::createWithData('подгружено', $data);
     }
 
