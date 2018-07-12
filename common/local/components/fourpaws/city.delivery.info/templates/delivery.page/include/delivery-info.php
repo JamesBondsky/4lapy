@@ -23,7 +23,11 @@ use FourPaws\Helpers\WordHelper;
     <div class="b-delivery__delivery-type-row__day">
         <p>Получение</p>
         <?php if ($delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE) { ?>
-            <span>В день оформления заказа (при оформлении до 13:00) или на следующий день</span>
+            <?php if ($delivery['ZONE'] === DeliveryService::ZONE_1) { ?>
+                <span>В день оформления заказа (при оформлении до 13:00) или на следующий день</span>
+            <?php } else { ?>
+                <span>В день оформления заказа (при оформлении до 14:00) или на следующий день</span>
+            <?php } ?>
         <?php } else { ?>
             <span>
                 Через <?= $delivery['PERIOD_FROM'] ?> <?= WordHelper::declension(
