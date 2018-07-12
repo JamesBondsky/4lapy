@@ -21,48 +21,66 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserService;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
+
+/** @noinspection EfferentObjectCouplingInspection
+ *
+ * Class FourPawsOrderCompleteComponent
+ */
 class FourPawsOrderCompleteComponent extends FourPawsComponent
 {
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
-
     /** @var DeliveryService */
     protected $deliveryService;
-
     /** @var OrderService */
     protected $orderService;
-
     /** @var StoreService */
     protected $storeService;
-
     /** @var ManzanaPosService */
     protected $manzanaPosService;
-
     /** @var UserAccountService */
     protected $userAccountService;
-    /** @var \FourPaws\UserBundle\Service\UserService  */
+    /** @var UserService */
     private $authUserService;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+    /**
+     * @var SalePreset
+     */
+    private $salePreset;
 
     /**
      * FourPawsOrderCompleteComponent constructor.
      *
      * @param null $component
      *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
     public function __construct($component = null)
@@ -75,13 +93,25 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->manzanaPosService = $serviceContainer->get('manzana.pos.service');
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
+        $this->ecommerceService = $serviceContainer->get(GoogleEcommerceService::class);
+        $this->salePreset = $serviceContainer->get(SalePreset::class);
 
         parent::__construct($component);
     }
 
     /**
-     * @global \CMain $APPLICATION
+     * @global CMain $APPLICATION
      *
+     * @throws Exception
+     * @throws UserNotFoundException
+     * @throws RuntimeException
+     * @throws ObjectPropertyException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     * @throws NotFoundException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -106,6 +136,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
             $user = $this->currentUserProvider->getCurrentUser();
         } catch (NotAuthorizedException $e) {
         }
+
         /**
          * При переходе на страницу "спасибо за заказ" мы ищем заказ с переданным id
          */
@@ -116,6 +147,12 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                 $user ? $user->getId() : null,
                 $this->arParams['HASH']
             );
+
+            $this->arResult['ECOMMERCE_VIEW_SCRIPT_ORDER'] = $this->ecommerceService->renderScript(
+                $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
+                true
+            );
+
             if ($this->orderService->hasRelatedOrder($order)) {
                 $relatedOrder = $this->orderService->getRelatedOrder($order);
                 if ($relatedOrder->getId() < $order->getId()) {
@@ -123,6 +160,11 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                     $relatedOrder = $order;
                     $order = $tmp;
                 }
+
+                $this->arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED'] = $this->ecommerceService->renderScript(
+                    $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
+                    true
+                );
             }
         } catch (NotFoundException $e) {
             Tools::process404('', true, true, true);
@@ -168,6 +210,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         $this->userAccountService->refreshUserBalance($user);
 
         /** @var Shipment $shipment */
+        /** @noinspection PhpAssignmentInConditionInspection */
         if ($shipment = $order->getShipmentCollection()->current()) {
             $this->arResult['ORDER_DELIVERY'] = $this->getDeliveryData($order, $this->arResult['ORDER_PROPERTIES']);
             $deliveryCode = $shipment->getDelivery()->getCode();
@@ -196,6 +239,11 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
      * @param User $user
      *
      * @return array
+     *
+     * @throws UserNotFoundException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws NotFoundException
      */
     protected function getOrderProperties(Order $order, User $user): array
     {
@@ -215,10 +263,13 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
      * @param Order $order
      * @param array $properties
      *
+     * @return array
+     *
+     * @throws Exception
+     * @throws NotFoundException
      * @throws ArgumentException
      * @throws SystemException
      * @throws ObjectPropertyException
-     * @return array
      */
     protected function getDeliveryData(Order $order, array $properties): array
     {
@@ -227,6 +278,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         if ($properties['DPD_TERMINAL_CODE']) {
             $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
             /** @var Store $terminal */
+            /** @noinspection PhpAssignmentInConditionInspection */
             if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
                 $result['SCHEDULE'] = $terminal->getScheduleString();
             }
