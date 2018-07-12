@@ -16,4 +16,13 @@ interface ScriptRenderedInterface
      * @return string
      */
     public function renderScript($data, bool $addScriptTag): string;
+
+    /**
+     * @param $data
+     * @param string $name
+     * @param bool $addScriptTag
+     *
+     * @return string
+     */
+    public function renderPreset($data, string $name, bool $addScriptTag): string;
 }
