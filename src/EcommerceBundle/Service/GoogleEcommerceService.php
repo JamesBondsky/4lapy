@@ -54,9 +54,9 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     /**
      * GoogleEcommerceService constructor.
      *
-     * @param SerializerInterface       $serializer
+     * @param SerializerInterface $serializer
      * @param ArrayTransformerInterface $arrayTransformer
-     * @param EngineInterface           $renderer
+     * @param EngineInterface $renderer
      */
     public function __construct(SerializerInterface $serializer, ArrayTransformerInterface $arrayTransformer, EngineInterface $renderer)
     {
@@ -67,7 +67,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param object $data
-     * @param bool   $addScriptTag
+     * @param bool $addScriptTag
      *
      * @return string
      *
@@ -82,9 +82,26 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
+     * @param object $data
+     * @param string $name
+     * @param bool $addScriptTag
+     *
+     * @return string
+     *
+     * @throws RuntimeException
+     */
+    public function renderPreset($data, string $name, bool $addScriptTag): string
+    {
+        /** @noinspection PhpParamsInspection */
+        $data = $this->serializer->serialize($data, 'json');
+
+        return \trim($this->renderer->render('EcommerceBundle:GoogleEcommerce:inline.script.php', \compact('data', 'name', 'addScriptTag')));
+    }
+
+    /**
      * @param ArrayMapperInterface $mapper
-     * @param array                $data
-     * @param string               $type
+     * @param array $data
+     * @param string $type
      *
      * @return GoogleEcommerce
      *
@@ -112,7 +129,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ProductCollection $collection
-     * @param string            $list
+     * @param string $list
      *
      * @return ArrayCollection
      */
@@ -142,7 +159,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param OfferCollection $collection
-     * @param string          $list
+     * @param string $list
      *
      * @return ArrayCollection
      */
@@ -170,7 +187,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ProductCollection $collection
-     * @param string            $list
+     * @param string $list
      *
      * @return GoogleEcommerce
      */
@@ -185,7 +202,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
-     * @param Offer  $offer
+     * @param Offer $offer
      * @param string $list
      *
      * @return GoogleEcommerce
@@ -211,7 +228,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
-     * @param array  $offerList
+     * @param array $offerList
      * @param string $list
      *
      * @return GoogleEcommerce

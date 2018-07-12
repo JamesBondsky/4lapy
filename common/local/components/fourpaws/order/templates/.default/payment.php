@@ -60,7 +60,10 @@ $basketPrice = $basket->getOrderableItems()->getPrice();
 
 /** @var User $user */
 $user = $arResult['USER'];
-?>
+
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
+} ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
         <?php $APPLICATION->ShowTitle() ?>
