@@ -133,7 +133,7 @@ class BasketController extends Controller implements LoggerAwareInterface
 
             $temporaryItem = clone $basketItem;
             $temporaryItem->setFieldNoDemand('QUANTITY', $quantity);
-            $data['execution'] = $this->ecommerceService->renderScript(
+            $data['command'] = $this->ecommerceService->renderScript(
                 $this->salePreset->createAddFromBasketItem($temporaryItem),
                 false
             );
@@ -209,7 +209,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $this->basketService->getOfferCollection(true);
 
             if ($itemCollection) {
-                $data['execution'] = $this->ecommerceService->renderScript(
+                $data['command'] = $this->ecommerceService->renderScript(
                     $this->salePreset->createAddFromBasketItemCollection($itemCollection),
                     false
                 );
@@ -288,7 +288,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             ];
 
             if ($itemCollection) {
-                $data['execution'] = $this->ecommerceService->renderScript(
+                $data['command'] = $this->ecommerceService->renderScript(
                     $this->salePreset->createAddFromBasketItemCollection($itemCollection),
                     false
                 );
@@ -432,7 +432,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             ];
 
             if ($result) {
-                $data['execution'] = $this->ecommerceService->renderScript(
+                $data['command'] = $this->ecommerceService->renderScript(
                     $this->salePreset->createRemoveFromBasketItem($basketItem),
                     false
                 );
