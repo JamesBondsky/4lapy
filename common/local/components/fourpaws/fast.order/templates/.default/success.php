@@ -1,8 +1,14 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
-<?php if ($arParams['LOAD_TYPE'] !== 'default') { ?>
+}
+
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
+}
+
+if ($arParams['LOAD_TYPE'] !== 'default') { ?>
     <div class="b-popup-one-click__close-bar">
         <a class="b-popup-one-click__close js-close-popup" href="javascript:void(0)" title="Закрыть"></a>
         <h1 class="b-title b-title--one-click b-title--one-click-head">Быстрый заказ</h1>
