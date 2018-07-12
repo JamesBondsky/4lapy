@@ -67,6 +67,15 @@ class Product
     protected $price = 0;
 
     /**
+     * Количество
+     *
+     * @Serializer\Type("int")
+     *
+     * @var int
+     */
+    protected $quantity = 0;
+
+    /**
      * Номер в списке товаров
      *
      * @Serializer\Type("int")
@@ -212,6 +221,26 @@ class Product
     public function setPosition(int $position): Product
     {
         $this->position = $position;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getQuantity(): int
+    {
+        return $this->quantity;
+    }
+
+    /**
+     * @param int $quantity
+     *
+     * @return $this
+     */
+    public function setQuantity(int $quantity): self
+    {
+        $this->quantity = $quantity;
 
         return $this;
     }
