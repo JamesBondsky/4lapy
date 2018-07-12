@@ -400,12 +400,8 @@ class UserService implements
         if ($dateRegister instanceof DateTime) {
             $client->plRegistrationDate = $user->getManzanaDateRegister();
         }
-        if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {
-            // если e-mail и телефон подтверждены - отмечаем, что анкета актуальна и делаем карту бонусной
-            // - так делалось по умолчанию на старом сайте
-            $client->setActualContact();
-            $client->setLoyaltyProgramContact();
-        }
+        $client->setActualContact();
+        $client->setLoyaltyProgramContact();
     }
 
     /**
