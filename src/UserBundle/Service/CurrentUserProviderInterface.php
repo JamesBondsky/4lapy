@@ -2,6 +2,7 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -46,4 +47,10 @@ interface CurrentUserProviderInterface
      * @return array
      */
     public function getUserGroups(int $id = 0): array;
+
+    /**
+     * @param Client    $client
+     * @param User|null $user
+     */
+    public function setClientPersonalDataByCurUser(Client $client, User $user = null): void;
 }

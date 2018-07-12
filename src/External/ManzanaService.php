@@ -581,7 +581,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return Contact
      *
-     * @throws \Exception
      * @throws ManzanaServiceException
      * @throws ContactNotFoundException
      */
