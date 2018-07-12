@@ -28,7 +28,11 @@ use Symfony\Component\Templating\EngineInterface;
 /**
  * Class GoogleEcommerceService
  *
- * @todo    добавить общий класс/trait; добавить настройки с магией
+ * @todo add base ecommerce service class
+ * @todo add ua settings
+ * @todo add ga/gtm render
+ * @todo add render configuration
+ * @todo move products into preset
  *
  * @package FourPaws\EcommerceBundle\Service
  */
