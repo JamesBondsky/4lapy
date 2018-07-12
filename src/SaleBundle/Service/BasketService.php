@@ -183,10 +183,13 @@ class BasketService implements LoggerAwareInterface
         }
         /** @var BasketItem $basketItem */
         $basketItem = $this->getBasket()->getItemById($basketId);
+
         if (null === $basketItem) {
             throw new NotFoundException('Не найден элемент корзины');
         }
+
         $result = $basketItem->delete();
+
         if (!$result->isSuccess()) {
             // проверяем не специально ли было запорото
             $found = false;
@@ -195,15 +198,18 @@ class BasketService implements LoggerAwareInterface
                     $found = true;
                 }
             }
+
             if (!$found) {
                 throw new BitrixProxyException($result);
             }
         }
+
         $res = BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
         if ($res) {
             //всегда перегружаем из-за подарков
             $this->setBasketIds();
         }
+
         return $res;
     }
 
@@ -1037,9 +1043,10 @@ class BasketService implements LoggerAwareInterface
                 return null;
             }
             return $res->fetch();
-        } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+        } catch (ObjectPropertyException | ArgumentException | SystemException $e) {
             /** @todo залогировать */
         }
+
         return null;
     }
 
@@ -1065,13 +1072,14 @@ class BasketService implements LoggerAwareInterface
 
         try {
             $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
                 $result[$basketItem->getProductId()] += $basketItem->getQuantity();
             }
         } catch (\Exception $e) {
             $this->log()->error(
-                sprintf('Failed to get basket products: %s: %s', \get_class($e), $e->getMessage()),
+                \sprintf('Failed to get basket products: %s: %s', \get_class($e), $e->getMessage()),
                 ['trace' => $e->getTrace()]
             );
         }

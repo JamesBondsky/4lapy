@@ -51,7 +51,7 @@ if (!($product instanceof Product)) {
 }
 
 $offer = null;
-\CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
+CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
 /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
 try {
     $catalogElementDetailClass = new CatalogElementDetailComponent();
@@ -61,16 +61,19 @@ try {
         $logger->error('ошибка при получении оффера');
         /** ошибки быть не должно */
     }
-} catch (SystemException | \RuntimeException | ServiceNotFoundException $e) {
+} catch (SystemException | RuntimeException | ServiceNotFoundException $e) {
     $logger->error('ошибка при загрузке класса компонента');
     /** ошибки быть не должно, так как компонент отрабатывает выше */
     return;
 }
+
 if (null === $offer) {
     /** нет оффера что-то пошло не так */
     $logger->error('Нет оффера');
     return;
 }
+
+
 ?>
 <div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>"
      data-url="/ajax/catalog/product-info/product/" data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/">

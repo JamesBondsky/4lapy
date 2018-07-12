@@ -12,10 +12,15 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use WebArch\BitrixCache\BitrixCache;
 
+/**
+ * Class OfferQuery
+ *
+ * @package FourPaws\Catalog\Query
+ */
 class OfferQuery extends IblockElementQuery
 {
     /** кешируем на неделю  */
-    protected const CACHE_TIME_BY_ID = 7 * 24 * 60 * 60;
+    protected const CACHE_TIME_BY_ID = 7 * 60 * 60 * 12 * 2;
 
     /**
      * @param int $id
@@ -28,6 +33,7 @@ class OfferQuery extends IblockElementQuery
             /** @todo вместо null выбивать exception */
             return null;
         }
+
         $query = new static();
         $getOffer = function () use ($id, $query) {
             $collection = $query->withFilter(['ID' => $id])->exec();
