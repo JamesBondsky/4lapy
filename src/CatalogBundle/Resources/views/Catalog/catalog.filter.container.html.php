@@ -217,7 +217,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
         <?php $i = 0;
         $countItems = $productSearchResult->getProductCollection()->count();
-        foreach ($productSearchResult->getProductCollection() as $product) {
+        $collection = $productSearchResult->getProductCollection();
+        foreach ($collection as $product) {
             $i++;
 
             $APPLICATION->IncludeComponent(

@@ -1,12 +1,12 @@
 <?php
 /**
- * @var CBitrixComponentTemplate $this
- * @var CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
+ * @var CBitrixComponentTemplate      $this
+ * @var CMain                         $APPLICATION
+ * @var array                         $arParams
+ * @var array                         $arResult
  * @var CatalogElementDetailComponent $component
- * @var Product $product
- * @var Offer $currentOffer
+ * @var Product                       $product
+ * @var Offer                         $currentOffer
  */
 
 use FourPaws\App\Application;
@@ -41,19 +41,18 @@ $currentOffer = $arResult['CURRENT_OFFER'];
 
 $mainCombinationType = $currentOffer->getClothingSize() ? 'SIZE' : 'VOLUME';
 
-$this->setFrameMode(true);
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
+}
 
-$this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW);
-?>
+$this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>
     <a href="<?= $brand->getDetailPageUrl() ?>"
        class="b-title b-title--h2 b-title--inline b-title--card"
        title="<?= $brand->getName() ?>"><?= $brand->getName() ?></a>
     <h1 class="b-title b-title--h1 b-title--card"><?= $product->getName() ?></h1>
-<?php
-$this->EndViewTarget();
+<?php $this->EndViewTarget();
 
-$this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
-?>
+$this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
     <div class="b-product-card__slider">
         <div class="b-product-slider">
             <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for">
@@ -315,7 +314,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             <div class="b-plus-minus b-plus-minus--half-mobile js-buy1click-ps js-plus-minus-cont">
                 <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
                 <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"
-                       data-cont-max="<?=$currentOffer->getQuantity()?>" data-one-price="<?=$currentOffer->getPrice()?>" />
+                       data-cont-max="<?= $currentOffer->getQuantity() ?>"
+                       data-one-price="<?= $currentOffer->getPrice() ?>"/>
                 <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a>
                 <span class="b-plus-minus__by-line">Количество</span>
             </div>

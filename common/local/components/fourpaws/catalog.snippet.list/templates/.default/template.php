@@ -16,12 +16,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 if (0 === $component->getProductCollection()->count()) {
     return;
+}
+
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
 } ?>
 <div class="b-container">
     <section class="b-common-section" data-url="/ajax/catalog/product-info/">
         <div class="b-common-section__title-box b-common-section__title-box--sale">
             <h2 class="b-title b-title--sale"><?= $arParams['TITLE'] ?></h2>
-            <?/**
+            <?php
+            /**
              * Ссылка "Показать все" потребуется в случае добавления отдельной страницы с распродажей
              *
              * <a class="b-link b-link--title b-link--title" href="javascript:void(0)"
@@ -31,7 +36,8 @@ if (0 === $component->getProductCollection()->count()) {
              * <use class="b-icon__use" xlink:href="icons.svg#icon-arrow-right" href="icons.svg#icon-arrow-right">
              * </use>
              * </svg></span></a>
-             */ ?>
+             */
+            ?>
         </div>
         <div class="b-common-section__content b-common-section__content--sale js-popular-product">
             <?php foreach ($component->getProductCollection() as $product) {

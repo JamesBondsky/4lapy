@@ -13,6 +13,7 @@ use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\IblockSection;
+use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterTrait;
@@ -212,7 +213,29 @@ class Category extends IblockSection implements FilterInterface
                 $this->withParent($parent);
             }
         }
+
         return $this->parent;
+    }
+
+    /**
+     * @return CategoryCollection
+     */
+    public function getFullPathCollection(): CategoryCollection
+    {
+        $collection = new CategoryCollection(new \CDBResult());
+        $section = $this;
+
+        while ($section) {
+            $collection->add($section);
+
+            if ($section->getIblockSectionId() === 0) {
+                break;
+            }
+
+            $section = $section->getParent();
+        }
+
+        return $collection;
     }
 
     /**

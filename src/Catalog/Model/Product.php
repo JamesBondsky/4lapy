@@ -6,6 +6,7 @@
 
 namespace FourPaws\Catalog\Model;
 
+use CDBResult;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -16,11 +17,14 @@ use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Type\TextContent;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
+use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Query\BrandQuery;
+use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
@@ -258,9 +262,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     protected $purpose;
 
-    //TODO Изображения
     protected $PROPERTY_IMG = [];
-
 
     /**
      * @var bool
@@ -601,6 +603,18 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var array
      */
     protected $fullDeliveryAvailability;
+
+    /**
+     * @var Category
+     * @Serializer\Exclude()
+     */
+    protected $section;
+
+    /**
+     * @var CategoryCollection
+     * @Serializer\Exclude()
+     */
+    protected $fullPathCollection;
 
     /**
      * BitrixArrayItemBase constructor.
@@ -1860,9 +1874,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getOffers($skipZeroPrice = true, bool $reload = false, array $additionalFilter = []): Collection
     {
         if (null === $this->offers || $reload) {
-            $offerQuery =  (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+            $offerQuery = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
                 ->withOrder(['CATALOG_WEIGHT' => 'ASC']);
-            if(!empty($additionalFilter)){
+            if (!empty($additionalFilter)) {
                 foreach ($additionalFilter as $key => $value) {
                     $offerQuery->withFilterParameter($key, $value);
                 }
@@ -1908,6 +1922,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if (!($this->offers instanceof ArrayCollection)) {
             $this->offers = new ArrayCollection();
         }
+
         $this->offers->add($offer);
     }
 
@@ -2010,6 +2025,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
         return $this->getFullDeliveryAvailability()[$deliveryService->getCurrentDeliveryZone()] ?? [];
     }
 
@@ -2055,6 +2071,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function withTransportOnlyRefrigerator(bool $onlyRefrigerator = true): Product
     {
         $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = $onlyRefrigerator;
+
         return $this;
     }
 
@@ -2074,6 +2091,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function withDeliveryAreaRestrict(bool $restrict = true): Product
     {
         $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
+
         return $this;
     }
 
@@ -2083,5 +2101,36 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getWeightCapacityPacking(): string
     {
         return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
+    }
+
+    /**
+     * @return Category
+     */
+    public function getSection(): ?Category
+    {
+        if (null === $this->section) {
+            $this->section = (new CategoryQuery())
+                ->withFilterParameter('=ID', $this->getIblockSectionId())
+                ->exec()
+                ->first();
+        }
+
+        return $this->section;
+    }
+
+    /**
+     * Возвращает навигационную цепочку
+     *
+     * @return CategoryCollection
+     */
+    public function getFullPathCollection(): CategoryCollection
+    {
+        if (null === $this->fullPathCollection) {
+            $category = $this->getSection();
+
+            $this->fullPathCollection = $category ? $category->getFullPathCollection() : new CategoryCollection(new CDBResult());
+        }
+
+        return $this->fullPathCollection;
     }
 }

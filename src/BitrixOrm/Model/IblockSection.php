@@ -4,10 +4,15 @@ namespace FourPaws\BitrixOrm\Model;
 
 use FourPaws\BitrixOrm\Model\Traits\IblockModelTrait;
 
+/**
+ * Class IblockSection
+ *
+ * @package FourPaws\BitrixOrm\Model
+ */
 abstract class IblockSection extends BitrixArrayItemBase
 {
-    const ROOT_SECTION_NAME = 'root';
-    const ROOT_SECTION_CODE = 'root';
+    protected const ROOT_SECTION_NAME = 'root';
+    protected const ROOT_SECTION_CODE = 'root';
 
     use IblockModelTrait;
 

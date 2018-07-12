@@ -19,30 +19,30 @@ class ContactResult extends Result
      * @Serializer\XmlElement(cdata=false)
      */
     protected $contactId = '';
-    
+
     /**
      * @return string
      */
-    public function getContactId() : string
+    public function getContactId(): string
     {
         return $this->contactId;
     }
-    
+
     /**
      * @param string $contactId
      */
-    public function setContactId(string $contactId = '')
+    public function setContactId(string $contactId = ''): void
     {
         $this->result = $contactId;
     }
-    
+
     /**
      * @param string $result
      */
-    public function setResult(string $result = '')
+    public function setResult(string $result = ''): void
     {
         $this->error = true;
-        
+
         parent::setResult($result);
     }
 }

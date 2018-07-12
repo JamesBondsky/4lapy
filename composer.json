@@ -94,6 +94,7 @@
     "somework/composer-symlinks": "^1.1",
     "somework/expert-sender-api": "^0.6.0",
     "symfony/symfony": "3.3.*",
+    "theiconic/php-ga-measurement-protocol": "^2.0",
     "twig/twig": "^1.0",
     "webarchitect609/bitrix-cache": "^1.0",
     "webarchitect609/bitrix-neverinclude": "^0.4.2"

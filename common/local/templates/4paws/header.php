@@ -26,6 +26,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     <script data-skip-moving="true">
         window.js_static = '/static/build/';
         window._global = {};
+        window.dataLayer = window.dataLayer || [];
     </script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle(false) ?></title>

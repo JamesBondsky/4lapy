@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -10,11 +11,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 $banner = reset($arResult['ITEMS']);
-?>
+
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
+}  ?>
 
 <div class="b-main-item b-main-item--catalog">
     <a class="b-main-item__link b-main-item__link--catalog"
        href="<?= $banner['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?>"
+        <?php if ($banner['ECOMMERCE_CLICK_SCRIPT']) {
+            echo \sprintf('onclick="%s;"', \str_replace('"', '\'', $banner['ECOMMERCE_CLICK_SCRIPT']));
+        } ?>
        title="<?= $banner['NAME'] ?>">
         <?php if ($banner['DESKTOP_PICTURE']) { ?>
             <img class="b-main-item__slider-background b-main-item__slider-background--desktop"
