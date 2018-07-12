@@ -9,7 +9,7 @@
 if ($addScriptTag) { ?>
     <script>
         <?php } ?>
-        window.<?=$presetName?>=<?= $data ?>);
+        window.<?=$presetName?>=<?= $data ?>;
         <?php if ($addScriptTag) { ?>
     </script>
 <?php }
