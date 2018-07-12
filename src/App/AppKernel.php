@@ -13,6 +13,7 @@ use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\BitrixOrmBundle\FourPawsBitrixOrmBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\EcommerceBundle\EcommerceBundle;
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\LocationBundle\FourPawsLocationBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
@@ -101,6 +102,7 @@ class AppKernel extends Kernel
             new FourPawsFoodSelectionBundle(),
             new FourPawsLocationBundle(),
             new FourPawsBitrixOrmBundle(),
+            new EcommerceBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {

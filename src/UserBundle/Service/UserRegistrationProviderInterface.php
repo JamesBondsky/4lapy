@@ -15,9 +15,6 @@ use FourPaws\UserBundle\Exception\ValidationException;
 interface UserRegistrationProviderInterface
 {
     /**
-     * @todo remove manzanaSave parameter
-     * @todo return entity
-     *
      * @param User $user
      *
      * @throws InvalidIdentifierException

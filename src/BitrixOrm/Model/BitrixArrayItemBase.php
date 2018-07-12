@@ -25,7 +25,7 @@ use FourPaws\BitrixOrm\Model\Interfaces\ToArrayInterface;
  */
 abstract class BitrixArrayItemBase implements ActiveReadModelInterface, ItemInterface, ToArrayInterface
 {
-    const PATTERN_PROPERTY_VALUE = '~^(?>(PROPERTY_\w+)_VALUE)$~';
+    public const PATTERN_PROPERTY_VALUE = '~^(?>(PROPERTY_\w+)_VALUE)$~';
 
     /**
      * @var bool
@@ -93,6 +93,9 @@ abstract class BitrixArrayItemBase implements ActiveReadModelInterface, ItemInte
          */
     }
 
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         $result = [];

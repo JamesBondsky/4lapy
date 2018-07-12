@@ -8,14 +8,12 @@ use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
-use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -31,16 +29,18 @@ class CatalogController extends Controller
      *
      * @Route("/search/")
      *
-     * @param Request $request
-     * @param SearchRequest $searchRequest
-     * @param SearchService $searchService
+     * @param Request                $request
+     * @param SearchRequest          $searchRequest
+     * @param SearchService          $searchService
+     * @param ValidatorInterface     $validator
+     * @param GoogleEcommerceService $ecommerceService
      *
-     * @param ValidatorInterface $validator
      * @return Response
+     *
+     * @throws ApplicationCreateException
      * @throws Exception
-     * @throws RuntimeException
      */
-    public function searchAction(Request $request, SearchRequest $searchRequest, SearchService $searchService, ValidatorInterface $validator): Response
+    public function searchAction(Request $request, SearchRequest $searchRequest, SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService): Response
     {
         $result = null;
 
@@ -69,6 +69,7 @@ class CatalogController extends Controller
             'productSearchResult' => $result,
             'catalogRequest' => $searchRequest,
             'categories' => $categories,
+            'ecommerceService' => $ecommerceService,
         ]);
     }
 
@@ -104,20 +105,18 @@ class CatalogController extends Controller
 
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
-     * @param Request $request
-     * @param ChildCategoryRequest $categoryRequest
-     * @param SearchService $searchService
      *
-     * @throws CatalogRuntimeException
-     * @throws RuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws Exception
-     * @throws ApplicationCreateException
+     * @param Request                $request
+     * @param ChildCategoryRequest   $categoryRequest
+     * @param SearchService          $searchService
+     * @param GoogleEcommerceService $ecommerceService
      *
      * @return Response
+     *
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
-    public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest, SearchService $searchService): Response
+    public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest, SearchService $searchService, GoogleEcommerceService $ecommerceService): Response
     {
         $result = $searchService->searchProducts(
             $categoryRequest->getCategory()->getFilters(),
@@ -136,6 +135,7 @@ class CatalogController extends Controller
             'request' => $request,
             'productSearchResult' => $result,
             'catalogRequest' => $categoryRequest,
+            'ecommerceService' => $ecommerceService,
         ]);
     }
 }

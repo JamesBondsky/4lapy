@@ -32,7 +32,7 @@ class ReferralCardAttachResult extends Result
     /**
      * @param string $contactId
      */
-    public function setContactId(string $contactId = '')
+    public function setContactId(string $contactId = ''): void
     {
         $this->result = $contactId;
     }
@@ -40,7 +40,7 @@ class ReferralCardAttachResult extends Result
     /**
      * @param string $result
      */
-    public function setResult(string $result = '')
+    public function setResult(string $result = ''): void
     {
         $this->error = true;
         
