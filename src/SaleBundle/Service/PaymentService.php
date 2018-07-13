@@ -17,12 +17,14 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscal;
@@ -35,6 +37,7 @@ use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
 use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\StoreBundle\Entity\Store;
+use JMS\Serializer\ArrayTransformerInterface;
 
 /**
  * Class PaymentService
@@ -43,6 +46,11 @@ use FourPaws\StoreBundle\Entity\Store;
  */
 class PaymentService
 {
+    /**
+     * @var ArrayTransformerInterface
+     */
+    protected $arrayTransformer;
+
     /**
      * @var BasketService
      */
@@ -57,8 +65,9 @@ class PaymentService
      * PaymentService constructor.
      * @param BasketService $basketService
      */
-    public function __construct(BasketService $basketService)
+    public function __construct(BasketService $basketService, ArrayTransformerInterface $arrayTransformer)
     {
+        $this->arrayTransformer = $arrayTransformer;
         $this->basketService = $basketService;
     }
 
@@ -102,6 +111,9 @@ class PaymentService
      */
     public function getFiscalization(Order $order, int $taxSystem, $skipGifts = true): Fiscal
     {
+        /** @var DateTime $dateCreate */
+        $dateCreate = $order->getField('DATE_INSERT');
+
         $orderBundle = new OrderBundle();
         $fiscal = (new Fiscal())
             ->setOrderBundle($orderBundle)
@@ -109,7 +121,7 @@ class PaymentService
 
         $orderBundle
             ->setCustomerDetails($this->getCustomerDetails($order))
-            ->setDateCreate(\DateTime::createFromFormat('d.m.Y', $order->getField('DATE_INSERT')))
+            ->setDateCreate(DateHelper::convertToDateTime($dateCreate))
             ->setCartItems($this->getCartItems($order, $skipGifts));
 
         return $fiscal;
@@ -432,7 +444,7 @@ class PaymentService
             $itemPrice = floor($basketItem->getPrice() * 100);
             $item = (new Item())
                 ->setPositionId(++$position)
-                ->setName($basketItem->getField('NAME'))
+                ->setName($basketItem->getField('NAME') ?: '')
                 ->setQuantity($quantity)
                 ->setPrice($itemPrice)
                 ->setTotal($itemPrice * (int)$basketItem->getQuantity())
@@ -464,7 +476,7 @@ class PaymentService
              * распределяем погрешность по товарам
              */
             $correction = $bonusSum - $correction;
-            $items->map(function (Item $item) use (&$correction, $diff, $total) {
+            $items->map(function (Item $item) use (&$correction) {
                 if ((int)$correction === 0) {
                     return;
                 }
@@ -484,10 +496,10 @@ class PaymentService
             $deliveryPrice = floor($order->getDeliveryPrice() * 100);
             $delivery = (new Item())
                 ->setPositionId(++$position)
-                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE'))
+                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: '')
                 ->setQuantity((new ItemQuantity())
                     ->setValue(1)
-                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT'))
+                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: '')
                 )
                 ->setTotal($deliveryPrice)
                 ->setCode($order->getId() . '_DELIVERY')
@@ -515,5 +527,14 @@ class PaymentService
             },
             0
         );
+    }
+
+    /**
+     * @param Fiscal $fiscal
+     * @return array
+     */
+    public function fiscalToArray(Fiscal $fiscal): array
+    {
+        return $this->arrayTransformer->toArray($fiscal);
     }
 }

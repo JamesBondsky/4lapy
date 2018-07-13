@@ -5,10 +5,15 @@
 
 namespace FourPaws\SaleBundle\Dto\Fiscalization;
 
+use JMS\Serializer\Annotation as Serializer;
+
 class ItemTax
 {
     /**
      * @var int
+     *
+     * @Serializer\SerializedName("taxType")
+     * @Serializer\Type("int")
      */
     protected $type;
 

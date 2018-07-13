@@ -5,20 +5,31 @@
 
 namespace FourPaws\SaleBundle\Dto\Fiscalization;
 
+use JMS\Serializer\Annotation as Serializer;
+
 class OrderBundle
 {
     /**
      * @var CartItems
+     *
+     * @Serializer\SerializedName("cartItems")
+     * @Serializer\Type("FourPaws\SaleBundle\Dto\Fiscalization\CartItems")
      */
     protected $cartItems;
 
     /**
      * @var \DateTime
+     *
+     * @Serializer\SerializedName("orderCreationDate")
+     * @Serializer\Type("DateTime<'U'>")
      */
     protected $dateCreate;
 
     /**
      * @var CustomerDetails
+     *
+     * @Serializer\SerializedName("customerDetails")
+     * @Serializer\Type("FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails")
      */
     protected $customerDetails;
 

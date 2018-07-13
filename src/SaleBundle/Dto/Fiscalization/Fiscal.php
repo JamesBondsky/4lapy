@@ -5,15 +5,23 @@
 
 namespace FourPaws\SaleBundle\Dto\Fiscalization;
 
+use JMS\Serializer\Annotation as Serializer;
+
 class Fiscal
 {
     /**
      * @var OrderBundle
+     *
+     * @Serializer\SerializedName("orderBundle")
+     * @Serializer\Type("FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle")
      */
     protected $orderBundle;
 
     /**
      * @var int
+     *
+     * @Serializer\SerializedName("taxSystem")
+     * @Serializer\Type("int")
      */
     protected $taxSystem;
 

@@ -5,16 +5,23 @@
 
 namespace FourPaws\SaleBundle\Dto\Fiscalization;
 
+use JMS\Serializer\Annotation as Serializer;
 
 class ItemQuantity
 {
     /**
      * @var int
+     *
+     * @Serializer\SerializedName("value")
+     * @Serializer\Type("int")
      */
     protected $value = 0;
 
     /**
      * @var string
+     *
+     * @Serializer\SerializedName("measure")
+     * @Serializer\Type("string")
      */
     protected $measure = '';
 

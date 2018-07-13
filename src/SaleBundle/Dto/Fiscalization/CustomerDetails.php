@@ -5,15 +5,23 @@
 
 namespace FourPaws\SaleBundle\Dto\Fiscalization;
 
+use JMS\Serializer\Annotation as Serializer;
+
 class CustomerDetails
 {
     /**
      * @var string
+     *
+     * @Serializer\SerializedName("contact")
+     * @Serializer\Type("string")
      */
     protected $contact;
 
     /**
      * @var string
+     *
+     * @Serializer\SerializedName("email")
+     * @Serializer\Type("string")
      */
     protected $email;
 

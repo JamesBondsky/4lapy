@@ -5,41 +5,63 @@
 
 namespace FourPaws\SaleBundle\Dto\Fiscalization;
 
+use JMS\Serializer\Annotation as Serializer;
 
 class Item
 {
     /**
      * @var int
+     *
+     * @Serializer\SerializedName("positionId")
+     * @Serializer\Type("int")
      */
     protected $positionId = 0;
 
     /**
      * @var string
+     *
+     * @Serializer\SerializedName("name")
+     * @Serializer\Type("string")
      */
     protected $name = '';
 
     /**
      * @var ItemQuantity
+     *
+     * @Serializer\SerializedName("quantity")
+     * @Serializer\Type("FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity")
      */
     protected $quantity;
 
     /**
      * @var int
+     *
+     * @Serializer\SerializedName("itemAmount")
+     * @Serializer\Type("integer")
      */
     protected $total = 0;
 
     /**
      * @var string
+     *
+     * @Serializer\SerializedName("itemCode")
+     * @Serializer\Type("string")
      */
     protected $code;
 
     /**
      * @var int
+     *
+     * @Serializer\SerializedName("itemPrice")
+     * @Serializer\Type("string")
      */
     protected $price = 0;
 
     /**
      * @var ItemTax
+     *
+     * @Serializer\SerializedName("tax")
+     * @Serializer\Type("FourPaws\SaleBundle\Dto\Fiscalization\ItemTax")
      */
     protected $tax;
 

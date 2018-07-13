@@ -6,11 +6,15 @@
 namespace FourPaws\SaleBundle\Dto\Fiscalization;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use JMS\Serializer\Annotation as Serializer;
 
 class CartItems
 {
     /**
      * @var ArrayCollection
+     *
+     * @Serializer\SerializedName("items")
+     * @Serializer\Type("ArrayCollection<FourPaws\SaleBundle\Dto\Fiscalization\Item>")
      */
     protected $items;
 
