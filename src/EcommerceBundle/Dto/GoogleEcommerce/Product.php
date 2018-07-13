@@ -18,7 +18,7 @@ class Product
      *
      * @var string
      */
-    protected $id = '';
+    protected $id;
 
     /**
      * Название торгового предложения
@@ -27,7 +27,7 @@ class Product
      *
      * @var string
      */
-    protected $name = '';
+    protected $name;
 
     /**
      * Бренд
@@ -36,7 +36,7 @@ class Product
      *
      * @var string
      */
-    protected $brand = '';
+    protected $brand;
 
     /**
      * Категория товара, строка типа 'Категория 1|Категория 2|Категория 3'
@@ -45,7 +45,7 @@ class Product
      *
      * @var string
      */
-    protected $category = '';
+    protected $category;
 
     /**
      * Список, в котором показывается товар
@@ -55,7 +55,7 @@ class Product
      *
      * @var string
      */
-    protected $list = '';
+    protected $list;
 
     /**
      * Цена
@@ -64,7 +64,7 @@ class Product
      *
      * @var float
      */
-    protected $price = 0;
+    protected $price;
 
     /**
      * Количество
