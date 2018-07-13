@@ -11,6 +11,11 @@ use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Search\Factory;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 
+/**
+ * Class ProductSearchResult
+ *
+ * @package FourPaws\Search\Model
+ */
 class ProductSearchResult implements ProductResultInterface
 {
     /**
@@ -41,9 +46,9 @@ class ProductSearchResult implements ProductResultInterface
     /**
      * ProductSearchResult constructor.
      *
-     * @param ResultSet  $resultSet
+     * @param ResultSet $resultSet
      * @param Navigation $navigation
-     * @param string     $query
+     * @param string $query
      *
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
@@ -71,13 +76,14 @@ class ProductSearchResult implements ProductResultInterface
             }
 
             $cdbres = new CDBResult(null);
+
             $cdbres->InitFromArray($productList);
 
             if ($this->navigation) {
-                $cdbres->NavRecordCount = $this->resultSet->getTotalHits();
+                $cdbres->NavRecordCount = (int)$this->resultSet->getTotalHits();
                 $cdbres->NavPageNomer = $this->navigation->getPage();
                 $cdbres->NavPageSize = $this->navigation->getPageSize();
-                $cdbres->NavPageCount = ceil($this->resultSet->getTotalHits() / $this->navigation->getPageSize());
+                $cdbres->NavPageCount = \ceil($this->resultSet->getTotalHits() / $this->navigation->getPageSize());
             }
 
             $this->productCollection = new ProductCollection($cdbres);
@@ -86,6 +92,9 @@ class ProductSearchResult implements ProductResultInterface
         return $this->productCollection;
     }
 
+    /**
+     * @return array
+     */
     public function getProductIds(): array
     {
         $productIds = [];
@@ -106,6 +115,9 @@ class ProductSearchResult implements ProductResultInterface
         return $this->resultSet;
     }
 
+    /**
+     * @return string
+     */
     public function getQuery(): string
     {
         return $this->query;
