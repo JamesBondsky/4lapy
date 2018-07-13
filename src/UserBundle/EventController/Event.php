@@ -242,7 +242,7 @@ class Event extends BaseServiceHandler
     public static function updateManzana($fields): bool
     {
         if (self::$isEventsDisable) {
-            return;
+            return false;
         }
 
         if (!isset($_SESSION['NOT_MANZANA_UPDATE'])) {
@@ -404,7 +404,7 @@ class Event extends BaseServiceHandler
     public static function findSocialServicesUser(array $fields): int
     {
         if (self::$isEventsDisable) {
-            return;
+            return 0;
         }
 
         $result = 0;
