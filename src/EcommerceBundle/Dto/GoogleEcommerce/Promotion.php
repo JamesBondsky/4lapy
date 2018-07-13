@@ -18,7 +18,7 @@ class Promotion
      *
      * @var string
      */
-    protected $id = '';
+    protected $id;
 
     /**
      * Название
@@ -27,7 +27,7 @@ class Promotion
      *
      * @var string
      */
-    protected $name = '';
+    protected $name;
 
     /**
      * Название креатива
@@ -36,7 +36,7 @@ class Promotion
      *
      * @var string
      */
-    protected $creative = '';
+    protected $creative;
 
     /**
      * Номер в списке/позиция
