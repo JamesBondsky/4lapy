@@ -936,7 +936,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         $offers = $orderService->getOrderProducts($order);
 
-        $fiscal = $paymentService->getFiscalization($order, null, 0, false);
+        $fiscal = $paymentService->getFiscalization($order, 0, false);
         $items = [];
         try {
             $basketItems = $fiscal['fiscal']['orderBundle']['cartItems']['items'];

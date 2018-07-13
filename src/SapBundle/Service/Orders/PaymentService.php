@@ -239,7 +239,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             return null;
         }
 
-        $fiscalization = $this->salePaymentService->getFiscalization($order, ['name' => $user->getFullName(), 'email' => $user->getEmail()], (int)$config['TAX_SYSTEM']);
+        $fiscalization = $this->salePaymentService->getFiscalization($order, (int)$config['TAX_SYSTEM']);
         $map = $fiscalization['itemMap'];
         $itemsAfter = [];
 

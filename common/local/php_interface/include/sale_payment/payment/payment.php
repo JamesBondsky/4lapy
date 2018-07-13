@@ -70,7 +70,7 @@ if ($fiscalization['ENABLE'] === 'Y') {
      * @global $USER
      */
     $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentService::class);
-    [$amount, $fiscal] = \array_values($paymentService->getFiscalization($order, $USER, (int)$fiscalization['TAX_SYSTEM']));
+    [$amount, $fiscal] = \array_values($paymentService->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']));
 
     /**
      * Сбербанк не принимает чек, если в нем есть позиции с одинаковым itemCode

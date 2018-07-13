@@ -10,16 +10,26 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\IO\InvalidPathException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
-use CUser;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
+use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
+use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
+use FourPaws\SaleBundle\Dto\Fiscalization\Fiscal;
+use FourPaws\SaleBundle\Dto\Fiscalization\Item;
+use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
+use FourPaws\SaleBundle\Dto\Fiscalization\ItemTax;
+use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
@@ -76,189 +86,33 @@ class PaymentService
     }
 
     /**
-     * @todo переделать на DTO
      * @todo переделать на сериализацию
      *
-     * @param Order       $order
-     * @param CUser|array $user
-     * @param int         $taxSystem
-     * @param bool        $skipGifts
+     * @param Order $order
+     * @param int   $taxSystem
+     * @param bool  $skipGifts
      *
+     * @return Fiscal
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws InvalidPathException
      * @throws ObjectNotFoundException
-     * @return array
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getFiscalization(Order $order, $user, int $taxSystem, $skipGifts = true): array
+    public function getFiscalization(Order $order, int $taxSystem, $skipGifts = true): Fiscal
     {
-        $amount = 0; //Для фискализации общая сумма берется путем суммирования округленных позиций.
-        if ($user instanceof \CUser) {
-            $userEmail = $user->GetEmail();
-            $userName = $user->GetFullName();
-        } else {
-            $userEmail = ['email'];
-            $userName = ['name'];
-        }
+        $orderBundle = new OrderBundle();
+        $fiscal = (new Fiscal())
+            ->setOrderBundle($orderBundle)
+            ->setTaxSystem($taxSystem);
 
-        $fiscal = [
-            'orderBundle' => [
-                'orderCreationDate' => \strtotime($order->getField('DATE_INSERT')),
-                'customerDetails'   => [
-                    'email'   => false,
-                    'contact' => false,
-                ],
-                'cartItems'         => [
-                    'items' => [],
-                ],
-            ],
-            'taxSystem'   => $taxSystem,
-        ];
+        $orderBundle
+            ->setCustomerDetails($this->getCustomerDetails($order))
+            ->setDateCreate(\DateTime::createFromFormat('d.m.Y', $order->getField('DATE_INSERT')))
+            ->setCartItems($this->getCartItems($order, $skipGifts));
 
-        /** @var \Bitrix\Sale\PropertyValue $propertyValue */
-        foreach ($order->getPropertyCollection() as $propertyValue) {
-            if ($propertyValue->getProperty()['IS_PAYER'] === 'Y') {
-                $fiscal['orderBundle']['customerDetails']['contact'] = $propertyValue->getValue();
-            } elseif ($propertyValue->getProperty()['IS_EMAIL'] === 'Y') {
-                $fiscal['orderBundle']['customerDetails']['email'] = $propertyValue->getValue();
-            }
-        }
-
-        if (!$fiscal['orderBundle']['customerDetails']['email'] || !$fiscal['orderBundle']['customerDetails']['contact']) {
-            if (!$fiscal['orderBundle']['customerDetails']['email']) {
-                $fiscal['orderBundle']['customerDetails']['email'] = $userEmail;
-            }
-            if (!$fiscal['orderBundle']['customerDetails']['contact']) {
-                $fiscal['orderBundle']['customerDetails']['contact'] = $userName;
-            }
-        }
-
-        $measureList = [];
-        $dbMeasure = \CCatalogMeasure::getList();
-        while ($arMeasure = $dbMeasure->GetNext()) {
-            $measureList[$arMeasure['ID']] = $arMeasure['MEASURE_TITLE'];
-        }
-
-        $vatList = [];
-        $dbRes = \CCatalogVat::GetListEx();
-        while ($arRes = $dbRes->Fetch()) {
-            $vatList[$arRes['ID']] = (int)$arRes['RATE'];
-        }
-
-        $vatGateway = [
-            -1 => 0,
-            0  => 1,
-            10 => 2,
-            18 => 3,
-        ];
-
-        $itemsCnt = 0;
-        $arCheck = null;
-        $itemMap = [];
-
-        $cartItems = [];
-        /** @var \Bitrix\Sale\BasketItem $basketItem */
-        foreach ($order->getBasket() as $basketItem) {
-            // пропускаем подарки
-            $xmlId = $this->basketService->getBasketItemXmlId($basketItem);
-            if ($skipGifts && $xmlId[0] === '3') {
-                continue;
-            }
-
-            $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
-            $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
-
-            $itemAmount = $basketItem->getPrice() * 100;
-            if (!($itemAmount % 1)) {
-                $itemAmount = \round($itemAmount);
-            }
-
-            $amount += $itemAmount * $basketItem->getQuantity(); //Для фискализации общая сумма берется путем суммирования округленных позиций.
-
-            $cartItems[] = [
-                'positionId' => ++$itemsCnt,
-                'name'       => $basketItem->getField('NAME'),
-                'quantity'   => [
-                    'value'   => (int)$basketItem->getQuantity(),
-                    'measure' => $measureList[$arProduct['MEASURE']],
-                ],
-                'itemAmount' => (int)($itemAmount * $basketItem->getQuantity()),
-                'itemCode'   => (int)$basketItem->getProductId(),
-                'itemPrice'  => (int)$itemAmount,
-                'tax'        => [
-                    'taxType' => $vatGateway[$taxType],
-                ],
-            ];
-
-            if (!isset($itemMap[$xmlId])) {
-                $itemMap[$xmlId] = [
-                    'id' => (int)$basketItem->getProductId(),
-                    'count' => 0
-                ];
-            }
-            $itemMap[$xmlId]['count']++;
-        }
-
-        $delivery = null;
-        if ($order->getDeliveryPrice() > 0) {
-            $delivery = [
-                'positionId' => $itemsCnt + 1,
-                'name'       => Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE'),
-                'quantity'   => [
-                    'value'   => 1,
-                    'measure' => Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT'),
-                ],
-                'itemAmount' => $order->getDeliveryPrice() * 100,
-                'itemCode'   => $order->getId() . '_DELIVERY',
-                'itemPrice'  => $order->getDeliveryPrice() * 100,
-                'tax'        => [
-                    'taxType' => 0,
-                ],
-            ];
-        }
-
-        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
-        if ($innerPayment && $innerPayment->isPaid()) {
-            $bonusSum = $innerPayment->getSum() * 100;
-            $diff = $amount - $bonusSum;
-
-            $correction = 0;
-            foreach ($cartItems as $i => $item) {
-                $cartItems[$i]['itemPrice'] = floor($item['itemPrice'] * ($diff / $amount));
-                $oldAmount = $cartItems[$i]['itemAmount'];
-                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
-                $correction += $oldAmount - $cartItems[$i]['itemAmount'];
-            }
-
-            /**
-             * распределяем погрешность по товарам
-             */
-            $correction = $bonusSum - $correction;
-            foreach ($cartItems as $i => $item) {
-                if ((int)$correction === 0) {
-                    break;
-                }
-                $quantity = $cartItems[$i]['quantity']['value'];
-
-                $oldAmount = $cartItems[$i]['itemAmount'];
-                $cartItems[$i]['itemPrice'] = floor(
-                    $item['itemAmount'] * ($item['itemAmount'] - $correction) / $item['itemAmount'] / $quantity
-                );
-                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
-                $correction -= $oldAmount - $cartItems[$i]['itemAmount'];
-            }
-
-            /** погрешность все равно может не стать равной 0  */
-            $amount += $correction;
-
-            $amount -= $bonusSum;
-        }
-
-        if ($delivery) {
-            $cartItems[] = $delivery;
-            $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
-        }
-
-        $fiscal['orderBundle']['cartItems']['items'] = $cartItems;
-
-        return \compact('amount', 'fiscal', 'itemMap');
+        return $fiscal;
     }
 
     /**
@@ -351,7 +205,7 @@ class PaymentService
     {
         $orderInvoiceId = $this->getOrderInvoiceId($order);
         if (empty($fiscalization)) {
-            $fiscalization = $this->getFiscalization($order, null, 0);
+            $fiscalization = $this->getFiscalization($order, null);
         }
         return $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
             return $this->getSberbankProcessing()->depositPayment($orderInvoiceId, $amount, $fiscalization);
@@ -481,7 +335,13 @@ class PaymentService
         if (null === $this->sberbankProcessing) {
             /** @noinspection PhpIncludeInspection */
             require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
-            $settings = BusinessValueHelper::getPaysystemSettings(3, ['USER_NAME', 'PASSWORD', 'TEST_MODE', 'TWO_STAGE', 'LOGGING']);
+            $settings = BusinessValueHelper::getPaysystemSettings(3, [
+                'USER_NAME',
+                'PASSWORD',
+                'TEST_MODE',
+                'TWO_STAGE',
+                'LOGGING',
+            ]);
 
             $this->sberbankProcessing = new Sberbank(
                 $settings['USER_NAME'],
@@ -493,5 +353,167 @@ class PaymentService
         }
 
         return $this->sberbankProcessing;
+    }
+
+    /**
+     * @param Order $order
+     * @return CustomerDetails
+     */
+    private function getCustomerDetails(Order $order): CustomerDetails
+    {
+        $result = new CustomerDetails();
+
+        $email = $name = null;
+        /** @var \Bitrix\Sale\PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            if ($propertyValue->getProperty()['IS_PAYER'] === BitrixUtils::BX_BOOL_TRUE) {
+                $name = $propertyValue->getValue();
+            } elseif ($propertyValue->getProperty()['IS_EMAIL'] === BitrixUtils::BX_BOOL_TRUE) {
+                $email = $propertyValue->getValue();
+            }
+        }
+
+        return $result
+            ->setEmail($email ?: 'email')
+            ->setContact($name ?: 'name');
+    }
+
+    /**
+     * @param Order $order
+     * @param bool  $skipGifts
+     *
+     * @return CartItems
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws InvalidPathException
+     * @throws ObjectPropertyException
+     */
+    private function getCartItems(Order $order, bool $skipGifts = true): CartItems
+    {
+        $items = new ArrayCollection();
+
+        $measureList = [];
+        $dbMeasure = \CCatalogMeasure::getList();
+        while ($arMeasure = $dbMeasure->GetNext()) {
+            $measureList[$arMeasure['ID']] = $arMeasure['MEASURE_TITLE'];
+        }
+
+        $vatList = [];
+        $dbRes = \CCatalogVat::GetListEx();
+        while ($arRes = $dbRes->Fetch()) {
+            $vatList[$arRes['ID']] = (int)$arRes['RATE'];
+        }
+
+        $vatGateway = [
+            -1 => 0,
+            0  => 1,
+            10 => 2,
+            18 => 3,
+        ];
+
+        $position = 0;
+        /** @var BasketItem $basketItem */
+        foreach ($order->getBasket() as $basketItem) {
+            if ($skipGifts && $this->basketService->isGiftProduct($basketItem)) {
+                continue;
+            }
+
+            $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
+            $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
+
+            $quantity = (new ItemQuantity())
+                ->setValue($basketItem->getQuantity())
+                ->setMeasure($measureList[$arProduct['MEASURE']]);
+
+            $tax = (new ItemTax())->setType($vatGateway[$taxType]);
+
+            $itemPrice = floor($basketItem->getPrice() * 100);
+            $item = (new Item())
+                ->setPositionId(++$position)
+                ->setName($basketItem->getField('NAME'))
+                ->setQuantity($quantity)
+                ->setPrice($itemPrice)
+                ->setTotal($itemPrice * (int)$basketItem->getQuantity())
+                ->setCode($basketItem->getProductId())
+                ->setTax($tax);
+            $items->add($item);
+        }
+
+        $total = \array_reduce($items->toArray(), function ($total, Item $item) {
+            return $total + $item->getTotal();
+        }, 0);
+
+        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
+        if ($innerPayment &&
+            $innerPayment->isPaid()
+        ) {
+            $correction = 0;
+            $bonusSum = $innerPayment->getSum() * 100;
+            $diff = $total - $bonusSum;
+
+            $items->map(function (Item $item) use (&$correction, $diff, $total) {
+                $item->setPrice(floor($item->getPrice() * ($diff / $total)));
+                $itemOldTotal = $item->getTotal();
+                $item->setTotal($item->getPrice() * $item->getQuantity()->getValue());
+                $correction += $itemOldTotal - $item->getTotal();
+            });
+
+            /**
+             * распределяем погрешность по товарам
+             */
+            $correction = $bonusSum - $correction;
+            $items->map(function (Item $item) use (&$correction, $diff, $total) {
+                if ((int)$correction === 0) {
+                    return;
+                }
+                $itemOldTotal = $item->getTotal();
+
+
+                $item->setPrice(
+                    floor($item->getTotal() * ($item->getTotal() - $correction) / $item->getTotal() / $item->getQuantity()->getValue())
+                );
+                $item->setTotal($item->getPrice() * $item->getQuantity()->getValue());
+
+                $correction -= $itemOldTotal - $item->getTotal();
+            });
+        }
+
+        if ($order->getDeliveryPrice() > 0) {
+            $deliveryPrice = floor($order->getDeliveryPrice() * 100);
+            $delivery = (new Item())
+                ->setPositionId(++$position)
+                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE'))
+                ->setQuantity((new ItemQuantity())
+                    ->setValue(1)
+                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT'))
+                )
+                ->setTotal($deliveryPrice)
+                ->setCode($order->getId() . '_DELIVERY')
+                ->setPrice($deliveryPrice)
+                ->setTax((new ItemTax())
+                    ->setType(0)
+                );
+
+            $items->add($delivery);
+        }
+
+        return (new CartItems())->setItems($items);
+    }
+
+    /**
+     * @param Fiscal $fiscal
+     * @return int
+     */
+    public function getFiscalTotal(Fiscal $fiscal): int
+    {
+        return \array_reduce(
+            $fiscal->getOrderBundle()->getCartItems()->getItems()->toArray(),
+            function ($total, Item $item) {
+                return $total + $item->getTotal();
+            },
+            0
+        );
     }
 }
