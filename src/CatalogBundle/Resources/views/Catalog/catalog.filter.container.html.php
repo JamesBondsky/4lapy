@@ -217,9 +217,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
         <?php $i = 0;
 
-
         $collection = $productSearchResult->getProductCollection();
-        dump($collection);
         $countItems = $collection->count();
 
         echo $ecommerceService->renderScript(

@@ -1,19 +1,5 @@
 <?php
 
-/**
- * @var array                 $arParams
- * @var array                 $arResult
- *
- * @var CatalogElementSnippet $component
- *
- * @var Product               $product
- * @var OfferCollection       $offers
- * @var Offer                 $offer
- * @var Offer                 $currentOffer
- *
- * @global \CMain             $APPLICATION
- */
-
 use Bitrix\Main\Web\Uri;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -32,13 +18,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 /**
  * @var $ecommerceService GoogleEcommerceService
+ * @var array $arParams
+ * @var array $arResult
+ *
+ * @var CatalogElementSnippet $component
+ *
+ * @var Product $product
+ * @var OfferCollection $offers
+ * @var Offer $offer
+ * @var Offer $currentOffer
+ *
+ * @global CMain $APPLICATION
  */
-$ecommerceService = $this->getEcommerceService();
+$ecommerceService = $component->getEcommerceService();
 $getOnClick = function (Offer $offer) use ($ecommerceService, $arParams) {
-    return $ecommerceService->renderScript(
-            $ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']),
-            false
-    );
+    return \str_replace('"', '\'', $ecommerceService->renderScript(
+        $ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']),
+        false
+    ));
 };
 
 $product = $arResult['PRODUCT'];
@@ -51,7 +48,8 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
     <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
-            <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>" onclick="<?= $getOnClick($currentOffer) ?>">
+            <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
+               onclick="<?= $getOnClick($currentOffer) ?>">
                 <img class="b-common-item__image js-weight-img"
                      src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                      alt="<?= $product->getName() ?>"
@@ -60,7 +58,8 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         </span>
     <?php } ?>
     <div class="b-common-item__info-center-block">
-        <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>" onclick="<?= $getOnClick($currentOffer) ?>" title="">
+        <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>"
+           onclick="<?= $getOnClick($currentOffer) ?>" title="">
             <span class="b-clipped-text b-clipped-text--three">
                 <span>
                     <?php if ($product->getBrand()) { ?>
@@ -77,13 +76,13 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 'fourpaws:comments',
                 'catalog.snippet',
                 [
-                    'HL_ID'              => HighloadHelper::getIdByName('Comments'),
-                    'OBJECT_ID'          => $productId,
-                    'SORT_DESC'          => 'Y',
-                    'ITEMS_COUNT'        => 5,
+                    'HL_ID' => HighloadHelper::getIdByName('Comments'),
+                    'OBJECT_ID' => $productId,
+                    'SORT_DESC' => 'Y',
+                    'ITEMS_COUNT' => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
-                    'TYPE'               => 'catalog',
-                    'ITEM_LINK'          => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
+                    'TYPE' => 'catalog',
+                    'ITEM_LINK' => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
@@ -212,7 +211,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                            data-price="<?= $currentOffer->getPriceCeil() ?>"
                            data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
-                           data-onclick="<?= $getOnClick($offer) ?>"
+                           data-onclick="<?= $getOnClick($currentOffer) ?>"
                            data-link="<?= $currentOffer->getLink() ?>"></a>
                     </li>
                 </ul>

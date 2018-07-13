@@ -187,9 +187,10 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
         <?php
         $productCollection = $productSearchResult->getProductCollection();
+
         echo $ecommerceService->renderScript(
-                $ecommerceService->buildImpressionsFromProductCollection($productCollection, 'Каталог по бренду'),
-                true
+            $ecommerceService->buildImpressionsFromProductCollection($productSearchResult->getProductCollection(), 'Каталог по бренду'),
+            true
         );
 
         foreach ($productCollection as $product) {
@@ -197,7 +198,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 'fourpaws:catalog.element.snippet',
                 '',
                 [
-                        'PRODUCT' => $product, 'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду'
+                    'PRODUCT' => $product, 'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду'
                 ],
                 null,
                 [

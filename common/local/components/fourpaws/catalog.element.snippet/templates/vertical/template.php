@@ -25,21 +25,19 @@ use FourPaws\Helpers\WordHelper;
  * @var Offer $offer
  * @var Offer $currentOffer
  */
-
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 
 /**
  * @var $ecommerceService GoogleEcommerceService
  */
-$ecommerceService = $this->getEcommerceService();
+$ecommerceService = $component->getEcommerceService();
 $getOnClick = function (Offer $offer) use ($ecommerceService, $arParams) {
-    return $ecommerceService->renderScript(
+    return \str_replace('"', '\'', $ecommerceService->renderScript(
         $ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']),
         false
-    );
+    ));
 };
-
 
 $currentOffer = $arResult['CURRENT_OFFER'];
 
@@ -89,26 +87,20 @@ if ($mainCombinationType === 'SIZE') {
                         echo $product->getName(); ?>
                     </span>
                 </span>
-            </a><?php
-
-            //
-            // Переключение торговых предложений
-            //
-            //$isWeightCapacityPacking = strlen(trim($product->getWeightCapacityPacking())) ? true : false;
-            $isWeightCapacityPacking = true;
-            //&& $product->isFood()
-            if ($offers->count() > 0 || $isWeightCapacityPacking) {
+            </a>
+            <?php if ($offers->count() > 0) {
                 $isOffersPrinted = false;
                 $mainCombinationType = '';
+
                 if ($currentOffer->getClothingSize()) {
                     $mainCombinationType = 'SIZE';
                 } elseif ($currentOffer->getVolumeReference()) {
                     $mainCombinationType = 'VOLUME';
-                } elseif ($isWeightCapacityPacking) {
+                } else {
                     $mainCombinationType = 'WEIGHT';
                 }
-                ob_start();
-                ?>
+
+                ob_start(); ?>
                 <div class="b-weight-container b-weight-container--list">
                     <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : '' ?>js-mobile-select js-select-mobile-package"
                        href="javascript:void(0);"><?= $value ?></a>
@@ -176,8 +168,8 @@ if ($mainCombinationType === 'SIZE') {
                                class="b-weight-container__link js-price active-link"
                                data-discount="<?= $currentOffer->getDiscountPrice() ?>"
                                data-pickup=""
-                               data-onclick="<?= $getOnClick($offer) ?>"
-                               data-available="<?= !$offer->isAvailable() ? 'Нет в наличии' : '' ?>"
+                               data-onclick="<?= $getOnClick($currentOffer) ?>"
+                               data-available="<?= !$currentOffer->isAvailable() ? 'Нет в наличии' : '' ?>"
                                data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
                                data-price="<?= $currentOffer->getPriceCeil() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
@@ -186,31 +178,23 @@ if ($mainCombinationType === 'SIZE') {
                         </li>
                     </ul>
                 </div>
-            <?php }
-
-            //
-            // Кнопка добавления в корзину
-            //
-            ?><a class="b-common-item__add-to-cart js-basket-add track-recommendation"
-                 href="javascript:void(0);"
-                 data-url="/ajax/sale/basket/add/"
-                 data-offerid="<?= $currentOffer->getId() ?>">
+            <?php } ?>
+            <a class="b-common-item__add-to-cart js-basket-add track-recommendation"
+               href="javascript:void(0);"
+               data-url="/ajax/sale/basket/add/"
+               data-offerid="<?= $currentOffer->getId() ?>">
                 <span class="b-common-item__wrapper-link">
                     <span class="b-cart">
-                        <span class="b-icon b-icon--cart"><?php
-                            echo new SvgDecorator('icon-cart', 16, 16);
-                            ?></span>
+                        <span class="b-icon b-icon--cart">
+                            <?php echo new SvgDecorator('icon-cart', 16, 16); ?>
+                        </span>
                     </span>
                     <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
                     <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                 </span>
                 <span class="b-common-item__incart">+1</span>
-            </a><?php
-
-            //
-            // Информация об особенностях покупки товара
-            //
-            ob_start();
+            </a>
+            <?php ob_start();
             if ($currentOffer->hasDiscount()) {
                 ?>
                 <div class="b-common-item__benefin js-sale-block">

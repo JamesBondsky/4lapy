@@ -144,11 +144,11 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                 $productCollection->add(
                     (new Product())
                         ->setId($offer->getXmlId())
-                        ->setName($offer->getName())
+                        ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
                         ->setBrand($product->getBrandName())
                         ->setPrice($offer->getPrice())
                         ->setCategory(\implode('|', \array_reverse($product->getFullPathCollection()->map(function (Category $category) {
-                            return $category->getName();
+                            return \preg_replace('~\'|"~', '', $category->getName());
                         })->toArray())))
                         ->setList($list)
                         ->setPosition($productCollection->count() + 1)
@@ -173,13 +173,13 @@ class GoogleEcommerceService implements ScriptRenderedInterface
             $productCollection->add(
                 (new Product())
                     ->setId($offer->getId())
-                    ->setName($offer->getName())
+                    ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
                     ->setBrand($offer->getProduct()->getBrandName())
                     ->setPrice($offer->getPrice())
                     ->setCategory(\implode('|', \array_reverse($offer->getProduct()->getFullPathCollection()->map(function (Category $category) {
-                        return $category->getName();
+                        return \preg_replace('~\'|"~', '', $category->getName());
                     })->toArray())))
-                    ->setList($list)
+                    ->setList($list ?: null)
                     ->setPosition($productCollection->count() + 1)
             );
         });
@@ -250,7 +250,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                                 (new ActionField())
                                     ->setList($list)
                             )
-                            ->setProducts($this->buildProductsFromOfferCollection($offerCollection))
+                            ->setProducts($this->buildProductsFromOfferCollection($offerCollection, $list))
                     )
             );
     }

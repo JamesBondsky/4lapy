@@ -34,13 +34,15 @@ class CatalogElementSnippet extends CBitrixComponent
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     *
+     * @param CBitrixComponent $component
      */
-    public function __construct()
+    public function __construct($component)
     {
         $container = Application::getInstance()->getContainer();
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
 
-        parent::__construct();
+        parent::__construct($component);
     }
 
     /**
@@ -86,14 +88,12 @@ class CatalogElementSnippet extends CBitrixComponent
                 /** @var Product $product */
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
-
                 TaggedCacheHelper::addManagedCacheTags([
                     'iblock:item:' . $currentOffer->getId(),
                     'iblock:item:' . $product->getId(),
                 ]);
 
                 $this->includeComponentTemplate();
-
                 return;
             }
 
