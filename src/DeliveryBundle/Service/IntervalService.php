@@ -7,16 +7,9 @@
 namespace FourPaws\DeliveryBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\ArgumentException;
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Collection\IntervalCollection;
-use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Entity\IntervalRule\AddDaysRule;
-use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
 
 /**
@@ -50,47 +43,6 @@ class IntervalService implements LoggerAwareInterface
     public function __construct(DeliveryService $deliveryService)
     {
         $this->deliveryService = $deliveryService;
-    }
-
-    /**
-     * @param string $type
-     * @param array $data
-     * @throws NotFoundException
-     * @return BaseRule
-     */
-    public function createRule(string $type, array $data): BaseRule
-    {
-        switch ($type) {
-            case BaseRule::TYPE_ADD_DAYS:
-                return (new AddDaysRule())
-                    ->setTo($data['TO'] ?? 0)
-                    ->setFrom($data['FROM'] ?? 0)
-                    ->setValue($data['VALUE'] ?? 0);
-        }
-
-        throw new NotFoundException(
-            \sprintf('Rule type %s not found', $type)
-        );
-    }
-
-    /**
-     * @param string $type
-     * @param array $data
-     *
-     * @return IntervalRuleCollection
-     */
-    public function createRules(string $type, array $data): IntervalRuleCollection
-    {
-        $result = new IntervalRuleCollection();
-        foreach ($data as $item) {
-            try {
-                $result->add($this->createRule($type, $item));
-            } catch (NotFoundException $e) {
-                $this->logger->error('Unknown interval rule type', ['type' => $type]);
-            }
-        }
-
-        return $result;
     }
 
     /**
