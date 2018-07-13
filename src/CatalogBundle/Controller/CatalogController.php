@@ -20,33 +20,59 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Class CatalogController
+ *
  * @package FourPaws\CatalogBundle\Controller
+ *
  * @Route("/catalog")
  */
 class CatalogController extends Controller
 {
+    /**
+     * @var SearchService
+     */
+    private $searchService;
+    /**
+     * @var ValidatorInterface
+     */
+    private $validator;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+
+    /**
+     * CatalogController constructor.
+     *
+     * @param SearchService $searchService
+     * @param ValidatorInterface $validator
+     * @param GoogleEcommerceService $ecommerceService
+     */
+    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService)
+    {
+        $this->searchService = $searchService;
+        $this->validator = $validator;
+        $this->ecommerceService = $ecommerceService;
+    }
+
     /** @noinspection MoreThanThreeArgumentsInspection
      *
      * @Route("/search/")
      *
-     * @param Request                $request
-     * @param SearchRequest          $searchRequest
-     * @param SearchService          $searchService
-     * @param ValidatorInterface     $validator
-     * @param GoogleEcommerceService $ecommerceService
+     * @param Request $request
+     * @param SearchRequest $searchRequest
      *
      * @return Response
      *
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    public function searchAction(Request $request, SearchRequest $searchRequest, SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService): Response
+    public function searchAction(Request $request, SearchRequest $searchRequest): Response
     {
         $result = null;
 
-        if (!$validator->validate($searchRequest)->count()) {
+        if (!$this->validator->validate($searchRequest)->count()) {
             /** @var ProductSearchResult $result */
-            $result = $searchService->searchProducts(
+            $result = $this->searchService->searchProducts(
                 $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
@@ -69,7 +95,7 @@ class CatalogController extends Controller
             'productSearchResult' => $result,
             'catalogRequest' => $searchRequest,
             'categories' => $categories,
-            'ecommerceService' => $ecommerceService,
+            'ecommerceService' => $this->ecommerceService,
         ]);
     }
 
@@ -79,14 +105,15 @@ class CatalogController extends Controller
      * @param RootCategoryRequest $rootCategoryRequest
      * @param Request $request
      *
-     * @param SearchService $searchService
      * @return Response
+     *
+     * @throws ApplicationCreateException
      * @throws Exception
      * @throws RuntimeException
      */
-    public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest, Request $request, SearchService $searchService): Response
+    public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest, Request $request): Response
     {
-        $result = $searchService->searchProducts(
+        $result = $this->searchService->searchProducts(
             $rootCategoryRequest->getCategory()->getFilters(),
             $rootCategoryRequest->getSorts()->getSelected(),
             $rootCategoryRequest->getNavigation(),
@@ -106,19 +133,17 @@ class CatalogController extends Controller
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
      *
-     * @param Request                $request
-     * @param ChildCategoryRequest   $categoryRequest
-     * @param SearchService          $searchService
-     * @param GoogleEcommerceService $ecommerceService
+     * @param Request $request
+     * @param ChildCategoryRequest $categoryRequest
      *
      * @return Response
      *
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest, SearchService $searchService, GoogleEcommerceService $ecommerceService): Response
+    public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest): Response
     {
-        $result = $searchService->searchProducts(
+        $result = $this->searchService->searchProducts(
             $categoryRequest->getCategory()->getFilters(),
             $categoryRequest->getSorts()->getSelected(),
             $categoryRequest->getNavigation(),
@@ -135,7 +160,7 @@ class CatalogController extends Controller
             'request' => $request,
             'productSearchResult' => $result,
             'catalogRequest' => $categoryRequest,
-            'ecommerceService' => $ecommerceService,
+            'ecommerceService' => $this->ecommerceService,
         ]);
     }
 }

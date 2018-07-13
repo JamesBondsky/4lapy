@@ -18,6 +18,7 @@ class ProductController extends Controller
 {
     /**
      * @Route("/{path}/{slug}.html", requirements={"path"="[^\.]+(?!\.html)"})
+     *
      * @param ProductDetailRequest $productDetailRequest
      *
      * @return Response

@@ -5,8 +5,10 @@ namespace FourPaws\CatalogBundle\Controller;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
+use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Search\SearchService;
+use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,13 +36,15 @@ class BrandController extends Controller
     /**
      * @Route("/{brand}/")
      *
-     * @param Request                $request
-     * @param CatalogBrandRequest    $catalogBrandRequest
-     * @param SearchService          $searchService
+     * @param Request $request
+     * @param CatalogBrandRequest $catalogBrandRequest
+     * @param SearchService $searchService
      * @param GoogleEcommerceService $ecommerceService
      *
      * @return Response
      *
+     * @throws CatalogRuntimeException
+     * @throws RuntimeException
      * @throws Exception
      * @throws ApplicationCreateException
      */
