@@ -31,7 +31,7 @@ use Symfony\Component\Templating\PhpEngine;
 if ($isBrand && !empty($brand)) {
     $cacheTime = 24 * 60 * 60;
     $instance = Application::getInstance();
-    $requestSections = implode(',', $instance->getContext()->getRequest()->get('Sections'));
+    $requestSections = explode(',', $instance->getContext()->getRequest()->get('Sections'));
     $childs = null;
     $cache = $instance->getCache();
 
