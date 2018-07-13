@@ -7,9 +7,12 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use CBitrixComponent;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -20,6 +23,26 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class CatalogElementSnippet extends CBitrixComponent
 {
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+
+    /**
+     * CatalogElementSnippet constructor.
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     */
+    public function __construct()
+    {
+        $container = Application::getInstance()->getContainer();
+        $this->ecommerceService = $container->get(GoogleEcommerceService::class);
+
+        parent::__construct();
+    }
+
     /**
      * @param array $params
      *
@@ -38,6 +61,8 @@ class CatalogElementSnippet extends CBitrixComponent
         $params['OFFER_FILTER'] = $params['OFFER_FILTER'] ?? [];
         $params['SHARE_ID'] = $params['SHARE_ID'] ?? 0;
         $params['SHARE_ID'] = (int)$params['SHARE_ID'];
+
+        $params['GOOGLE_ECOMMERCE_TYPE'] = (string)$params['GOOGLE_ECOMMERCE_TYPE'] ?: 'Каталог';
 
         return parent::onPrepareComponentParams($params);
     }
@@ -60,7 +85,6 @@ class CatalogElementSnippet extends CBitrixComponent
             if ($this->arParams['PRODUCT']) {
                 /** @var Product $product */
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
-
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
 
                 TaggedCacheHelper::addManagedCacheTags([
@@ -104,5 +128,13 @@ class CatalogElementSnippet extends CBitrixComponent
         }
 
         return $currentOffer;
+    }
+
+    /**
+     * @return GoogleEcommerceService
+     */
+    public function getEcommerceService()
+    {
+        return $this->ecommerceService;
     }
 }

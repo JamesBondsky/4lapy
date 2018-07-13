@@ -132,11 +132,13 @@ abstract class AbstractCatalogRequestConverter implements ParamConverterInterfac
         Request $request,
         ParamConverter $configuration,
         AbstractCatalogRequest $catalogRequest
-    ) {
+    ): bool
+    {
         $catalogRequest
             ->setNavigation($this->getNavigation($request))
             ->setSearchString($this->getSearchString($request))
             ->setSorts($this->getSortsCollection($request));
+
         return true;
     }
 

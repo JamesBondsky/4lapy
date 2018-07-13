@@ -19,7 +19,9 @@ use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion;
 use FourPaws\EcommerceBundle\Exception\InvalidArgumentException;
 use FourPaws\EcommerceBundle\Mapper\ArrayMapper;
 use FourPaws\EcommerceBundle\Mapper\ArrayMapperInterface;
+use FourPaws\EcommerceBundle\Preset\PresetInterface;
 use FourPaws\EcommerceBundle\Storage\KeyValueStaticStorage;
+use InvalidArgumentException as MainInvalidArgumentException;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use RuntimeException;
@@ -228,6 +230,32 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
+     * @param Offer $offer
+     * @param string $list
+     *
+     * @return GoogleEcommerce
+     */
+    public function buildClickFromOffer(Offer $offer, string $list = ''): GoogleEcommerce
+    {
+        $offerCollection = new OfferCollection(new CDBResult());
+        $offerCollection->add($offer);
+
+        return (new GoogleEcommerce())
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode('RUB')
+                    ->setClick(
+                        (new Action())
+                            ->setActionField(
+                                (new ActionField())
+                                    ->setList($list)
+                            )
+                            ->setProducts($this->buildProductsFromOfferCollection($offerCollection))
+                    )
+            );
+    }
+
+    /**
      * @param array $offerList
      * @param string $list
      *
@@ -279,5 +307,31 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     public function getArrayMapper(array $map): ArrayMapperInterface
     {
         return new ArrayMapper($map);
+    }
+
+    /**
+     * @param string $interfaceClass
+     * @return PresetInterface
+     *
+     * @throws MainInvalidArgumentException
+     */
+    public function getPreset(string $interfaceClass): PresetInterface
+    {
+        /**
+         * @todo - presetRepository
+         */
+        $class = $this->presetRepository->get($interfaceClass);
+
+        /**
+         * @todo move to repo
+         */
+        if (!$class instanceof PresetInterface) {
+            throw new MainInvalidArgumentException(\sprintf(
+                'Class %s must be intance of PresetInterface',
+                $interfaceClass
+            ));
+        }
+
+        return $class;
     }
 }

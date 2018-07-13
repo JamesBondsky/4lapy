@@ -9,25 +9,37 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 
 /**
- * @global CMain                 $APPLICATION
- * @var array                    $arParams
- * @var array                    $arResult
- * @var CatalogElementSnippet    $component
- * @var CBitrixComponentTemplate $this
- * @var string                   $templateName
- * @var string                   $componentPath
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ * @var CatalogElementSnippet $component
+ * @var string $templateName
+ * @var string $componentPath
  *
- * @var Product                  $product
- * @var OfferCollection          $offers
- * @var Offer                    $offer
- * @var Offer                    $currentOffer
+ * @var Product $product
+ * @var OfferCollection $offers
+ * @var Offer $offer
+ * @var Offer $currentOffer
  */
 
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
+
+/**
+ * @var $ecommerceService GoogleEcommerceService
+ */
+$ecommerceService = $this->getEcommerceService();
+$getOnClick = function (Offer $offer) use ($ecommerceService, $arParams) {
+    return $ecommerceService->renderScript(
+        $ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']),
+        false
+    );
+};
+
 
 $currentOffer = $arResult['CURRENT_OFFER'];
 
@@ -56,7 +68,8 @@ if ($mainCombinationType === 'SIZE') {
         <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
-                <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
+                <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
+                   onclick="<?= $getOnClick($currentOffer) ?>">
                     <img class="b-common-item__image js-weight-img"
                          src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                          alt="<?= $currentOffer->getName() ?>"
@@ -66,13 +79,13 @@ if ($mainCombinationType === 'SIZE') {
         </span>
         <div class="b-common-item__info-center-block">
             <a class="b-common-item__description-wrap js-item-link track-recommendation"
-               href="<?= $currentOffer->getLink() ?>">
+               href="<?= $currentOffer->getLink() ?>" onclick="<?= $getOnClick($currentOffer) ?>">
                 <span class="b-clipped-text b-clipped-text--three">
                     <span>
                         <?php if ($product->getBrand()) {
-                            echo '<strong>' . $product->getBrand()->getName() . '</strong>';
-                            echo ' ';
+                            echo '<strong>' . $product->getBrand()->getName() . '</strong> ';
                         }
+
                         echo $product->getName(); ?>
                     </span>
                 </span>
@@ -97,7 +110,8 @@ if ($mainCombinationType === 'SIZE') {
                 ob_start();
                 ?>
                 <div class="b-weight-container b-weight-container--list">
-                    <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : ''?>js-mobile-select js-select-mobile-package" href="javascript:void(0);"><?= $value ?></a>
+                    <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : '' ?>js-mobile-select js-select-mobile-package"
+                       href="javascript:void(0);"><?= $value ?></a>
                     <div class="b-weight-container__dropdown-list__wrapper">
                         <div class="b-weight-container__dropdown-list"></div>
                     </div>
@@ -134,6 +148,7 @@ if ($mainCombinationType === 'SIZE') {
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
+                            $addAttr .= ' data-onclick="' . $getOnClick($offer) . '"';
                             $addAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
                             $addAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
@@ -161,6 +176,7 @@ if ($mainCombinationType === 'SIZE') {
                                class="b-weight-container__link js-price active-link"
                                data-discount="<?= $currentOffer->getDiscountPrice() ?>"
                                data-pickup=""
+                               data-onclick="<?= $getOnClick($offer) ?>"
                                data-available="<?= !$offer->isAvailable() ? 'Нет в наличии' : '' ?>"
                                data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
                                data-price="<?= $currentOffer->getPriceCeil() ?>"
@@ -240,19 +256,19 @@ if ($mainCombinationType === 'SIZE') {
 //
 if (isset($arParams['BIG_DATA']['RCM_ID']) && !empty($arParams['BIG_DATA']['RCM_ID'])) {
     $jsProduct = [
-        'ID'     => $product->getId(),
+        'ID' => $product->getId(),
         'RCM_ID' => $arParams['BIG_DATA']['RCM_ID'] ?? '',
     ];
     $jsSelectors = [
-        'item'                => '#' . $arParams['ITEM_ATTR_ID'],
+        'item' => '#' . $arParams['ITEM_ATTR_ID'],
         'trackRecommendation' => '#' . $arParams['ITEM_ATTR_ID'] . ' .track-recommendation',
     ];
     $jsParams = [
         'cookiePrefix' => $arParams['BIG_DATA']['cookiePrefix'] ?? '',
         'cookieDomain' => $arParams['BIG_DATA']['cookieDomain'] ?? '',
-        'serverTime'   => $arParams['BIG_DATA']['serverTime'] ?? 0,
-        'product'      => $jsProduct,
-        'selectors'    => $jsSelectors,
+        'serverTime' => $arParams['BIG_DATA']['serverTime'] ?? 0,
+        'product' => $jsProduct,
+        'selectors' => $jsSelectors,
     ];
 
     ?>
