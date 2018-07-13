@@ -178,7 +178,7 @@ class Product
      *
      * @return Product
      */
-    public function setList(string $list): Product
+    public function setList(?string $list): Product
     {
         $this->list = $list;
 
