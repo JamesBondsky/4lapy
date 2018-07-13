@@ -19,7 +19,9 @@ use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Promotion;
 use FourPaws\EcommerceBundle\Exception\InvalidArgumentException;
 use FourPaws\EcommerceBundle\Mapper\ArrayMapper;
 use FourPaws\EcommerceBundle\Mapper\ArrayMapperInterface;
+use FourPaws\EcommerceBundle\Preset\PresetInterface;
 use FourPaws\EcommerceBundle\Storage\KeyValueStaticStorage;
+use InvalidArgumentException as MainInvalidArgumentException;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use RuntimeException;
@@ -142,11 +144,11 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                 $productCollection->add(
                     (new Product())
                         ->setId($offer->getXmlId())
-                        ->setName($offer->getName())
+                        ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
                         ->setBrand($product->getBrandName())
                         ->setPrice($offer->getPrice())
                         ->setCategory(\implode('|', \array_reverse($product->getFullPathCollection()->map(function (Category $category) {
-                            return $category->getName();
+                            return \preg_replace('~\'|"~', '', $category->getName());
                         })->toArray())))
                         ->setList($list)
                         ->setPosition($productCollection->count() + 1)
@@ -171,13 +173,13 @@ class GoogleEcommerceService implements ScriptRenderedInterface
             $productCollection->add(
                 (new Product())
                     ->setId($offer->getId())
-                    ->setName($offer->getName())
+                    ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
                     ->setBrand($offer->getProduct()->getBrandName())
                     ->setPrice($offer->getPrice())
                     ->setCategory(\implode('|', \array_reverse($offer->getProduct()->getFullPathCollection()->map(function (Category $category) {
-                        return $category->getName();
+                        return \preg_replace('~\'|"~', '', $category->getName());
                     })->toArray())))
-                    ->setList($list)
+                    ->setList($list ?: null)
                     ->setPosition($productCollection->count() + 1)
             );
         });
@@ -223,6 +225,32 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                                     ->setList($list)
                             )
                             ->setProducts($this->buildProductsFromOfferCollection($offerCollection))
+                    )
+            );
+    }
+
+    /**
+     * @param Offer $offer
+     * @param string $list
+     *
+     * @return GoogleEcommerce
+     */
+    public function buildClickFromOffer(Offer $offer, string $list = ''): GoogleEcommerce
+    {
+        $offerCollection = new OfferCollection(new CDBResult());
+        $offerCollection->add($offer);
+
+        return (new GoogleEcommerce())
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode('RUB')
+                    ->setClick(
+                        (new Action())
+                            ->setActionField(
+                                (new ActionField())
+                                    ->setList($list)
+                            )
+                            ->setProducts($this->buildProductsFromOfferCollection($offerCollection, $list))
                     )
             );
     }
@@ -279,5 +307,31 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     public function getArrayMapper(array $map): ArrayMapperInterface
     {
         return new ArrayMapper($map);
+    }
+
+    /**
+     * @param string $interfaceClass
+     * @return PresetInterface
+     *
+     * @throws MainInvalidArgumentException
+     */
+    public function getPreset(string $interfaceClass): PresetInterface
+    {
+        /**
+         * @todo - presetRepository
+         */
+        $class = $this->presetRepository->get($interfaceClass);
+
+        /**
+         * @todo move to repo
+         */
+        if (!$class instanceof PresetInterface) {
+            throw new MainInvalidArgumentException(\sprintf(
+                'Class %s must be intance of PresetInterface',
+                $interfaceClass
+            ));
+        }
+
+        return $class;
     }
 }

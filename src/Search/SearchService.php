@@ -52,10 +52,12 @@ class SearchService implements LoggerAwareInterface
      * аггрегации: и фильтры соответствующим образом "схлопываются", обеспечивая настоящий фасетный поиск по каталогу.
      *
      * @param FilterCollection $filters
-     * @param Sorting          $sorting
-     * @param Navigation       $navigation
-     * @param string           $searchString
+     * @param Sorting $sorting
+     * @param Navigation $navigation
+     * @param string $searchString
      *
+     * @throws \UnexpectedValueException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws RuntimeException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return ProductSearchResult
@@ -68,7 +70,7 @@ class SearchService implements LoggerAwareInterface
     ): ProductSearchResult {
         $search = $this->getIndexHelper()->createProductSearch();
 
-        if ($searchString != '') {
+        if ($searchString !== '') {
             $search->getQuery()->setMinScore(0.9);
         }
 
