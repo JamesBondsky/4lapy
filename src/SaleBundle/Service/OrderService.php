@@ -925,8 +925,12 @@ class OrderService implements LoggerAwareInterface
 
                 try {
                     $address = $this->locationService->splitAddress((string)$address, $storage->getCityCode());
+                    if (!$address->getStreet()) {
+                        $address->setValid(false);
+                        $address->setStreet($storage->getStreet());
+                    }
                     $this->setOrderPropertiesByCode($order, [
-                        'STREET' => $address->getStreet() ?: $storage->getStreet(),
+                        'STREET' => $address->getStreet(),
                         'STREET_PREFIX' => $address->getStreetPrefix(),
                         'ZIP_CODE' => $address->getZipCode()
                     ]);
