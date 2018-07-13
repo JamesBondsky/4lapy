@@ -5,6 +5,7 @@ namespace FourPaws\SaleBundle\Validation;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\Validator\Constraint;
@@ -62,10 +63,10 @@ class OrderBonusCardValidator extends ConstraintValidator
         } else {
             try {
                 if (!$this->manzanaService->searchCardByNumber($entity->getDiscountCardNumber())) {
-                    $this->context->addViolation(\sprintf($constraint->cardNotValidMessage, \tplvar('phone_main')));
+                    $this->context->addViolation(\sprintf($constraint->cardNotValidMessage, PhoneHelper::getCityPhone()));
                 }
             } catch (ManzanaServiceException | CardNotFoundException $e) {
-                $this->context->addViolation(\sprintf($constraint->cardNotValidMessage, \tplvar('phone_main')));
+                $this->context->addViolation(\sprintf($constraint->cardNotValidMessage, PhoneHelper::getCityPhone()));
             }
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -18,12 +19,5 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CUser $USER
  * @global CMain $APPLICATION
  * @global CDatabase $DB
- */
-
-$this->setFrameMode(true);
-?>
-<?php $frame = $this->createFrame()->begin() ?>
+ */ ?>
 <span class="b-header__phone-short-header"><?= $arResult['PHONE'] ?></span>
-<?php $frame->beginStub() ?>
-<span class="b-header__phone-short-header"><?= $arResult['DEFAULT_PHONE'] ?></span>
-<? $frame->end() ?>

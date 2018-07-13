@@ -2,8 +2,14 @@
 
 namespace FourPaws\Helpers;
 
+use CMain;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 
+/**
+ * Class PhoneHelper
+ *
+ * @package FourPaws\Helpers
+ */
 class PhoneHelper
 {
     public const FORMAT_FULL = '+7 (%s%s%s) %s%s%s-%s%s-%s%s';
@@ -86,5 +92,26 @@ class PhoneHelper
         } catch (WrongPhoneNumberException $e) {
             return $phone;
         }
+    }
+
+    /**
+     * @global CMain $APPLICATION
+     *
+     * @return string
+     */
+    public static function getCityPhone(): string
+    {
+        global $APPLICATION;
+
+        \ob_start();
+        $APPLICATION->IncludeComponent(
+            'fourpaws:city.phone',
+            'template.footer',
+            [],
+            false,
+            ['HIDE_ICONS' => 'Y']
+        );
+
+        return \ob_get_clean();
     }
 }
