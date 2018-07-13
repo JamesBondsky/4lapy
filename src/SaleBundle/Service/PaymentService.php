@@ -109,7 +109,7 @@ class PaymentService
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getFiscalization(Order $order, int $taxSystem, $skipGifts = true): Fiscal
+    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true): Fiscal
     {
         /** @var DateTime $dateCreate */
         $dateCreate = $order->getField('DATE_INSERT');
@@ -217,7 +217,7 @@ class PaymentService
     {
         $orderInvoiceId = $this->getOrderInvoiceId($order);
         if (empty($fiscalization)) {
-            $fiscalization = $this->getFiscalization($order, null);
+            $fiscalization = $this->fiscalToArray($this->getFiscalization($order));
         }
         return $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
             return $this->getSberbankProcessing()->depositPayment($orderInvoiceId, $amount, $fiscalization);
@@ -448,7 +448,7 @@ class PaymentService
                 ->setQuantity($quantity)
                 ->setPrice($itemPrice)
                 ->setTotal($itemPrice * (int)$basketItem->getQuantity())
-                ->setCode($basketItem->getProductId())
+                ->setCode($basketItem->getProductId() . '_' . $position)
                 ->setTax($tax);
             $items->add($item);
         }
