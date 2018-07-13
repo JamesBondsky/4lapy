@@ -242,7 +242,7 @@ class SalePreset
             }
 
             $basketArrayCollection->add(
-                [
+                \array_filter([
                     'basketId' => $basketItem->getId(),
                     'id' => $offer->getXmlId(),
                     'price' => $basketItem->getPrice(),
@@ -251,11 +251,10 @@ class SalePreset
                     'quantity' => $basketItem->getQuantity(),
                     'name' => $offer ? $offer->getName() : $basketItem->getField('NAME'),
                     'brand' => $product ? $product->getBrandName() : '',
-                    'list' => '',
                     'category' => $product ? \implode('|', \array_reverse($product->getFullPathCollection()->map(function (Category $category) {
                         return $category->getName();
                     })->toArray())) : '',
-                ]
+                ])
             );
         }
 
