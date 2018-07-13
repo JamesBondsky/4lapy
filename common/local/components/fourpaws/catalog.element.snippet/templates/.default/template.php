@@ -1,17 +1,4 @@
 <?php
-/**
- * @var array                 $arParams
- * @var array                 $arResult
- *
- * @var CatalogElementSnippet $component
- *
- * @var Product               $product
- * @var OfferCollection       $offers
- * @var Offer                 $offer
- * @var Offer                 $currentOffer
- *
- * @global \CMain             $APPLICATION
- */
 
 use Bitrix\Main\Web\Uri;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -21,6 +8,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\HighloadHelper;
 use FourPaws\Helpers\WordHelper;
 
@@ -28,18 +16,40 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+/**
+ * @var $ecommerceService GoogleEcommerceService
+ * @var array $arParams
+ * @var array $arResult
+ *
+ * @var CatalogElementSnippet $component
+ *
+ * @var Product $product
+ * @var OfferCollection $offers
+ * @var Offer $offer
+ * @var Offer $currentOffer
+ *
+ * @global CMain $APPLICATION
+ */
+$ecommerceService = $component->getEcommerceService();
+$getOnClick = function (Offer $offer) use ($ecommerceService, $arParams) {
+    return \str_replace('"', '\'', $ecommerceService->renderScript(
+        $ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']),
+        false
+    ));
+};
+
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers(true, false, $arParams['OFFER_FILTER']);
 /** @var Offer $currentOffer */
 
-$currentOffer = $arResult['CURRENT_OFFER'];
-?>
+$currentOffer = $arResult['CURRENT_OFFER']; ?>
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
     <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
-            <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>">
+            <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
+               onclick="<?= $getOnClick($currentOffer) ?>">
                 <img class="b-common-item__image js-weight-img"
                      src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                      alt="<?= $product->getName() ?>"
@@ -48,7 +58,8 @@ $currentOffer = $arResult['CURRENT_OFFER'];
         </span>
     <?php } ?>
     <div class="b-common-item__info-center-block">
-        <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>" title="">
+        <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>"
+           onclick="<?= $getOnClick($currentOffer) ?>" title="">
             <span class="b-clipped-text b-clipped-text--three">
                 <span>
                     <?php if ($product->getBrand()) { ?>
@@ -65,13 +76,13 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                 'fourpaws:comments',
                 'catalog.snippet',
                 [
-                    'HL_ID'              => HighloadHelper::getIdByName('Comments'),
-                    'OBJECT_ID'          => $productId,
-                    'SORT_DESC'          => 'Y',
-                    'ITEMS_COUNT'        => 5,
+                    'HL_ID' => HighloadHelper::getIdByName('Comments'),
+                    'OBJECT_ID' => $productId,
+                    'SORT_DESC' => 'Y',
+                    'ITEMS_COUNT' => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
-                    'TYPE'               => 'catalog',
-                    'ITEM_LINK'          => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
+                    'TYPE' => 'catalog',
+                    'ITEM_LINK' => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
@@ -170,6 +181,7 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                                    data-oldprice="<?= $offer->getOldPriceCeil() ?>"
                                    data-price="<?= $offer->getPriceCeil() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
+                                   data-onclick="<?= $getOnClick($offer) ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
                             </li>
@@ -181,6 +193,7 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                                    data-price="<?= $offer->getPriceCeil() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                   data-onclick="<?= $getOnClick($offer) ?>"
                                    data-link="<?= $offer->getLink() ?>"></a>
                             </li>
                         <?php } ?>
@@ -198,6 +211,7 @@ $currentOffer = $arResult['CURRENT_OFFER'];
                            data-price="<?= $currentOffer->getPriceCeil() ?>"
                            data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                           data-onclick="<?= $getOnClick($currentOffer) ?>"
                            data-link="<?= $currentOffer->getLink() ?>"></a>
                     </li>
                 </ul>

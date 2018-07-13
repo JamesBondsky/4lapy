@@ -11,8 +11,10 @@ use FourPaws\Search\SearchService;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use UnexpectedValueException;
 
 /**
  * Class BrandController
@@ -43,6 +45,8 @@ class BrandController extends Controller
      *
      * @return Response
      *
+     * @throws UnexpectedValueException
+     * @throws ServiceCircularReferenceException
      * @throws CatalogRuntimeException
      * @throws RuntimeException
      * @throws Exception
@@ -63,11 +67,11 @@ class BrandController extends Controller
         );
 
         return $this->render('FourPawsCatalogBundle:Catalog:brand.detail.html.php', [
-            'request'             => $request,
-            'catalogRequest'      => $catalogBrandRequest,
+            'request' => $request,
+            'catalogRequest' => $catalogBrandRequest,
             'productSearchResult' => $result,
-            'searchService'       => $searchService,
-            'ecommerceService'    => $ecommerceService,
+            'searchService' => $searchService,
+            'ecommerceService' => $ecommerceService,
         ]);
     }
 }

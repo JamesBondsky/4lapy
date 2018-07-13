@@ -19,6 +19,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Factory\IntervalRuleFactory;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 
 class InnerDeliveryHandler extends DeliveryHandlerBase
@@ -107,7 +108,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
                     $ruleCollection = new IntervalRuleCollection(
                         \array_merge(
                             $ruleCollection->toArray(),
-                            $this->intervalService->createRules($type, $ruleData)->toArray()
+                            IntervalRuleFactory::createRules($type, $ruleData)->toArray()
                         )
                     );
                 }

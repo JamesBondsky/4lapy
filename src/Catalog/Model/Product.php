@@ -2115,7 +2115,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 ->first();
         }
 
-        return $this->section;
+        return $this->section ?: null;
     }
 
     /**

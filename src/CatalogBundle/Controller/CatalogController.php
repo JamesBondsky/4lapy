@@ -8,6 +8,7 @@ use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
+use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -63,6 +64,8 @@ class CatalogController extends Controller
      *
      * @return Response
      *
+     * @throws CatalogRuntimeException
+     * @throws RuntimeException
      * @throws ApplicationCreateException
      * @throws Exception
      */
@@ -107,6 +110,7 @@ class CatalogController extends Controller
      *
      * @return Response
      *
+     * @throws CatalogRuntimeException
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws RuntimeException
@@ -138,6 +142,8 @@ class CatalogController extends Controller
      *
      * @return Response
      *
+     * @throws RuntimeException
+     * @throws CatalogRuntimeException
      * @throws ApplicationCreateException
      * @throws Exception
      */

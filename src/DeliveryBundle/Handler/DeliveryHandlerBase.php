@@ -24,7 +24,6 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -65,11 +64,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     protected $deliveryService;
 
     /**
-     * @var IntervalService
-     */
-    protected $intervalService;
-
-    /**
      * DeliveryHandlerBase constructor.
      *
      * @param $initParams
@@ -87,7 +81,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         $this->storeService = $serviceContainer->get('store.service');
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->userService = $serviceContainer->get(UserCitySelectInterface::class);
-        $this->intervalService = $serviceContainer->get(IntervalService::class);
         parent::__construct($initParams);
     }
 
