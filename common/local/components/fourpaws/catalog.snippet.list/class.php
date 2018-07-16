@@ -29,11 +29,13 @@ class CatalogSaleListComponent extends CBitrixComponent
     /**
      * CatalogSaleListComponent constructor.
      *
+     * @param $component
+     *
      * @throws ApplicationCreateException
      */
-    public function __construct()
+    public function __construct($component = null)
     {
-        parent::__construct();
+        parent::__construct($component);
 
         $this->ecommerceService = Application::getInstance()->getContainer()->get(GoogleEcommerceService::class);
     }
