@@ -6,6 +6,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 /**
  * Class AjaxMess
@@ -109,8 +110,7 @@ class AjaxMess
         string $hotLinePhone = '',
         string $login = '',
         string $loginName = 'логином'
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $hotLineText = $hotLinePhone ? ' по телефону ' . $hotLinePhone : '';
         $loginText = !empty($login) ? ' с данным ' . $loginName . ' ' . $login : '';
         $mes = 'Найдено больше одного пользователя' . $loginText . ', обратитесь на горячую линию' . $hotLineText;
@@ -372,7 +372,9 @@ class AjaxMess
      */
     public function getCardNotValidError(): JsonResponse
     {
-        return $this->getJsonError('cardNotValid', \sprintf('Ваша карта не привязана. Пожалуйста, обратитесь на Горячую линию по телефону %s', PhoneHelper::getCityPhone()));
+        return $this->getJsonError('cardNotValid',
+            \sprintf('Ваша карта не привязана. Пожалуйста, обратитесь на Горячую линию по телефону %s',
+                PhoneHelper::getCityPhone()));
     }
 
     /**
@@ -432,14 +434,14 @@ class AjaxMess
      * @param string $code
      * @param string $mes
      *
-     * @param array $additionalData
+     * @param array  $additionalData
      *
      * @return JsonResponse
      */
     private function getJsonError(string $code, string $mes, array $additionalData = []): JsonResponse
     {
         if ($this->isReloadRecaptcha()) {
-            $recaptchaService = Application::getInstance()->getContainer()->get('recaptcha.service');
+            $recaptchaService = Application::getInstance()->getContainer()->get(ReCaptchaInterface::class);
             $additionalData = array_merge($additionalData,
                 ['recaptchaReload' => true, 'recaptchaParams' => $recaptchaService->getParams()]);
         }

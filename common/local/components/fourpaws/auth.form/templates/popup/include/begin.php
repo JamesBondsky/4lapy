@@ -3,6 +3,7 @@
 use Bitrix\Main\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -12,10 +13,9 @@ global $APPLICATION;
 ?>
 <?php if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
     $requestUri = Application::getInstance()->getContext()->getRequest()->getRequestUri();
-    if(strpos($requestUri, 'sale/order/complete') !== false){
+    if (strpos($requestUri, 'sale/order/complete') !== false) {
         $backUrl = '/personal';
-    }
-    else {
+    } else {
         $backUrl = !empty($backUrl) ? $backUrl : $requestUri;
     }
     ?>
@@ -27,7 +27,7 @@ global $APPLICATION;
               data-url="/ajax/user/auth/login/"
               method="post">
             <input type="hidden" name="action" value="login" class="js-no-valid">
-            <input type="hidden" name="backurl" value="<?=$backUrl?>" class="js-no-valid">
+            <input type="hidden" name="backurl" value="<?= $backUrl ?>" class="js-no-valid">
             <div class="b-input-line b-input-line--popup-authorization">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="tel-email-authorization">Телефон или
@@ -60,16 +60,16 @@ global $APPLICATION;
                 </div>
             </div>
             <?php
-            if((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3) {
+            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3) {
                 try {
-                    $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                    $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
                     echo $recaptchaService->getCaptcha('', true);
                 } catch (ApplicationCreateException $e) {
                 }
-            }?>
+            } ?>
             <div>
                 <span class="b-registration__auth-error">
-                    <?=(int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 ? 'Неверный логин или пароль' : ''?>
+                    <?= (int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 ? 'Неверный логин или пароль' : '' ?>
                 </span>
             </div>
             <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
