@@ -26,6 +26,13 @@ class Item
     protected $name = '';
 
     /**
+     * @var string
+     *
+     * @Serializer\Exclude()
+     */
+    protected $xmlId = '';
+
+    /**
      * @var ItemQuantity
      *
      * @Serializer\SerializedName("quantity")
@@ -98,6 +105,24 @@ class Item
     public function setName(string $name): Item
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getXmlId(): string
+    {
+        return $this->xmlId;
+    }
+
+    /**
+     * @param string $xmlId
+     * @return Item
+     */
+    public function setXmlId(string $xmlId): Item
+    {
+        $this->xmlId = $xmlId;
         return $this;
     }
 

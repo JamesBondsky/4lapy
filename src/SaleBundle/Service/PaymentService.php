@@ -213,10 +213,10 @@ class PaymentService
      * @throws PaymentException
      * @return bool
      */
-    public function depositPayment(Order $order, float $amount, array $fiscalization = []): bool
+    public function depositPayment(Order $order, float $amount, array $fiscalization = null): bool
     {
         $orderInvoiceId = $this->getOrderInvoiceId($order);
-        if (empty($fiscalization)) {
+        if (null === $fiscalization) {
             $fiscalization = $this->fiscalToArray($this->getFiscalization($order));
         }
         return $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
@@ -445,6 +445,7 @@ class PaymentService
             $item = (new Item())
                 ->setPositionId(++$position)
                 ->setName($basketItem->getField('NAME') ?: '')
+                ->setXmlId($this->basketService->getBasketItemXmlId($basketItem))
                 ->setQuantity($quantity)
                 ->setPrice($itemPrice)
                 ->setTotal($itemPrice * (int)$basketItem->getQuantity())
