@@ -589,20 +589,9 @@ class PaymentService
         if (!$this->isOnlinePayment($order)) {
             throw new PaymentException('Invalid order payment type');
         }
-        /**
-         * @see common/local/php_interface/include/sale_payment/payment/payment.php
-         */
-        for ($i = 0; $i < 3; $i++) {
-            try {
-                $response = $this->getSberbankProcessing()->getOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER') . '_' . $i);
-                $this->processOnlinePayment($order, $response);
-                return;
-            } catch (SberbankOrderNotFoundException $e) {
-                // не требуется
-            }
-        }
 
-        throw new SberbankOrderNotFoundException('Order not found');
+        $response = $this->getSberbankProcessing()->getOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER'));
+        $this->processOnlinePayment($order, $response);
     }
 
     /**

@@ -75,20 +75,14 @@ if ($fiscalization['ENABLE'] === 'Y') {
     $fiscal = $paymentService->fiscalToArray($fiscal);
 }
 /* END Фискализация */
-for ($i = 0; $i <= 10; $i++) {
-    $response = $rbs->register_order(
-        $order->getField('ACCOUNT_NUMBER') . '_' . $i,
-        $amount,
-        (string)new FullHrefDecorator($returnUrl),
-        $order->getCurrency(),
-        $order->getField('USER_DESCRIPTION'),
-        $fiscal
-    );
-
-    if ((int)$response['errorCode'] !== 1) {
-        break;
-    }
-}
+$response = $rbs->register_order(
+    $order->getField('ACCOUNT_NUMBER'),
+    $amount,
+    (string)new FullHrefDecorator($returnUrl),
+    $order->getCurrency(),
+    $order->getField('USER_DESCRIPTION'),
+    $fiscal
+);
 
 /**
  * Разбор ответа
