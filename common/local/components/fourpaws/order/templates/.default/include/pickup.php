@@ -14,6 +14,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 
@@ -78,7 +79,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
         </div>
         <div class="b-input-line__text-line">
             <?php foreach ($arResult['PICKUP_AVAILABLE_PAYMENTS'] as $payment) {
-                $icon = $payment['CODE'] === OrderService::PAYMENT_CASH ? 'icon-cash' : 'icon-bank-card'
+                $icon = $payment['CODE'] === OrderPayment::PAYMENT_CASH ? 'icon-cash' : 'icon-bank-card'
                 ?>
                 <span class="b-input-line__pay-type">
                     <span class="b-icon b-icon--icon-cash">

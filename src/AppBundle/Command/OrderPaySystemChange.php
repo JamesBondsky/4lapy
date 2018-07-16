@@ -15,6 +15,7 @@ use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
@@ -92,7 +93,7 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
         $filter = [
             '<DATE_INSERT'        => $date->format('d.m.Y H:i:s'),
             '>DATE_INSERT'        => $maxDate->format('d.m.Y H:i:s'),
-            '=PAYMENT_SYSTEM.CODE' => OrderService::PAYMENT_ONLINE,
+            '=PAYMENT_SYSTEM.CODE' => OrderPayment::PAYMENT_ONLINE,
             '!CANCELED'           => 'Y',
             '!PAYED'       => 'Y',
         ];

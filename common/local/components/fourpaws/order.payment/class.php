@@ -17,6 +17,7 @@ use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -113,7 +114,7 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
                 continue;
             }
 
-            if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
+            if ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE) {
                 $paymentItem = $payment;
             }
         }

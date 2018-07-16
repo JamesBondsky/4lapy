@@ -33,6 +33,7 @@ use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemTax;
 use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
@@ -79,17 +80,17 @@ class PaymentService
      */
     public function getAvailablePaymentsForStore(Store $store, float $paymentSum = 0): array
     {
-        $result = [OrderService::PAYMENT_ONLINE];
+        $result = [OrderPayment::PAYMENT_ONLINE];
         if ($store instanceof Terminal) {
             if ($store->isNppAvailable() && $store->getNppValue() >= $paymentSum) {
                 if ($store->hasCardPayment()) {
-                    $result[] = OrderService::PAYMENT_CASH_OR_CARD;
+                    $result[] = OrderPayment::PAYMENT_CASH_OR_CARD;
                 } elseif ($store->hasCashPayment()) {
-                    $result[] = OrderService::PAYMENT_CASH;
+                    $result[] = OrderPayment::PAYMENT_CASH;
                 }
             }
         } else {
-            $result[] = OrderService::PAYMENT_CASH_OR_CARD;
+            $result[] = OrderPayment::PAYMENT_CASH_OR_CARD;
         }
 
         return $result;
@@ -159,7 +160,7 @@ class PaymentService
     {
         $result = false;
         try {
-            $result = $this->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE;
+            $result = $this->getOrderPaymentType($order) === OrderPayment::PAYMENT_ONLINE;
         } catch (NotFoundException $e) {
         }
 

@@ -14,6 +14,7 @@ use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
 use Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Restrictions\PaymentByDeliveryRestriction;
 use FourPaws\SaleBundle\Service\OrderService;
 
@@ -22,7 +23,7 @@ class PaymentSystemRestrictions20180709162631 extends SprintMigrationBase
     protected $description = 'Задание ограничений платежным системам по службам доставки';
 
     protected $restrictions = [
-        OrderService::PAYMENT_CASH_OR_CARD => [
+        OrderPayment::PAYMENT_CASH_OR_CARD => [
             'CLASS_NAME' => '\\' . PaymentByDeliveryRestriction::class,
             'PARAMS'     => [
                 DeliveryService::DPD_PICKUP_CODE     => 'Y',

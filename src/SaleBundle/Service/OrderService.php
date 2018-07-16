@@ -63,6 +63,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
@@ -97,14 +98,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
-    public const PAYMENT_CASH_OR_CARD = 'cash-or-card';
-
-    public const PAYMENT_CASH = 'cash';
-
-    public const PAYMENT_ONLINE = 'card-online';
-
-    public const PAYMENT_INNER = 'inner';
 
     public const PROPERTY_TYPE_ENUM = 'ENUM';
 
@@ -1339,7 +1332,7 @@ class OrderService implements LoggerAwareInterface
     public function processPaymentError(Order $order): void
     {
         /** @todo костыль */
-        if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => static::PAYMENT_CASH]])->fetch()) {
+        if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => OrderPayment::PAYMENT_CASH]])->fetch()) {
             $this->log()->error('cash payment not found');
             return;
         }
@@ -1354,7 +1347,7 @@ class OrderService implements LoggerAwareInterface
             try {
                 $payment = $this->getOrderPayment($order);
                 if ($payment->isPaid() ||
-                    $payment->getPaySystem()->getField('CODE') !== OrderService::PAYMENT_ONLINE
+                    $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE
                 ) {
                     return;
                 }
@@ -1542,7 +1535,7 @@ class OrderService implements LoggerAwareInterface
         $paySystemService = null;
         if (!isset($this->paySystemServiceCache['cash'])) {
             $this->paySystemServiceCache['cash'] = null;
-            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH_OR_CARD);
+            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(OrderPayment::PAYMENT_CASH_OR_CARD);
             if ($data) {
                 $this->paySystemServiceCache['cash'] = new Service(
                     $data

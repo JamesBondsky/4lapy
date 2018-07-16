@@ -27,6 +27,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -354,7 +355,7 @@ class OrderController extends Controller
             if ($payment->isInner()) {
                 continue;
             }
-            if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
+            if ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE) {
                 $url->setPath('/sale/payment/');
                 $url->addParams(['ORDER_ID' => $order->getId()]);
                 if (!$this->orderService->hasRelatedOrder($order)) {

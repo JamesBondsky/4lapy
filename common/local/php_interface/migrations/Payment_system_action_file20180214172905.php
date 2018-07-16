@@ -3,7 +3,7 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use CSalePaySystemAction;
 
 class Payment_system_action_file20180214172905 extends SprintMigrationBase
@@ -16,8 +16,8 @@ class Payment_system_action_file20180214172905 extends SprintMigrationBase
 
     public function up()
     {
-        if (!$paySystem = CSalePaySystemAction::GetList([], ['CODE' => OrderService::PAYMENT_ONLINE])->Fetch()) {
-            $this->log()->error('Не найден платежная система ' . OrderService::PAYMENT_ONLINE);
+        if (!$paySystem = CSalePaySystemAction::GetList([], ['CODE' => OrderPayment::PAYMENT_ONLINE])->Fetch()) {
+            $this->log()->error('Не найден платежная система ' . OrderPayment::PAYMENT_ONLINE);
 
             return false;
         }
@@ -30,8 +30,8 @@ class Payment_system_action_file20180214172905 extends SprintMigrationBase
 
     public function down()
     {
-        if (!$paySystem = CSalePaySystemAction::GetList([], ['CODE' => OrderService::PAYMENT_ONLINE])->Fetch()) {
-            $this->log()->error('Не найден платежная система ' . OrderService::PAYMENT_ONLINE);
+        if (!$paySystem = CSalePaySystemAction::GetList([], ['CODE' => OrderPayment::PAYMENT_ONLINE])->Fetch()) {
+            $this->log()->error('Не найден платежная система ' . OrderPayment::PAYMENT_ONLINE);
 
             return false;
         }
