@@ -96,8 +96,6 @@ class PaymentService
     }
 
     /**
-     * @todo переделать на сериализацию
-     *
      * @param Order $order
      * @param int   $taxSystem
      * @param bool  $skipGifts
