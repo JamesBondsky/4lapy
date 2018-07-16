@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\ReCaptcha\ReCaptchaService;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
@@ -35,7 +35,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
           method="post">
         <input type="hidden" name="action" value="<?= !empty($newAction) ? $newAction : 'get' ?>">
         <input type="hidden" name="step" value="step2">
-        <input type="hidden" name="backurl" value="<?=$backUrl?>">
+        <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <input type="hidden" name="phone" value="<?= $phone ?>">
         <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
@@ -58,13 +58,13 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                title="Отправить снова">Отправить снова</a>
         </div>
         <?php
-        if($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] >= 3) {
+        if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] >= 3) {
             try {
-                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
                 echo $recaptchaService->getCaptcha('', true);
             } catch (ApplicationCreateException $e) {
             }
-        }?>
+        } ?>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>

@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\ReCaptcha;
+namespace FourPaws\ReCaptchaBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application;
@@ -15,7 +15,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerAwareInterface;
 
-class ReCaptchaService implements LoggerAwareInterface
+class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
 {
     use LazyLoggerAwareTrait;
 
@@ -31,15 +31,15 @@ class ReCaptchaService implements LoggerAwareInterface
     /**
      * ReCaptchaService constructor.
      *
-     * @param ClientInterface $guzzle
+     * @param ClientInterface $client
      *
      * @param array           $parameters
      *
      * @throws \RuntimeException
      */
-    public function __construct(ClientInterface $guzzle, array $parameters)
+    public function __construct(ClientInterface $client, array $parameters)
     {
-        $this->guzzle = $guzzle;
+        $this->guzzle = $client;
         $this->parameters = $parameters;
     }
 
