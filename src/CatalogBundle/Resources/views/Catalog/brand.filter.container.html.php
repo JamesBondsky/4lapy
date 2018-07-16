@@ -1,30 +1,31 @@
 <?php
-/**
- * @var Request                               $request
- * @var CatalogBrandRequest $catalogRequest
- * @var SearchService                         $searchService
- * @var ProductSearchResult                   $productSearchResult
- * @var PhpEngine                             $view
- * @var CMain                                 $APPLICATION
- */
 
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
-use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
-global $APPLICATION;
 
 /**
+ * @var Request $request
+ * @var CatalogBrandRequest $catalogRequest
+ * @var SearchService $searchService
+ * @var GoogleEcommerceService $ecommerceService
+ * @var ProductSearchResult $productSearchResult
+ * @var PhpEngine $view
+ * @var CMain $APPLICATION
  * @var Category $category
  */
+
+global $APPLICATION;
+
 $category = $catalogRequest->getCategory();
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
@@ -37,12 +38,19 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>" data-url="/ajax/catalog/product-info/count-by-filter-brand/">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>"
+              data-url="/ajax/catalog/product-info/count-by-filter-brand/">
             <div class="b-filter__block" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
-                <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
-                    <li class="b-filter-link-list__item" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
-                        <label class="b-filter-link-list__label" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
-                            <input type="checkbox" name="brand_code" value="<?=$catalogRequest->getBrand()->getCode()?>" checked="checked" class="b-filter-link-list__checkbox js-filter-control js-checkbox-change" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox"
+                    style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                    <li class="b-filter-link-list__item"
+                        style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                        <label class="b-filter-link-list__label"
+                               style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                            <input type="checkbox" name="brand_code"
+                                   value="<?= $catalogRequest->getBrand()->getCode() ?>" checked="checked"
+                                   class="b-filter-link-list__checkbox js-filter-control js-checkbox-change"
+                                   style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                         </label>
                     </li>
                 </ul>
@@ -56,15 +64,15 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
                 [
-                    'category'       => $category,
-                    'searchService'  => $searchService,
+                    'category' => $category,
+                    'searchService' => $searchService,
                     'catalogRequest' => $catalogRequest,
-                    'brand'          => $brand,
-                    'isBrand'        => true,
+                    'brand' => $brand,
+                    'isBrand' => true,
                 ]
             ) ?>
             <?php $filterToShow = $filterCollection->getFiltersToShow();
-            $filterActions = $filterCollection->getActionsFilter();?>
+            $filterActions = $filterCollection->getActionsFilter(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
@@ -77,9 +85,9 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 /**
                  * @var FilterBase $filter
                  */
-                foreach ($filterActions as $filter) {?>
+                foreach ($filterActions as $filter) { ?>
                     <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) {?>
+                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
                             <li class="b-filter-link-list__item">
                                 <label class="b-filter-link-list__label">
                                     <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
@@ -131,7 +139,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterActions as $filter) {?>
+                    foreach ($filterActions as $filter) { ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
@@ -178,11 +186,20 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
         <?php
-        foreach ($productSearchResult->getProductCollection() as $product) {
+        $productCollection = $productSearchResult->getProductCollection();
+
+        echo $ecommerceService->renderScript(
+            $ecommerceService->buildImpressionsFromProductCollection($productSearchResult->getProductCollection(), 'Каталог по бренду'),
+            true
+        );
+
+        foreach ($productCollection as $product) {
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
-                ['PRODUCT' => $product],
+                [
+                    'PRODUCT' => $product, 'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду'
+                ],
                 null,
                 [
                     'HIDE_ICONS' => 'Y',
@@ -197,11 +214,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE'      => '',
-            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS'    => false,
+            'NAV_TITLE' => '',
+            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS' => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE'      => 'Y',
+            'AJAX_MODE' => 'Y',
         ],
         null,
         [

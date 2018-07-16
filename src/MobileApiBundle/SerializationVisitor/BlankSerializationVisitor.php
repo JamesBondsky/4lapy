@@ -12,6 +12,7 @@ use JMS\Serializer\Metadata\PropertyMetadata;
 
 /**
  * Class BlankSerializationVisitor
+ *
  * @package FourPaws\MobileApiBundle\SerializationVisitor
  */
 class BlankSerializationVisitor extends JsonSerializationVisitor
@@ -22,6 +23,11 @@ class BlankSerializationVisitor extends JsonSerializationVisitor
     public function visitProperty(PropertyMetadata $metadata, $data, Context $context): void
     {
         parent::visitProperty($metadata, $data, $context);
+
+        if ($metadata->skipWhenEmpty) {
+            return;
+        }
+
         $k = $this->namingStrategy->translateName($metadata);
         if (!$this->hasData($k)) {
             $this->setBlankValue($k, $metadata->type, $context);

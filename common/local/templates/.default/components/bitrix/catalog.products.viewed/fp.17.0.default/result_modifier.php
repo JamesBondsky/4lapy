@@ -1,17 +1,24 @@
 <?php
+
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var CBitrixComponentTemplate $this */
-/** @var array $arParams */
-/** @var array $arResult */
-/** @global CDatabase $DB */
 
-$arParams['RESIZE_WIDTH'] = isset($arParams['RESIZE_WIDTH']) ? $arParams['RESIZE_WIDTH'] : 110;
-$arParams['RESIZE_HEIGHT'] = isset($arParams['RESIZE_HEIGHT']) ? $arParams['RESIZE_HEIGHT'] : 110;
-$arParams['RESIZE_TYPE'] = isset($arParams['RESIZE_TYPE']) ? $arParams['RESIZE_TYPE'] : 'BX_RESIZE_IMAGE_PROPORTIONAL_ALT';
+/**
+ * @var CBitrixComponentTemplate $this
+ * @var array $arParams
+ * @var array $arResult
+ * @global CDatabase $DB
+ */
 
 $arResult['PRINT_ITEMS'] = [];
+$arParams['RESIZE_WIDTH'] = $arParams['RESIZE_WIDTH'] ?? 110;
+$arParams['RESIZE_HEIGHT'] = $arParams['RESIZE_HEIGHT'] ?? 110;
+$arParams['RESIZE_TYPE'] = $arParams['RESIZE_TYPE'] ?? 'BX_RESIZE_IMAGE_PROPORTIONAL_ALT';
+
 if (!$arResult['ITEMS']) {
     return;
 }
@@ -32,40 +39,35 @@ foreach ($arResult['ITEMS'] as $item) {
                 $printOffer = $offer;
             }
         }
+
         if ($printOffer) {
             break;
         }
     }
+
     if ($printOffer) {
         $img = null;
         $imgField = [];
+
         if (!empty($printOffer['DISPLAY_PROPERTIES']['IMG']['FILE_VALUE'][0])) {
             $imgField = $printOffer['DISPLAY_PROPERTIES']['IMG']['FILE_VALUE'][0];
         } elseif (!empty($printOffer['DISPLAY_PROPERTIES']['IMG']['FILE_VALUE'])) {
             $imgField = $printOffer['DISPLAY_PROPERTIES']['IMG']['FILE_VALUE'];
         }
-        if ($imgField) {
-            if (!empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT'])) {
-                try {
-                    $isCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] == 'BX_RESIZE_IMAGE_EXACT';
-                    if ($isCrop) {
-                        if (is_array($imgField)) {
-                            $img = new \FourPaws\BitrixOrm\Model\CropImageDecorator($imgField);
-                        } else {
-                            $img = \FourPaws\BitrixOrm\Model\CropImageDecorator::createFromPrimary($imgField);
-                        }
-                        $img->setCropWidth($arParams['RESIZE_WIDTH']);
-                        $img->setCropHeight($arParams['RESIZE_HEIGHT']);
-                    } else {
-                        if (is_array($imgField)) {
-                            $img = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($imgField);
-                        } else {
-                            $img = \FourPaws\BitrixOrm\Model\ResizeImageDecorator::createFromPrimary($imgField);
-                        }
-                        $img->setResizeWidth($arParams['RESIZE_WIDTH']);
-                        $img->setResizeHeight($arParams['RESIZE_HEIGHT']);
-                    }
-                } catch (\Exception $obException) {}
+
+        if ($imgField && !empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT'])) {
+            try {
+                $isCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] === 'BX_RESIZE_IMAGE_EXACT';
+                if ($isCrop) {
+                    $img = is_array($imgField) ? new CropImageDecorator($imgField) : CropImageDecorator::createFromPrimary($imgField);
+                    $img->setCropWidth($arParams['RESIZE_WIDTH']);
+                    $img->setCropHeight($arParams['RESIZE_HEIGHT']);
+                } else {
+                    $img = is_array($imgField) ? new ResizeImageDecorator($imgField) : ResizeImageDecorator::createFromPrimary($imgField);
+                    $img->setResizeWidth($arParams['RESIZE_WIDTH']);
+                    $img->setResizeHeight($arParams['RESIZE_HEIGHT']);
+                }
+            } catch (Exception $e) {
             }
         }
 

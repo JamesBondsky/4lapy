@@ -20,12 +20,7 @@ use FourPaws\LocationBundle\LocationService;
  * @global CUser $USER
  * @global CMain $APPLICATION
  * @global CDatabase $DB
- */
-
-$this->setFrameMode(true);
-?>
-
-<?php $frame = $this->createFrame()->begin() ?>
+ */ ?>
 <dl class="b-phone-pair">
     <dt class="b-phone-pair__phone">
         <a class="b-phone-pair__link" href="tel:<?= $arResult['PHONE_FOR_URL'] ?>" title="<?= $arResult['PHONE'] ?>">
@@ -36,15 +31,3 @@ $this->setFrameMode(true);
         Для <?= $arResult['LOCATION']['TYPE']['CODE'] === LocationService::TYPE_CITY ? 'г.' : '' ?><?= $arResult['CITY_NAME'] ?>
         . <?= $arResult['WORKING_HOURS'] ?></dd>
 </dl>
-<?php $frame->beginStub() ?>
-<dl class="b-phone-pair">
-    <dt class="b-phone-pair__phone">
-        <a class="b-phone-pair__link" href="tel:<?= $arResult['DEFAULT_PHONE_FOR_URL'] ?>"
-           title="<?= $arResult['DEFAULT_PHONE'] ?>">
-            <?= $arResult['DEFAULT_PHONE'] ?>
-        </a>
-    </dt>
-    <dd class="b-phone-pair__description">Для г.<?= $arResult['DEFAULT_CITY_NAME'] ?>
-        . <?= $arResult['DEFAULT_WORKING_HOURS'] ?></dd>
-</dl>
-<?php $frame->end() ?>

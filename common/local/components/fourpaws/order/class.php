@@ -12,6 +12,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
@@ -29,12 +30,15 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -56,80 +60,78 @@ use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/** @noinspection EfferentObjectCouplingInspection */
+
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
 {
     protected const DEFAULT_TEMPLATES_404 = [
-        OrderStorageService::AUTH_STEP => 'index.php',
-        OrderStorageService::DELIVERY_STEP => 'delivery/',
-        OrderStorageService::PAYMENT_STEP => 'payment/',
-        OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#/',
+        OrderStorageEnum::AUTH_STEP => 'index.php',
+        OrderStorageEnum::DELIVERY_STEP => 'delivery/',
+        OrderStorageEnum::PAYMENT_STEP => 'payment/',
+        OrderStorageEnum::COMPLETE_STEP => 'complete/#ORDER_ID#/',
     ];
 
     /**
      * @var string
      */
     protected $currentStep;
-
     /**
      * @var OrderService
      */
     protected $orderService;
-
     /**
      * @var OrderSplitService
      */
     protected $orderSplitService;
-
     /**
      * @var OrderStorageService
      */
     protected $orderStorageService;
-
     /**
      * @var DeliveryService
      */
     protected $deliveryService;
-
     /**
      * @var StoreService
      */
     protected $storeService;
-
     /**
      * @var CurrentUserProviderInterface
      */
     protected $currentUserProvider;
-
     /**
      * @var UserCitySelectInterface
      */
     protected $userCityProvider;
-
     /**
      * @var BasketService $basketService
      */
     protected $basketService;
-
     /**
      * @var UserAccountService
      */
     protected $userAccountService;
-
     /**
      * @var LoggerInterface
      */
     protected $logger;
-
     /**
      * @var LocationService
      */
     protected $locationService;
-
     /**
      * @var ManzanaService
      */
     protected $manzanaService;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
+    /**
+     * @var SalePreset
+     */
+    private $salePreset;
 
     /**
      * FourPawsOrderComponent constructor.
@@ -155,6 +157,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
         $this->locationService = $serviceContainer->get('location.service');
         $this->manzanaService = $serviceContainer->get('manzana.service');
+        $this->ecommerceService = $serviceContainer->get(GoogleEcommerceService::class);
+        $this->salePreset = $serviceContainer->get(SalePreset::class);
         $this->logger = LoggerFactory::create('component_order');
 
         parent::__construct($component);
@@ -164,6 +168,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     public function executeComponent()
     {
         global $APPLICATION;
+
         try {
             $variables = [];
             $componentPage = CComponentEngine::parseComponentPath(
@@ -189,22 +194,25 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->prepareResult();
 
             $this->includeComponentTemplate($componentPage);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             try {
                 $this->logger->error(sprintf('Component execute error: %s: %s', \get_class($e), $e->getMessage()), [
                     'trace' => $e->getTrace(),
                 ]);
-            } catch (\RuntimeException $e) {
+            } catch (RuntimeException $e) {
             }
         }
+
+        parent::executeComponent();
     }
 
     /**
+     * @throws RuntimeException
      * @throws Exception
      * @throws OrderCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
@@ -212,7 +220,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     protected function prepareResult(): void
     {
-        if ($this->currentStep === OrderStorageService::COMPLETE_STEP) {
+        if ($this->currentStep === OrderStorageEnum::COMPLETE_STEP) {
             return;
         }
 
@@ -221,31 +229,38 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         $date = new \DateTime();
-        if (($this->currentStep === OrderStorageService::DELIVERY_STEP) &&
+        if (($this->currentStep === OrderStorageEnum::DELIVERY_STEP) &&
             (abs(
-                $storage->getCurrentDate()->getTimestamp() - $date->getTimestamp()
-            ) > OrderDeliveryValidator::MAX_DATE_DIFF)
+                    $storage->getCurrentDate()->getTimestamp() - $date->getTimestamp()
+                ) > OrderDeliveryValidator::MAX_DATE_DIFF)
         ) {
             $storage->setCurrentDate($date);
-            $this->orderStorageService->updateStorage($storage, OrderStorageService::NOVALIDATE_STEP);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
         }
 
+        /**
+         * @var Basket $basket
+         */
         $basket = $this->basketService->getBasket()->getOrderableItems();
+        $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
+
         try {
             $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {
             LocalRedirect('/cart');
+
+            return;
         }
 
         /** @noinspection PhpUndefinedVariableInspection */
-        if ($this->currentStep !== OrderStorageService::AUTH_STEP) {
+        if ($this->currentStep !== OrderStorageEnum::AUTH_STEP) {
             $basket = $order->getBasket();
         }
 
         $this->arResult['URL'] = [
-            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
-            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP],
-            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
+            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageEnum::AUTH_STEP],
+            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageEnum::DELIVERY_STEP],
+            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageEnum::PAYMENT_STEP],
         ];
 
         /** @var Router $router */
@@ -284,7 +299,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $deliveries = $this->orderStorageService->getDeliveries($storage);
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
-        if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
+        if ($this->currentStep === OrderStorageEnum::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
 
             $addresses = null;
@@ -316,7 +331,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['DELIVERY'] = $delivery;
             $this->arResult['ADDRESSES'] = $addresses;
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
-        } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
+        } elseif ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
 
             try {
@@ -494,7 +509,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
         ];
     }
 
-    public function getBasketItemData(Basket $basket) {
+    public function getBasketItemData(Basket $basket)
+    {
         $itemData = [];
         /** @var BasketItem $item */
         foreach ($basket as $item) {
@@ -512,5 +528,42 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         return $itemData;
+    }
+
+    /**
+     * @param Basket $basket
+     *
+     * @return string
+     *
+     * @throws RuntimeException
+     */
+    private function getEcommerceViewScript(Basket $basket): string
+    {
+        $script = '';
+        $option = '';
+        $step = 1;
+        $isPreset = true;
+
+        switch ($this->currentStep) {
+            case OrderStorageEnum::COMPLETE_STEP:
+                return $script;
+            case OrderStorageEnum::AUTH_STEP:
+                $step = 2;
+                $option = 'Контактные данные';
+                $isPreset = false;
+                break;
+            case OrderStorageEnum::DELIVERY_STEP:
+                $step = 3;
+                break;
+            case OrderStorageEnum::PAYMENT_STEP:
+                $step = 4;
+                break;
+        }
+
+        $ecommerce = $this->salePreset->createEcommerceToCheckoutFromBasket($basket, $step, $option);
+
+        return $isPreset
+            ? $this->ecommerceService->renderPreset($ecommerce, 'preset', true)
+            : $this->ecommerceService->renderScript($ecommerce, true);
     }
 }

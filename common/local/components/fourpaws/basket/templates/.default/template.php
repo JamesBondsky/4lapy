@@ -5,16 +5,7 @@
  * @global \CMain $APPLICATION
  */
 
-use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Order;
-use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\Catalog\Collection\OfferCollection;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Components\BasketComponent;
-use FourPaws\Decorators\SvgDecorator;
-use FourPaws\Helpers\WordHelper;
-use FourPaws\UserBundle\Entity\User;
+use Bitrix\Sale\Basket;use Bitrix\Sale\BasketItem;use Bitrix\Sale\Order;use Doctrine\Common\Collections\ArrayCollection;use FourPaws\Catalog\Collection\OfferCollection;use FourPaws\Catalog\Model\Offer;use FourPaws\Components\BasketComponent;use FourPaws\Decorators\SvgDecorator;use FourPaws\Helpers\WordHelper;use FourPaws\UserBundle\Entity\User;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -51,6 +42,10 @@ foreach ($notAllowedItems as $item) {
 
 /** @var Order $order */
 $order = $basket->getOrder();
+
+if ($arResult['ECOMMERCE_VIEW_BASKET']) {
+    echo $arResult['ECOMMERCE_VIEW_BASKET'];
+}
 
 if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) { ?>
     <div class="b-shopping-cart">

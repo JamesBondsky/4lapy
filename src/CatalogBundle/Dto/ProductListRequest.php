@@ -1,17 +1,20 @@
 <?php
-/*
- * @copyright Copyright (c) ADV/web-engineering co.
- */
 
 namespace FourPaws\CatalogBundle\Dto;
 
 use FourPaws\Catalog\Collection\FilterCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Class ProductListRequest
+ *
+ * @package FourPaws\CatalogBundle\Dto
+ */
 class ProductListRequest
 {
     /**
      * @Assert\Count(min = 1)
+     *
      * @var array
      */
     protected $productIds = [];
@@ -29,11 +32,13 @@ class ProductListRequest
 
     /**
      * @param array $productIds
+     *
      * @return ProductListRequest
      */
     public function setProductIds(array $productIds): ProductListRequest
     {
         $this->productIds = $productIds;
+
         return $this;
     }
 
@@ -47,11 +52,13 @@ class ProductListRequest
 
     /**
      * @param FilterCollection $filters
+     *
      * @return ProductListRequest
      */
     public function setFilters(FilterCollection $filters): ProductListRequest
     {
         $this->filters = $filters;
+
         return $this;
     }
 }

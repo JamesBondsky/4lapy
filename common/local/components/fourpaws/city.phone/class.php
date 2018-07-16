@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -15,9 +11,8 @@ use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsCityPhoneComponent extends \CBitrixComponent
+class FourPawsCityPhoneComponent extends CBitrixComponent
 {
-
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
@@ -28,12 +23,12 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         if (empty($params['LOCATION_CODE'])) {
             /** @var UserCitySelectInterface $userService */
             $userService = Application::getInstance()
-                                      ->getContainer()
-                                      ->get(FourPaws\UserBundle\Service\UserCitySelectInterface::class);
+                ->getContainer()
+                ->get(FourPaws\UserBundle\Service\UserCitySelectInterface::class);
             $params['LOCATION_CODE'] = $userService->getSelectedCity()['CODE'];
         }
 
-        return $params;
+        return parent::onPrepareComponentParams($params);
     }
 
     /** {@inheritdoc} */
@@ -49,8 +44,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
             try {
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
-            }
+            } catch (\RuntimeException $e) {}
         }
     }
 
@@ -58,13 +52,13 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
      * @throws CityNotFoundException
      * @return $this
      */
-    protected function prepareResult()
+    protected function prepareResult(): self
     {
         /** @var \FourPaws\LocationBundle\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         if ($defaultCity = $locationService->getDefaultCity()) {
             $defaultLocation = $locationService->getDefaultLocation();
-            if(!empty($defaultLocation)) {
+            if (!empty($defaultLocation)) {
                 $defaultCity->withName($defaultLocation['NAME']);
             }
         } else {

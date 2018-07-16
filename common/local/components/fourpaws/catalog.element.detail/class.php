@@ -29,6 +29,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -50,6 +51,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $ecommerceService;
 
     /**
      * CatalogElementDetailComponent constructor.
@@ -64,6 +69,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         parent::__construct($component);
         try {
             $container = App::getInstance()->getContainer();
+            $this->ecommerceService = $container->get(GoogleEcommerceService::class);
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         } catch (ApplicationCreateException | ServiceCircularReferenceException | ServiceNotFoundException $e) {
             $logger = LoggerFactory::create('component');
@@ -109,7 +115,6 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             Tools::process404([], true, true, true);
         }
 
-        $cachePath = $this->getCachePath() ?: $this->getPath();
         if ($this->startResultCache()) {
             parent::executeComponent();
 
@@ -137,11 +142,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'CURRENT_OFFER' => $currentOffer,
                 'SECTION_CHAIN' => $this->getSectionChain($sectionId),
                 'SHOW_FAST_ORDER' => $this->arParams['SHOW_FAST_ORDER'],
+                'ECOMMERCE_VIEW_SCRIPT' => $this->ecommerceService->renderScript(
+                    $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара'),
+                    true
+                )
                 /**
                  * @todo впилить seo
                  */
-                // возможно, понадобится в будущем
-                //'SECTION' => $this->getSection($sectionId),
             ];
 
 

@@ -46,11 +46,12 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
     /**
      * @param SortsCollection $sorts
      *
-     * @return static
+     * @return CatalogSearchRequestInterface
      */
     public function setSorts(SortsCollection $sorts): CatalogSearchRequestInterface
     {
         $this->sorts = $sorts;
+
         return $this;
     }
 
@@ -65,11 +66,12 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
     /**
      * @param Navigation $navigation
      *
-     * @return static
+     * @return CatalogSearchRequestInterface
      */
     public function setNavigation(Navigation $navigation): CatalogSearchRequestInterface
     {
         $this->navigation = $navigation;
+
         return $this;
     }
 
@@ -85,7 +87,7 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
     /**
      * @param string $searchString
      *
-     * @return static
+     * @return CatalogSearchRequestInterface
      */
     public function setSearchString(string $searchString): CatalogSearchRequestInterface
     {

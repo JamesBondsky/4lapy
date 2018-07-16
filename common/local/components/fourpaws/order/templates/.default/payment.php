@@ -60,7 +60,10 @@ $basketPrice = $basket->getOrderableItems()->getPrice();
 
 /** @var User $user */
 $user = $arResult['USER'];
-?>
+
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
+} ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
         <?php $APPLICATION->ShowTitle() ?>
@@ -109,6 +112,7 @@ $user = $arResult['USER'];
                             <?php /** @var array $payment */
                             $i = 0;
                             $max = count($payments);
+
                             foreach ($payments as $payment) {
                                 $labelClass = $i % 2 !== 0
                                     ? ' b-choice-recovery__label--right'
@@ -117,13 +121,14 @@ $user = $arResult['USER'];
                                     $labelClass .= ' b-choice-recovery__label--right';
                                 }
                                 ?>
-                                <input class="b-choice-recovery__input"
-                                       id="order-payment-<?= $payment['ID'] ?>"
-                                       type="radio"
-                                       name="pay-type"
-                                       data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
-                                       value="<?= $payment['ID'] ?>"
-                                    <?= (int)$payment['ID'] === (int)$selectedPayment['ID'] ? 'checked="checked"' : '' ?>/>
+                                <input <?= (int)$payment['ID'] === (int)$selectedPayment['ID'] ? 'checked="checked"' : '' ?>
+                                        data-name="<?= $payment['NAME'] ?>"
+                                        class="b-choice-recovery__input js-payment-type"
+                                        id="order-payment-<?= $payment['ID'] ?>"
+                                        type="radio"
+                                        name="pay-type"
+                                        data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
+                                        value="<?= $payment['ID'] ?>">
                                 <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
                                     <span class="b-choice-recovery__main-text"><?= $payment['NAME'] ?></span>
@@ -167,7 +172,8 @@ $user = $arResult['USER'];
                         <div class="b-new-bonus-card_block">
                             <div class="b-new-bonus-card--step1<?= $storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
                                 <div class="b-new-bonus-card">
-                                    <p class="js-new-bonus-card">Укажите бонусную карту</p><span>Для зачисления баллов</span>
+                                    <p class="js-new-bonus-card">Укажите бонусную карту</p>
+                                    <span>Для зачисления баллов</span>
                                 </div>
                             </div>
                             <div class="b-new-bonus-card--step2 hidden">
@@ -190,7 +196,8 @@ $user = $arResult['USER'];
                             </div>
                             <div class="b-new-bonus-card--step3 <?= !$storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
                                 <div class="b-new-bonus-card--info">
-                                    <p>Бонусная карта для зачисления баллов: <span><?= $storage->getDiscountCardNumber() ?></span></p>
+                                    <p>Бонусная карта для зачисления баллов:
+                                        <span><?= $storage->getDiscountCardNumber() ?></span></p>
                                     <span class="js-another-bonus-card">Указать другую карту</span>
                                 </div>
                             </div>
@@ -229,19 +236,19 @@ $user = $arResult['USER'];
                             </div>
                         </li>
                         <?php if ($storage->getBonus()) { ?>
-                                <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3 b-order-list__pointspay">
-                                        <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
-                                           <div class="b-order-list__clipped-text">
-                                                   <div class="b-order-list__text-backed">
-                                                           Оплачено бонусами
-                                                       </div>
-                                               </div>
-                                       </div>
-                                   <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                           <?= CurrencyHelper::formatPrice(max($storage->getBonus(), $arResult['MAX_BONUS_SUM']), false) ?>
-                                       </div>
-                               </li>
-                       <?php } ?>
+                            <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3 b-order-list__pointspay">
+                                <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
+                                    <div class="b-order-list__clipped-text">
+                                        <div class="b-order-list__text-backed">
+                                            Оплачено бонусами
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                    <?= CurrencyHelper::formatPrice(max($storage->getBonus(), $arResult['MAX_BONUS_SUM']), false) ?>
+                                </div>
+                            </li>
+                        <?php } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">

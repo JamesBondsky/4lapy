@@ -33,6 +33,7 @@ $order = $arResult['ORDER'];
 /** @var OrderSubscribe $orderSubscribe */
 // ORDER_SUBSCRIBE приходит только если нужно вывести форму редактирования подписки
 $orderSubscribe = $arParams['ORDER_SUBSCRIBE'] ?? null;
+$isOrderSubscribePage = $orderSubscribe ? true : false;
 
 /**
  * Подписка на доставку заказа
@@ -105,7 +106,7 @@ if ($orderSubscribe) {
                         </span>
                     </span>
                     <?php
-                    if ($orderSubscribe) {
+                    if ($isOrderSubscribePage) {
                         ?>
                         <span class="b-accordion-order-item__number-order">
                             <?php
@@ -147,7 +148,7 @@ if ($orderSubscribe) {
             <div class="b-accordion-order-item__adress">
                 <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
                     <?php
-                    if ($orderSubscribe) {
+                    if ($isOrderSubscribePage) {
                         echo '<span>';
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
@@ -201,7 +202,7 @@ if ($orderSubscribe) {
                 <div class="b-accordion-order-item__not-pay">
                     <?php
                     $paymentName = '';
-                    if ($orderSubscribe) {
+                    if ($isOrderSubscribePage) {
                         $paymentName = 'Оплата наличными или картой при получении';
                     } else {
                         $payment = $order->getPayment();
@@ -244,7 +245,7 @@ if ($orderSubscribe) {
             </div>
             <div class="b-accordion-order-item__button js-button-default">
                 <?php
-                if (!$orderSubscribe && (!$order->isManzana() || $order->isNewManzana())) {
+                if (!$isOrderSubscribePage && (!$order->isManzana() || $order->isNewManzana())) {
                     $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
                     $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]);
                     if ($order->isNewManzana()) {
@@ -264,7 +265,7 @@ if ($orderSubscribe) {
                     <?php
                 }
                 /*
-                if (!$orderSubscribe && !$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') {
+                if (!$isOrderSubscribePage && !$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') {
                     ?>
                     <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                         <a class="b-link b-link--pay-account b-link--pay-account"
@@ -389,8 +390,14 @@ if ($orderSubscribe) {
                                 <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                             </div>
                         </li>
-                    <?php }
-                    if($order->getBonusPay() > 0){ ?>
+                        <?php
+                    }
+
+                    /**
+                     * [LP03-908] В подписке на доставку не отображаем бонусы
+                     */
+                    if (!$isOrderSubscribePage && $order->getBonusPay() > 0) {
+                        ?>
                         <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                             <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
                                 <span>Оплата бонусами</span>
@@ -401,14 +408,16 @@ if ($orderSubscribe) {
                                 <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                             </div>
                         </li>
-                    <?php } ?>
+                        <?php
+                    }
+                    ?>
                     <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                         <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account b-characteristics-tab__characteristics-text--last">
                             <span>Итого к оплате</span>
                             <div class="b-characteristics-tab__dots"></div>
                         </div>
                         <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account b-characteristics-tab__characteristics-value--last">
-                            <?= $order->getFormattedPrice() ?>
+                            <?= ($isOrderSubscribePage ? $order->getFormattedPriceReal() : $order->getFormattedPrice()) ?>
                             <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                         </div>
                     </li>

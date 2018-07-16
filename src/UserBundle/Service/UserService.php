@@ -382,7 +382,7 @@ class UserService implements
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public function setClientPersonalDataByCurUser(Client $client, User $user = null)
+    public function setClientPersonalDataByCurUser(Client $client, User $user = null): void
     {
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
@@ -400,12 +400,8 @@ class UserService implements
         if ($dateRegister instanceof DateTime) {
             $client->plRegistrationDate = $user->getManzanaDateRegister();
         }
-        if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {
-            // если e-mail и телефон подтверждены - отмечаем, что анкета актуальна и делаем карту бонусной
-            // - так делалось по умолчанию на старом сайте
-            $client->setActualContact();
-            $client->setLoyaltyProgramContact();
-        }
+        $client->setActualContact();
+        $client->setLoyaltyProgramContact();
     }
 
     /**

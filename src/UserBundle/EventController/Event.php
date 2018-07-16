@@ -42,6 +42,18 @@ class Event extends BaseServiceHandler
     public const GROUP_ADMIN = 1;
     public const GROUP_TECHNICAL_USERS = 8;
 
+    protected static $isEventsDisable = false;
+
+    public static function disableEvents(): void
+    {
+        self::$isEventsDisable = true;
+    }
+
+    public static function enableEvents(): void
+    {
+        self::$isEventsDisable = false;
+    }
+
     /**
      * @param EventManager $eventManager
      *
@@ -103,6 +115,10 @@ class Event extends BaseServiceHandler
      */
     public static function checkPhoneFormat(array &$fields): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         if ($fields['PERSONAL_PHONE'] ?? '') {
             try {
                 $fields['PERSONAL_PHONE'] = PhoneHelper::normalizePhone($fields['PERSONAL_PHONE']);
@@ -119,6 +135,10 @@ class Event extends BaseServiceHandler
      */
     public static function checkSocserviseRegisterHandler(array &$fields)
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         if ($fields['EXTERNAL_AUTH_ID'] === 'socservices') {
             /** Установка обязательных пользовательских полей */
             $fields['UF_CONFIRMATION'] = 1;
@@ -134,6 +154,10 @@ class Event extends BaseServiceHandler
      */
     public static function replaceLogin(array $fields): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         global $APPLICATION;
         $userService = App::getInstance()->getContainer()->get(UserRegistrationProviderInterface::class);
         if (!empty($fields['LOGIN'])) {
@@ -148,6 +172,10 @@ class Event extends BaseServiceHandler
      */
     public static function deleteBasicAuth(&$auth): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         if (\is_array($auth) && isset($auth['basic'])) {
             unset($auth['basic']);
         }
@@ -158,6 +186,10 @@ class Event extends BaseServiceHandler
      */
     public static function preventAuthorizationOnRegister(&$fields): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         $fields['ACTIVE'] = 'N';
     }
 
@@ -168,6 +200,10 @@ class Event extends BaseServiceHandler
      */
     public static function sendEmail($fields): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         if ($_SESSION['SEND_REGISTER_EMAIL'] && (int)$fields['USER_ID'] > 0 && !empty($fields['EMAIL'])) {
             /** отправка письма о регистрации */
             try {
@@ -205,6 +241,10 @@ class Event extends BaseServiceHandler
      */
     public static function updateManzana($fields): bool
     {
+        if (self::$isEventsDisable) {
+            return false;
+        }
+
         if (!isset($_SESSION['NOT_MANZANA_UPDATE'])) {
             $_SESSION['NOT_MANZANA_UPDATE'] = false;
         }
@@ -246,6 +286,10 @@ class Event extends BaseServiceHandler
      */
     public static function replaceLoginOnUpdate(&$fields): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         $notReplacedGroups = [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
@@ -289,6 +333,10 @@ class Event extends BaseServiceHandler
      */
     public static function clearUserCache($arFields): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         TaggedCacheHelper::clearManagedCache([
             'user:' . $arFields['ID'],
         ]);
@@ -296,6 +344,10 @@ class Event extends BaseServiceHandler
 
     public static function logoutBeforeAuth(): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         /** @var UserAuthorizationInterface $userService */
         try {
             $userService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
@@ -316,6 +368,10 @@ class Event extends BaseServiceHandler
 
     public static function refreshUserOnAuth(): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         try {
             /** @var MainTemplate $template */
             $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
@@ -345,7 +401,12 @@ class Event extends BaseServiceHandler
      * @return int
      * @throws ApplicationCreateException
      */
-    public static function findSocialServicesUser(array $fields): int {
+    public static function findSocialServicesUser(array $fields): int
+    {
+        if (self::$isEventsDisable) {
+            return 0;
+        }
+
         $result = 0;
         if ($fields['EMAIL']) {
             /** @var UserSearchInterface $userSearchService */

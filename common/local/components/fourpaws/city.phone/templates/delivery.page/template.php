@@ -18,11 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CUser $USER
  * @global CMain $APPLICATION
  * @global CDatabase $DB
- */
-
-$this->setFrameMode(true);
-
-?>
+ */ ?>
 <div class="b-container b-container--delivery">
     <div class="b-delivery">
         <div class="b-delivery__return">
