@@ -26,6 +26,7 @@ use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -624,7 +625,7 @@ class ExpertsenderService implements LoggerAwareInterface
             'PHONE',
             'USER_REGISTERED',
             'COM_WAY',
-            'EMAIL'
+            'EMAIL',
         ]);
 
         /**
@@ -936,23 +937,24 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         $offers = $orderService->getOrderProducts($order);
 
-        $fiscal = $paymentService->getFiscalization($order, null, 0, false);
+        $fiscalization = $paymentService->getFiscalization($order, 0, false);
         $items = [];
         try {
-            $basketItems = $fiscal['fiscal']['orderBundle']['cartItems']['items'];
+            $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+            /** @var Item $basketItem */
             foreach ($basketItems as $basketItem) {
-                if (mb_strpos($basketItem['itemCode'], 'DELIVERY') !== false) {
+                if (mb_strpos($basketItem->getCode(), 'DELIVERY') !== false) {
                     continue;
                 }
                 $currentOffer = null;
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
-                    if ($offer->getId() === (int)$basketItem['itemCode']) {
+                    if ($offer->getId() === (int)$basketItem->getCode()) {
                         $currentOffer = $offer;
                     }
                 }
                 if (!$currentOffer) {
-                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem['itemCode']));
+                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getCode()));
                 }
                 $link = ($currentOffer->getXmlId()[0] === '3') ? '' : new FullHrefDecorator($currentOffer->getDetailPageUrl());
                 $item = '';
@@ -961,8 +963,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
                 $item .= '<Link>' . $link . '</Link>';
                 $item .= '<Price1>' . $currentOffer->getOldPrice() . '</Price1>';
-                $item .= '<Price2>' . ($basketItem['itemPrice'] / 100) . '</Price2>';
-                $item .= '<Amount>' . $basketItem['quantity']['value'] . '</Amount>';
+                $item .= '<Price2>' . ($basketItem->getPrice() / 100) . '</Price2>';
+                $item .= '<Amount>' . $basketItem->getQuantity()->getValue() . '</Amount>';
                 $item .= '</Product>';
                 $items[] = $item;
             }

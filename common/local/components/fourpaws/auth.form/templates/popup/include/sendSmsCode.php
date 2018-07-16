@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\ReCaptcha\ReCaptchaService;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step"
@@ -22,7 +22,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
           method="post">
         <input type="hidden" name="action" value="savePhone">
         <input type="hidden" name="phone" value="<?= $phone ?>">
-        <input type="hidden" name="backurl" value="<?=$backUrl?>" class="js-no-valid">
+        <input type="hidden" name="backurl" value="<?= $backUrl ?>" class="js-no-valid">
         <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
@@ -45,13 +45,13 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                title="Отправить снова">Отправить снова</a>
         </div>
         <?php
-        if($_SESSION['COUNT_AUTH_CONFIRM_CODE'] >= 3) {
+        if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] >= 3) {
             try {
-                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
                 echo $recaptchaService->getCaptcha('', true);
             } catch (ApplicationCreateException $e) {
             }
-        }?>
+        } ?>
         <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
