@@ -70,16 +70,10 @@ if ($fiscalization['ENABLE'] === 'Y') {
      * @global $USER
      */
     $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentService::class);
-    [$amount, $fiscal] = \array_values($paymentService->getFiscalization($order, $USER, (int)$fiscalization['TAX_SYSTEM']));
-
-    /**
-     * Сбербанк не принимает чек, если в нем есть позиции с одинаковым itemCode
-     */
-    foreach ($fiscal['orderBundle']['cartItems']['items'] as $i => $item) {
-        $fiscal['orderBundle']['cartItems']['items'][$i]['itemCode'] = $item['itemCode'] . '_' . $item['positionId'];
-    }
+    $fiscal = $paymentService->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
+    $amount = $paymentService->getFiscalTotal($fiscal);
+    $fiscal = $paymentService->fiscalToArray($fiscal);
 }
-
 /* END Фискализация */
 for ($i = 0; $i <= 10; $i++) {
     $response = $rbs->register_order(
