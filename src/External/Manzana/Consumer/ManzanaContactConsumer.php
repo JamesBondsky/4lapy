@@ -14,6 +14,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\WrongContactMessageException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\UserBundle\EventController\Event;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -37,6 +38,8 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
      */
     public function execute(AMQPMessage $message): bool
     {
+        Event::disableEvents();
+
         try {
             /** @var Client $contact */
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
@@ -94,6 +97,7 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
                 ));
             }
         }
+        Event::enableEvents();
 
         return true;
     }
