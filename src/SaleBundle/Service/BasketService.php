@@ -872,6 +872,17 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * @param BasketItem $basketItem
+     * @return bool
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     */
+    public function isGiftProduct(BasketItem $basketItem): bool
+    {
+        return $this->getBasketItemXmlId($basketItem)[0] === '3';
+    }
+
+    /**
      * @param MainResult $res
      * @param Basket     $basket
      * @param array      $oldBasketCodes

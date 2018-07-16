@@ -11,14 +11,18 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\IO\InvalidPathException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\Payment;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
+use FourPaws\SaleBundle\Dto\Fiscalization\Item as FiscalItem;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as SalePaymentService;
@@ -152,7 +156,13 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $return = $paymentTask->getSumReturned();
 
         if ($amount) {
-            $this->salePaymentService->depositPayment($order, $amount, $fiscalization);
+            $fiscal = [];
+            if ($fiscalization) {
+                $fiscal = $this->salePaymentService->fiscalToArray($fiscalization);
+                $amount = $this->salePaymentService->getFiscalTotal($fiscalization);
+            }
+
+            $this->salePaymentService->depositPayment($order, $amount, $fiscal);
 
             $debit = (new OutDebit())
                 ->setPayMerchantCode(SapOrder::ORDER_PAYMENT_ONLINE_MERCHANT_ID)
@@ -221,15 +231,20 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param SaleOrder $order
-     * @param User $user
-     * @param Order $paymentTask
+     * @param User      $user
+     * @param Order     $paymentTask
      *
-     * @return array|null
+     * @return Fiscalization|null
      *
+     * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws InvalidPathException
+     * @throws ObjectPropertyException
      */
-    private function getFiscalization(SaleOrder $order, User $user, Order $paymentTask): ?array
+    private function getFiscalization(SaleOrder $order, User $user, Order $paymentTask): ?Fiscalization
     {
         $config = Option::get(self::MODULE_PROVIDER_CODE, self::OPTION_FISCALIZATION_CODE, []);
         /** @noinspection UnserializeExploitsInspection */
@@ -239,55 +254,70 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             return null;
         }
 
-        $fiscalization = $this->salePaymentService->getFiscalization($order, ['name' => $user->getFullName(), 'email' => $user->getEmail()], (int)$config['TAX_SYSTEM']);
-        $map = $fiscalization['itemMap'];
-        $itemsAfter = [];
-
-        /** @noinspection ForeachSourceInspection */
-        foreach ($fiscalization['fiscal']['orderBundle']['cartItems']['items'] as $item) {
-            $itemsAfter[] = $paymentTask->getItems()->map(function (Item $v) use (&$map, $item) {
-                if ($v->getQuantity() && (
-                        /* Доставка */
-                        ($v->getOfferXmlId() >= 2000000 && $item['name'] === null)
-                        /* или товар */
-                        || (int)$map[$v->getOfferXmlId()]['id'] === $item['itemCode']
-                    )
-                ) {
-                    $newItem = $item;
-                    $newItem['quantity']['value'] = $v->getQuantity();
-                    $newItem['itemPrice'] = (int)($v->getPrice() * 100);
-                    $newItem['itemAmount'] = (int)($v->getSumPrice() * 100);
-
-                    if (($newItem['itemAmount'] <= $item['itemAmount']) &&
-                        ($newItem['quantity']['value'] <= $item['quantity']['value'])
-                    ) {
-                        $map[$v->getOfferXmlId()]['count']--;
-                        if ($map[$v->getOfferXmlId()]['count'] < 0) {
-                            unset($map[$v->getOfferXmlId()]);
-                        } else {
-                            return $newItem;
-                        }
-                    }
-                }
-
-                return null;
-            })->filter(function ($v) {
-                return null !== $v;
-            })->toArray();
-        }
-
-        $amount = 0;
-        $fiscalization['fiscal']['orderBundle']['cartItems']['items'] = \array_reduce($itemsAfter, function ($to, $from) use (&$amount) {
-            $to = $to ?? [];
-
-            if ($from) {
-                $amount += current($from)['itemAmount'];
-                return \array_merge($to, $from);
+        /** @var array[] $paymentTaskItems */
+        $paymentTaskItems = [];
+        $paymentTask->getItems()->map(function (Item $item) use (&$paymentTaskItems) {
+            $xmlId = $item->getOfferXmlId();
+            if (!isset($paymentTaskItems[$xmlId])) {
+                $paymentTaskItems[$xmlId] = [];
             }
 
-            return $to;
+            $found = false;
+            /** @var Item $pti */
+            foreach ($paymentTaskItems[$xmlId] as $pti) {
+                if ($pti->getPrice() === $item->getPrice()) {
+                    $pti->setQuantity((int)$pti->getQuantity() + (int)$item->getQuantity());
+                    $found = true;
+                }
+            }
+
+            if (!$found) {
+                $paymentTaskItems[$xmlId][] = clone $item;
+            }
         });
-        $fiscalization['amount'] = (int)$amount;
+
+        /**
+         * Сортируем позиции по возрастанию цены, исходя из того,
+         * что в корзине позиция со скидкой всегда первая
+         */
+        foreach ($paymentTaskItems as $items) {
+            \usort($items, function (Item $item1, Item $item2) {
+                return $item1->getPrice() <=> $item2->getPrice();
+            });
+        }
+
+        $fiscalization = $this->salePaymentService->getFiscalization($order, (int)$config['TAX_SYSTEM']);
+        $items = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+
+        $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->setItems(
+            $items->map(
+                function (FiscalItem $item) use (&$paymentTaskItems) {
+                    $xmlId = $item->getXmlId();
+                    if (!isset($paymentTaskItems[$xmlId])) {
+                        $item->getQuantity()->setValue(0);
+                    } else {
+                        /** @var Item $pti */
+                        foreach ($paymentTaskItems[$xmlId] as $i => $pti) {
+                            if (($pti->getPrice() * 100) > $item->getPrice()) {
+                                continue;
+                            }
+
+                            $item->getQuantity()->setValue((int)$pti->getQuantity());
+                            $item->setTotal((int)($pti->getSumPrice() * 100));
+                            $item->setPrice((int)($pti->getPrice() * 100));
+                            unset($paymentTaskItems[$xmlId][$i]);
+                            break;
+                        }
+                    }
+
+                    return $item;
+                }
+            )->filter(
+                function (FiscalItem $item) {
+                    return $item->getQuantity()->getValue() > 0;
+                }
+            )
+        );
 
         return $fiscalization;
     }
