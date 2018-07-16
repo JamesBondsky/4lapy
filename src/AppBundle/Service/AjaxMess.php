@@ -5,6 +5,7 @@ namespace FourPaws\AppBundle\Service;
 use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
+use FourPaws\Helpers\PhoneHelper;
 
 /**
  * Class AjaxMess
@@ -371,7 +372,7 @@ class AjaxMess
      */
     public function getCardNotValidError(): JsonResponse
     {
-        return $this->getJsonError('cardNotValid', \sprintf('Ваша карта не привязана. Пожалуйста, обратитесь на Горячую линию по телефону %s', \tplvar('phone_main')));
+        return $this->getJsonError('cardNotValid', \sprintf('Ваша карта не привязана. Пожалуйста, обратитесь на Горячую линию по телефону %s', PhoneHelper::getCityPhone()));
     }
 
     /**

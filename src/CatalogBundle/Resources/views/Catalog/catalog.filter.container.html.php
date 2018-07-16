@@ -1,17 +1,11 @@
 <?php
-/**
- * @var Request                               $request
- * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult                   $productSearchResult
- * @var PhpEngine                             $view
- * @var CMain                                 $APPLICATION
- */
 
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,14 +15,20 @@ global $APPLICATION;
 
 /**
  * @var Category $category
+ * @var Request $request
+ * @var CatalogCategorySearchRequestInterface $catalogRequest
+ * @var ProductSearchResult $productSearchResult
+ * @var GoogleEcommerceService $ecommerceService
+ * @var PhpEngine $view
+ * @var CMain $APPLICATION
  */
 $category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category',
     '',
     [
         'SECTION_CODE' => $catalogRequest->getCategory()->getCode(),
-        'SET_TITLE'    => 'Y',
-        'CACHE_TIME'   => 10,
+        'SET_TITLE' => 'Y',
+        'CACHE_TIME' => 10,
     ],
     null,
     ['HIDE_ICONS' => 'Y']
@@ -63,8 +63,10 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <div class="b-filter__block" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                 <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox"
                     style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
-                    <li class="b-filter-link-list__item" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
-                        <label class="b-filter-link-list__label" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                    <li class="b-filter-link-list__item"
+                        style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
+                        <label class="b-filter-link-list__label"
+                               style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                             <input type="checkbox" name="section_id" value="<?= $category->getId() ?>" checked="checked"
                                    class="b-filter-link-list__checkbox js-filter-control js-checkbox-change"
                                    style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
@@ -104,7 +106,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 /**
                  * @var FilterBase $filter
                  */
-                foreach ($filterActions as $filter) {?>
+                foreach ($filterActions as $filter) { ?>
                     <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                         <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
                             ?>
@@ -142,10 +144,10 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 'fourpaws:catalog.often.seek',
                 '',
                 [
-                    'SECTION_ID'   => $category->getId(),
-                    'LEFT_MARGIN'  => $category->getLeftMargin(),
+                    'SECTION_ID' => $category->getId(),
+                    'LEFT_MARGIN' => $category->getLeftMargin(),
                     'RIGHT_MARGIN' => $category->getRightMargin(),
-                    'DEPTH_LEVEL'  => $category->getDepthLevel(),
+                    'DEPTH_LEVEL' => $category->getDepthLevel(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
@@ -171,7 +173,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     /**
                      * @var FilterBase $filter
                      */
-                    foreach ($filterActions as $filter) {?>
+                    foreach ($filterActions as $filter) { ?>
                         <span class="b-catalog-filter__discount js-discount-desktop-here">
                             <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
@@ -191,12 +193,10 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                             </a>
                                         </label>
                                     </li>
-                                    <?php
-                                } ?>
+                                <?php } ?>
                             </ul>
                         </span>
-                        <?php
-                    } ?>
+                    <?php } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
                     <a class="b-link b-link--type active js-link-type-normal" href="javascript:void(0);" title="">
@@ -216,34 +216,38 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
         <?php $i = 0;
-        $countItems = $productSearchResult->getProductCollection()->count();
+
         $collection = $productSearchResult->getProductCollection();
+        $countItems = $collection->count();
+
+        echo $ecommerceService->renderScript(
+            $ecommerceService->buildImpressionsFromProductCollection($collection, 'Каталог по питомцу'),
+            true
+        );
+
         foreach ($collection as $product) {
             $i++;
 
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
-                ['PRODUCT' => $product],
+                ['PRODUCT' => $product, 'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по питомцу'],
                 null,
                 ['HIDE_ICONS' => 'Y']
             );
 
             if ($catalogRequest->getCategory()->isLanding() && !empty($catalogRequest->getCategory()->getUfLandingBanner())) {
-                if ($i === 3 || ($i === $countItems && $i < 3)) {
-                    ?>
+                if ($i === 3 || ($i === $countItems && $i < 3)) { ?>
                     <div class="b-fleas-protection-banner b-tablet">
                         <?= htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner()) ?>
                     </div>
-                    <?php
-                }
-                if ($i === 4 || ($i === $countItems && $i < 4)) {
-                    ?>
+                <?php }
+
+                if ($i === 4 || ($i === $countItems && $i < 4)) { ?>
                     <div class="b-fleas-protection-banner">
                         <?= htmlspecialcharsback($catalogRequest->getCategory()->getUfLandingBanner()) ?>
                     </div>
-                    <?php
-                }
+                <?php }
             }
         } ?>
     </div>
@@ -252,11 +256,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE'      => '',
-            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS'    => false,
+            'NAV_TITLE' => '',
+            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS' => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE'      => 'Y',
+            'AJAX_MODE' => 'Y',
         ],
         null,
         [

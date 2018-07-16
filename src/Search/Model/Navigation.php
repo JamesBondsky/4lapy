@@ -5,6 +5,11 @@ namespace FourPaws\Search\Model;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Class Navigation
+ *
+ * @package FourPaws\Search\Model
+ */
 class Navigation
 {
     /**
@@ -12,6 +17,7 @@ class Navigation
      * @Serializer\Type("int")
      * @Assert\GreaterThanOrEqual("1")
      * @Assert\NotBlank()
+     *
      * @var int
      */
     protected $page = 1;
@@ -20,18 +26,19 @@ class Navigation
      * @Serializer\SerializedName("pageSize")
      * @Serializer\Type("int")
      * @Assert\GreaterThanOrEqual("1")
-     * @Assert\Choice({"20","40"})
+     * @Assert\Choice({"36","72"})
      * @Assert\NotBlank()
+     *
      * @var int
      */
-    protected $pageSize = 20;
+    protected $pageSize = 36;
 
     /**
      * @param int $page
      *
      * @return $this
      */
-    public function withPage(int $page)
+    public function withPage(int $page): self
     {
         $this->page = $page;
 
@@ -43,13 +50,16 @@ class Navigation
      *
      * @return $this
      */
-    public function withPageSize(int $pageSize)
+    public function withPageSize(int $pageSize): self
     {
         $this->pageSize = $pageSize;
 
         return $this;
     }
 
+    /**
+     * @return int
+     */
     public function getFrom(): int
     {
         return ($this->getPage() - 1) * $this->getPageSize();
