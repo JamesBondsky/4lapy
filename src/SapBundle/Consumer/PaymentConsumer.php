@@ -66,7 +66,6 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
                 $e->getMessage()),
                 ['order' => $paymentInfo->getBitrixOrderId(), 'sapOrderId' => $paymentInfo->getSapOrderId()]
             );
-            die('FAIL');
         }
 
         return $success;

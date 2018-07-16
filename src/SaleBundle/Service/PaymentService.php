@@ -28,6 +28,7 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscal;
+use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemTax;
@@ -101,7 +102,7 @@ class PaymentService
      * @param int   $taxSystem
      * @param bool  $skipGifts
      *
-     * @return Fiscal
+     * @return Fiscalization
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws InvalidPathException
@@ -109,7 +110,7 @@ class PaymentService
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true): Fiscal
+    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true): Fiscalization
     {
         /** @var DateTime $dateCreate */
         $dateCreate = $order->getField('DATE_INSERT');
@@ -124,7 +125,7 @@ class PaymentService
             ->setDateCreate(DateHelper::convertToDateTime($dateCreate))
             ->setCartItems($this->getCartItems($order, $skipGifts));
 
-        return $fiscal;
+        return (new Fiscalization())->setFiscal($fiscal);
     }
 
     /**
@@ -516,13 +517,13 @@ class PaymentService
     }
 
     /**
-     * @param Fiscal $fiscal
+     * @param Fiscalization $fiscal
      * @return int
      */
-    public function getFiscalTotal(Fiscal $fiscal): int
+    public function getFiscalTotal(Fiscalization $fiscal): int
     {
         return \array_reduce(
-            $fiscal->getOrderBundle()->getCartItems()->getItems()->toArray(),
+            $fiscal->getFiscal()->getOrderBundle()->getCartItems()->getItems()->toArray(),
             function ($total, Item $item) {
                 return $total + $item->getTotal();
             },
@@ -531,10 +532,10 @@ class PaymentService
     }
 
     /**
-     * @param Fiscal $fiscal
+     * @param Fiscalization $fiscal
      * @return array
      */
-    public function fiscalToArray(Fiscal $fiscal): array
+    public function fiscalToArray(Fiscalization $fiscal): array
     {
         return $this->arrayTransformer->toArray($fiscal);
     }

@@ -937,10 +937,10 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         $offers = $orderService->getOrderProducts($order);
 
-        $fiscal = $paymentService->getFiscalization($order, 0, false);
+        $fiscalization = $paymentService->getFiscalization($order, 0, false);
         $items = [];
         try {
-            $basketItems = $fiscal->getOrderBundle()->getCartItems()->getItems();
+            $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
             /** @var Item $basketItem */
             foreach ($basketItems as $basketItem) {
                 if (mb_strpos($basketItem->getCode(), 'DELIVERY') !== false) {

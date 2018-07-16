@@ -21,7 +21,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\Payment;
 use FourPaws\Helpers\DateHelper;
-use FourPaws\SaleBundle\Dto\Fiscalization\Fiscal;
+use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item as FiscalItem;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
@@ -234,7 +234,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @param User      $user
      * @param Order     $paymentTask
      *
-     * @return Fiscal|null
+     * @return Fiscalization|null
      *
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -244,7 +244,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws InvalidPathException
      * @throws ObjectPropertyException
      */
-    private function getFiscalization(SaleOrder $order, User $user, Order $paymentTask): ?Fiscal
+    private function getFiscalization(SaleOrder $order, User $user, Order $paymentTask): ?Fiscalization
     {
         $config = Option::get(self::MODULE_PROVIDER_CODE, self::OPTION_FISCALIZATION_CODE, []);
         /** @noinspection UnserializeExploitsInspection */
@@ -287,9 +287,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         }
 
         $fiscalization = $this->salePaymentService->getFiscalization($order, (int)$config['TAX_SYSTEM']);
-        $items = $fiscalization->getOrderBundle()->getCartItems()->getItems();
+        $items = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
 
-        $fiscalization->getOrderBundle()->getCartItems()->setItems(
+        $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->setItems(
             $items->map(
                 function (FiscalItem $item) use (&$paymentTaskItems) {
                     $xmlId = $item->getXmlId();
@@ -298,7 +298,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     } else {
                         /** @var Item $pti */
                         foreach ($paymentTaskItems[$xmlId] as $i => $pti) {
-                            if ($pti->getPrice() > $item->getPrice()) {
+                            if (($pti->getPrice() * 100) > $item->getPrice()) {
                                 continue;
                             }
 
