@@ -97,14 +97,5 @@ services:
     class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
     arguments: ['@jms_identical_property_naming_strategy']
 
-  recaptcha.guzzle:
-      class: GuzzleHttp\Client
-      arguments:
-        - curl: '%recaptcha.guzzle.curl%'
-
-  recaptcha.service:
-      class: FourPaws\ReCaptcha\ReCaptchaService
-      arguments: ['@recaptcha.guzzle', '%recaptcha%']
-
   form.service:
       class: FourPaws\Form\FormService

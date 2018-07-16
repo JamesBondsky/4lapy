@@ -27,6 +27,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Model\City;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\AuthException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -335,19 +336,19 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
                     $logger->error('ошибка загрузки сервисов');
                 } catch (ArgumentException $e) {
-                    $logger->error('ошибка аргументов - '.$e->getMessage());
+                    $logger->error('ошибка аргументов - ' . $e->getMessage());
                 } catch (\Exception $e) {
-                    $logger->error('ошибка - '.$e->getMessage());
+                    $logger->error('ошибка - ' . $e->getMessage());
                 }
             }
         } catch (UserRuntimeException $exception) {
             return $this->ajaxMess->getRegisterError($exception->getMessage());
         } catch (SqlQueryException $e) {
-            $logger->error('ошибка sql - '.$e->getMessage());
+            $logger->error('ошибка sql - ' . $e->getMessage());
         } catch (SystemException $e) {
-            $logger->error('ошибка system - '.$e->getMessage());
+            $logger->error('ошибка system - ' . $e->getMessage());
         } catch (Exception $e) {
-            $logger->error('ошибка - '.$e->getMessage());
+            $logger->error('ошибка - ' . $e->getMessage());
         }
 
         return $this->ajaxMess->getSystemError();
@@ -392,7 +393,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
             try {
-                $recaptchaService = $container->get('recaptcha.service');
+                $recaptchaService = $container->get(ReCaptchaInterface::class);
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
             } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
                 try {
@@ -682,7 +683,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
             try {
-                $recaptchaService = $container->get('recaptcha.service');
+                $recaptchaService = $container->get(ReCaptchaInterface::class);
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
             } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
                 try {
