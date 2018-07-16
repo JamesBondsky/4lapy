@@ -19,12 +19,16 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscal;
@@ -37,7 +41,10 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
+use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
+use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
+use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 
@@ -537,5 +544,191 @@ class PaymentService
     public function fiscalToArray(Fiscalization $fiscal): array
     {
         return $this->arrayTransformer->toArray($fiscal);
+    }
+
+    /**
+     * @param Order $order
+     * @param       $sberbankOrderId
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function processOnlinePaymentByOrderId(Order $order, $sberbankOrderId): void
+    {
+        if (!$this->isOnlinePayment($order)) {
+            throw new PaymentException('Invalid order payment type');
+        }
+        $response = $this->getSberbankProcessing()->getOrderStatusByOrderId($sberbankOrderId);
+        $this->processOnlinePayment($order, $response);
+    }
+
+    /**
+     * @param Order $order
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function processOnlinePaymentByOrderNumber(Order $order): void
+    {
+        if (!$this->isOnlinePayment($order)) {
+            throw new PaymentException('Invalid order payment type');
+        }
+        /**
+         * @see common/local/php_interface/include/sale_payment/payment/payment.php
+         */
+        for ($i = 0; $i < 3; $i++) {
+            try {
+                $response = $this->getSberbankProcessing()->getOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER') . '_' . $i);
+                $this->processOnlinePayment($order, $response);
+                return;
+            } catch (SberbankOrderNotFoundException $e) {
+                // не требуется
+            }
+        }
+
+        throw new SberbankOrderNotFoundException('Order not found');
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     */
+    public function processOnlinePaymentError(Order $order)
+    {
+        /** @todo костыль */
+        if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => OrderPayment::PAYMENT_CASH]])->fetch()) {
+            $this->log()->error('cash payment not found');
+            return;
+        }
+
+        if ($discountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
+
+        $paySystemId = $payment['ID'];
+        $sapConsumer = Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer, $orderService) {
+            try {
+                $payment = $this->getOrderPayment($order);
+                if ($payment->isPaid() ||
+                    $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE
+                ) {
+                    return;
+                }
+                $newPayment = $order->getPaymentCollection()->createItem();
+                $newPayment->setField('SUM', $payment->getSum());
+                $newPayment->setField('PAY_SYSTEM_ID', $paySystemId);
+                $paySystem = $newPayment->getPaySystem();
+                $newPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+                $payment->delete();
+                $newPayment->save();
+                $commWay = $orderService->getOrderPropertyByCode($order, 'COM_WAY');
+                $commWay->setValue(OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS);
+                $order->save();
+                $sapConsumer->consume($order);
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [
+                    'order' => $order->getId(),
+                ]);
+            }
+        };
+        $updateOrder($order);
+        if ($orderService->hasRelatedOrder($order)) {
+            $relatedOrder = $orderService->getRelatedOrder($order);
+            if (!$relatedOrder->isPaid()) {
+                $updateOrder($relatedOrder);
+            }
+        }
+
+        if ($discountEnabled) {
+            Manager::enableExtendsDiscount();
+        }
+    }
+
+    /**
+     * @param Order $order
+     * @param array $response
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function processOnlinePayment(Order $order, array $response): void
+    {
+        $isSuccess = (int)$response['errorCode'] === Sberbank::SUCCESS_CODE;
+        if ($isSuccess && \in_array(
+                (int)$response['orderStatus'],
+                [
+                    Sberbank::ORDER_STATUS_HOLD,
+                    Sberbank::ORDER_STATUS_PAID
+                ],
+                true
+            )
+        ) {
+            $onlinePayment = $this->getOrderPayment($order);
+
+            $sberbankOrderId = '';
+            foreach ($response['attributes'] as $attribute) {
+                if ($attribute['name'] === Sberbank::ORDER_NUMBER_ATTRIBUTE) {
+                    $sberbankOrderId = $attribute['value'];
+                }
+            }
+            if (!$sberbankOrderId) {
+                throw new SberbankPaymentException('Order number not found');
+            }
+
+            $onlinePayment->setPaid('Y');
+            $onlinePayment->setField('PS_SUM', $response['amount'] / 100);
+            $onlinePayment->setField('PS_CURRENCY', $response['currency']);
+            $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\DateTime());
+            $onlinePayment->setField('PS_INVOICE_ID', $sberbankOrderId);
+            $onlinePayment->setField('PS_STATUS', 'Y');
+            $onlinePayment->setField(
+                'PS_STATUS_DESCRIPTION',
+                $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName']
+            );
+            $onlinePayment->setField('PS_STATUS_CODE', 'Y');
+            $onlinePayment->setField('PS_STATUS_MESSAGE', $response['paymentAmountInfo']['paymentState']);
+            $onlinePayment->save();
+            $order->save();
+        } else {
+            if ((int)$response['errorCode'] === Sberbank::ERROR_ORDER_NOT_FOUND) {
+                throw new SberbankOrderNotFoundException($response['errorMessage'], $response['errorCode']);
+            }
+            throw new SberbankPaymentException(
+                $isSuccess ? $response['actionCodeDescription'] : $response['errorMessage'],
+                $response['errorCode']
+            );
+        }
     }
 }

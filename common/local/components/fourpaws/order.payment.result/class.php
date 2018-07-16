@@ -17,6 +17,7 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 
@@ -26,6 +27,9 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
     /** @var OrderService */
     protected $orderService;
 
+    /** @var PaymentService */
+    protected $paymentService;
+
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
 
@@ -33,6 +37,7 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
     {
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->paymentService = $serviceContainer->get(PaymentService::class);
         $this->currentUserProvider = $serviceContainer->get(CurrentUserProviderInterface::class);
         parent::__construct($component);
     }
@@ -128,7 +133,7 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
             ]);
         }
         if (!$isOk) {
-            $this->orderService->processPaymentError($order);
+            $this->paymentService->processOnlinePaymentError($order);
         }
 
         LocalRedirect($url->getUri());

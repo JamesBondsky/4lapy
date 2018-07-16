@@ -191,7 +191,7 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
-        if (!$this->orderService->getOrderPayment($order)->isPaid()) {
+        if (!$this->paymentService->getOrderPayment($order)->isPaid()) {
             return;
         }
 

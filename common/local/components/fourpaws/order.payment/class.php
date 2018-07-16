@@ -21,6 +21,7 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -31,6 +32,9 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
 {
     /** @var OrderService */
     protected $orderService;
+
+    /** @var PaymentService */
+    protected $paymentService;
 
     /** @var CurrentUserProviderInterface */
     protected $currentUserProvider;
@@ -46,6 +50,7 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
     {
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->paymentService = $serviceContainer->get(PaymentService::class);
         $this->currentUserProvider = $serviceContainer->get(CurrentUserProviderInterface::class);
         parent::__construct($component);
     }
@@ -155,7 +160,7 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
                 }
 
                 if (!$isOk) {
-                    $this->orderService->processPaymentError($order);
+                    $this->paymentService->processOnlinePaymentError($order);
                     $this->arResult['ERRORS'][] = $e->getMessage();
                     $url = new \Bitrix\Main\Web\Uri(sprintf('/sale/order/complete/%s/', $order->getId()));
 
