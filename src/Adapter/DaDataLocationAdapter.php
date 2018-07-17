@@ -52,6 +52,7 @@ class DaDataLocationAdapter extends BaseAdapter
 
     /**
      * DaDataLocationAdapter constructor.
+     * @throws ApplicationCreateException
      */
     public function __construct()
     {
@@ -74,9 +75,10 @@ class DaDataLocationAdapter extends BaseAdapter
             $cities = [];
             $fullCities = $this->getFullCities($entity);
             $region = $this->getRegion($entity);
-            if (!empty($entity->getKladrId())) {
-                $city = $this->getCityName($entity);
+            $city = $this->getCityName($entity);
 
+            $selectedCity = null;
+            if (!empty($entity->getKladrId())) {
                 try {
                     $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE,
                         $entity->getKladrId());
@@ -85,29 +87,23 @@ class DaDataLocationAdapter extends BaseAdapter
                     $logger = LoggerFactory::create('dadataAdapter');
                     $logger->error($e->getMessage(), $e);
                 }
-                /** двухфакторный фикс - первый отбирает частичное соответствие населенного пунка, второй полное соответствие если результатов больше 1 */
+
                 if (\count($cities) > 1) {
+                    $maxSimilarity = null;
+                    $selectedCity = null;
                     foreach ($cities as $key => $cityItem) {
-                        if (strpos($cityItem['NAME'], $city) === false) {
-                            unset($cities[$key]);
-                        }
-                    }
-                    /** если после частичного отбора все равно много местоположений - отбираем по полному совпадению */
-                    if (\count($cities) > 1) {
-                        $fullCities = array_unique($fullCities);
-                        foreach ($cities as $key => $cityItem) {
-                            if (!\in_array($cityItem['NAME'], $fullCities, true)) {
-                                unset($cities[$key]);
-                            }
+                        $similarity = similar_text($cityItem['NAME'], $city);
+                        if ((null === $maxSimilarity) ||
+                            $similarity > $maxSimilarity
+                        ) {
+                            $maxSimilarity = $similarity;
+                            $selectedCity = $cityItem;
                         }
                     }
                 }
             }
 
-            if (empty($cities)) {
-                /** пока доставка в одной стране - убираем поиск по стране */
-                $city = $this->getCityName($entity);
-
+            if (null === $selectedCity) {
                 $fullRegion = $this->getFullRegion($entity);
                 /** гребаный фикс - циклим поиск по нескольким местоположениям */
                 foreach ($fullCities as $fullCity) {
@@ -117,10 +113,13 @@ class DaDataLocationAdapter extends BaseAdapter
                         break;
                     }
                 }
+
+                if (!empty($cities)) {
+                    $selectedCity = reset($cities);
+                }
             }
-            if (!empty($cities)) {
-                $selectedCity = reset($cities);
-            } else {
+
+            if (null === $selectedCity) {
                 $selectedCity['NAME'] = $city;
             }
 
@@ -137,12 +136,11 @@ class DaDataLocationAdapter extends BaseAdapter
 
             $selectedCity['REGION'] = $region;
             $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
-
         } catch (CityNotFoundException $e) {
             /** не нашли - возвращаем пустой объект - должно быть сведено к 0*/
             $logger = LoggerFactory::create('dadataAdapter');
             $logger->error('не найдено');
-        } catch (ApplicationCreateException $e) {}
+        }
 
         return $bitrixLocation;
     }
