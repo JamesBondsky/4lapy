@@ -16,7 +16,8 @@ use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Form\FormService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\ReCaptcha\ReCaptchaService;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -32,7 +33,8 @@ class FaqController extends Controller
     /** @var AjaxMess */
     private $ajaxMess;
 
-    public function __construct() {
+    public function __construct()
+    {
         try {
             $container = App::getInstance()->getContainer();
             $this->ajaxMess = $container->get('ajax.mess');
@@ -87,7 +89,7 @@ class FaqController extends Controller
 
             if ($request->request->has('g-recaptcha-response')) {
                 /** @var ReCaptchaService $recaptchaService */
-                $recaptchaService = $container->get('recaptcha.service');
+                $recaptchaService = $container->get(ReCaptchaInterface::class);
                 if (!$recaptchaService->checkCaptcha()) {
                     return $this->ajaxMess->getFailCaptchaCheckError();
                 }

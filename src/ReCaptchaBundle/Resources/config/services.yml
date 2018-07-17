@@ -1,0 +1,32 @@
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        # automatically injects dependencies in your services
+        autowire: true
+        # automatically registers your services as commands, event subscribers, etc.
+        autoconfigure: true
+        # this means you cannot fetch services directly from the container via $container->get()
+        # if you need to do this, you can override this setting on individual services
+        public: true
+
+    FourPaws\ReCaptchaBundle\:
+        resource: '../../*'
+        # you can exclude directories or files
+        # but if a service is unused, it's removed anyway
+        exclude: '../../{Entity,Tests,EventController}'
+
+    recaptcha.guzzle:
+        class: GuzzleHttp\Client
+        public: true
+        arguments:
+          - curl: '%recaptcha.guzzle.curl%'
+
+    FourPaws\ReCaptchaBundle\Service\ReCaptchaService:
+        class: FourPaws\ReCaptchaBundle\Service\ReCaptchaService
+        public: true
+        arguments: ['@recaptcha.guzzle', '%recaptcha%']
+
+    FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface:
+        class: FourPaws\ReCaptchaBundle\Service\ReCaptchaService
+        public: true
+        arguments: ['@recaptcha.guzzle', '%recaptcha%']

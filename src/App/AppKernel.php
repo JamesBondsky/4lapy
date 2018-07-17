@@ -16,6 +16,7 @@ use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
 use FourPaws\EcommerceBundle\EcommerceBundle;
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\LocationBundle\FourPawsLocationBundle;
+use FourPaws\ReCaptchaBundle\FourPawsReCaptchaBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\SaleBundle\FourPawsSaleBundle;
@@ -101,6 +102,7 @@ class AppKernel extends Kernel
             new FourPawsPersonalBundle(),
             new FourPawsFoodSelectionBundle(),
             new FourPawsLocationBundle(),
+            new FourPawsReCaptchaBundle(),
             new FourPawsBitrixOrmBundle(),
             new EcommerceBundle(),
         ];
