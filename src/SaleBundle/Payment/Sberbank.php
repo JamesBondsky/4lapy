@@ -36,9 +36,11 @@ class Sberbank
      */
     private const prod_url = \API_PROD_URL;
 
-    private const SUCCESS_CODE = 0;
+    public const SUCCESS_CODE = 0;
 
-    private const ERROR_CODES = [1, 2, 3, 4, 5, 7, 8, 999];
+    public const ERROR_ORDER_NOT_FOUND = 6;
+
+    public const ERROR_CODES = [1, 2, 3, 4, 5, 7, 8, 999];
 
     public const ORDER_STATUS_HOLD = 1;
 
@@ -47,6 +49,8 @@ class Sberbank
     public const ORDER_STATUS_REVERSE = 3;
 
     public const ORDER_STATUS_REFUND = 4;
+
+    public const ORDER_NUMBER_ATTRIBUTE = 'mdOrder';
 
     /**
      * ЛОГИН МЕРЧАНТА

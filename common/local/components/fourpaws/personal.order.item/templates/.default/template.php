@@ -10,6 +10,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -204,13 +205,13 @@ if ($orderSubscribe) {
                         $payment = $order->getPayment();
                         $paymentCode = $payment->getCode();
                         switch ($paymentCode) {
-                            case OrderService::PAYMENT_CASH_OR_CARD:
+                            case OrderPayment::PAYMENT_CASH_OR_CARD:
                                 $paymentName = 'наличными или картой';
                                 break;
-                            case OrderService::PAYMENT_ONLINE:
+                            case OrderPayment::PAYMENT_ONLINE:
                                 $paymentName = 'онлайн';
                                 break;
-                            case OrderService::PAYMENT_CASH:
+                            case OrderPayment::PAYMENT_CASH:
                                 $paymentName = 'наличными';
                                 break;
                         }

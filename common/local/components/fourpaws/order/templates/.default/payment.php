@@ -10,6 +10,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
 
@@ -41,7 +42,7 @@ $selectedPayment = null;
 /** @var array $payments */
 $payments = $arResult['PAYMENTS'];
 $selectedPayment = current(array_filter($payments, function ($item) {
-    return $item['CODE'] === OrderService::PAYMENT_CASH_OR_CARD;
+    return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
 }));
 
 foreach ($payments as $i => $payment) {
@@ -127,7 +128,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         id="order-payment-<?= $payment['ID'] ?>"
                                         type="radio"
                                         name="pay-type"
-                                        data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
+                                        data-pay="<?= $payment['CODE'] === OrderPayment::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
                                         value="<?= $payment['ID'] ?>">
                                 <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
@@ -275,7 +276,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             </div>
         </div>
         <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
-            <?php if ($selectedPayment['CODE'] === OrderService::PAYMENT_ONLINE) { ?>
+            <?php if ($selectedPayment['CODE'] === OrderPayment::PAYMENT_ONLINE) { ?>
                 Перейти к оплате
             <?php } else { ?>
                 Заказать
