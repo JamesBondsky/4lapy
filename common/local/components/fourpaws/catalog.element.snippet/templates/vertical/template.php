@@ -28,6 +28,8 @@ use FourPaws\Helpers\WordHelper;
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 
+$pickupText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST');
+
 /**
  * @var $ecommerceService GoogleEcommerceService
  */
@@ -138,13 +140,12 @@ if ($mainCombinationType === 'SIZE') {
                             $addAttr = ' data-price="' . $offer->getPriceCeil() . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
+                            $addAttr .= ' data-pickup="' . ($offer->isByRequest() ? $pickupText : '') . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
                             $addAttr .= ' data-onclick="' . $getOnClick($offer) . '"';
-                            if ($offer->getDiscountPrice()) {
-                                $addAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
-                                $addAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
-                            }
+                            $addAttr .= ' data-oldprice="' . ($offer->getOldPriceCeil() !== $offer->getPriceCeil() ? $offer->getOldPriceCeil() : ''). '"';
+                            $addAttr .= ' data-discount="' . ($offer->getDiscountPrice() ?: '') . '"';
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
                             $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : ''; ?>
@@ -168,11 +169,10 @@ if ($mainCombinationType === 'SIZE') {
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                                <?php if ($currentOffer->getDiscountPrice()) { ?>
-                                    data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
-                                    data-discount="<?= $currentOffer->getDiscountPrice() ?>"
-                                <?php } ?>
+                               data-oldprice="<?= ($currentOffer->getOldPriceCeil() !== $currentOffer->getPriceCeil() ? $currentOffer->getOldPriceCeil() : '') ?>"
+                               data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
+                               data-pickup="<?= $currentOffer->isByRequest() ? $pickupText : '' ?>"
                                data-available="<?= !$currentOffer->isAvailable() ? 'Нет в наличии' : '' ?>"
                                data-price="<?= $currentOffer->getPriceCeil() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
@@ -217,7 +217,7 @@ if ($mainCombinationType === 'SIZE') {
                 ?>
                 <div class="b-common-item__info-wrap">
                     <span class="b-common-item__text">
-                        <?= Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST') ?>
+                        <?= $pickupText ?>
                     </span>
                 </div>
             <?php }
