@@ -8,11 +8,9 @@ namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
@@ -26,7 +24,6 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Exception\NotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
 
@@ -73,9 +70,9 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * NotificationService constructor.
-     * @param OrderService $orderService
-     * @param SmsService $smsService
-     * @param StoreService $storeService
+     * @param OrderService        $orderService
+     * @param SmsService          $smsService
+     * @param StoreService        $storeService
      * @param ExpertsenderService $emailService
      *
      * @throws ApplicationCreateException
@@ -191,7 +188,7 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
-        if (!$this->paymentService->getOrderPayment($order)->isPaid()) {
+        if (!$this->orderService->getOrderPayment($order)->isPaid()) {
             return;
         }
 

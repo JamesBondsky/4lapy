@@ -15,9 +15,6 @@ if (!$sberbankOrderId = $_REQUEST['orderId']) {
 
 $order = \Bitrix\Sale\Order::load($orderId);
 
-/** @noinspection PhpMethodParametersCountMismatchInspection */
-$rbs = new RBS(\compact('test_mode', 'two_stage', 'logging', 'user_name', 'password'));
-
 /** @var PaymentService $paymentService */
 $paymentService = \FourPaws\App\Application::getInstance()->getContainer()->get(PaymentService::class);
 $paymentService->processOnlinePaymentByOrderId($order, $sberbankOrderId);
