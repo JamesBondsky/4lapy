@@ -72,23 +72,17 @@ if ($fiscalization['ENABLE'] === 'Y') {
     $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentService::class);
     $fiscal = $paymentService->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
     $amount = $paymentService->getFiscalTotal($fiscal);
-    $fiscal = $paymentService->fiscalToArray($fiscal);
+    $fiscal = $paymentService->fiscalToArray($fiscal)['fiscal'];
 }
 /* END Фискализация */
-for ($i = 0; $i <= 10; $i++) {
-    $response = $rbs->register_order(
-        $order->getField('ACCOUNT_NUMBER') . '_' . $i,
-        $amount,
-        (string)new FullHrefDecorator($returnUrl),
-        $order->getCurrency(),
-        $order->getField('USER_DESCRIPTION'),
-        $fiscal
-    );
-
-    if ((int)$response['errorCode'] !== 1) {
-        break;
-    }
-}
+$response = $rbs->register_order(
+    $order->getField('ACCOUNT_NUMBER'),
+    $amount,
+    (string)new FullHrefDecorator($returnUrl),
+    $order->getCurrency(),
+    $order->getField('USER_DESCRIPTION'),
+    $fiscal
+);
 
 /**
  * Разбор ответа

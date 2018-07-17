@@ -1,15 +1,16 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application as BitrixApplication;
 use FourPaws\App\Application;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
-
+/** @noinspection AutoloadingIssuesInspection
+ *
+ * Class FourPawsPersonalCabinetOrderItemComponent
+ */
 class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
 {
     use LazyLoggerAwareTrait;
@@ -31,7 +32,12 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
         parent::__construct($component);
     }
 
-    public function onPrepareComponentParams($params)
+    /**
+     * @param $params
+     *
+     * @return array
+     */
+    public function onPrepareComponentParams($params): array
     {
         $params['ORDER'] = $params['ORDER'] ?? null;
         if (!$params['ORDER'] instanceof Order) {
@@ -46,9 +52,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
         // подстраховка для идентификатора кеша
         $params['ORDER_ID'] = $params['ORDER']->getId();
 
-        $params = parent::onPrepareComponentParams($params);
-
-        return $params;
+        return parent::onPrepareComponentParams($params);
     }
 
     /**
@@ -60,7 +64,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
         /** @var Order $personalOrder */
         $personalOrder = $this->arParams['ORDER'];
 
-        $cachePath = \Bitrix\Main\Application::getInstance()->getManagedCache()->getCompCachePath(
+        $cachePath = BitrixApplication::getInstance()->getManagedCache()->getCompCachePath(
             $this->getRelativePath()
         );
         // к пути кеша добавляем идентификатор заказа

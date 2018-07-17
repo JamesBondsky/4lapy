@@ -14,6 +14,7 @@ class CustomerDetails
      *
      * @Serializer\SerializedName("contact")
      * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
      */
     protected $contact;
 
@@ -22,8 +23,18 @@ class CustomerDetails
      *
      * @Serializer\SerializedName("email")
      * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
      */
     protected $email;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("phone")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $phone;
 
     /**
      * @return string
@@ -58,6 +69,24 @@ class CustomerDetails
     public function setEmail(string $email): CustomerDetails
     {
         $this->email = $email;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPhone(): string
+    {
+        return $this->phone;
+    }
+
+    /**
+     * @param string $phone
+     * @return CustomerDetails
+     */
+    public function setPhone(string $phone): CustomerDetails
+    {
+        $this->phone = $phone;
         return $this;
     }
 }
