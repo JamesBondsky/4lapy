@@ -141,8 +141,10 @@ if ($mainCombinationType === 'SIZE') {
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
                             $addAttr .= ' data-onclick="' . $getOnClick($offer) . '"';
-                            $addAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
-                            $addAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
+                            if ($offer->getDiscountPrice()) {
+                                $addAttr .= ' data-oldprice="' . $offer->getOldPriceCeil() . '"';
+                                $addAttr .= ' data-discount="' . $offer->getDiscountPrice() . '"';
+                            }
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
                             $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : ''; ?>
@@ -166,11 +168,12 @@ if ($mainCombinationType === 'SIZE') {
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                               data-discount="<?= $currentOffer->getDiscountPrice() ?>"
-                               data-pickup=""
+                                <?php if ($currentOffer->getDiscountPrice()) { ?>
+                                    data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
+                                    data-discount="<?= $currentOffer->getDiscountPrice() ?>"
+                                <?php } ?>
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
                                data-available="<?= !$currentOffer->isAvailable() ? 'Нет в наличии' : '' ?>"
-                               data-oldprice="<?= $currentOffer->getOldPriceCeil() ?>"
                                data-price="<?= $currentOffer->getPriceCeil() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
                                data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
