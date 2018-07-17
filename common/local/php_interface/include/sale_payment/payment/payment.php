@@ -72,7 +72,7 @@ if ($fiscalization['ENABLE'] === 'Y') {
     $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentService::class);
     $fiscal = $paymentService->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
     $amount = $paymentService->getFiscalTotal($fiscal);
-    $fiscal = $paymentService->fiscalToArray($fiscal);
+    $fiscal = $paymentService->fiscalToArray($fiscal)['fiscal'];
 }
 /* END Фискализация */
 $response = $rbs->register_order(
