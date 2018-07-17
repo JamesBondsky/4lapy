@@ -28,6 +28,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -382,19 +383,22 @@ class PaymentService
     {
         $result = new CustomerDetails();
 
-        $email = $name = null;
         /** @var \Bitrix\Sale\PropertyValue $propertyValue */
         foreach ($order->getPropertyCollection() as $propertyValue) {
-            if ($propertyValue->getProperty()['IS_PAYER'] === BitrixUtils::BX_BOOL_TRUE) {
-                $name = $propertyValue->getValue();
-            } elseif ($propertyValue->getProperty()['IS_EMAIL'] === BitrixUtils::BX_BOOL_TRUE) {
-                $email = $propertyValue->getValue();
+            $property = $propertyValue->getProperty();
+            if ($property['IS_PAYER'] === BitrixUtils::BX_BOOL_TRUE) {
+                $result->setContact($propertyValue->getValue());
+            } elseif ($property['IS_EMAIL'] === BitrixUtils::BX_BOOL_TRUE && $propertyValue->getValue()) {
+                /**
+                 * у сбера email валидируется строже, проще использовать телефон
+                 */
+//                $result->setEmail($propertyValue->getValue());
+            } elseif ($property['IS_PHONE'] === BitrixUtils::BX_BOOL_TRUE) {
+                $result->setPhone(PhoneHelper::formatPhone($propertyValue->getValue(), '7' . PhoneHelper::FORMAT_SHORT));
             }
         }
 
-        return $result
-            ->setEmail($email ?: 'email')
-            ->setContact($name ?: 'name');
+        return $result;
     }
 
     /**
