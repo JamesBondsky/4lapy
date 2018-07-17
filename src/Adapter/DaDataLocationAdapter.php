@@ -7,7 +7,6 @@ use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 
 /**
@@ -68,79 +67,70 @@ class DaDataLocationAdapter extends BaseAdapter
      */
     public function convert($entity): BitrixLocation
     {
-        /** @var DadataLocation $entity */
-        $bitrixLocation = new BitrixLocation();
+        $cities = [];
+        $fullCities = $this->getFullCities($entity);
+        $region = $this->getRegion($entity);
+        $city = $this->getCityName($entity);
 
-        try {
-            $cities = [];
-            $fullCities = $this->getFullCities($entity);
-            $region = $this->getRegion($entity);
-            $city = $this->getCityName($entity);
+        $selectedCity = null;
+        if (!empty($entity->getKladrId())) {
+            try {
+                $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE,
+                    $entity->getKladrId());
+            } catch (\Exception $e) {
+                $cities = [];
+                $logger = LoggerFactory::create('dadataAdapter');
+                $logger->error($e->getMessage(), $e);
+            }
 
-            $selectedCity = null;
-            if (!empty($entity->getKladrId())) {
-                try {
-                    $cities = $this->locationService->findLocationByExtService(LocationService::KLADR_SERVICE_CODE,
-                        $entity->getKladrId());
-                } catch (\Exception $e) {
-                    $cities = [];
-                    $logger = LoggerFactory::create('dadataAdapter');
-                    $logger->error($e->getMessage(), $e);
-                }
-
-                if (\count($cities) > 1) {
-                    $maxSimilarity = null;
-                    $selectedCity = null;
-                    foreach ($cities as $key => $cityItem) {
-                        $similarity = similar_text($cityItem['NAME'], $city);
-                        if ((null === $maxSimilarity) ||
-                            $similarity > $maxSimilarity
-                        ) {
-                            $maxSimilarity = $similarity;
-                            $selectedCity = $cityItem;
-                        }
+            if (\count($cities) > 1) {
+                $maxSimilarity = null;
+                $selectedCity = null;
+                foreach ($cities as $key => $cityItem) {
+                    $similarity = similar_text($cityItem['NAME'], $city);
+                    if ((null === $maxSimilarity) ||
+                        $similarity > $maxSimilarity
+                    ) {
+                        $maxSimilarity = $similarity;
+                        $selectedCity = $cityItem;
                     }
                 }
             }
-
-            if (null === $selectedCity) {
-                $fullRegion = $this->getFullRegion($entity);
-                /** гребаный фикс - циклим поиск по нескольким местоположениям */
-                foreach ($fullCities as $fullCity) {
-                    $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true,
-                        true);
-                    if (!empty($cities)) {
-                        break;
-                    }
-                }
-
-                if (!empty($cities)) {
-                    $selectedCity = reset($cities);
-                }
-            }
-
-            if (null === $selectedCity) {
-                $selectedCity['NAME'] = $city;
-            }
-
-            /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
-            if (!empty($selectedCity['PATH'])) {
-                foreach ($selectedCity['PATH'] as $pathItem) {
-                    if (ToUpper($pathItem['TYPE']['CODE']) === 'REGION') {
-                        $selectedCity['REGION_ID'] = $pathItem['ID'];
-                        $selectedCity['REGION_CODE'] = $pathItem['CODE'];
-                        break;
-                    }
-                }
-            }
-
-            $selectedCity['REGION'] = $region;
-            $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
-        } catch (CityNotFoundException $e) {
-            /** не нашли - возвращаем пустой объект - должно быть сведено к 0*/
-            $logger = LoggerFactory::create('dadataAdapter');
-            $logger->error('не найдено');
         }
+
+        if (null === $selectedCity) {
+            $fullRegion = $this->getFullRegion($entity);
+            /** гребаный фикс - циклим поиск по нескольким местоположениям */
+            foreach ($fullCities as $fullCity) {
+                $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true,
+                    true);
+                if (!empty($cities)) {
+                    break;
+                }
+            }
+
+            if (!empty($cities)) {
+                $selectedCity = reset($cities);
+            }
+        }
+
+        if (null === $selectedCity) {
+            $selectedCity['NAME'] = $city;
+        }
+
+        /** установка ид региона дополнительно из запроса, при необходимости именно здесь устанавливать доп. данные */
+        if (!empty($selectedCity['PATH'])) {
+            foreach ($selectedCity['PATH'] as $pathItem) {
+                if (ToUpper($pathItem['TYPE']['CODE']) === 'REGION') {
+                    $selectedCity['REGION_ID'] = $pathItem['ID'];
+                    $selectedCity['REGION_CODE'] = $pathItem['CODE'];
+                    break;
+                }
+            }
+        }
+
+        $selectedCity['REGION'] = $region;
+        $bitrixLocation = $this->convertDataToEntity($selectedCity, BitrixLocation::class);
 
         return $bitrixLocation;
     }
@@ -240,12 +230,21 @@ class DaDataLocationAdapter extends BaseAdapter
         if (!empty($region)) {
             $continue = true;
             /** если регион это город федерального значения то не юзаем префикс */
-            if (\in_array(ToLower($region), ['москва', 'санкт-петербург', 'севастополь'])) {
+            if (\in_array(ToLower($region), [
+                'москва',
+                'санкт-петербург',
+                'севастополь',
+            ])) {
                 $continue = false;
             }
             if ($continue) {
                 $regionType = trim($entity->getRegionTypeFull());
-                $regionExcluded = ['Кабардино-Балкарская', 'Удмуртская', 'Чеченская', 'Чувашская'];
+                $regionExcluded = [
+                    'Кабардино-Балкарская',
+                    'Удмуртская',
+                    'Чеченская',
+                    'Чувашская',
+                ];
                 if ($entity->getRegionType() === 'Респ' && !\in_array($region, $regionExcluded, true)) {
                     $fullRegion = $regionType . ' ' . $region;
                 } else {
