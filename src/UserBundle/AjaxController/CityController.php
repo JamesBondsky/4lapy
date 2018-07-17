@@ -5,10 +5,10 @@ namespace FourPaws\UserBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
-use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\DaDataService;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\UserBundle\Service\UserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -27,9 +27,13 @@ class CityController extends Controller
     /**@var UserService */
     protected $userService;
 
-    public function __construct(UserService $userService)
+    /**@var DaDataService */
+    protected $daDataService;
+
+    public function __construct(UserService $userService, DaDataService $daDataService)
     {
         $this->userService = $userService;
+        $this->daDataService = $daDataService;
     }
 
     /**
@@ -45,7 +49,6 @@ class CityController extends Controller
         $codeList = json_decode($code, true);
         $dadata = null;
         $dadataLocationAdapter = new DaDataLocationAdapter();
-        $dadataService = Application::getInstance()->getContainer()->get('dadata.service');
         $dadataNotFound = false;
         if (\is_array($codeList) || \is_array($code)) {
             if(\is_array($codeList) && !empty($codeList)){
@@ -87,7 +90,7 @@ class CityController extends Controller
                     if(empty($dadata['area_fias_id'])){
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
-                    $code = $dadataService->getCenterDistrictByFias($regionName, $dadata['area_fias_id']);
+                    $code = $this->daDataService->getCenterDistrictByFias($regionName, $dadata['area_fias_id']);
 
                     if(empty($code)){
                         throw new CityNotFoundException('населенный пункт не найден');
@@ -116,7 +119,7 @@ class CityController extends Controller
                         if(empty($dadata['region_fias_id'])){
                             throw new CityNotFoundException('населенный пункт не найден');
                         }
-                        $code = $dadataService->getCenterRegionByFias($regionName, $dadata['region_fias_id']);
+                        $code = $this->daDataService->getCenterRegionByFias($regionName, $dadata['region_fias_id']);
 
                         if(empty($code)){
                             throw new CityNotFoundException('населенный пункт не найден');
@@ -146,7 +149,7 @@ class CityController extends Controller
                 }
             } else{
                 try {
-                    $code = $dadataService->getCenterRegion($regionName);
+                    $code = $this->daDataService->getCenterRegion($regionName);
 
                     if(empty($code)){
                         throw new CityNotFoundException('населенный пункт не найден');
