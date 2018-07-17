@@ -95,10 +95,13 @@ class DaDataLocationAdapter extends BaseAdapter
                         $selectedCity = $cityItem;
                     }
                 }
+                if ($selectedCity) {
+                    $cities = [$selectedCity];
+                }
             }
         }
 
-        if (null === $selectedCity) {
+        if (empty($cities)) {
             $fullRegion = $this->getFullRegion($entity);
             /** гребаный фикс - циклим поиск по нескольким местоположениям */
             foreach ($fullCities as $fullCity) {
@@ -108,13 +111,11 @@ class DaDataLocationAdapter extends BaseAdapter
                     break;
                 }
             }
-
-            if (!empty($cities)) {
-                $selectedCity = reset($cities);
-            }
         }
 
-        if (null === $selectedCity) {
+        if (!empty($cities)) {
+            $selectedCity = reset($cities);
+        } else {
             $selectedCity['NAME'] = $city;
         }
 
