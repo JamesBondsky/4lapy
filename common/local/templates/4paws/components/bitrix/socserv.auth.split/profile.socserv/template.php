@@ -45,7 +45,7 @@ if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES']))
                     <a class="b-account-social__close"
                         <?php if (is_numeric($service['ID'])) {
                                         ?>
-                            href="<?= htmlspecialcharsbx($service['DELETE_LINK']) ?>"
+                            href="<?= htmlspecialcharsbx($service['DELETE_LINK'] ?: '/?logout=yes') ?>"
                             onclick="return confirm('<?= Loc::getMessage('SS_PROFILE_DELETE_CONFIRM') ?>')"
                             <?php
                                     } ?>
