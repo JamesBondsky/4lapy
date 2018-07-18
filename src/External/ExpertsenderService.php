@@ -3,7 +3,7 @@
 namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -50,7 +50,6 @@ use LinguaLeo\ExpertSender\Request\AddUserToList;
 use LinguaLeo\ExpertSender\Results\ApiResult;
 use LinguaLeo\ExpertSender\Results\UserIdResult;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -63,7 +62,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class ExpertsenderService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     public const FORGOT_BASKET_TO_CLOSE_SITE = 1;
     public const FORGOT_BASKET_AFTER_TIME = 2;
@@ -111,8 +110,6 @@ class ExpertsenderService implements LoggerAwareInterface
         $this->key = $key;
         $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
-
-        $this->setLogger(LoggerFactory::create('expertsender'));
     }
 
     /**
@@ -188,7 +185,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $email = $user->getEmail();
             $userId = $user->getId();
 
-            $this->logger->info(
+            $this->log()->info(
                 __FUNCTION__,
                 [
                     'email' => $email,
@@ -238,7 +235,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         true),
                 ];
 
-                $this->logger->info(
+                $this->log()->info(
                     __FUNCTION__,
                     [
                         'email' => $email,
@@ -295,7 +292,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $oldUserEmail = $oldUser->getEmail();
         if ($oldUser->hasEmail()) {
 
-            $this->logger->info(
+            $this->log()->info(
                 __FUNCTION__,
                 [
                     'curUserEmail' => $curUserEmail,
@@ -357,7 +354,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 if ($continue) {
-                    $this->logger->info(
+                    $this->log()->info(
                         __FUNCTION__,
                         [
                             'curUserEmail' => $curUserEmail,
@@ -610,7 +607,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -678,7 +675,7 @@ class ExpertsenderService implements LoggerAwareInterface
 
         $transactionId = self::COMPLETE_ORDER_LIST_ID;
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -763,7 +760,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -914,7 +911,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -994,7 +991,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -1058,39 +1055,18 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     protected function getUserId(string $email): UserIdResult
     {
-        try {
-            $apiResult = $this->client->getUserId($email);
-        } catch (BadResponseException $e) {
-            $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
-            throw new ExpertsenderServiceException(
-                $message,
-                $e->getCode(),
-                $e
-            );
-        } catch (GuzzleException | Exception $e) {
-            throw new ExpertsenderServiceException(
-                $e->getMessage(),
-                $e->getCode(),
-                $e
-            );
-        }
-
-        if (!$apiResult->isOk()) {
-            throw new ExpertsenderServiceApiException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-        }
-
-        return $apiResult;
+        return $this->sendRequest('getUserId', [$email]);
     }
 
     /**
      * @param $name
      * @param $parameters
      *
-     * @return ApiResult
+     * @return ApiResult|UserIdResult
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    protected function sendRequest($name, $parameters): ApiResult
+    protected function sendRequest($name, $parameters)
     {
         try {
             /** @var ApiResult $apiResult */
@@ -1100,18 +1076,28 @@ class ExpertsenderService implements LoggerAwareInterface
             throw new ExpertsenderServiceException(
                 $message,
                 $e->getCode(),
-                $e
+                $e,
+                $name,
+                $parameters
             );
         } catch (GuzzleException | Exception $e) {
             throw new ExpertsenderServiceException(
                 $e->getMessage(),
                 $e->getCode(),
-                $e
+                $e,
+                $name,
+                $parameters
             );
         }
 
         if (!$apiResult->isOk()) {
-            throw new ExpertsenderServiceApiException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
+            throw new ExpertsenderServiceApiException(
+                $apiResult->getErrorMessage(),
+                $apiResult->getErrorCode(),
+                null,
+                $name,
+                $parameters
+            );
         }
 
         return $apiResult;
