@@ -105,13 +105,17 @@ class GoogleEcommerceService implements ScriptRenderedInterface
      * @param array $data
      * @param string $type
      *
+     * @param string $event
      * @return GoogleEcommerce
-     *
-     * @throws InvalidArgumentException
      */
-    public function buildPromotionFromArray(ArrayMapperInterface $mapper, array $data, string $type): GoogleEcommerce
+    public function buildPromotionFromArray(ArrayMapperInterface $mapper, array $data, string $type, string $event = ''): GoogleEcommerce
     {
-        $ecommerce = (new GoogleEcommerce())->setEcommerce(new Ecommerce());
+        $ecommerce = (new GoogleEcommerce())
+            ->setEcommerce(new Ecommerce());
+
+        if ($event) {
+            $ecommerce->setEvent('promotionClick');
+        }
 
         $promotions = \array_map(function ($promotion) {
             return $this->arrayTransformer->fromArray($promotion, Promotion::class);
@@ -241,6 +245,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         $offerCollection->add($offer);
 
         return (new GoogleEcommerce())
+            ->setEvent('click')
             ->setEcommerce(
                 (new Ecommerce())
                     ->setCurrencyCode('RUB')

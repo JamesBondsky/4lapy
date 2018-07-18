@@ -42,7 +42,7 @@ $getImage = function ($id, $width) {
 
 foreach ($arResult['ITEMS'] as $i => &$item) {
     $item['ECOMMERCE_CLICK_SCRIPT'] = $ecommerceService->renderScript(
-        $ecommerceService->buildPromotionFromArray($mapper, [$item], 'promoClick'), false
+        $ecommerceService->buildPromotionFromArray($mapper, [$item], 'promoClick', 'promotionClick'), false
     );
 
     $arResult['ITEMS'][$i]['DESKTOP_PICTURE'] = $getImage($item['~DETAIL_PICTURE'], 1020);
