@@ -22,6 +22,12 @@
 - ./bin/symfony_console r:c manzana_referral_add   # обработка очереди передачи рефералов в ML
 ```
 
+## Перезапуск консьюмеров манзаны по расписанию
+```
+- /usr/bin/supervisorctl restart 4lapy_manzana_update
+- /usr/bin/supervisorctl restart 4lapy_stage_manzana_update
+```
+
 ## Запуск импорта из SAP 
 
 ```
