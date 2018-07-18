@@ -43,6 +43,8 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
+use FourPaws\SaleBundle\Exception\SberbankOrderNotPaidException;
+use FourPaws\SaleBundle\Exception\SberbankOrderPaymentDeclinedException;
 use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
@@ -560,6 +562,8 @@ class PaymentService
      * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws PaymentException
+     * @throws SberbankOrderNotPaidException
+     * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankOrderNotFoundException
      * @throws SberbankPaymentException
      * @throws SystemException
@@ -583,6 +587,8 @@ class PaymentService
      * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws PaymentException
+     * @throws SberbankOrderNotPaidException
+     * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankOrderNotFoundException
      * @throws SberbankPaymentException
      * @throws SystemException
@@ -671,6 +677,8 @@ class PaymentService
      * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws PaymentException
+     * @throws SberbankOrderNotPaidException
+     * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankOrderNotFoundException
      * @throws SberbankPaymentException
      * @throws SystemException
@@ -715,6 +723,14 @@ class PaymentService
             $onlinePayment->save();
             $order->save();
         } else {
+            if ((int)$response['orderStatus'] === Sberbank::ORDER_STATUS_DECLINED) {
+                throw new SberbankOrderPaymentDeclinedException('Order not paid');
+            }
+
+            if ((int)$response['orderStatus'] === Sberbank::ORDER_STATUS_CREATED) {
+                throw new SberbankOrderNotPaidException('Order still can be paid');
+            }
+
             if ((int)$response['errorCode'] === Sberbank::ERROR_ORDER_NOT_FOUND) {
                 throw new SberbankOrderNotFoundException($response['errorMessage'], $response['errorCode']);
             }
