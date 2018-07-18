@@ -28,7 +28,7 @@ $arResult['ECOMMERCE_VIEW_SCRIPT'] = $ecommerceService->renderScript(
 
 foreach ($arResult['ITEMS'] as &$item) {
     $item['ECOMMERCE_CLICK_SCRIPT'] = $ecommerceService->renderScript(
-        $ecommerceService->buildPromotionFromArray($mapper, [$item], 'promoClick'), false
+        $ecommerceService->buildPromotionFromArray($mapper, [$item], 'promoClick', 'promotionClick'), false
     );
 
     // изображение для десктопа
