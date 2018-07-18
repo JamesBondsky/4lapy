@@ -245,7 +245,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         $offerCollection->add($offer);
 
         return (new GoogleEcommerce())
-            ->setEvent('click')
+            ->setEvent('productClick')
             ->setEcommerce(
                 (new Ecommerce())
                     ->setCurrencyCode('RUB')
