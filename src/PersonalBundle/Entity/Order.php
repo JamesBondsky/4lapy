@@ -882,7 +882,7 @@ class Order extends BaseEntity
         } else {
             /** @todo рассчитанная дата доставки */
             $propVal = $this->getPropValue('DELIVERY_DATE');
-            if ($propVal) {
+            if ($propVal && \DateTime::createFromFormat('d.m.Y', $propVal)) {
                 /** @var Date|null $date */
                 $date = new Date($propVal);
                 if ($date instanceof Date) {
