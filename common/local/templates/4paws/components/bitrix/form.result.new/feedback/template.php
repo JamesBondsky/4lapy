@@ -1,13 +1,16 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
 if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
     return;
 }
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 
 ?>
 <h2 class="b-title b-title--feedback-form"><?= $arResult['FORM_DESCRIPTION'] ?></h2>
@@ -34,7 +37,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                     } elseif ($fieldSid === 'phone') {
                         $type = 'tel';
                     } ?>
-                    <div class="b-input-line b-input-line--feedback-page js-form-field-block-<?=$fieldSid?>">
+                    <div class="b-input-line b-input-line--feedback-page js-form-field-block-<?= $fieldSid ?>">
                         <div class="b-input-line__label-wrapper">
                             <label class="b-input-line__label"
                                    for="feedback-<?= $fieldSid ?>"><?= $question['CAPTION'] ?></label>
@@ -124,22 +127,19 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                     </div>
                     <?php
                     break;
-            } ?>
-            <?php
+            }
         }
     }
-    if ($arResult['isUseCaptcha']) {
-        ?>
+
+    if ($arResult['isUseCaptcha']) { ?>
         <div class="b-feedback-page__capcha">
             <?php try {
-                echo App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();
+                echo App::getInstance()->getContainer()->get(ReCaptchaService::class)->getCaptcha();
             } catch (ApplicationCreateException $e) {
                 /** ошибка - капчу не вывести */
             } ?>
         </div>
-        <?php
-    }
-    ?>
+        <?php } ?>
     <button class="b-button b-button--feedback-page" type="submit" name="web_form_submit" value="Отправить">
         Отправить
     </button>
