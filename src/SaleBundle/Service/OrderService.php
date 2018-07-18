@@ -1340,33 +1340,24 @@ class OrderService implements LoggerAwareInterface
      * Бонусы, начисленные за заказ
      *
      * @param Order $order
-     * @param User  $user
      *
      * @return string
      * @throws NotFoundException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws UserNotFoundException
      */
-    public function getOrderBonusSum(Order $order, ?User $user = null): string
+    public function getOrderBonusSum(Order $order): string
     {
         $propertyValue = $this->getOrderPropertyByCode($order, 'BONUS_COUNT');
-
-        if (!$user) {
-            $user = $this->userProvider->findOne($order->getUserId());
-        }
 
         if (null === $propertyValue->getValue()) {
             try {
                 $propertyValue->setValue(0);
-                if ($user->getDiscountCardNumber()) {
-                    /**
-                     * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
-                     */
-
+                $discountCard = $this->getOrderPropertyByCode($order, 'DISCOUNT_CARD')->getValue();
+                if ($discountCard) {
                     $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
                         $order->getBasket(),
-                        $user->getDiscountCardNumber(),
+                        $discountCard,
                         $this->basketService
                     );
                     if ($order->getPaymentCollection()->getInnerPayment()) {
