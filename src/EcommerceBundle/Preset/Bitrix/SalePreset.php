@@ -47,21 +47,23 @@ class SalePreset
      */
     public function createEcommerceToCheckoutFromBasket(Basket $basket, int $step, string $option): GoogleEcommerce
     {
-        return (new GoogleEcommerce())->setEcommerce(
-            (new Ecommerce())
-                ->setCurrencyCode('RUB')
-                ->setCheckout(
-                    (new Action())
-                        ->setActionField(
-                            (new ActionField())
-                                ->setStep($step)
-                                ->setOption($option)
-                        )
-                        ->setProducts(
-                            $this->createProductsFromBitrixBasket($basket)
-                        )
-                )
-        );
+        return (new GoogleEcommerce())
+            ->setEvent('checkout')
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode('RUB')
+                    ->setCheckout(
+                        (new Action())
+                            ->setActionField(
+                                (new ActionField())
+                                    ->setStep($step)
+                                    ->setOption($option)
+                            )
+                            ->setProducts(
+                                $this->createProductsFromBitrixBasket($basket)
+                            )
+                    )
+            );
     }
 
     /**
@@ -71,16 +73,18 @@ class SalePreset
      */
     public function createAddFromBasketItem(BasketItem $basketItem): GoogleEcommerce
     {
-        return (new GoogleEcommerce())->setEcommerce(
-            (new Ecommerce())
-                ->setCurrencyCode($basketItem->getCurrency())
-                ->setAdd(
-                    (new Action())
-                        ->setProducts(
-                            $this->createProductsFromBitrixBasketItem($basketItem)
-                        )
-                )
-        );
+        return (new GoogleEcommerce())
+            ->setEvent('addToCart')
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode($basketItem->getCurrency())
+                    ->setAdd(
+                        (new Action())
+                            ->setProducts(
+                                $this->createProductsFromBitrixBasketItem($basketItem)
+                            )
+                    )
+            );
     }
 
     /**
@@ -90,16 +94,18 @@ class SalePreset
      */
     public function createRemoveFromBasketItem(BasketItem $basketItem): GoogleEcommerce
     {
-        return (new GoogleEcommerce())->setEcommerce(
-            (new Ecommerce())
-                ->setCurrencyCode($basketItem->getCurrency())
-                ->setRemove(
-                    (new Action())
-                        ->setProducts(
-                            $this->createProductsFromBitrixBasketItem($basketItem)
-                        )
-                )
-        );
+        return (new GoogleEcommerce())
+            ->setEvent('removeFromCart')
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode($basketItem->getCurrency())
+                    ->setRemove(
+                        (new Action())
+                            ->setProducts(
+                                $this->createProductsFromBitrixBasketItem($basketItem)
+                            )
+                    )
+            );
     }
 
     /**
@@ -131,28 +137,30 @@ class SalePreset
      */
     public function createPurchaseFromBitrixOrder(Order $order, string $affiliation): GoogleEcommerce
     {
-        return (new GoogleEcommerce())->setEcommerce(
-            (new Ecommerce())
-                ->setCurrencyCode($order->getCurrency())
-                ->setPurchase(
-                    (new Action())
-                        ->setActionField(
-                            (new ActionField())
-                                ->setId($order->getField('ACCOUNT_NUMBER'))
-                                ->setAffiliation($affiliation)
-                                ->setRevenue($order->getPrice())
-                                ->setTax($order->getTaxPrice())
-                                ->setShipping($order->getDeliveryPrice())
-                                /**
-                                 * @todo add coupon
-                                 */
-                                ->setCoupon('')
-                        )
-                        ->setProducts(
-                            $this->createProductsFromBitrixBasket($order->getBasket())
-                        )
-                )
-        );
+        return (new GoogleEcommerce())
+            ->setEvent('transactionComplete')
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode($order->getCurrency())
+                    ->setPurchase(
+                        (new Action())
+                            ->setActionField(
+                                (new ActionField())
+                                    ->setId($order->getField('ACCOUNT_NUMBER'))
+                                    ->setAffiliation($affiliation)
+                                    ->setRevenue($order->getPrice())
+                                    ->setTax($order->getTaxPrice())
+                                    ->setShipping($order->getDeliveryPrice())
+                                    /**
+                                     * @todo add coupon
+                                     */
+                                    ->setCoupon('')
+                            )
+                            ->setProducts(
+                                $this->createProductsFromBitrixBasket($order->getBasket())
+                            )
+                    )
+            );
     }
 
     /**

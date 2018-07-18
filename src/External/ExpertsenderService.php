@@ -3,7 +3,7 @@
 namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -22,10 +22,12 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
+use FourPaws\External\Exception\ExpertsenderServiceApiException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -37,6 +39,7 @@ use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use LinguaLeo\ExpertSender\Entities\Property;
 use LinguaLeo\ExpertSender\Entities\Receiver;
@@ -44,8 +47,9 @@ use LinguaLeo\ExpertSender\Entities\Snippet;
 use LinguaLeo\ExpertSender\ExpertSender;
 use LinguaLeo\ExpertSender\ExpertSenderException;
 use LinguaLeo\ExpertSender\Request\AddUserToList;
+use LinguaLeo\ExpertSender\Results\ApiResult;
+use LinguaLeo\ExpertSender\Results\UserIdResult;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -58,7 +62,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class ExpertsenderService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     public const FORGOT_BASKET_TO_CLOSE_SITE = 1;
     public const FORGOT_BASKET_AFTER_TIME = 2;
@@ -106,8 +110,6 @@ class ExpertsenderService implements LoggerAwareInterface
         $this->key = $key;
         $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
-
-        $this->setLogger(LoggerFactory::create('expertsender'));
     }
 
     /**
@@ -132,6 +134,7 @@ class ExpertsenderService implements LoggerAwareInterface
         if (!isset($params['subscribe'])) {
             $params['subscribe'] = false;
         }
+
         if ($user->hasEmail()) {
             $addUserToList = new AddUserToList();
             $addUserToList->setForce(true);
@@ -157,13 +160,9 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** ip юзверя */
                 $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                     BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
-                $apiResult = $this->client->addUserToList($addUserToList);
-
-                if ($apiResult->isOk()) {
-                    return true;
-                }
-                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-            } catch (SystemException|GuzzleException|Exception $e) {
+                $this->addUserToList($addUserToList);
+                return true;
+            } catch (Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -176,34 +175,27 @@ class ExpertsenderService implements LoggerAwareInterface
      * @return bool
      * @throws ExpertsenderServiceException
      * @throws GuzzleException
+     * @throws ExpertSenderException
      */
     public function sendChangePasswordByProfile(User $user): bool
     {
         if($user->hasEmail()) {
-            try {
-                $transactionId = self::CHANGE_PASSWORD_LIST_ID;
+            $transactionId = self::CHANGE_PASSWORD_LIST_ID;
 
-                $email = $user->getEmail();
-                $userId = $user->getId();
+            $email = $user->getEmail();
+            $userId = $user->getId();
 
-                $this->logger->info(
-                    __FUNCTION__,
-                    [
-                        'email' => $email,
-                        'transactionId' => $transactionId,
-                        'userId' => $userId,
-                    ]
-                );
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'email' => $email,
+                    'transactionId' => $transactionId,
+                    'userId' => $userId,
+                ]
+            );
 
-                $receiver = new Receiver($email);
-                $apiResult = $this->client->sendSystemTransactional($transactionId, $receiver);
-                if ($apiResult->isOk()) {
-                    return true;
-                }
-                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-            } catch (ExpertSenderException|GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            }
+            $this->sendSystemTransactional($transactionId, $email);
+            return true;
         }
 
         return false;
@@ -235,7 +227,6 @@ class ExpertsenderService implements LoggerAwareInterface
                 $email = $user->getEmail();
                 $userId = $user->getId();
                 $confirmService::setGeneratedHash($email, 'email_forgot');
-                $receiver = new Receiver($email);
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $userId : '';
                 $snippets = [
                     new Snippet('user_name', $user->getName() ?: $user->getFullName(), true),
@@ -244,7 +235,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         true),
                 ];
 
-                $this->logger->info(
+                $this->log()->info(
                     __FUNCTION__,
                     [
                         'email' => $email,
@@ -262,12 +253,9 @@ class ExpertsenderService implements LoggerAwareInterface
                     ]
                 );
 
-                $apiResult = $this->client->sendSystemTransactional($transactionId, $receiver, $snippets);
-                if ($apiResult->isOk()) {
-                    return true;
-                }
-                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-            } catch (ExpertSenderException|GuzzleException|ApplicationCreateException|Exception $e) {
+                $this->sendSystemTransactional($transactionId, $email, $snippets);
+                return true;
+            } catch (Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -279,14 +267,14 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $oldUser
      * @param User $curUser
      * @return bool
+     * @throws ExpertSenderException
      * @throws ExpertsenderServiceException
-     * @throws SystemException
+     * @throws GuzzleException
      */
     public function sendChangeEmail(User $oldUser, User $curUser): bool
     {
         $continue = true;
         $expertSenderId = 0;
-        $hasExpertSenderId = false;
         $hasNewEmailInSender = false;
         $transactionIdOld = self::CHANGE_EMAIL_LIST_ID;
         $transactionIdNew = self::CHANGE_EMAIL_TO_NEW_EMAIL_LIST;
@@ -295,19 +283,16 @@ class ExpertsenderService implements LoggerAwareInterface
         $curUserEmail = $curUser->getEmail();
         if ($curUser->hasEmail()) {
             try {
-                $userIdResult = $this->client->getUserId($curUserEmail);
-                if ($userIdResult->isOk()) {
-                    $hasNewEmailInSender = true;
-                }
-            } catch (GuzzleException | Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+                $this->getUserId($curUserEmail);
+                $hasNewEmailInSender = true;
+            } catch (ExpertsenderServiceApiException $e) {
             }
         }
 
-        $oldUserEmail = $oldUser->hasEmail();
+        $oldUserEmail = $oldUser->getEmail();
         if ($oldUser->hasEmail()) {
 
-            $this->logger->info(
+            $this->log()->info(
                 __FUNCTION__,
                 [
                     'curUserEmail' => $curUserEmail,
@@ -321,24 +306,22 @@ class ExpertsenderService implements LoggerAwareInterface
             $continue = false;
             /** отправка почты на старый email */
             try {
-                $receiver = new Receiver($oldUserEmail);
-                $apiResult = $this->client->sendSystemTransactional($transactionIdOld, $receiver);
-                if ($apiResult->isOk()) {
-                    $continue = true;
+                $this->sendSystemTransactional($transactionIdOld, $oldUserEmail);
+                $continue = true;
+            } catch (ExpertsenderServiceApiException $e) {
+            }
+
+            if (!$hasNewEmailInSender) {
+                /** получение id подписчика по старому email */
+                try {
+                    $expertSenderId = $this->getUserId($oldUserEmail)->getId();
+                } catch (ExpertsenderServiceApiException $e) {
                 }
 
-                if (!$hasNewEmailInSender) {
-                    /** получение id подписчика по старому email */
-                    $userIdResult = $this->client->getUserId($oldUserEmail);
-                    if ($userIdResult->isOk()) {
-                        $expertSenderId = $userIdResult->getId();
-                        if (!empty($expertSenderId)) {
-                            $hasExpertSenderId = true;
-                        }
-                    }
+                $userIdResult = $this->client->getUserId($oldUserEmail);
+                if ($userIdResult->isOk()) {
+                    $expertSenderId = $userIdResult->getId();
                 }
-            } catch (GuzzleException | Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
 
@@ -346,7 +329,7 @@ class ExpertsenderService implements LoggerAwareInterface
             try {
                 if (!$hasNewEmailInSender) {
                     $continue = false;
-                    if ($hasExpertSenderId) {
+                    if ($expertSenderId) {
                         $addUserToList = new AddUserToList();
                         $addUserToList->setForce(true);
                         $addUserToList->setMode(static::MAIN_LIST_MODE);
@@ -360,14 +343,8 @@ class ExpertsenderService implements LoggerAwareInterface
                         /** ip юзверя */
                         $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
                             BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
-
-                        $apiResult = $this->client->addUserToList($addUserToList);
-                        if ($apiResult->isOk()) {
-                            $continue = true;
-                        } else {
-                            throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
-                                $apiResult->getErrorCode());
-                        }
+                        $this->addUserToList($addUserToList);
+                        $continue = true;
                     } else {
                         /** если нет старой почты или не нашли на сайте регистрируем в сендере */
                         if ($this->sendEmailAfterRegister($curUser, ['isReg' => false, 'type' => 'email_change_email'])) {
@@ -377,8 +354,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 if ($continue) {
-
-                    $this->logger->info(
+                    $this->log()->info(
                         __FUNCTION__,
                         [
                             'curUserEmail' => $curUserEmail,
@@ -390,15 +366,10 @@ class ExpertsenderService implements LoggerAwareInterface
                     );
 
                     /** отправка почты на новый email, отправляем именно при смене и при регистрации */
-                    $receiver = new Receiver($curUserEmail);
-                    $apiResult = $this->client->sendSystemTransactional($transactionIdNew, $receiver);
-                    if ($apiResult->isOk()) {
-                        return true;
-                    }
-                    throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
-                        $apiResult->getErrorCode());
+                    $this->sendSystemTransactional($transactionIdNew, $curUserEmail);
+                    return true;
                 }
-            } catch (GuzzleException|Exception $e) {
+            } catch (Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -411,53 +382,33 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @return bool
      * @throws ExpertsenderServiceException
+     * @throws SystemException
      */
     public function changeUserData(User $curUser): bool
     {
-        $continue = true;
         $expertSenderId = 0;
-        $hasExpertSenderId = false;
         if ($curUser->hasEmail()) {
             try {
-                /** получение id подписчика */
-                $userIdResult = $this->client->getUserId($curUser->getEmail());
-                if ($userIdResult->isOk()) {
-                    $expertSenderId = $userIdResult->getId();
-                    if(!empty($expertSenderId)) {
-                        $hasExpertSenderId = true;
-                    }
-                }
-            } catch (GuzzleException | Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+                $expertSenderId = $this->getUserId($curUser->getEmail())->getId();
+            } catch (ExpertsenderServiceApiException $e) {
             }
         }
-        if ($continue && $hasExpertSenderId && $curUser->hasEmail()) {
-            try {
-                $addUserToList = new AddUserToList();
-                $addUserToList->setForce(true);
-                $addUserToList->setMode(static::MAIN_LIST_MODE);
-                $addUserToList->setTrackingCode('change_user_data');
-                $addUserToList->setListId(static::MAIN_LIST_ID);
-                $addUserToList->setId($expertSenderId);
+        if ($expertSenderId && $curUser->hasEmail()) {
+            $addUserToList = new AddUserToList();
+            $addUserToList->setForce(true);
+            $addUserToList->setMode(static::MAIN_LIST_MODE);
+            $addUserToList->setTrackingCode('change_user_data');
+            $addUserToList->setListId(static::MAIN_LIST_ID);
+            $addUserToList->setId($expertSenderId);
 
-                $addUserToList->setEmail($curUser->getEmail());
-                $addUserToList->setName($curUser->getName());
-                $addUserToList->setLastName($curUser->getLastName());
-                /** ip юзверя */
-                $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
-                    BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+            $addUserToList->setEmail($curUser->getEmail());
+            $addUserToList->setName($curUser->getName());
+            $addUserToList->setLastName($curUser->getLastName());
+            /** ip юзверя */
+            $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
+                BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
 
-                $apiResult = $this->client->addUserToList($addUserToList);
-                if ($apiResult->isOk()) {
-                    return true;
-                }
-
-                throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
-                    $apiResult->getErrorCode());
-            } catch (GuzzleException|Exception $e) {
-                $e->getMessage();
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-            }
+            $this->addUserToList($addUserToList);
         }
 
         return false;
@@ -467,55 +418,41 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $user
      *
      * @return bool
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ExpertsenderServiceException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
+     * @throws GuzzleException
+     * @throws SystemException
      */
     public function sendEmailSubscribeNews(User $user): bool
     {
         if ($user->hasEmail()) {
+            $expertSenderId = 0;
             try {
-                $expertSenderId = 0;
-                $hasExpertSenderId = false;
-                $userIdResult = $this->client->getUserId($user->getEmail());
-                if ($userIdResult->isOk()) {
-                    $expertSenderId = $userIdResult->getId();
-                    if(!empty($expertSenderId)){
-                        $hasExpertSenderId = true;
-                    }
-                }
-
-                if ($hasExpertSenderId) {
-                    $addUserToList = new AddUserToList();
-                    $addUserToList->setForce(true);
-                    $addUserToList->setMode(static::MAIN_LIST_MODE);
-                    $addUserToList->setTrackingCode('subscribe');
-                    $addUserToList->setListId(static::MAIN_LIST_ID);
-                    $addUserToList->setEmail($user->getEmail());
-                    $addUserToList->setId($expertSenderId);
-
-                    /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(true)));
-                    /** ip юзверя */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
-                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
-
-
-                    $apiResult = $this->client->addUserToList($addUserToList);
-                    if ($apiResult->isOk()) {
-                        return true;
-                    }
-                    throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-                }
-
-                /** если не нашли id по почте регистрируем в сендере */
-                return $this->sendEmailAfterRegister($user,
-                    ['isReg' => false, 'type' => 'email_subscribe', 'subscribe' => true]);
-            } catch (GuzzleException|Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+                $expertSenderId = $this->getUserId($user->getEmail())->getId();
+            } catch (ExpertsenderServiceApiException $e) {
             }
+
+            if ($expertSenderId) {
+                $addUserToList = new AddUserToList();
+                $addUserToList->setForce(true);
+                $addUserToList->setMode(static::MAIN_LIST_MODE);
+                $addUserToList->setTrackingCode('subscribe');
+                $addUserToList->setListId(static::MAIN_LIST_ID);
+                $addUserToList->setEmail($user->getEmail());
+                $addUserToList->setId($expertSenderId);
+
+                /** флаг подписки на новости */
+                $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(true)));
+                /** ip юзверя */
+                $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
+                    BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+
+
+                $this->addUserToList($addUserToList);
+            }
+
+            /** если не нашли id по почте регистрируем в сендере */
+            return $this->sendEmailAfterRegister($user,
+                    ['isReg' => false, 'type' => 'email_subscribe', 'subscribe' => true]);
         }
         return false;
     }
@@ -524,51 +461,36 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $user
      *
      * @return bool
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ExpertsenderServiceException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
+     * @throws GuzzleException
+     * @throws SystemException
      */
     public function sendEmailUnSubscribeNews(User $user): bool
     {
         if ($user->hasEmail()) {
+            $expertSenderId = 0;
             try {
-                $expertSenderId = 0;
-                $hasExpertSenderId = false;
-                $userIdResult = $this->client->getUserId($user->getEmail());
-                if ($userIdResult->isOk()) {
-                    $expertSenderId = $userIdResult->getId();
-                    if(!empty($expertSenderId)){
-                        $hasExpertSenderId = true;
-                    }
-                }
-
-                if ($hasExpertSenderId) {
-                    $addUserToList = new AddUserToList();
-                    $addUserToList->setForce(true);
-                    $addUserToList->setMode(static::MAIN_LIST_MODE);
-                    $addUserToList->setTrackingCode('unsubscribe');
-                    $addUserToList->setListId(static::MAIN_LIST_ID);
-                    $addUserToList->setId($expertSenderId);
-                    $addUserToList->setEmail($user->getEmail());
-                    /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(false)));
-                    /** ip юзверя */
-                    $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
-                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
-
-                    $apiResult = $this->client->addUserToList($addUserToList);
-                    if ($apiResult->isOk()) {
-                        return true;
-                    }
-
-                    throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-                }
-                return true;
-            } catch (GuzzleException|Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+                $expertSenderId = $this->getUserId($user->getEmail())->getId();
+            } catch (ExpertsenderServiceApiException $e) {
             }
+
+            if ($expertSenderId) {
+                $addUserToList = new AddUserToList();
+                $addUserToList->setForce(true);
+                $addUserToList->setMode(static::MAIN_LIST_MODE);
+                $addUserToList->setTrackingCode('unsubscribe');
+                $addUserToList->setListId(static::MAIN_LIST_ID);
+                $addUserToList->setId($expertSenderId);
+                $addUserToList->setEmail($user->getEmail());
+                /** флаг подписки на новости */
+                $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_SUBSCRIBE_ID, 'boolean', json_encode(false)));
+                /** ip юзверя */
+                $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
+                    BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+
+                $this->addUserToList($addUserToList);
+            }
+            return true;
         }
         return false;
     }
@@ -624,7 +546,7 @@ class ExpertsenderService implements LoggerAwareInterface
             'PHONE',
             'USER_REGISTERED',
             'COM_WAY',
-            'EMAIL'
+            'EMAIL',
         ]);
 
         /**
@@ -685,7 +607,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -703,15 +625,8 @@ class ExpertsenderService implements LoggerAwareInterface
             ]
         );
 
-        try {
-            $apiResult = $this->client->sendSystemTransactional($transactionId, new Receiver($email), $snippets);
-            if (!$apiResult->isOk()) {
-                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-            }
-            return $transactionId;
-        } catch (GuzzleException|Exception $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-        }
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
+        return $transactionId;
     }
 
     /**
@@ -760,7 +675,7 @@ class ExpertsenderService implements LoggerAwareInterface
 
         $transactionId = self::COMPLETE_ORDER_LIST_ID;
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -778,16 +693,8 @@ class ExpertsenderService implements LoggerAwareInterface
             ]
         );
 
-        try {
-            $apiResult = $this->client->sendSystemTransactional($transactionId, new Receiver($email), $snippets);
-            if (!$apiResult->isOk()) {
-                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
-            }
-
-            return $transactionId;
-        } catch (GuzzleException|Exception $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        }
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
+        return $transactionId;
     }
 
     /**
@@ -805,6 +712,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderBasketEmptyException
      * @throws ExpertsenderServiceException
+     * @throws ExpertSenderException
      */
     public function sendForgotBasket(Basket $basket, int $type):bool
     {
@@ -852,7 +760,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -870,25 +778,7 @@ class ExpertsenderService implements LoggerAwareInterface
             ]
         );
 
-        try {
-            $apiResult = $this->client->sendSystemTransactional(
-                $transactionId,
-                new Receiver($email),
-                $snippets
-            );
-            if (!$apiResult->isOk()) {
-                throw new ExpertsenderServiceException(
-                    var_export($snippets, true). ' - Ошибка - '.$apiResult->getErrorMessage(),
-                    $apiResult->getErrorCode()
-                );
-            }
-        } catch (GuzzleException|Exception $exception) {
-            throw new ExpertsenderServiceException(
-                var_export($snippets, true). ' - Ошибка - '.$exception->getMessage(),
-                $exception->getCode(),
-                $exception
-            );
-        }
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
 
         return true;
     }
@@ -936,23 +826,24 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         $offers = $orderService->getOrderProducts($order);
 
-        $fiscal = $paymentService->getFiscalization($order, null, 0, false);
+        $fiscalization = $paymentService->getFiscalization($order, 0, false);
         $items = [];
         try {
-            $basketItems = $fiscal['fiscal']['orderBundle']['cartItems']['items'];
+            $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+            /** @var Item $basketItem */
             foreach ($basketItems as $basketItem) {
-                if (mb_strpos($basketItem['itemCode'], 'DELIVERY') !== false) {
+                if (mb_strpos($basketItem->getCode(), 'DELIVERY') !== false) {
                     continue;
                 }
                 $currentOffer = null;
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
-                    if ($offer->getId() === (int)$basketItem['itemCode']) {
+                    if ($offer->getId() === (int)$basketItem->getCode()) {
                         $currentOffer = $offer;
                     }
                 }
                 if (!$currentOffer) {
-                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem['itemCode']));
+                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getCode()));
                 }
                 $link = ($currentOffer->getXmlId()[0] === '3') ? '' : new FullHrefDecorator($currentOffer->getDetailPageUrl());
                 $item = '';
@@ -961,8 +852,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
                 $item .= '<Link>' . $link . '</Link>';
                 $item .= '<Price1>' . $currentOffer->getOldPrice() . '</Price1>';
-                $item .= '<Price2>' . ($basketItem['itemPrice'] / 100) . '</Price2>';
-                $item .= '<Amount>' . $basketItem['quantity']['value'] . '</Amount>';
+                $item .= '<Price2>' . ($basketItem->getPrice() / 100) . '</Price2>';
+                $item .= '<Amount>' . $basketItem->getQuantity()->getValue() . '</Amount>';
                 $item .= '</Product>';
                 $items[] = $item;
             }
@@ -1020,7 +911,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -1038,25 +929,7 @@ class ExpertsenderService implements LoggerAwareInterface
             ]
         );
 
-        try {
-            $apiResult = $this->client->sendSystemTransactional(
-                $transactionId,
-                new Receiver($email),
-                $snippets
-            );
-            if (!$apiResult->isOk()) {
-                throw new ExpertsenderServiceException(
-                    $apiResult->getErrorMessage(),
-                    $apiResult->getErrorCode()
-                );
-            }
-        } catch (GuzzleException|Exception $exception) {
-            throw new ExpertsenderServiceException(
-                $exception->getMessage(),
-                $exception->getCode(),
-                $exception
-            );
-        }
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
 
         return $transactionId;
     }
@@ -1118,7 +991,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->logger->info(
+        $this->log()->info(
             __FUNCTION__,
             [
                 'email' => $email,
@@ -1136,26 +1009,97 @@ class ExpertsenderService implements LoggerAwareInterface
             ]
         );
 
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
+
+        return $transactionId;
+    }
+
+
+    /**
+     * @param int    $transactionId
+     * @param string $email
+     * @param array  $snippets
+     *
+     * @return ApiResult
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     * @throws ExpertSenderException
+     */
+    protected function sendSystemTransactional(int $transactionId, string $email, array $snippets = []): ApiResult
+    {
+        return $this->sendRequest('sendSystemTransactional', [
+            $transactionId,
+            new Receiver($email),
+            $snippets
+        ]);
+    }
+
+    /**
+     * @param AddUserToList $addUserToList
+     *
+     * @return ApiResult
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    protected function addUserToList(AddUserToList $addUserToList): ApiResult
+    {
+        return $this->sendRequest('addUserToList', [$addUserToList]);
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return UserIdResult
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    protected function getUserId(string $email): UserIdResult
+    {
+        return $this->sendRequest('getUserId', [$email]);
+    }
+
+    /**
+     * @param $name
+     * @param $parameters
+     *
+     * @return ApiResult|UserIdResult
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    protected function sendRequest($name, $parameters)
+    {
         try {
-            $apiResult = $this->client->sendSystemTransactional(
-                $transactionId,
-                new Receiver($email),
-                $snippets
-            );
-            if (!$apiResult->isOk()) {
-                throw new ExpertsenderServiceException(
-                    $apiResult->getErrorMessage(),
-                    $apiResult->getErrorCode()
-                );
-            }
-        } catch (GuzzleException|Exception $exception) {
+            /** @var ApiResult $apiResult */
+            $apiResult = $this->client->$name(...$parameters);
+        } catch (BadResponseException $e) {
+            $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
             throw new ExpertsenderServiceException(
-                $exception->getMessage(),
-                $exception->getCode(),
-                $exception
+                $message,
+                $e->getCode(),
+                $e,
+                $name,
+                $parameters
+            );
+        } catch (GuzzleException | Exception $e) {
+            throw new ExpertsenderServiceException(
+                $e->getMessage(),
+                $e->getCode(),
+                $e,
+                $name,
+                $parameters
             );
         }
 
-        return $transactionId;
+        if (!$apiResult->isOk()) {
+            throw new ExpertsenderServiceApiException(
+                $apiResult->getErrorMessage(),
+                $apiResult->getErrorCode(),
+                null,
+                $name,
+                $parameters
+            );
+        }
+
+        return $apiResult;
     }
 }

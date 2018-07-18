@@ -10,21 +10,44 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\IO\InvalidPathException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
-use CUser;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
+use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\PhoneHelper;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
+use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
+use FourPaws\SaleBundle\Dto\Fiscalization\Fiscal;
+use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
+use FourPaws\SaleBundle\Dto\Fiscalization\Item;
+use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
+use FourPaws\SaleBundle\Dto\Fiscalization\ItemTax;
+use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
+use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
+use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
+use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Entity\Store;
+use JMS\Serializer\ArrayTransformerInterface;
 
 /**
  * Class PaymentService
@@ -33,6 +56,11 @@ use FourPaws\StoreBundle\Entity\Store;
  */
 class PaymentService
 {
+    /**
+     * @var ArrayTransformerInterface
+     */
+    protected $arrayTransformer;
+
     /**
      * @var BasketService
      */
@@ -47,8 +75,9 @@ class PaymentService
      * PaymentService constructor.
      * @param BasketService $basketService
      */
-    public function __construct(BasketService $basketService)
+    public function __construct(BasketService $basketService, ArrayTransformerInterface $arrayTransformer)
     {
+        $this->arrayTransformer = $arrayTransformer;
         $this->basketService = $basketService;
     }
 
@@ -59,206 +88,51 @@ class PaymentService
      */
     public function getAvailablePaymentsForStore(Store $store, float $paymentSum = 0): array
     {
-        $result = [OrderService::PAYMENT_ONLINE];
+        $result = [OrderPayment::PAYMENT_ONLINE];
         if ($store instanceof Terminal) {
             if ($store->isNppAvailable() && $store->getNppValue() >= $paymentSum) {
                 if ($store->hasCardPayment()) {
-                    $result[] = OrderService::PAYMENT_CASH_OR_CARD;
+                    $result[] = OrderPayment::PAYMENT_CASH_OR_CARD;
                 } elseif ($store->hasCashPayment()) {
-                    $result[] = OrderService::PAYMENT_CASH;
+                    $result[] = OrderPayment::PAYMENT_CASH;
                 }
             }
         } else {
-            $result[] = OrderService::PAYMENT_CASH_OR_CARD;
+            $result[] = OrderPayment::PAYMENT_CASH_OR_CARD;
         }
 
         return $result;
     }
 
     /**
-     * @todo переделать на DTO
-     * @todo переделать на сериализацию
+     * @param Order $order
+     * @param int   $taxSystem
+     * @param bool  $skipGifts
      *
-     * @param Order       $order
-     * @param CUser|array $user
-     * @param int         $taxSystem
-     * @param bool        $skipGifts
-     *
+     * @return Fiscalization
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws InvalidPathException
      * @throws ObjectNotFoundException
-     * @return array
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getFiscalization(Order $order, $user, int $taxSystem, $skipGifts = true): array
+    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true): Fiscalization
     {
-        $amount = 0; //Для фискализации общая сумма берется путем суммирования округленных позиций.
-        if ($user instanceof \CUser) {
-            $userEmail = $user->GetEmail();
-            $userName = $user->GetFullName();
-        } else {
-            $userEmail = ['email'];
-            $userName = ['name'];
-        }
+        /** @var DateTime $dateCreate */
+        $dateCreate = $order->getField('DATE_INSERT');
 
-        $fiscal = [
-            'orderBundle' => [
-                'orderCreationDate' => \strtotime($order->getField('DATE_INSERT')),
-                'customerDetails'   => [
-                    'email'   => false,
-                    'contact' => false,
-                ],
-                'cartItems'         => [
-                    'items' => [],
-                ],
-            ],
-            'taxSystem'   => $taxSystem,
-        ];
+        $orderBundle = new OrderBundle();
+        $fiscal = (new Fiscal())
+            ->setOrderBundle($orderBundle)
+            ->setTaxSystem($taxSystem);
 
-        /** @var \Bitrix\Sale\PropertyValue $propertyValue */
-        foreach ($order->getPropertyCollection() as $propertyValue) {
-            if ($propertyValue->getProperty()['IS_PAYER'] === 'Y') {
-                $fiscal['orderBundle']['customerDetails']['contact'] = $propertyValue->getValue();
-            } elseif ($propertyValue->getProperty()['IS_EMAIL'] === 'Y') {
-                $fiscal['orderBundle']['customerDetails']['email'] = $propertyValue->getValue();
-            }
-        }
+        $orderBundle
+            ->setCustomerDetails($this->getCustomerDetails($order))
+            ->setDateCreate(DateHelper::convertToDateTime($dateCreate))
+            ->setCartItems($this->getCartItems($order, $skipGifts));
 
-        if (!$fiscal['orderBundle']['customerDetails']['email'] || !$fiscal['orderBundle']['customerDetails']['contact']) {
-            if (!$fiscal['orderBundle']['customerDetails']['email']) {
-                $fiscal['orderBundle']['customerDetails']['email'] = $userEmail;
-            }
-            if (!$fiscal['orderBundle']['customerDetails']['contact']) {
-                $fiscal['orderBundle']['customerDetails']['contact'] = $userName;
-            }
-        }
-
-        $measureList = [];
-        $dbMeasure = \CCatalogMeasure::getList();
-        while ($arMeasure = $dbMeasure->GetNext()) {
-            $measureList[$arMeasure['ID']] = $arMeasure['MEASURE_TITLE'];
-        }
-
-        $vatList = [];
-        $dbRes = \CCatalogVat::GetListEx();
-        while ($arRes = $dbRes->Fetch()) {
-            $vatList[$arRes['ID']] = (int)$arRes['RATE'];
-        }
-
-        $vatGateway = [
-            -1 => 0,
-            0  => 1,
-            10 => 2,
-            18 => 3,
-        ];
-
-        $itemsCnt = 0;
-        $arCheck = null;
-        $itemMap = [];
-
-        $cartItems = [];
-        /** @var \Bitrix\Sale\BasketItem $basketItem */
-        foreach ($order->getBasket() as $basketItem) {
-            // пропускаем подарки
-            $xmlId = $this->basketService->getBasketItemXmlId($basketItem);
-            if ($skipGifts && $xmlId[0] === '3') {
-                continue;
-            }
-
-            $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
-            $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
-
-            $itemAmount = $basketItem->getPrice() * 100;
-            if (!($itemAmount % 1)) {
-                $itemAmount = \round($itemAmount);
-            }
-
-            $amount += $itemAmount * $basketItem->getQuantity(); //Для фискализации общая сумма берется путем суммирования округленных позиций.
-
-            $cartItems[] = [
-                'positionId' => ++$itemsCnt,
-                'name'       => $basketItem->getField('NAME'),
-                'quantity'   => [
-                    'value'   => (int)$basketItem->getQuantity(),
-                    'measure' => $measureList[$arProduct['MEASURE']],
-                ],
-                'itemAmount' => (int)($itemAmount * $basketItem->getQuantity()),
-                'itemCode'   => (int)$basketItem->getProductId(),
-                'itemPrice'  => (int)$itemAmount,
-                'tax'        => [
-                    'taxType' => $vatGateway[$taxType],
-                ],
-            ];
-
-            if (!isset($itemMap[$xmlId])) {
-                $itemMap[$xmlId] = [
-                    'id' => (int)$basketItem->getProductId(),
-                    'count' => 0
-                ];
-            }
-            $itemMap[$xmlId]['count']++;
-        }
-
-        $delivery = null;
-        if ($order->getDeliveryPrice() > 0) {
-            $delivery = [
-                'positionId' => $itemsCnt + 1,
-                'name'       => Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE'),
-                'quantity'   => [
-                    'value'   => 1,
-                    'measure' => Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT'),
-                ],
-                'itemAmount' => $order->getDeliveryPrice() * 100,
-                'itemCode'   => $order->getId() . '_DELIVERY',
-                'itemPrice'  => $order->getDeliveryPrice() * 100,
-                'tax'        => [
-                    'taxType' => 0,
-                ],
-            ];
-        }
-
-        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
-        if ($innerPayment && $innerPayment->isPaid()) {
-            $bonusSum = $innerPayment->getSum() * 100;
-            $diff = $amount - $bonusSum;
-
-            $correction = 0;
-            foreach ($cartItems as $i => $item) {
-                $cartItems[$i]['itemPrice'] = floor($item['itemPrice'] * ($diff / $amount));
-                $oldAmount = $cartItems[$i]['itemAmount'];
-                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
-                $correction += $oldAmount - $cartItems[$i]['itemAmount'];
-            }
-
-            /**
-             * распределяем погрешность по товарам
-             */
-            $correction = $bonusSum - $correction;
-            foreach ($cartItems as $i => $item) {
-                if ((int)$correction === 0) {
-                    break;
-                }
-                $quantity = $cartItems[$i]['quantity']['value'];
-
-                $oldAmount = $cartItems[$i]['itemAmount'];
-                $cartItems[$i]['itemPrice'] = floor(
-                    $item['itemAmount'] * ($item['itemAmount'] - $correction) / $item['itemAmount'] / $quantity
-                );
-                $cartItems[$i]['itemAmount'] = $cartItems[$i]['itemPrice'] * $cartItems[$i]['quantity']['value'];
-                $correction -= $oldAmount - $cartItems[$i]['itemAmount'];
-            }
-
-            /** погрешность все равно может не стать равной 0  */
-            $amount += $correction;
-
-            $amount -= $bonusSum;
-        }
-
-        if ($delivery) {
-            $cartItems[] = $delivery;
-            $amount += $order->getDeliveryPrice() * 100; //Для фискализации общая сумма берется путем суммирования округленных позиций.
-        }
-
-        $fiscal['orderBundle']['cartItems']['items'] = $cartItems;
-
-        return \compact('amount', 'fiscal', 'itemMap');
+        return (new Fiscalization())->setFiscal($fiscal);
     }
 
     /**
@@ -294,7 +168,7 @@ class PaymentService
     {
         $result = false;
         try {
-            $result = $this->getOrderPaymentType($order) === OrderService::PAYMENT_ONLINE;
+            $result = $this->getOrderPaymentType($order) === OrderPayment::PAYMENT_ONLINE;
         } catch (NotFoundException $e) {
         }
 
@@ -347,11 +221,11 @@ class PaymentService
      * @throws PaymentException
      * @return bool
      */
-    public function depositPayment(Order $order, float $amount, array $fiscalization = []): bool
+    public function depositPayment(Order $order, float $amount, array $fiscalization = null): bool
     {
         $orderInvoiceId = $this->getOrderInvoiceId($order);
-        if (empty($fiscalization)) {
-            $fiscalization = $this->getFiscalization($order, null, 0);
+        if (null === $fiscalization) {
+            $fiscalization = $this->fiscalToArray($this->getFiscalization($order));
         }
         return $this->response(function () use ($orderInvoiceId, $amount, $fiscalization) {
             return $this->getSberbankProcessing()->depositPayment($orderInvoiceId, $amount, $fiscalization);
@@ -481,7 +355,13 @@ class PaymentService
         if (null === $this->sberbankProcessing) {
             /** @noinspection PhpIncludeInspection */
             require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
-            $settings = BusinessValueHelper::getPaysystemSettings(3, ['USER_NAME', 'PASSWORD', 'TEST_MODE', 'TWO_STAGE', 'LOGGING']);
+            $settings = BusinessValueHelper::getPaysystemSettings(3, [
+                'USER_NAME',
+                'PASSWORD',
+                'TEST_MODE',
+                'TWO_STAGE',
+                'LOGGING',
+            ]);
 
             $this->sberbankProcessing = new Sberbank(
                 $settings['USER_NAME'],
@@ -493,5 +373,355 @@ class PaymentService
         }
 
         return $this->sberbankProcessing;
+    }
+
+    /**
+     * @param Order $order
+     * @return CustomerDetails
+     */
+    private function getCustomerDetails(Order $order): CustomerDetails
+    {
+        $result = new CustomerDetails();
+
+        /** @var \Bitrix\Sale\PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            $property = $propertyValue->getProperty();
+            if ($property['IS_PAYER'] === BitrixUtils::BX_BOOL_TRUE) {
+                $result->setContact($propertyValue->getValue());
+            } elseif ($property['IS_EMAIL'] === BitrixUtils::BX_BOOL_TRUE && $propertyValue->getValue()) {
+                /**
+                 * у сбера email валидируется строже, проще использовать телефон
+                 */
+//                $result->setEmail($propertyValue->getValue());
+            } elseif ($property['IS_PHONE'] === BitrixUtils::BX_BOOL_TRUE) {
+                $result->setPhone(PhoneHelper::formatPhone($propertyValue->getValue(), '7' . PhoneHelper::FORMAT_SHORT));
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     * @param bool  $skipGifts
+     *
+     * @return CartItems
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws InvalidPathException
+     * @throws ObjectPropertyException
+     */
+    private function getCartItems(Order $order, bool $skipGifts = true): CartItems
+    {
+        $items = new ArrayCollection();
+
+        $measureList = [];
+        $dbMeasure = \CCatalogMeasure::getList();
+        while ($arMeasure = $dbMeasure->GetNext()) {
+            $measureList[$arMeasure['ID']] = $arMeasure['MEASURE_TITLE'];
+        }
+
+        $vatList = [];
+        $dbRes = \CCatalogVat::GetListEx();
+        while ($arRes = $dbRes->Fetch()) {
+            $vatList[$arRes['ID']] = (int)$arRes['RATE'];
+        }
+
+        $vatGateway = [
+            -1 => 0,
+            0  => 1,
+            10 => 2,
+            18 => 3,
+        ];
+
+        $position = 0;
+        /** @var BasketItem $basketItem */
+        foreach ($order->getBasket() as $basketItem) {
+            if ($skipGifts && $this->basketService->isGiftProduct($basketItem)) {
+                continue;
+            }
+
+            $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
+            $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
+
+            $quantity = (new ItemQuantity())
+                ->setValue($basketItem->getQuantity())
+                ->setMeasure($measureList[$arProduct['MEASURE']]);
+
+            $tax = (new ItemTax())->setType($vatGateway[$taxType]);
+
+            $itemPrice = floor($basketItem->getPrice() * 100);
+            $item = (new Item())
+                ->setPositionId(++$position)
+                ->setName($basketItem->getField('NAME') ?: '')
+                ->setXmlId($this->basketService->getBasketItemXmlId($basketItem))
+                ->setQuantity($quantity)
+                ->setPrice($itemPrice)
+                ->setTotal($itemPrice * (int)$basketItem->getQuantity())
+                ->setCode($basketItem->getProductId() . '_' . $position)
+                ->setTax($tax);
+            $items->add($item);
+        }
+
+        $total = \array_reduce($items->toArray(), function ($total, Item $item) {
+            return $total + $item->getTotal();
+        }, 0);
+
+        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
+        if ($innerPayment &&
+            $innerPayment->isPaid()
+        ) {
+            $correction = 0;
+            $bonusSum = $innerPayment->getSum() * 100;
+            $diff = $total - $bonusSum;
+
+            $items->map(function (Item $item) use (&$correction, $diff, $total) {
+                $item->setPrice(floor($item->getPrice() * ($diff / $total)));
+                $itemOldTotal = $item->getTotal();
+                $item->setTotal($item->getPrice() * $item->getQuantity()->getValue());
+                $correction += $itemOldTotal - $item->getTotal();
+            });
+
+            /**
+             * распределяем погрешность по товарам
+             */
+            $correction = $bonusSum - $correction;
+            $items->map(function (Item $item) use (&$correction) {
+                if ((int)$correction === 0) {
+                    return;
+                }
+                $itemOldTotal = $item->getTotal();
+
+
+                $item->setPrice(
+                    floor($item->getTotal() * ($item->getTotal() - $correction) / $item->getTotal() / $item->getQuantity()->getValue())
+                );
+                $item->setTotal($item->getPrice() * $item->getQuantity()->getValue());
+
+                $correction -= $itemOldTotal - $item->getTotal();
+            });
+        }
+
+        if ($order->getDeliveryPrice() > 0) {
+            $deliveryPrice = floor($order->getDeliveryPrice() * 100);
+            $delivery = (new Item())
+                ->setPositionId(++$position)
+                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: '')
+                ->setQuantity((new ItemQuantity())
+                    ->setValue(1)
+                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: '')
+                )
+                ->setTotal($deliveryPrice)
+                ->setCode($order->getId() . '_DELIVERY')
+                ->setPrice($deliveryPrice)
+                ->setTax((new ItemTax())
+                    ->setType(0)
+                );
+
+            $items->add($delivery);
+        }
+
+        return (new CartItems())->setItems($items);
+    }
+
+    /**
+     * @param Fiscalization $fiscal
+     * @return int
+     */
+    public function getFiscalTotal(Fiscalization $fiscal): int
+    {
+        return \array_reduce(
+            $fiscal->getFiscal()->getOrderBundle()->getCartItems()->getItems()->toArray(),
+            function ($total, Item $item) {
+                return $total + $item->getTotal();
+            },
+            0
+        );
+    }
+
+    /**
+     * @param Fiscalization $fiscal
+     * @return array
+     */
+    public function fiscalToArray(Fiscalization $fiscal): array
+    {
+        return $this->arrayTransformer->toArray($fiscal);
+    }
+
+    /**
+     * @param Order $order
+     * @param       $sberbankOrderId
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function processOnlinePaymentByOrderId(Order $order, $sberbankOrderId): void
+    {
+        if (!$this->isOnlinePayment($order)) {
+            throw new PaymentException('Invalid order payment type');
+        }
+        $response = $this->getSberbankProcessing()->getOrderStatusByOrderId($sberbankOrderId);
+        $this->processOnlinePayment($order, $response);
+    }
+
+    /**
+     * @param Order $order
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function processOnlinePaymentByOrderNumber(Order $order): void
+    {
+        if (!$this->isOnlinePayment($order)) {
+            throw new PaymentException('Invalid order payment type');
+        }
+
+        $response = $this->getSberbankProcessing()->getOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER'));
+        $this->processOnlinePayment($order, $response);
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     */
+    public function processOnlinePaymentError(Order $order)
+    {
+        /** @todo костыль */
+        if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => OrderPayment::PAYMENT_CASH]])->fetch()) {
+            $this->log()->error('cash payment not found');
+            return;
+        }
+
+        if ($discountEnabled = Manager::isExtendDiscountEnabled()) {
+            Manager::disableExtendsDiscount();
+        }
+
+        $paySystemId = $payment['ID'];
+        $sapConsumer = Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer, $orderService) {
+            try {
+                $payment = $this->getOrderPayment($order);
+                if ($payment->isPaid() ||
+                    $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE
+                ) {
+                    return;
+                }
+                $newPayment = $order->getPaymentCollection()->createItem();
+                $newPayment->setField('SUM', $payment->getSum());
+                $newPayment->setField('PAY_SYSTEM_ID', $paySystemId);
+                $paySystem = $newPayment->getPaySystem();
+                $newPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+                $payment->delete();
+                $newPayment->save();
+                $commWay = $orderService->getOrderPropertyByCode($order, 'COM_WAY');
+                $commWay->setValue(OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS);
+                $order->save();
+                $sapConsumer->consume($order);
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [
+                    'order' => $order->getId(),
+                ]);
+            }
+        };
+        $updateOrder($order);
+        if ($orderService->hasRelatedOrder($order)) {
+            $relatedOrder = $orderService->getRelatedOrder($order);
+            if (!$relatedOrder->isPaid()) {
+                $updateOrder($relatedOrder);
+            }
+        }
+
+        if ($discountEnabled) {
+            Manager::enableExtendsDiscount();
+        }
+    }
+
+    /**
+     * @param Order $order
+     * @param array $response
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function processOnlinePayment(Order $order, array $response): void
+    {
+        $isSuccess = (int)$response['errorCode'] === Sberbank::SUCCESS_CODE;
+        if ($isSuccess && \in_array(
+                (int)$response['orderStatus'],
+                [
+                    Sberbank::ORDER_STATUS_HOLD,
+                    Sberbank::ORDER_STATUS_PAID
+                ],
+                true
+            )
+        ) {
+            $onlinePayment = $this->getOrderPayment($order);
+
+            $sberbankOrderId = '';
+            foreach ($response['attributes'] as $attribute) {
+                if ($attribute['name'] === Sberbank::ORDER_NUMBER_ATTRIBUTE) {
+                    $sberbankOrderId = $attribute['value'];
+                }
+            }
+            if (!$sberbankOrderId) {
+                throw new SberbankPaymentException('Order number not found');
+            }
+
+            $onlinePayment->setPaid('Y');
+            $onlinePayment->setField('PS_SUM', $response['amount'] / 100);
+            $onlinePayment->setField('PS_CURRENCY', $response['currency']);
+            $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\DateTime());
+            $onlinePayment->setField('PS_INVOICE_ID', $sberbankOrderId);
+            $onlinePayment->setField('PS_STATUS', 'Y');
+            $onlinePayment->setField(
+                'PS_STATUS_DESCRIPTION',
+                $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName']
+            );
+            $onlinePayment->setField('PS_STATUS_CODE', 'Y');
+            $onlinePayment->setField('PS_STATUS_MESSAGE', $response['paymentAmountInfo']['paymentState']);
+            $onlinePayment->save();
+            $order->save();
+        } else {
+            if ((int)$response['errorCode'] === Sberbank::ERROR_ORDER_NOT_FOUND) {
+                throw new SberbankOrderNotFoundException($response['errorMessage'], $response['errorCode']);
+            }
+            throw new SberbankPaymentException(
+                $isSuccess ? $response['actionCodeDescription'] : $response['errorMessage'],
+                $response['errorCode']
+            );
+        }
     }
 }

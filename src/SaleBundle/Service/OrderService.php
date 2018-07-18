@@ -63,6 +63,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
@@ -97,14 +98,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
-    public const PAYMENT_CASH_OR_CARD = 'cash-or-card';
-
-    public const PAYMENT_CASH = 'cash';
-
-    public const PAYMENT_ONLINE = 'card-online';
-
-    public const PAYMENT_INNER = 'inner';
 
     public const PROPERTY_TYPE_ENUM = 'ENUM';
 
@@ -1006,11 +999,6 @@ class OrderService implements LoggerAwareInterface
                     )
                 );
             }
-
-            $this->log()->info('Order created', [
-                'id' => $order->getId(),
-                'storage' => $this->orderStorageService->storageToArray($storage)
-            ]);
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
             if ($order->getId() > 0) {
@@ -1322,72 +1310,6 @@ class OrderService implements LoggerAwareInterface
         return (new OfferQuery())->withFilterParameter('=ID', $ids)->exec();
     }
 
-    /**
-     * @param Order $order
-     *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws NotFoundException
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws NotImplementedException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
-    public function processPaymentError(Order $order): void
-    {
-        /** @todo костыль */
-        if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => static::PAYMENT_CASH]])->fetch()) {
-            $this->log()->error('cash payment not found');
-            return;
-        }
-
-        if ($discountEnabled = Manager::isExtendDiscountEnabled()) {
-            Manager::disableExtendsDiscount();
-        }
-
-        $paySystemId = $payment['ID'];
-        $sapConsumer = Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
-        $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer) {
-            try {
-                $payment = $this->getOrderPayment($order);
-                if ($payment->isPaid() ||
-                    $payment->getPaySystem()->getField('CODE') !== OrderService::PAYMENT_ONLINE
-                ) {
-                    return;
-                }
-                $newPayment = $order->getPaymentCollection()->createItem();
-                $newPayment->setField('SUM', $payment->getSum());
-                $newPayment->setField('PAY_SYSTEM_ID', $paySystemId);
-                $paySystem = $newPayment->getPaySystem();
-                $newPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
-                $payment->delete();
-                $newPayment->save();
-                $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
-                $commWay->setValue(OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS);
-                $order->save();
-                $sapConsumer->consume($order);
-            } catch (\Exception $e) {
-                $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [
-                    'order' => $order->getId(),
-                ]);
-            }
-        };
-        $updateOrder($order);
-        if ($this->hasRelatedOrder($order)) {
-            $relatedOrder = $this->getRelatedOrder($order);
-            if (!$relatedOrder->isPaid()) {
-                $updateOrder($relatedOrder);
-            }
-        }
-
-        if ($discountEnabled) {
-            Manager::enableExtendsDiscount();
-        }
-    }
-
     public function hasRelatedOrder(Order $order): bool
     {
         return (int)$this->getOrderPropertyByCode($order, 'RELATED_ORDER_ID')->getValue() > 0;
@@ -1542,7 +1464,7 @@ class OrderService implements LoggerAwareInterface
         $paySystemService = null;
         if (!isset($this->paySystemServiceCache['cash'])) {
             $this->paySystemServiceCache['cash'] = null;
-            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(static::PAYMENT_CASH_OR_CARD);
+            $data = \Bitrix\Sale\PaySystem\Manager::getByCode(OrderPayment::PAYMENT_CASH_OR_CARD);
             if ($data) {
                 $this->paySystemServiceCache['cash'] = new Service(
                     $data

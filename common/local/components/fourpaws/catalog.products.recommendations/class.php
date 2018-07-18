@@ -1,12 +1,13 @@
 <?php
 
-use \Bitrix\Iblock\Component\ElementList;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\Component\ElementList;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
+use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use FourPaws\Catalog\Query\ProductQuery;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -367,18 +368,22 @@ class FourPawsCatalogProductsRecommendations extends ElementList
      * @param array $ids
      * @return array
      */
-    protected function getProducts($ids)
+    protected function getProducts($ids): array
     {
         $result = [];
-        if (empty($ids)) {
-            return $result;
+
+        if ($ids) {
+            $productQuery = new ProductQuery();
+            $productQuery->withFilterParameter('ID', $ids);
+            $productQueryCollection = $productQuery->exec();
+
+            foreach ($productQueryCollection as $product) {
+                if ($product instanceof Product) {
+                    $result[] = $product;
+                }
+            }
         }
-        $productQuery = new ProductQuery();
-        $productQuery->withFilterParameter('ID', $ids);
-        $productQueryCollection = $productQuery->exec();
-        foreach ($productQueryCollection as $product) {
-            $result[] = $product;
-        }
+
         return $result;
     }
 }

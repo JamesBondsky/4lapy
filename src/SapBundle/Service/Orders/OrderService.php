@@ -42,6 +42,7 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
@@ -374,7 +375,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * 02 – ZIMN Не оплачено;
          * 03 – ZIMN Предоплачено.
          */
-        if ($externalPayment->getPaySystem()->getField('CODE') === $this->baseOrderService::PAYMENT_ONLINE) {
+        if ($externalPayment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE) {
             /** @noinspection PhpParamsInspection */
             $dto
                 ->setPayType(SapOrder::ORDER_PAYMENT_ONLINE_CODE)
@@ -829,7 +830,37 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         Manager::enableExtendsDiscount();
         Manager::setExtendCalculated(true);
 
-        $externalItems = $orderDto->getProducts();
+        /** @var array[] $externalItems */
+        $externalItems = [];
+        foreach ($orderDto->getProducts() as $product) {
+            $xmlId = \ltrim($product->getOfferXmlId(), '0');
+            if (!isset($externalItems[$xmlId])) {
+                $externalItems[$xmlId] = [];
+            }
+
+            $found = false;
+            /** @var OrderOfferIn $extItem */
+            foreach ($externalItems[$xmlId] as $extItem) {
+                if (abs($product->getUnitPrice() - $extItem->getUnitPrice()) < 0.0001) {
+                    $extItem->setQuantity($product->getQuantity() + $extItem->getQuantity());
+                    $found = true;
+                }
+            }
+
+            if (!$found) {
+                $externalItems[$xmlId][] = clone $product;
+            }
+        }
+
+        /**
+         * Сортируем позиции по возрастанию цены, исходя из того,
+         * что в корзине позиция со скидкой всегда первая
+         */
+        foreach ($externalItems as $items) {
+            \usort($items, function (OrderOfferIn $item1, OrderOfferIn $item2) {
+                return $item1->getUnitPrice() <=> $item2->getUnitPrice();
+            });
+        }
 
         /**
          * @var BasketItem $basketItem
@@ -837,18 +868,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
             $article = \ltrim($this->basketService->getBasketItemXmlId($basketItem), '0');
 
-            $externalItem = $externalItems->filter(
-                function ($item) use ($article) {
-                    /**
-                     * @var OrderOfferIn $item
-                     */
-                    return $article === \ltrim($item->getOfferXmlId(), '0');
-                }
-            )->first();
+            $externalItem = null;
+            if ($externalItems[$article]) {
+                $externalItem = array_shift($externalItems[$article]);
+            }
 
             if ($externalItem) {
                 $this->renewBasketItem($basketItem, $externalItem);
-                $externalItems->removeElement($externalItem);
             } else {
                 try {
                     $basketItem->delete();
@@ -860,8 +886,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             }
         }
 
-        foreach ($externalItems as $item) {
-            $this->addBasketItem($order->getBasket(), $item);
+        foreach ($externalItems as $items) {
+            foreach ($items as $item) {
+                $this->addBasketItem($order->getBasket(), $item);
+            }
         }
 
         Manager::setExtendCalculated(false);

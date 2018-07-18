@@ -6,16 +6,17 @@
 
 namespace FourPaws\AppBundle\Command;
 
-use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\PaymentService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -41,6 +42,11 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
     protected $orderService;
 
     /**
+     * @var PaymentService
+     */
+    protected $paymentService;
+
+    /**
      * OrderPaySystemChange constructor.
      *
      * @param null|string $name
@@ -52,6 +58,7 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
     {
         parent::__construct($name);
         $this->orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $this->paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
     }
 
     /**
@@ -92,7 +99,7 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
         $filter = [
             '<DATE_INSERT'        => $date->format('d.m.Y H:i:s'),
             '>DATE_INSERT'        => $maxDate->format('d.m.Y H:i:s'),
-            '=PAYMENT_SYSTEM.CODE' => OrderService::PAYMENT_ONLINE,
+            '=PAYMENT_SYSTEM.CODE' => OrderPayment::PAYMENT_ONLINE,
             '!CANCELED'           => 'Y',
             '!PAYED'       => 'Y',
         ];
@@ -118,7 +125,15 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
                 continue;
             }
 
-            $this->orderService->processPaymentError($saleOrder);
+            try {
+                try {
+                    $this->paymentService->processOnlinePaymentByOrderNumber($saleOrder);
+                } catch (SberbankOrderNotFoundException $e) {
+                    $this->paymentService->processOnlinePaymentError($saleOrder);
+                }
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('%s: %s %s', \get_class($e), $e->getCode(), $e->getMessage()));
+            }
             $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()));
         }
 

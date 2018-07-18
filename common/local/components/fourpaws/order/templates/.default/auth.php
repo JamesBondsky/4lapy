@@ -10,7 +10,8 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\ReCaptcha\ReCaptchaService;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -37,7 +38,7 @@ try {
 /** @var OrderPropertyService $orderPropertyService */
 $orderPropertyService = $serviceContainer->get(OrderPropertyService::class);
 /** @var ReCaptchaService $recaptchaService */
-$recaptchaService = $serviceContainer->get('recaptcha.service');
+$recaptchaService = $serviceContainer->get(ReCaptchaInterface::class);
 
 $communicationWays = $orderPropertyService->getPropertyVariants($orderPropertyService->getPropertyByCode('COM_WAY'))
     ->filter(

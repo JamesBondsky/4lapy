@@ -372,7 +372,10 @@ class OrderItem extends BaseEntity
         /**
          * @todo оптимизировать - перегружаться будет всегда при запросе если пустая строка - малый перегруз - но перегруз
          */
-        if (($this->hasArticle() || $this->hasProductId())
+        if (
+            (int)$this->article{0} !== 3
+            &&
+            ($this->hasArticle() || $this->hasProductId())
             && (
                 !$this->hasDetailPageUrl(true)
                 || (
@@ -383,6 +386,7 @@ class OrderItem extends BaseEntity
         ) {
             $this->reloadPageUrl();
         }
+
         return $this->detailPageUrl ?? '';
     }
 

@@ -31,7 +31,7 @@ class ForgotBasketController
      * переодический агент - изначально раз в час
      * @return string
      */
-    public function sendEmailByOldBasketAfter3Days(): string
+    public static function sendEmailByOldBasketAfter3Days(): string
     {
         /** получаем неизмененные итемы не привязанные к заказу и с пользователем
          * искдючаем неавторизованные корзины
@@ -55,12 +55,11 @@ class ForgotBasketController
         while ($basketItem = $res->fetch()) {
             $fUserIds[] = $basketItem['FUSER_ID'];
         }
-        if(empty($fUserIds)){
-            /** Обновлять нечего */
+        if (empty($fUserIds)) {
             return $returnString;
         }
         $fUserIds = array_unique($fUserIds);
-        /** ищем среди найденых корзин обновленные элементы */
+
         $updatedFUserIds = [];
         try {
             $res = BasketTable::query()
@@ -93,7 +92,7 @@ class ForgotBasketController
             $curDate = DateTime::createFromTimestamp(time());
             foreach ($sendFuserIds as $sendFuserId) {
                 $userBasket = $basketService->getBasket(true, $sendFuserId);
-                if($userBasket->count() > 0 && \count($userBasket->getBasketItems()) > 0) {
+                if ($userBasket->count() > 0 && \count($userBasket->getBasketItems()) > 0) {
                     try {
                         $res = $expertSenderService->sendForgotBasket($userBasket,
                             ExpertsenderService::FORGOT_BASKET_AFTER_TIME);
@@ -113,13 +112,17 @@ class ForgotBasketController
                         $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
                     } catch (ApplicationCreateException $e) {
                         $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
-                        return $returnString;
                     } catch (ExpertsenderUserNotFoundException $e) {
                         $logger->info('Не найден пользователь ' . $e->getMessage(), $e->getTrace());
                     } catch (ExpertsenderEmptyEmailException|ExpertsenderBasketEmptyException $e) {
                         /** при пустой корзине или пустом email логирвоание не нужно */
                     } catch (ExpertsenderServiceException $e) {
-                        $logger->error('Ошибка при отправке сообщения ' . $e->getMessage(), $e->getTrace());
+                        $logger->error(\sprintf(
+                            '%s Method: %s. Arguments: %s',
+                            $e->getMessage(),
+                            $e->getMethod(),
+                            var_export($e->getParameters(), true)
+                        ));
                     }
                 }
             }
@@ -132,10 +135,10 @@ class ForgotBasketController
      *
      * @param int|string $fuserId
      */
-    public function sendEmailByOldBasketAfter3Hours($fuserId): void
+    public static function sendEmailByOldBasketAfter3Hours($fuserId): void
     {
         $fuserId = (int)$fuserId;
-        if($fuserId === 0){
+        if ($fuserId === 0) {
             return;
         }
         /** получаем неизмененные итемы не привязанные к заказу и с пользователем
@@ -170,7 +173,7 @@ class ForgotBasketController
             /** @var ExpertsenderService $expertSenderService */
             $expertSenderService = $container->get('expertsender.service');
             $userBasket = $basketService->getBasket(true, $fuserId);
-            if($userBasket->count() > 0 && \count($userBasket->getBasketItems()) > 0) {
+            if ($userBasket->count() > 0 && \count($userBasket->getBasketItems()) > 0) {
                 try {
                     $res = $expertSenderService->sendForgotBasket($userBasket,
                         ExpertsenderService::FORGOT_BASKET_TO_CLOSE_SITE);
@@ -197,7 +200,12 @@ class ForgotBasketController
                 } catch (ExpertsenderEmptyEmailException|ExpertsenderBasketEmptyException $e) {
                     /** при пустой корзине или пустом email логирвоание не нужно */
                 } catch (ExpertsenderServiceException $e) {
-                    $logger->error('Ошибка прио отправке сообщения ' . $e->getMessage(), $e->getTrace());
+                    $logger->error(\sprintf(
+                        '%s Method: %s. Arguments: %s',
+                        $e->getMessage(),
+                        $e->getMethod(),
+                        var_export($e->getParameters(), true)
+                    ));
                     return;
                 }
             }

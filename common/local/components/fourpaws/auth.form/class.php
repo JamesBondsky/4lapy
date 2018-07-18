@@ -29,6 +29,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Model\City;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -48,6 +49,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsAuthFormComponent extends \CBitrixComponent
 {
     public const MODE_PROFILE = 0;
@@ -180,7 +182,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
-                $recaptchaService = $container->get('recaptcha.service');
+                $recaptchaService = $container->get(ReCaptchaInterface::class);
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
             } catch (Exception $e) {
                 return $this->ajaxMess->getSystemError();
@@ -272,7 +274,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         }
                     }
                 }
-            } catch (Exception $e) {/** обработка ниже */}
+            } catch (Exception $e) {
+                /** обработка ниже */
+            }
         }
 
         try {
@@ -321,7 +325,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $logger->info('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
 
             try {
-                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin, 'логином/email/телефоном');
+                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin,
+                    'логином/email/телефоном');
             } catch (ApplicationCreateException $e) {
                 return $this->ajaxMess->getSystemError();
             }
@@ -333,14 +338,14 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 'unionBasket',
                 'Объединение корзины',
                 [
-                    'backurl' => $backUrl,
-                    'needAddPhone' => $needWritePhone ? 'Y' : 'N',
-                    'delBasketIds' => $delBasketIds,
-                    'delBasketKeys' => $delBasketKeys,
-                    'delItemsByUnion' => $delItemsByUnionIds,
+                    'backurl'             => $backUrl,
+                    'needAddPhone'        => $needWritePhone ? 'Y' : 'N',
+                    'delBasketIds'        => $delBasketIds,
+                    'delBasketKeys'       => $delBasketKeys,
+                    'delItemsByUnion'     => $delItemsByUnionIds,
                     'delItemsByUnionKeys' => $delItemsByUnionKeys,
-                    'addQuantityByUnion' => $addQuantityBasketIds,
-                    'sum' => $basketPrice,
+                    'addQuantityByUnion'  => $addQuantityBasketIds,
+                    'sum'                 => $basketPrice,
                 ]
             );
 
@@ -421,7 +426,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3) {
             try {
-                $recaptchaService = $container->get('recaptcha.service');
+                $recaptchaService = $container->get(ReCaptchaInterface::class);
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
             } catch (ServiceNotFoundException|ServiceCircularReferenceException|SystemException|RuntimeException|Exception $e) {
                 return $this->ajaxMess->getFailCaptchaCheckError();
@@ -483,7 +488,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
         $data = [
             'UF_PHONE_CONFIRMED' => true,
-            'PERSONAL_PHONE' => $phone,
+            'PERSONAL_PHONE'     => $phone,
         ];
 
         try {
@@ -579,8 +584,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         return JsonSuccessResponse::createWithData(
             $mess,
             [
-                'html' => $html,
-                'step' => $step,
+                'html'  => $html,
+                'step'  => $step,
                 'phone' => $phone ?? '',
             ]
         );
@@ -825,7 +830,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $page
      * @param string $title
-     * @param array $params
+     * @param array  $params
      *
      * @return string
      */

@@ -25,8 +25,9 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\ReCaptcha\ReCaptchaService;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -78,11 +79,11 @@ class OrderController extends Controller
     /**
      * OrderController constructor.
      *
-     * @param OrderService $orderService
-     * @param DeliveryService $deliveryService
-     * @param OrderStorageService $orderStorageService
+     * @param OrderService               $orderService
+     * @param DeliveryService            $deliveryService
+     * @param OrderStorageService        $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
-     * @param ReCaptchaService $recaptcha
+     * @param ReCaptchaService         $recaptcha
      */
     public function __construct(
         OrderService $orderService,
@@ -189,8 +190,8 @@ class OrderController extends Controller
         /** @var Interval $interval */
         foreach ($intervals as $i => $interval) {
             $result[] = [
-                'name' => (string)$interval,
-                'value' => $i+1,
+                'name'  => (string)$interval,
+                'value' => $i + 1,
             ];
         }
 
@@ -213,7 +214,7 @@ class OrderController extends Controller
     public function validateBonusCardAction(Request $request): JsonResponse
     {
         $storage = $this->orderStorageService->getStorage();
-        [$validationErrors]= $this->fillStorage($storage, $request, OrderStorageEnum::PAYMENT_STEP_CARD);
+        [$validationErrors] = $this->fillStorage($storage, $request, OrderStorageEnum::PAYMENT_STEP_CARD);
 
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
@@ -354,7 +355,7 @@ class OrderController extends Controller
             if ($payment->isInner()) {
                 continue;
             }
-            if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
+            if ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE) {
                 $url->setPath('/sale/payment/');
                 $url->addParams(['ORDER_ID' => $order->getId()]);
                 if (!$this->orderService->hasRelatedOrder($order)) {

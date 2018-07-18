@@ -34,6 +34,7 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -130,8 +131,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $this->copyOrder2CustomerBasket($orderId, $request);
             }
         }
-
-        $this->setFrameMode(true);
 
         try {
             $userId = $this->currentUserProvider->getCurrentUserId();
@@ -237,7 +236,10 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         return -1;
     }
 
-    public function getCurrentUserService()
+    /**
+     * @return UserService
+     */
+    public function getCurrentUserService(): UserService
     {
         return $this->currentUserProvider;
     }

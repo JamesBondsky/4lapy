@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
@@ -403,10 +404,10 @@ class OrderStorageService
                 foreach ($payments as $id => $payment) {
                     $delete = $basketPrice > $terminal->getNppValue();
                     switch ($payment['CODE']) {
-                        case OrderService::PAYMENT_CASH_OR_CARD:
+                        case OrderPayment::PAYMENT_CASH_OR_CARD:
                             $delete |= !$terminal->hasCardPayment();
                             break;
-                        case OrderService::PAYMENT_CASH:
+                        case OrderPayment::PAYMENT_CASH:
                             $delete |= !$terminal->hasCashPayment();
                             break;
                         default:
@@ -435,10 +436,10 @@ class OrderStorageService
          * Если есть оплата "наличными или картой", удаляем оплату "наличными"
          */
         if ($filter && !empty(\array_filter($payments, function ($item) {
-            return $item['CODE'] === OrderService::PAYMENT_CASH_OR_CARD;
+            return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
         }))) {
             foreach ($payments as $id => $payment) {
-                if ($payment['CODE'] === OrderService::PAYMENT_CASH) {
+                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
                     unset($payments[$id]);
                     break;
                 }

@@ -106,7 +106,7 @@ class PhoneHelper
         \ob_start();
         $APPLICATION->IncludeComponent(
             'fourpaws:city.phone',
-            'template.footer',
+            'template.text',
             [],
             false,
             ['HIDE_ICONS' => 'Y']

@@ -28,6 +28,7 @@ use FourPaws\AppBundle\Exception\UserNotFoundAddCommentException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\UserBundle\Exception\WrongEmailException;
 use FourPaws\UserBundle\Exception\WrongPasswordException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -75,7 +76,7 @@ class CCommentsComponent extends \CBitrixComponent
         $class->setUserBundle();
         $class->arResult['AUTH'] = $class->userAuthService->isAuthorized();
         if (!$class->arResult['AUTH']) {
-            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
             if (!$recaptchaService->checkCaptcha()) {
                 throw new CaptchaErrorException('Капча не валидна');
             }

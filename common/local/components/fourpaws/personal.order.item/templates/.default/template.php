@@ -10,6 +10,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -18,13 +19,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
- * @global CMain                                  $APPLICATION
- * @var array                                     $arParams
- * @var array                                     $arResult
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  * @var FourPawsPersonalCabinetOrderItemComponent $component
- * @var CBitrixComponentTemplate                  $this
- * @var string                                    $templateName
- * @var string                                    $componentPath
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $componentPath
  */
 
 /** @var Order $order */
@@ -64,7 +65,7 @@ if ($genSubscribeControls) {
         'fourpaws:personal.orders.subscribe.form',
         'popup',
         [
-            'ORDER_ID'          => $order->getId(),
+            'ORDER_ID' => $order->getId(),
             // Y - вставлять html через отложенные функции
             'OUTPUT_VIA_BUFFER' => 'Y',
         ],
@@ -90,7 +91,6 @@ if ($orderSubscribe) {
     $attr .= ' data-first-subscribe="' . $orderSubscribe->getDateStart() . '"';
     $attr .= ' data-interval="' . $orderSubscribe->getDeliveryTime() . '"';
     $attr .= ' data-frequency="' . $orderSubscribe->getDeliveryFrequency() . '"';
-    //$attr .= ' data-id="'.$orderSubscribe->getOrderId().'"';
 }
 
 ?>
@@ -118,19 +118,18 @@ if ($orderSubscribe) {
                         <?php
                     } else {
                         $orderNumber = 0;
-                        if($order->isManzana()){
+                        if ($order->isManzana()) {
                             $orderNumber = $order->getManzanaId();
                         } else {
                             $orderNumber = !empty($order->getAccountNumber()) ? $order->getAccountNumber() : $order->getId();
-                        }?>
+                        } ?>
                         <span class="b-accordion-order-item__number-order">
                             <?= ('№ ' . $orderNumber . ' от ' . $order->getFormattedDateInsert()) ?>
                         </span>
-                        <?php
-                    }
-                    ?>
+                    <?php } ?>
                 </a>
                 <?php
+
                 $orderItems = $order->getItems();
                 $countItems = $orderItems !== null ? $order->getItems()->count() : 0;
 
@@ -147,8 +146,7 @@ if ($orderSubscribe) {
             </div>
             <div class="b-accordion-order-item__adress">
                 <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
-                    <?php
-                    if ($isOrderSubscribePage) {
+                    <?php if ($isOrderSubscribePage) {
                         echo '<span>';
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
@@ -172,8 +170,7 @@ if ($orderSubscribe) {
                         echo $order->getFormattedDateStatus();
                         echo ' ';
                         echo '</span>';
-                    }
-                    ?>
+                    } ?>
                 </div>
                 <?php if (!$order->isFastOrder()) { ?>
                     <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
@@ -182,7 +179,7 @@ if ($orderSubscribe) {
                     </div>
                 <?php }
                 $store = $order->getStore();
-                if($store !== null && $store->isActive()) {
+                if ($store !== null && $store->isActive()) {
                     $address = trim($store->getAddress());
                     if (!empty($address)) { ?>
                         <div class="b-adress-info b-adress-info--order">
@@ -208,13 +205,13 @@ if ($orderSubscribe) {
                         $payment = $order->getPayment();
                         $paymentCode = $payment->getCode();
                         switch ($paymentCode) {
-                            case OrderService::PAYMENT_CASH_OR_CARD:
+                            case OrderPayment::PAYMENT_CASH_OR_CARD:
                                 $paymentName = 'наличными или картой';
                                 break;
-                            case OrderService::PAYMENT_ONLINE:
+                            case OrderPayment::PAYMENT_ONLINE:
                                 $paymentName = 'онлайн';
                                 break;
-                            case OrderService::PAYMENT_CASH:
+                            case OrderPayment::PAYMENT_CASH:
                                 $paymentName = 'наличными';
                                 break;
                         }
@@ -233,14 +230,12 @@ if ($orderSubscribe) {
                         if ($order->isFastOrder() && \in_array($order->getStatusId(), ['N', 'Q'], true)) {
                             $paymentName = 'Постоплата';
                         }
-                        if (!empty($paymentName)) {
-                            if($paymentName !== 'Постоплата') {
-                                $paymentName = $order->getPayPrefixText() . ' ' . $paymentName;
-                            }
+                        if ($paymentName && $paymentName !== 'Постоплата') {
+                            $paymentName = $order->getPayPrefixText() . ' ' . $paymentName;
                         }
                     }
-                    echo $paymentName;
-                    ?>
+
+                    echo $paymentName; ?>
                 </div>
             </div>
             <div class="b-accordion-order-item__button js-button-default">
@@ -252,18 +247,16 @@ if ($orderSubscribe) {
 
                         $uri->addParams([
                             'is_manzana' => true,
-                            'item_ids'   => json_encode($order->getItemIdsQuantity()),
+                            'item_ids' => json_encode($order->getItemIdsQuantity()),
                         ]);
-                    }
-                    ?>
+                    } ?>
                     <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                         <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?= $uri->getUri() ?>"
                            title="Повторить заказ">
                             <span class="b-link__text b-link__text--repeat-order">Повторить заказ</span>
                         </a>
                     </div>
-                    <?php
-                }
+                <?php }
                 /*
                 if (!$isOrderSubscribePage && !$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') {
                     ?>
@@ -298,8 +291,8 @@ if ($orderSubscribe) {
             <ul class="b-list-order">
                 <?php /** @var OrderItem $item */
                 foreach ($order->getItems() as $item) {
-                    if(!$order->isManzana() && $item->hasDetailPageUrl()){ ?>
-                        <a href="<?=$item->getDetailPageUrl()?>">
+                    if (!$order->isManzana() && $item->hasDetailPageUrl()) { ?>
+                        <a href="<?= $item->getDetailPageUrl() ?>">
                     <?php } ?>
                     <li class="b-list-order__item">
                         <div class="b-list-order__image-wrapper">
@@ -362,7 +355,7 @@ if ($orderSubscribe) {
                             </div>
                         </div>
                     </li>
-                    <?php if(!$order->isManzana() && !empty($item->getDetailPageUrl())){ ?>
+                    <?php if (!$order->isManzana() && !empty($item->getDetailPageUrl())) { ?>
                         </a>
                     <?php } ?>
                 <?php } ?>
