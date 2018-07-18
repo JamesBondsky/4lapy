@@ -276,7 +276,12 @@ if ($orderSubscribe) {
 
                 ?>
                 <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
-                    <?= $order->getFormattedPrice() ?>
+                    <?php
+                    /**
+                    * [LP03-908] В подписке на доставку не отображаем бонусы
+                    */
+                    echo $isOrderSubscribePage ? $order->getFormattedPriceReal() : $order->getFormattedPrice();
+                    ?>
                     <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
                 </div>
                 <?php
