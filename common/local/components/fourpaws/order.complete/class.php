@@ -190,7 +190,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         }
 
         $this->arResult['ORDER'] = $order;
-        $this->arResult['ORDER_PROPERTIES'] = $this->getOrderProperties($order, $user);
+        $this->arResult['ORDER_PROPERTIES'] = $this->getOrderProperties($order);
         /**
          * флаг, что пользователь был зарегистрирован при оформлении заказа
          */
@@ -201,7 +201,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
 
         if (null !== $relatedOrder) {
             $this->arResult['RELATED_ORDER'] = $relatedOrder;
-            $this->arResult['RELATED_ORDER_PROPERTIES'] = $this->getOrderProperties($relatedOrder, $user);
+            $this->arResult['RELATED_ORDER_PROPERTIES'] = $this->getOrderProperties($relatedOrder);
             $this->arResult['RELATED_ORDER_DELIVERY'] = $this->getDeliveryData(
                 $relatedOrder,
                 $this->arResult['RELATED_ORDER_PROPERTIES']
@@ -236,16 +236,14 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
 
     /**
      * @param Order $order
-     * @param User $user
      *
      * @return array
      *
-     * @throws UserNotFoundException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws NotFoundException
      */
-    protected function getOrderProperties(Order $order, User $user): array
+    protected function getOrderProperties(Order $order): array
     {
         $result = [];
         /** @var PropertyValue $propertyValue */
@@ -254,7 +252,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
             $result[$propertyCode] = $propertyValue->getValue();
         }
 
-        $result['BONUS_COUNT'] = $this->orderService->getOrderBonusSum($order, $user);
+        $result['BONUS_COUNT'] = $this->orderService->getOrderBonusSum($order);
 
         return $result;
     }
