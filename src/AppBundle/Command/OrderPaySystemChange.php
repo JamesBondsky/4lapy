@@ -131,10 +131,13 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
                 } catch (SberbankOrderNotFoundException $e) {
                     $this->paymentService->processOnlinePaymentError($saleOrder);
                 }
+                $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()));
             } catch (\Exception $e) {
-                $this->log()->error(sprintf('%s: %s %s', \get_class($e), $e->getCode(), $e->getMessage()));
+                $this->log()->error(
+                    sprintf('%s: %s %s', \get_class($e), $e->getCode(), $e->getMessage()),
+                    ['order' => $order['ID']]
+                );
             }
-            $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()));
         }
 
         $this->log()->info('Task finished.');
