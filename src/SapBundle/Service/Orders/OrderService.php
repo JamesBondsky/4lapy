@@ -43,7 +43,6 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
-use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
@@ -144,7 +143,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param BasketService $basketService
      */
     public function __construct(
-        BaseOrderService $baseOrderService,
         DeliveryService $deliveryService,
         LocationService $locationService,
         SerializerInterface $serializer,
@@ -155,7 +153,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         BasketService $basketService
     )
     {
-        $this->baseOrderService = $baseOrderService;
         $this->serializer = $serializer;
         $this->userRepository = $userRepository;
         $this->deliveryService = $deliveryService;
@@ -264,6 +261,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param OrderDtoIn $orderDto
      *
+     * @throws NotFoundOrderDeliveryException
      * @throws NotFoundProductException
      * @throws SystemException
      * @throws ArgumentNullException
@@ -273,11 +271,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @throws NotFoundOrderShipmentException
      * @throws NotFoundOrderStatusException
      * @throws RuntimeException
-     *
      * @throws NotFoundOrderPaySystemException
      * @throws Exception
      * @throws ObjectNotFoundException
      * @throws ArgumentOutOfRangeException
+     *
      * @return Order
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
@@ -606,7 +604,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param Order $order
      * @return string
      */
-    private function getDeliveryCode(Order $order): string {
+    private function getDeliveryCode(Order $order): string
+    {
         $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
 
         if (null === $shipment) {
@@ -659,22 +658,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             PhoneHelper::formatPhone($orderDto->getClientOrderPhone(), PhoneHelper::FORMAT_SHORT)
         );
         $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('d.m.Y'));
-
-        try {
-            $this->setPropertyValue(
-                $propertyCollection,
-                'DELIVERY_INTERVAL',
-                $this->intervalService->getIntervalByCode($orderDto->getDeliveryTimeInterval())
-            );
-        } catch (NotFoundException $e) {
-            $this->log()->error(
-                \sprintf(
-                    'Интервал %s не найден для заказа %s',
-                    $orderDto->getDeliveryTimeInterval(),
-                    $orderDto->getId()
-                )
-            );
-        }
 
         if ($deliveryAddress) {
             $this->setPropertyValue($propertyCollection, 'CITY', $deliveryAddress->getCityName());
@@ -764,7 +747,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function setDeliveryFromDto(Order $order, OrderDtoIn $orderDto): void
     {
-        $deliveryType = $orderDto->getDeliveryTimeInterval();
+        $deliveryType = $orderDto->getDeliveryType();
 
         $deliveryCode = null;
         $currentDeliveryCode = null;
@@ -787,7 +770,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
 
         if (null === $deliveryCode) {
-            throw new NotFoundOrderDeliveryException('unknown sap delivery code');
+            throw new NotFoundOrderDeliveryException('Unknown sap delivery code');
         }
 
         $deliveryPrice = 0;
@@ -1073,9 +1056,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $deliveryPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
             $deliveryShipmentPoint = $deliveryPlaceCode;
             if (\in_array($this->getDeliveryTypeCode($order), [
-                    SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE,
-                    SapOrder::DELIVERY_TYPE_COURIER_SHOP
-                ], true)
+                SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE,
+                SapOrder::DELIVERY_TYPE_COURIER_SHOP
+            ], true)
             ) {
                 $deliveryShipmentPoint = '';
             }

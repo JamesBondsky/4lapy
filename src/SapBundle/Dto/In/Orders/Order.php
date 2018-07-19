@@ -6,6 +6,7 @@
 
 namespace FourPaws\SapBundle\Dto\In\Orders;
 
+use DateTime;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -48,7 +49,7 @@ class Order
      * @Serializer\SerializedName("OrderDate")
      * @Serializer\Type("DateTime<'Ymd'>")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $dateInsert;
     
@@ -103,19 +104,12 @@ class Order
      * @Serializer\SerializedName("RequestDeliveryDate")
      * @Serializer\Type("DateTime<'Ymd'>")
      *
-     * @var \DateTime
+     * @var DateTime
      */
     protected $deliveryDate;
     
     /**
-     * Интервал доставки
-     * 1    (09:00 – 18:00);
-     * 2    (18:00 – 24:00);
-     * 3    (08:00 – 12:00);
-     * 4    (12:00 – 16:00);
-     * 5    (16:00 – 20:00);
-     * 6    (20:00 – 24:00);
-     * 7    (15:00 – 21:00);
+     * Способ получения заказа (тип доставки)
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("AgreedDeliveryDate")
@@ -123,7 +117,7 @@ class Order
      *
      * @var string
      */
-    protected $deliveryTimeInterval = '';
+    protected $deliveryType = '';
     
     /**
      * Содержит статус заказа.
@@ -295,25 +289,27 @@ class Order
     public function setId(string $id): Order
     {
         $this->id = $id;
+
         return $this;
     }
     
     /**
-     * @return \DateTime
+     * @return DateTime
      */
-    public function getDateInsert(): \DateTime
+    public function getDateInsert(): DateTime
     {
         return $this->dateInsert;
     }
     
     /**
-     * @param \DateTime $dateInsert
+     * @param DateTime $dateInsert
      *
      * @return Order
      */
-    public function setDateInsert(\DateTime $dateInsert): Order
+    public function setDateInsert(DateTime $dateInsert): Order
     {
         $this->dateInsert = $dateInsert;
+
         return $this;
     }
     
@@ -333,6 +329,7 @@ class Order
     public function setClientId(int $clientId): Order
     {
         $this->clientId = $clientId;
+
         return $this;
     }
     
@@ -352,6 +349,7 @@ class Order
     public function setClientFio(string $clientFio): Order
     {
         $this->clientFio = $clientFio;
+
         return $this;
     }
     
@@ -371,6 +369,7 @@ class Order
     public function setClientPhone(string $clientPhone): Order
     {
         $this->clientPhone = $clientPhone;
+
         return $this;
     }
     
@@ -390,44 +389,47 @@ class Order
     public function setClientOrderPhone(string $clientOrderPhone): Order
     {
         $this->clientOrderPhone = $clientOrderPhone;
+
         return $this;
     }
     
     /**
-     * @return \DateTime
+     * @return DateTime
      */
-    public function getDeliveryDate(): \DateTime
+    public function getDeliveryDate(): DateTime
     {
         return $this->deliveryDate;
     }
     
     /**
-     * @param \DateTime $deliveryDate
+     * @param DateTime $deliveryDate
      *
      * @return Order
      */
-    public function setDeliveryDate(\DateTime $deliveryDate): Order
+    public function setDeliveryDate(DateTime $deliveryDate): Order
     {
         $this->deliveryDate = $deliveryDate;
+
         return $this;
     }
     
     /**
      * @return string
      */
-    public function getDeliveryTimeInterval(): string
+    public function getDeliveryType(): string
     {
-        return $this->deliveryTimeInterval;
+        return $this->deliveryType;
     }
     
     /**
-     * @param string $deliveryTimeInterval
+     * @param string $deliveryType
      *
      * @return Order
      */
-    public function setDeliveryTimeInterval(string $deliveryTimeInterval): Order
+    public function setDeliveryType(string $deliveryType): Order
     {
-        $this->deliveryTimeInterval = $deliveryTimeInterval;
+        $this->deliveryType = $deliveryType;
+
         return $this;
     }
     
@@ -466,6 +468,7 @@ class Order
     public function setPayType(string $payType): Order
     {
         $this->payType = $payType;
+
         return $this;
     }
     
@@ -485,6 +488,7 @@ class Order
     public function setPayStatus(string $payStatus): Order
     {
         $this->payStatus = $payStatus;
+
         return $this;
     }
     
@@ -504,6 +508,7 @@ class Order
     public function setBonusCard(string $bonusCard): Order
     {
         $this->bonusCard = $bonusCard;
+
         return $this;
     }
     
@@ -523,6 +528,7 @@ class Order
     public function setBonusPayedCount(float $bonusPayedCount): Order
     {
         $this->bonusPayedCount = $bonusPayedCount;
+
         return $this;
     }
     
@@ -542,6 +548,7 @@ class Order
     public function setTotalSum(float $totalSum): Order
     {
         $this->totalSum = $totalSum;
+
         return $this;
     }
     
@@ -561,6 +568,7 @@ class Order
     public function setDn(int $dn): Order
     {
         $this->dn = $dn;
+
         return $this;
     }
     
@@ -580,6 +588,7 @@ class Order
     public function setStock(int $stock): Order
     {
         $this->stock = $stock;
+
         return $this;
     }
     
@@ -599,6 +608,7 @@ class Order
     public function setSalesOrganization(int $salesOrganization): Order
     {
         $this->salesOrganization = $salesOrganization;
+
         return $this;
     }
     
@@ -618,6 +628,7 @@ class Order
     public function setDistributionChannel(int $distributionChannel): Order
     {
         $this->distributionChannel = $distributionChannel;
+
         return $this;
     }
     
@@ -637,6 +648,7 @@ class Order
     public function setDivision(int $division): Order
     {
         $this->division = $division;
+
         return $this;
     }
     
@@ -656,6 +668,7 @@ class Order
     public function setProducts($products): Order
     {
         $this->products = $products;
+
         return $this;
     }
     
@@ -675,6 +688,7 @@ class Order
     public function setDeliveryAddress(DeliveryAddress $deliveryAddress): Order
     {
         $this->deliveryAddress = $deliveryAddress;
+
         return $this;
     }
 }
