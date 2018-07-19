@@ -9,13 +9,13 @@ if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
  * @global CMain $APPLICATION
  * @var array $arParams
  * @var array $arResult
- * @var CatalogSectionComponent $component
+ * @var FourPawsCatalogProductsRecommendations $component
  * @var CBitrixComponentTemplate $this
  * @var string $templateName
  * @var string $componentPath
  */
-$arParams['WRAP_CONTAINER_BLOCK'] = isset($arParams['WRAP_CONTAINER_BLOCK']) ? $arParams['WRAP_CONTAINER_BLOCK'] : 'N';
-$arParams['SHOW_TOP_LINE'] = isset($arParams['SHOW_TOP_LINE']) ? $arParams['SHOW_TOP_LINE'] : 'N';
+$arParams['WRAP_CONTAINER_BLOCK'] = $arParams['WRAP_CONTAINER_BLOCK'] ?? 'N';
+$arParams['SHOW_TOP_LINE'] = $arParams['SHOW_TOP_LINE'] ?? 'N';
 
 //
 // Если выбрана отложенная загрузка результата, то отправляем ajax-запрос
@@ -65,7 +65,9 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                 <h2 class="b-title b-title--sale b-title--shopping-bargain"><?=Loc::getMessage('FOLLOWUP_PRODUCTS.TITLE')?></h2><?php
             ?></div>
             <div class="b-common-section__content b-common-section__content--sale b-common-section__content--shopping-bargain js-popular-product"><?php
+
                 foreach ($arResult['PRODUCTS'] as $product) {
+                    /** @var \FourPaws\Catalog\Model\Product $product */
                     $productId = $product->getId();
                     $APPLICATION->IncludeComponent(
                         'fourpaws:catalog.element.snippet',

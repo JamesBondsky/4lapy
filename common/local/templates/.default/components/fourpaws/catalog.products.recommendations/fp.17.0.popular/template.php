@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
  * @global CMain $APPLICATION
  * @var array $arParams
  * @var array $arResult
- * @var CatalogSectionComponent $component
+ * @var FourPawsCatalogProductsRecommendations $component
  * @var CBitrixComponentTemplate $this
  * @var string $templateName
  * @var string $componentPath
@@ -64,6 +64,7 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                 ?></div>
                 <div class="b-common-section__content b-common-section__content--popular js-popular-product"><?php
                     foreach ($arResult['PRODUCTS'] as $product) {
+                        /** @var \FourPaws\Catalog\Model\Product $product */
                         $productId = $product->getId();
                         $APPLICATION->IncludeComponent(
                             'fourpaws:catalog.element.snippet',
@@ -71,10 +72,10 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                             [
                                 'PRODUCT' => $product,
                                 'BIG_DATA' => [
-                                    'RCM_ID' => isset($arResult['recommendationIdToProduct'][$productId]) ? $arResult['recommendationIdToProduct'][$productId] : '',
-                                    'cookiePrefix' => isset($arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix']) ? $arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix'] : '',
-                                    'cookieDomain' => isset($arResult['BIG_DATA_SETTINGS']['js']['cookieDomain']) ? $arResult['BIG_DATA_SETTINGS']['js']['cookieDomain'] : '',
-                                    'serverTime' => isset($arResult['BIG_DATA_SETTINGS']['js']['serverTime']) ? $arResult['BIG_DATA_SETTINGS']['js']['serverTime'] : '',
+                                    'RCM_ID' => $arResult['recommendationIdToProduct'][$productId] ?? '',
+                                    'cookiePrefix' => $arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix'] ?? '',
+                                    'cookieDomain' => $arResult['BIG_DATA_SETTINGS']['js']['cookieDomain'] ?? '',
+                                    'serverTime' => $arResult['BIG_DATA_SETTINGS']['js']['serverTime'] ?? '',
                                 ],
                             ],
                             $component,
