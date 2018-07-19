@@ -26,11 +26,11 @@ interface ConfirmCodeEmailInterface
      * @param string $text
      * @param string $type
      *
-     * @param int    $time
+     * @param float  $time
      *
      * @throws \RuntimeException
      * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setGeneratedHash(string $text, string $type = 'sms', int $time = 0): void;
+    public static function setGeneratedHash(string $text, string $type = 'sms', float $time = 0): void;
 }
