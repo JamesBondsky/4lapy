@@ -504,7 +504,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $result = [];
         $getResult = function () use ($product, $offer) {
             $available = $offer->isAvailable();
-            $price = $offer->getPriceCeil();
+            $price = $offer->getCatalogPrice();
             $oldPrice = $offer->getOldPrice() ? $offer->getOldPriceCeil() : $price;
 
             $responseItem = [

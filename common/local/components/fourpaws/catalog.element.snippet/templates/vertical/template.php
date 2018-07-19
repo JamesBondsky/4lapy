@@ -137,14 +137,14 @@ if ($mainCombinationType === 'SIZE') {
                             $countSizes++;
                             $isOffersPrinted = true;
 
-                            $addAttr = ' data-price="' . $offer->getPriceCeil() . '"';
+                            $addAttr = ' data-price="' . $offer->getCatalogPrice() . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-pickup="' . ($offer->isByRequest() ? $pickupText : '') . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
                             $addAttr .= ' data-onclick="' . $getOnClick($offer) . '"';
-                            $addAttr .= ' data-oldprice="' . ($offer->getOldPriceCeil() !== $offer->getPriceCeil() ? $offer->getOldPriceCeil() : ''). '"';
+                            $addAttr .= ' data-oldprice="' . ($offer->getOldPriceCeil() !== $offer->getCatalogPrice() ? $offer->getOldPriceCeil() : ''). '"';
                             $addAttr .= ' data-discount="' . ($offer->getDiscountPrice() ?: '') . '"';
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
@@ -169,12 +169,12 @@ if ($mainCombinationType === 'SIZE') {
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                               data-oldprice="<?= ($currentOffer->getOldPriceCeil() !== $currentOffer->getPriceCeil() ? $currentOffer->getOldPriceCeil() : '') ?>"
+                               data-oldprice="<?= ($currentOffer->getOldPriceCeil() !== $currentOffer->getCatalogPrice() ? $currentOffer->getOldPriceCeil() : '') ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
                                data-pickup="<?= $currentOffer->isByRequest() ? $pickupText : '' ?>"
                                data-available="<?= !$currentOffer->isAvailable() ? 'Нет в наличии' : '' ?>"
-                               data-price="<?= $currentOffer->getPriceCeil() ?>"
+                               data-price="<?= $currentOffer->getCatalogPrice() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
                                data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                                data-link="<?= $currentOffer->getLink() ?>"></a>
@@ -192,7 +192,7 @@ if ($mainCombinationType === 'SIZE') {
                             <?php echo new SvgDecorator('icon-cart', 16, 16); ?>
                         </span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getCatalogPrice() ?></span>
                     <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                 </span>
                 <span class="b-common-item__incart">+1</span>

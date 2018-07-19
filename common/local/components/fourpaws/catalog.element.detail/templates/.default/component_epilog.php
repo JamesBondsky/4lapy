@@ -60,9 +60,9 @@ foreach ($offers as $offer) {
         $(function () {
             var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
             if ($offerLink.length > 0) {
-                $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getPriceCeil(),
+                $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getCatalogPrice(),
                     0) ?> <span class="b-ruble b-ruble--weight">₽</span>');
-                $offerLink.data('price', '<?=WordHelper::numberFormat($offer->getPriceCeil(), 0)?>');
+                $offerLink.data('price', '<?=WordHelper::numberFormat($offer->getCatalogPrice(), 0)?>');
                 <?php if(!$offer->isAvailable()) { ?>
                 $offerLink.addClass('unavailable-link');
                 $offerLink.find('.b-weight-container__not').html('Нет в наличии').css('display', 'inline-block');

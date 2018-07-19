@@ -20,6 +20,7 @@ use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\RuntimeException;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 
 /**
  * Class Adder
@@ -100,6 +101,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                             $price = 0;
                                         }
                                     }
+                                    $price = PriceHelper::roundPrice($price);
                                     $oldQuantity = $basketItem->getQuantity();
                                     $basketItem->setField('QUANTITY', $applyCount);
                                     $basketItem->setField('PRICE', $price);
