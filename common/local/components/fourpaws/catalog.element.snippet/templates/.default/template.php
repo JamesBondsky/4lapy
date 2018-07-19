@@ -179,7 +179,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?>"
                                    data-oldprice="<?= $offer->getOldPriceCeil() ?>"
-                                   data-price="<?= $offer->getPriceCeil() ?>"
+                                   data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-onclick="<?= $getOnClick($offer) ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
@@ -190,7 +190,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price active-link"
                                    data-oldprice="<?= $offer->getOldPriceCeil() ?>"
-                                   data-price="<?= $offer->getPriceCeil() ?>"
+                                   data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-onclick="<?= $getOnClick($offer) ?>"
@@ -208,7 +208,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                         <a href="javascript:void(0)"
                            class="b-weight-container__link js-price active-link"
                            data-oldprice="<?= $currentOffer->getOldPrice() ?>"
-                           data-price="<?= $currentOffer->getPriceCeil() ?>"
+                           data-price="<?= $currentOffer->getCatalogPrice() ?>"
                            data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                            data-onclick="<?= $getOnClick($currentOffer) ?>"
@@ -243,7 +243,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getCatalogPrice() ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>
@@ -256,7 +256,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPriceCeil() ?></span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getCatalogPrice() ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>
