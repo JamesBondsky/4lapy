@@ -20,7 +20,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     $APPLICATION->IncludeComponent('fourpaws:city.selector', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     $APPLICATION->IncludeComponent('fourpaws:auth.form', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
-
+    $APPLICATION->IncludeComponent('fourpaws:information.popup', '', [], false, ['HIDE_ICONS' => 'Y']);
     if ($template->hasPersonalReferral()) {
         $APPLICATION->IncludeComponent('fourpaws:personal.referral', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
