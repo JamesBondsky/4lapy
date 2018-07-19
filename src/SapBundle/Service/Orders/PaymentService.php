@@ -267,6 +267,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             foreach ($paymentTaskItems[$xmlId] as $pti) {
                 if ($pti->getPrice() === $item->getPrice()) {
                     $pti->setQuantity((int)$pti->getQuantity() + (int)$item->getQuantity());
+                    $pti->setSumPrice($pti->getPrice() * (int)$pti->getQuantity());
                     $found = true;
                 }
             }
@@ -298,13 +299,12 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     } else {
                         /** @var Item $pti */
                         foreach ($paymentTaskItems[$xmlId] as $i => $pti) {
-                            if (($pti->getPrice() * 100) > $item->getPrice()) {
-                                continue;
-                            }
+                            $price = $pti->getPrice() * 100;
+                            $sum = $pti->getSumPrice() * 100;
 
                             $item->getQuantity()->setValue((int)$pti->getQuantity());
-                            $item->setTotal((int)($pti->getSumPrice() * 100));
-                            $item->setPrice((int)($pti->getPrice() * 100));
+                            $item->setTotal(round($sum));
+                            $item->setPrice(round($price));
                             unset($paymentTaskItems[$xmlId][$i]);
                             break;
                         }

@@ -59,7 +59,7 @@ class CallbackConsumer extends CallbackConsumerBase
                 }
 
                 if ($curDate !== null) {
-                    preg_match_all('/^https?:\/\/(.*):(.*)@' . $uri->getHost() . '/', $href, $matches);
+                    preg_match('/^https?:\/\/(.*):(.*)@' . $uri->getHost() . '/', $href, $matches);
                     $uri->deleteParams(['startparam2']);
                     $uri->addParams(['startparam2' => $curDate]);
                     $uri->setPass($matches[2]);

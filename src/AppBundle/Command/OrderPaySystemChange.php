@@ -15,6 +15,8 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
+use FourPaws\SaleBundle\Exception\SberbankOrderNotPaidException;
+use FourPaws\SaleBundle\Exception\SberbankOrderPaymentDeclinedException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use Psr\Log\LoggerAwareInterface;
@@ -28,7 +30,7 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    protected const TIME_TO_PAY = 1200; // 20 minutes
+    protected const TIME_TO_PAY = 1500; // 25 minutes
 
     protected const MAX_TIME = 86400; // 1 day
 
@@ -128,7 +130,10 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
             try {
                 try {
                     $this->paymentService->processOnlinePaymentByOrderNumber($saleOrder);
-                } catch (SberbankOrderNotFoundException $e) {
+                } catch (SberbankOrderNotPaidException $e) {
+                    // заказ еще можно оплатить
+                    continue;
+                } catch (SberbankOrderNotFoundException|SberbankOrderPaymentDeclinedException $e) {
                     $this->paymentService->processOnlinePaymentError($saleOrder);
                 }
                 $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()));
