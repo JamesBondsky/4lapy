@@ -17,6 +17,7 @@ use FourPaws\External\Manzana\Dto\Coupon;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserService;
@@ -128,6 +129,15 @@ class Manzana implements LoggerAwareInterface
             $this->recalculateBasketFromResponse($basket, $response);
             $this->discount = $price - $basket->getPrice();
         } catch (ExecuteException $e) {
+            /** @var BasketItem $item */
+            foreach ($basket as $item) {
+                $price = PriceHelper::roundPrice($item->getPrice());
+                /** @noinspection PhpInternalEntityUsedInspection */
+                $item->setFieldsNoDemand([
+                    'PRICE' => $price,
+                    'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
+                ]);
+            }
             $this->log()->error(
                 \sprintf(
                     'Manzana recalculate error: %s',
@@ -155,7 +165,7 @@ class Manzana implements LoggerAwareInterface
 
             $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item) {
                 if ($position->getChequeItemNumber() === $basketCode) {
-                    $price = $position->getSummDiscounted() / $position->getQuantity();
+                    $price = PriceHelper::roundPrice($position->getSummDiscounted() / $position->getQuantity());
 
                     /** @noinspection PhpInternalEntityUsedInspection */
                     $item->setFieldsNoDemand([
