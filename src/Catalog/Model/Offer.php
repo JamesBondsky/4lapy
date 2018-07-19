@@ -973,11 +973,13 @@ class Offer extends IblockElement
     }
 
     /**
+     * Отображаемая цена в каталоге
+     *
      * @return float
      */
-    public function getPriceCeil(): float
+    public function getCatalogPrice(): float
     {
-        return ceil($this->getPrice());
+        return floor($this->getPrice());
     }
 
     /**

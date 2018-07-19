@@ -250,7 +250,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                             <?php
                         } ?>
                         <span class="b-product-information__price js-price-product">
-                            <?= $currentOffer->getPriceCeil() ?>
+                            <?= $currentOffer->getCatalogPrice() ?>
                         </span>
                         <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
                         <span class="b-product-information__bonus js-bonus-<?= $currentOffer->getId() ?>"></span>
