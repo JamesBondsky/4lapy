@@ -14,8 +14,8 @@ if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
  * @var string $templateName
  * @var string $componentPath
  */
-$arParams['WRAP_CONTAINER_BLOCK'] = isset($arParams['WRAP_CONTAINER_BLOCK']) ? $arParams['WRAP_CONTAINER_BLOCK'] : 'N';
-$arParams['SHOW_TOP_LINE'] = isset($arParams['SHOW_TOP_LINE']) ? $arParams['SHOW_TOP_LINE'] : 'N';
+$arParams['WRAP_CONTAINER_BLOCK'] = $arParams['WRAP_CONTAINER_BLOCK'] ?? 'N';
+$arParams['SHOW_TOP_LINE'] = $arParams['SHOW_TOP_LINE'] ?? 'N';
 
 //
 // Если выбрана отложенная загрузка результата, то отправляем ajax-запрос
