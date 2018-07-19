@@ -29,10 +29,11 @@ $cookieEnv = explode(':', getenv('ADDITIONAL_COOKIE'));
 
 if ($cookieEnv) {
     $cookieScript = <<<SCR
-    <script>
-        var date = new Date();
-        date.setDate(date.getDate() + 30);
-        document.cookie = "{$cookieEnv[0]}={$cookieEnv[1]}; path=/; expires=" + date;
+    <script data-skip-moving="true">
+        window.configDefence = {
+            cName: '{$cookieEnv[0]}',
+            cValue: '{$cookieEnv[1]}'
+        }
     </script>
 SCR;
 
