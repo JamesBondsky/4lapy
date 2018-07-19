@@ -31,13 +31,13 @@ interface ConfirmCodeInterface
      * @param string $text
      * @param string $type
      *
-     * @param int    $time
+     * @param float  $time
      *
      * @throws \RuntimeException
      * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setGeneratedCode(string $text, string $type = 'sms', int $time = 0): void;
+    public static function setGeneratedCode(string $text, string $type = 'sms', float $time = 0): void;
 
     /**
      * @param string $type
@@ -80,11 +80,11 @@ interface ConfirmCodeInterface
     /**
      * @param string $text
      *
-     * @param int    $time
+     * @param float  $time
      *
      * @return string
      */
-    public static function getConfirmHash(string $text, int $time = 0): string;
+    public static function getConfirmHash(string $text, float $time = 0): string;
 
     /**
      * @param $id
@@ -100,21 +100,21 @@ interface ConfirmCodeInterface
     /**
      * @param string $code
      * @param string $type
-     * @param int    $time
+     * @param float  $time
      *
      * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setCode(string $code, string $type, int $time = 0): void;
+    public static function setCode(string $code, string $type, float $time = 0): void;
 
     /**
-     * @param  string $type
-     * @param int     $time
+     * @param string $type
+     * @param float  $time
      *
      * @return string
      * @throws \Exception
      */
-    public static function setCookie(string $type, int $time = 0): string;
+    public static function setCookie(string $type, float $time = 0): string;
 
     /**
      * @param string $type

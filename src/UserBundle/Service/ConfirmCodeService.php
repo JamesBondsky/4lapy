@@ -120,13 +120,13 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param string $text
      * @param string $type
      *
-     * @param int    $time
+     * @param float  $time
      *
      * @throws \RuntimeException
      * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setGeneratedCode(string $text, string $type = 'sms', int $time = 0): void
+    public static function setGeneratedCode(string $text, string $type = 'sms', float $time = 0): void
     {
         if (!empty($text)) {
             static::setCode(static::generateCode($text), $type, $time);
@@ -136,16 +136,16 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     /**
      * @param string $code
      * @param string $type
-     * @param int    $time
+     * @param float  $time
      *
      * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setCode(string $code, string $type, int $time = 0): void
+    public static function setCode(string $code, string $type, float $time = 0): void
     {
         if (!empty($code)) {
-            if ($time === 0) {
-                $time = time();
+            if (!$time) {
+                $time = microtime(true);
             }
 
             $id = static::setCookie($type, $time);
@@ -261,10 +261,10 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @return string
      */
-    public static function getConfirmHash(string $text, int $time = 0): string
+    public static function getConfirmHash(string $text, float $time = 0): string
     {
-        if ($time === 0) {
-            $time = time();
+        if (!$time) {
+            $time = microtime(true);
         }
         return substr(md5('confirm' . $text . $time), 0, 255);
     }
@@ -287,17 +287,17 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param string $text
      * @param string $type
      *
-     * @param int    $time
+     * @param float  $time
      *
      * @throws \RuntimeException
      * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setGeneratedHash(string $text, string $type = 'sms', int $time = 0): void
+    public static function setGeneratedHash(string $text, string $type = 'sms', float $time = 0): void
     {
         if (!empty($text)) {
-            if ($time === 0) {
-                $time = time();
+            if (!$time) {
+                $time = microtime(true);
             }
             static::setCode(static::getConfirmHash($text, $time), $type, $time);
         }
@@ -340,22 +340,22 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     }
 
     /**
-     * @param  string $type
-     * @param int     $time
+     * @param string $type
+     * @param float   $time
      *
      * @return string
      * @throws \Exception
      */
-    public static function setCookie(string $type, int $time = 0): string
+    public static function setCookie(string $type, float $time = 0): string
     {
-        if ($time === 0) {
-            $time = time();
+        if (!$time) {
+            $time = microtime(true);
         }
         $cookieCode = ToUpper($type) . '_ID';
         if (!empty($_COOKIE[$cookieCode])) {
             static::delCurrentCode($type);
         }
-        $lifeTime = \constant('static::'.static::getPrefixByType($type, true) . '_LIFE_TIME');
+        $lifeTime = \constant('static::' . static::getPrefixByType($type, true) . '_LIFE_TIME');
         $_COOKIE[$cookieCode] = $id = session_id() . '_' . $time;
         if (!setcookie($cookieCode, $id, $time + $lifeTime, '/')) {
             throw new \RuntimeException('ошибка установки куков');
