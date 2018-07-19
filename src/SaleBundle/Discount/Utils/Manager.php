@@ -75,6 +75,10 @@ class Manager
          */
         $order = $event->getParameter('ENTITY');
 
+        if ($order->isCanceled()) {
+            return;
+        }
+
         self::setCalculation(true);
         if (self::isOrderNotEmpty($order) && !self::$extendCalculated) {
             self::disableExtendsDiscount();
