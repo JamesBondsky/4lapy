@@ -659,22 +659,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         );
         $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('d.m.Y'));
 
-        try {
-            $this->setPropertyValue(
-                $propertyCollection,
-                'DELIVERY_INTERVAL',
-                $this->intervalService->getIntervalByCode($orderDto->getDeliveryType())
-            );
-        } catch (NotFoundException $e) {
-            $this->log()->error(
-                \sprintf(
-                    'Интервал %s не найден для заказа %s',
-                    $orderDto->getDeliveryType(),
-                    $orderDto->getId()
-                )
-            );
-        }
-
         if ($deliveryAddress) {
             $this->setPropertyValue($propertyCollection, 'CITY', $deliveryAddress->getCityName());
             $this->setPropertyValue($propertyCollection, 'STREET', $deliveryAddress->getStreetName());
