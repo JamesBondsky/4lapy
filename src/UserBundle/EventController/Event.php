@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application as App;
+use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
@@ -409,10 +410,18 @@ class Event extends BaseServiceHandler
 
         $result = 0;
         if ($fields['EMAIL']) {
+            $serviceContainer = App::getInstance()->getContainer();
+
+            $userAuthService = $serviceContainer->get(UserAuthorizationInterface::class);
             /** @var UserSearchInterface $userSearchService */
-            $userSearchService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
+            $userSearchService = $serviceContainer->get(UserSearchInterface::class);
             try {
                 $result = $userSearchService->findOneByEmail($fields['EMAIL'])->getId();
+                if (!$userAuthService->isAuthorized()) {
+                    $serviceContainer
+                        ->get('flash.message')
+                        ->add('Пользователь с таким e-mail уже зарегистрирован');
+                }
             } catch (NotFoundException $e) {}
         }
 

@@ -42,13 +42,13 @@ class Sberbank
 
     public const ERROR_CODES = [1, 2, 3, 4, 5, 7, 8, 999];
 
+    public const ORDER_STATUS_CREATED = 0;
     public const ORDER_STATUS_HOLD = 1;
-
     public const ORDER_STATUS_PAID = 2;
-
     public const ORDER_STATUS_REVERSE = 3;
-
     public const ORDER_STATUS_REFUND = 4;
+    public const ORDER_STATUS_DECLINED = 6;
+
 
     public const ORDER_NUMBER_ATTRIBUTE = 'mdOrder';
 

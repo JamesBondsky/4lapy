@@ -112,9 +112,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $curUser = $this->currentUserProvider->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && !$curUser->hasEmail())) {
                     $this->arResult['STEP'] = 'addPhone';
-                } else {
-                    $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
                 }
+
+                $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
             }
             $this->setSocial();
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
