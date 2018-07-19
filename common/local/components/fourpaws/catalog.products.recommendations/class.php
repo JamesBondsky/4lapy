@@ -15,6 +15,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 class FourPawsCatalogProductsRecommendations extends ElementList
 {
+    /**
+     * FourPawsCatalogProductsRecommendations constructor.
+     *
+     * @param \CBitrixComponent|null $component
+     */
     public function __construct($component = null)
     {
         parent::__construct($component);
@@ -23,15 +28,20 @@ class FourPawsCatalogProductsRecommendations extends ElementList
         $this->setMultiIblockMode(false);
     }
 
+    /**
+     * @param array $params
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
     public function onPrepareComponentParams($params)
     {
-        $params['CACHE_TYPE'] = isset($params['CACHE_TYPE']) ? $params['CACHE_TYPE'] : 'A';
-        $params['CACHE_TIME'] = isset($params['CACHE_TIME']) ? $params['CACHE_TIME'] : 3600;
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
 
         $params['IBLOCK_TYPE'] = IblockType::CATALOG;
         $params['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
         $params['CACHE_GROUPS'] = 'N';
-        $params['PAGE_ELEMENT_COUNT'] = isset($params['PAGE_ELEMENT_COUNT']) ? intval($params['PAGE_ELEMENT_COUNT']) : 0;
+        $params['PAGE_ELEMENT_COUNT'] = isset($params['PAGE_ELEMENT_COUNT']) ? (int)$params['PAGE_ELEMENT_COUNT'] : 0;
         $params['PAGE_ELEMENT_COUNT'] = $params['PAGE_ELEMENT_COUNT'] > 0 ? $params['PAGE_ELEMENT_COUNT'] : 10;
 
         // Y - отложенная генерация результата (через ajax)
@@ -39,10 +49,10 @@ class FourPawsCatalogProductsRecommendations extends ElementList
 
         // может быть задействован при дополнительной фильтрации по секции
         $params['DEPTH'] = 5;
-        $params['AJAX_ID'] = isset($params['AJAX_ID']) ? $params['AJAX_ID'] : '';
+        $params['AJAX_ID'] = $params['AJAX_ID'] ?? '';
 
         // id товара, для которого подбираются похожие
-        $params['RCM_PROD_ID'] = isset($params['RCM_PROD_ID']) ? intval($params['RCM_PROD_ID']) : 0;
+        $params['RCM_PROD_ID'] = isset($params['RCM_PROD_ID']) ? (int)$params['RCM_PROD_ID'] : 0;
         // id товаров, для которых сервисом BigData подбирается рекомендация по алгоритму postcross
         $params['POSTCROSS_IDS'] = isset($params['POSTCROSS_IDS']) && is_array($params['POSTCROSS_IDS']) ? $params['POSTCROSS_IDS'] : [];
 
@@ -74,6 +84,9 @@ class FourPawsCatalogProductsRecommendations extends ElementList
         return $params;
     }
 
+    /**
+     * executeComponent
+     */
     public function executeComponent()
     {
         $this->recommendationIdToProduct = [];
@@ -93,6 +106,7 @@ class FourPawsCatalogProductsRecommendations extends ElementList
         if ($this->request->isAjaxRequest() && $this->request->get('action') === 'deferredLoad')  {
             $action = 'deferredLoad';
         }
+
         return $action;
     }
 
@@ -159,7 +173,9 @@ class FourPawsCatalogProductsRecommendations extends ElementList
         $httpClient = new HttpClient();
         $httpClient->setHeader('CMS', 'Bitrix');
         $httpClient->setHeader('User-Agent', 'X-Bitrix-Sale');
-        $response = $httpClient->get($this->arResult['BIG_DATA_SETTINGS']['requestBaseUrl'].'?'.$this->arResult['BIG_DATA_SETTINGS']['requestUrlParams']);
+        $response = $httpClient->get(
+            $this->arResult['BIG_DATA_SETTINGS']['requestBaseUrl'].'?'.$this->arResult['BIG_DATA_SETTINGS']['requestUrlParams']
+        );
         if ($httpClient->getStatus() == 200) {
             $response = $response ? Json::decode($response) : [];
             if (isset($response['id'])) {
@@ -212,6 +228,7 @@ class FourPawsCatalogProductsRecommendations extends ElementList
                 //'ib' => $params['ib'],
             ];
         }
+
         return $params;
     }
 
@@ -321,11 +338,16 @@ class FourPawsCatalogProductsRecommendations extends ElementList
     {
         $ids = [];
         if (!empty($this->arResult['BIG_DATA_RESPONSE']['ITEMS'])) {
-            $ids = $this->filterByParams($this->arResult['BIG_DATA_RESPONSE']['ITEMS'], $this->arParams['FILTER_IDS'], false);
+            $ids = $this->filterByParams(
+                $this->arResult['BIG_DATA_RESPONSE']['ITEMS'],
+                $this->arParams['FILTER_IDS'],
+                false
+            );
             foreach ($ids as $id) {
                 $this->recommendationIdToProduct[$id] = $this->arResult['BIG_DATA_RESPONSE']['RECOMMENDATION_ID'];
             }
         }
+
         return $ids;
     }
 
@@ -341,26 +363,30 @@ class FourPawsCatalogProductsRecommendations extends ElementList
         $productIds = [];
 
         $getParentOnly = true;
-        $productIterator = \CSaleProduct::GetProductList(
+        $productIterator = (new \CSaleProduct())->GetProductList(
             $this->arParams['RCM_PROD_ID'],
             $this->arParams['MIN_BUYES'],
             $this->arParams['PAGE_ELEMENT_COUNT'],
             $getParentOnly
         );
 
-        if($productIterator) {
+        if ($productIterator) {
             $GLOBALS['CACHE_MANAGER']->RegisterTag('sale_product_buy');
-            while($product = $productIterator->fetch()) {
+            while ($product = $productIterator->fetch()) {
                 $productIds[] = $product['PARENT_PRODUCT_ID'];
             }
-            $productIds = $this->filterByParams($productIds, $this->arParams['FILTER_IDS'], false);
-
+            $productIds = $this->filterByParams(
+                $productIds,
+                $this->arParams['FILTER_IDS'],
+                false
+            );
             foreach ($productIds as $id) {
                 if (!isset($this->recommendationIdToProduct[$id])) {
                     $this->recommendationIdToProduct[$id] = $recommendationId;
                 }
             }
         }
+
         return array_unique(array_merge($ids, $productIds));
     }
 

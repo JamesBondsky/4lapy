@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $templateData
  * @var string $templateFolder
- * @var CatalogSectionComponent $component
+ * @var FourPawsCatalogProductsRecommendations $component
  */
 
 if ($arParams['DEFERRED_LOAD'] === 'Y') {
