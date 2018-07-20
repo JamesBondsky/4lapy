@@ -79,6 +79,10 @@ class Event extends BaseServiceHandler
          * @var OrderService $orderService
          */
         $order = $event->getParameter('ENTITY');
+        if ($order->isCanceled()) {
+            return;
+        }
+
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $orderService = Application::getInstance()->getContainer()->get(
             OrderService::class
