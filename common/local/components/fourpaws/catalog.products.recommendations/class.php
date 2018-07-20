@@ -2,6 +2,7 @@
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\Component\ElementList;
+use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 use FourPaws\Catalog\Model\Offer;
@@ -9,6 +10,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -18,6 +20,8 @@ class FourPawsCatalogProductsRecommendations extends ElementList
 {
     /** @var array $productsCache */
     protected $productsCache = [];
+    /** @var int $cacheTime */
+    protected $cacheTime = false;
 
     /**
      * FourPawsCatalogProductsRecommendations constructor.
@@ -96,6 +100,8 @@ class FourPawsCatalogProductsRecommendations extends ElementList
         $this->recommendationIdToProduct = [];
         $this->setAction($this->prepareAction());
         $this->doAction();
+
+        return $this->arResult;
     }
 
     /**
@@ -127,6 +133,10 @@ class FourPawsCatalogProductsRecommendations extends ElementList
 
     /**
      * This method executes when "initialLoad" action is chosen.
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      */
     protected function initialLoadAction()
     {
@@ -142,11 +152,15 @@ class FourPawsCatalogProductsRecommendations extends ElementList
             }
             $this->initProductIds();
         }
+
         $this->loadData();
     }
 
     /**
      * This method executes when "deferredLoad" action is chosen.
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\SystemException
      */
     protected function deferredLoadAction()
     {
@@ -167,6 +181,8 @@ class FourPawsCatalogProductsRecommendations extends ElementList
 
     /**
      * Отправляет запрос BigData
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     protected function doBigDataRequest()
     {
@@ -238,23 +254,14 @@ class FourPawsCatalogProductsRecommendations extends ElementList
 
     /**
      * Show cached component data or load if outdated.
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\SystemException
      */
     public function loadData()
     {
-        // нужно для генерации уникального идентификатора кеша
-        $this->productIdMap = [];
-        if (!empty($this->arResult['ids'])) {
-            foreach ($this->arResult['ids'] as $id) {
-                $this->productIdMap[$id] = $id;
-            }
-        }
         $this->arParams['RESULT_TYPE'] = $this->arResult['RESULT_TYPE'];
-
-        if ($this->isCacheDisabled() || $this->startResultCache(false, $this->getAdditionalCacheId(), $this->getComponentCachePath())) {
-            $this->arResult['PRODUCTS'] = $this->getProducts($this->arResult['ids']);
-            $this->endResultCache();
-        }
-
+        $this->arResult['PRODUCTS'] = $this->getProducts($this->arResult['ids']);
         $this->arResult['recommendationIdToProduct'] = $this->recommendationIdToProduct;
 
         $this->includeComponentTemplate();
@@ -340,6 +347,8 @@ class FourPawsCatalogProductsRecommendations extends ElementList
      * @param array $filterIds Filtered ids.
      * @param bool $useSectionFilter Check filter by section.
      * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\SystemException
      */
     protected function filterByParams($ids, $filterIds = [], $useSectionFilter = true)
     {
@@ -423,6 +432,8 @@ class FourPawsCatalogProductsRecommendations extends ElementList
     /**
      * @param array|null $ids
      * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\SystemException
      */
     protected function getProducts($ids): array
     {
@@ -438,16 +449,9 @@ class FourPawsCatalogProductsRecommendations extends ElementList
             }
 
             if ($selectIds) {
-                $productQuery = new ProductQuery();
-                $productQuery->withFilterParameter('ID', $selectIds);
-                $productQueryCollection = $productQuery->exec();
-                foreach ($productQueryCollection as $product) {
-                    if ($product instanceof Product) {
-                        $offer = $product->getOffers()->first();
-                        if ($offer instanceof Offer) {
-                            $this->productsCache[$product->getId()] = $product;
-                        }
-                    }
+                $products = $this->doProductsQueryCache($selectIds);
+                foreach ($products as $product) {
+                    $this->productsCache[$product->getId()] = $product;
                 }
             }
 
@@ -459,5 +463,104 @@ class FourPawsCatalogProductsRecommendations extends ElementList
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $selectIds
+     * @return Product[]|array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function doProductsQueryCache(array $selectIds): array
+    {
+        if (empty($selectIds)) {
+            return [];
+        }
+
+        sort($selectIds);
+        $cacheTime = $this->getCacheTime();
+        $cacheId = md5(
+            serialize(
+                [
+                    $selectIds,
+                    SITE_ID,
+                    $this->getSiteId(),
+                    $this->arParams['CACHE_GROUPS'] === 'N' ? false : $this->getUserGroupsCacheId(),
+                ]
+            )
+        );
+        $cachePath = $this->getComponentCachePath();
+
+        $cache = Application::getInstance()->getCache();
+        if ($cache->startDataCache($cacheTime, $cacheId, $cachePath)) {
+            $tagCache = $cache->isStarted() ? new TaggedCacheHelper($cachePath) : null;
+
+            $products = $this->doProductsQuery($selectIds);
+
+            if ($tagCache) {
+                // в идеале, теги по инфоблокам должны добавляться автоматически в соотв. коллекциях
+                TaggedCacheHelper::addManagedCacheTags(
+                    [
+                        'iblock_id_'.IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                        'iblock_id_'.IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                        'iblock_id_'.IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
+                    ]
+                );
+                $tagCache->end();
+            }
+
+            $cache->endDataCache($products);
+        } else {
+            $products = $cache->getVars();
+            if (!is_array($products)) {
+                $products = [];
+            }
+        }
+
+        return $products;
+    }
+
+    /**
+     * @param array $selectIds
+     * @return Product[]|array
+     */
+    protected function doProductsQuery(array $selectIds): array
+    {
+        $products = [];
+        if ($selectIds) {
+            $productQuery = new ProductQuery();
+            $productQuery->withFilterParameter('ID', $selectIds);
+            $productQueryCollection = $productQuery->exec();
+            foreach ($productQueryCollection as $product) {
+                if ($product instanceof Product) {
+                    $offer = $product->getOffers()->first();
+                    if ($offer instanceof Offer) {
+                        $products[$product->getId()] = $product;
+                    }
+                }
+            }
+        }
+
+        return $products;
+    }
+
+    /**
+     * @return int
+     */
+    protected function getCacheTime(): int
+    {
+        if ($this->cacheTime === false) {
+            $this->cacheTime = $this->arParams['CACHE_TYPE'] === 'N' ? 0 : (int)$this->arParams['CACHE_TIME'];
+            if ($this->cacheTime > 0 && $this->isCacheDisabled()) {
+                $this->cacheTime = 0;
+            }
+            if ($this->cacheTime > 0 && $this->arParams['CACHE_TYPE'] === 'A') {
+                if (\COption::getOptionString('main', 'component_cache_on', 'Y') === 'N') {
+                    $this->cacheTime = 0;
+                }
+            }
+        }
+
+        return $this->cacheTime;
     }
 }
