@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -64,8 +65,14 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class OrderService
 {
-    public static $finalStatuses = ['G', 'J'];
-    public static $cancelStatuses = ['A', 'K'];
+    public static $finalStatuses = [
+        'G',
+        'J',
+    ];
+    public static $cancelStatuses = [
+        'A',
+        'K',
+    ];
     protected static $manzanaFinalStatus = 'G';
     protected $manzanaFinalStatusSort = 110;
     /**
@@ -516,9 +523,9 @@ class OrderService
      */
     protected function hasOrderByManzana(Order $order): bool
     {
-        $filter  = [
-            'USER_ID'         => $order->getUserId(),
-            'PROPERTY.CODE'   => 'MANZANA_NUMBER',
+        $filter = [
+            'USER_ID'        => $order->getUserId(),
+            'PROPERTY.CODE'  => 'MANZANA_NUMBER',
             'PROPERTY.VALUE' => $order->getManzanaId(),
         ];
 
@@ -537,8 +544,15 @@ class OrderService
             $res = OrderTable::query()->setFilter([
                 'USER_ID'         => $userId,
                 'PROPERTY.CODE'   => 'MANZANA_NUMBER',
-                '!PROPERTY.VALUE' => [null, ''],
-            ])->setSelect(['ID', 'PROPERTY_CODE' => 'PROPERTY.CODE', 'PROPERTY_VALUE' => 'PROPERTY.VALUE'])->exec();
+                '!PROPERTY.VALUE' => [
+                    null,
+                    '',
+                ],
+            ])->setSelect([
+                'ID',
+                'PROPERTY_CODE'  => 'PROPERTY.CODE',
+                'PROPERTY_VALUE' => 'PROPERTY.VALUE',
+            ])->exec();
             while ($item = $res->fetch()) {
                 if ($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
                     $this->siteManzanaOrders[$item['ID']] = $item['PROPERTY_VALUE'];
@@ -599,16 +613,16 @@ class OrderService
             $offer = $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()];
             $basketItem = $orderBasket->createItem('catalog', $productId);
             $basketItem->setPrice($item->getPrice(), true);
-            $basketItem->setFieldNoDemand('QUANTITY', $item->getQuantity());
-            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
-            $basketItem->setFieldNoDemand('DELAY', 'N');
-            $basketItem->setFieldNoDemand('CURRENCY', 'RUB');
-            $basketItem->setFieldNoDemand('NAME', $offer->getName());
-            $basketItem->setFieldNoDemand('WEIGHT', $offer->getCatalogProduct()->getWeight());
-            $basketItem->setFieldNoDemand('DETAIL_PAGE_URL', $offer->getLink());
-            $basketItem->setFieldNoDemand('PRODUCT_PROVIDER_CLASS', CatalogProvider::class);
-            $basketItem->setFieldNoDemand('CATALOG_XML_ID', $offerIblockId);
-            $basketItem->setFieldNoDemand('PRODUCT_XML_ID', $item->getArticle());
+            $basketItem->setFields([
+                'QUANTITY'        => $item->getQuantity(),
+                'CURRENCY'        => CurrencyManager::getBaseCurrency(),
+                'NAME'            => $offer->getName(),
+                'WEIGHT'          => $offer->getCatalogProduct()->getWeight(),
+                'DETAIL_PAGE_URL' => $offer->getLink(),
+                'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+                'CATALOG_XML_ID' => $offerIblockId,
+                'PRODUCT_XML_ID' => $item->getArticle()
+            ]);
             $allBonuses += $item->getBonus();
         }
 
