@@ -190,12 +190,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return $this->ajaxMess->getSystemError();
         }
         $phone = $request->get('phone');
-        $oldPhone = $request->get('oldPhone', '');
+        $oldPhone = $curUser->getPersonalPhone();
         try {
             $phone = PhoneHelper::normalizePhone($phone);
-            if (!empty($oldPhone)) {
-                $oldPhone = PhoneHelper::normalizePhone($oldPhone);
-            }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
