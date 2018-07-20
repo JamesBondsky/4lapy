@@ -4,6 +4,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\Component\ElementList;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
@@ -15,6 +16,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 class FourPawsCatalogProductsRecommendations extends ElementList
 {
+    /** @var array $productsCache */
+    protected $productsCache = [];
+
     /**
      * FourPawsCatalogProductsRecommendations constructor.
      *
@@ -330,6 +334,32 @@ class FourPawsCatalogProductsRecommendations extends ElementList
     }
 
     /**
+     * Filter correct product ids.
+     *
+     * @param array $ids Items ids.
+     * @param array $filterIds Filtered ids.
+     * @param bool $useSectionFilter Check filter by section.
+     * @return array
+     */
+    protected function filterByParams($ids, $filterIds = [], $useSectionFilter = true)
+    {
+        $result = [];
+
+        $filteredIds = parent::filterByParams($ids, $filterIds, $useSectionFilter);
+
+        // дополнитально проверяем, чтобы у выбранных товаров были корректные торговые предложения
+        $products = $this->getProducts($filteredIds);
+        if ($products) {
+            foreach ($products as $product) {
+                /** @var Product $product */
+                $result[] = $product->getId();
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Возвращает отфильтрованные id элементов по ответу BigData
      *
      * @return array
@@ -391,21 +421,39 @@ class FourPawsCatalogProductsRecommendations extends ElementList
     }
 
     /**
-     * @param array $ids
+     * @param array|null $ids
      * @return array
      */
     protected function getProducts($ids): array
     {
         $result = [];
 
-        if ($ids) {
-            $productQuery = new ProductQuery();
-            $productQuery->withFilterParameter('ID', $ids);
-            $productQueryCollection = $productQuery->exec();
+        if ($ids && is_array($ids)) {
+            $selectIds = [];
+            foreach ($ids as $id) {
+                if (!isset($this->productsCache[$id])) {
+                    $selectIds[] = $id;
+                    $this->productsCache[$id] = false;
+                }
+            }
 
-            foreach ($productQueryCollection as $product) {
-                if ($product instanceof Product) {
-                    $result[] = $product;
+            if ($selectIds) {
+                $productQuery = new ProductQuery();
+                $productQuery->withFilterParameter('ID', $selectIds);
+                $productQueryCollection = $productQuery->exec();
+                foreach ($productQueryCollection as $product) {
+                    if ($product instanceof Product) {
+                        $offer = $product->getOffers()->first();
+                        if ($offer instanceof Offer) {
+                            $this->productsCache[$product->getId()] = $product;
+                        }
+                    }
+                }
+            }
+
+            foreach ($ids as $id) {
+                if ($this->productsCache[$id]) {
+                    $result[] = $this->productsCache[$id];
                 }
             }
         }
