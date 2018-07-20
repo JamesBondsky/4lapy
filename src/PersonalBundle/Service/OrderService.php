@@ -516,7 +516,13 @@ class OrderService
      */
     protected function hasOrderByManzana(Order $order): bool
     {
-        return \in_array($order->getManzanaId(), $this->getSiteManzanaOrders($order->getUserId()), true);
+        $filter  = [
+            'USER_ID'         => $order->getUserId(),
+            'PROPERTY.CODE'   => 'MANZANA_NUMBER',
+            'PROPERTY.VALUE' => $order->getManzanaId(),
+        ];
+
+        return (bool)OrderTable::query()->setFilter($filter)->exec()->fetch();
     }
 
     /**
