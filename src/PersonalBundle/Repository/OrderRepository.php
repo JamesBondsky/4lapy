@@ -210,7 +210,13 @@ class OrderRepository extends BaseRepository
             /**
              * @var array $item
              */
-            if (!isset($items[$item['PRODUCT_ID']])) {
+            /** был PRODUCT_XML_ID или PRODUCT_ID, насколько я вижу ключ нигде не используется, а одинаковые товары в корзине быть могут с разделением */
+//            $key = !empty($item['PRODUCT_XML_ID']) ? $item['PRODUCT_XML_ID'] : '';
+//            if (\mb_strlen($key) <= 1) {
+//                $key = $item['PRODUCT_ID'];
+//            }
+            $key = 'ID';
+            if (!isset($items[$key])) {
                 if (empty($item['PROPERTY_SELECTED'])) {
                     if (!empty($item['PROPERTY_SIZE'])) {
                         $res = HLBlockFactory::createTableObject('ClothingSize')::query()
@@ -309,10 +315,7 @@ class OrderRepository extends BaseRepository
                     $item['SUMMARY_PRICE'] = $item['PRICE']*$item['QUANTITY'];
                 }
                 $allSum += (float)$item['SUMMARY_PRICE'];
-                $key = !empty($item['PRODUCT_XML_ID']) ? $item['PRODUCT_XML_ID'] : '';
-                if (\mb_strlen($key) <= 1) {
-                    $key = $item['PRODUCT_ID'];
-                }
+
                 $items[$key] = $item;
             }
         }

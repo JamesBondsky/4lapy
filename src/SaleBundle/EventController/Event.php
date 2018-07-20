@@ -162,6 +162,9 @@ class Event extends BaseServiceHandler
 
         if ($entity instanceof Order) {
             $order = $entity;
+            if ($order->isCanceled()) {
+                return;
+            }
         } elseif ($entity instanceof Payment) {
             /** @var PaymentCollection $collection */
             $collection = $entity->getCollection();
@@ -203,8 +206,11 @@ class Event extends BaseServiceHandler
             return;
         }
 
-        /** @var Payment $payment */
+        /** @var Order $order*/
         $order = $event->getParameter('ENTITY');
+        if ($order->isCanceled()) {
+            return;
+        }
 
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(
@@ -237,6 +243,11 @@ class Event extends BaseServiceHandler
 
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
+
+        // если свойств нет, то это удаление заказа
+        if ($order->getPropertyCollection()->isEmpty()) {
+            return;
+        }
 
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(
@@ -272,6 +283,9 @@ class Event extends BaseServiceHandler
 
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
+        if ($order->isCanceled()) {
+            return;
+        }
 
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(
@@ -309,6 +323,11 @@ class Event extends BaseServiceHandler
 
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
+
+        // если свойств нет, то это удаление заказа
+        if ($order->getPropertyCollection()->isEmpty()) {
+            return;
+        }
 
         if (\in_array(
             $order->getField('STATUS_ID'),
@@ -367,6 +386,13 @@ class Event extends BaseServiceHandler
      * @throws ArgumentTypeException
      */
     public static function unlockOrderTables(BitrixEvent $event) {
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+
+        if ($order->isCanceled()) {
+            return;
+        }
+
         try {
             BitrixApplication::getConnection()->query('UNLOCK TABLES');
         } catch (\Exception $e) {
