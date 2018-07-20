@@ -131,7 +131,7 @@ if ($orderSubscribe) {
                 <?php
 
                 $orderItems = $order->getItems();
-                $countItems = $orderItems !== null ? $order->getItems()->count() : 0;
+                $countItems = $orderItems !== null ? $orderItems->count() : 0;
 
                 if ($countItems > 0) { ?>
                     <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
