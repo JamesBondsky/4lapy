@@ -15,6 +15,7 @@ use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
@@ -356,7 +357,12 @@ class IndexHelper implements LoggerAwareInterface
     public function indexProducts(array $products): bool
     {
         $products = array_filter($products, function ($data) {
-            return $data && $data instanceof Product && $data->isActive() && !$data->getOffers()->isEmpty();
+            return  $data &&
+                $data instanceof Product &&
+                $data->isActive() &&
+                !$data->getOffers()->isEmpty() &&
+                $data->getSection() &&
+                $data->getSection()->getCode() !== Category::UNSORTED_CATEGORY_CODE;
         });
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
