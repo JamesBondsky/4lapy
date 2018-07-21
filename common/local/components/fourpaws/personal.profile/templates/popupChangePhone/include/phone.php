@@ -8,8 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
       data-url="/ajax/personal/profile/changePhone/"
       method="post">
     <input type="hidden" class="js-data-id js-no-valid" name="ID" value="<?= $arResult['CUR_USER']['ID'] ?>">
-    <input type="hidden" name="oldPhone"
-           value="<?= $oldPhone ?>">
     <div class="b-registration__step b-registration__step--one js-phone-change-one">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="confirm">
