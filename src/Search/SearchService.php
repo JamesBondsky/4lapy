@@ -425,22 +425,34 @@ class SearchService implements LoggerAwareInterface
                 50,
                 $queryBuilder
                     ->query()
-                    ->match()
-                    ->setField('offers.PROPERTY_IS_NEW', true)
+                    ->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder
+                            ->query()
+                            ->match()
+                            ->setField('offers.PROPERTY_IS_NEW', true)
+                    )
             )
             // товары с шильдиками +20
             ->addWeightFunction(
                 20,
                 $queryBuilder
                     ->query()
-                    ->multi_match()
-                    ->setFields([
-                        'offers.PROPERTY_IS_POPULAR',
-                        'offers.PROPERTY_IS_HIT',
-                        'offers.PROPERTY_IS_NEW',
-                        'offers.PROPERTY_IS_SALE',
-                    ])
-                    ->setQuery(true)
+                    ->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder
+                            ->query()
+                            ->multi_match()
+                            ->setFields([
+                                'offers.PROPERTY_IS_POPULAR',
+                                'offers.PROPERTY_IS_HIT',
+                                'offers.PROPERTY_IS_NEW',
+                                'offers.PROPERTY_IS_SALE',
+                            ])
+                        ->setQuery(true)
+                    )
             )
             ->setScoreMode('sum')
             ->setBoostMode('sum');
