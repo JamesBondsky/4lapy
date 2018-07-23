@@ -18,6 +18,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
@@ -378,6 +379,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         );
         if ($haveUsers['phone']) {
             return $this->ajaxMess->getHavePhoneError();
+        }
+
+        try {
+            $this->manzanaService->getContactByPhone(
+                PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_MANZANA)
+            );
+            throw new ManzanaServiceContactSearchMoreOneException('User with this phone number already exists');
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            LoggerFactory::create(static::class)->error(
+                sprintf('Failed to change user phone: %s: %s: ', \get_class($e), $e->getMessage()),
+                ['phone' => $phone]
+            );
+            return $this->ajaxMess->getSystemError();
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            // требуется, чтобы контакт в манзане с новым номером телефона не существовал
         }
 
         try {
