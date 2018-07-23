@@ -410,8 +410,14 @@ class SearchService implements LoggerAwareInterface
                 50,
                 $queryBuilder
                     ->query()
-                    ->match()
-                    ->setField('offers.PROPERTY_IS_POPULAR', true)
+                    ->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder
+                            ->query()
+                            ->match()
+                            ->setField('offers.PROPERTY_IS_POPULAR', true)
+                    )
             )
             // товар, имеющий акции +100
             ->addWeightFunction(
