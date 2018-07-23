@@ -2,6 +2,10 @@
     die();
 }
 ?>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NXNPF4Z"
+               height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" data-skip-moving="true">
     (function (d, w, c) {
@@ -30,9 +34,6 @@
         } else { f(); }
     })(document, window, "yandex_metrika_callbacks");
 </script>
-<noscript>
-    <div><img src="https://mc.yandex.ru/watch/18638617" style="position:absolute; left:-9999px;" alt=""/></div>
-</noscript>
 <!-- /Yandex.Metrika counter -->
 <!-- Rating@Mail.ru counter -->
 <script type="text/javascript" data-skip-moving="true">
@@ -56,10 +57,5 @@
         }
     })(document, window, "topmailru-code");
 </script>
-<noscript>
-    <div>
-        <img src="//top-fwz1.mail.ru/counter?id=2935984;js=na" style="border:0;position:absolute;left:-9999px;" alt=""/>
-    </div>
-</noscript>
 <!-- //Rating@Mail.ru counter -->
 <!-- Rating@Mail.ru counter dynamic remarketing appendix -->
