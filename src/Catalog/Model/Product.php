@@ -1970,7 +1970,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $result = false;
         /** @var Offer $offer */
         foreach ($this->getOffers() as $offer) {
-            $result |= $offer->getOldPrice() > $offer->getPrice();
+            if (!($offer->getOldPrice() > $offer->getPrice()) || !$offer->getShare()->isEmpty()) {
+                continue;
+            }
+
+            $result = true;
+            break;
         }
 
         return $result;
