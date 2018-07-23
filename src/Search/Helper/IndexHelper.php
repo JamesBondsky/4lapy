@@ -271,6 +271,10 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_BARCODE'          => ['type' => 'keyword'],
                                 'PROPERTY_KIND_OF_PACKING'  => ['type' => 'keyword'],
                                 'PROPERTY_REWARD_TYPE'      => ['type' => 'keyword'],
+                                'PROPERTY_IS_HIT'           => ['type' => 'boolean'],
+                                'PROPERTY_IS_NEW'           => ['type' => 'boolean'],
+                                'PROPERTY_IS_SALE'          => ['type' => 'boolean'],
+                                'PROPERTY_IS_POPULAR'       => ['type' => 'boolean'],
                                 'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
                                 'currency'                  => ['type' => 'keyword'],
 //                                'prices'                   => [
