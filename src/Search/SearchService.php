@@ -345,8 +345,9 @@ class SearchService implements LoggerAwareInterface
             $boolQuery->addParam('filter', $filterQuery);
         }
 
+        $this->addWeightFunctions($searchQuery);
         if ('' === $searchString) {
-            $this->addWeightFunctions($searchQuery);
+            $searchQuery->setBoostMode('sum');
         }
 
         return $searchQuery;
@@ -379,7 +380,7 @@ class SearchService implements LoggerAwareInterface
     {
         $queryBuilder = new QueryBuilder();
         $query
-            // товары, имеющие остатки и картинки +500
+            // товары, имеющие остатки и картинки
             ->addWeightFunction(
                 500,
                 $queryBuilder
@@ -454,7 +455,6 @@ class SearchService implements LoggerAwareInterface
                         ->setQuery(true)
                     )
             )
-            ->setScoreMode('sum')
-            ->setBoostMode('sum');
+            ->setScoreMode('sum');
     }
 }
