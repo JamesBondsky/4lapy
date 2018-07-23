@@ -30,11 +30,11 @@ use Symfony\Component\Templating\EngineInterface;
 /**
  * Class GoogleEcommerceService
  *
- * @todo add base ecommerce service class
- * @todo add ua settings
- * @todo add ga/gtm render
- * @todo add render configuration
- * @todo move products into preset
+ * @todo    add base ecommerce service class
+ * @todo    add ua settings
+ * @todo    add ga/gtm render
+ * @todo    add render configuration
+ * @todo    move products into preset
  *
  * @package FourPaws\EcommerceBundle\Service
  */
@@ -56,9 +56,9 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     /**
      * GoogleEcommerceService constructor.
      *
-     * @param SerializerInterface $serializer
+     * @param SerializerInterface       $serializer
      * @param ArrayTransformerInterface $arrayTransformer
-     * @param EngineInterface $renderer
+     * @param EngineInterface           $renderer
      */
     public function __construct(SerializerInterface $serializer, ArrayTransformerInterface $arrayTransformer, EngineInterface $renderer)
     {
@@ -69,7 +69,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param object $data
-     * @param bool $addScriptTag
+     * @param bool   $addScriptTag
      *
      * @return string
      *
@@ -86,7 +86,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     /**
      * @param object $data
      * @param string $presetName
-     * @param bool $addScriptTag
+     * @param bool   $addScriptTag
      *
      * @return string
      *
@@ -102,10 +102,11 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ArrayMapperInterface $mapper
-     * @param array $data
-     * @param string $type
+     * @param array                $data
+     * @param string               $type
      *
-     * @param string $event
+     * @param string               $event
+     *
      * @return GoogleEcommerce
      */
     public function buildPromotionFromArray(ArrayMapperInterface $mapper, array $data, string $type, string $event = ''): GoogleEcommerce
@@ -135,7 +136,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ProductCollection $collection
-     * @param string $list
+     * @param string            $list
      *
      * @return ArrayCollection
      */
@@ -144,20 +145,23 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         $productCollection = new ArrayCollection();
 
         $collection->map(function (ProductModel $product) use ($productCollection, $list) {
-            $product->getOffers()->map(function (Offer $offer) use ($productCollection, $product, $list) {
-                $productCollection->add(
-                    (new Product())
-                        ->setId($offer->getXmlId())
-                        ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
-                        ->setBrand($product->getBrandName())
-                        ->setPrice($offer->getPrice())
-                        ->setCategory(\implode('|', \array_reverse($product->getFullPathCollection()->map(function (Category $category) {
-                            return \preg_replace('~\'|"~', '', $category->getName());
-                        })->toArray())))
-                        ->setList($list)
-                        ->setPosition($productCollection->count() + 1)
-                );
-            });
+            $product->getOffers()
+                ->map(function (Offer $offer) use ($productCollection, $product, $list) {
+                    $productCollection->add(
+                        (new Product())
+                            ->setId($offer->getXmlId())
+                            ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
+                            ->setBrand($product->getBrandName())
+                            ->setPrice($offer->getPrice())
+                            ->setCategory(\implode('|', \array_reverse($product->getFullPathCollection()
+                                ->map(function (Category $category) {
+                                    return \preg_replace('~\'|"~', '', $category->getName());
+                                })
+                                ->toArray())))
+                            ->setList($list)
+                            ->setPosition($productCollection->count() + 1)
+                    );
+                });
         });
 
         return $productCollection;
@@ -165,7 +169,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param OfferCollection $collection
-     * @param string $list
+     * @param string          $list
      *
      * @return ArrayCollection
      */
@@ -178,11 +182,15 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                 (new Product())
                     ->setId($offer->getId())
                     ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
-                    ->setBrand($offer->getProduct()->getBrandName())
+                    ->setBrand($offer->getProduct()
+                        ->getBrandName())
                     ->setPrice($offer->getPrice())
-                    ->setCategory(\implode('|', \array_reverse($offer->getProduct()->getFullPathCollection()->map(function (Category $category) {
-                        return \preg_replace('~\'|"~', '', $category->getName());
-                    })->toArray())))
+                    ->setCategory(\implode('|', \array_reverse($offer->getProduct()
+                        ->getFullPathCollection()
+                        ->map(function (Category $category) {
+                            return \preg_replace('~\'|"~', '', $category->getName());
+                        })
+                        ->toArray())))
                     ->setList($list ?: null)
                     ->setPosition($productCollection->count() + 1)
             );
@@ -193,22 +201,22 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param ProductCollection $collection
-     * @param string $list
+     * @param string            $list
      *
      * @return GoogleEcommerce
      */
     public function buildImpressionsFromProductCollection(ProductCollection $collection, string $list = ''): GoogleEcommerce
     {
-        $ecommerce = (new GoogleEcommerce())->setEcommerce(new Ecommerce());
-        $ecommerce->getEcommerce()
-            ->setCurrencyCode('RUB')
-            ->setImpressions($this->buildProductsFromProductsCollection($collection, $list));
-
-        return $ecommerce;
+        return (new GoogleEcommerce())
+            ->setEvent('Impression')
+            ->setEcommerce((new Ecommerce())
+                ->setCurrencyCode('RUB')
+                ->setImpressions($this->buildProductsFromProductsCollection($collection, $list))
+            );
     }
 
     /**
-     * @param Offer $offer
+     * @param Offer  $offer
      * @param string $list
      *
      * @return GoogleEcommerce
@@ -219,6 +227,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         $offerCollection->add($offer);
 
         return (new GoogleEcommerce())
+            ->setEvent('productDetails')
             ->setEcommerce(
                 (new Ecommerce())
                     ->setCurrencyCode('RUB')
@@ -234,7 +243,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
-     * @param Offer $offer
+     * @param Offer  $offer
      * @param string $list
      *
      * @return GoogleEcommerce
@@ -261,7 +270,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     }
 
     /**
-     * @param array $offerList
+     * @param array  $offerList
      * @param string $list
      *
      * @return GoogleEcommerce
@@ -316,6 +325,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
 
     /**
      * @param string $interfaceClass
+     *
      * @return PresetInterface
      *
      * @throws MainInvalidArgumentException
