@@ -300,12 +300,20 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                         /** @var Item $pti */
                         foreach ($paymentTaskItems[$xmlId] as $i => $pti) {
                             $price = $pti->getPrice() * 100;
-                            $sum = $pti->getSumPrice() * 100;
 
-                            $item->getQuantity()->setValue((int)$pti->getQuantity());
-                            $item->setTotal(round($sum));
+                            $newQuantity = $pti->getQuantity() > $item->getQuantity()->getValue()
+                                ? $item->getQuantity()->getValue()
+                                : $pti->getQuantity();
+                            $remainingQuantity = $pti->getQuantity() - $newQuantity;
+                            $item->getQuantity()->setValue((int)$newQuantity);
+                            $item->setTotal(round($pti->getPrice() * $newQuantity * 100));
                             $item->setPrice(round($price));
-                            unset($paymentTaskItems[$xmlId][$i]);
+
+                            if ($remainingQuantity > 0) {
+                                $pti->setQuantity($remainingQuantity);
+                            } else {
+                                unset($paymentTaskItems[$xmlId][$i]);
+                            }
                             break;
                         }
                     }
