@@ -330,19 +330,26 @@ class SearchService implements LoggerAwareInterface
      * @param FilterCollection $filters
      * @param string           $searchString
      *
-     * @return BoolQuery
+     * @return AbstractQuery
      */
-    public function getFullQueryRule(FilterCollection $filters, string $searchString = ''): BoolQuery
+    public function getFullQueryRule(FilterCollection $filters, string $searchString = ''): AbstractQuery
     {
+        $searchQuery = new Query\FunctionScore();
+
         $boolQuery = $this->getQueryRule($searchString);
+        $searchQuery->setQuery($boolQuery);
 
         /** @var AbstractQuery[] $filterSet */
         $filterSet = $this->getFilterRule($filters);
         foreach ($filterSet as $filterQuery) {
-            $boolQuery->addFilter($filterQuery);
+            $boolQuery->addParam('filter', $filterQuery);
         }
 
-        return $boolQuery;
+        if ('' === $searchString) {
+            $this->addWeightFunctions($searchQuery);
+        }
+
+        return $searchQuery;
     }
 
     /**
@@ -363,5 +370,71 @@ class SearchService implements LoggerAwareInterface
         }
 
         return $this->aggsHelper;
+    }
+
+    /**
+     * @param Query\FunctionScore $query
+     */
+    protected function addWeightFunctions(Query\FunctionScore $query): void
+    {
+        $queryBuilder = new QueryBuilder();
+        $query
+            // товары, имеющие остатки и картинки +500 @todo
+//                ->addWeightFunction(
+//                    500,
+//                    $queryBuilder
+//                        ->query()
+//                        ->match()
+//                        ->setField('hasImagesAndStocks', true)
+//                )
+            // собственная торговая марка +50
+            ->addWeightFunction(
+                50,
+                $queryBuilder
+                    ->query()
+                    ->match()
+                    ->setField('PROPERTY_STM', true)
+
+            )
+            // популярные товары +50
+            ->addWeightFunction(
+                50,
+                $queryBuilder
+                    ->query()
+                    ->match()
+                    ->setField('offers.PROPERTY_IS_POPULAR', true)
+            )
+            // товар, имеющий акции +100
+            ->addWeightFunction(
+                100,
+                $queryBuilder
+                    ->query()
+                    ->match()
+                    ->setField('hasActions', true)
+            )
+            // новинки +50
+            ->addWeightFunction(
+                50,
+                $queryBuilder
+                    ->query()
+                    ->match()
+                    ->setField('offers.PROPERTY_IS_NEW', true)
+            )
+            // товары с шильдиками +20
+            ->addWeightFunction(
+                20,
+                $queryBuilder
+                    ->query()
+                    ->multi_match()
+                    ->setFields([
+                        'offers.PROPERTY_IS_POPULAR',
+                        'offers.PROPERTY_IS_HIT',
+                        'offers.PROPERTY_IS_NEW',
+                        'offers.PROPERTY_IS_SALE',
+                    ])
+                    ->setQuery(true)
+            )
+            ->setScoreMode('sum')
+            ->setBoostMode('sum');
     }
 }

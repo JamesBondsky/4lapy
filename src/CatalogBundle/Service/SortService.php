@@ -43,6 +43,7 @@ class SortService
                 ->withName('популярности')
                 ->withRule([
                     'SORT' => ['order' => 'asc'],
+                    '_score' => ['order' => 'desc'],
                     'ID' => ['order' => 'desc']
                 ]),
 
@@ -64,6 +65,7 @@ class SortService
                         //                            ],
                         //
                         //                        ],
+                        '_score' => ['order' => 'desc']
                     ]
                 ),
 
@@ -85,6 +87,7 @@ class SortService
                         //                            ],
                         //
                         //                        ],
+                        '_score' => ['order' => 'desc']
                     ]
                 ),
         ];
