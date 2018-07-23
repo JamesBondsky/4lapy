@@ -340,6 +340,8 @@ class IndexHelper implements LoggerAwareInterface
                         'PROPERTY_FEED_SPECIFICATION'      => ['type' => 'keyword'],
                         'PROPERTY_PHARMA_GROUP'            => ['type' => 'keyword'],
                         'hasActions'                       => ['type' => 'boolean'],
+                        'hasImages'                        => ['type' => 'boolean'],
+                        'hasStocks'                        => ['type' => 'boolean'],
                         'deliveryAvailability'             => ['type' => 'keyword'],
                     ],
                 ],

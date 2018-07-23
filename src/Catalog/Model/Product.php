@@ -566,6 +566,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $hasActions;
 
     /**
+     * @var bool
+     * @Type("bool")
+     * @Accessor(getter="hasImages")
+     * @Groups({"elastic"})
+     */
+    protected $hasImages;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Accessor(getter="hasStocks")
+     * @Groups({"elastic"})
+     */
+    protected $hasStocks;
+
+    /**
      * @var array
      * @Type("array<string>")
      * @Accessor(getter="getFullDeliveryAvailabilityForFilter")
@@ -2132,5 +2148,44 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->fullPathCollection;
+    }
+
+    /**
+     * @return bool
+     * @throws ApplicationCreateException
+     */
+    public function hasStocks(): bool
+    {
+        $result = false;
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            if ($offer->getAllStocks()->isEmpty()) {
+                continue;
+            }
+
+            $result = true;
+            break;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasImages(): bool
+    {
+        $result = false;
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            if ($offer->getImages()->isEmpty()) {
+                continue;
+            }
+
+            $result = true;
+            break;
+        }
+
+        return $result;
     }
 }

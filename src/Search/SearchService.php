@@ -379,14 +379,23 @@ class SearchService implements LoggerAwareInterface
     {
         $queryBuilder = new QueryBuilder();
         $query
-            // товары, имеющие остатки и картинки +500 @todo
-//                ->addWeightFunction(
-//                    500,
-//                    $queryBuilder
-//                        ->query()
-//                        ->match()
-//                        ->setField('hasImagesAndStocks', true)
-//                )
+            // товары, имеющие остатки и картинки +500
+            ->addWeightFunction(
+                500,
+                $queryBuilder
+                    ->query()
+                    ->bool()
+                    ->addMust(
+                        $queryBuilder
+                            ->query()
+                            ->match('hasImages', true)
+                    )
+                    ->addMust(
+                        $queryBuilder
+                            ->query()
+                            ->match('hasStocks', true)
+                    )
+            )
             // собственная торговая марка +50
             ->addWeightFunction(
                 50,
@@ -394,7 +403,6 @@ class SearchService implements LoggerAwareInterface
                     ->query()
                     ->match()
                     ->setField('PROPERTY_STM', true)
-
             )
             // популярные товары +50
             ->addWeightFunction(
