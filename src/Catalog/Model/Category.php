@@ -29,6 +29,8 @@ use WebArch\BitrixCache\BitrixCache;
 
 class Category extends IblockSection implements FilterInterface
 {
+    public const UNSORTED_CATEGORY_CODE = 'unsorted';
+
     use FilterTrait;
 
     /**

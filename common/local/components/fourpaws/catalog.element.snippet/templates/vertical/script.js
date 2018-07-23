@@ -8,19 +8,19 @@
         this.cookie_domain = params.cookieDomain || '';
         this.current_server_time = params.serverTime || '';
 
-        if (typeof BX != 'undefined') {
+        if (typeof BX !== 'undefined') {
             if (!this.cookie_prefix) {
-                if (typeof BX.cookie_prefix != 'undefined') {
+                if (typeof BX.cookie_prefix !== 'undefined') {
                     this.cookie_prefix = BX.cookie_prefix;
                 }
             }
             if (!this.cookie_domain) {
-                if (typeof BX.cookie_domain != 'undefined') {
+                if (typeof BX.cookie_domain !== 'undefined') {
                     this.cookie_domain = BX.cookie_domain;
                 }
             }
             if (!this.current_server_time) {
-                if (typeof BX.current_server_time != 'undefined') {
+                if (typeof BX.current_server_time !== 'undefined') {
                     this.current_server_time = BX.current_server_time;
                 }
             }
@@ -90,7 +90,7 @@
             while (i--) {
                 cItem = cItems[i].split('-');
 
-                if (cItem[0] == this.product.id) {
+                if (cItem[0] === this.product.id) {
                     // it's already in recommendations, update the date
                     cItem = cItems[i].split('-');
 

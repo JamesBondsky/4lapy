@@ -18,6 +18,9 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -54,6 +57,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     private $ajaxMess;
 
     /**
+     * @var ManzanaService
+     */
+    private $manzanaService;
+
+    /**
      * AutoloadingIssuesInspection constructor.
      *
      * @param null|\CBitrixComponent $component
@@ -68,6 +76,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
             $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
             $this->ajaxMess = $container->get('ajax.mess');
+            $this->manzanaService = $container->get('manzana.service');
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             try {
                 $logger = LoggerFactory::create('component');
@@ -190,12 +199,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return $this->ajaxMess->getSystemError();
         }
         $phone = $request->get('phone');
-        $oldPhone = $request->get('oldPhone', '');
+        $oldPhone = $curUser->getPersonalPhone();
         try {
             $phone = PhoneHelper::normalizePhone($phone);
-            if (!empty($oldPhone)) {
-                $oldPhone = PhoneHelper::normalizePhone($oldPhone);
-            }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
@@ -224,6 +230,17 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         ];
 
         try {
+            if (!empty($oldPhone)) {
+                try {
+                    $contact = $this->manzanaService->getContactByPhone(
+                        PhoneHelper::formatPhone($oldPhone, PhoneHelper::FORMAT_MANZANA)
+                    );
+                    $_SESSION['MANZANA_CONTACT_ID'] = $contact->contactId;
+                } catch (ManzanaServiceContactSearchNullException $e) {
+                    // не найден, ну и ладно
+                }
+            }
+
             /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
             if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
                 TaggedCacheHelper::clearManagedCache(['personal:profile:' . $userId]);
@@ -362,6 +379,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         );
         if ($haveUsers['phone']) {
             return $this->ajaxMess->getHavePhoneError();
+        }
+
+        try {
+            $this->manzanaService->getContactByPhone(
+                PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_MANZANA)
+            );
+            throw new ManzanaServiceContactSearchMoreOneException('User with this phone number already exists');
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            LoggerFactory::create(static::class)->error(
+                sprintf('Failed to change user phone: %s: %s: ', \get_class($e), $e->getMessage()),
+                ['phone' => $phone]
+            );
+            return $this->ajaxMess->getSystemError();
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            // требуется, чтобы контакт в манзане с новым номером телефона не существовал
         }
 
         try {
