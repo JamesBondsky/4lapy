@@ -21,7 +21,7 @@ use FourPaws\Catalog\Model\Category;
 foreach (array_values($childCategories) as $index => $childCategory) {
     ?>
     <section class="b-common-section" xmlns="http://www.w3.org/1999/html">
-        <div class="b-common-section__title-box b-common-section__title-box--catalog">
+        <div class="b-common-section__title-box b-common-section__title-box--catalog" id="<?= $childCategory->getCode() ?>">
             <h2 class="b-title b-title--catalog">
                 <a href="<?= $childCategory->getSectionPageUrl() ?>"
                    title="<?= htmlspecialcharsbx($childCategory->getName()) ?>">
@@ -42,7 +42,7 @@ foreach (array_values($childCategories) as $index => $childCategory) {
             } catch (FileNotFoundException $e) {
             }
         } ?>
-                <div class="b-common-item b-common-item--catalog js-product-item">
+                <div class="b-common-item b-common-item--catalog js-product-item" id="<?= $childChildCategory->getCode() ?>">
                     <a class="b-common-item__link" href="<?= $childChildCategory->getSectionPageUrl() ?>"
                        title="<?= $childChildCategory->getName() ?>">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
