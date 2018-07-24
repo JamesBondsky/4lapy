@@ -162,7 +162,7 @@ class FastOrderController extends Controller
                 $temporaryItem = clone $basketItem;
                 $temporaryItem->setFieldNoDemand('QUANTITY', $quantity);
                 $addData['command'] = $this->ecommerceService->renderScript(
-                    $this->salePreset->createProductsFromBitrixBasketItem($temporaryItem),
+                    $this->salePreset->createAddFromBasketItem($temporaryItem),
                     false
                 );
 
