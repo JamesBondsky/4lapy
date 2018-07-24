@@ -8,8 +8,15 @@ namespace FourPaws\UserBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
+use CBitrixComponent;
+use Exception;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPawsAuthFormComponent;
+use FourPawsRegisterComponent;
+use InvalidArgumentException;
+use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -27,9 +34,13 @@ class AuthController extends Controller
     /** @var AjaxMess */
     private $ajaxMess;
 
-    public function __construct(
-        AjaxMess $ajaxMess
-    ) {
+    /**
+     * AuthController constructor.
+     *
+     * @param AjaxMess $ajaxMess
+     */
+    public function __construct(AjaxMess $ajaxMess)
+    {
         $this->ajaxMess = $ajaxMess;
     }
 
@@ -38,23 +49,29 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws InvalidArgumentException
      */
     public function loginAction(Request $request): JsonResponse
     {
         $action = $request->get('action', '');
-        \CBitrixComponent::includeComponentClass('fourpaws:auth.form');
+        CBitrixComponent::includeComponentClass('fourpaws:auth.form');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         try {
-            $loginClass = new \FourPawsAuthFormComponent();
-        } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            $loginClass = new FourPawsAuthFormComponent();
+        } catch (SystemException | ServiceNotFoundException | ServiceCircularReferenceException | RuntimeException | Exception $e) {
             return $this->ajaxMess->getSystemError();
         }
+
         switch ($action) {
             case 'login':
-                return $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''),
+                $response = $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''),
                     $request->get('backurl', ''));
+
+                if ($response instanceof JsonErrorResponse) {
+                    //$response->setStatusCode(418, 'I’m a teapot');
+                }
+
+                return $response;
                 break;
             case 'resendSms':
                 return $loginClass->ajaxResendSms($request->get('phone', ''));
@@ -87,13 +104,11 @@ class AuthController extends Controller
     {
         $action = $request->get('action');
 
-        \CBitrixComponent::includeComponentClass('fourpaws:register');
+        CBitrixComponent::includeComponentClass('fourpaws:register');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         try {
-            $registerClass = new \FourPawsRegisterComponent();
-        } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            $registerClass = new FourPawsRegisterComponent();
+        } catch (SystemException | ServiceNotFoundException | ServiceCircularReferenceException | RuntimeException | Exception $e) {
             return $this->ajaxMess->getSystemError();
         }
 
@@ -125,13 +140,14 @@ class AuthController extends Controller
     {
         $action = $request->get('action', '');
 
-        \CBitrixComponent::includeComponentClass('fourpaws:forgotpassword');
+        CBitrixComponent::includeComponentClass('fourpaws:forgotpassword');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         try {
             $forgotPasswordClass = new \FourPawsForgotPasswordFormComponent();
-        } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+        } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|RuntimeException|Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+
             return $this->ajaxMess->getSystemError();
         }
         switch ($action) {
