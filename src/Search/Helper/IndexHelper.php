@@ -15,6 +15,7 @@ use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
@@ -270,6 +271,10 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_BARCODE'          => ['type' => 'keyword'],
                                 'PROPERTY_KIND_OF_PACKING'  => ['type' => 'keyword'],
                                 'PROPERTY_REWARD_TYPE'      => ['type' => 'keyword'],
+                                'PROPERTY_IS_HIT'           => ['type' => 'boolean'],
+                                'PROPERTY_IS_NEW'           => ['type' => 'boolean'],
+                                'PROPERTY_IS_SALE'          => ['type' => 'boolean'],
+                                'PROPERTY_IS_POPULAR'       => ['type' => 'boolean'],
                                 'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
                                 'currency'                  => ['type' => 'keyword'],
 //                                'prices'                   => [
@@ -335,6 +340,8 @@ class IndexHelper implements LoggerAwareInterface
                         'PROPERTY_FEED_SPECIFICATION'      => ['type' => 'keyword'],
                         'PROPERTY_PHARMA_GROUP'            => ['type' => 'keyword'],
                         'hasActions'                       => ['type' => 'boolean'],
+                        'hasImages'                        => ['type' => 'boolean'],
+                        'hasStocks'                        => ['type' => 'boolean'],
                         'deliveryAvailability'             => ['type' => 'keyword'],
                     ],
                 ],
@@ -356,7 +363,12 @@ class IndexHelper implements LoggerAwareInterface
     public function indexProducts(array $products): bool
     {
         $products = array_filter($products, function ($data) {
-            return $data && $data instanceof Product && $data->isActive() && !$data->getOffers()->isEmpty();
+            return  $data &&
+                $data instanceof Product &&
+                $data->isActive() &&
+                !$data->getOffers()->isEmpty() &&
+                $data->getSection() &&
+                $data->getSection()->getCode() !== Category::UNSORTED_CATEGORY_CODE;
         });
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);

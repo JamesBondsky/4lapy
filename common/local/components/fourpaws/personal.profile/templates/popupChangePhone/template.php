@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <h1 class="b-title b-title--h1 b-title--registration">Изменение телефона</h1>
         </header>
         <div class="b-registration__form">
-            <?php $oldPhone = $phone = $arResult['CUR_USER']['PERSONAL_PHONE'];
+            <?php $phone = $arResult['CUR_USER']['PERSONAL_PHONE'];
             require_once 'include/phone.php'; ?>
         </div>
     </div>

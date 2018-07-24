@@ -40,7 +40,7 @@ class SalePreset
 
     /**
      * @param Basket $basket
-     * @param int $step
+     * @param int    $step
      * @param string $option
      *
      * @return GoogleEcommerce
@@ -117,20 +117,22 @@ class SalePreset
     {
         $currency = $basketItemCollection[0] ? $basketItemCollection[0]->getCurrency() : 'RUB';
 
-        return (new GoogleEcommerce())->setEcommerce(
-            (new Ecommerce())
-                ->setCurrencyCode($currency)
-                ->setAdd(
-                    (new Action())
-                        ->setProducts(
-                            $this->createProductsFromBitrixBasketItemCollection($basketItemCollection)
-                        )
-                )
-        );
+        return (new GoogleEcommerce())
+            ->setEvent('addToCart')
+            ->setEcommerce(
+                (new Ecommerce())
+                    ->setCurrencyCode($currency)
+                    ->setAdd(
+                        (new Action())
+                            ->setProducts(
+                                $this->createProductsFromBitrixBasketItemCollection($basketItemCollection)
+                            )
+                    )
+            );
     }
 
     /**
-     * @param Order $order
+     * @param Order  $order
      * @param string $affiliation
      *
      * @return GoogleEcommerce
@@ -211,11 +213,12 @@ class SalePreset
     {
         $productCollection = new ArrayCollection();
 
-        $this->enrichBasketCollection($basket)->map(function (array $item) use ($productCollection) {
-            $productCollection->add(
-                $this->arrayTransformer->fromArray($item, Product::class)
-            );
-        });
+        $this->enrichBasketCollection($basket)
+            ->map(function (array $item) use ($productCollection) {
+                $productCollection->add(
+                    $this->arrayTransformer->fromArray($item, Product::class)
+                );
+            });
 
         return $productCollection;
     }
@@ -252,16 +255,18 @@ class SalePreset
             $basketArrayCollection->add(
                 \array_filter([
                     'basketId' => $basketItem->getId(),
-                    'id' => $offer->getXmlId(),
-                    'price' => $basketItem->getPrice(),
+                    'id'       => $offer->getXmlId(),
+                    'price'    => $basketItem->getPrice(),
                     'discount' => $basketItem->getDiscountPrice(),
-                    'tax' => $basketItem->getVat(),
+                    'tax'      => $basketItem->getVat(),
                     'quantity' => $basketItem->getQuantity(),
-                    'name' => $offer ? $offer->getName() : $basketItem->getField('NAME'),
-                    'brand' => $product ? $product->getBrandName() : '',
-                    'category' => $product ? \implode('|', \array_reverse($product->getFullPathCollection()->map(function (Category $category) {
-                        return $category->getName();
-                    })->toArray())) : '',
+                    'name'     => $offer ? $offer->getName() : $basketItem->getField('NAME'),
+                    'brand'    => $product ? $product->getBrandName() : '',
+                    'category' => $product ? \implode('|', \array_reverse($product->getFullPathCollection()
+                        ->map(function (Category $category) {
+                            return $category->getName();
+                        })
+                        ->toArray())) : '',
                 ])
             );
         }

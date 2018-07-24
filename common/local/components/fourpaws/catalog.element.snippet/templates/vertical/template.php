@@ -144,7 +144,7 @@ if ($mainCombinationType === 'SIZE') {
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
                             $addAttr .= ' data-onclick="' . $getOnClick($offer) . '"';
-                            $addAttr .= ' data-oldprice="' . ($offer->getOldPriceCeil() !== $offer->getCatalogPrice() ? $offer->getOldPriceCeil() : ''). '"';
+                            $addAttr .= ' data-oldprice="' . ($offer->getCatalogOldPrice() !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : ''). '"';
                             $addAttr .= ' data-discount="' . ($offer->getDiscountPrice() ?: '') . '"';
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
@@ -169,7 +169,7 @@ if ($mainCombinationType === 'SIZE') {
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                               data-oldprice="<?= ($currentOffer->getOldPriceCeil() !== $currentOffer->getCatalogPrice() ? $currentOffer->getOldPriceCeil() : '') ?>"
+                               data-oldprice="<?= ($currentOffer->getCatalogOldPrice() !== $currentOffer->getCatalogPrice() ? $currentOffer->getCatalogOldPrice() : '') ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
                                data-pickup="<?= $currentOffer->isByRequest() ? $pickupText : '' ?>"

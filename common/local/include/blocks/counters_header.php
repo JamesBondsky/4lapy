@@ -4,8 +4,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 } ?>
 <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-30730607-1" data-skip-moving="true"></script>
+<?php /*<script async src="https://www.googletagmanager.com/gtag/js?id=UA-30730607-1" data-skip-moving="true"></script>*/ ?>
 <script data-skip-moving="true">
+    window.dataLayer = window.dataLayer || [];
+
     (function (w, d, s, l, i) {
         w[l] = w[l] || [];
         w[l].push({
@@ -20,13 +22,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-NXNPF4Z');
 
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
+    /* function gtag() {
         dataLayer.push(arguments);
     }
 
     gtag('js', new Date());
 
-    gtag('config', 'UA-30730607-1');
+    gtag('config', 'UA-30730607-1'); */
 </script>

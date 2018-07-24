@@ -266,8 +266,11 @@ class Event extends BaseServiceHandler
 
             $manzanaService = $container->get('manzana.service');
 
-            /** contactId получим в очереди */
             $client = new Client();
+            if ($_SESSION['MANZANA_CONTACT_ID']) {
+                $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
+                unset($_SESSION['MANZANA_CONTACT_ID']);
+            }
 
             /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
             $userService->setClientPersonalDataByCurUser($client, $user);
