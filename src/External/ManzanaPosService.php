@@ -14,6 +14,7 @@ use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
+use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\ArithmeticHelper;
@@ -307,6 +308,10 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             }
         } else {
             $result = $this->results[$cacheKey];
+        }
+
+        if ($result->isErrorResponse()) {
+            throw new ExecuteErrorException($result->getMessage(), $result->getReturnCode());
         }
 
         return $result;

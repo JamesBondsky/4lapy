@@ -178,7 +178,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?>"
-                                   data-oldprice="<?= $offer->getOldPriceCeil() ?>"
+                                   data-oldprice="<?= $offer->getCatalogOldPrice() ?>"
                                    data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-onclick="<?= $getOnClick($offer) ?>"
@@ -189,7 +189,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                             <li class="b-weight-container__item" style="display: none">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price active-link"
-                                   data-oldprice="<?= $offer->getOldPriceCeil() ?>"
+                                   data-oldprice="<?= $offer->getCatalogOldPrice() ?>"
                                    data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"

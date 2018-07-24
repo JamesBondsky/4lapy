@@ -48,6 +48,16 @@ class Product
     protected $category;
 
     /**
+     * Тип товара
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var string
+     */
+    protected $variant;
+
+    /**
      * Список, в котором показывается товар
      *
      * @Serializer\Type("string")
@@ -241,6 +251,26 @@ class Product
     public function setQuantity(int $quantity): self
     {
         $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVariant(): string
+    {
+        return $this->variant;
+    }
+
+    /**
+     * @param string $variant
+     *
+     * @return $this
+     */
+    public function setVariant(string $variant): self
+    {
+        $this->variant = $variant;
 
         return $this;
     }

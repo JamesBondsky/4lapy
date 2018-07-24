@@ -2,8 +2,6 @@
 
 namespace FourPaws\App\Response;
 
-use FourPaws\App\Model\ResponseContent\JsonContent;
-
 /**
  * Class JsonErrorResponse
  *
@@ -24,7 +22,7 @@ class JsonErrorResponse extends JsonResponse
 
         return parent::create($content, $status, $headers);
     }
-    
+
     /**
      * Создаётся JsonResponse с предустановленным JsonContent, data и success = false
      *
@@ -40,7 +38,8 @@ class JsonErrorResponse extends JsonResponse
         array $data = [],
         int $status = 200,
         array $options = []
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $content = static::buildContent($message, false, $data, $options);
 
         return parent::create($content, $status);

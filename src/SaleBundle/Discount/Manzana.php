@@ -136,6 +136,7 @@ class Manzana implements LoggerAwareInterface
                 $item->setFieldsNoDemand([
                     'PRICE' => $price,
                     'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
+                    'CUSTOM_PRICE' => 'Y'
                 ]);
             }
             $this->log()->error(

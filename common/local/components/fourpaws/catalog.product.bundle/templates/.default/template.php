@@ -59,8 +59,8 @@ $bundle = $arResult['BUNDLE']; ?>
                                 if ($weight > 0) { ?>
                                     <span class="b-advice__weight"><?= WordHelper::showWeight($weight) ?></span>
                                 <?php }
-                                $oldPrice = $offer->getOldPrice();
-                                $price = $offer->getPrice();
+                                $oldPrice = $offer->getCatalogOldPrice();
+                                $price = $offer->getCatalogPrice();
                                 if ($oldPrice > 0 && $oldPrice > $price) {
                                     ?>
                                     <span class="b-advice__old-price">
