@@ -1148,11 +1148,13 @@ class Offer extends IblockElement
     }
 
     /**
+     * Отображаемая цена без скидки в каталоге
+     *
      * @return float
      */
-    public function getOldPriceCeil(): float
+    public function getCatalogOldPrice(): float
     {
-        return ceil($this->getOldPrice());
+        return floor($this->getOldPrice());
     }
 
     /**
