@@ -236,6 +236,10 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
             $sReturn = $arItem['SECTION_HREF']['URL'];
         }
 
+        if ($arItem['SECTION_ANCHOR'] && $arItem['SECTION_ANCHOR']['URL']) {
+            $sReturn .= '#' . $arItem['SECTION_ANCHOR']['URL'];
+        }
+
         return $sReturn;
     }
 
@@ -323,6 +327,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 
         $arRelElements = [];
         $arRelSections = [];
+        $arAnchorSections = [];
         $dbItems = \CIBlockSection::GetList(
             [
                 'LEFT_MARGIN' => 'ASC' // !!!
@@ -343,6 +348,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
             ]
         );
         while ($arItem = $dbItems->getNext(true, false)) {
+
             $this->arMenuIBlockSectionsTree[$arItem['ID']] = [
                 'ID' => $arItem['ID'],
                 'CODE' => $arItem['CODE'],
@@ -356,6 +362,8 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
                 'ELEMENT_HREF' => [], // заполняются ниже
                 'SECTION_HREF_ID' => isset($arItem['UF_SECTION_HREF']) ? (int)$arItem['UF_SECTION_HREF'] : 0,
                 'SECTION_HREF' => [], // заполняются ниже
+                'SECTION_ANCHOR_ID' => isset($arItem['UF_SECTION_ANCHOR']) ? (int)$arItem['UF_SECTION_ANCHOR'] : 0,
+                'SECTION_ANCHOR' => [], // заполняются ниже
                 'TARGET_BLANK' => isset($arItem['UF_TARGET_BLANK']) ? (int)$arItem['UF_TARGET_BLANK'] : 0,
                 'IS_BRAND_MENU'  => isset($arItem['UF_BRAND_MENU']) ? (int)$arItem['UF_BRAND_MENU'] : 0,
             ];
@@ -366,13 +374,16 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
             if ($this->arMenuIBlockSectionsTree[$arItem['ID']]['SECTION_HREF_ID'] > 0) {
                 $arRelSections[$this->arMenuIBlockSectionsTree[$arItem['ID']]['SECTION_HREF_ID']][] = $arItem['ID'];
             }
+            if ($this->arMenuIBlockSectionsTree[$arItem['ID']]['SECTION_ANCHOR_ID'] > 0) {
+                $arAnchorSections[$this->arMenuIBlockSectionsTree[$arItem['ID']]['SECTION_ANCHOR_ID']][] = $arItem['ID'];
+            }
         }
 
         // заполнение данными связанных элементов
         $this->arMenuIBlockSectionsTree = $this->completeRelElements($this->arMenuIBlockSectionsTree, $arRelElements);
 
         // заполнение данными связанных секций
-        $this->arMenuIBlockSectionsTree = $this->completeRelSections($this->arMenuIBlockSectionsTree, $arRelSections);
+        $this->arMenuIBlockSectionsTree = $this->completeRelSections($this->arMenuIBlockSectionsTree, $arRelSections, $arAnchorSections);
     }
 
     /**
@@ -400,6 +411,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 
         $arRelElements = [];
         $arRelSections = [];
+        $arAnchorSections = [];
         $dbItems = \CIBlockElement::GetList(
             [
                 'SORT' => 'ASC',
@@ -435,6 +447,8 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
                 'ELEMENT_HREF' => [], // заполняются ниже
                 'SECTION_HREF_ID' => isset($arItem['PROPERTY_SECTION_HREF_VALUE']) ? (int)$arItem['PROPERTY_SECTION_HREF_VALUE'] : 0,
                 'SECTION_HREF' => [], // заполняются ниже
+                'SECTION_ANCHOR_ID' => isset($arItem['UF_SECTION_ANCHOR']) ? (int)$arItem['UF_SECTION_ANCHOR'] : 0,
+                'SECTION_ANCHOR' => [], // заполняются ниже
                 'TARGET_BLANK' => isset($arItem['PROPERTY_TARGET_BLANK_VALUE']) ? (int)$arItem['PROPERTY_TARGET_BLANK_VALUE'] : 0,
             ];
 
@@ -444,13 +458,16 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
             if ($this->arMenuIBlockElements[$arItem['ID']]['SECTION_HREF_ID'] > 0) {
                 $arRelSections[$this->arMenuIBlockElements[$arItem['ID']]['SECTION_HREF_ID']][] = $arItem['ID'];
             }
+            if ($this->arMenuIBlockElements[$arItem['ID']]['SECTION_ANCHOR_ID'] > 0) {
+                $arAnchorSections[$this->arMenuIBlockElements[$arItem['ID']]['SECTION_ANCHOR_ID']][] = $arItem['ID'];
+            }
         }
 
         // заполнение данными связанных элементов
         $this->arMenuIBlockElements = $this->completeRelElements($this->arMenuIBlockElements, $arRelElements);
 
         // заполнение данными связанных секций
-        $this->arMenuIBlockElements = $this->completeRelSections($this->arMenuIBlockElements, $arRelSections);
+        $this->arMenuIBlockElements = $this->completeRelSections($this->arMenuIBlockElements, $arRelSections, $arAnchorSections);
     }
 
 
@@ -498,14 +515,15 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
     /**
      * @param array $arData
      * @param array $arRelSections
+     * @param array $arAnchorSections
      * @return array
      */
-    private function completeRelSections($arData, $arRelSections) {
-        if ($arRelSections) {
+    private function completeRelSections($arData, $arRelSections, $arAnchorSections) {
+        if ($arRelSections || $arAnchorSections) {
             $dbItems = \CIBlockSection::GetList(
                 [],
                 [
-                    'ID' => array_keys($arRelSections),
+                    'ID' => \array_unique(\array_merge(\array_keys($arRelSections), \array_keys($arAnchorSections))),
                     'ACTIVE' => 'Y',
                     'GLOBAL_ACTIVE' => 'Y',
                 ],
@@ -525,6 +543,18 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
                                 'IBLOCK_CODE' => $arItem['IBLOCK_CODE'],
                                 //'IBLOCK_SECTION_ID' => $arItem['IBLOCK_SECTION_ID'],
                                 //'CODE' => $arItem['CODE'],
+                            ];
+                        }
+                    }
+                }
+                if ($arAnchorSections[$arItem['ID']]) {
+                    foreach ($arAnchorSections[$arItem['ID']] as $iTmpId) {
+                        if ($arData[$iTmpId]) {
+                            $arData[$iTmpId]['SECTION_ANCHOR'] = [
+                                'ID' => $arItem['ID'],
+                                'URL' => $arItem['CODE'],
+                                'IBLOCK_ID' => $arItem['IBLOCK_ID'],
+                                'IBLOCK_CODE' => $arItem['IBLOCK_CODE'],
                             ];
                         }
                     }
