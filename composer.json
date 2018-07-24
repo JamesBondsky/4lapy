@@ -12,8 +12,24 @@
       "email": "panychev@adv.ru"
     },
     {
-      "name": "Igor Pinchuk",
+      "name": "Pinchuk Igor",
       "email": "pinchuk@adv.ru"
+    },
+    {
+      "name": "Leshchenko Sergey",
+      "email": "prevedgreat@gmail.com"
+    },
+    {
+      "name": "Dmitry Solovov",
+      "email": "solovov@adv.ru"
+    },
+    {
+      "name": "Sergey Frolov",
+      "email": "frolov@adv.ru"
+    },
+    {
+      "name": "Ilia Makeev",
+      "email": "makeev@adv.ru"
     }
   ],
   "minimum-stability": "stable",
