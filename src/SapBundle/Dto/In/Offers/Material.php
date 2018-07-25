@@ -54,7 +54,7 @@ class Material
      * Может быть заполнено только для одного торгового предложения составного товара.
      *
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("Name2")
+     * @Serializer\SerializedName("Name_2")
      * @Serializer\XmlAttribute()
      *
      * @var string
