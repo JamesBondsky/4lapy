@@ -17,7 +17,7 @@ class CatalogProductsDisable20180725175031 extends SprintMigrationBase
     /**
      * @var string
      */
-    protected $description = 'Деактивация товаров, не имеющих офферов';
+    protected $description = 'Удаление товаров, не имеющих офферов';
 
     public function up()
     {
@@ -46,8 +46,7 @@ class CatalogProductsDisable20180725175031 extends SprintMigrationBase
         )->fetchAll();
 
         foreach ($products as $product) {
-            $e = new \CIBlockElement();
-            $e->Update($product['ID'], ['ACTIVE' => 'N']);
+            \CIBlockElement::Delete($product['ID']);
         }
 
         return true;
