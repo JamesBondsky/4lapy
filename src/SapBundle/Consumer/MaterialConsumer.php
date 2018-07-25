@@ -125,6 +125,10 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             $offer = $this->getOffer($material, $product);
             $this->getCatalogProduct($material, $offer);
             $this->connection->commitTransaction();
+            /**
+             * Костыль! Уровень изоляции кривой.
+             */
+            Event::unlockEvents();
             Event::clearProductCache($offer->getId());
             Event::clearProductCache($product->getId());
 
