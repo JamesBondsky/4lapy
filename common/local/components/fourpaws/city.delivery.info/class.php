@@ -182,7 +182,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'PERIOD_TYPE' => $defaultDeliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
                 'DELIVERY_DATE' => $defaultDeliveryResult->getDeliveryDate(),
                 'CODE' => $defaultDeliveryResult->getDeliveryCode(),
-                'ZONE' => $currentDeliveryResult->getDeliveryZone(),
+                'ZONE' => $defaultDeliveryResult->getDeliveryZone(),
                 'RESULT' => $defaultDeliveryResult
             ];
         }
