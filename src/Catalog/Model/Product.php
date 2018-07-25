@@ -2183,7 +2183,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $result = false;
         /** @var Offer $offer */
         foreach ($this->getOffers() as $offer) {
-            if ($offer->getImages()->isEmpty()) {
+            if (empty($offer->getImagesIds())) {
                 continue;
             }
 
