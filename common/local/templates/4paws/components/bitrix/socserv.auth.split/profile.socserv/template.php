@@ -7,8 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main\Localization\Loc;
 use FourPaws\Decorators\SvgDecorator;
 
-if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES'])) {
-    ?>
+if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES'])) { ?>
     <div class="b-account-profile__column b-account-profile__column--bottom">
         <div class="b-account-profile__title b-account-profile__title--small">
             Соцсети
@@ -17,13 +16,12 @@ if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES']))
             Вы можете привязать свой аккаунт соцсети, чтобы в дальнейшем входить без ввода пароля.
         </div>
         <?php if ($arResult['ERROR_MESSAGE']) {
-        ShowMessage($arResult['ERROR_MESSAGE']);
-    } ?>
+            ShowMessage($arResult['ERROR_MESSAGE']);
+        } ?>
         <div class="b-account-profile__social">
             <?php
             /** @noinspection ForeachSourceInspection */
-            foreach ($arResult['AUTH_SERVICES'] as $service) {
-                ?>
+            foreach ($arResult['AUTH_SERVICES'] as $service) { ?>
                 <div class="b-account-social<?= $service['ACTIVE'] ? ' active' : '' ?>">
                     <a class="b-account-social__link"
                        href="javascript:void(0);" <?= $service['FORM_HTML']['ON_CLICK'] ?? '' ?>
@@ -43,25 +41,17 @@ if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES']))
                             </span>
                     </a>
                     <a class="b-account-social__close"
-                        <?php if (is_numeric($service['ID'])) {
-                                        ?>
+                        <?php if (is_numeric($service['ID'])) { ?>
                             href="<?= htmlspecialcharsbx($service['DELETE_LINK'] ?: '/?logout=yes') ?>"
                             onclick="return confirm('<?= Loc::getMessage('SS_PROFILE_DELETE_CONFIRM') ?>')"
-                            <?php
-                                    } ?>
+                        <?php } ?>
                        title="close">
                         <span class="b-icon b-icon--account-social-del">
-                            <?= new SvgDecorator(
-                                'icon-delete',
-                                13,
-                                13
-                            ) ?>
+                            <?= new SvgDecorator('icon-delete-account', 26, 26) ?>
                         </span>
                     </a>
                 </div>
-                <?php
-            } ?>
+            <?php } ?>
         </div>
     </div>
-    <?php
-}
+<?php }
