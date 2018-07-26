@@ -17,6 +17,7 @@ use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
@@ -179,6 +180,7 @@ class OrderRepository extends BaseRepository
 
                 'PROPERTY_BRAND'   => 'PRODUCT_PROPS.PROPERTY_' . $brandPropId,
                 'PROPERTY_FLAVOUR' => 'PRODUCT_PROPS.PROPERTY_' . $flavourPropId,
+                'BASKET_PROPERTY_HAS_BONUS' => 'BASKET_PROPS.VALUE'
             ])
             ->where('ORDER_ID', $orderId)
             ->registerRuntimeField(new ReferenceField(
@@ -195,6 +197,12 @@ class OrderRepository extends BaseRepository
                 'PRODUCT_PROPS',
                 IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
                 Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
+            ))
+            ->registerRuntimeField(new ReferenceField(
+                'BASKET_PROPS',
+                BasketPropertyTable::class,
+                Join::on('this.ID', 'ref.BASKET_ID')->where('ref.CODE', 'HAS_BONUS'),
+                ['join_type' => 'LEFT']
             ))
 //            ->registerRuntimeField(new ReferenceField(
 //                'PRODUCT',

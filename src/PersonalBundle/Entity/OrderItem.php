@@ -131,6 +131,14 @@ class OrderItem extends BaseEntity
     protected $detailPageUrl = '';
 
     /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("BASKET_PROPERTY_HAS_BONUS")
+     * @Serializer\Groups(groups={"read", "update", "create"})
+     */
+    protected $bonusAwardingQuantity = 0;
+
+    /**
      * @return string
      */
     public function getName(): string
@@ -493,6 +501,25 @@ class OrderItem extends BaseEntity
     public function setImage(string $image): OrderItem
     {
         $this->image = $image;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBonusAwardingQuantity(): int
+    {
+        return $this->bonusAwardingQuantity;
+    }
+
+    /**
+     * @param int $bonusAwardingQuantity
+     * @return OrderItem
+     */
+    public function setBonusAwardingQuantity(int $bonusAwardingQuantity): OrderItem
+    {
+        $this->bonusAwardingQuantity = $bonusAwardingQuantity;
+
         return $this;
     }
 
