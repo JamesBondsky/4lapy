@@ -310,7 +310,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $result = $this->results[$cacheKey];
         }
 
-        if ($result->isErrorResponse()) {
+        if ($result->isErrorResponse() && $result->getItems()->isEmpty()) {
             throw new ExecuteErrorException($result->getMessage(), $result->getReturnCode());
         }
 
