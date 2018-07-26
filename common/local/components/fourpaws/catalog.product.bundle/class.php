@@ -68,6 +68,7 @@ class CatalogDetailBundle extends CBitrixComponent
 
         $this->loadTemplateFields();
         $this->includeComponentTemplate();
+
         return true;
     }
 
@@ -87,8 +88,8 @@ class CatalogDetailBundle extends CBitrixComponent
             $percent = $this->userService->getCurrentUserBonusPercent();
             foreach ($products as $item) {
                 $offer = $item->getOffer();
-                $this->arResult['SUM'] += $offer->getPrice()*$item->getQuantity();
-                $this->arResult['OLD_SUM'] += $offer->getOldPrice()*$item->getQuantity();
+                $this->arResult['SUM'] += $offer->getCatalogPrice() * $item->getQuantity();
+                $this->arResult['OLD_SUM'] += $offer->getCatalogOldPrice() * $item->getQuantity();
                 $this->arResult['BONUS'] += $offer->getBonusCount($percent, $item->getQuantity());
             }
             $this->arResult['BONUS_FORMATTED'] = $this->formattedBonus($this->arResult['BONUS']);
@@ -109,11 +110,10 @@ class CatalogDetailBundle extends CBitrixComponent
             return $bonusText;
         }
 
-        if($precision > 0 ){
+        if ($precision > 0) {
             $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
             $floorBonus = \floor($bonus);
-        }
-        else{
+        } else {
             $floorBonus = $bonus = \floor($bonus);
         }
 
@@ -122,7 +122,11 @@ class CatalogDetailBundle extends CBitrixComponent
         return \sprintf(
             '+ %s %s',
             WordHelper::numberFormat($bonus, $precision),
-            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
+            WordHelper::declension($div ?: $floorBonus, [
+                'бонус',
+                'бонуса',
+                'бонусов',
+            ])
         );
     }
 }
