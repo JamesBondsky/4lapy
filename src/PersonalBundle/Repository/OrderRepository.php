@@ -180,7 +180,8 @@ class OrderRepository extends BaseRepository
 
                 'PROPERTY_BRAND'   => 'PRODUCT_PROPS.PROPERTY_' . $brandPropId,
                 'PROPERTY_FLAVOUR' => 'PRODUCT_PROPS.PROPERTY_' . $flavourPropId,
-                'BASKET_PROPERTY_HAS_BONUS' => 'BASKET_PROPS.VALUE'
+                'BASKET_PROPERTY_CODE' => 'BASKET_PROPS.CODE',
+                'BASKET_PROPERTY_VALUE' => 'BASKET_PROPS.VALUE',
             ])
             ->where('ORDER_ID', $orderId)
             ->registerRuntimeField(new ReferenceField(
@@ -201,7 +202,7 @@ class OrderRepository extends BaseRepository
             ->registerRuntimeField(new ReferenceField(
                 'BASKET_PROPS',
                 BasketPropertyTable::class,
-                Join::on('this.ID', 'ref.BASKET_ID')->where('ref.CODE', 'HAS_BONUS'),
+                Join::on('this.ID', 'ref.BASKET_ID')->whereIn('ref.CODE', ['HAS_BONUS', 'DETACHED_FROM']),
                 ['join_type' => 'LEFT']
             ))
 //            ->registerRuntimeField(new ReferenceField(
@@ -326,12 +327,30 @@ class OrderRepository extends BaseRepository
 
                 $items[$item[$key]] = $item;
             }
+            if ($item['BASKET_PROPERTY_CODE']) {
+                $items[$item[$key]]['BASKET_PROPERTY_' . $item['BASKET_PROPERTY_CODE']] = $item['BASKET_PROPERTY_VALUE'];
+            }
         }
+
         if ($basketRes->getSelectedRowsCount() > 0) {
             $result = new ArrayCollection($this->dataToEntity(
                 $items,
                 sprintf('array<string, %s>', OrderItem::class)
             ));
+
+            /**
+             * @var int $id
+             * @var OrderItem $item
+             */
+            foreach ($result as $id => $item) {
+                if (($detachedFrom = $item->getDetachedFrom()) &&
+                    $parentItem = $result->get($detachedFrom)
+                ) {
+                    /** @var OrderItem $parentItem */
+                    $parentItem->getDetachedItems()->add($item);
+                    $item->setParentItem($parentItem);
+                }
+            }
         }
         return [$result, $allWeight, $allSum];
     }

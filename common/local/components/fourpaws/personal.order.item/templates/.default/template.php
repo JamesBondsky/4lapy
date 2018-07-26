@@ -130,8 +130,14 @@ if ($orderSubscribe) {
                 </a>
                 <?php
 
-                $orderItems = $order->getItems();
-                $countItems = $orderItems !== null ? $orderItems->count() : 0;
+                $countItems = 0;
+                /** @var OrderItem $orderItem */
+                foreach ($order->getItems() as $orderItem) {
+                    if ($orderItem->getParentItem()) {
+                        continue;
+                    }
+                    $countItems++;
+                }
 
                 if ($countItems > 0) { ?>
                     <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
@@ -296,6 +302,9 @@ if ($orderSubscribe) {
             <ul class="b-list-order">
                 <?php /** @var OrderItem $item */
                 foreach ($order->getItems() as $item) {
+                    if ($item->getParentItem()) {
+                        continue;
+                    }
                     if (!$order->isManzana() && $item->hasDetailPageUrl()) { ?>
                         <a href="<?= $item->getDetailPageUrl() ?>">
                     <?php } ?>
@@ -351,9 +360,14 @@ if ($orderSubscribe) {
                                 <div class="b-list-order__sum b-list-order__sum--item"><?= $item->getFormattedSum() ?>
                                     <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
                                 </div>
-                                <?php if ($item->getQuantity() > 1) { ?>
+                                <?php if (($item->getQuantity() > 1) || !$item->getDetachedItems()->isEmpty()) { ?>
                                     <div class="b-list-order__calculation"><?= $item->getFormattedPrice() ?> ₽
                                         × <?= $item->getQuantity() ?> шт
+                                    </div>
+                                <?php } ?>
+                                <?php foreach ($item->getDetachedItems() as $childItem) { ?>
+                                    <div class="b-list-order__calculation"><?= $childItem->getFormattedPrice() ?> ₽
+                                        × <?= $childItem->getQuantity() ?> шт
                                     </div>
                                 <?php } ?>
                                 <div class="b-list-order__bonus js-order-item-bonus-<?= $order->isManzana() ? 'manzana-' : '' ?><?= $item->getId() ?>"></div>

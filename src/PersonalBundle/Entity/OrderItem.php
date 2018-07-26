@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Templates\MediaEnum;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -134,9 +135,27 @@ class OrderItem extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("BASKET_PROPERTY_HAS_BONUS")
-     * @Serializer\Groups(groups={"read", "update", "create"})
+     * @Serializer\Groups(groups={"read"})
      */
     protected $bonusAwardingQuantity = 0;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("BASKET_PROPERTY_DETACHED_FROM")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $detachedFrom = 0;
+
+    /**
+     * @var ArrayCollection
+     */
+    protected $detachedItems;
+
+    /**
+     * @var OrderItem
+     */
+    protected $parentItem;
 
     /**
      * @return string
@@ -164,6 +183,7 @@ class OrderItem extends BaseEntity
     {
         return $this->bonus ?? 0;
     }
+
 
     /**
      * @param float $bonus
@@ -310,7 +330,12 @@ class OrderItem extends BaseEntity
      */
     public function getFormattedSum(): string
     {
-        return \number_format($this->getSum(), 2, '.', ' ');
+        $sum = $this->getSum();
+        /** @var OrderItem $detachedItem */
+        foreach ($this->getDetachedItems() as $detachedItem) {
+            $sum += $detachedItem->getSum();
+        }
+        return \number_format($sum, 2, '.', ' ');
     }
 
     /**
@@ -519,6 +544,67 @@ class OrderItem extends BaseEntity
     public function setBonusAwardingQuantity(int $bonusAwardingQuantity): OrderItem
     {
         $this->bonusAwardingQuantity = $bonusAwardingQuantity;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDetachedFrom(): int
+    {
+        return $this->detachedFrom;
+    }
+
+    /**
+     * @param int $detachedFrom
+     * @return OrderItem
+     */
+    public function setDetachedFrom(int $detachedFrom): OrderItem
+    {
+        $this->detachedFrom = $detachedFrom;
+
+        return $this;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getDetachedItems(): ArrayCollection
+    {
+        if (null === $this->detachedItems) {
+            $this->detachedItems = new ArrayCollection();
+        }
+
+        return $this->detachedItems;
+    }
+
+    /**
+     * @param ArrayCollection $detachedItems
+     * @return OrderItem
+     */
+    public function setDetachedItems(ArrayCollection $detachedItems): OrderItem
+    {
+        $this->detachedItems = $detachedItems;
+
+        return $this;
+    }
+
+    /**
+     * @return OrderItem|null
+     */
+    public function getParentItem(): ?OrderItem
+    {
+        return $this->parentItem;
+    }
+
+    /**
+     * @param OrderItem $parentItem
+     * @return OrderItem
+     */
+    public function setParentItem(OrderItem $parentItem): OrderItem
+    {
+        $this->parentItem = $parentItem;
 
         return $this;
     }
