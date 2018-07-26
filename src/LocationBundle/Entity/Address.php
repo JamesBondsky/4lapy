@@ -21,6 +21,16 @@ class Address
     /**
      * @var string
      */
+    protected $region = '';
+
+    /**
+     * @var string
+     */
+    protected $area = '';
+
+    /**
+     * @var string
+     */
     protected $city = '';
 
     /**
@@ -103,6 +113,44 @@ class Address
     public function setZipCode(string $zipCode): Address
     {
         $this->zipCode = $zipCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRegion(): string
+    {
+        return $this->region;
+    }
+
+    /**
+     * @param string $region
+     * @return Address
+     */
+    public function setRegion(string $region): Address
+    {
+        $this->region = $region;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getArea(): string
+    {
+        return $this->area;
+    }
+
+    /**
+     * @param string $area
+     * @return Address
+     */
+    public function setArea(string $area): Address
+    {
+        $this->area = $area;
+
         return $this;
     }
 
@@ -301,6 +349,8 @@ class Address
     public function __toString(): string
     {
         $map = [
+            ['value' => $this->region, 'prefix' => ''],
+            ['value' => $this->area, 'prefix' => ''],
             ['value' => $this->city, 'prefix' => ''],
             ['value' => $this->streetPrefix, 'prefix' => ''],
             ['value' => $this->street, 'prefix' => ''],
