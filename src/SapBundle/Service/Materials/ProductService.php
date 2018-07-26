@@ -8,8 +8,15 @@ namespace FourPaws\SapBundle\Service\Materials;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Config\ConfigurationException;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\UpdateResult;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Enum\IblockCode;
@@ -17,6 +24,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Enum\SapProductProperty;
+use FourPaws\SapBundle\Exception\NotFoundPropertyException;
 use FourPaws\SapBundle\Repository\ProductRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 
@@ -86,6 +94,24 @@ class ProductService
     public function update(Product $product): UpdateResult
     {
         return $this->productRepository->update($product);
+    }
+
+    /**
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
+     * @throws ConfigurationException
+     * @throws SqlQueryException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws NotFoundPropertyException
+     */
+    public function deleteEmptyProducts()
+    {
+        foreach ($this->productRepository->getEmptyProducts() as $product) {
+            $this->productRepository->delete($product);
+        }
     }
 
     /**
