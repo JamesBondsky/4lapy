@@ -9,6 +9,7 @@ namespace FourPaws\SapBundle\Consumer;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Db\SqlQueryException;
 use FourPaws\SapBundle\Dto\In\Offers\Materials;
+use FourPaws\SapBundle\Service\Materials\ProductService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 
@@ -27,22 +28,34 @@ class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
     private $consumer;
 
     /**
+     * @var ProductService
+     */
+    private $productService;
+
+    /**
      * MaterialsConsumer constructor.
      *
      * @param MaterialConsumer $consumer
+     * @param ProductService   $productService
      */
-    public function __construct(MaterialConsumer $consumer)
+    public function __construct(MaterialConsumer $consumer, ProductService $productService)
     {
         $this->consumer = $consumer;
+        $this->productService = $productService;
     }
-    
+
     /**
      * @param Materials $materials
      *
-     * @throws SqlQueryException
-     * @throws \RuntimeException
-     *
      * @return bool
+     * @throws SqlQueryException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\Config\ConfigurationException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function consume($materials) : bool
     {
@@ -63,6 +76,10 @@ class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
             }
             $error++;
         }
+
+        $this->log()->log(LogLevel::INFO, 'Удаление товаров, не имеющих торговые предложения...');
+        $this->productService->deleteEmptyProducts();
+
         $this->log()->log(LogLevel::INFO, \sprintf('Импортировано %s товаров', $totalCount - $error));
         $this->log()->log(LogLevel::INFO, \sprintf('Ошибка импорта %s товаров', $error));
         
