@@ -17,6 +17,7 @@ use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
@@ -179,6 +180,8 @@ class OrderRepository extends BaseRepository
 
                 'PROPERTY_BRAND'   => 'PRODUCT_PROPS.PROPERTY_' . $brandPropId,
                 'PROPERTY_FLAVOUR' => 'PRODUCT_PROPS.PROPERTY_' . $flavourPropId,
+                'BASKET_PROPERTY_CODE' => 'BASKET_PROPS.CODE',
+                'BASKET_PROPERTY_VALUE' => 'BASKET_PROPS.VALUE',
             ])
             ->where('ORDER_ID', $orderId)
             ->registerRuntimeField(new ReferenceField(
@@ -195,6 +198,12 @@ class OrderRepository extends BaseRepository
                 'PRODUCT_PROPS',
                 IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
                 Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
+            ))
+            ->registerRuntimeField(new ReferenceField(
+                'BASKET_PROPS',
+                BasketPropertyTable::class,
+                Join::on('this.ID', 'ref.BASKET_ID')->whereIn('ref.CODE', ['HAS_BONUS', 'DETACHED_FROM']),
+                ['join_type' => 'LEFT']
             ))
 //            ->registerRuntimeField(new ReferenceField(
 //                'PRODUCT',
@@ -318,12 +327,30 @@ class OrderRepository extends BaseRepository
 
                 $items[$item[$key]] = $item;
             }
+            if ($item['BASKET_PROPERTY_CODE']) {
+                $items[$item[$key]]['BASKET_PROPERTY_' . $item['BASKET_PROPERTY_CODE']] = $item['BASKET_PROPERTY_VALUE'];
+            }
         }
+
         if ($basketRes->getSelectedRowsCount() > 0) {
             $result = new ArrayCollection($this->dataToEntity(
                 $items,
                 sprintf('array<string, %s>', OrderItem::class)
             ));
+
+            /**
+             * @var int $id
+             * @var OrderItem $item
+             */
+            foreach ($result as $id => $item) {
+                if (($detachedFrom = $item->getDetachedFrom()) &&
+                    $parentItem = $result->get($detachedFrom)
+                ) {
+                    /** @var OrderItem $parentItem */
+                    $parentItem->getDetachedItems()->add($item);
+                    $item->setParentItem($parentItem);
+                }
+            }
         }
         return [$result, $allWeight, $allSum];
     }
