@@ -25,39 +25,12 @@ class DeliveryAddress extends DeliveryAddressBase
     protected $region = '';
 
     /**
-     * Район
-     *
-     * @var string
-     * @Serializer\Exclude()
-     */
-    protected $area = '';
-
-    /**
      * Код магазина
      *
      * @var string
      * @Serializer\Exclude()
      */
     protected $deliveryPlaceCode = '';
-
-    /**
-     * @return string
-     */
-    public function getArea(): string
-    {
-        return $this->area;
-    }
-
-    /**
-     * @param string $area
-     * @return DeliveryAddress
-     */
-    public function setArea(string $area): DeliveryAddress
-    {
-        $this->area = $area;
-
-        return $this;
-    }
 
     /**
      * @return string
@@ -103,7 +76,6 @@ class DeliveryAddress extends DeliveryAddressBase
             \array_filter(
                 [
                     $this->region,
-                    $this->area,
                     parent::__toString(),
                     $this->deliveryPlaceCode,
                 ]
