@@ -523,6 +523,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         return (new OutDeliveryAddress())
             ->setDeliveryPlaceCode($deliveryPlaceCode)
+            ->setRegion($this->getPropertyValueByCode($order, 'REGION'))
+            ->setArea($this->getPropertyValueByCode($order, 'AREA'))
             ->setRegionCode($this->locationService->getRegionNumberCode($city))
             ->setPostCode($this->getPropertyValueByCode($order, 'ZIP_CODE'))
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
