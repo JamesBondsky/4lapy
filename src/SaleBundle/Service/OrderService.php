@@ -824,6 +824,7 @@ class OrderService implements LoggerAwareInterface
                 }
 
                 $_SESSION['SEND_REGISTER_EMAIL'] = true;
+                $_SESSION['NOT_MANZANA_UPDATE'] = true;
                 $user = $this->userRegistrationProvider->register($user);
 
                 try {
@@ -837,7 +838,7 @@ class OrderService implements LoggerAwareInterface
                             \get_class($e),
                             $e->getMessage()
                         ),
-                        ['user' => $user->getId()]
+                        ['user' => $user->getId(), 'phone' => $storage->getPhone()]
                     );
                 }
 
