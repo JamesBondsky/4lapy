@@ -6,6 +6,7 @@
 
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -38,6 +39,7 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,8 +51,9 @@ use Symfony\Component\Validator\ConstraintViolation;
  * @package FourPaws\SaleBundle\Controller
  * @Route("/order")
  */
-class OrderController extends Controller
+class OrderController extends Controller implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
     /**
      * @var OrderService
      */
@@ -345,6 +348,9 @@ class OrderController extends Controller
         try {
             $order = $this->orderService->createOrder($storage);
         } catch (OrderCreateException|OrderSplitException $e) {
+            $this->log()->error(sprintf('failed to create order: %s', $e->getMessage()), [
+                'storage' => $this->orderStorageService->storageToArray($storage)
+            ]);
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
