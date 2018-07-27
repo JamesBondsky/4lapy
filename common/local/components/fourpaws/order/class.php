@@ -238,12 +238,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
         }
 
-        /**
-         * @var Basket $basket
-         */
-        $basket = $this->basketService->getBasket()->getOrderableItems();
-        $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
-
         try {
             $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {
@@ -252,6 +246,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
+        /** @var Basket $basket */
+        $basket = $this->basketService->getBasket()->getOrderableItems();
+        $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->currentStep !== OrderStorageEnum::AUTH_STEP) {
             $basket = $order->getBasket();
