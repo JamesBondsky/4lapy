@@ -322,6 +322,11 @@ class NotificationService implements LoggerAwareInterface
 
         $text = $this->renderer->render($tpl, $parameters);
 
+        $this->log()->info(sprintf('sending sms "%s"', $tpl), [
+            'phone' => $parameters['phone'],
+            'order' => $parameters['accountNumber']
+        ]);
+
         if ($immediate) {
             $this->smsService->sendSmsImmediate($text, $parameters['phone']);
         } else {

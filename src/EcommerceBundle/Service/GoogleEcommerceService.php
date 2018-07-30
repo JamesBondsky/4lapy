@@ -151,7 +151,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                         (new Product())
                             ->setId($offer->getXmlId())
                             ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
-                            ->setBrand($product->getBrandName())
+                            ->setBrand(\preg_replace('~"|\'~', '', $product->getBrandName()))
                             ->setPrice($offer->getPrice())
                             ->setCategory(\implode('|', \array_reverse($product->getFullPathCollection()
                                 ->map(function (Category $category) {
@@ -182,8 +182,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                 (new Product())
                     ->setId($offer->getId())
                     ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
-                    ->setBrand($offer->getProduct()
-                        ->getBrandName())
+                    ->setBrand(\preg_replace('~"|\'~', '', $offer->getProduct()->getBrandName()))
                     ->setPrice($offer->getPrice())
                     ->setCategory(\implode('|', \array_reverse($offer->getProduct()
                         ->getFullPathCollection()

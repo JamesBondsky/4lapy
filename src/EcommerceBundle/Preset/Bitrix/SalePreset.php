@@ -260,8 +260,8 @@ class SalePreset
                     'discount' => $basketItem->getDiscountPrice(),
                     'tax'      => $basketItem->getVat(),
                     'quantity' => $basketItem->getQuantity(),
-                    'name'     => $offer ? $offer->getName() : $basketItem->getField('NAME'),
-                    'brand'    => $product ? $product->getBrandName() : '',
+                    'name'     => \preg_replace('~"|\'~', '',$offer ? $offer->getName() : $basketItem->getField('NAME')),
+                    'brand'    =>\preg_replace('~"|\'~', '', $product ? $product->getBrandName() : ''),
                     'category' => $product ? \implode('|', \array_reverse($product->getFullPathCollection()
                         ->map(function (Category $category) {
                             return $category->getName();
