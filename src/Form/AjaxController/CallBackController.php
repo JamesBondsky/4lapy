@@ -81,20 +81,13 @@ class CallBackController extends Controller
 
             if ($formService->addResult($data)) {
                 if (!empty($data[$formattedFields['phone']])) {
-                    /** @noinspection PhpUnhandledExceptionInspection */
-                    Loader::includeModule('form');
-                    $answer = new \CFormAnswer();
-                    $arAnswer = $answer->GetByID($data[$formattedFields['time_call']])->Fetch();
-                    $timeout = $arAnswer['FIELD_PARAM'] ?? 0;
-                    /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                     $date = new DateTime();
                     /** @noinspection PhpUnhandledExceptionInspection */
                     /** @var CallbackService $callbackService */
                     $callbackService = $container->get('callback.service');
                     $callbackService->send(
                         $data[$formattedFields['phone']],
-                        $date->format('Y-m-d H:i:s'),
-                        $timeout
+                        $date->format('Y-m-d H:i:s')
                     );
                 }
                 return JsonSuccessResponse::create('Ваша завка принята');

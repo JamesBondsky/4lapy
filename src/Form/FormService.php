@@ -229,7 +229,8 @@ class FormService
     {
         $by = 'ID';
         $order = 'ASC';
-        $res = \CForm::GetList($by, $order, ['SID' => $sid]);
+        $isFiltered = false;
+        $res = \CForm::GetList($by, $order, ['SID' => $sid], $isFiltered);
         while ($item = $res->Fetch()) {
             \CForm::Delete($item['ID']);
         }
