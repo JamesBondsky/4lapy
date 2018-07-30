@@ -15,7 +15,7 @@ $ajaxUrl = '/ajax/user/auth/login/'; ?>
     <div class="b-registration__text-instruction">В вашей корзине есть товары на
         сумму <?= WordHelper::numberFormat($sum) ?> руб. Объединить товары в одну корзину?
     </div>
-    <form class="b-registration__form">
+    <form class="b-registration__form js-auth-2way">
         <input type="button" name="confirm_yes" value="Да"
                class="b-button b-button--social b-button--full-width js-ajax-item" data-url="<?= $ajaxUrl ?>"
                data-action="unionBasket" data-backurl="<?= $backUrl ?>"
