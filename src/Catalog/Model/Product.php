@@ -1923,11 +1923,30 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @param array|ArrayCollection $offers
+     * @return ArrayCollection
+     */
+    public function getOffersSorted(): ArrayCollection
+    {
+        $sort = function (Offer $offer1, Offer $offer2) {
+            if ($offer1->getClothingSizeXmlId() && $offer2->getClothingSizeXmlId()) {
+                /** @noinspection NullPointerExceptionInspection */
+                return $offer1->getClothingSize()->getSort() <=> $offer2->getClothingSize()->getSort();
+            }
+
+            return 0;
+        };
+
+        $iterator = $this->getOffers()->getIterator();
+        $iterator->uasort($sort);
+        return new ArrayCollection(iterator_to_array($iterator));
+    }
+
+    /**
+     * @param Collection|array $offers
      */
     public function setOffers($offers)
     {
-        if (!($offers instanceof ArrayCollection) && \is_array($offers)) {
+        if (!($offers instanceof Collection) && \is_array($offers)) {
             $offers = new ArrayCollection($offers);
         }
         $this->offers = $offers;
