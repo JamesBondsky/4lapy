@@ -98,19 +98,8 @@ class FormUpdate20180730153724 extends SprintMigrationBase
         Option::set('form', 'SIMPLE', 'N');
     }
 
-    /**
-     * @return bool|void
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     */
     public function down()
     {
-        //Loader::includeModule('form');
 
-        $formService = App::getInstance()->getContainer()->get('form.service');
-
-        $formService ->deleteForm('feedback');
-        $formService ->deleteForm('callback');
     }
 }
