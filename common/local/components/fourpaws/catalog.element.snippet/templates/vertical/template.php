@@ -26,7 +26,7 @@ use FourPaws\Helpers\WordHelper;
  * @var Offer $currentOffer
  */
 $product = $arResult['PRODUCT'];
-$offers = $product->getOffers();
+$offers = $product->getOffersSorted();
 
 $pickupText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST');
 
