@@ -6,9 +6,11 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Elastica\Exception\InvalidException;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Search\Model\CatalogSyncMsg;
 use FourPaws\Search\SearchService;
 use JMS\Serializer\Serializer;
@@ -117,9 +119,12 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private function updateProduct(int $productId)
     {
-        $product = ProductQuery::getById($productId);
+        $product = (new ProductQuery)
+            ->withFilter(['ID' =>$productId])
+            ->exec()
+            ->first();
 
-        if ($product === null) {
+        if (!($product instanceof Product)) {
             $this->log()->error(
                 sprintf(
                     'Продукт #%d не найден',
@@ -144,9 +149,9 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
         }
 
         if ($indexProductResult) {
-            /* TaggedCacheHelper::clearManagedCache([
+            TaggedCacheHelper::clearManagedCache([
                 'iblock:item:' . $product->getId(),
-            ]); */
+            ]);
         } else {
             $this->log()->error(
                 sprintf(
@@ -167,10 +172,9 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             $deleteProductResult = $this->searchService->getIndexHelper()->deleteProduct($productId);
 
             if ($deleteProductResult) {
-                /* TaggedCacheHelper::clearManagedCache([
+                TaggedCacheHelper::clearManagedCache([
                     'iblock:item:' . $productId,
-                ]); */
-
+                ]);
             } else {
                 $this->log()->error(
                     sprintf(
@@ -196,7 +200,10 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private function updateOffer(int $offerId)
     {
-        $offer = OfferQuery::getById($offerId);
+        $offer = (new OfferQuery)
+            ->withFilter(['ID' => $offerId])
+            ->exec()
+            ->first();
 
         if (!($offer instanceof Offer)) {
             $this->log()->error(
@@ -226,10 +233,10 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
 
             if ($indexProductResult) {
-                /* TaggedCacheHelper::clearManagedCache([
+                TaggedCacheHelper::clearManagedCache([
                     'iblock:item:' . $offerId,
                     'iblock:item:' . $product->getId(),
-                ]); */
+                ]);
             } else {
                 $this->log()->error(
                     sprintf(

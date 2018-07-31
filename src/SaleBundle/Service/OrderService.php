@@ -824,6 +824,7 @@ class OrderService implements LoggerAwareInterface
                 }
 
                 $_SESSION['SEND_REGISTER_EMAIL'] = true;
+                $_SESSION['NOT_MANZANA_UPDATE'] = true;
                 $user = $this->userRegistrationProvider->register($user);
 
                 try {
@@ -837,7 +838,7 @@ class OrderService implements LoggerAwareInterface
                             \get_class($e),
                             $e->getMessage()
                         ),
-                        ['user' => $user->getId()]
+                        ['user' => $user->getId(), 'phone' => $storage->getPhone()]
                     );
                 }
 
@@ -917,12 +918,25 @@ class OrderService implements LoggerAwareInterface
                 }
 
                 try {
+                    if (!$address->getRegion()) {
+                        $location = $this->locationService->findLocationByCode($storage->getCityCode());
+                        foreach ($location['PATH'] as $locationPathItem) {
+                            if ($locationPathItem['TYPE']['CODE'] === LocationService::TYPE_REGION) {
+                                $address->setRegion($locationPathItem['NAME']);
+                            } elseif ($locationPathItem['TYPE']['CODE'] === LocationService::TYPE_SUBREGION) {
+                                $address->setArea($locationPathItem['NAME']);
+                            }
+                        }
+                    }
+
                     $address = $this->locationService->splitAddress((string)$address, $storage->getCityCode());
                     if (!$address->getStreet()) {
                         $address->setValid(false);
                         $address->setStreet($storage->getStreet());
                     }
                     $this->setOrderPropertiesByCode($order, [
+                        'AREA' => $address->getArea(),
+                        'REGION' => $address->getRegion(),
                         'STREET' => $address->getStreet(),
                         'STREET_PREFIX' => $address->getStreetPrefix(),
                         'ZIP_CODE' => $address->getZipCode()
@@ -1587,6 +1601,8 @@ class OrderService implements LoggerAwareInterface
     protected function compileOrderAddress(Order $order): Address
     {
         $properties = $this->getOrderPropertiesByCode($order, [
+            'REGION',
+            'AREA',
             'CITY_CODE',
             'CITY',
             'STREET',
@@ -1599,6 +1615,8 @@ class OrderService implements LoggerAwareInterface
         ]);
 
         $address = (new Address())
+            ->setRegion($properties['REGION'])
+            ->setArea($properties['AREA'])
             ->setCity($properties['CITY'])
             ->setLocation($properties['CITY_CODE'])
             ->setStreet($properties['STREET'])
@@ -1621,16 +1639,18 @@ class OrderService implements LoggerAwareInterface
     protected function setOrderAddress(Order $order, Address $address): Order
     {
         $properties = [
-            'CITY_CODE'   => $address->getLocation(),
-            'CITY'        => $address->getCity(),
-            'STREET'      => $address->getStreet(),
+            'REGION'        => $address->getRegion(),
+            'AREA'          => $address->getArea(),
+            'CITY_CODE'     => $address->getLocation(),
+            'CITY'          => $address->getCity(),
+            'STREET'        => $address->getStreet(),
             'STREET_PREFIX' => $address->getStreetPrefix(),
-            'HOUSE'       => $address->getHouse(),
-            'BUILDING'    => $address->getHousing(),
-            'PORCH'       => $address->getEntrance(),
-            'FLOOR'       => $address->getFloor(),
-            'APARTMENT'   => $address->getFlat(),
-            'ZIP_CODE'    => $address->getZipCode()
+            'HOUSE'         => $address->getHouse(),
+            'BUILDING'      => $address->getHousing(),
+            'PORCH'         => $address->getEntrance(),
+            'FLOOR'         => $address->getFloor(),
+            'APARTMENT'     => $address->getFlat(),
+            'ZIP_CODE'      => $address->getZipCode(),
         ];
 
         return $this->setOrderPropertiesByCode($order, $properties);

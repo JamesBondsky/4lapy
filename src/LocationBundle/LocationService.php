@@ -917,6 +917,8 @@ class LocationService
 
             $result = new Address();
             $result->setLocation($locationCode)
+                ->setRegion($dadataLocation->getRegionWithType())
+                ->setArea($dadataLocation->getAreaWithType())
                 ->setCity($dadataLocation->getCity() ?: $dadataLocation->getRegion())
                 ->setValid($this->daDataService->isValidAddress($dadataLocation))
                 ->setStreetPrefix($dadataLocation->getStreetType())

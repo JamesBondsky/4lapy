@@ -11,7 +11,7 @@ if (!$arResult['canEditProfile']) {
 
 ?>
 <div class="b-account-profile__link-block">
-    <a class="b-link b-link--edit-data js-open-popup js-open-popup--edit-data"
+    <a class="b-link b-link--edit-data js-edit-profile js-open-popup js-open-popup--edit-data"
        href="javascript:void(0)"
        title="Редактировать данные"
        data-popup-id="edit-data"><span class="b-link__text b-link__text--edit-data">Редактировать данные</span></a>
