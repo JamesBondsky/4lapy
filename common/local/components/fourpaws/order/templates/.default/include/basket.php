@@ -137,7 +137,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
 <aside class="b-order__list js-list-orders-static <?= $deliveryUnavailableResult->isEmpty() ? '' : 'parts-type' ?>" <?= !$showPickupContainer ? '' : 'style="display:none"' ?>>
     <div class="one-delivery__block<?= $deliveryIsSplit ? '' : ' active activeBlock' ?>">
         <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
-            <span class="js-mobile-title-order">Заказ: <?= $deliveryOrderableQuantity ?> <?= $productsDeclension->get($deliveryOrderableQuantity) ?>
+            <span class="js-mobile-title-order">Заказ: <span class="js-count-products"><?= $deliveryOrderableQuantity ?></span> <?= $productsDeclension->get($deliveryOrderableQuantity) ?>
             </span>
             (<?= WordHelper::showWeight($deliveryOrderableWeight, true) ?>) на
             сумму <?= CurrencyHelper::formatPrice(
@@ -170,7 +170,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
         </div>
         <h4 class="b-title b-title--order-list js-parts-list-title" data-count="<?= $deliveryUnavailableQuantity ?>"
             <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
-            <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
+            <span class="js-mobile-title-order">Останется в корзине: <span class="js-count-products"><?= $deliveryUnavailableQuantity ?></span></span>
             <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
             (<?= WordHelper::showWeight($deliveryUnavailableWeight, true) ?>) на
             сумму <?= CurrencyHelper::formatPrice(
@@ -218,7 +218,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
     <?php if (!empty($arResult['SPLIT_RESULT'])) { ?>
         <div class="two-deliveries__block<?= !$deliveryIsSplit ? '' : ' active activeBlock' ?>">
             <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title js-full-list-title--order-list js-popup-mobile-link">
-                <span class="js-mobile-title-order">Заказ №1: <?= $deliveryResult1Quantity ?> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
+                <span class="js-mobile-title-order">Заказ №1: <span class="js-count-products"><?= $deliveryResult1Quantity ?></span> <?= $productsDeclension->get($deliveryResult1Quantity) ?></span>
                 (<?= WordHelper::showWeight($deliveryResult1Weight, true) ?>) на
                 сумму <?= CurrencyHelper::formatPrice($deliveryResult1Price, false) ?>
             </h4>
@@ -247,7 +247,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
             </div>
 
             <h4 class="b-title b-title--order-list js-popup-mobile-link js-parts-list-title--order-list js-popup-mobile-link js-parts-list-title">
-                <span class="js-mobile-title-order">Заказ №2: <?= $deliveryResult2Quantity ?> <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
+                <span class="js-mobile-title-order">Заказ №2: <span class="js-count-products"><?= $deliveryResult2Quantity ?></span> <?= $productsDeclension->get($deliveryResult2Quantity) ?></span>
                 (<?= WordHelper::showWeight($deliveryResult2Weight, true) ?>) на
                 сумму <?= CurrencyHelper::formatPrice($deliveryResult2Price, false) ?>
             </h4>
@@ -276,7 +276,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
             </div>
             <h4 class="b-title b-title--order-list js-incart-title"
                 <?= $deliveryUnavailableResult->isEmpty() ? 'style="display:none"' : '' ?>>
-                <span class="js-mobile-title-order">Останется в корзине: <?= $deliveryUnavailableQuantity ?></span>
+                <span class="js-mobile-title-order">Останется в корзине: <span class="js-count-products"><?= $deliveryUnavailableQuantity ?></span></span>
                 <?= $productsDeclension->get($deliveryUnavailableQuantity) ?>
                 (<?= WordHelper::showWeight($deliveryUnavailableWeight, true) ?>) на
                 сумму <?= CurrencyHelper::formatPrice(
@@ -360,7 +360,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
     <h4 class="b-title b-title--order-list js-parts-list-title"
         <?= !($pickupCanSplit || $pickupCanGetPartial) ? 'style="display:none"' : '' ?>>
         <span class="js-mobile-title-order"><?= $pickupCanSplit ? 'Заказ №2' : 'Останется в корзине' ?>
-            : <?= $delayedQuantity ?></span>
+            : <span class="js-count-products"><?= $delayedQuantity ?></span></span>
         <?= $productsDeclension->get($delayedQuantity) ?> (<?= WordHelper::showWeight($delayedWeight, true) ?>) на
         сумму <?= CurrencyHelper::formatPrice(
             $delayedPrice,
