@@ -35,7 +35,7 @@ $locationService = Application::getInstance()->getContainer()->get('location.ser
  */
 
 $product = $arResult['PRODUCT'];
-$offers = $product->getOffers();
+$offers = $product->getOffersSorted();
 $brand = $product->getBrand();
 $currentOffer = $arResult['CURRENT_OFFER'];
 
