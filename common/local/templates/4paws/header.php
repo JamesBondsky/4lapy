@@ -33,7 +33,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
-    $asset->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
+    $asset->addJs('https://api-maps.yandex.ru/2.1.68/?lang=ru_RU');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru'); ?>
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
