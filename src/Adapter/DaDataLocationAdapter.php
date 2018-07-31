@@ -41,6 +41,11 @@ class DaDataLocationAdapter extends BaseAdapter
             'хутор',
             'аул',
             'деревня',
+            'днп',
+            'снт',
+            'днт',
+            'дт',
+            'ст'
         ],
     ];
 
@@ -159,11 +164,19 @@ class DaDataLocationAdapter extends BaseAdapter
         $result = \array_filter($this->expandLocation($location), function ($item) {
             return $this::TYPE_MAP[$item['TYPE']['CODE']];
         });
-
         return \array_reduce($result, function ($array, $item) {
+            $code = $item['TYPE']['CODE'];
             if (self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']]) {
-                $item['NAME'] = \trim(\str_replace(self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']], '',
-                    \strtolower($item['NAME'])));
+                $item['NAME'] = \implode(' ', \array_filter(\array_map(function ($str) use ($code) {
+                    $result = $str;
+                    if ($data = self::EXCLUDE_REGION_TYPE[$code]) {
+                        if (\in_array(\mb_strtolower($str), $data, true)) {
+                            $result = '';
+                        }
+                    }
+
+                    return $result;
+                }, \explode(' ', $item['NAME']))));
             }
 
             return \array_merge($array, [
