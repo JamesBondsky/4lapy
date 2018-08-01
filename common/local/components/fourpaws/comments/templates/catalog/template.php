@@ -125,32 +125,19 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                     сайте</p>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-tel">Мобильный телефон</label>
-                    <input class="b-form-review__input js-phone-mask js-may-be-empty"
-                           id="id-review-tel"
-                           type="tel"
-                           name="PHONE"
-                           value=""/>
+                    <input class="b-form-review__input js-phone-mask" id="id-review-tel" type="tel" name="PHONE" value=""/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-mail">Эл. почта</label>
-                    <input class="b-form-review__input js-may-be-empty"
-                           id="id-review-mail"
-                           type="email"
-                           name="EMAIL"
-                           value=""/>
+                    <input class="b-form-review__input" id="id-review-mail" type="email" name="EMAIL" value=""/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-pass">Пароль</label>
-                    <input class="b-form-review__input js-may-be-empty"
-                           id="id-review-pass"
-                           type="password"
-                           name="PASSWORD"
-                           value=""
-                           autocomplete="off"/>
+                    <input class="b-form-review__input" id="id-review-pass" type="password" name="PASSWORD" value="" autocomplete="off" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
