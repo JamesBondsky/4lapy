@@ -114,16 +114,15 @@ class CatalogElementSnippet extends CBitrixComponent
         if (!empty($this->arParams['CURRENT_OFFER']) && $this->arParams['CURRENT_OFFER'] instanceof Offer) {
             $currentOffer = $this->arParams['CURRENT_OFFER'];
         } else {
-            $offers = $product->getOffers(true, false, $this->arParams['OFFER_FILTER']);
-            $currentOffer = null;
+            $product->getOffers(true, false, $this->arParams['OFFER_FILTER']);
+            $offers = $product->getOffersSorted();
+            /** @var Offer $offer */
+            $foundOfferWithImages = false;
+            $currentOffer = $offers->last();
             foreach ($offers as $offer) {
-                if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+                if (!$foundOfferWithImages || $offer->getImagesIds()) {
                     $currentOffer = $offer;
                 }
-            }
-
-            if (!($currentOffer instanceof Offer)) {
-                $currentOffer = $offers->first();
             }
         }
 
