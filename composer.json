@@ -89,6 +89,7 @@
   },
   "require": {
     "adv/bitrix-tools": "^1.0",
+    "adv/yandex-market-api": "^1.0",
     "andreyryabin/sprint.migration": "^2.3",
     "ci/restclientbundle": "~2.0.2",
     "cocur/slugify": "^3.0",
@@ -127,6 +128,10 @@
     {
       "type": "vcs",
       "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git"
+    },
+    {
+      "type": "vcs",
+      "url": "ssh://git@scm.adv.ru:7999/adv/yandex-market-api.git"
     }
   ],
   "scripts": {

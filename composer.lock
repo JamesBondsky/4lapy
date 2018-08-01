@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "0902cf2e9763e13cb416d9ba6903ed52",
+    "content-hash": "d845b9cf37b51080f4e749e8160829a8",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -38,6 +38,48 @@
             ],
             "description": "Bitrix tools",
             "time": "2018-03-30T13:11:34+00:00"
+        },
+        {
+            "name": "adv/yandex-market-api",
+            "version": "v1.0.4",
+            "source": {
+                "type": "git",
+                "url": "ssh://git@scm.adv.ru:7999/adv/yandex-market-api.git",
+                "reference": "2b65997159787ba2e8cadc58a68c01be496ff386"
+            },
+            "require": {
+                "doctrine/cache": "^1.6",
+                "doctrine/collections": "^1.4",
+                "guzzlehttp/guzzle": "^6.3",
+                "jms/serializer": "^1.11",
+                "php": "^7.0",
+                "psr/log": "^1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^6.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Adv\\YandexMarketApi\\": "src"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Adv\\YandexMarketApi\\Test\\": "test"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Sergey Gripinskiy",
+                    "email": "gripinskiy@adv.ru"
+                }
+            ],
+            "description": "Yandex.Market API implementation.",
+            "time": "2018-06-15T14:23:28+00:00"
         },
         {
             "name": "andreyryabin/sprint.migration",
