@@ -879,7 +879,10 @@ class BasketService implements LoggerAwareInterface
      */
     public function isGiftProduct(BasketItem $basketItem): bool
     {
-        return $this->getBasketItemXmlId($basketItem)[0] === '3';
+        $xmlId = $this->getBasketItemXmlId($basketItem);
+
+        return !\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап"
+            ($xmlId[0] === '3');
     }
 
     /**
