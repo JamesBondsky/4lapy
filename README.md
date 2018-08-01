@@ -61,6 +61,11 @@
 - ./bin/symfony_console f:o:p:c
 ```
 
+## Деактивация завершившихся акций
+
+```
+- ./bin/symfony_console f:o:p:c
+```
 ## Сервисы вагранта
 
 * [MailHog](http://4lapy.vag:8025/)
