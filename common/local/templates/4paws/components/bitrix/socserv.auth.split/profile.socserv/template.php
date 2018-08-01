@@ -47,7 +47,7 @@ if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES']))
                         <?php } ?>
                        title="close">
                         <span class="b-icon b-icon--account-social-del">
-                            <?= new SvgDecorator('icon-delete-account', 26, 26) ?>
+                            <?= new SvgDecorator('icon-delete-account', 13, 13) ?>
                         </span>
                     </a>
                 </div>
