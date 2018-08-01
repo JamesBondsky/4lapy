@@ -140,14 +140,6 @@ class OrderItem extends BaseEntity
     protected $bonusAwardingQuantity = 0;
 
     /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("BASKET_PROPERTY_DETACHED_FROM")
-     * @Serializer\Groups(groups={"read"})
-     */
-    protected $detachedFrom = 0;
-
-    /**
      * @var ArrayCollection
      */
     protected $detachedItems;
@@ -544,25 +536,6 @@ class OrderItem extends BaseEntity
     public function setBonusAwardingQuantity(int $bonusAwardingQuantity): OrderItem
     {
         $this->bonusAwardingQuantity = $bonusAwardingQuantity;
-
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDetachedFrom(): int
-    {
-        return $this->detachedFrom;
-    }
-
-    /**
-     * @param int $detachedFrom
-     * @return OrderItem
-     */
-    public function setDetachedFrom(int $detachedFrom): OrderItem
-    {
-        $this->detachedFrom = $detachedFrom;
 
         return $this;
     }
