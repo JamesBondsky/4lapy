@@ -28,7 +28,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class ExportDescriptionToCsv
+ * Class CreateProductFeed
  *
  * @package FourPaws\CatalogBundle\Console
  */
@@ -37,7 +37,7 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     /**
-     * ImportDescriptionFromCsv constructor.
+     * CreateProductFeed constructor.
      *
      * @param string|null $name
      *
@@ -54,9 +54,9 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
     public function configure(): void
     {
         $this
-            ->setName('bitrix:product:description:export')
-            ->setDescription('Export detail_text, composition, norms of use to csv file for active products without description')
-            ->addArgument('path', InputArgument::REQUIRED, 'Full path to csv file');
+            ->setName('bitrix:product:feed:create')
+            ->setDescription('Run bitrix export task')
+            ->addArgument('id', InputArgument::REQUIRED, 'Bitrix feed id');
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -64,114 +64,25 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
      * @param InputInterface $input
      * @param OutputInterface $output
      *
-     * @throws ObjectPropertyException
      * @throws RuntimeException
      * @throws InvalidArgumentException
-     * @throws ArgumentException
      * @throws SystemException
-     * @throws IblockNotFoundException
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
-        $path = $input->getArgument('path');
-
-        if ($path && $out = fopen($path, 'wb')) {
-            $progress = new ProgressBar($output, 100);
-            $progress->start();
-
-            $products = $this->findProducts();
-
-            $total = \count($products) - 1;
-
-            foreach ($products as $k => $product) {
-                if ($k % 50 === 0) {
-                    $progress->setProgress($this->countPercent($total, $k));
-                }
-
-                \fputcsv($out, $product);
-            }
-
-            $progress->setProgress(100);
-
-            $this->log()->debug(sprintf('Count: %s', $total));
-        }
-    }
-
-    /**
-     * @param int $total
-     * @param int $current
-     *
-     * @return float
-     */
-    protected function countPercent(int $total, int $current): float
-    {
-        return \floor($current / ($total / 100));
-    }
-
-    /**
-     * @return array
-     *
-     * @throws RuntimeException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws ArgumentException
-     * @throws IblockNotFoundException
-     */
-    protected function findProducts(): array
-    {
-        $filter = [
-            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-            'DETAIL_TEXT' => false,
-            'ACTIVE' => 'Y'
-        ];
-
-        $select = [
-            'ID',
-            'NAME',
-            'XML_ID',
-            'DETAIL_TEXT',
-        ];
-
-        $products = [
-            [
-                'XML_ID',
-                'NAME',
-                'NAME',
-                'DETAIL_TEXT',
-                'COMPOSITION',
-                'NORMS_OF_USE',
-                'ID',
-            ]
-        ];
-
-        $res = (new Query(ElementTable::getEntity()))->setFilter($filter)->setSelect($select)->exec();
-
-        /** @var array $el */
-        /** @noinspection PhpAssignmentInConditionInspection */
-        while ($el = $res->fetch()) {
-            $xmlId = CIBlockElement::GetList([], ['PROPERTY_CML2_LINK' => $el['ID']], false, ['nTopCount' => 1], ['XML_ID'])->Fetch();
-
-            if (!$xmlId['XML_ID']) {
-                $this->log()->error(\sprintf(
-                    'Нет предложений у товара #%s',
-                    $el['ID']
-                ));
-
-                continue;
-            }
-
-            $products[] = [
-                $xmlId['XML_ID'],
-                $el['NAME'],
-                $el['NAME'],
-                $el['DETAIL_TEXT'],
-                '',
-                '',
-                $el['ID']
-            ];
+        $id = $input->getArgument('id');
+        if (!$id) {
+            throw new RuntimeException('Profile id not defined');
         }
 
-        return $products;
+        if (! \CCatalogExport::GetByID($id)) {
+            throw new RuntimeException(\sprintf('Profile with id #%s not found', $id));
+        }
+
+        if (!\CCatalogExport::PreGenerateExport($id)) {
+            $this->log()->error(\sprintf('Failed to generate feed for profile #%s', $id));
+        }
+        $this->log()->info('Task finished');
     }
 }
 

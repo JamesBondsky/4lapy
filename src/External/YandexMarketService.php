@@ -100,14 +100,8 @@ class YandexMarketService
 
         $response = $this->client->pricesMethods()->updates($this->campaignId, $prices);
         if (!$response->isOk()) {
-            $offerIds = [];
-            /** @var Offer $offer */
-            foreach ($offers as $offer) {
-                $offerIds[] = $offer->getId();
-            }
             throw new YandexMarketApiException(
-                \sprintf('Failed to update offer prices: %s', $response->getErrorMessage()),
-                ['offers' => $offerIds]
+                \sprintf('Failed to update offer prices: %s', $response->getErrorMessage())
             );
         }
 
