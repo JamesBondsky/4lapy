@@ -173,8 +173,11 @@ class YandexMarketService
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $price = (new Price())
-                ->withDiscountBase($offer->getCatalogOldPrice())
                 ->withValue($offer->getPrice());
+
+            if ($offer->isSimpleDiscountAction() && $offer->getDiscount()) {
+                $price->withDiscountBase($offer->getCatalogOldPrice());
+            }
 
             $result->addOfferPrice(
                 (new OfferPrice())
