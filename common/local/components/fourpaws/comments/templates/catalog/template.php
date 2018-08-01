@@ -106,10 +106,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
             </div>
         </div>
-        <form class="b-form-review js-form-review js-form-validation js-review-query-catalog"
-              id="commentsFormCatalog"
-              data-url="/ajax/comments/catalog/add/"
-              method="post">
+        <form class="b-form-review js-form-review js-form-validation js-review-query"
+              novalidate id="commentsFormCatalog" data-url="/ajax/comments/catalog/add/" method="post">
             <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>" class="js-no-valid">
             <input type="hidden" name="HL_ID" value="<?= $arParams['HL_ID'] ?>" class="js-no-valid">
             <input type="hidden" name="UF_OBJECT_ID" value="<?= $arParams['OBJECT_ID'] ?>" class="js-no-valid">

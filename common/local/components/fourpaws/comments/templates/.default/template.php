@@ -74,9 +74,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                 </div>
             </div>
             <form class="b-form-review js-form-review js-form-validation js-review-query"
-                  id="commentsForm"
-                  data-url="/ajax/comments/add/"
-                  method="post">
+                  id="commentsForm" novalidate data-url="/ajax/comments/add/" method="post">
                 <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>" class="js-no-valid">
                 <input type="hidden" name="HL_ID" value="<?= $arParams['HL_ID'] ?>" class="js-no-valid">
                 <input type="hidden" name="UF_OBJECT_ID" value="<?= $arParams['OBJECT_ID'] ?>" class="js-no-valid">
