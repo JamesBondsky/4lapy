@@ -66,11 +66,6 @@ class CheckActionActivity extends Command implements LoggerAwareInterface
      *
      * @throws Exception
      * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotImplementedException
-     * @throws ObjectException
-     * @throws ObjectNotFoundException
      * @throws SystemException
      *
      * @global $APPLICATION
@@ -82,30 +77,30 @@ class CheckActionActivity extends Command implements LoggerAwareInterface
         $actions = (new ShareQuery())
             ->withFilter([
                 'ACTIVE' => BitrixUtils::BX_BOOL_TRUE,
-                '>ACTIVE_TO' => $date->format('d.m.Y H:i:s'),
+                [
+                    '<DATE_ACTIVE_TO' => $date->format('d.m.Y H:i:s'),
+                ]
             ])
             ->withOrder(['ID' => 'DESC'])
             ->exec();
 
         /** @var Share $action */
         foreach ($actions as $action) {
-            if ($action->getDateActiveTo() && $action->isActive() && $action->getDateActiveTo() < $date) {
-                $e = new \CIBlockElement();
-                if ($e->Update($action->getId(), ['ACTIVE' => BitrixUtils::BX_BOOL_FALSE])) {
-                    $this->log()->info(
-                        \sprintf('Deactivated action %s (#%s)', $action->getName(), $action->getId())
-                    );
-                } else {
-                    $message = $APPLICATION->GetException() ? $APPLICATION->GetException()->GetString() : '';
-                    $this->log()->error(
-                        \sprintf(
-                            'Failed to deactivate action %s (#%s): %s',
-                            $action->getName(),
-                            $action->getId(),
-                            $message
-                        )
-                    );
-                }
+            $e = new \CIBlockElement();
+            if ($e->Update($action->getId(), ['ACTIVE' => BitrixUtils::BX_BOOL_FALSE])) {
+                $this->log()->info(
+                    \sprintf('Deactivated action %s (#%s)', $action->getName(), $action->getId())
+                );
+            } else {
+                $message = $APPLICATION->GetException() ? $APPLICATION->GetException()->GetString() : '';
+                $this->log()->error(
+                    \sprintf(
+                        'Failed to deactivate action %s (#%s): %s',
+                        $action->getName(),
+                        $action->getId(),
+                        $message
+                    )
+                );
             }
         }
 
