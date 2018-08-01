@@ -14,6 +14,8 @@ use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Exception\YandexMarketException;
+use FourPaws\External\YandexMarketService;
 use FourPaws\SapBundle\Dto\In\Prices\Item;
 use FourPaws\SapBundle\Dto\In\Prices\Prices;
 use Psr\Log\LoggerAwareInterface;
@@ -35,6 +37,14 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /** @var int $maxOffersCacheSize */
     private $maxOffersCacheSize = 100;
+
+    /** @var YandexMarketService */
+    private $ymService;
+
+    public function __construct(YandexMarketService $yandexMarketService)
+    {
+        $this->ymService = $yandexMarketService;
+    }
 
     /**
      * @param Prices $prices
@@ -66,6 +76,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
             $prices->getRegionCode(),
             $prices->getItems()->count()
         ));
+        $toUpdate = [];
         foreach ($prices->getItems() as $id => $priceItem) {
             $offerElementData = $this->getOfferElementDataByXmlId($priceItem->getOfferXmlId());
             if (!$offerElementData->isSuccess()) {
@@ -86,6 +97,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
                     $prices->getRegionCode(),
                     $priceItem->getOfferXmlId()
                 ));
+                $toUpdate[] = $setOffersResult->getData()['offer_id'];
             } else {
                 foreach ($setOffersResult->getErrors() as $error) {
                     $this->log()->error(sprintf(
@@ -94,6 +106,19 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
                         $priceItem->getOfferXmlId(),
                         $error->getMessage()
                     ));
+                }
+            }
+        }
+
+        if (!empty($toUpdate)) {
+            $toUpdate = \array_chunk($toUpdate, YandexMarketService::MAX_OFFERS_TO_UPDATE);
+            foreach ($toUpdate as $chunk) {
+                try {
+                    $this->ymService->updateOffersByIds($chunk);
+                } catch (YandexMarketException $e) {
+                    $this->log()->error(
+                        \sprintf('%s: %s', \get_class($e), $e->getMessage())
+                    );
                 }
             }
         }
@@ -365,6 +390,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
             }
         }
 
+        $resultData['offer_id'] = $offerElementData['ID'];
         $result->setData($resultData);
 
         return $result;

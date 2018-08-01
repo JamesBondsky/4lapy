@@ -19,6 +19,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Exception\YandexMarketApiException;
 use FourPaws\External\Exception\YandexMarketCampaignNotFoundException;
+use FourPaws\External\Exception\YandexMarketException;
 use FourPaws\External\Exception\YandexMarketOfferNotFoundException;
 
 class YandexMarketService
@@ -68,6 +69,9 @@ class YandexMarketService
      * @param int $offerId
      *
      * @return bool
+     * @throws YandexMarketOfferNotFoundException
+     * @throws YandexMarketApiException
+     * @throws YandexMarketException
      */
     public function updateOfferById(int $offerId)
     {
@@ -82,17 +86,36 @@ class YandexMarketService
      * @param Offer $offer
      *
      * @return bool
+     * @throws YandexMarketApiException
      */
     public function updateOffer(Offer $offer): bool
     {
         return $this->updateOffers(new ArrayCollection([$offer]));
+    }
 
+    /**
+     * @param array $offerIds
+     *
+     * @return bool
+     * @throws YandexMarketApiException
+     * @throws YandexMarketException
+     */
+    public function updateOffersByIds(array $offerIds)
+    {
+        if (empty($offerIds)) {
+            throw new YandexMarketException('Got empty offers list');
+        }
+
+        $offers = (new OfferQuery())->withFilter(['ID' => $offerIds])->exec();
+
+        return $this->updateOffers($offers);
     }
 
     /**
      * @param Collection $offers
      *
      * @return bool
+     * @throws YandexMarketApiException
      */
     public function updateOffers(Collection $offers): bool
     {
