@@ -64,7 +64,7 @@
 ## Деактивация завершившихся акций
 
 ```
-- ./bin/symfony_console f:o:p:c
+- ./bin/symfony_console f:s:a:a:c
 ```
 ## Сервисы вагранта
 
