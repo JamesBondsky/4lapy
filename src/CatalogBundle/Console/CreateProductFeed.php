@@ -88,9 +88,9 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
 
         if (!\CCatalogExport::PreGenerateExport($id)) {
             $this->log()->error(\sprintf('Failed to generate feed for profile #%s', $id));
+        } else {
+            $this->runAfterExport($type);
         }
-
-        $this->runAfterExport($type);
 
         $this->log()->info(\sprintf('Task #%s (%s) finished', $id, $type));
     }
