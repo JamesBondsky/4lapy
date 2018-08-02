@@ -717,7 +717,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function getDpdTerminalsByLocation(
         string $locationCode,
-        bool $withCod = true,
+        bool $withCod = false,
         float $sum = 0
     ): StoreCollection
     {
