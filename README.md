@@ -66,6 +66,13 @@
 ```
 - ./bin/symfony_console f:s:a:a:c
 ```
+
+## Выгрузка фида для Yandex Market
+
+```
+- ./bin/symfony_console b:p:f:c --type yandex-market %id% # id - ид профиля выгрузки
+```
+
 ## Сервисы вагранта
 
 * [MailHog](http://4lapy.vag:8025/)
