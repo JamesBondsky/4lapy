@@ -41,11 +41,11 @@
         },
         {
             "name": "adv/yandex-market-api",
-            "version": "v1.0.4",
+            "version": "v1.0.5",
             "source": {
                 "type": "git",
                 "url": "ssh://git@scm.adv.ru:7999/adv/yandex-market-api.git",
-                "reference": "2b65997159787ba2e8cadc58a68c01be496ff386"
+                "reference": "3b6247501e1f3e52dcf575a53946147a17110a1f"
             },
             "require": {
                 "doctrine/cache": "^1.6",
@@ -79,7 +79,7 @@
                 }
             ],
             "description": "Yandex.Market API implementation.",
-            "time": "2018-06-15T14:23:28+00:00"
+            "time": "2018-08-02T06:59:10+00:00"
         },
         {
             "name": "andreyryabin/sprint.migration",
