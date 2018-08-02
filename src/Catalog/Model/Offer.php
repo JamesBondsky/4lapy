@@ -394,8 +394,6 @@ class Offer extends IblockElement
      */
     protected $deliverableQuantity;
 
-    protected $bonus = 0;
-
     /** @var ShareCollection */
     protected $share;
 
@@ -1183,13 +1181,12 @@ class Offer extends IblockElement
      */
     public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if ($this->isBonusExclude()) {
-            $this->bonus = 0;
-        } elseif (!$this->bonus) {
-            $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
+        $result = 0;
+        if (!$this->isBonusExclude()) {
+            $result = $this->getPrice() * $quantity * $percent / 100;
         }
 
-        return $this->bonus;
+        return $result;
     }
 
 
@@ -1204,26 +1201,16 @@ class Offer extends IblockElement
     {
         $bonusText = '';
 
-        $bonus = $this->getBonusCount($percent, $quantity);
-
-        if ($bonus <= 0) {
-            return $bonusText;
+        $bonus = floor($this->getBonusCount($percent, $quantity));
+        if ($bonus > 0) {
+            $bonusText = \sprintf(
+                '+ %s %s',
+                $bonus,
+                WordHelper::declension($bonus, ['бонус', 'бонуса', 'бонусов'])
+            );
         }
 
-        if ($precision > 0) {
-            $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
-            $floorBonus = \floor($bonus);
-        } else {
-            $floorBonus = $bonus = \floor($bonus);
-        }
-
-        $div = ($bonus - $floorBonus) * 100;
-
-        return \sprintf(
-            '+ %s %s',
-            WordHelper::numberFormat($bonus, $precision),
-            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
-        );
+        return $bonusText;
     }
 
     /**
