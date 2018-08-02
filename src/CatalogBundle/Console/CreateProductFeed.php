@@ -29,7 +29,7 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const ARG_PROFILE_ID = 'type';
+    public const ARG_PROFILE_ID = 'id';
 
     public const OPT_FEED_TYPE = 'type';
 
