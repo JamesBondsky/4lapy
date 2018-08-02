@@ -87,3 +87,8 @@ parameters:
   dpd.ftp.directory: 'integration'
   dpd.ftp.filemask: 'GeographyDPD.*\.csv'
   dpd.ftp.localpath: '/tmp'
+
+  yandex_market.client_id: ''
+  yandex_market.oauth_token: ''
+  yandex_market.feed_id: 0
+  yandex_market.campaign_id: ''
