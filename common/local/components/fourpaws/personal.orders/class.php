@@ -251,33 +251,26 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
      *
      * @return string
      */
-    public function getItemBonus(OrderItem $item, int $percent, int $precision = 2): string
+    public function getItemBonus(OrderItem $item, int $percent): string
     {
         $bonusText = '';
-        $bonus = \round($item->getPrice() * $item->getBonusAwardingQuantity() * $percent / 100, $precision);
+
+        $bonus = $item->getPrice() * $item->getBonusAwardingQuantity() * $percent / 100;
         /** @var OrderItem $child */
         foreach ($item->getDetachedItems() as $child) {
-            $bonus += \round($child->getPrice() * $child->getBonusAwardingQuantity() * $percent / 100, $precision);
+            $bonus += $child->getPrice() * $child->getBonusAwardingQuantity() * $percent / 100;
+        }
+        $bonus = floor($bonus);
+
+        if ($bonus > 0) {
+            $bonusText = \sprintf(
+                '+ %s %s',
+                $bonus,
+                WordHelper::declension($bonus, ['бонус', 'бонуса', 'бонусов'])
+            );
         }
 
-        if ($bonus <= 0) {
-            return $bonusText;
-        }
-
-        if ($precision > 0) {
-            $bonus = \round($bonus, $precision, \PHP_ROUND_HALF_DOWN);
-            $floorBonus = \floor($bonus);
-        } else {
-            $floorBonus = $bonus = floor($bonus);
-        }
-
-        $div = ($bonus - $floorBonus) * 100;
-
-        return \sprintf(
-            '+ %s %s',
-            WordHelper::numberFormat($bonus, $precision),
-            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
-        );
+        return $bonusText;
     }
 
     /**
