@@ -29,10 +29,8 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const ARG_PROFILE_ID = 'id';
-
-    public const OPT_FEED_TYPE = 'type';
-
+    public const ARG_PROFILE_ID          = 'id';
+    public const OPT_FEED_TYPE           = 'type';
     public const FEED_TYPE_YANDEX_MARKET = 'yandex-market';
 
     /**
