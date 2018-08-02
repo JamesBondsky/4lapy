@@ -9,6 +9,8 @@ namespace FourPaws\BitrixOrm\Model;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\FileTable;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
@@ -307,14 +309,17 @@ class Share extends IblockElement
     }
 
     /**
-     * @return OfferCollection
+     * @return Collection
      */
-    public function getProducts(): OfferCollection
+    public function getProducts(): Collection
     {
-        if (null === $this->products) {
+        if ((null === $this->products) && $this->getPropertyProducts()) {
             $this->products = (new OfferQuery())->withFilter(['=XML_ID' => $this->getPropertyProducts()])->exec();
+        } else {
+            $this->products = new ArrayCollection();
         }
 
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this->products;
     }
 

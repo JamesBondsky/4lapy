@@ -106,10 +106,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                 <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
             </div>
         </div>
-        <form class="b-form-review js-form-review js-form-validation js-review-query-catalog"
-              id="commentsFormCatalog"
-              data-url="/ajax/comments/catalog/add/"
-              method="post">
+        <form class="b-form-review js-form-review js-form-validation js-review-query"
+              novalidate id="commentsFormCatalog" data-url="/ajax/comments/catalog/add/" method="post">
             <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>" class="js-no-valid">
             <input type="hidden" name="HL_ID" value="<?= $arParams['HL_ID'] ?>" class="js-no-valid">
             <input type="hidden" name="UF_OBJECT_ID" value="<?= $arParams['OBJECT_ID'] ?>" class="js-no-valid">
@@ -127,32 +125,19 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                     сайте</p>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-tel">Мобильный телефон</label>
-                    <input class="b-form-review__input js-phone-mask js-may-be-empty"
-                           id="id-review-tel"
-                           type="tel"
-                           name="PHONE"
-                           value=""/>
+                    <input class="b-form-review__input js-phone-mask" id="id-review-tel" type="tel" name="PHONE" value=""/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-mail">Эл. почта</label>
-                    <input class="b-form-review__input js-may-be-empty"
-                           id="id-review-mail"
-                           type="email"
-                           name="EMAIL"
-                           value=""/>
+                    <input class="b-form-review__input" id="id-review-mail" type="email" name="EMAIL" value=""/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-pass">Пароль</label>
-                    <input class="b-form-review__input js-may-be-empty"
-                           id="id-review-pass"
-                           type="password"
-                           name="PASSWORD"
-                           value=""
-                           autocomplete="off"/>
+                    <input class="b-form-review__input" id="id-review-pass" type="password" name="PASSWORD" value="" autocomplete="off" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>

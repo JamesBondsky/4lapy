@@ -200,9 +200,8 @@ class OrderRepository extends BaseRepository
                 Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')
             ))
             ->registerRuntimeField(new ReferenceField(
-                'BASKET_PROPS',
-                BasketPropertyTable::class,
-                Join::on('this.ID', 'ref.BASKET_ID')->whereIn('ref.CODE', ['HAS_BONUS', 'DETACHED_FROM']),
+                'BASKET_PROPS', BasketPropertyTable::class,
+                Join::on('this.ID', 'ref.BASKET_ID')->whereIn('ref.CODE', ['HAS_BONUS']),
                 ['join_type' => 'LEFT']
             ))
 //            ->registerRuntimeField(new ReferenceField(
@@ -338,18 +337,22 @@ class OrderRepository extends BaseRepository
                 sprintf('array<string, %s>', OrderItem::class)
             ));
 
+            $map = [];
             /**
              * @var int $id
              * @var OrderItem $item
              */
             foreach ($result as $id => $item) {
-                if (($detachedFrom = $item->getDetachedFrom()) &&
-                    $parentItem = $result->get($detachedFrom)
-                ) {
-                    /** @var OrderItem $parentItem */
-                    $parentItem->getDetachedItems()->add($item);
-                    $item->setParentItem($parentItem);
+                if (!isset($map[$item->getProductId()])) {
+                    $map[$item->getProductId()] = $id;
+                    continue;
                 }
+
+                $parentId = $map[$item->getProductId()];
+                /** @var OrderItem $parentItem */
+                $parentItem = $result->get($parentId);
+                $parentItem->getDetachedItems()->add($item);
+                $item->setParentItem($parentItem);
             }
         }
         return [$result, $allWeight, $allSum];
