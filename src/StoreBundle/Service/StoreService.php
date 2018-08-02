@@ -209,6 +209,9 @@ class StoreService implements LoggerAwareInterface
     public function getStoresByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
         $location = $this->locationService->getCurrentLocation();
+        if ($this->deliveryService->getCurrentDeliveryZone() === DeliveryService::ZONE_4) {
+            $type = self::TYPE_STORE;
+        }
 
         return $this->getStoresByLocation($location, $type);
     }
