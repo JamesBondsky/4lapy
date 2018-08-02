@@ -29,10 +29,8 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const ARG_PROFILE_ID = 'type';
-
-    public const OPT_FEED_TYPE = 'type';
-
+    public const ARG_PROFILE_ID          = 'id';
+    public const OPT_FEED_TYPE           = 'type';
     public const FEED_TYPE_YANDEX_MARKET = 'yandex-market';
 
     /**
@@ -88,9 +86,9 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
 
         if (!\CCatalogExport::PreGenerateExport($id)) {
             $this->log()->error(\sprintf('Failed to generate feed for profile #%s', $id));
+        } else {
+            $this->runAfterExport($type);
         }
-
-        $this->runAfterExport($type);
 
         $this->log()->info(\sprintf('Task #%s (%s) finished', $id, $type));
     }
