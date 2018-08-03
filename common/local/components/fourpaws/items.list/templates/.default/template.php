@@ -55,7 +55,7 @@ $frame = $this->createFrame(); ?>
                         CIBlock::GetArrayByID($item['IBLOCK_ID'], 'ELEMENT_DELETE'),
                         ['CONFIRM' => GetMessage('CT_BNL_ELEMENT_DELETE_CONFIRM')]
                     ); ?>
-                    <article class="b-news-item<?= ($key === 0) ? ' b-news-item--big' : '' ?>"
+                    <article class="b-news-item<?= ($key === 0) ? ' b-news-item--big' : '' ?> b-news-item--main-page"
                              id="<?= $this->GetEditAreaId($item['ID']); ?>">
                         <?php if (!empty($item['DETAIL_PAGE_URL'])){ ?>
                         <a class="b-news-item__link"

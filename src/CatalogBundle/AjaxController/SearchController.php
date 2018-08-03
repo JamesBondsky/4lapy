@@ -40,6 +40,7 @@ class SearchController extends Controller
      * @throws ApplicationCreateException
      * @throws InvalidArgumentException
      * @throws RuntimeException
+     * @throws \Exception
      */
     public function autocompleteAction(SearchRequest $searchRequest): JsonResponse
     {
@@ -53,7 +54,7 @@ class SearchController extends Controller
         if (!$validator->validate($searchRequest)->count()) {
             /** @var ProductSearchResult $result */
             $result = $searchService->searchProducts(
-                new FilterCollection(),
+                $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
