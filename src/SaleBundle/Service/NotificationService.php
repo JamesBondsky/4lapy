@@ -260,7 +260,7 @@ class NotificationService implements LoggerAwareInterface
         $smsTemplate = null;
         $sendCompleteEmail = false;
         switch ($status) {
-            case OrderStatus::STATUS_FINISHED:
+            case OrderStatus::STATUS_ISSUING_POINT:
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
                     if ($parameters['dcDelivery']) {
                         $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.issuingPoint.dc.html.php';
@@ -280,6 +280,9 @@ class NotificationService implements LoggerAwareInterface
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.delivered.html.php';
                 }
+                break;
+            case OrderStatus::STATUS_FINISHED:
+                $sendCompleteEmail = true;
                 break;
         }
 
