@@ -33,5 +33,6 @@ if ($arResult['COUNT_COMMENTS'] > 0) { ?>
         <?php } ?>
     </span>
 <?php } else { ?>
+    <div class="b-rating b-rating--card"></div>
     <a class="b-common-item__rank-text" href="<?= $arParams['ITEM_LINK'] ?>" title="Оставьте отзыв">Оставьте отзыв</a>
 <?php } ?>
