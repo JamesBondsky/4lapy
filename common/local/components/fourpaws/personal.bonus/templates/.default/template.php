@@ -68,14 +68,14 @@ $bonus = $arResult['BONUS'];
                 $steps = [
                     'one',
                     'second',
-                    'third mobile',
-                    'four mobile',
+                    'third',
+                    'four',
                     'five',
                     'six',
                 ];
-                foreach (UserBonus::$discountTable as $discountPercent => $discountSum) {
-                    $i++; ?>
-                    <li class="b-account-bonus-progress__progress-value b-account-bonus-progress__progress-value--step-<?= $steps[$i] ?><?= $i <= $bonus->getDiscount() ? ' active' : '' ?>">
+                foreach (UserBonus::$discountTable as $discountPercent => $discountSum) { ?>
+                    <?php $displayMobile = ($discountPercent >= $bonus->getRealDiscount()) && ($discountPercent <= $bonus->getNextDiscount()); ?>
+                    <li class="b-account-bonus-progress__progress-value b-account-bonus-progress__progress-value--step-<?= $steps[$i] ?><?= $displayMobile ? ' mobile ' : '' ?><?= $discountPercent <= $bonus->getRealDiscount() ? ' active' : '' ?>">
                         <div class="b-account-bonus-progress__percent"><?= $discountPercent ?>%
                         </div>
                         <div class="b-account-bonus-progress__number">
@@ -87,6 +87,7 @@ $bonus = $arResult['BONUS'];
                             <?php } ?>
                         </div>
                     </li>
+                    <?php $i++ ?>
                 <?php } ?>
             </ul>
             <div class="b-account-bonus-progress__progress-bg">
