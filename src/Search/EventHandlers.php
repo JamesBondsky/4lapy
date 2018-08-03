@@ -4,6 +4,7 @@ namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Exception;
 use FourPaws\App\Application;
@@ -52,8 +53,8 @@ class EventHandlers extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterIBlockElementDelete', [self::class, 'deleteInElastic'], $module);
 
         $module = 'catalog';
-        foreach (['OnPriceUpdate', 'OnPriceAdd'] as $eventType) {
-            static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnPriceChange'], $module);
+        foreach (['PriceOnUpdate', 'PriceOnAdd'] as $eventType) {
+            static::initHandler($eventType, [self::class, 'updateOfferInElasticOnPriceChange'], $module);
         }
 
         /** Не переиндексируем на обновлении продукта каталога
@@ -83,11 +84,12 @@ class EventHandlers extends BaseServiceHandler
     /**
      * Обновление торгового предложения, когда у него меняется цена.
      *
-     * @param array $arFields
+     * @param Event $event
      */
-    public static function updateOfferInElasticOnPriceChange($arFields): void
+    public static function updateOfferInElasticOnPriceChange(Event $event): void
     {
         try {
+            $arFields = $event->getParameter('fields');
             if (!isset($arFields['PRODUCT_ID']) || $arFields['PRODUCT_ID'] <= 0) {
                 return;
             }
