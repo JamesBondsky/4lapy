@@ -443,10 +443,7 @@ class UserBonus
                     /** формула
                      * прогресс = активные интервалы * процент одного интервала + ((((сумма покупок - сумма нижней границы) / (сумма верхней границы - сумма нижней границы))*100)* процент одного интервала / 100)*/
                     $progress = floor(
-                        $activeIntervals * $percentOneInterval + ((floor(
-                                    ($this->getSum() - $minPrice) / ($nextPrice
-                                        - $minPrice)
-                                ) * 100) * $percentOneInterval / 100)
+                        $activeIntervals * $percentOneInterval + ((($this->getSum() - $minPrice) / ($nextPrice - $minPrice) * 100) * $percentOneInterval / 100)
                     );
                 } else {
                     $progress = 100;
