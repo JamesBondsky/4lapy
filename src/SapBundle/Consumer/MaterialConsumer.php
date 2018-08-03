@@ -266,12 +266,26 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
     protected function getOffer(Material $material, Product $product): Offer
     {
         $offer = $this->offerService->processMaterial($material);
+
+        /**
+         * если оффер перемещается к другому товару, то мы должны переиндексировать его предыдущий товар
+         */
+        $previousProductId = null;
+        if ($offer->getCml2Link() && $offer->getCml2Link() !== $product->getId()) {
+            $previousProductId = $offer->getCml2Link();
+        }
         $offer->withCml2Link($product->getId());
 
         if ($offer->getId()) {
             $result = $this->offerService->update($offer);
         } else {
             $result = $this->offerService->create($offer);
+        }
+
+        if ((null !== $previousProductId) &&
+            $product = $this->productService->findById($previousProductId)
+        ) {
+            $this->productService->update($product);
         }
 
         if ($result->isSuccess()) {
