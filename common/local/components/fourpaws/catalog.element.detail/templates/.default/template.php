@@ -52,7 +52,23 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>
     <h1 class="b-title b-title--h1 b-title--card"><?= $product->getName() ?></h1>
 <?php $this->EndViewTarget();
 
-$this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
+$this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
+/** переносим картинки текущего оффера в начало слайдера */
+$clonedOffers = (clone $offers)->getIterator();
+$clonedOffers->uasort(
+    function (Offer $offer1, Offer $offer2) use ($currentOffer) {
+        $result = 0;
+        if ($offer1->getId() === $currentOffer->getId()) {
+            $result = -1;
+        } elseif ($offer2->getId() === $currentOffer->getId()) {
+            $result = 1;
+        }
+
+        return $result;
+    }
+);
+dump($clonedOffers);
+?>
     <div class="b-product-card__slider">
         <div class="b-product-slider">
             <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for">
@@ -60,7 +76,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
                 $mainImageIndex = [];
                 $iterator = 0;
                 /** @var Offer $offer */
-                foreach ($offers as $offer) {
+                foreach ($clonedOffers as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
@@ -98,7 +114,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
             <div class="b-product-slider__list b-product-slider__list--nav js-product-slider-nav">
                 <?php
                 /** @var Offer $offer */
-                foreach ($offers as $offer) {
+                foreach ($clonedOffers as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
