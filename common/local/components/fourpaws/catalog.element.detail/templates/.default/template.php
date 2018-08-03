@@ -67,7 +67,6 @@ $clonedOffers->uasort(
         return $result;
     }
 );
-dump($clonedOffers);
 ?>
     <div class="b-product-card__slider">
         <div class="b-product-slider">
