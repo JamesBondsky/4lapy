@@ -115,6 +115,16 @@ class ProductService
     }
 
     /**
+     * @param int $id
+     * @return Product|null
+     */
+    public function findById(int $id): ?Product
+    {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->productRepository->find($id);
+    }
+
+    /**
      * @param Material $material
      *
      * @throws \FourPaws\SapBundle\Exception\LogicException
