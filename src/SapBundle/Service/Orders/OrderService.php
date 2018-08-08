@@ -44,7 +44,6 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
 use FourPaws\SapBundle\Dto\In\Orders\OrderOffer as OrderOfferIn;
@@ -75,8 +74,8 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Class OrderService
  *
- * @todo divide to base -> out
- *                      -> in
+ * @todo    divide to base -> out
+ *                         -> in
  *
  * @package FourPaws\SapBundle\Service\Orders
  */
@@ -84,10 +83,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 {
     use LazyLoggerAwareTrait, SapOutFile;
 
-    /**
-     * @var BaseOrderService
-     */
-    private $baseOrderService;
     /**
      * @var SerializerInterface
      */
@@ -132,15 +127,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * OrderService constructor.
      *
-     * @param BaseOrderService $baseOrderService
-     * @param DeliveryService $deliveryService
-     * @param LocationService $locationService
+     * @param DeliveryService     $deliveryService
+     * @param LocationService     $locationService
      * @param SerializerInterface $serializer
-     * @param Filesystem $filesystem
-     * @param UserRepository $userRepository
-     * @param IntervalService $intervalService
-     * @param StatusService $statusService
-     * @param BasketService $basketService
+     * @param Filesystem          $filesystem
+     * @param UserRepository      $userRepository
+     * @param IntervalService     $intervalService
+     * @param StatusService       $statusService
+     * @param BasketService       $basketService
      */
     public function __construct(
         DeliveryService $deliveryService,
@@ -223,12 +217,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             : OrderDtoOut::ORDER_SOURCE_SITE;
 
         $description = \trim(\implode("\n",
-            [$order->getField('USER_DESCRIPTION'), $order->getField('COMMENTS')]
+            [
+                $order->getField('USER_DESCRIPTION'),
+                $order->getField('COMMENTS')
+            ]
         )) ?: '';
 
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
-            ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
+            ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
+                ->toUserTime()))
             ->setClientId($order->getUserId())
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
             ->setClientPhone(PhoneHelper::formatPhone(
@@ -241,7 +239,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ))
             ->setClientComment($description)
             ->setOrderSource($orderSource)
-            ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'));
+            ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'))
+            ->setAvatarEmail($this->getPropertyValueByCode($order, 'OPERATOR_EMAIL'))
+            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'));
 
         if (Env::isStage()) {
             $orderDto
@@ -255,12 +255,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoProducts($orderDto, $order);
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
+
         return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
     }
 
     /**
      * @param OrderDtoIn $orderDto
      *
+     * @throws \Bitrix\Main\NotSupportedException
      * @throws NotFoundOrderDeliveryException
      * @throws NotFoundProductException
      * @throws SystemException
@@ -330,7 +332,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param OrderDtoOut $dto
+     * @param OrderDtoOut       $dto
      * @param PaymentCollection $paymentCollection
      *
      * @throws ObjectNotFoundException
@@ -373,7 +375,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * 02 – ZIMN Не оплачено;
          * 03 – ZIMN Предоплачено.
          */
-        if ($externalPayment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE) {
+        if ($externalPayment->getPaySystem()
+                ->getField('CODE') === OrderPayment::PAYMENT_ONLINE) {
             /** @noinspection PhpParamsInspection */
             $dto
                 ->setPayType(SapOrder::ORDER_PAYMENT_ONLINE_CODE)
@@ -393,7 +396,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param OrderDtoOut $orderDto
-     * @param Order $order
+     * @param Order       $order
      *
      * @throws NotFoundOrderShipmentException
      * @throws NotFoundOrderDeliveryException
@@ -414,7 +417,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $contractorDeliveryTypeCode = '';
 
         if (\strpos($deliveryTypeCode, '_')) {
-            [$deliveryTypeCode, $contractorDeliveryTypeCode] = \explode('_', $deliveryTypeCode);
+            [
+                $deliveryTypeCode,
+                $contractorDeliveryTypeCode
+            ] = \explode('_', $deliveryTypeCode);
         }
 
         try {
@@ -443,7 +449,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($deliveryAddress)
             ->setDeliveryAddressOrPoint($deliveryAddress->__toString())
-            ->setContractorCode($deliveryTypeCode === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
+            ->setContractorCode($deliveryTypeCode
+                                === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
 
         if ($deliveryDate) {
             $orderDto->setDeliveryDate($deliveryDate);
@@ -452,8 +459,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param OrderDtoOut $orderDto
-     * @param Order $order
+     * @param Order       $order
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException
      * @throws NotFoundOrderShipmentException
      */
     private function populateOrderDtoProducts(OrderDtoOut $orderDto, Order $order)
@@ -610,7 +618,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param Order $order
+     *
      * @return string
+     *
+     * @throws NotFoundOrderShipmentException
      */
     private function getDeliveryCode(Order $order): string
     {
@@ -625,11 +636,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             );
         }
 
-        return $shipment->getDelivery()->getCode();
+        return $shipment->getDelivery()
+            ->getCode();
     }
 
     /**
-     * @param Order $order
+     * @param Order  $order
      * @param string $code
      *
      * @return string
@@ -642,7 +654,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order      $order
      * @param OrderDtoIn $orderDto
      *
      * @throws RuntimeException
@@ -665,7 +677,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             'PHONE_ALT',
             PhoneHelper::formatPhone($orderDto->getClientOrderPhone(), PhoneHelper::FORMAT_SHORT)
         );
-        $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('d.m.Y'));
+        $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()
+            ->format('d.m.Y'));
 
         if ($deliveryAddress) {
             $this->setPropertyValue($propertyCollection, 'CITY', $deliveryAddress->getCityName());
@@ -679,8 +692,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param PropertyValueCollection $collection
-     * @param string $code
-     * @param string $value
+     * @param string                  $code
+     * @param string                  $value
      */
     public function setPropertyValue(PropertyValueCollection $collection, string $code, string $value): void
     {
@@ -692,7 +705,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order      $order
      * @param OrderDtoIn $orderDto
      *
      * @throws ArgumentOutOfRangeException
@@ -706,12 +719,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         /**
          * Мы не меняем платежную систему при смене статуса, только суммы
          */
-        $statusPayed = (empty($orderDto->getPayStatus()) || SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus())
+        $statusPayed = (empty($orderDto->getPayStatus())
+                        || SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus())
             ? 'N'
             : 'Y';
 
         $bonusPayedCount = $orderDto->getBonusPayedCount();
-        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
+        $innerPayment = $order->getPaymentCollection()
+            ->getInnerPayment();
         $externalPayment = null;
 
         if ($innerPayment && $bonusPayedCount) {
@@ -743,9 +758,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order      $order
      * @param OrderDtoIn $orderDto
      *
+     * @throws \Bitrix\Main\NotSupportedException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
@@ -771,7 +787,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 $deliveryCode = DeliveryService::INNER_PICKUP_CODE;
                 break;
             case SapOrder::DELIVERY_TYPE_CONTRACTOR:
-                $deliveryCode = ($orderDto->getDeliveryAddress() && $orderDto->getDeliveryAddress()->getDeliveryPointCode())
+                /** @noinspection NullPointerExceptionInspection */
+                $deliveryCode = ($orderDto->getDeliveryAddress()
+                                 && $orderDto->getDeliveryAddress()
+                                     ->getDeliveryPointCode())
                     ? DeliveryService::DPD_PICKUP_CODE
                     : DeliveryService::DPD_DELIVERY_CODE;
         }
@@ -799,9 +818,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             /** @noinspection PhpInternalEntityUsedInspection */
             $shipment->setFields(
                 [
-                    'DELIVERY_ID' => $deliveryService->getId(),
-                    'PRICE_DELIVERY' => $deliveryPrice,
-                    'DELIVERY_NAME' => $deliveryService->getName(),
+                    'DELIVERY_ID'           => $deliveryService->getId(),
+                    'PRICE_DELIVERY'        => $deliveryPrice,
+                    'DELIVERY_NAME'         => $deliveryService->getName(),
                     'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
@@ -809,7 +828,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order $order
+     * @param Order      $order
      * @param OrderDtoIn $orderDto
      *
      * @throws NotFoundProductException
@@ -856,7 +875,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         /**
          * @var BasketItem $basketItem
          */
-        foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
+        foreach ($basketCollection = $order->getBasket()
+            ->getBasketItems() as $basketItem) {
             $article = \ltrim($this->basketService->getBasketItemXmlId($basketItem), '0');
 
             $externalItem = null;
@@ -888,7 +908,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param BasketItem $basketItem
+     * @param BasketItem   $basketItem
      * @param OrderOfferIn $externalItem
      *
      * @throws RuntimeException
@@ -899,12 +919,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         try {
             $basketItem->setField('QUANTITY', $externalItem->getQuantity());
         } catch (ArgumentOutOfRangeException | Exception $e) {
-            $this->log()->error(\sprintf('Ошибка обновления товара в корзине: %s', $e->getMessage()));
+            $this->log()
+                ->error(\sprintf('Ошибка обновления товара в корзине: %s', $e->getMessage()));
         }
     }
 
     /**
-     * @param Basket $basket
+     * @param Basket       $basket
      * @param OrderOfferIn $externalItem
      *
      * @throws NotFoundProductException
@@ -931,10 +952,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $element = (new Query(ElementTable::class))
                 ->setFilter([
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'XML_ID' => $xmlId,
+                    'XML_ID'    => $xmlId,
                 ])
                 ->setLimit(1)
-                ->setSelect(['XML_ID', 'ID', 'NAME'])
+                ->setSelect([
+                    'XML_ID',
+                    'ID',
+                    'NAME'
+                ])
                 ->exec()
                 ->fetch();
 
@@ -949,22 +974,24 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             $itemId = $element['ID'];
         } catch (IblockNotFoundException | ArgumentException $e) {
-            $this->log()->error(\sprintf('Ошибка добавления продукта: %s', $e->getMessage()));
+            $this->log()
+                ->error(\sprintf('Ошибка добавления продукта: %s', $e->getMessage()));
         }
 
         $context = [
-            'SITE_ID' => SITE_ID,
-            'USER_ID' => $basket->getOrder()->getUserId(),
+            'SITE_ID'  => SITE_ID,
+            'USER_ID'  => $basket->getOrder()
+                ->getUserId(),
             'ORDER_ID' => $basket->getOrderId(),
         ];
 
         $fields = [
-            'PRODUCT_ID' => $itemId,
-            'QUANTITY' => $externalItem->getQuantity(),
-            'MODULE' => 'catalog',
-            'CURRENCY' => 'RUB',
-            'PRICE' => $externalItem->getUnitPrice(),
-            'NAME' => $element['NAME'],
+            'PRODUCT_ID'             => $itemId,
+            'QUANTITY'               => $externalItem->getQuantity(),
+            'MODULE'                 => 'catalog',
+            'CURRENCY'               => 'RUB',
+            'PRICE'                  => $externalItem->getUnitPrice(),
+            'NAME'                   => $element['NAME'],
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
 
@@ -975,18 +1002,19 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 throw new CantCreateBasketItem(\implode(', ', $result->getErrorMessages()));
             }
         } catch (CantCreateBasketItem | LoaderException | ObjectNotFoundException $e) {
-            $this->log()->error(
-                \sprintf(
-                    'Ошибка добавления товара в корзину заказа #%s: %s',
-                    $basket->getOrderId(),
-                    $e->getMessage()
-                )
-            );
+            $this->log()
+                ->error(
+                    \sprintf(
+                        'Ошибка добавления товара в корзину заказа #%s: %s',
+                        $basket->getOrderId(),
+                        $e->getMessage()
+                    )
+                );
         }
     }
 
     /**
-     * @param Order $order
+     * @param Order      $order
      * @param OrderDtoIn $orderDto
      *
      * @throws NotFoundOrderShipmentException
@@ -1008,7 +1036,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             );
         }
 
-        $deliveryCode = $shipment->getDelivery()->getCode();
+        $deliveryCode = $shipment->getDelivery()
+            ->getCode();
         $status = $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus());
 
         if ($status) {
@@ -1023,19 +1052,21 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param BasketItem $item
-     * @param string $code
+     * @param string     $code
      *
      * @return string
      */
     private function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
-        return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
+        return $item->getPropertyCollection()
+                   ->getPropertyValues()[$code]['VALUE'] ?? '';
     }
 
     /**
-     * @param Order $order
+     * @param Order           $order
      * @param ArrayCollection $collection
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException
      * @throws NotFoundOrderShipmentException
      */
     private function addBasketDeliveryItem(Order $order, ArrayCollection $collection): void
