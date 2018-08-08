@@ -18,6 +18,11 @@ use JMS\Serializer\SerializationContext;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Class StorageBaseRepository
+ *
+ * @package FourPaws\SaleBundle\Repository\OrderStorage
+ */
 abstract class StorageBaseRepository implements StorageRepositoryInterface
 {
     /**
@@ -40,6 +45,14 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
      */
     protected $userCitySelect;
 
+    /**
+     * StorageBaseRepository constructor.
+     *
+     * @param ArrayTransformerInterface    $arrayTransformer
+     * @param ValidatorInterface           $validator
+     * @param CurrentUserProviderInterface $currentUserProviderInterface
+     * @param UserCitySelectInterface      $userCitySelect
+     */
     public function __construct(
         ArrayTransformerInterface $arrayTransformer,
         ValidatorInterface $validator,
@@ -68,7 +81,9 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
             $user = $this->currentUserProvider->getCurrentUser();
             $data['UF_USER_ID'] = $user->getId();
 
-            $data['PROPERTY_NAME'] = $user->getName();
+            if (!$data['PROPERTY_NAME']) {
+                $data['PROPERTY_NAME'] = $user->getName();
+            }
             $data['PROPERTY_PHONE'] = $user->getPersonalPhone();
             if ($user->getEmail()) {
                 $data['PROPERTY_EMAIL'] = $user->getEmail();
