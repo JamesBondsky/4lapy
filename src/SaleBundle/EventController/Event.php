@@ -19,11 +19,13 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
 use FourPaws\App\Tools\StaticLoggerTrait;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -37,6 +39,7 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -77,66 +80,132 @@ class Event extends BaseServiceHandler
         ###   Обработчики скидок       ###
 
         /** Инициализация кастомных правил работы с корзиной */
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr'], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr'], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr'], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr'], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
+            Gift::class,
+            'GetControlDescr'
+        ], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
+            BasketFilter::class,
+            'GetControlDescr'
+        ], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
+            BasketQuantity::class,
+            'GetControlDescr'
+        ], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
+            DiscountFromProperty::class,
+            'GetControlDescr'
+        ], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
+            DetachedRowDiscount::class,
+            'GetControlDescr'
+        ], $module);
         /** Здесь дополнительная обработка акций */
-        static::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction'], $module);
-        static::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction'], $module);
+        static::initHandler('OnAfterSaleOrderFinalAction', [
+            Manager::class,
+            'OnAfterSaleOrderFinalAction'
+        ], $module);
+        static::initHandler('OnBeforeSaleOrderFinalAction', [
+            Manager::class,
+            'OnBeforeSaleOrderFinalAction'
+        ], $module);
 
         ###   Обработчики скидок EOF   ###
 
         /** генерация номера заказа */
-        static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [self::class, 'updateOrderAccountNumber'], $module);
-        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'unlockOrderTables'], $module);
+        static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
+            self::class,
+            'updateOrderAccountNumber'
+        ], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [
+            self::class,
+            'unlockOrderTables'
+        ], $module);
 
         /** отправка email */
         // новый заказ
-        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'sendNewOrderMessage'], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [
+            self::class,
+            'sendNewOrderMessage'
+        ], $module);
         // смена платежной системы у заказа
-        static::initHandler('OnSalePaymentEntitySaved', [self::class, 'sendNewOrderMessage'], $module);
+        static::initHandler('OnSalePaymentEntitySaved', [
+            self::class,
+            'sendNewOrderMessage'
+        ], $module);
         // оплата заказа
-        static::initHandler('OnSaleOrderPaid', [self::class, 'sendOrderPaymentMessage'], $module);
+        static::initHandler('OnSaleOrderPaid', [
+            self::class,
+            'sendOrderPaymentMessage'
+        ], $module);
         // отмена заказа
-        static::initHandler('OnSaleOrderCanceled', [self::class, 'sendOrderCancelMessage'], $module);
+        static::initHandler('OnSaleOrderCanceled', [
+            self::class,
+            'sendOrderCancelMessage'
+        ], $module);
         // смена статуса заказа
-        static::initHandler('OnSaleStatusOrderChange', [self::class, 'sendOrderStatusMessage'], $module);
+        static::initHandler('OnSaleStatusOrderChange', [
+            self::class,
+            'sendOrderStatusMessage'
+        ], $module);
 
         /** отмена заказа, перешедшего в статус отмены */
-        static::initHandler('OnSaleStatusOrderChange', [self::class, 'cancelOrder'], $module);
+        static::initHandler('OnSaleStatusOrderChange', [
+            self::class,
+            'cancelOrder'
+        ], $module);
 
         /** очистка кеша заказа */
-        static::initHandler('OnSaleOrderSaved', [self::class, 'clearOrderCache'], $module);
+        static::initHandler('OnSaleOrderSaved', [
+            self::class,
+            'clearOrderCache'
+        ], $module);
 
         /** обновление бонусного счета пользователя и бонусного процента пользователя */
         $module = 'main';
-        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'updateUserAccountBalance'], $module);
-        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'updateUserAccountBalance'], $module);
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserLogin', [
+            self::class,
+            'updateUserAccountBalance'
+        ], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [
+            self::class,
+            'updateUserAccountBalance'
+        ], $module);
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [
+            self::class,
+            'updateUserAccountBalance'
+        ], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [
+            self::class,
+            'setNameAfterOrder'
+        ], $module);
     }
 
     public static function updateUserAccountBalance(): void
     {
         try {
             /** @var MainTemplate $template */
-            $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
+            $template = MainTemplate::getInstance(BitrixApplication::getInstance()
+                ->getContext());
             /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal)
              *  так же чекаем что это не страница заказа
              */
             if (!$template->hasUserAuth()) {
                 return;
             }
-            $container = Application::getInstance()->getContainer();
+            $container = Application::getInstance()
+                ->getContainer();
             $userService = $container->get(CurrentUserProviderInterface::class);
             $userAccountService = $container->get(UserAccountService::class);
             $user = $userService->getCurrentUser();
-            [, $bonus] = $userAccountService->refreshUserBalance($user);
+            [
+                ,
+                $bonus
+            ] = $userAccountService->refreshUserBalance($user);
             $userService->refreshUserBonusPercent($user, $bonus);
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('failed to update user account balance: ' . $e->getMessage());
         }
@@ -174,9 +243,11 @@ class Event extends BaseServiceHandler
         }
 
         /** @var OrderService $orderService */
-        $orderService = Application::getInstance()->getContainer()->get(
-            OrderService::class
-        );
+        $orderService = Application::getInstance()
+            ->getContainer()
+            ->get(
+                OrderService::class
+            );
         if ($orderService->isSubscribe($order) || $orderService->isManzanaOrder($order)) {
             // пропускаются заказы, созданные по подписке
             return;
@@ -206,16 +277,18 @@ class Event extends BaseServiceHandler
             return;
         }
 
-        /** @var Order $order*/
+        /** @var Order $order */
         $order = $event->getParameter('ENTITY');
         if ($order->isCanceled()) {
             return;
         }
 
         /** @var OrderService $orderService */
-        $orderService = Application::getInstance()->getContainer()->get(
-            OrderService::class
-        );
+        $orderService = Application::getInstance()
+            ->getContainer()
+            ->get(
+                OrderService::class
+            );
         if ($orderService->isManzanaOrder($order)) {
             return;
         }
@@ -245,14 +318,17 @@ class Event extends BaseServiceHandler
         $order = $event->getParameter('ENTITY');
 
         // если свойств нет, то это удаление заказа
-        if ($order->getPropertyCollection()->isEmpty()) {
+        if ($order->getPropertyCollection()
+            ->isEmpty()) {
             return;
         }
 
         /** @var OrderService $orderService */
-        $orderService = Application::getInstance()->getContainer()->get(
-            OrderService::class
-        );
+        $orderService = Application::getInstance()
+            ->getContainer()
+            ->get(
+                OrderService::class
+            );
         if ($orderService->isManzanaOrder($order)) {
             return;
         }
@@ -288,9 +364,11 @@ class Event extends BaseServiceHandler
         }
 
         /** @var OrderService $orderService */
-        $orderService = Application::getInstance()->getContainer()->get(
-            OrderService::class
-        );
+        $orderService = Application::getInstance()
+            ->getContainer()
+            ->get(
+                OrderService::class
+            );
 
         if ($orderService->isManzanaOrder($order)) {
             return;
@@ -306,6 +384,7 @@ class Event extends BaseServiceHandler
 
     /**
      * @param BitrixEvent $event
+     *
      * @throws ArgumentException
      * @throws ObjectNotFoundException
      * @throws SystemException
@@ -313,7 +392,7 @@ class Event extends BaseServiceHandler
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function cancelOrder(BitrixEvent $event): void
     {
@@ -325,17 +404,24 @@ class Event extends BaseServiceHandler
         $order = $event->getParameter('ENTITY');
 
         // если свойств нет, то это удаление заказа
-        if ($order->getPropertyCollection()->isEmpty()) {
+        if ($order->getPropertyCollection()
+            ->isEmpty()) {
             return;
         }
 
         if (\in_array(
-            $order->getField('STATUS_ID'),
-            [OrderStatus::STATUS_CANCEL_COURIER, OrderStatus::STATUS_CANCEL_PICKUP],
-            true
-        ) && !$order->isCanceled()) {
+                $order->getField('STATUS_ID'),
+                [
+                    OrderStatus::STATUS_CANCEL_COURIER,
+                    OrderStatus::STATUS_CANCEL_PICKUP
+                ],
+                true
+            )
+            && !$order->isCanceled()) {
             /** @var PaymentService $paymentService */
-            $paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
+            $paymentService = Application::getInstance()
+                ->getContainer()
+                ->get(PaymentService::class);
             $paymentService->cancelPayment($order, 0, false);
 
             $order->setField('CANCELED', 'Y');
@@ -346,6 +432,7 @@ class Event extends BaseServiceHandler
     /**
      * @param $id
      * @param $type
+     *
      * @return false|string
      */
     public static function updateOrderAccountNumber($id, $type)
@@ -357,24 +444,31 @@ class Event extends BaseServiceHandler
 
         if ($type === 'NUMBER') {
             try {
-                BitrixApplication::getConnection()->query('LOCK TABLE b_sale_order WRITE');
-                /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
-                $maxNumber = BitrixApplication::getConnection()->query(
-                    'SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) as maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 9999999'
-                )->fetch()['maxNumber'];
+                /**
+                 * @var array $connection
+                 */
+                $connection = BitrixApplication::getConnection();
 
-                if ($defaultNumber = Option::get('sale', 'account_number_data', 0)) {
+                $connection->query('LOCK TABLE b_sale_order WRITE');
+                /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
+                $maxNumber = $connection
+                                 ->query('SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) AS maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 9999999')
+                                 ->fetch()['maxNumber'];
+                $defaultNumber = Option::get('sale', 'account_number_data', 0);
+
+                if ($defaultNumber) {
                     $result = (int)$defaultNumber > (int)$maxNumber ? $defaultNumber : ($maxNumber + 1);
                 }
-            } catch (\Exception $e) {
-                static::getLogger()->error(
-                    sprintf(
-                        'failed to set order %s account number: %s: %s',
-                        $id,
-                        \get_class($e),
-                        $e->getMessage()
-                    )
-                );
+            } catch (Exception $e) {
+                static::getLogger()
+                    ->error(
+                        sprintf(
+                            'failed to set order %s account number: %s: %s',
+                            $id,
+                            \get_class($e),
+                            $e->getMessage()
+                        )
+                    );
             }
         }
 
@@ -383,9 +477,11 @@ class Event extends BaseServiceHandler
 
     /**
      * @param BitrixEvent $event
+     *
      * @throws ArgumentTypeException
      */
-    public static function unlockOrderTables(BitrixEvent $event) {
+    public static function unlockOrderTables(BitrixEvent $event)
+    {
         /** @var Order $order */
         $order = $event->getParameter('ENTITY');
 
@@ -394,12 +490,15 @@ class Event extends BaseServiceHandler
         }
 
         try {
-            BitrixApplication::getConnection()->query('UNLOCK TABLES');
-        } catch (\Exception $e) {
+            BitrixApplication::getConnection()
+                ->query('UNLOCK TABLES');
+        } catch (Exception $e) {
             /** @noinspection NullPointerExceptionInspection */
-            static::getLogger()->error('failed to unlock order tables', [
-                'order' => $event->getParameter('ENTITY')->getId(),
-            ]);
+            static::getLogger()
+                ->error('failed to unlock order tables', [
+                    'order' => $event->getParameter('ENTITY')
+                        ->getId(),
+                ]);
         }
     }
 
@@ -420,5 +519,71 @@ class Event extends BaseServiceHandler
             'personal:order:' . $order->getField('USER_ID'),
             'order:item:' . $order->getId(),
         ]);
+    }
+
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     */
+    public static function setNameAfterOrder(BitrixEvent $event): void
+    {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
+        $entity = $event->getParameter('ENTITY');
+
+        if ($entity instanceof Order) {
+            $order = $entity;
+
+            if ($order->isCanceled()) {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        $container = Application::getInstance()
+            ->getContainer();
+        $userService = $container->get(CurrentUserProviderInterface::class);
+
+        if (!$userService->isAuthorized()) {
+            return;
+        }
+
+        try {
+            $currentUser = $userService->getCurrentUser();
+        } catch (Exception $e) {
+            return;
+        }
+
+        if (!$currentUser->getName()) {
+            $orderService = $container->get(OrderService::class);
+            $userRepository = $container->get(UserRepository::class);
+
+            if ($orderService->isSubscribe($order) || $orderService->isManzanaOrder($order)) {
+                // пропускаются заказы, созданные по подписке
+                return;
+            }
+            $name = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'NAME');
+
+            $currentUser->setName($name);
+            try {
+                $userRepository->update($currentUser);
+            } catch (Exception $e) {
+                self::getLogger()
+                    ->error(\sprintf(
+                        'User name update error: %s',
+                        $e->getMessage()
+                    ));
+            }
+        }
     }
 }
