@@ -180,7 +180,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         $collection->map(function (Offer $offer) use ($productCollection, $list) {
             $productCollection->add(
                 (new Product())
-                    ->setId($offer->getId())
+                    ->setId($offer->getXmlId())
                     ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
                     ->setBrand(\preg_replace('~"|\'~', '', $offer->getProduct()->getBrandName()))
                     ->setPrice($offer->getPrice())
