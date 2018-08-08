@@ -659,6 +659,36 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        /**
+         * [LP22-37] Сохранение информации об операторе в режиме "аватара"
+         */
+        if ($this->userAvatarAuthorization->isAvatarAuthorized()) {
+            try {
+                $operator = $this->userProvider->findOne($this->userAvatarAuthorization->getAvatarHostUserId());
+                if ($operator) {
+                    $this->setOrderPropertyByCode(
+                        $order,
+                        'OPERATOR_EMAIL',
+                        $operator->getEmail()
+                    );
+                    $this->setOrderPropertyByCode(
+                        $order,
+                        'OPERATOR_SHOP',
+                        $operator->getShopCode()
+                    );
+                }
+            } catch (UserNotFoundException $e) {
+                $this->log()->error(
+                    'avatar not found',
+                    [
+                        'fuserId' => $storage->getFuserId(),
+                        'userId'  => $storage->getUserId(),
+                        'avatarId' => $this->userAvatarAuthorization->getAvatarHostUserId()
+                    ]
+                );
+            }
+        }
+
         if ($storage->isFastOrder()) {
             $fastOrderProperties = [
                 'NAME',
