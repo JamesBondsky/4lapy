@@ -161,6 +161,14 @@ class Event extends BaseServiceHandler
             'clearOrderCache'
         ], $module);
 
+        /**
+         * Сохранение имени пользователя
+         */
+        static::initHandler('OnSaleOrderEntitySaved', [
+            self::class,
+            'setNameAfterOrder'
+        ], $module);
+
         /** обновление бонусного счета пользователя и бонусного процента пользователя */
         $module = 'main';
         static::initHandlerCompatible('OnAfterUserLogin', [
@@ -174,10 +182,6 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserLoginByHash', [
             self::class,
             'updateUserAccountBalance'
-        ], $module);
-        static::initHandler('OnSaleOrderEntitySaved', [
-            self::class,
-            'setNameAfterOrder'
         ], $module);
     }
 
@@ -572,9 +576,13 @@ class Event extends BaseServiceHandler
                 // пропускаются заказы, созданные по подписке
                 return;
             }
+
             $name = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'NAME');
 
-            $currentUser->setName($name);
+            if ($name) {
+                $currentUser->setName($name->getValue());
+            }
+
             try {
                 $userRepository->update($currentUser);
             } catch (Exception $e) {
