@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\UserBundle\Repository;
 
 use Bitrix\Main\Type\DateTime;
@@ -34,6 +30,11 @@ use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\Exception\ValidatorException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Class UserRepository
+ *
+ * @package FourPaws\UserBundle\Repository
+ */
 class UserRepository
 {
     public const FIELD_ID = 'ID';
@@ -391,6 +392,11 @@ class UserRepository
         })->toArray();
     }
 
+    /**
+     * @param array $params
+     *
+     * @return array
+     */
     public function havePhoneAndEmailByUsers(array $params): array
     {
         $return = [

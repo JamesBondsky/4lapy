@@ -10,7 +10,6 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application as App;
-use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
@@ -42,6 +41,7 @@ class Event extends BaseServiceHandler
 {
     public const GROUP_ADMIN = 1;
     public const GROUP_TECHNICAL_USERS = 8;
+    public const GROUP_FRONT_OFFICE_USERS = 28;
 
     protected static $isEventsDisable = false;
 
@@ -294,7 +294,7 @@ class Event extends BaseServiceHandler
             return;
         }
 
-        $notReplacedGroups = [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
+        $notReplacedGroups = [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS, static::GROUP_FRONT_OFFICE_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
                 $container = App::getInstance()->getContainer();
@@ -346,6 +346,9 @@ class Event extends BaseServiceHandler
         ]);
     }
 
+    /**
+     * Если авторизованы, то выходим перед авторизацией.
+     */
     public static function logoutBeforeAuth(): void
     {
         if (self::$isEventsDisable) {
@@ -402,7 +405,11 @@ class Event extends BaseServiceHandler
 
     /**
      * @param array $fields
+     *
      * @return int
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
     public static function findSocialServicesUser(array $fields): int

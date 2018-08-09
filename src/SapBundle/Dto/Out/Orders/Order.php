@@ -22,7 +22,7 @@ class Order
     public const DEFAULT_CONTRACTOR_CODE = '0000802070';
 
     public const ORDER_SOURCE_MOBILE_APP = 'MOBI';
-    public const ORDER_SOURCE_SITE = 'DFUE';
+    public const ORDER_SOURCE_SITE       = 'DFUE';
 
     /**
      * Содержит номер заказа в Системе.
@@ -316,11 +316,35 @@ class Order
     protected $bonusCard = '';
 
     /**
+     * Содержит значение поля «E-mail» профиля пользователя,
+     * который оформил заказ в режиме «Аватар».
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("avatar_login")
+     * @Serializer\Type("float")
+     *
+     * @var float
+     */
+    protected $avatarEmail = '';
+
+    /**
+     * Содержит значение поля «Код магазина» из профиля пользователя,
+     * который оформил заказ в режиме «Аватар».
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("department")
+     * @Serializer\Type("string")
+     *
+     * @var float
+     */
+    protected $avatarDepartment = '';
+
+    /**
      * Сумма оплаты баллами
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("SUM_POINTS")
-     * @Serializer\Type("float")
+     * @Serializer\Type("string")
      *
      * @var float
      */
@@ -350,7 +374,7 @@ class Order
      * @var null|DeliveryAddress
      */
     protected $deliveryAddress;
-    
+
     /**
      * @return string
      */
@@ -358,7 +382,7 @@ class Order
     {
         return $this->id;
     }
-    
+
     /**
      * @param string $id
      *
@@ -370,7 +394,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return \DateTime
      */
@@ -378,7 +402,7 @@ class Order
     {
         return $this->dateInsert;
     }
-    
+
     /**
      * @param \DateTime $dateInsert
      *
@@ -390,7 +414,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return int
      */
@@ -398,7 +422,7 @@ class Order
     {
         return $this->clientId;
     }
-    
+
     /**
      * @param int $clientId
      *
@@ -410,7 +434,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -418,7 +442,7 @@ class Order
     {
         return $this->clientFio;
     }
-    
+
     /**
      * @param string $clientFio
      *
@@ -430,7 +454,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -438,7 +462,7 @@ class Order
     {
         return $this->clientPhone;
     }
-    
+
     /**
      * @param string $clientPhone
      *
@@ -450,7 +474,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -458,7 +482,7 @@ class Order
     {
         return $this->clientOrderPhone;
     }
-    
+
     /**
      * @param string $clientOrderPhone
      *
@@ -470,7 +494,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -478,7 +502,7 @@ class Order
     {
         return $this->deliveryAddressOrPoint;
     }
-    
+
     /**
      * @param string $deliveryAddressOrPoint
      *
@@ -490,7 +514,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -498,7 +522,7 @@ class Order
     {
         return $this->clientComment;
     }
-    
+
     /**
      * @param string $clientComment
      *
@@ -510,7 +534,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -518,7 +542,7 @@ class Order
     {
         return $this->orderSource;
     }
-    
+
     /**
      * @param string $orderSource
      *
@@ -530,7 +554,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -538,7 +562,7 @@ class Order
     {
         return $this->communicationType;
     }
-    
+
     /**
      * @param string $communicationType
      *
@@ -550,7 +574,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -558,7 +582,7 @@ class Order
     {
         return $this->deliveryType;
     }
-    
+
     /**
      * @param string $deliveryType
      *
@@ -570,7 +594,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -578,7 +602,7 @@ class Order
     {
         return $this->contractorDeliveryType;
     }
-    
+
     /**
      * @param string $contractorDeliveryType
      *
@@ -590,7 +614,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -598,7 +622,7 @@ class Order
     {
         return $this->contractorCode;
     }
-    
+
     /**
      * @param string $contractorCode
      *
@@ -610,7 +634,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return \DateTime
      */
@@ -618,7 +642,7 @@ class Order
     {
         return $this->deliveryDate;
     }
-    
+
     /**
      * @param \DateTime $deliveryDate
      *
@@ -630,7 +654,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -638,7 +662,7 @@ class Order
     {
         return $this->deliveryTimeInterval;
     }
-    
+
     /**
      * @param string $deliveryTimeInterval
      *
@@ -650,7 +674,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -658,7 +682,7 @@ class Order
     {
         return $this->payType;
     }
-    
+
     /**
      * @param string $payType
      *
@@ -670,7 +694,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -678,7 +702,7 @@ class Order
     {
         return $this->payStatus;
     }
-    
+
     /**
      * @param string $payStatus
      *
@@ -690,7 +714,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -698,7 +722,7 @@ class Order
     {
         return $this->payHoldTransaction;
     }
-    
+
     /**
      * @param string $payHoldTransaction
      *
@@ -710,7 +734,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return null|\DateTime
      */
@@ -718,7 +742,7 @@ class Order
     {
         return $this->payHoldDate;
     }
-    
+
     /**
      * @param null|\DateTime $payHoldDate
      *
@@ -730,7 +754,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -738,7 +762,7 @@ class Order
     {
         return $this->payMerchantCode;
     }
-    
+
     /**
      * @param string $payMerchantCode
      *
@@ -750,7 +774,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return float
      */
@@ -758,7 +782,7 @@ class Order
     {
         return $this->prePayedSum;
     }
-    
+
     /**
      * @param float $prePayedSum
      *
@@ -770,7 +794,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -778,7 +802,7 @@ class Order
     {
         return $this->bonusCard;
     }
-    
+
     /**
      * @param string $bonusCard
      *
@@ -790,7 +814,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return float
      */
@@ -798,7 +822,7 @@ class Order
     {
         return $this->bonusPayedCount;
     }
-    
+
     /**
      * @param float $bonusPayedCount
      *
@@ -810,7 +834,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return Collection|OrderOffer[]
      */
@@ -818,7 +842,7 @@ class Order
     {
         return $this->products;
     }
-    
+
     /**
      * @param Collection|OrderOffer[] $products
      *
@@ -830,7 +854,7 @@ class Order
 
         return $this;
     }
-    
+
     /**
      * @return null|DeliveryAddress
      */
@@ -838,7 +862,7 @@ class Order
     {
         return $this->deliveryAddress;
     }
-    
+
     /**
      * @param null|DeliveryAddress $deliveryAddress
      *
@@ -847,6 +871,46 @@ class Order
     public function setDeliveryAddress(DeliveryAddress $deliveryAddress): Order
     {
         $this->deliveryAddress = $deliveryAddress;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAvatarEmail(): string
+    {
+        return $this->avatarEmail;
+    }
+
+    /**
+     * @param string $avatarEmail
+     *
+     * @return Order
+     */
+    public function setAvatarEmail(string $avatarEmail): Order
+    {
+        $this->avatarEmail = $avatarEmail;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAvatarDepartment(): string
+    {
+        return $this->avatarDepartment;
+    }
+
+    /**
+     * @param string $avatarDepartment
+     *
+     * @return Order
+     */
+    public function setAvatarDepartment(string $avatarDepartment): Order
+    {
+        $this->avatarDepartment = $avatarDepartment;
 
         return $this;
     }
