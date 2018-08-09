@@ -41,6 +41,7 @@ class Event extends BaseServiceHandler
 {
     public const GROUP_ADMIN = 1;
     public const GROUP_TECHNICAL_USERS = 8;
+    public const GROUP_FRONT_OFFICE_USERS = 28;
 
     protected static $isEventsDisable = false;
 
@@ -293,7 +294,7 @@ class Event extends BaseServiceHandler
             return;
         }
 
-        $notReplacedGroups = [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
+        $notReplacedGroups = [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS, static::GROUP_FRONT_OFFICE_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
                 $container = App::getInstance()->getContainer();
