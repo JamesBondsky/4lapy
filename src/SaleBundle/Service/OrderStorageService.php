@@ -33,6 +33,7 @@ use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -95,7 +96,8 @@ class OrderStorageService
         DatabaseStorageRepository $storageRepository,
         DeliveryService $deliveryService,
         StoreService $storeService
-    ) {
+    )
+    {
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->storageRepository = $storageRepository;
@@ -107,13 +109,14 @@ class OrderStorageService
      * Вычисляет шаг оформления заказа в соответствии с состоянием хранилища
      *
      * @param OrderStorage $storage
-     * @param string $startStep
+     * @param string       $startStep
      *
      * @return string
      */
     public function validateStorage(OrderStorage $storage, string $startStep = OrderStorageEnum::AUTH_STEP): string
     {
-        return $this->storageRepository->validateAllStepsBefore($storage, $startStep)->getRealStep();
+        return $this->storageRepository->validateAllStepsBefore($storage, $startStep)
+            ->getRealStep();
     }
 
     /**
@@ -137,8 +140,8 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param Request $request
-     * @param string $step
+     * @param Request      $request
+     * @param string       $step
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -151,9 +154,9 @@ class OrderStorageService
 
         $mapping = [
             'order-pick-time' => 'split',
-            'shopId' => 'deliveryPlaceCode',
-            'pay-type' => 'paymentId',
-            'cardNumber' => 'discountCardNumber',
+            'shopId'          => 'deliveryPlaceCode',
+            'pay-type'        => 'paymentId',
+            'cardNumber'      => 'discountCardNumber',
         ];
 
         foreach ($data as $name => $value) {
@@ -171,26 +174,24 @@ class OrderStorageService
         switch ($step) {
             case OrderStorageEnum::AUTH_STEP:
                 $availableValues = [
+                    'name',
                     'altPhone',
                     'communicationWay',
                     'captchaFilled',
                 ];
 
-                if (!$storage->getUserId()) {
-                    $availableValues[] = 'name';
-                    $availableValues[] = 'phone';
-                    $availableValues[] = 'email';
-                } else {
+                if ($storage->getUserId()) {
                     try {
                         $user = $this->currentUserProvider->getCurrentUser();
-                        if ($user &&
-                            !$user->getEmail() &&
-                            $storage->getUserId() === $user->getId()
+
+                        if ($user && !$user->getEmail() && $storage->getUserId() === $user->getId()
                         ) {
                             $availableValues[] = 'email';
                         }
-                    } catch (NotAuthorizedException $e) {
-                    }
+                    } catch (NotAuthorizedException | UsernameNotFoundException $e) {}
+                } else {
+                    $availableValues[] = 'phone';
+                    $availableValues[] = 'email';
                 }
 
                 break;
@@ -230,8 +231,11 @@ class OrderStorageService
                                 }
                             }
                         }
-                        $orderSplitService = Application::getInstance()->getContainer()->get(OrderSplitService::class);
-                        if (!$orderSplitService->canSplitOrder($pickup) && !$orderSplitService->canGetPartial($pickup)) {
+                        $orderSplitService = Application::getInstance()
+                            ->getContainer()
+                            ->get(OrderSplitService::class);
+                        if (!$orderSplitService->canSplitOrder($pickup)
+                            && !$orderSplitService->canGetPartial($pickup)) {
                             $data['split'] = 0;
                         }
                     }
@@ -296,7 +300,7 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param string $step
+     * @param string       $step
      *
      * @throws OrderStorageValidationException
      * @return bool
@@ -347,7 +351,9 @@ class OrderStorageService
                 CurrencyManager::getBaseCurrency()
             );
             $this->paymentCollection = $order->getPaymentCollection();
-            $sum = $this->basketService->getBasket()->getOrderableItems()->getPrice();
+            $sum = $this->basketService->getBasket()
+                ->getOrderableItems()
+                ->getPrice();
 
             if ($storage->getBonus()) {
                 if (!$innerPayment = $this->paymentCollection->getInnerPayment()) {
@@ -398,8 +404,8 @@ class OrderStorageService
          */
         if ($storage->getDeliveryPlaceCode() && $storage->getDeliveryId()) {
             $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
-            if ($this->deliveryService->isDpdPickupCode($deliveryCode) &&
-                $terminal = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode())
+            if ($this->deliveryService->isDpdPickupCode($deliveryCode)
+                && $terminal = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode())
             ) {
                 foreach ($payments as $id => $payment) {
                     $delete = $basketPrice > $terminal->getNppValue();
@@ -435,9 +441,10 @@ class OrderStorageService
         /**
          * Если есть оплата "наличными или картой", удаляем оплату "наличными"
          */
-        if ($filter && !empty(\array_filter($payments, function ($item) {
-            return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
-        }))) {
+        if ($filter
+            && !empty(\array_filter($payments, function ($item) {
+                return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
+            }))) {
             foreach ($payments as $id => $payment) {
                 if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
                     unset($payments[$id]);
@@ -451,7 +458,7 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param bool $reload
+     * @param bool         $reload
      *
      * @throws ArgumentException
      * @throws NotSupportedException
@@ -516,7 +523,8 @@ class OrderStorageService
         if ($selectedDelivery instanceof PickupResultInterface && $storage->getDeliveryPlaceCode()) {
             $selectedDelivery->setSelectedShop($this->getSelectedShop($storage, $selectedDelivery));
             if (!$selectedDelivery->isSuccess()) {
-                $selectedDelivery->setSelectedShop($selectedDelivery->getBestShops()->first());
+                $selectedDelivery->setSelectedShop($selectedDelivery->getBestShops()
+                    ->first());
             }
         }
 
@@ -554,7 +562,8 @@ class OrderStorageService
             }
         }
 
-        return $result ?? $delivery->getBestShops()->first();
+        return $result ?? $delivery->getBestShops()
+                ->first();
     }
 
     /**
