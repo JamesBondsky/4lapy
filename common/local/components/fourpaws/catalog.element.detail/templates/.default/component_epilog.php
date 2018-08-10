@@ -10,6 +10,7 @@ use FourPaws\SaleBundle\Service\BasketService;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
 /** установка бонусов за товар */
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
@@ -62,22 +63,13 @@ foreach ($offers as $offer) {
             if ($offerLink.length > 0) {
                 $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getCatalogPrice(),
                     0) ?> <span class="b-ruble b-ruble--weight">₽</span>');
-                $offerLink.data('price', '<?=WordHelper::numberFormat($offer->getCatalogPrice(), 0)?>');
+                $offerLink.data('price', '<?= WordHelper::numberFormat($offer->getCatalogPrice(), 0) ?>');
                 <?php if(!$offer->isAvailable()) { ?>
                 $offerLink.addClass('unavailable-link');
                 $offerLink.find('.b-weight-container__not').html('Нет в наличии').css('display', 'inline-block');
-                <?php } else { ?>
-                <?php if($offer->isShare()) { ?>
+                <?php } elseif($offer->isShare()) { ?>
                 $offerLink.find('.js-offer-action').html('Акция').css('display', 'inline-block');
-                <?php }
-
-                /* if($offer->getOldPrice() > $offer->getPrice()) { ?>
-                    if ($offerLink.find('.b-weight-container__old-price--big').length > 0) {
-                        $offerLink.find('.b-weight-container__old-price--big').html('<?=WordHelper::numberFormat($offer->getOldPriceCeil(),
-                            0)?> <span class="b-ruble b-ruble--old-weight-price">₽</span>').css('display', 'inline-block');
-                    }
-                <?php } */
-                }?>
+                <?php }?>
             }
         });
     </script>
