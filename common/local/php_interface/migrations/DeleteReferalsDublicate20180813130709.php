@@ -43,16 +43,20 @@ class DeleteReferalsDublicate20180813130709 extends SprintMigrationBase
         $count = $collection->count();
         $delete = [];
         if(!$collection->isEmpty()){
+            $this->log()->info('Начало подготовки данных для удаления');
+
             /** @var Referral $item */
             foreach ($collection as $item) {
                 if(!$item->isCancelModerate()){
                     if(!\in_array($item->getCard(), $referrals[$item->getUserId()], true)){
-                        $referrals[$item->getUserId()] = $item->getCard();
+                        $referrals[$item->getUserId()][] = $item->getCard();
                     } else {
                         $delete[]=$item->getId();
                     }
                 }
             }
+
+            $this->log()->info('Подготовка данных для удаления завершена');
 
             if(!empty($delete)){
                 $countDelete = \count($delete);
