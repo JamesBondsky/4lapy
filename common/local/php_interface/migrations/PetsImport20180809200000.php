@@ -21,6 +21,7 @@ class PetsImport20180809200000 extends SprintMigrationBase
     protected $oldSitePhotoUrl = 'https://api.4lapy.ru';
     protected $petsHighloadBlockName = 'Pet';
     protected $categoriesHighloadBlockName = 'ForWho';
+    protected $breedsHighloadBlockName = 'PetBreed';
     /** @var string $defaultPetsGenderEnumXmlId */
     protected $defaultPetsGenderEnumXmlId = 'U';
     /** @var array $genderExternalId2InternalXmlId */
@@ -89,6 +90,8 @@ class PetsImport20180809200000 extends SprintMigrationBase
 
     /** @var \Bitrix\Highloadblock\DataManager $petsTableDataManager */
     private $petsTableDataManager = false;
+    /** @var \Bitrix\Highloadblock\DataManager $breedsTableDataManager */
+    private $breedsTableDataManager = false;
     /** @var array $mappingData */
     private $mappingData = [];
     /** @var resource $logFileRs */
@@ -111,6 +114,7 @@ class PetsImport20180809200000 extends SprintMigrationBase
     {
         $this->updatePetsFields();
         $this->createPetsFields();
+        $this->importBreeds();
         $this->importPets();
 
         return true;
@@ -236,6 +240,11 @@ class PetsImport20180809200000 extends SprintMigrationBase
         $entityId = $this->getPetsHlblockEntityId();
 
         $fieldCode = 'UF_XML_ID';
+        $tmp = $helper->UserTypeEntity()->getUserTypeEntity($entityId, $fieldCode);
+        if ($tmp) {
+            return;
+        }
+
         $helper->UserTypeEntity()->addUserTypeEntityIfNotExists(
             $entityId,
             $fieldCode,
@@ -275,6 +284,38 @@ class PetsImport20180809200000 extends SprintMigrationBase
                 ],
             ]
         );
+
+        $tableName = $this->getPetsHlblockTableName();
+        $connection = \Bitrix\Main\Application::getConnection();
+        $connection->queryExecute('ALTER TABLE '.$tableName.' MODIFY '.$fieldCode.' VARCHAR(255)');
+        $connection->queryExecute('CREATE INDEX ADV_IX_'.$fieldCode.' ON '.$tableName.' ('.$fieldCode.')');
+    }
+
+    /**
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Exception
+     */
+    protected function importBreeds()
+    {
+        $breedsData = $this->getOldSiteBreeds();
+        foreach ($breedsData as $item) {
+            if ($item['OLD_ID'] && $item['NEW_XML_ID'] === '' && $item['NEW_NAME'] !== '') {
+                if (!$this->findBreedsByName($item['OLD_NAME']) && !$this->findBreedsByName($item['NEW_NAME'])) {
+                    $newId = $this->addBreed(
+                        [
+                            'UF_NAME' => $item['OLD_NAME'],
+                            'UF_CODE' => $item['OLD_ID'],
+                            'UF_XML_ID' => $item['OLD_ID'],
+                        ]
+                    );
+                    if (!$newId) {
+                        throw new SystemException('Breed not created');
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -387,11 +428,6 @@ class PetsImport20180809200000 extends SprintMigrationBase
             }
             $internalPetCategoryId = $internalPetCategory['ID'] ?? 0;
 
-/**
- * @todo из ТЗ нифига не понял как правильно устнавливать породу
- */
-            //$categoryHasBreeds = $internalPetCategory && $internalPetCategory['__HAS_BREEDS'] === 'Y';
-
             $breedName = '';
             if ($externalBreedId !== '') {
                 $breed = $this->getOldSiteBreedByExternalId($externalBreedId);
@@ -399,11 +435,18 @@ class PetsImport20180809200000 extends SprintMigrationBase
                     $breedName = $breed['NEW_NAME'] === '' ? $breed['OLD_NAME'] : $breed['NEW_NAME'];
                 }
                 if ($breedName === '') {
-                    $logErr[] = 'Не удалось сопоставить породу питомца, oldSiteBreedId: '.$externalBreedId;
+                    $logErr[] = 'Не удалось сопоставить породу питомца по внешнему коду, oldSiteBreedId: '.$externalBreedId;
                 }
             }
             if ($breedName === '' && $externalBreedOther !== '') {
-                $breedName = $externalBreedOther;
+                $tmpList = $this->findBreedsByName($externalBreedOther);
+                if (!$tmpList) {
+                    $logErr[] = 'Не удалось сопоставить породу питомца по полю Порода (другое): '.$externalBreedOther;
+                } else {
+                    $tmp = reset($tmpList);
+                    $breedName = $tmp['UF_NAME'];
+                    $logErr[] = 'Сопоставлена порода питомца по полю Порода (другое): '.$externalBreedOther.' - '.$breedName;
+                }
             }
 
             $photo = false;
@@ -636,10 +679,12 @@ class PetsImport20180809200000 extends SprintMigrationBase
             $rels = $this->categoryExternalId2InternalXmlId[$externalValue] ?? [];
             if ($rels) {
                 $data = reset($this->getCategoriesMappingDataByFieldValue('UF_XML_ID', $rels['INTERNAL_XML_ID']));
+                /*
                 if ($data) {
                     $data['__HAS_BREEDS'] = $rels['HAS_BREEDS'];
                     $data['__EXTERNAL_NAME'] = $rels['EXTERNAL_NAME'];
                 }
+                */
             }
         }
 
@@ -654,10 +699,12 @@ class PetsImport20180809200000 extends SprintMigrationBase
     protected function getDefaultCategory()
     {
         $data = reset($this->getCategoriesMappingDataByFieldValue('UF_XML_ID', $this->defaultCategoryInternalXmlId));
+        /*
         if ($data) {
             $data['__HAS_BREEDS'] = 'N';
             $data['__EXTERNAL_NAME'] = '';
         }
+        */
 
         return $data;
     }
@@ -861,6 +908,22 @@ class PetsImport20180809200000 extends SprintMigrationBase
     }
 
     /**
+     * @return mixed
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getPetsHlblockTableName()
+    {
+        $petsTableDataManager = $this->getPetsTableDataManager();
+        $hlblockFields = $petsTableDataManager::getHighloadBlock();
+        if (!$hlblockFields) {
+            throw new SystemException('Highload block not inited');
+        }
+
+        return $hlblockFields['TABLE_NAME'];
+    }
+
+    /**
      * @param string $fieldName
      * @return array|bool
      * @throws SystemException
@@ -876,6 +939,81 @@ class PetsImport20180809200000 extends SprintMigrationBase
     }
 
     /**
+     * @return \Bitrix\Highloadblock\DataManager
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getBreedsTableDataManager()
+    {
+        if ($this->breedsTableDataManager === false) {
+            $this->breedsTableDataManager = $this->createHlblockTableDataManager(
+                $this->breedsHighloadBlockName
+            );
+        }
+
+        return $this->breedsTableDataManager;
+    }
+
+    /**
+     * @return int
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getBreedsHlblockId()
+    {
+        $tableDataManager = $this->getBreedsTableDataManager();
+        $hlblockFields = $tableDataManager::getHighloadBlock();
+        if (!$hlblockFields) {
+            throw new SystemException('Highload block not inited');
+        }
+
+        return (int)$hlblockFields['ID'];
+    }
+
+    /**
+     * @return string
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getBreedsHlblockEntityId()
+    {
+        $hlblockId = $this->getBreedsHlblockId();
+
+        return 'HLBLOCK_' . $hlblockId;
+    }
+
+    /**
+     * @return mixed
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getBreedsHlblockTableName()
+    {
+        $tableDataManager = $this->getBreedsTableDataManager();
+        $hlblockFields = $tableDataManager::getHighloadBlock();
+        if (!$hlblockFields) {
+            throw new SystemException('Highload block not inited');
+        }
+
+        return $hlblockFields['TABLE_NAME'];
+    }
+
+    /**
+     * @param string $fieldName
+     * @return array|bool
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function getBreedsField(string $fieldName)
+    {
+        $userTypeEntityHelper = $this->getHelper()->UserTypeEntity();
+        $entityId = $this->getBreedsHlblockEntityId();
+        $field = $userTypeEntityHelper->getUserTypeEntity($entityId, $fieldName);
+
+        return $field;
+    }
+
+    /**
      * @param string $xmlId
      * @return int
      * @throws SystemException
@@ -885,6 +1023,11 @@ class PetsImport20180809200000 extends SprintMigrationBase
      */
     protected function isPetExists(string $xmlId)
     {
+        $xmlId = trim($xmlId);
+        if ($xmlId === '') {
+            return 0;
+        }
+
         $dataManager = $this->getPetsTableDataManager();
         $item = $dataManager::getList(
             [
@@ -936,6 +1079,65 @@ class PetsImport20180809200000 extends SprintMigrationBase
     protected function addPet(array $fields)
     {
         $dataManager = $this->getPetsTableDataManager();
+
+        $result = $dataManager::add($fields);
+        if ($result->isSuccess()) {
+            $newId = (int)$result->getId();
+        } else {
+            throw new SystemException(
+                implode("\n", $result->getErrorMessages()),
+                100
+            );
+        }
+
+        return $newId;
+    }
+    /**
+     * @param string $breedName
+     * @return array
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Exception
+     */
+    protected function findBreedsByName(string $breedName)
+    {
+        $list = [];
+        $breedName = trim($breedName);
+        if ($breedName === '') {
+            return $list;
+        }
+
+        $dataManager = $this->getBreedsTableDataManager();
+        $items = $dataManager::getList(
+            [
+                'order' => [
+                    'ID' => 'asc',
+                ],
+                'filter' => [
+                    'UF_NAME' => $breedName,
+                ],
+                'select' => [
+                    'ID', 'UF_NAME', 'UF_XML_ID', 'UF_CODE',
+                ]
+            ]
+        );
+        while ($item = $items->fetch()) {
+            $list[] = $item;
+        }
+
+        return $list;
+    }
+
+    /**
+     * @param array $fields
+     * @return int
+     * @throws SystemException
+     * @throws \Exception
+     */
+    protected function addBreed(array $fields)
+    {
+        $dataManager = $this->getBreedsTableDataManager();
 
         $result = $dataManager::add($fields);
         if ($result->isSuccess()) {
