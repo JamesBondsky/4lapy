@@ -455,7 +455,6 @@ class PetsImport20180809200000 extends SprintMigrationBase
             }
 
             $resId = 0;
-            \FourPaws\PersonalBundle\EventController\Event::disableHandler('petUpdateManzana');
             if ($existsPetId) {
                 try {
                     $resId = $this->updatePet(
@@ -492,7 +491,6 @@ class PetsImport20180809200000 extends SprintMigrationBase
                     $logErr[] = 'Ошибки в процессе создания записи питомца: '.$exception->getMessage();
                 }
             }
-            \FourPaws\PersonalBundle\EventController\Event::enableHandler('petUpdateManzana');
 
             $this->addCsvlogData(
                 [
@@ -1059,7 +1057,9 @@ class PetsImport20180809200000 extends SprintMigrationBase
     {
         $dataManager = $this->getPetsTableDataManager();
 
+        \FourPaws\PersonalBundle\EventController\Event::disableHandler('petUpdateManzana');
         $result = $dataManager::update($id, $fields);
+        \FourPaws\PersonalBundle\EventController\Event::enableHandler('petUpdateManzana');
         if ($result->isSuccess()) {
             $newId = (int)$result->getId();
         } else {
@@ -1082,7 +1082,9 @@ class PetsImport20180809200000 extends SprintMigrationBase
     {
         $dataManager = $this->getPetsTableDataManager();
 
+        \FourPaws\PersonalBundle\EventController\Event::disableHandler('petUpdateManzana');
         $result = $dataManager::add($fields);
+        \FourPaws\PersonalBundle\EventController\Event::enableHandler('petUpdateManzana');
         if ($result->isSuccess()) {
             $newId = (int)$result->getId();
         } else {
