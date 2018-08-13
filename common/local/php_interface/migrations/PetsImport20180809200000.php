@@ -455,7 +455,7 @@ class PetsImport20180809200000 extends SprintMigrationBase
             }
 
             $resId = 0;
-            $GLOBALS['DisablePetUpdateManzana'] = true;
+            \FourPaws\PersonalBundle\EventController\Event::disableHandler('petUpdateManzana');
             if ($existsPetId) {
                 try {
                     $resId = $this->updatePet(
@@ -492,7 +492,7 @@ class PetsImport20180809200000 extends SprintMigrationBase
                     $logErr[] = 'Ошибки в процессе создания записи питомца: '.$exception->getMessage();
                 }
             }
-            $GLOBALS['DisablePetUpdateManzana'] = false;
+            \FourPaws\PersonalBundle\EventController\Event::enableHandler('petUpdateManzana');
 
             $this->addCsvlogData(
                 [

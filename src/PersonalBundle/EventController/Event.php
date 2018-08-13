@@ -32,6 +32,36 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Event extends BaseServiceHandler
 {
+    /** @var array $disabledHandlers */
+    protected static $disabledHandlers = [];
+
+    /**
+     * @param string $handlerName
+     */
+    public static function disableHandler(string $handlerName): void
+    {
+        static::$disabledHandlers[$handlerName] = true;
+    }
+
+    /**
+     * @param string $handlerName
+     */
+    public static function enableHandler(string $handlerName): void
+    {
+        if (isset(static::$disabledHandlers[$handlerName])) {
+            unset(static::$disabledHandlers[$handlerName]);
+        }
+    }
+
+    /**
+     * @param string $handlerName
+     * @return bool
+     */
+    public static function isDisabledHandler(string $handlerName): bool
+    {
+        return isset(static::$disabledHandlers[$handlerName]);
+    }
+
     /**
      * @param EventManager $eventManager
      *
@@ -302,7 +332,7 @@ class Event extends BaseServiceHandler
     public static function petUpdateManzana(BitrixEvent $event): void
     {
         // костыль для отключения обработчика
-        if (isset($GLOBALS['DisablePetUpdateManzana']) && $GLOBALS['DisablePetUpdateManzana']) {
+        if (static::isDisabledHandler(__FUNCTION__)) {
             return;
         }
 
