@@ -301,6 +301,11 @@ class Event extends BaseServiceHandler
      */
     public static function petUpdateManzana(BitrixEvent $event): void
     {
+        // костыль для отключения обработчика
+        if (isset($GLOBALS['DisablePetUpdateManzana']) && $GLOBALS['DisablePetUpdateManzana']) {
+            return;
+        }
+
         $id = $event->getParameter('id');
         if (\is_array($id)) {
             $id = $id['ID'];

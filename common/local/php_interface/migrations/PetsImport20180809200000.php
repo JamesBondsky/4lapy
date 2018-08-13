@@ -455,6 +455,7 @@ class PetsImport20180809200000 extends SprintMigrationBase
             }
 
             $resId = 0;
+            $GLOBALS['DisablePetUpdateManzana'] = true;
             if ($existsPetId) {
                 try {
                     $resId = $this->updatePet(
@@ -491,6 +492,7 @@ class PetsImport20180809200000 extends SprintMigrationBase
                     $logErr[] = 'Ошибки в процессе создания записи питомца: '.$exception->getMessage();
                 }
             }
+            $GLOBALS['DisablePetUpdateManzana'] = false;
 
             $this->addCsvlogData(
                 [
