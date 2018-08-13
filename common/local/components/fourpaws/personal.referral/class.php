@@ -10,9 +10,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\GroupTable;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -24,11 +26,7 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
-use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -36,6 +34,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 
+/**
+ * Class FourPawsPersonalCabinetReferralComponent
+ */
 class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 {
     /**
@@ -56,7 +57,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
     private $cachePath;
     /** @var Application */
     private $instance;
-    /** @var \Bitrix\Main\Data\Cache */
+    /** @var Cache */
     private $cache;
 
     /**
@@ -103,20 +104,15 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
     /**
      * {@inheritdoc}
-     * @throws ObjectException
-     * @throws EmptyEntityClass
-     * @throws SystemException
-     * @throws ValidationException
-     * @throws BitrixRuntimeException
-     * @throws \Exception
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
+     * @return bool|null
      * @throws ApplicationCreateException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws LoaderException
+     * @throws EmptyEntityClass
+     * @throws ObjectException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
      */
-    public function executeComponent()
+    public function executeComponent(): ?bool
     {
         if (!$this->checkPermissions()) {
             return null;
@@ -125,6 +121,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $this->init();
         /** @var PageNavigation $nav */
         $nav = $this->arResult['NAV'];
+        $cacheItems = [];
         if ($this->cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize([
                 'userId'        => $this->curUser->getId(),
@@ -172,6 +169,11 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         return true;
     }
 
+    /**
+     * @param $cacheItems
+     *
+     * @throws SystemException
+     */
     protected function showTemplate($cacheItems): void
     {
         /** @var PageNavigation $nav */
@@ -201,6 +203,9 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         }
     }
 
+    /**
+     * @return bool
+     */
     protected function checkPermissions(): bool
     {
         if (!$this->authUserProvider->isAuthorized()) {
@@ -222,11 +227,18 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             define('NEED_AUTH', true);
 
             return false;
+        } catch (Exception $e) {
+            define('NEED_AUTH', true);
+
+            return false;
         }
 
         return true;
     }
 
+    /**
+     * @param TaggedCacheHelper $tagCache
+     */
     protected function redirect(TaggedCacheHelper $tagCache): void
     {
         $tagCache->abortTagCache();
@@ -252,14 +264,24 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
         $this->arResult['NAV'] = $nav;
         $this->cache = $this->instance->getCache();
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $this->request = $this->instance->getContext()->getRequest();
         $this->arResult['search'] = (string)$this->request->get('search');
         $this->arResult['referralType'] = (string)$this->request->get('referral_type');
         $this->cachePath = $this->getCachePath() ?: $this->getPath();
     }
 
-    protected function loadData(PageNavigation $nav, TaggedCacheHelper $tagCache)
+    /**
+     * @param PageNavigation    $nav
+     * @param TaggedCacheHelper $tagCache
+     *
+     * @return ArrayCollection|null
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws ObjectException
+     * @throws SystemException
+     * @throws ObjectPropertyException
+     */
+    protected function loadData(PageNavigation $nav, TaggedCacheHelper $tagCache): ?ArrayCollection
     {
         $cacheItems = $items = new ArrayCollection();
         try {
@@ -305,8 +327,13 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
     protected function loadCounters(): void
     {
-        $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
-        $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
-        $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
+        try {
+            $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
+            $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
+            $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
+        } catch (ArgumentException|SystemException $e) {
+            /** @todo залогировать ошибку */
+        }
+
     }
 }

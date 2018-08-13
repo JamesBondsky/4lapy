@@ -9,7 +9,6 @@ namespace FourPaws\PersonalBundle\Service;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Mail\Event;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
@@ -88,7 +87,6 @@ class ReferralService
      * @param PageNavigation|null $nav
      * @param bool                $main
      *
-     * @throws \Bitrix\Main\ObjectException
      * @throws \RuntimeException
      * @throws ObjectPropertyException
      * @throws EmptyEntityClass
@@ -106,7 +104,6 @@ class ReferralService
      */
     public function getCurUserReferrals(PageNavigation $nav = null, bool $main = true): array
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()
             ->getContext()
             ->getRequest();
@@ -119,7 +116,6 @@ class ReferralService
         if (!empty($referralType)) {
             switch ($referralType) {
                 case 'active':
-                    /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                     /** Дата окончания активности должна быть больше текущей даты */
                     /** @todo фильтр по дате активности карты */
                     $filter['!UF_MODERATED'] = 1;
@@ -176,13 +172,13 @@ class ReferralService
             ,
             $haveAdd,
             $referrals,
-            $allBonus
+            $allBonus,
         ] = $this->setDataByManzana($curUser, $referrals, $main, $needLoadAllItems);
 
         return [
             $referrals,
             $haveAdd,
-            $allBonus
+            $allBonus,
         ];
     }
 
@@ -192,7 +188,6 @@ class ReferralService
      */
     public function getReferralType(): string
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()
             ->getContext()
             ->getRequest();
@@ -205,21 +200,15 @@ class ReferralService
         return $referralType;
     }
 
-    /** @noinspection MoreThanThreeArgumentsInspection */
     /**
      * @param array $data
      *
-     * @param bool  $updateManzana
-     *
      * @throws EmptyEntityClass
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
      * @throws ValidationException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
      * @throws \Exception
      * @throws BitrixRuntimeException
      * @return bool
@@ -229,12 +218,37 @@ class ReferralService
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
+
+        /** если уже есть такая карта не в статусе отмена модерации, то не добавляем */
+        if ($this->existsReferralByCardNumber($data['UF_CARD'])) {
+            return false;
+        }
+
         /** @var Referral $entity */
         $entity = $this->referralRepository->dataToEntity($data, Referral::class);
 
         return $this->referralRepository
             ->setEntity($entity)
             ->create();
+    }
+
+    /**
+     * @param string $cardNumber
+     *
+     * @return bool
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function existsReferralByCardNumber(string $cardNumber): bool
+    {
+        $params = [
+            'filter' => ['UF_CARD' => $cardNumber, '!UF_CANCEL_MODERATE' => 1],
+            'select' => ['ID'],
+            'limit'  => 1,
+        ];
+        $res = $this->referralRepository->findBy($params);
+        return !$res->isEmpty();
     }
 
     /**
@@ -301,6 +315,8 @@ class ReferralService
 
     /**
      * @return int
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getAllCountByUser(): int
     {
@@ -316,12 +332,12 @@ class ReferralService
 
     /**
      * @return int
-     * @throws ObjectException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getActiveCountByUser(): int
     {
         try {
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             return $this->referralRepository->getCount([
                 'UF_USER_ID'          => $this->referralRepository->curUserService->getCurrentUserId(),
                 '!UF_MODERATED'       => 1,
@@ -335,6 +351,8 @@ class ReferralService
 
     /**
      * @return int
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getModeratedCountByUser(): int
     {
@@ -353,11 +371,11 @@ class ReferralService
         return 0;
     }
 
-    /** @noinspection MoreThanThreeArgumentsInspection */
-
     /**
      * @return ArrayCollection|Referral[]
      * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getModeratedReferrals(): ArrayCollection
     {
@@ -413,8 +431,7 @@ class ReferralService
         ArrayCollection $referrals,
         bool $main = true,
         bool $needLoadAllItems = true
-    ): array
-    {
+    ): array {
         $arCards = [];
         $arReferralCards = [];
         $referralsList = [];
@@ -435,7 +452,7 @@ class ReferralService
                 $success,
                 $haveAdd,
                 new ArrayCollection($referralsList),
-                $allBonus
+                $allBonus,
             ];
         } catch (NotAuthorizedException $e) {
             /** прерываем выполнение если неавторизованы */
@@ -443,7 +460,7 @@ class ReferralService
                 $success,
                 $haveAdd,
                 new ArrayCollection($referralsList),
-                $allBonus
+                $allBonus,
             ];
         }
 
@@ -568,8 +585,8 @@ class ReferralService
                                     'UF_USER_ID' => $referral->getUserId(),
                                 ];
 
-                                /** @noinspection NotOptimalIfConditionsInspection */
                                 $isCancelModerate = false;
+                                /** @noinspection NotOptimalIfConditionsInspection */
                                 if ($lastCancelModerate !== $referral->isCancelModerate()) {
                                     $data['UF_CANCEL_MODERATE'] = $referral->isCancelModerate() ? 'Y' : 'N';
                                     if ($data['UF_CANCEL_MODERATE'] === 'Y') {
@@ -579,6 +596,7 @@ class ReferralService
                                         }
                                     }
                                 }
+                                /** @noinspection NotOptimalIfConditionsInspection */
                                 if ($lastModerate !== $referral->isModerate()) {
                                     $data['UF_MODERATED'] = $referral->isModerate() ? 'Y' : 'N';
                                     if ($data['UF_MODERATED'] === 'Y' && $data['UF_CANCEL_MODERATE'] === 'Y') {
@@ -592,7 +610,7 @@ class ReferralService
                                     $updateData = array_merge($updateData, $data);
                                     if ($this->update($updateData)) {
                                         TaggedCacheHelper::clearManagedCache([
-                                            'personal:referral:' . $referral->getUserId()
+                                            'personal:referral:' . $referral->getUserId(),
                                         ]);
 
                                         if ($isCancelModerate) {
@@ -617,8 +635,8 @@ class ReferralService
                                                 } elseif ($user->hasPhone()) {
                                                     $smsService = $container->get('sms.service');
                                                     $smsService->sendSms('Реферал с номером карты '
-                                                                         . $referral->getCard()
-                                                                         . ' не прошел модерацию',
+                                                        . $referral->getCard()
+                                                        . ' не прошел модерацию',
                                                         $user->getNormalizePersonalPhone());
                                                 }
                                             }
@@ -641,7 +659,7 @@ class ReferralService
             $success,
             $haveAdd,
             new ArrayCollection($referralsList),
-            $allBonus
+            $allBonus,
         ];
     }
 }
