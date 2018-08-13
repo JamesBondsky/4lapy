@@ -141,6 +141,16 @@ class Offer
     protected $description;
 
     /**
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("sales_notes")
+     * @Serializer\XmlElement(cdata=true)
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $salesNotes;
+
+    /**
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      *
@@ -173,4 +183,24 @@ class Offer
      * @var string
      */
     protected $barcode;
+
+    /**
+     * @return string
+     */
+    public function getSalesNotes(): string
+    {
+        return $this->salesNotes;
+    }
+
+    /**
+     * @param string $salesNotes
+     *
+     * @return Offer
+     */
+    public function setSalesNotes(string $salesNotes): Offer
+    {
+        $this->salesNotes = $salesNotes;
+
+        return $this;
+    }
 }
