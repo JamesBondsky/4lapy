@@ -489,8 +489,8 @@ class ReferralService
                     continue;
                 }
                 $allBonus += (float)$item->sumReferralBonus;
-                if (!empty($arCards)) {
-                    if (!\array_key_exists($cardNumber, $arCards)) {
+                if (!empty($arReferralCards)) {
+                    if (!\array_key_exists($cardNumber, $arReferralCards)) {
                         if (!$main) {
                             continue;
                         }
@@ -548,8 +548,8 @@ class ReferralService
                     } else {
                         /** @var Referral $referral */
                         $referral = null;
-                        if (array_key_exists($cardNumber, $arCards)) {
-                            $referral =& $fullReferralsList[$arCards[$cardNumber]];
+                        if (array_key_exists($cardNumber, $arReferralCards)) {
+                            $referral =& $fullReferralsList[$arReferralCards[$cardNumber]];
                         }
                         if ($referral !== null) {
                             $cardDate = '';
