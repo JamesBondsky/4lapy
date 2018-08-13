@@ -118,12 +118,15 @@ class ReferralService
                 case 'active':
                     /** Дата окончания активности должна быть больше текущей даты */
                     /** @todo фильтр по дате активности карты */
-                    $filter['!UF_MODERATED'] = 1;
-                    $filter['!UF_CANCEL_MODERATE'] = 1;
+//                    $filter['!UF_MODERATED'] = 1;
+                    $filter[] = ['LOGIC' => 'OR', 'UF_MODERATED' => 0, 'UF_MODERATED' => null];
+//                    $filter['!UF_CANCEL_MODERATE'] = 1;
+                    $filter[] = ['LOGIC' => 'OR', 'UF_CANCEL_MODERATE' => 0, 'UF_CANCEL_MODERATE' => null];
                     break;
                 case 'moderated':
                     $filter['UF_MODERATED'] = 1;
-                    $filter['!UF_CANCEL_MODERATE'] = 1;
+//                    $filter['!UF_CANCEL_MODERATE'] = 1;
+                    $filter[] = ['LOGIC' => 'OR', 'UF_CANCEL_MODERATE' => 0, 'UF_CANCEL_MODERATE' => null];
                     break;
             }
         }
@@ -220,7 +223,7 @@ class ReferralService
         }
 
         /** если уже есть такая карта не в статусе отмена модерации, то не добавляем */
-        if ($this->existsReferralByCardNumber($data['UF_CARD'])) {
+        if ($this->existsReferralByCardNumber($data['UF_CARD'], $data['UF_USER_ID'])) {
             return false;
         }
 
@@ -235,20 +238,24 @@ class ReferralService
     /**
      * @param string $cardNumber
      *
+     * @param string $userId
+     *
      * @return bool
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function existsReferralByCardNumber(string $cardNumber): bool
+    public function existsReferralByCardNumber(string $cardNumber, string $userId): bool
     {
-        $params = [
-            'filter' => ['UF_CARD' => $cardNumber, '!UF_CANCEL_MODERATE' => 1],
-            'select' => ['ID'],
-            'limit'  => 1,
+        $filter = [
+            [
+                'LOGIC' => 'OR',
+                ['UF_CARD' => $cardNumber, 'UF_USER_ID' => $userId],
+                ['UF_CARD' => $cardNumber, ['LOGIC' => 'OR', 'UF_CANCEL_MODERATE' => 0, 'UF_CANCEL_MODERATE' => null]],
+            ],
         ];
-        $res = $this->referralRepository->findBy($params);
-        return !$res->isEmpty();
+        $count = $this->referralRepository->getCount($filter);
+        return $count > 0;
     }
 
     /**
@@ -339,9 +346,10 @@ class ReferralService
     {
         try {
             return $this->referralRepository->getCount([
-                'UF_USER_ID'          => $this->referralRepository->curUserService->getCurrentUserId(),
-                '!UF_MODERATED'       => 1,
-                '!UF_CANCEL_MODERATE' => 1,
+                'UF_USER_ID'    => $this->referralRepository->curUserService->getCurrentUserId(),
+                '!UF_MODERATED' => 1,
+//                '!UF_CANCEL_MODERATE' => 1,
+                ['LOGIC' => 'OR', 'UF_CANCEL_MODERATE' => 0, 'UF_CANCEL_MODERATE' => null],
             ]);
         } catch (ObjectPropertyException | NotAuthorizedException $e) {
         }
@@ -359,9 +367,10 @@ class ReferralService
         try {
             return $this->referralRepository->getCount(
                 [
-                    'UF_USER_ID'          => $this->referralRepository->curUserService->getCurrentUserId(),
-                    'UF_MODERATED'        => 1,
-                    '!UF_CANCEL_MODERATE' => 1,
+                    'UF_USER_ID'   => $this->referralRepository->curUserService->getCurrentUserId(),
+                    'UF_MODERATED' => 1,
+//                    '!UF_CANCEL_MODERATE' => 1,
+                    ['LOGIC' => 'OR', 'UF_CANCEL_MODERATE' => 0, 'UF_CANCEL_MODERATE' => null],
                 ]
             );
         } catch (ObjectPropertyException $e) {
@@ -381,8 +390,9 @@ class ReferralService
     {
         return $this->referralRepository->findBy([
             'filter' => [
-                'UF_MODERATED'        => 1,
-                '!UF_CANCEL_MODERATE' => 1,
+                'UF_MODERATED' => 1,
+//                '!UF_CANCEL_MODERATE' => 1,
+                ['LOGIC' => 'OR', 'UF_CANCEL_MODERATE' => 0, 'UF_CANCEL_MODERATE' => null],
             ],
         ]);
     }
@@ -502,151 +512,149 @@ class ReferralService
             /** @var ManzanaReferal $item */
             foreach ($manzanaReferrals as $item) {
                 $cardNumber = $item->cardNumber;
-                if (empty($item->cardNumber)) {
+                if (empty($cardNumber)) {
                     continue;
                 }
                 $allBonus += (float)$item->sumReferralBonus;
-                if (!empty($arReferralCards)) {
-                    if (!\array_key_exists($cardNumber, $arReferralCards)) {
-                        if (!$main) {
-                            continue;
-                        }
-                        $data = [
-                            'UF_CARD'    => $cardNumber,
-                            'UF_USER_ID' => $curUser->getId(),
-                        ];
+                if (!\array_key_exists($cardNumber, $arReferralCards)) {
+                    if (!$main) {
+                        continue;
+                    }
+                    $data = [
+                        'UF_CARD'    => $cardNumber,
+                        'UF_USER_ID' => $curUser->getId(),
+                    ];
+                    try {
+                        $skip = false;
+                        $card = null;
                         try {
-                            $skip = false;
-                            $card = null;
-                            try {
-                                $card = $this->manzanaService->searchCardByNumber($cardNumber);
-                            } catch (CardNotFoundException $e) {
-                                $skip = true;
-                            } catch (\Exception $e) {
-                                $skip = true;
-                                $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
-                            }
-                            if (!$skip) {
-                                if (!empty($card->phone)) {
-                                    try {
-                                        $phone = PhoneHelper::normalizePhone((string)$card->phone);
-                                    } catch (WrongPhoneNumberException $e) {
-                                        $phone = '';
-                                    }
-                                } else {
+                            $card = $this->manzanaService->searchCardByNumber($cardNumber);
+                        } catch (CardNotFoundException $e) {
+                            $skip = true;
+                        } catch (\Exception $e) {
+                            $skip = true;
+                            $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+                        }
+                        if (!$skip) {
+                            if (!empty($card->phone)) {
+                                try {
+                                    $phone = PhoneHelper::normalizePhone((string)$card->phone);
+                                } catch (WrongPhoneNumberException $e) {
                                     $phone = '';
                                 }
-                                /** @noinspection SlowArrayOperationsInLoopInspection */
-                                $data = array_merge(
-                                    $data,
-                                    [
-                                        'UF_NAME'        => (string)$card->firstName,
-                                        'UF_LAST_NAME'   => (string)$card->lastName,
-                                        'UF_SECOND_NAME' => (string)$card->secondName,
-                                        'UF_EMAIL'       => (string)$card->email,
-                                        'UF_PHONE'       => $phone,
-                                        'UF_MODERATED'   => $item->isModerated() ? 'Y' : 'N',
-                                    ]
-                                );
-                                try {
-                                    if ($this->add($data)) {
-                                        $haveAdd = true;
+                            } else {
+                                $phone = '';
+                            }
+                            /** @noinspection SlowArrayOperationsInLoopInspection */
+                            $data = array_merge(
+                                $data,
+                                [
+                                    'UF_NAME'        => (string)$card->firstName,
+                                    'UF_LAST_NAME'   => (string)$card->lastName,
+                                    'UF_SECOND_NAME' => (string)$card->secondName,
+                                    'UF_EMAIL'       => (string)$card->email,
+                                    'UF_PHONE'       => $phone,
+                                    'UF_MODERATED'   => $item->isModerated() ? 'Y' : 'N',
+                                ]
+                            );
+                            try {
+                                if ($this->add($data)) {
+                                    $haveAdd = true;
+                                }
+                            } catch (BitrixRuntimeException $e) {
+                                $this->logger->error('Ошибка добавления реферрала - ' . $e->getMessage());
+                            } catch (\Exception $e) {
+                                $this->logger->error('Ошибка добавления реферрала - ' . $e->getMessage());
+                            }
+                        }
+                    } catch (ManzanaServiceException $e) {
+                        $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
+                        /** скипаем при ошибке манзаны */
+                    }
+                } else {
+                    /** @var Referral $referral */
+                    $referral = null;
+                    if (array_key_exists($cardNumber, $arReferralCards)) {
+                        $referral =& $fullReferralsList[$arReferralCards[$cardNumber]];
+                    }
+                    if ($referral !== null) {
+                        $cardDate = '';
+
+                        $referral->setBonus((float)$item->sumReferralBonus);
+                        $lastModerate = $referral->isModerate();
+                        $lastCancelModerate = $referral->isCancelModerate();
+                        $referral->setModerate($item->isModerated());
+                        $referral->setCancelModerate($item->isCancelModerate());
+
+                        if (!empty($cardDate) || $lastModerate !== $referral->isModerate()
+                            || $lastCancelModerate !== $referral->isCancelModerate()) {
+                            $data = [
+                                'ID'         => $referral->getId(),
+                                'UF_CARD'    => $referral->getCard(),
+                                'UF_USER_ID' => $referral->getUserId(),
+                            ];
+
+                            $isCancelModerate = false;
+                            /** @noinspection NotOptimalIfConditionsInspection */
+                            if ($lastCancelModerate !== $referral->isCancelModerate()) {
+                                $data['UF_CANCEL_MODERATE'] = $referral->isCancelModerate() ? 'Y' : 'N';
+                                if ($data['UF_CANCEL_MODERATE'] === 'Y') {
+                                    $isCancelModerate = true;
+                                    if ($data['UF_MODERATED'] === 'Y') {
+                                        $data['UF_MODERATED'] = 'N';
                                     }
-                                } catch (BitrixRuntimeException $e) {
-                                    $this->logger->error('Ошибка добавления реферрала - ' . $e->getMessage());
-                                } catch (\Exception $e) {
-                                    $this->logger->error('Ошибка добавления реферрала - ' . $e->getMessage());
                                 }
                             }
-                        } catch (ManzanaServiceException $e) {
-                            $this->logger->critical('Ошибка манзаны - ' . $e->getMessage());
-                            /** скипаем при ошибке манзаны */
-                        }
-                    } else {
-                        /** @var Referral $referral */
-                        $referral = null;
-                        if (array_key_exists($cardNumber, $arReferralCards)) {
-                            $referral =& $fullReferralsList[$arReferralCards[$cardNumber]];
-                        }
-                        if ($referral !== null) {
-                            $cardDate = '';
-
-                            $referral->setBonus((float)$item->sumReferralBonus);
-                            $lastModerate = $referral->isModerate();
-                            $lastCancelModerate = $referral->isCancelModerate();
-                            $referral->setModerate($item->isModerated());
-                            $referral->setCancelModerate($item->isCancelModerate());
-
-                            if (!empty($cardDate) || $lastModerate !== $referral->isModerate()
-                                || $lastCancelModerate !== $referral->isCancelModerate()) {
-                                $data = [
-                                    'ID'         => $referral->getId(),
-                                    'UF_CARD'    => $referral->getCard(),
-                                    'UF_USER_ID' => $referral->getUserId(),
-                                ];
-
-                                $isCancelModerate = false;
-                                /** @noinspection NotOptimalIfConditionsInspection */
-                                if ($lastCancelModerate !== $referral->isCancelModerate()) {
-                                    $data['UF_CANCEL_MODERATE'] = $referral->isCancelModerate() ? 'Y' : 'N';
-                                    if ($data['UF_CANCEL_MODERATE'] === 'Y') {
-                                        $isCancelModerate = true;
-                                        if ($data['UF_MODERATED'] === 'Y') {
-                                            $data['UF_MODERATED'] = 'N';
-                                        }
-                                    }
+                            /** @noinspection NotOptimalIfConditionsInspection */
+                            if ($lastModerate !== $referral->isModerate()) {
+                                $data['UF_MODERATED'] = $referral->isModerate() ? 'Y' : 'N';
+                                if ($data['UF_MODERATED'] === 'Y' && $data['UF_CANCEL_MODERATE'] === 'Y') {
+                                    $data['UF_CANCEL_MODERATE'] = 'N';
                                 }
-                                /** @noinspection NotOptimalIfConditionsInspection */
-                                if ($lastModerate !== $referral->isModerate()) {
-                                    $data['UF_MODERATED'] = $referral->isModerate() ? 'Y' : 'N';
-                                    if ($data['UF_MODERATED'] === 'Y' && $data['UF_CANCEL_MODERATE'] === 'Y') {
-                                        $data['UF_CANCEL_MODERATE'] = 'N';
-                                    }
-                                }
-                                if (\count($data) > 3) {
-                                    /** обновляем сущность полностью, чтобы данные не пропадали */
-                                    $updateData = $this->referralRepository->entityToData($referral);
-                                    /** @noinspection SlowArrayOperationsInLoopInspection */
-                                    $updateData = array_merge($updateData, $data);
-                                    if ($this->update($updateData)) {
-                                        TaggedCacheHelper::clearManagedCache([
-                                            'personal:referral:' . $referral->getUserId(),
-                                        ]);
+                            }
+                            if (\count($data) > 3) {
+                                /** обновляем сущность полностью, чтобы данные не пропадали */
+                                $updateData = $this->referralRepository->entityToData($referral);
+                                /** @noinspection SlowArrayOperationsInLoopInspection */
+                                $updateData = array_merge($updateData, $data);
+                                if ($this->update($updateData)) {
+                                    TaggedCacheHelper::clearManagedCache([
+                                        'personal:referral:' . $referral->getUserId(),
+                                    ]);
 
-                                        if ($isCancelModerate) {
-                                            /** если произошла отмена модерации то отправляем письмо или смс */
-                                            $container = App::getInstance()
-                                                ->getContainer();
-                                            $userService = $container->get(CurrentUserProviderInterface::class);
-                                            $user = $userService->getUserRepository()
-                                                ->find($referral->getUserId());
-                                            if ($user !== null) {
-                                                if ($user->hasEmail()) {
-                                                    Event::send(
-                                                        [
-                                                            'EVENT_NAME' => 'ReferralModeratedCancel',
-                                                            'LID'        => SITE_ID,
-                                                            'C_FIELDS'   => [
-                                                                'CARD'  => $referral->getCard(),
-                                                                'EMAIL' => $user->getEmail(),
-                                                            ],
-                                                        ]
-                                                    );
-                                                } elseif ($user->hasPhone()) {
-                                                    $smsService = $container->get('sms.service');
-                                                    $smsService->sendSms('Реферал с номером карты '
-                                                        . $referral->getCard()
-                                                        . ' не прошел модерацию',
-                                                        $user->getNormalizePersonalPhone());
-                                                }
+                                    if ($isCancelModerate) {
+                                        /** если произошла отмена модерации то отправляем письмо или смс */
+                                        $container = App::getInstance()
+                                            ->getContainer();
+                                        $userService = $container->get(CurrentUserProviderInterface::class);
+                                        $user = $userService->getUserRepository()
+                                            ->find($referral->getUserId());
+                                        if ($user !== null) {
+                                            if ($user->hasEmail()) {
+                                                Event::send(
+                                                    [
+                                                        'EVENT_NAME' => 'ReferralModeratedCancel',
+                                                        'LID'        => SITE_ID,
+                                                        'C_FIELDS'   => [
+                                                            'CARD'  => $referral->getCard(),
+                                                            'EMAIL' => $user->getEmail(),
+                                                        ],
+                                                    ]
+                                                );
+                                            } elseif ($user->hasPhone()) {
+                                                $smsService = $container->get('sms.service');
+                                                $smsService->sendSms('Реферал с номером карты '
+                                                    . $referral->getCard()
+                                                    . ' не прошел модерацию',
+                                                    $user->getNormalizePersonalPhone());
                                             }
                                         }
                                     }
                                 }
                             }
-                            if (array_key_exists($cardNumber, $arReferralCards)) {
-                                $referralsList[$arReferralCards[$cardNumber]] = $referral;
-                            }
+                        }
+                        if (array_key_exists($cardNumber, $arReferralCards)) {
+                            $referralsList[$arReferralCards[$cardNumber]] = $referral;
                         }
                     }
                 }
