@@ -87,7 +87,7 @@ services:
   expertsender.service:
     class: FourPaws\External\ExpertsenderService
 
-  yandex_market.service:
+  FourPaws\External\YandexMarketService:
     class: FourPaws\External\YandexMarketService
     arguments: ['%yandex_market.client_id%', '%yandex_market.oauth_token%', '%yandex_market.feed_id%', '%yandex_market.campaign_id%']
 
