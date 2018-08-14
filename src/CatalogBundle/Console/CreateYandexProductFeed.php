@@ -21,17 +21,18 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class CreateProductFeed
+ * Class CreateYandexProductFeed
  *
  * @package FourPaws\CatalogBundle\Console
  */
-class CreateProductFeed extends Command implements LoggerAwareInterface
+class CreateYandexProductFeed extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
     public const ARG_PROFILE_ID          = 'id';
     public const OPT_FEED_TYPE           = 'type';
     public const FEED_TYPE_YANDEX_MARKET = 'yandex-market';
+    public const OPT_FEED_STEP           = 'step';
 
     /**
      * CreateProductFeed constructor.
@@ -51,14 +52,20 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
     public function configure(): void
     {
         $this
-            ->setName('bitrix:product:feed:create')
+            ->setName('bitrix:feed:create:yandex')
             ->setDescription('Run bitrix export task')
             ->addArgument(static::ARG_PROFILE_ID, InputArgument::REQUIRED, 'Bitrix feed id')
             ->addOption(
                 static::OPT_FEED_TYPE,
                 't',
                 InputOption::VALUE_REQUIRED,
-                'type of feed'
+                'type of feed')
+            ->addOption(
+                static::OPT_FEED_STEP,
+                's',
+                InputOption::VALUE_REQUIRED,
+                'Step',
+                0
             );
     }
 
@@ -67,41 +74,55 @@ class CreateProductFeed extends Command implements LoggerAwareInterface
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @return int
+     *
      * @throws RuntimeException
      * @throws InvalidArgumentException
      * @throws SystemException
      * @throws ApplicationCreateException
      */
-    public function execute(InputInterface $input, OutputInterface $output): void
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
         $id = $input->getArgument(static::ARG_PROFILE_ID);
         $type = $input->getOption(static::OPT_FEED_TYPE);
+        $step = $input->getOption(static::OPT_FEED_STEP);
+
         if (!$id) {
             throw new RuntimeException('Profile id not defined');
         }
 
-        if (!\CCatalogExport::GetByID($id)) {
-            throw new RuntimeException(\sprintf('Profile with id #%s not found', $id));
-        }
-
-        if (!\CCatalogExport::PreGenerateExport($id)) {
-            $this->log()->error(\sprintf('Failed to generate feed for profile #%s', $id));
-        } else {
+        /**
+         * @todo export run
+         */
+        if ($step === 'last') {
+            $this->log()
+                ->info('Feed was create');
             $this->runAfterExport($type);
+
+            return FeedFactory::EXIT_CODE_END;
         }
 
-        $this->log()->info(\sprintf('Task #%s (%s) finished', $id, $type));
+        $this->log()
+            ->info('Step cleared');
+
+        return FeedFactory::EXIT_CODE_CONTINUE;
     }
 
     /**
+     * @todo move to service
+     *
      * @param string $type
+     *
      * @throws ApplicationCreateException
      */
     protected function runAfterExport(string $type)
     {
         switch ($type) {
             case static::FEED_TYPE_YANDEX_MARKET:
-                Application::getInstance()->getContainer()->get('yandex_market.service')->deleteAllPrices();
+                Application::getInstance()
+                    ->getContainer()
+                    ->get('yandex_market.service')
+                    ->deleteAllPrices();
                 break;
         }
     }
