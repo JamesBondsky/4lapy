@@ -56,6 +56,7 @@ class ShareQuery extends IblockElementQuery
             'PROPERTY_LABEL',
             'PROPERTY_BASKET_RULES',
             'PROPERTY_JSON_GROUP_SET',
+            'PROPERTY_PREMISE_BONUS',
         ];
     }
 
