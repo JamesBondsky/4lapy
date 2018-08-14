@@ -977,7 +977,7 @@ class Offer extends IblockElement
      */
     public function getCatalogPrice(): float
     {
-        return floor($this->getPrice());
+        return \round($this->getPrice());
     }
 
     /**
@@ -1152,7 +1152,7 @@ class Offer extends IblockElement
      */
     public function getCatalogOldPrice(): float
     {
-        return floor($this->getOldPrice());
+        return \round($this->getOldPrice());
     }
 
     /**
