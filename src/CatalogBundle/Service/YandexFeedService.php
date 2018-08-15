@@ -240,6 +240,14 @@ class YandexFeedService extends FeedService
                     ->isDeliveryAvailable())
                 ->setPickup($offer->getProduct()
                     ->isPickupAvailable())
+                ->setStore(!$offer->isByRequest() && $offer->getDeliverableQuantity() > 0)
+                ->setDescription(\substr(\strip_tags($offer->getDetailText()
+                        ->getText()), 0, 255) . '...')
+                ->setManufacturerWarranty(true)
+                ->setCountryOfOrigin($offer->getProduct()
+                    ->getCountry() ? $offer->getProduct()
+                    ->getCountry()
+                    ->getName() : '')
                 ->setAvailable($offer->isAvailable())
                 ->setSalesNotes('Доставка от 200 ₽;Бесплатно при заказе от 2 000 ₽')
                 ->setCurrencyId('RUB')
@@ -247,9 +255,9 @@ class YandexFeedService extends FeedService
                 ->setPicture($currentImage)
                 ->setUrl($detailPath)
                 ->setCpa(0)
-                ->setVendor($offer->getProduct()->getBrandName())
-                ->setVendorCode($offer->getProduct()->getBrand())
-                ->setBarcode(\array_shift($offer->getBarcodes()) ?: '');
+                ->setVendor($offer->getProduct()
+                    ->getBrandName())
+                ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
 
         $collection->set($key, $yandexOffer);
     }
@@ -439,4 +447,10 @@ class YandexFeedService extends FeedService
             \sys_get_temp_dir()
         );
     }
+
+    /* private function getDeliveryInfo() {
+        global $APPLICATION;
+
+
+    } */
 }
