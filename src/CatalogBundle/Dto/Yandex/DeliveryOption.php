@@ -36,6 +36,7 @@ class DeliveryOption
      * @Serializer\SerializedName("order-before")
      * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var int
      */
@@ -101,7 +102,7 @@ class DeliveryOption
      *
      * @return DeliveryOption
      */
-    public function setDaysBefore(int $daysBefore): DeliveryOption
+    public function setDaysBefore(?int $daysBefore): DeliveryOption
     {
         $this->daysBefore = $daysBefore;
 
