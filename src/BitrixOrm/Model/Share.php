@@ -422,9 +422,8 @@ class Share extends IblockElement
      * @param string $value
      *
      * @return $this
-     * @throws \FourPaws\BitrixOrmBundle\Exception\InvalidArgumentException
      */
-    public function setPropertyPremiseBonus(bool $value): Share
+    public function setPropertyPremiseBonus(string $value): Share
     {
         $this->PROPERTY_PREMISE_BONUS = $value;
         return $this;
