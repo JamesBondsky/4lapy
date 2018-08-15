@@ -256,7 +256,7 @@ class YandexFeedService extends FeedService
                     ->getCountry()
                     ->getName() : '')
                 ->setAvailable($offer->isAvailable())
-                ->setSalesNotes('Доставка от 200 ₽;Бесплатно при заказе от 2 000 ₽')
+                ->setSalesNotes('')
                 ->setCurrencyId('RUB')
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
