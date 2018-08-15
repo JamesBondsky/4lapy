@@ -33,6 +33,11 @@ services:
     FourPaws\CatalogBundle\Service\FilterService:
         public: true
 
+    # Tmp - remove after testing
+    # @see
+    FourPaws\CatalogBundle\Service\YandexFeedService:
+        public: true
+
     FourPaws\CatalogBundle\Service\FilterHelper:
         class: FourPaws\CatalogBundle\Service\FilterHelper
         arguments: ['@bx.hlblock.filter']

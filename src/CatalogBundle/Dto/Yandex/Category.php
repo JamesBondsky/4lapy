@@ -26,13 +26,14 @@ class Category
     /**
      * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var int
      */
     protected $parentId;
 
     /**
-     * @Serializer\XmlValue()
+     * @Serializer\XmlValue(cdata=false)
      * @Serializer\Type("string")
      *
      * @var string
@@ -72,7 +73,7 @@ class Category
      *
      * @return Category
      */
-    public function setParentId(int $parentId): Category
+    public function setParentId(?int $parentId): Category
     {
         $this->parentId = $parentId;
 

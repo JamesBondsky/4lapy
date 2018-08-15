@@ -5,6 +5,11 @@ namespace FourPaws\BitrixOrm\Query;
 use CDBResult;
 use CIBlockSection;
 
+/**
+ * Class IblockSectionQuery
+ *
+ * @package FourPaws\BitrixOrm\Query
+ */
 abstract class IblockSectionQuery extends IblockQueryBase
 {
     protected $countElements = false;

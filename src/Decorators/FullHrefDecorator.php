@@ -105,6 +105,18 @@ class FullHrefDecorator
     }
 
     /**
+     * @param string $host
+     *
+     * @return FullHrefDecorator
+     */
+    public function setHost(string $host): FullHrefDecorator
+    {
+        $this::$host = $host;
+
+        return $this;
+    }
+
+    /**
      * @return string
      * @throws SystemException
      */
