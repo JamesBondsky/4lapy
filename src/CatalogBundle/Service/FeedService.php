@@ -3,6 +3,7 @@
 namespace FourPaws\CatalogBundle\Service;
 
 
+use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -55,24 +56,46 @@ abstract class FeedService
      */
     abstract public function process(ConfigurationInterface $configuration, int $step): bool;
 
-    public function saveFeed()
+    /**
+     * @todo set with client
+     *
+     * @param string $key
+     * @param        $data
+     *
+     * @throws IOException
+     * @throws ArgumentException
+     */
+    public function saveFeed(string $key, $data): void
     {
+        if (!$data instanceof $this->context) {
+            throw new ArgumentException('Wrong save feed context');
+        }
 
+        $this->filesystem->dumpFile($key, $this->serializer->serialize($data, 'xml'));
     }
 
     /**
+     * @todo set with client
+     *
+     * @param string $key
+     *
      * @return mixed
      */
-    public function loadFeed()
+    public function loadFeed(string $key)
     {
-        $mixed = null;
-
-        return $mixed;
+        return $this->serializer->deserialize(\file_get_contents($key), $this->context, 'xml');
     }
 
-    public function clearFeed()
+    /**
+     * @todo set with client
+     *
+     * @param string $key
+     *
+     * @throws IOException
+     */
+    public function clearFeed(string $key): void
     {
-
+        $this->filesystem->remove($key);
     }
 
     /**
@@ -83,10 +106,6 @@ abstract class FeedService
      */
     public function publicFeed($feed, string $file): void
     {
-        $this->filesystem->dumpFile(\sprintf(
-            '%s%s',
-            \getcwd(),
-            $file
-        ), $this->serializer->serialize($feed, 'xml'));
+        $this->filesystem->dumpFile($file, $this->serializer->serialize($feed, 'xml'));
     }
 }

@@ -19,6 +19,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\InvalidArgumentException as ProcessInvalidArgumentException;
 use Symfony\Component\Process\Exception\LogicException as SymfonyLogicException;
 use Symfony\Component\Process\Exception\RuntimeException as ProcessRuntimeException;
 use Symfony\Component\Process\PhpExecutableFinder;
@@ -77,6 +78,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @throws ProcessInvalidArgumentException
      * @throws SymfonyLogicException
      * @throws ProcessRuntimeException
      * @throws ArgumentException
@@ -89,19 +91,25 @@ class FeedFactory extends Command implements LoggerAwareInterface
     {
         $id = $input->getArgument(static::ARG_PROFILE_ID);
         $type = $input->getOption(static::OPT_FEED_TYPE);
+        $step = 0;
+        $iterator = 1;
 
         if (!$id) {
             throw new ArgumentException('Profile id is not defined');
         }
 
         while (true) {
-            $process = new Process($this->getFeedProcessName($id, $type));
+            $process = new Process($this->getFeedProcessName($id, $type, $step));
             $process->setTimeout(600);
             $process->run();
 
             if ($process->getExitCode() !== self::EXIT_CODE_CONTINUE) {
                 break;
             }
+
+            $step = 1;
+            $this->log()->info(\sprintf('Step #%d was finished', $iterator));
+            $iterator++;
         }
 
         $this->log()
@@ -111,12 +119,13 @@ class FeedFactory extends Command implements LoggerAwareInterface
     /**
      * @param int    $id
      * @param string $type
+     * @param int    $step
      *
      * @return string
      *
      * @throws ArgumentException
      */
-    public function getFeedProcessName(int $id, string $type): string
+    public function getFeedProcessName(int $id, string $type, $step = 0): string
     {
         $php = (new PhpExecutableFinder())->find();
 
@@ -143,7 +152,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
             self::OPT_FEED_TYPE,
             $type,
             self::OPT_FEED_STEP,
-            0
+            $step
         );
     }
 }

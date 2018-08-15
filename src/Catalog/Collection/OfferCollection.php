@@ -2,13 +2,14 @@
 
 namespace FourPaws\Catalog\Collection;
 
-use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\StoreBundle\Collection\StockCollection;
-use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Service\StoreService;
 
+/**
+ * Class OfferCollection
+ *
+ * @package FourPaws\Catalog\Collection
+ */
 class OfferCollection extends IblockElementCollection
 {
     /**
@@ -16,6 +17,7 @@ class OfferCollection extends IblockElementCollection
      */
     protected function fetchElement(): \Generator
     {
+        /** @noinspection PhpAssignmentInConditionInspection */
         while ($fields = $this->getCdbResult()->GetNext()) {
             yield new Offer($fields);
         }

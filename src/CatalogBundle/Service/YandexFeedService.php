@@ -4,14 +4,18 @@ namespace FourPaws\CatalogBundle\Service;
 
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\CategoryCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
 use FourPaws\CatalogBundle\Dto\Yandex\Currency;
 use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
+use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
 use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
@@ -45,6 +49,7 @@ class YandexFeedService extends FeedService
      *
      * @return boolean
      *
+     * @throws ArgumentException
      * @throws IOException
      */
     public function process(ConfigurationInterface $configuration, int $step): bool
@@ -60,12 +65,16 @@ class YandexFeedService extends FeedService
                 ->processCurrencies($feed, $configuration)
                 ->processDeliveryOptions($feed, $configuration)
                 ->processCategories($feed, $configuration);
+
+            $this->saveFeed($this->getStorageKey(), $feed);
         } else {
-            $feed = $this->loadFeed();
+            $feed = $this->loadFeed($this->getStorageKey());
+
             try {
                 $this->processOffers($feed, $configuration);
             } catch (OffersIsOver $isOver) {
-                $this->publicFeed($this->loadFeed(), $configuration->getExportFile());
+                $this->publicFeed($this->loadFeed($this->getStorageKey()), Application::getAbsolutePath($configuration->getExportFile()));
+                $this->clearFeed($this->getStorageKey());
 
                 return false;
             }
@@ -123,12 +132,52 @@ class YandexFeedService extends FeedService
      * @param Configuration $configuration
      *
      * @return YandexFeedService
+     *
+     * @throws IOException
+     * @throws OffersIsOver
+     * @throws ArgumentException
      */
     protected function processOffers(Feed $feed, Configuration $configuration): YandexFeedService
     {
+        $this->saveFeed($this->getStorageKey(), $feed);
 
+        throw new OffersIsOver('All offers was been processed.');
 
         return $this;
+    }
+
+    /**
+     * @param array $filter
+     * @param int   $offset
+     * @param int   $limit
+     *
+     * @return OfferCollection
+     */
+    protected function getOffers(array $filter, int $offset = 0, $limit = 500): OfferCollection
+    {
+
+    }
+
+    /**
+     * @param Offer           $offer
+     * @param ArrayCollection $arrayCollection
+     */
+    public function addOffer(Offer $offer, ArrayCollection $arrayCollection): void
+    {
+
+    }
+
+    /**
+     * Проверяем по стоп-словам.
+     *
+     * @param Offer $offer
+     *
+     * @return bool
+     */
+    public function isOfferExcluded(Offer $offer): bool {
+
+
+        return false;
     }
 
     /**
@@ -196,7 +245,7 @@ class YandexFeedService extends FeedService
             $category->getId(),
             (new YandexCategory())
                 ->setId($category->getId())
-                ->setParentId($category->getIblockSectionId())
+                ->setParentId($category->getIblockSectionId() ?: null)
                 ->setName(
                     \implode(' | ',
                         \array_reverse($category->getFullPathCollection()
@@ -236,10 +285,23 @@ class YandexFeedService extends FeedService
     }
 
     /**
+     * @param string $key
+     *
      * @return Feed
      */
-    public function loadFeed(): Feed
+    public function loadFeed(string $key): Feed
     {
-        return parent::loadFeed();
+        return parent::loadFeed($key);
+    }
+
+    /**
+     * @return string
+     */
+    private function getStorageKey(): string
+    {
+        return \sprintf(
+            '%s/yandex_tmp_feed.xml',
+            \sys_get_temp_dir()
+        );
     }
 }
