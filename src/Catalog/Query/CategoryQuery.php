@@ -9,8 +9,18 @@ use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
+/**
+ * Class CategoryQuery
+ *
+ * @package FourPaws\Catalog\Query
+ */
 class CategoryQuery extends IblockSectionQuery
 {
+    /**
+     * Возвращает базовую выборку полей. Например, те поля, которые обязательно нужны для создания сущности.
+     *
+     * @return array
+     */
     public function getBaseSelect(): array
     {
         return [
