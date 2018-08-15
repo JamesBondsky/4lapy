@@ -257,7 +257,7 @@ class YandexFeedService extends FeedService
                     ->isPickupAvailable())
                 ->setStore(!$offer->isByRequest() && $offer->getDeliverableQuantity() > 0)
                 ->setDescription(\substr(\strip_tags($offer->getProduct()->getDetailText()
-                        ->getText()), 0, 255) . '...')
+                        ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
                 ->setCountryOfOrigin($offer->getProduct()
                     ->getCountry() ? $offer->getProduct()
