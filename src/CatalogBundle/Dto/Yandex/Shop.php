@@ -3,6 +3,7 @@
 namespace FourPaws\CatalogBundle\Dto\Yandex;
 
 use Doctrine\Common\Annotations\Annotation\Required;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -210,11 +211,11 @@ class Shop
     }
 
     /**
-     * @return Collection|Offer[]
+     * @return ArrayCollection|Offer[]
      */
     public function getOffers()
     {
-        return $this->offers;
+        return $this->offers ?? new ArrayCollection();
     }
 
     /**

@@ -8,6 +8,7 @@ namespace FourPaws\CatalogBundle\Console;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Exception;
+use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Service\YandexFeedService;
 use FourPaws\CatalogBundle\Translate\BitrixExportConfigTranslator;
 use FourPaws\External\Exception\YandexMarketApiException;
@@ -98,6 +99,7 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
      *
      * @return int
      *
+     * @throws ArgumentException
      * @throws IOException
      * @throws YandexMarketApiException
      * @throws Exception
@@ -116,11 +118,15 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
 
         $configuration = $this->translator->translate($this->translator->getProfileData($id));
 
-        if ($this->feedService->process($configuration, $step)) {
-            $this->log()
-                ->info('Step cleared');
+        try {
+            if ($this->feedService->process($configuration, $step)) {
+                $this->log()
+                    ->info('Step cleared');
 
-            return FeedFactory::EXIT_CODE_CONTINUE;
+                return FeedFactory::EXIT_CODE_CONTINUE;
+            }
+        } catch (\Throwable $e) {
+            dump($e);
         }
 
         $this->log()

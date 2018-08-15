@@ -2,6 +2,9 @@
 
 namespace FourPaws\CatalogBundle\Service;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use CIBlockElement;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
@@ -10,15 +13,20 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
 use FourPaws\CatalogBundle\Dto\Yandex\Currency;
 use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
+use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
 use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
+use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
@@ -133,15 +141,38 @@ class YandexFeedService extends FeedService
      *
      * @return YandexFeedService
      *
+     * @throws IblockNotFoundException
      * @throws IOException
      * @throws OffersIsOver
      * @throws ArgumentException
      */
     protected function processOffers(Feed $feed, Configuration $configuration): YandexFeedService
     {
+        $limit = 500;
+        $offers = $feed->getShop()
+            ->getOffers();
+
+        $offers->last();
+        $offset = (int)$offers->key() + 1;
+        $number = $offset;
+
+        $offerCollection = $this->getOffers($this->buildOfferFilter($feed, $configuration), $offset, $limit);
+
+        foreach ($offerCollection as $k => $offer) {
+            ++$number;
+
+            $this->addOffer($offer, $offers, $number, $configuration->getServerName());
+        }
+
+
+        $feed->getShop()
+            ->setOffers($offers);
         $this->saveFeed($this->getStorageKey(), $feed);
 
-        throw new OffersIsOver('All offers was been processed.');
+        $cdbResult = $offerCollection->getCdbResult();
+        if ($this->getPageNumber($offset, $limit) === (int)$cdbResult->NavPageCount) {
+            throw new OffersIsOver('All offers was been processed.');
+        }
 
         return $this;
     }
@@ -155,29 +186,133 @@ class YandexFeedService extends FeedService
      */
     protected function getOffers(array $filter, int $offset = 0, $limit = 500): OfferCollection
     {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return (new OfferQuery())->withFilter($filter)
+            ->withNav([
+                'nPageSize' => $limit,
+                'iNumPage'  => $this->getPageNumber($offset, $limit),
+            ])
+            ->exec();
+    }
 
+    /**
+     * @param int $offset
+     * @param int $limit
+     *
+     * @return int
+     */
+    protected function getPageNumber(int $offset, int $limit): int
+    {
+        return (int)\ceil(($offset + 1) / $limit);
     }
 
     /**
      * @param Offer           $offer
-     * @param ArrayCollection $arrayCollection
+     * @param ArrayCollection $collection
+     * @param int             $key
+     * @param string          $host
      */
-    public function addOffer(Offer $offer, ArrayCollection $arrayCollection): void
+    public function addOffer(Offer $offer, ArrayCollection $collection, int $key, string $host): void
     {
+        $currentImage = (new FullHrefDecorator($offer->getImages()
+            ->first()
+            ->getSrc()))->setHost($host)
+            ->__toString();
+        $detailPath = (new FullHrefDecorator(\sprintf(
+            '%s%sutm_source=market.yandex.ru&utm_term=4386079&utm_medium=cpc&utm_campaign=main',
+            $offer->getDetailPageUrl(),
+            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?')
+        )))->setHost($host)
+            ->__toString();
 
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        /** @noinspection PassingByReferenceCorrectnessInspection */
+        $yandexOffer =
+            (new YandexOffer())
+                ->setId($offer->getXmlId())
+                ->setName(\sprintf(
+                    '%s %s',
+                    $offer->getProduct()
+                        ->getBrandName(),
+                    $offer->getName()
+                ))
+                ->setDelivery($offer->getProduct()
+                    ->isDeliveryAvailable())
+                ->setPickup($offer->getProduct()
+                    ->isPickupAvailable())
+                ->setAvailable($offer->isAvailable())
+                ->setSalesNotes('Доставка от 200 ₽;Бесплатно при заказе от 2 000 ₽')
+                ->setCurrencyId('RUB')
+                ->setPrice($offer->getPrice())
+                ->setPicture($currentImage)
+                ->setUrl($detailPath)
+                ->setCpa(0)
+                ->setVendor($offer->getProduct()->getBrandName())
+                ->setVendorCode($offer->getProduct()->getBrand())
+                ->setBarcode(\array_shift($offer->getBarcodes()) ?: '');
+
+        $collection->set($key, $yandexOffer);
     }
 
     /**
-     * Проверяем по стоп-словам.
+     * Проверяем по стоп-словам и прочим прелестям.
      *
      * @param Offer $offer
      *
      * @return bool
      */
-    public function isOfferExcluded(Offer $offer): bool {
+    protected function isOfferExcluded(Offer $offer): bool
+    {
+        $badWordsTemplate = '~новинка|хит|акция|распродажа|новый|new|sale~iu';
 
+        if (
+            preg_match($badWordsTemplate, $offer->getName())
+            || preg_match(
+                $badWordsTemplate,
+                $offer->getDetailText()
+                    ->getText()
+            )
+        ) {
+            return true;
+        }
 
         return false;
+    }
+
+    /**
+     * @param Feed          $feed
+     * @param Configuration $configuration
+     *
+     * @return array
+     *
+     * @throws IblockNotFoundException
+     */
+    public function buildOfferFilter(Feed $feed, Configuration $configuration): array
+    {
+        $sectionIds = \array_reduce(
+            $feed->getShop()
+                ->getCategories()
+                ->toArray(),
+            function ($carry, YandexCategory $item) {
+                return array_merge($carry, [$item->getId()]);
+            },
+            []
+        );
+
+        return [
+            'PROPERTY_CML2_LINK' => CIBlockElement::SubQuery(
+                'ID',
+                [
+                    'IBLOCK_ID'  => IblockUtils::getIblockId(
+                        IblockType::CATALOG,
+                        IblockCode::PRODUCTS
+                    ),
+                    'SECTION_ID' => $sectionIds,
+                    'ACTIVE'     => 'Y'
+                ]
+            ),
+            'ACTIVE'             => 'Y'
+        ];
     }
 
     /**
@@ -247,7 +382,7 @@ class YandexFeedService extends FeedService
                 ->setId($category->getId())
                 ->setParentId($category->getIblockSectionId() ?: null)
                 ->setName(
-                    \implode(' | ',
+                    \implode(' - ',
                         \array_reverse($category->getFullPathCollection()
                             ->map(function (Category $category) {
                                 return \preg_replace('~\'|"~', '', $category->getName());
