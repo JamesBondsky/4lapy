@@ -21,6 +21,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
  * Class CreateYandexProductFeed
@@ -97,6 +98,7 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
      *
      * @return int
      *
+     * @throws IOException
      * @throws YandexMarketApiException
      * @throws Exception
      * @throws RuntimeException

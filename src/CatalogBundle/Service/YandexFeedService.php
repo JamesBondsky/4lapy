@@ -4,8 +4,12 @@ namespace FourPaws\CatalogBundle\Service;
 
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Collection\CategoryCollection;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
 use FourPaws\CatalogBundle\Dto\Yandex\Currency;
+use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
@@ -62,6 +66,8 @@ class YandexFeedService extends FeedService
                 $this->processOffers($feed, $configuration);
             } catch (OffersIsOver $isOver) {
                 $this->publicFeed($this->loadFeed(), $configuration->getExportFile());
+
+                return false;
             }
         }
 
@@ -133,12 +139,80 @@ class YandexFeedService extends FeedService
      */
     protected function processCategories(Feed $feed, Configuration $configuration): YandexFeedService
     {
-        $parentCategories = (new CategoryQuery())->withFilter(['@ID' => $configuration->getSectionIds()])->exec();
+        $categories = new ArrayCollection();
+
+        /**
+         * @var CategoryCollection $parentCategories
+         */
+        $parentCategories = (new CategoryQuery())
+            ->withFilter([
+                'ID'            => $configuration->getSectionIds(),
+                'GLOBAL_ACTIVE' => 'Y'
+            ])
+            ->withOrder(['LEFT_MARGIN' => 'ASC'])
+            ->exec();
+
+        /**
+         * @var Category $parentCategory
+         */
+        foreach ($parentCategories as $parentCategory) {
+            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
+                continue;
+            }
+
+            if ($categories->get($parentCategory->getId())) {
+                continue;
+            }
+
+            $childCategories = (new CategoryQuery())
+                ->withFilter([
+                    '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
+                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
+                    'GLOBAL_ACTIVE' => 'Y'
+                ])
+                ->withOrder(['LEFT_MARGIN' => 'ASC'])
+                ->exec();
+
+            $this->addCategory($parentCategory, $categories);
+
+            foreach ($childCategories as $category) {
+                $this->addCategory($category, $categories);
+            }
+        }
+
+        $feed->getShop()
+            ->setCategories($categories);
 
         return $this;
     }
 
     /**
+     * @param Category        $category
+     * @param ArrayCollection $categoryCollection
+     */
+    protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
+    {
+        $categoryCollection->set(
+            $category->getId(),
+            (new YandexCategory())
+                ->setId($category->getId())
+                ->setParentId($category->getIblockSectionId())
+                ->setName(
+                    \implode(' | ',
+                        \array_reverse($category->getFullPathCollection()
+                            ->map(function (Category $category) {
+                                return \preg_replace('~\'|"~', '', $category->getName());
+                            })
+                            ->toArray()
+                        )
+                    )
+                )
+        );
+    }
+
+    /**
+     * @todo from db + profile
+     *
      * @param Feed          $feed
      * @param Configuration $configuration
      *
@@ -146,7 +220,17 @@ class YandexFeedService extends FeedService
      */
     protected function processDeliveryOptions(Feed $feed, Configuration $configuration): YandexFeedService
     {
+        $options = new ArrayCollection();
+        $options->add((new DeliveryOption())
+            ->setCost(0)
+            ->setDays(1)
+        );
 
+        /**
+         * По умолчанию в Мск вполне себе доступна бесплатная доставка и товар есть в магазине
+         */
+        $feed->getShop()
+            ->setDeliveryOptions($options);
 
         return $this;
     }

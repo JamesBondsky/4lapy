@@ -96,6 +96,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
 
         while (true) {
             $process = new Process($this->getFeedProcessName($id, $type));
+            $process->setTimeout(600);
             $process->run();
 
             if ($process->getExitCode() !== self::EXIT_CODE_CONTINUE) {
