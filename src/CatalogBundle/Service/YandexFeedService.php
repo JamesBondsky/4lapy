@@ -225,6 +225,13 @@ class YandexFeedService extends FeedService
         )))->setHost($host)
             ->__toString();
 
+        $deliveryInfo = $this->getDeliveryInfo();
+        foreach ($deliveryInfo as $option) {
+            if ($offer->getPrice() > $option->getFreeFrom()) {
+                $option->setCost(0);
+            }
+        }
+
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $yandexOffer =
@@ -257,6 +264,7 @@ class YandexFeedService extends FeedService
                 ->setCpa(0)
                 ->setVendor($offer->getProduct()
                     ->getBrandName())
+                ->setDeliveryOptions($deliveryInfo)
                 ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
 
         $collection->set($key, $yandexOffer);
@@ -412,17 +420,11 @@ class YandexFeedService extends FeedService
      */
     protected function processDeliveryOptions(Feed $feed, Configuration $configuration): YandexFeedService
     {
-        $options = new ArrayCollection();
-        $options->add((new DeliveryOption())
-            ->setCost(0)
-            ->setDays(1)
-        );
-
         /**
          * По умолчанию в Мск вполне себе доступна бесплатная доставка и товар есть в магазине
          */
         $feed->getShop()
-            ->setDeliveryOptions($options);
+            ->setDeliveryOptions($this->getDeliveryInfo());
 
         return $this;
     }
@@ -448,9 +450,31 @@ class YandexFeedService extends FeedService
         );
     }
 
-    /* private function getDeliveryInfo() {
+    /**
+     * @return ArrayCollection|DeliveryOption[]
+     */
+    private function getDeliveryInfo(): ArrayCollection
+    {
         global $APPLICATION;
 
+        $deliveryCollection = new ArrayCollection();
 
-    } */
+        $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+            'empty',
+            ['CACHE_TIME' => 3601 * 24],
+            false,
+            ['HIDE_ICONS' => 'Y']);
+
+        foreach ($deliveryInfo as $delivery) {
+            $deliveryCollection->add(
+                (new DeliveryOption())
+                    ->setCost((int)$delivery['PRICE'])
+                    ->setDays((int)$delivery['PERIOD_FROM'])
+                    ->setDaysBefore(14)
+                    ->setFreeFrom((int)$delivery['FREE_FROM'])
+            );
+        }
+
+        return $deliveryCollection;
+    }
 }

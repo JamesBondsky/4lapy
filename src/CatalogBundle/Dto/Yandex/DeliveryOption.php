@@ -42,6 +42,13 @@ class DeliveryOption
     protected $daysBefore;
 
     /**
+     * @Serializer\Exclude()
+     *
+     * @var int
+     */
+    protected $freeFrom;
+
+    /**
      * @return float
      */
     public function getCost(): float
@@ -97,6 +104,26 @@ class DeliveryOption
     public function setDaysBefore(int $daysBefore): DeliveryOption
     {
         $this->daysBefore = $daysBefore;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFreeFrom(): int
+    {
+        return $this->freeFrom;
+    }
+
+    /**
+     * @param int $freeFrom
+     *
+     * @return $this
+     */
+    public function setFreeFrom(int $freeFrom)
+    {
+        $this->freeFrom = $freeFrom;
 
         return $this;
     }
