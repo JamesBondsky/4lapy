@@ -214,6 +214,10 @@ class YandexFeedService extends FeedService
      */
     public function addOffer(Offer $offer, ArrayCollection $collection, int $key, string $host): void
     {
+        if ($this->isOfferExcluded($offer)) {
+            return;
+        }
+
         $currentImage = (new FullHrefDecorator($offer->getImages()
             ->first()
             ->getSrc()))->setHost($host)
@@ -227,6 +231,10 @@ class YandexFeedService extends FeedService
 
         $deliveryInfo = $this->getDeliveryInfo();
         foreach ($deliveryInfo as $option) {
+            if ((int)$option->getCost() === 0) {
+                $option->setDaysBefore(null);
+            }
+
             if ($offer->getPrice() > $option->getFreeFrom()) {
                 $option->setCost(0);
             }
@@ -248,7 +256,7 @@ class YandexFeedService extends FeedService
                 ->setPickup($offer->getProduct()
                     ->isPickupAvailable())
                 ->setStore(!$offer->isByRequest() && $offer->getDeliverableQuantity() > 0)
-                ->setDescription(\substr(\strip_tags($offer->getDetailText()
+                ->setDescription(\substr(\strip_tags($offer->getProduct()->getDetailText()
                         ->getText()), 0, 255) . '...')
                 ->setManufacturerWarranty(true)
                 ->setCountryOfOrigin($offer->getProduct()
@@ -289,6 +297,10 @@ class YandexFeedService extends FeedService
                     ->getText()
             )
         ) {
+            return true;
+        }
+
+        if ((int)$offer->getPrice() === 0) {
             return true;
         }
 
