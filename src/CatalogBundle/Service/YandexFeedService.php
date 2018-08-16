@@ -4,6 +4,7 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException as BitrixArgumentException;
 use Bitrix\Main\LoaderException;
@@ -37,6 +38,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use InvalidArgumentException;
 use JMS\Serializer\SerializerInterface;
+use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -48,8 +50,12 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * @package FourPaws\CatalogBundle\Service
  */
-class YandexFeedService extends FeedService
+class YandexFeedService extends FeedService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
+    private $deliveryInfo;
+
     /**
      * YandexFeedService constructor.
      *
@@ -170,6 +176,19 @@ class YandexFeedService extends FeedService
 
         $offerCollection = $this->getOffers($this->buildOfferFilter($feed, $configuration), $offset, $limit);
 
+        $this
+            ->log()
+            ->info(
+                \sprintf(
+                    'Offers page %d, limit %d, $offset %d, number %d, pages %d',
+                    $offerCollection->getCdbResult()->NavPageNomer,
+                    $limit,
+                    $offset,
+                    $number,
+                    $offerCollection->getCdbResult()->NavPageCount
+                )
+            );
+
         foreach ($offerCollection as $k => $offer) {
             ++$number;
 
@@ -257,21 +276,7 @@ class YandexFeedService extends FeedService
         )))->setHost($host)
             ->__toString();
 
-        $deliveryInfo = $this->getDeliveryInfo();
-        foreach ($deliveryInfo as $option) {
-            if ($offer->getDeliverableQuantity() < 1) {
-                $option->setDays('1');
-                $option->setDaysBefore(13);
-            }
-
-            if ((int)$option->getCost() === 0) {
-                $option->setDaysBefore(18);
-            }
-
-            if ($offer->getPrice() > $option->getFreeFrom()) {
-                $option->setCost(0);
-            }
-        }
+        $deliveryInfo = $this->getOfferDeliveryInfo($offer);
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -379,12 +384,13 @@ class YandexFeedService extends FeedService
                     'ACTIVE'             => 'Y'
                 ])
                 ->exec()
-                ->fetchAll() ?: [], function($carry, $on) {
+                ->fetchAll() ?: [], function ($carry, $on) {
                 $carry[] = $on['ID'];
 
                 return $carry;
             }, []);
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         return [
             '=PROPERTY_CML2_LINK' => $idList,
@@ -517,26 +523,61 @@ class YandexFeedService extends FeedService
      */
     private function getDeliveryInfo(): ArrayCollection
     {
-        global $APPLICATION;
+        if (!$this->deliveryInfo) {
+            global $APPLICATION;
 
-        $deliveryCollection = new ArrayCollection();
+            $deliveryCollection = new ArrayCollection();
 
-        $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-            'empty',
-            ['CACHE_TIME' => 3601 * 24],
-            false,
-            ['HIDE_ICONS' => 'Y']);
+            $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                'empty',
+                ['CACHE_TIME' => 3601 * 24],
+                false,
+                ['HIDE_ICONS' => 'Y']);
 
-        foreach ($deliveryInfo as $delivery) {
-            $deliveryCollection->add(
-                (new DeliveryOption())
-                    ->setCost((int)$delivery['PRICE'])
-                    ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
-                    ->setDaysBefore(13)
-                    ->setFreeFrom((int)$delivery['FREE_FROM'])
-            );
+            foreach ($deliveryInfo as $delivery) {
+                $deliveryCollection->add(
+                    (new DeliveryOption())
+                        ->setCost((int)$delivery['PRICE'])
+                        ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
+                        ->setDaysBefore(13)
+                        ->setFreeFrom((int)$delivery['FREE_FROM'])
+                );
+            }
+
+            $this->deliveryInfo = $deliveryCollection;
         }
 
-        return $deliveryCollection;
+        return $this->deliveryInfo;
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return ArrayCollection
+     */
+    private function getOfferDeliveryInfo(Offer $offer): ArrayCollection
+    {
+        if (!$offer->isAvailable()) {
+            return new ArrayCollection();
+        }
+
+        $deliveryInfo = $this->getDeliveryInfo();
+
+        foreach ($deliveryInfo as $option) {
+            if ($offer->getDeliverableQuantity() < 1) {
+                $option->setDays('1');
+                $option->setDaysBefore(13);
+            }
+
+            if ((int)$option->getCost() === 0) {
+                $option->setDaysBefore(18);
+            }
+
+            if ($offer->getPrice() > $option->getFreeFrom()) {
+                $option->setCost(0);
+            }
+        }
+
+        return $deliveryInfo;
     }
 }
