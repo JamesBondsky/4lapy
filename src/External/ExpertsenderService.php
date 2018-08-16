@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceApiException;
+use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\Helpers\PhoneHelper;
@@ -103,7 +104,6 @@ class ExpertsenderService implements LoggerAwareInterface
 
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
-    private $notUseBlackList = false;
 
     public function __construct()
     {
@@ -712,13 +712,14 @@ class ExpertsenderService implements LoggerAwareInterface
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ExpertsenderServiceBlackListException
      * @throws ExpertsenderUserNotFoundException
      * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderBasketEmptyException
      * @throws ExpertsenderServiceException
      * @throws ExpertSenderException
      */
-    public function sendForgotBasket(Basket $basket, int $type):bool
+    public function sendForgotBasket(Basket $basket, int $type): bool
     {
         switch ($type) {
             case static::FORGOT_BASKET_TO_CLOSE_SITE:
@@ -764,9 +765,23 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->notUseBlackList = true;
-        $this->sendSystemTransactional($transactionId, $email, $snippets);
-        $this->notUseBlackList = false;
+        try {
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+        } catch (ExpertsenderServiceApiException | ExpertsenderServiceException $e) {
+            $message = $e->getMessage();
+            /** чекаем на черный список */
+            if ($this->isBlackListed($message)) {
+                throw new ExpertsenderServiceBlackListException($message, $e->getCode(), $e, $e->getMethod(),
+                    $e->getParameters());
+            }
+            if ($e instanceof ExpertsenderServiceApiException) {
+                throw new ExpertsenderServiceApiException($message, $e->getCode(), $e, $e->getMethod(),
+                    $e->getParameters());
+            } else {
+                throw new ExpertsenderServiceException($message, $e->getCode(), $e, $e->getMethod(),
+                    $e->getParameters());
+            }
+        }
 
         return true;
     }
@@ -1021,7 +1036,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 $transactionId,
                 new Receiver($email),
                 $snippets
-            ]);
+            ]
+        );
     }
 
     /**
@@ -1061,47 +1077,30 @@ class ExpertsenderService implements LoggerAwareInterface
         try {
             /** @var ApiResult $apiResult */
             $apiResult = $this->client->$name(...$parameters);
-        } catch (BadResponseException $e) {
-            $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
-            $code = $e->getCode();
-            $previous = $e;
-            $method = $name;
-            /** чекаем на черный список */
-            if($this->notUseBlackList) {
-                if(!$this->isBlackListed($message)) {
-                    $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
-                }
+        } catch (BadResponseException | GuzzleException | Exception $e) {
+            if($e instanceof BadResponseException) {
+                $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
             } else {
-                $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
+                $message = $e->getMessage();
             }
-
-        } catch (GuzzleException | Exception $e) {
-            $message = $e->getMessage();
-            $code = $e->getCode();
-            $previous = $e;
-            $method = $name;
-            /** чекаем на черный список */
-            if($this->notUseBlackList) {
-                if (!$this->isBlackListed($message)) {
-                    $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
-                }
-            } else {
-                $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
-            }
+            throw new ExpertsenderServiceException(
+                $message,
+                $e->getCode(),
+                $e,
+                $name,
+                $parameters
+            );
         }
 
         if (!$apiResult->isOk()) {
             $message = $apiResult->getErrorMessage();
-            $code = $apiResult->getErrorCode();
-            $previous = null;
-            $method = $name;
-            if($this->notUseBlackList) {
-                if (!$this->isBlackListed($message)) {
-                    $this->setExpertsenderServiceApiException($message, $code, $previous, $method, $parameters);
-                }
-            } else {
-                $this->setExpertsenderServiceApiException($message, $code, $previous, $method, $parameters);
-            }
+            throw new ExpertsenderServiceApiException(
+                $message,
+                $apiResult->getErrorCode(),
+                null,
+                $name,
+                $parameters
+            );
         }
 
         return $apiResult;
@@ -1127,45 +1126,5 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return false;
-    }
-
-    /**
-     * @param $parameters
-     * @param $message
-     * @param $code
-     * @param $previous
-     * @param $method
-     *
-     * @throws ExpertsenderServiceException
-     */
-    protected function setExpertSenderServiceException($message, $code, $previous, $method, $parameters): void
-    {
-        throw new ExpertsenderServiceException(
-            $message,
-            $code,
-            $previous,
-            $method,
-            $parameters
-        );
-    }
-
-    /**
-     * @param $message
-     * @param $code
-     * @param $previous
-     * @param $method
-     * @param $parameters
-     *
-     * @throws ExpertsenderServiceApiException
-     */
-    protected function setExpertsenderServiceApiException($message, $code, $previous, $method, $parameters): void
-    {
-        throw new ExpertsenderServiceApiException(
-            $message,
-            $code,
-            $previous,
-            $method,
-            $parameters
-        );
     }
 }
