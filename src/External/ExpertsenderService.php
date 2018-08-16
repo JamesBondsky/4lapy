@@ -760,23 +760,23 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->log()->info(
-            __FUNCTION__,
-            [
-                'email' => $email,
-                'transactionId' => $transactionId,
-                'fuserId' => $fuserId,
-                'snippets' => implode(
-                    '; ',
-                    array_map(
-                        function($snp) {
-                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
-                        },
-                        $snippets
-                    )
-                ),
-            ]
-        );
+//        $this->log()->info(
+//            __FUNCTION__,
+//            [
+//                'email' => $email,
+//                'transactionId' => $transactionId,
+//                'fuserId' => $fuserId,
+//                'snippets' => implode(
+//                    '; ',
+//                    array_map(
+//                        function($snp) {
+//                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+//                        },
+//                        $snippets
+//                    )
+//                ),
+//            ]
+//        );
 
         $this->sendSystemTransactional($transactionId, $email, $snippets);
 
@@ -1073,21 +1073,28 @@ class ExpertsenderService implements LoggerAwareInterface
             $apiResult = $this->client->$name(...$parameters);
         } catch (BadResponseException $e) {
             $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
-            throw new ExpertsenderServiceException(
-                $message,
-                $e->getCode(),
-                $e,
-                $name,
-                $parameters
-            );
+            /** чекаем на черный список */
+            if(!$this->isBlackListed($message)) {
+                throw new ExpertsenderServiceException(
+                    $message,
+                    $e->getCode(),
+                    $e,
+                    $name,
+                    $parameters
+                );
+            }
         } catch (GuzzleException | Exception $e) {
-            throw new ExpertsenderServiceException(
-                $e->getMessage(),
-                $e->getCode(),
-                $e,
-                $name,
-                $parameters
-            );
+            $message = $e->getMessage();
+            /** чекаем на черный список */
+            if(!$this->isBlackListed($message)) {
+                throw new ExpertsenderServiceException(
+                    $message,
+                    $e->getCode(),
+                    $e,
+                    $name,
+                    $parameters
+                );
+            }
         }
 
         if (!$apiResult->isOk()) {
@@ -1101,5 +1108,24 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return $apiResult;
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return bool
+     */
+    protected function isBlackListed(string $message): bool
+    {
+        $sop = \simplexml_load_string($message);
+        $code = (int)$sop->ErrorMessage->Code;
+        $errMess = (string)$sop->ErrorMessage->Message;
+        if($code === 400){
+            if($errMess === 'Subscriber is blacklisted.'){
+                return true;
+            }
+        }
+
+        return false;
     }
 }
