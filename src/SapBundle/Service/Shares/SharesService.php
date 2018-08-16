@@ -747,7 +747,8 @@ class SharesService implements LoggerAwareInterface
             ->withPropertyOnlyMp('N')
             ->withPropertyProducts($products)
             ->withPropertyBasketRules([$basketRule->getId()])
-            ->withPropertyJsonGroupSet($jsonGroupSet);
+            ->withPropertyJsonGroupSet($jsonGroupSet)
+            ->setPropertyPremiseBonus($promo->isBonus());
 
         return $entity;
     }

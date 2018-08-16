@@ -112,6 +112,12 @@ class Share extends IblockElement
     protected $PROPERTY_JSON_GROUP_SET = '';
 
     /**
+     * @var string
+     * @Type("string")
+     */
+    protected $PROPERTY_PREMISE_BONUS = false;
+
+    /**
      * @var OfferCollection
      */
     protected $products;
@@ -410,6 +416,35 @@ class Share extends IblockElement
     public function setPropertyLabelImage(int $image): void
     {
         $this->PROPERTY_LABEL_IMAGE = $image;
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function setPropertyPremiseBonus(string $value): Share
+    {
+        $this->PROPERTY_PREMISE_BONUS = $value;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPropertyPremiseBonus(): string
+    {
+        return $this->PROPERTY_PREMISE_BONUS;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBonus(): bool
+    {
+        //почему-то туда пишется строка 0/1, а не N/Y как предполагается в ONLY_MP
+        //отдельный кек - only mobilnoe prilojenie
+        return (bool)$this->getPropertyPremiseBonus();
     }
 
     public function getPropertyLabelImageFile($width = 0, $height = 0)
