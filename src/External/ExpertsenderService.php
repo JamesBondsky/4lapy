@@ -103,6 +103,7 @@ class ExpertsenderService implements LoggerAwareInterface
 
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
+    private $notUseBlackList = false;
 
     public function __construct()
     {
@@ -763,7 +764,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->sendSystemTransactional($transactionId, $email, $snippets, true);
+        $this->notUseBlackList = true;
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
+        $this->notUseBlackList = false;
 
         return true;
     }
@@ -1004,14 +1007,13 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param int    $transactionId
      * @param string $email
      * @param array  $snippets
-     * @param bool  $notUseBlackList
      *
      * @return ApiResult
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      * @throws ExpertSenderException
      */
-    protected function sendSystemTransactional(int $transactionId, string $email, array $snippets = [], bool $notUseBlackList = false): ApiResult
+    protected function sendSystemTransactional(int $transactionId, string $email, array $snippets = []): ApiResult
     {
         return $this->sendRequest(
             'sendSystemTransactional',
@@ -1019,8 +1021,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 $transactionId,
                 new Receiver($email),
                 $snippets
-            ],
-            $notUseBlackList);
+            ]);
     }
 
     /**
@@ -1050,13 +1051,12 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * @param $name
      * @param $parameters
-     * @param bool $notUseBlackList
      *
      * @return ApiResult|UserIdResult
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    protected function sendRequest($name, $parameters, bool $notUseBlackList = false)
+    protected function sendRequest($name, $parameters)
     {
         try {
             /** @var ApiResult $apiResult */
@@ -1067,7 +1067,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $previous = $e;
             $method = $name;
             /** чекаем на черный список */
-            if($notUseBlackList) {
+            if($this->notUseBlackList) {
                 if(!$this->isBlackListed($message)) {
                     $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
                 }
@@ -1081,7 +1081,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $previous = $e;
             $method = $name;
             /** чекаем на черный список */
-            if($notUseBlackList) {
+            if($this->notUseBlackList) {
                 if (!$this->isBlackListed($message)) {
                     $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
                 }
@@ -1095,7 +1095,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $code = $apiResult->getErrorCode();
             $previous = null;
             $method = $name;
-            if($notUseBlackList) {
+            if($this->notUseBlackList) {
                 if (!$this->isBlackListed($message)) {
                     $this->setExpertsenderServiceApiException($message, $code, $previous, $method, $parameters);
                 }
