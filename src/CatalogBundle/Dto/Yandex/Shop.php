@@ -18,7 +18,7 @@ class Shop
      * Имя магазина
      *
      * @Required()
-     * @Serializer\XmlElement()
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      *
      * @var string
@@ -29,7 +29,7 @@ class Shop
      * Имя компании
      *
      * @Required()
-     * @Serializer\XmlElement()
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      *
      * @var string
@@ -40,7 +40,7 @@ class Shop
      * Урл сайта
      *
      * @Required()
-     * @Serializer\XmlElement()
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      *
      * @var string

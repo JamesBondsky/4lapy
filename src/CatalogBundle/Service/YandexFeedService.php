@@ -4,10 +4,16 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use CIBlockElement;
+use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\ArgumentException as BitrixArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
@@ -25,9 +31,15 @@ use FourPaws\CatalogBundle\Exception\OffersIsOver;
 use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\StoreBundle\Exception\NotFoundException;
+use InvalidArgumentException;
 use JMS\Serializer\SerializerInterface;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -161,7 +173,11 @@ class YandexFeedService extends FeedService
         foreach ($offerCollection as $k => $offer) {
             ++$number;
 
-            $this->addOffer($offer, $offers, $number, $configuration->getServerName());
+            try {
+                $this->addOffer($offer, $offers, $number, $configuration->getServerName());
+            } catch (Exception $e) {
+                /** Просто подавляем исключение */
+            }
         }
 
 
@@ -211,6 +227,18 @@ class YandexFeedService extends FeedService
      * @param ArrayCollection $collection
      * @param int             $key
      * @param string          $host
+     *
+     * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws DeliveryNotFoundException
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws LoaderException
+     * @throws BitrixArgumentException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws RuntimeException
+     * @throws ApplicationCreateException
      */
     public function addOffer(Offer $offer, ArrayCollection $collection, int $key, string $host): void
     {
@@ -231,8 +259,13 @@ class YandexFeedService extends FeedService
 
         $deliveryInfo = $this->getDeliveryInfo();
         foreach ($deliveryInfo as $option) {
+            if ($offer->getDeliverableQuantity() < 1) {
+                $option->setDays('1');
+                $option->setDaysBefore(13);
+            }
+
             if ((int)$option->getCost() === 0) {
-                $option->setDaysBefore(null);
+                $option->setDaysBefore(18);
             }
 
             if ($offer->getPrice() > $option->getFreeFrom()) {
@@ -251,13 +284,15 @@ class YandexFeedService extends FeedService
                         ->getBrandName(),
                     $offer->getName()
                 ))
-                ->setDelivery($offer->getProduct()
-                    ->isDeliveryAvailable())
-                ->setPickup($offer->getProduct()
-                    ->isPickupAvailable())
-                ->setStore(!$offer->isByRequest() && $offer->getDeliverableQuantity() > 0)
-                ->setDescription(\substr(\strip_tags($offer->getProduct()->getDetailText()
-                        ->getText()), 0, 2990))
+                ->setCategoryId($offer->getProduct()
+                    ->getIblockSectionId())
+                ->setDelivery(!$offer->getProduct()
+                    ->isDeliveryForbidden())
+                ->setPickup(true)
+                ->setStore($offer->getDeliverableQuantity() > 0)
+                ->setDescription(\substr(\strip_tags($offer->getProduct()
+                    ->getDetailText()
+                    ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
                 ->setCountryOfOrigin($offer->getProduct()
                     ->getCountry() ? $offer->getProduct()
@@ -279,7 +314,7 @@ class YandexFeedService extends FeedService
     }
 
     /**
-     * Проверяем по стоп-словам и прочим прелестям.
+     * Проверяем по стоп-словам, ТПЗ.
      *
      * @param Offer $offer
      *
@@ -287,16 +322,19 @@ class YandexFeedService extends FeedService
      */
     protected function isOfferExcluded(Offer $offer): bool
     {
-        $badWordsTemplate = '~новинка|хит|акция|распродажа|новый|new|sale~iu';
+        $badWordsTemplate = '~новинка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|new|sale~iu';
 
         if (
-            preg_match($badWordsTemplate, $offer->getName())
+            preg_match($badWordsTemplate, $offer->getName()) > 0
             || preg_match(
-                $badWordsTemplate,
-                $offer->getDetailText()
-                    ->getText()
-            )
+                   $badWordsTemplate,
+                   $offer->getProduct()
+                       ->getDetailText()
+                       ->getText()
+               ) > 0
         ) {
+            dump("Exclude " . $offer->getXmlId() . " by stop");
+
             return true;
         }
 
@@ -304,7 +342,7 @@ class YandexFeedService extends FeedService
             return true;
         }
 
-        return false;
+        return $offer->isByRequest();
     }
 
     /**
@@ -322,24 +360,36 @@ class YandexFeedService extends FeedService
                 ->getCategories()
                 ->toArray(),
             function ($carry, YandexCategory $item) {
-                return array_merge($carry, [$item->getId()]);
+                return \array_merge($carry, [$item->getId()]);
             },
             []
         );
 
-        return [
-            'PROPERTY_CML2_LINK' => CIBlockElement::SubQuery(
-                'ID',
-                [
-                    'IBLOCK_ID'  => IblockUtils::getIblockId(
+        $idList = [-1];
+        try {
+            $idList = \array_reduce(ElementTable::query()
+                ->setCacheTtl(3600)
+                ->setSelect(['ID'])
+                ->setFilter([
+                    'IBLOCK_ID'          => IblockUtils::getIblockId(
                         IblockType::CATALOG,
                         IblockCode::PRODUCTS
                     ),
-                    'SECTION_ID' => $sectionIds,
-                    'ACTIVE'     => 'Y'
-                ]
-            ),
-            'ACTIVE'             => 'Y'
+                    '@IBLOCK_SECTION_ID' => $sectionIds,
+                    'ACTIVE'             => 'Y'
+                ])
+                ->exec()
+                ->fetchAll() ?: [], function($carry, $on) {
+                $carry[] = $on['ID'];
+
+                return $carry;
+            }, []);
+        } catch (Exception $e) {}
+
+        return [
+            '=PROPERTY_CML2_LINK' => $idList,
+            '<XML_ID'             => 2000000,
+            'ACTIVE'              => 'Y'
         ];
     }
 
@@ -481,8 +531,8 @@ class YandexFeedService extends FeedService
             $deliveryCollection->add(
                 (new DeliveryOption())
                     ->setCost((int)$delivery['PRICE'])
-                    ->setDays((int)$delivery['PERIOD_FROM'])
-                    ->setDaysBefore(14)
+                    ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
+                    ->setDaysBefore(13)
                     ->setFreeFrom((int)$delivery['FREE_FROM'])
             );
         }
