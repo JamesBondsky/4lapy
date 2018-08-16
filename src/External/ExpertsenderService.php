@@ -101,6 +101,9 @@ class ExpertsenderService implements LoggerAwareInterface
     public const FORGOT_PASSWORD_LIST_ID = 7779;//old 7072
     public const CHANGE_PASSWORD_LIST_ID = 7780;//old 7073
 
+    public const BLACK_LIST_ERROR_CODE = 400;
+    public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
+
     public function __construct()
     {
         $client = new Client();
@@ -1157,9 +1160,8 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     protected function isBlackListed(string $message): bool
     {
-        $blackListMessage = 'Subscriber is blacklisted.';
         if(!empty($message)) {
-            if ($message === $blackListMessage) {
+            if ($message === self::BLACK_LIST_ERROR_MESSAGE) {
                 return true;
             }
 
@@ -1167,8 +1169,8 @@ class ExpertsenderService implements LoggerAwareInterface
             if (isset($sop->ErrorMessage)) {
                 $code = (int)$sop->ErrorMessage->Code;
                 $errMess = (string)$sop->ErrorMessage->Message;
-                if ($code === 400) {
-                    if ($errMess === $blackListMessage) {
+                if ($code === self::BLACK_LIST_ERROR_CODE) {
+                    if ($errMess === self::BLACK_LIST_ERROR_MESSAGE) {
                         return true;
                     }
                 }
