@@ -763,25 +763,6 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        /** отключаем логирование всех сообщений по брошенной корзине */
-//        $this->log()->info(
-//            __FUNCTION__,
-//            [
-//                'email' => $email,
-//                'transactionId' => $transactionId,
-//                'fuserId' => $fuserId,
-//                'snippets' => implode(
-//                    '; ',
-//                    array_map(
-//                        function($snp) {
-//                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
-//                        },
-//                        $snippets
-//                    )
-//                ),
-//            ]
-//        );
-
         $this->sendSystemTransactional($transactionId, $email, $snippets, true);
 
         return true;
@@ -1082,71 +1063,44 @@ class ExpertsenderService implements LoggerAwareInterface
             $apiResult = $this->client->$name(...$parameters);
         } catch (BadResponseException $e) {
             $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
+            $code = $e->getCode();
+            $previous = $e;
+            $method = $name;
             /** чекаем на черный список */
             if($notUseBlackList) {
                 if(!$this->isBlackListed($message)) {
-                    throw new ExpertsenderServiceException(
-                        $message,
-                        $e->getCode(),
-                        $e,
-                        $name,
-                        $parameters
-                    );
+                    $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
                 }
             } else {
-                throw new ExpertsenderServiceException(
-                    $message,
-                    $e->getCode(),
-                    $e,
-                    $name,
-                    $parameters
-                );
+                $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
             }
 
         } catch (GuzzleException | Exception $e) {
             $message = $e->getMessage();
+            $code = $e->getCode();
+            $previous = $e;
+            $method = $name;
             /** чекаем на черный список */
             if($notUseBlackList) {
                 if (!$this->isBlackListed($message)) {
-                    throw new ExpertsenderServiceException(
-                        $message,
-                        $e->getCode(),
-                        $e,
-                        $name,
-                        $parameters
-                    );
+                    $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
                 }
             } else {
-                throw new ExpertsenderServiceException(
-                    $message,
-                    $e->getCode(),
-                    $e,
-                    $name,
-                    $parameters
-                );
+                $this->setExpertSenderServiceException($message, $code, $previous, $method, $parameters);
             }
         }
 
         if (!$apiResult->isOk()) {
             $message = $apiResult->getErrorMessage();
+            $code = $apiResult->getErrorCode();
+            $previous = null;
+            $method = $name;
             if($notUseBlackList) {
                 if (!$this->isBlackListed($message)) {
-                    throw new ExpertsenderServiceApiException(
-                        $message,
-                        $apiResult->getErrorCode(),
-                        null,
-                        $name,
-                        $parameters
-                    );
+                    $this->setExpertsenderServiceApiException($message, $code, $previous, $method, $parameters);
                 }
             } else {
-                throw new ExpertsenderServiceApiException(
-                    $message,
-                    $apiResult->getErrorCode(),
-                    null,
-                    $name,
-                    $parameters
-                );
+                $this->setExpertsenderServiceApiException($message, $code, $previous, $method, $parameters);
             }
         }
 
@@ -1166,17 +1120,52 @@ class ExpertsenderService implements LoggerAwareInterface
             }
 
             $sop = \simplexml_load_string($message);
-            if (isset($sop->ErrorMessage)) {
-                $code = (int)$sop->ErrorMessage->Code;
-                $errMess = (string)$sop->ErrorMessage->Message;
-                if ($code === self::BLACK_LIST_ERROR_CODE) {
-                    if ($errMess === self::BLACK_LIST_ERROR_MESSAGE) {
-                        return true;
-                    }
-                }
+            if (isset($sop->ErrorMessage) && (int)$sop->ErrorMessage->Code === self::BLACK_LIST_ERROR_CODE
+                && (string)$sop->ErrorMessage->Message === self::BLACK_LIST_ERROR_MESSAGE) {
+                return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * @param $parameters
+     * @param $message
+     * @param $code
+     * @param $previous
+     * @param $method
+     *
+     * @throws ExpertsenderServiceException
+     */
+    protected function setExpertSenderServiceException($message, $code, $previous, $method, $parameters): void
+    {
+        throw new ExpertsenderServiceException(
+            $message,
+            $code,
+            $previous,
+            $method,
+            $parameters
+        );
+    }
+
+    /**
+     * @param $message
+     * @param $code
+     * @param $previous
+     * @param $method
+     * @param $parameters
+     *
+     * @throws ExpertsenderServiceApiException
+     */
+    protected function setExpertsenderServiceApiException($message, $code, $previous, $method, $parameters): void
+    {
+        throw new ExpertsenderServiceApiException(
+            $message,
+            $code,
+            $previous,
+            $method,
+            $parameters
+        );
     }
 }
