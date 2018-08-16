@@ -760,6 +760,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
+        /** отключаем логирование всех сообщений по брошенной корзине */
 //        $this->log()->info(
 //            __FUNCTION__,
 //            [
