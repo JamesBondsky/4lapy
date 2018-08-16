@@ -1118,11 +1118,13 @@ class ExpertsenderService implements LoggerAwareInterface
     protected function isBlackListed(string $message): bool
     {
         $sop = \simplexml_load_string($message);
-        $code = (int)$sop->ErrorMessage->Code;
-        $errMess = (string)$sop->ErrorMessage->Message;
-        if($code === 400){
-            if($errMess === 'Subscriber is blacklisted.'){
-                return true;
+        if(isset($sop->ErrorMessage)) {
+            $code = (int)$sop->ErrorMessage->Code;
+            $errMess = (string)$sop->ErrorMessage->Message;
+            if ($code === 400) {
+                if ($errMess === 'Subscriber is blacklisted.') {
+                    return true;
+                }
             }
         }
 
