@@ -55,9 +55,8 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
         $request = new SoftChequeRequest();
 
-        /** @var BasketItem $item */
         $hasItems = false;
-
+        /** @var BasketItem $item */
         foreach ($basket->getBasketItems() as $k => $item) {
             if ($basketService->isGiftProduct($item)) {
                 continue;
@@ -86,6 +85,9 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     ->setArticleId($xmlId)
                     ->setChequeItemId($item->getId());
 
+            /**
+             * @todo проверить может ли это прийти с предыдущего хита в неактуальном виде
+             */
             $signCharge = $item->getPropertyCollection()->getPropertyValues()['HAS_BONUS']['VALUE'];
             if (null === $signCharge) {
                 try {

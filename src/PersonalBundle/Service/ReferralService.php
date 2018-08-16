@@ -6,8 +6,13 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Mail\Event;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -25,6 +30,7 @@ use FourPaws\External\Manzana\Model\Referral as ManzanaReferal;
 use FourPaws\External\Manzana\Model\ReferralParams as ManzanaReferalParams;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\HighloadHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
@@ -34,6 +40,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerInterface;
@@ -88,6 +95,7 @@ class ReferralService
     /**
      * @param PageNavigation|null $nav
      * @param bool                $main
+     * @param bool                $useManzana
      *
      * @throws \RuntimeException
      * @throws ObjectPropertyException
@@ -104,11 +112,9 @@ class ReferralService
      * @throws ServiceCircularReferenceException
      * @return array
      */
-    public function getCurUserReferrals(PageNavigation $nav = null, bool $main = true): array
+    public function getCurUserReferrals(PageNavigation $nav = null, bool $main = true, bool $useManzana = false): array
     {
-        $request = Application::getInstance()
-            ->getContext()
-            ->getRequest();
+        $request = Application::getInstance()->getContext()->getRequest();
         $search = (string)$request->get('search');
         $referralType = $this->getReferralType();
 
@@ -127,12 +133,50 @@ class ReferralService
             $this->referralRepository->clearNav();
         }
 
-        $needLoadAllItems = $nav->getPageCount() > 1;
+        if($useManzana) {
+            $needLoadAllItems = $nav->getPageCount() > 1;
+            [
+                ,
+                $referrals,
+                $allBonus,
+            ] = $this->setDataByManzana($curUser, $referrals, $main, $needLoadAllItems);
+        } else {
+            $allBonus = $this->getBonusByUser($curUser->getId());
+        }
+
+        return [
+            $referrals,
+            $this->haveAdd,
+            $allBonus,
+        ];
+    }
+
+    /**
+     * @param int $userId
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     */
+    public function getAllUserReferralsWithManzana(int $userId): array
+    {
+        $user = $this->currentUser->findOne($userId);
+
+        $referrals = $this->referralRepository->findBy(
+            [
+                'filter' => ['UF_USER_ID' => $userId],
+            ]
+        );
+
         [
             ,
             $referrals,
             $allBonus,
-        ] = $this->setDataByManzana($curUser, $referrals, $main, $needLoadAllItems);
+        ] = $this->setDataByManzana($user, $referrals, true, false);
 
         return [
             $referrals,
@@ -199,7 +243,7 @@ class ReferralService
      * @return bool
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function existsReferralByCardNumber(string $cardNumber, string $userId): bool
     {
@@ -279,7 +323,7 @@ class ReferralService
     /**
      * @return int
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function getAllCountByUser(): int
     {
@@ -296,7 +340,7 @@ class ReferralService
     /**
      * @return int
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function getActiveCountByUser(): int
     {
@@ -316,7 +360,7 @@ class ReferralService
     /**
      * @return int
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function getModeratedCountByUser(): int
     {
@@ -340,7 +384,7 @@ class ReferralService
      * @return ArrayCollection|Referral[]
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function getModeratedReferrals(): ArrayCollection
     {
@@ -465,8 +509,8 @@ class ReferralService
         if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
             /** @var ManzanaReferal $item */
             foreach ($manzanaReferrals as $item) {
-                $cardNumber = $item->cardNumber;
-                if (empty($cardNumber)) {
+                $cardNumber = (int)$item->cardNumber;
+                if (empty($cardNumber) || $cardNumber === 0) {
                     continue;
                 }
                 $allBonus += (float)$item->sumReferralBonus;
@@ -477,10 +521,7 @@ class ReferralService
                     $this->setDataByNoneExistManzanaItemInSite($cardNumber, $curUser, $item);
                 } else {
                     /** @var Referral $referral */
-                    $referral = null;
-                    if (array_key_exists($cardNumber, $arReferralCards)) {
-                        $referral =& $fullReferralsList[$arReferralCards[$cardNumber]];
-                    }
+                    $referral =& $fullReferralsList[$arReferralCards[$cardNumber]];
                     if ($referral !== null) {
                         $referral = $this->setDataByExistManzanaItemInSite($referral, $item);
 
@@ -508,7 +549,7 @@ class ReferralService
      * @return ArrayCollection
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     private function getReferralsByFilter(User $curUser, array $filter): ArrayCollection
     {
@@ -540,7 +581,7 @@ class ReferralService
             ]);
         }
         return $referrals;
-}
+    }
 
     /**
      * @param $search
@@ -572,7 +613,7 @@ class ReferralService
             }
         }
         return $filter;
-}
+    }
 
     /**
      * @param string         $cardNumber
@@ -614,6 +655,7 @@ class ReferralService
                         'UF_LAST_NAME'   => (string)$card->lastName,
                         'UF_SECOND_NAME' => (string)$card->secondName,
                         'UF_EMAIL'       => (string)$card->email,
+                        'UF_BONUS'       => (float)$item->sumReferralBonus,
                         'UF_PHONE'       => $phone,
                         'UF_MODERATED'   => $item->isModerated() ? 'Y' : 'N',
                     ]
@@ -646,19 +688,25 @@ class ReferralService
     {
         $cardDate = '';
 
-        $referral->setBonus((float)$item->sumReferralBonus);
+        $oldBonus = $referral->getBonus();
+        $bonus = (float)$item->sumReferralBonus;
+        $referral->setBonus($bonus);
         $lastModerate = $referral->isModerate();
         $lastCancelModerate = $referral->isCancelModerate();
         $referral->setModerate($item->isModerated());
         $referral->setCancelModerate($item->isCancelModerate());
 
         if (!empty($cardDate) || $lastModerate !== $referral->isModerate()
-            || $lastCancelModerate !== $referral->isCancelModerate()) {
+            || $lastCancelModerate !== $referral->isCancelModerate() || $oldBonus !== $bonus) {
             $data = [
                 'ID'         => $referral->getId(),
                 'UF_CARD'    => $referral->getCard(),
                 'UF_USER_ID' => $referral->getUserId(),
             ];
+
+            if($oldBonus !== $bonus){
+                $data['UF_BONUS'] = $bonus;
+            }
 
             $isCancelModerate = false;
             /** @noinspection NotOptimalIfConditionsInspection */
@@ -720,5 +768,27 @@ class ReferralService
         }
 
         return $referral;
+    }
+
+    /**
+     * @param int $userId
+     *
+     * @return float
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    protected function getBonusByUser(int $userId):float
+    {
+        /** @var DataManager $datamanager */
+        $datamanager = HLBlockFactory::createTableObject('Referral');
+        $query = $datamanager->query();
+        $query->addSelect('BONUSES');
+        $query->registerRuntimeField(new ExpressionField('BONUSES', 'SUM(%s)', ['UF_BONUS']));
+        $query->where('UF_USER_ID', $userId);
+        $query->whereNot('UF_CANCEL_MODERATE', true);
+        $query->whereNot('UF_MODERATED', true);
+        $item = $query->exec()->fetch();
+        return (float)$item['BONUSES'];
     }
 }
