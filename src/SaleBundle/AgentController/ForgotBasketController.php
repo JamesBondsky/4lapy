@@ -20,6 +20,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
+use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\External\ExpertsenderService;
@@ -112,6 +113,8 @@ class ForgotBasketController
                         $logger->error('Ошибка при получении юзера ' . $e->getMessage(), $e->getTrace());
                     } catch (ApplicationCreateException $e) {
                         $logger->error('Ошибка при получении контейнера ' . $e->getMessage(), $e->getTrace());
+                    } catch (ExpertsenderServiceBlackListException $e) {
+                        /** не логируем черный список */
                     } catch (ExpertsenderUserNotFoundException $e) {
                         $logger->info('Не найден пользователь ' . $e->getMessage(), $e->getTrace());
                     } catch (ExpertsenderEmptyEmailException|ExpertsenderBasketEmptyException $e) {
