@@ -189,11 +189,12 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->log()
             ->info(
                 \sprintf(
-                    'Offers page %d, limit %d, $offset %d, pages %d',
+                    'Offers page %d, limit %d, offset %d, pages %d, full count %d',
                     $offerCollection->getCdbResult()->NavPageNomer,
                     $limit,
                     $offset,
-                    $offerCollection->getCdbResult()->NavPageCount
+                    $offerCollection->getCdbResult()->NavPageCount,
+                    $offerCollection->getCdbResult()->NavRecordCount
                 )
             );
 
@@ -602,6 +603,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             }
         }
 
-        return $deliveryInfo;
+        return clone $deliveryInfo;
     }
 }
