@@ -75,6 +75,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      *
      * @return boolean
      *
+     * @throws RuntimeException
+     * @throws IblockNotFoundException
      * @throws ArgumentException
      * @throws IOException
      */
@@ -85,6 +87,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
          */
 
         if ($step === 0) {
+            $this->clearFeed($this->getStorageKey());
+
             $feed = new Feed();
             $this
                 ->processFeed($feed, $configuration)
@@ -99,7 +103,11 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             try {
                 $this->processOffers($feed, $configuration);
             } catch (OffersIsOver $isOver) {
-                $this->publicFeed($this->loadFeed($this->getStorageKey()), Application::getAbsolutePath($configuration->getExportFile()));
+                $feed = $this->loadFeed($this->getStorageKey());
+                $feed->getShop()
+                    ->setOffset(null);
+
+                $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
 
                 return false;
@@ -159,6 +167,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      *
      * @return YandexFeedService
      *
+     * @throws RuntimeException
      * @throws IblockNotFoundException
      * @throws IOException
      * @throws OffersIsOver
@@ -170,9 +179,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $offers = $feed->getShop()
             ->getOffers();
 
-        $offers->last();
-        $offset = (int)$offers->key() + 1;
-        $number = $offset;
+        $offset = $feed->getShop()
+            ->getOffset();
+        $offset = $offset ?? 0;
 
         $offerCollection = $this->getOffers($this->buildOfferFilter($feed, $configuration), $offset, $limit);
 
@@ -180,20 +189,19 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->log()
             ->info(
                 \sprintf(
-                    'Offers page %d, limit %d, $offset %d, number %d, pages %d',
+                    'Offers page %d, limit %d, $offset %d, pages %d',
                     $offerCollection->getCdbResult()->NavPageNomer,
                     $limit,
                     $offset,
-                    $number,
                     $offerCollection->getCdbResult()->NavPageCount
                 )
             );
 
         foreach ($offerCollection as $k => $offer) {
-            ++$number;
+            ++$offset;
 
             try {
-                $this->addOffer($offer, $offers, $number, $configuration->getServerName());
+                $this->addOffer($offer, $offers, $configuration->getServerName());
             } catch (Exception $e) {
                 /** Просто подавляем исключение */
             }
@@ -201,7 +209,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
 
         $feed->getShop()
-            ->setOffers($offers);
+            ->setOffers($offers)
+            ->setOffset($offset);
         $this->saveFeed($this->getStorageKey(), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
@@ -244,7 +253,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param Offer           $offer
      * @param ArrayCollection $collection
-     * @param int             $key
      * @param string          $host
      *
      * @throws InvalidArgumentException
@@ -259,7 +267,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @throws RuntimeException
      * @throws ApplicationCreateException
      */
-    public function addOffer(Offer $offer, ArrayCollection $collection, int $key, string $host): void
+    public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
     {
         if ($this->isOfferExcluded($offer)) {
             return;
@@ -299,12 +307,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setCountryOfOrigin($offer->getProduct()
-                    ->getCountry() ? $offer->getProduct()
-                    ->getCountry()
-                    ->getName() : '')
                 ->setAvailable($offer->isAvailable())
-                ->setSalesNotes('')
                 ->setCurrencyId('RUB')
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
@@ -315,7 +318,14 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->setDeliveryOptions($deliveryInfo)
                 ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
 
-        $collection->set($key, $yandexOffer);
+        $country = $offer
+            ->getProduct()
+            ->getCountry();
+        if ($country) {
+            $yandexOffer->setCountryOfOrigin($country->getName());
+        }
+
+        $collection->add($yandexOffer);
     }
 
     /**
@@ -324,10 +334,16 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Offer $offer
      *
      * @return bool
+     *
+     * @throws RuntimeException
      */
     protected function isOfferExcluded(Offer $offer): bool
     {
         $badWordsTemplate = '~новинка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|new|sale~iu';
+
+        if (!$offer->getXmlId()) {
+            return true;
+        }
 
         if (
             preg_match($badWordsTemplate, $offer->getName()) > 0
@@ -338,7 +354,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                        ->getText()
                ) > 0
         ) {
-            dump("Exclude " . $offer->getXmlId() . " by stop");
+            $this->log()
+                ->info(
+                    \sprintf(
+                        'Offer %s was been excluded by stop word',
+                        $offer->getXmlId()
+                    )
+                );
 
             return true;
         }
@@ -370,18 +392,19 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             []
         );
 
-        $idList = [-1];
+        $idList = [];
+
         try {
             $idList = \array_reduce(ElementTable::query()
-                ->setCacheTtl(3600)
+                //->setCacheTtl(3600)
                 ->setSelect(['ID'])
                 ->setFilter([
-                    'IBLOCK_ID'          => IblockUtils::getIblockId(
+                    'IBLOCK_ID'         => IblockUtils::getIblockId(
                         IblockType::CATALOG,
                         IblockCode::PRODUCTS
                     ),
-                    '@IBLOCK_SECTION_ID' => $sectionIds,
-                    'ACTIVE'             => 'Y'
+                    'IBLOCK_SECTION_ID' => $sectionIds,
+                    'ACTIVE'            => 'Y'
                 ])
                 ->exec()
                 ->fetchAll() ?: [], function ($carry, $on) {
@@ -391,6 +414,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             }, []);
         } catch (Exception $e) {
         }
+
+        $idList = $idList ?: [-1];
 
         return [
             '=PROPERTY_CML2_LINK' => $idList,
@@ -424,11 +449,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
          * @var Category $parentCategory
          */
         foreach ($parentCategories as $parentCategory) {
-            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
+            if ($categories->get($parentCategory->getId())) {
                 continue;
             }
 
-            if ($categories->get($parentCategory->getId())) {
+            $this->addCategory($parentCategory, $categories);
+
+            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
                 continue;
             }
 
@@ -440,8 +467,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ])
                 ->withOrder(['LEFT_MARGIN' => 'ASC'])
                 ->exec();
-
-            $this->addCategory($parentCategory, $categories);
 
             foreach ($childCategories as $category) {
                 $this->addCategory($category, $categories);
@@ -557,20 +582,21 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     private function getOfferDeliveryInfo(Offer $offer): ArrayCollection
     {
-        if (!$offer->isAvailable()) {
+        if ($offer->getProduct()
+            ->isDeliveryForbidden()) {
             return new ArrayCollection();
         }
 
         $deliveryInfo = $this->getDeliveryInfo();
 
         foreach ($deliveryInfo as $option) {
+            if ((int)$option->getCost() === 0) {
+                $deliveryInfo->remove($option);
+            }
+
             if ($offer->getDeliverableQuantity() < 1) {
                 $option->setDays('1');
                 $option->setDaysBefore(13);
-            }
-
-            if ((int)$option->getCost() === 0) {
-                $option->setDaysBefore(18);
             }
 
             if ($offer->getPrice() > $option->getFreeFrom()) {

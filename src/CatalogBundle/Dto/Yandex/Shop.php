@@ -48,6 +48,16 @@ class Shop
     protected $url;
 
     /**
+     * Урл сайта
+     *
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Type("int")
+     *
+     * @var int
+     */
+    protected $offset;
+
+    /**
      * Валюты
      *
      * @Required()
@@ -226,6 +236,26 @@ class Shop
     public function setOffers($offers): Shop
     {
         $this->offers = $offers;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOffset(): ?int
+    {
+        return $this->offset;
+    }
+
+    /**
+     * @param int $offset
+     *
+     * @return Shop
+     */
+    public function setOffset(?int $offset): Shop
+    {
+        $this->offset = $offset;
 
         return $this;
     }
