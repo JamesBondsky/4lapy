@@ -23,6 +23,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceApiException;
+use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
 use FourPaws\Helpers\PhoneHelper;
@@ -100,6 +101,9 @@ class ExpertsenderService implements LoggerAwareInterface
     public const COMPLETE_ORDER_LIST_ID = 7778;//old 7122
     public const FORGOT_PASSWORD_LIST_ID = 7779;//old 7072
     public const CHANGE_PASSWORD_LIST_ID = 7780;//old 7073
+
+    public const BLACK_LIST_ERROR_CODE = 400;
+    public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
 
     public function __construct()
     {
@@ -708,13 +712,14 @@ class ExpertsenderService implements LoggerAwareInterface
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ExpertsenderServiceBlackListException
      * @throws ExpertsenderUserNotFoundException
      * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderBasketEmptyException
      * @throws ExpertsenderServiceException
      * @throws ExpertSenderException
      */
-    public function sendForgotBasket(Basket $basket, int $type):bool
+    public function sendForgotBasket(Basket $basket, int $type): bool
     {
         switch ($type) {
             case static::FORGOT_BASKET_TO_CLOSE_SITE:
@@ -760,25 +765,23 @@ class ExpertsenderService implements LoggerAwareInterface
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
-        $this->log()->info(
-            __FUNCTION__,
-            [
-                'email' => $email,
-                'transactionId' => $transactionId,
-                'fuserId' => $fuserId,
-                'snippets' => implode(
-                    '; ',
-                    array_map(
-                        function($snp) {
-                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
-                        },
-                        $snippets
-                    )
-                ),
-            ]
-        );
-
-        $this->sendSystemTransactional($transactionId, $email, $snippets);
+        try {
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+        } catch (ExpertsenderServiceApiException | ExpertsenderServiceException $e) {
+            $message = $e->getMessage();
+            /** чекаем на черный список */
+            if ($this->isBlackListed($message)) {
+                throw new ExpertsenderServiceBlackListException($message, $e->getCode(), $e, $e->getMethod(),
+                    $e->getParameters());
+            }
+            if ($e instanceof ExpertsenderServiceApiException) {
+                throw new ExpertsenderServiceApiException($message, $e->getCode(), $e, $e->getMethod(),
+                    $e->getParameters());
+            } else {
+                throw new ExpertsenderServiceException($message, $e->getCode(), $e, $e->getMethod(),
+                    $e->getParameters());
+            }
+        }
 
         return true;
     }
@@ -1027,11 +1030,14 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     protected function sendSystemTransactional(int $transactionId, string $email, array $snippets = []): ApiResult
     {
-        return $this->sendRequest('sendSystemTransactional', [
-            $transactionId,
-            new Receiver($email),
-            $snippets
-        ]);
+        return $this->sendRequest(
+            'sendSystemTransactional',
+            [
+                $transactionId,
+                new Receiver($email),
+                $snippets
+            ]
+        );
     }
 
     /**
@@ -1071,18 +1077,14 @@ class ExpertsenderService implements LoggerAwareInterface
         try {
             /** @var ApiResult $apiResult */
             $apiResult = $this->client->$name(...$parameters);
-        } catch (BadResponseException $e) {
-            $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
+        } catch (BadResponseException | GuzzleException | Exception $e) {
+            if($e instanceof BadResponseException) {
+                $message = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
+            } else {
+                $message = $e->getMessage();
+            }
             throw new ExpertsenderServiceException(
                 $message,
-                $e->getCode(),
-                $e,
-                $name,
-                $parameters
-            );
-        } catch (GuzzleException | Exception $e) {
-            throw new ExpertsenderServiceException(
-                $e->getMessage(),
                 $e->getCode(),
                 $e,
                 $name,
@@ -1091,8 +1093,9 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         if (!$apiResult->isOk()) {
+            $message = $apiResult->getErrorMessage();
             throw new ExpertsenderServiceApiException(
-                $apiResult->getErrorMessage(),
+                $message,
                 $apiResult->getErrorCode(),
                 null,
                 $name,
@@ -1101,5 +1104,27 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return $apiResult;
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return bool
+     */
+    protected function isBlackListed(string $message): bool
+    {
+        if(!empty($message)) {
+            if ($message === self::BLACK_LIST_ERROR_MESSAGE) {
+                return true;
+            }
+
+            $sop = \simplexml_load_string($message);
+            if (isset($sop->ErrorMessage) && (int)$sop->ErrorMessage->Code === self::BLACK_LIST_ERROR_CODE
+                && (string)$sop->ErrorMessage->Message === self::BLACK_LIST_ERROR_MESSAGE) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
