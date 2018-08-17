@@ -560,13 +560,15 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ['HIDE_ICONS' => 'Y']);
 
             foreach ($deliveryInfo as $delivery) {
-                $deliveryCollection->add(
-                    (new DeliveryOption())
-                        ->setCost((int)$delivery['PRICE'])
-                        ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
-                        ->setDaysBefore(13)
-                        ->setFreeFrom((int)$delivery['FREE_FROM'])
-                );
+                if ((int)$delivery['PRICE']) {
+                    $deliveryCollection->add(
+                        (new DeliveryOption())
+                            ->setCost((int)$delivery['PRICE'])
+                            ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
+                            ->setDaysBefore(13)
+                            ->setFreeFrom((int)$delivery['FREE_FROM'])
+                    );
+                }
             }
 
             $this->deliveryInfo = $deliveryCollection;
@@ -587,13 +589,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return new ArrayCollection();
         }
 
-        $deliveryInfo = $this->getDeliveryInfo();
+        $deliveryInfo = clone $this->getDeliveryInfo();
 
         foreach ($deliveryInfo as $option) {
-            if ((int)$option->getCost() === 0) {
-                $deliveryInfo->remove($option);
-            }
-
             if ($offer->getDeliverableQuantity() < 1) {
                 $option->setDays('1');
                 $option->setDaysBefore(13);
