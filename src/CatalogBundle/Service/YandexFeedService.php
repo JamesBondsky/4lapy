@@ -189,11 +189,12 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->log()
             ->info(
                 \sprintf(
-                    'Offers page %d, limit %d, $offset %d, pages %d',
+                    'Offers page %d, limit %d, offset %d, pages %d, full count %d',
                     $offerCollection->getCdbResult()->NavPageNomer,
                     $limit,
                     $offset,
-                    $offerCollection->getCdbResult()->NavPageCount
+                    $offerCollection->getCdbResult()->NavPageCount,
+                    $offerCollection->getCdbResult()->NavRecordCount
                 )
             );
 
@@ -339,7 +340,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     protected function isOfferExcluded(Offer $offer): bool
     {
-        $badWordsTemplate = '~новинка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|new|sale~iu';
+        $badWordsTemplate = '~новинка|подарка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|подарок|new|sale~iu';
 
         if (!$offer->getXmlId()) {
             return true;
@@ -589,6 +590,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return new ArrayCollection();
         }
 
+
         $deliveryInfo = clone $this->getDeliveryInfo();
 
         foreach ($deliveryInfo as $option) {
@@ -602,6 +604,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             }
         }
 
-        return $deliveryInfo;
+        return clone $deliveryInfo;
     }
 }
