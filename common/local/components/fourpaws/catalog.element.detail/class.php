@@ -2,10 +2,10 @@
 
 namespace FourPaws\Components;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\CatalogViewedProductTable;
 use Bitrix\Catalog\Product\Basket;
 use Bitrix\Iblock\Component\Tools;
+use Bitrix\Iblock\InheritedProperty\ElementValues;
 use Bitrix\Main\Analytics\Catalog;
 use Bitrix\Main\Analytics\Counter;
 use Bitrix\Main\ArgumentNullException;
@@ -18,6 +18,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Text\JsExpression;
 use CBitrixComponent;
+use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\MediaEnum;
@@ -33,12 +34,15 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection AutoloadingIssuesInspection EfferentObjectCouplingInspection
  *
  * Class CatalogElementDetailComponent
+ *
  * @package FourPaws\Components
  */
 class CatalogElementDetailComponent extends \CBitrixComponent
@@ -61,21 +65,18 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      *
      * @param CBitrixComponent|null $component
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws SystemException
      */
     public function __construct(?CBitrixComponent $component = null)
     {
         parent::__construct($component);
         try {
-            $container = App::getInstance()->getContainer();
+            $container = App::getInstance()
+                ->getContainer();
             $this->ecommerceService = $container->get(GoogleEcommerceService::class);
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         } catch (ApplicationCreateException | ServiceCircularReferenceException | ServiceNotFoundException $e) {
-            $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            /** @noinspection PhpUnhandledExceptionInspection */
-            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
     }
 
@@ -102,6 +103,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     /**
      * @return mixed
      *
+     * @throws RuntimeException
      * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -124,9 +126,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             } catch (CatalogProductNotFoundException $e) {
                 $product = false;
             }
+
             if (!$product) {
                 $this->abortResultCache();
                 Tools::process404([], true, true, true);
+
+                return false;
             }
 
             $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
@@ -138,10 +143,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             $sectionId = (int)current($product->getSectionsIdList());
 
             $this->arResult = [
-                'PRODUCT' => $product,
-                'CURRENT_OFFER' => $currentOffer,
-                'SECTION_CHAIN' => $this->getSectionChain($sectionId),
-                'SHOW_FAST_ORDER' => $this->arParams['SHOW_FAST_ORDER'],
+                'PRODUCT'               => $product,
+                'CURRENT_OFFER'         => $currentOffer,
+                'SECTION_CHAIN'         => $this->getSectionChain($sectionId),
+                'SHOW_FAST_ORDER'       => $this->arParams['SHOW_FAST_ORDER'],
                 'ECOMMERCE_VIEW_SCRIPT' => $this->ecommerceService->renderScript(
                     $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара'),
                     true
@@ -152,19 +157,68 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             ];
 
 
-
-            $this->setResultCacheKeys(['PRODUCT', 'CURRENT_OFFER', 'SHOW_FAST_ORDER']);
+            $this->setResultCacheKeys([
+                'PRODUCT',
+                'CURRENT_OFFER',
+                'SHOW_FAST_ORDER'
+            ]);
 
             $this->includeComponentTemplate();
         }
 
+        $this->setSeo($this->arResult['CURRENT_OFFER']);
+
         // bigdata
         $this->obtainCounterData();
         $this->sendCounters();
-        $this->setMeta();
         $this->saveViewedProduct();
 
         return $this->arResult['PRODUCT'];
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return $this
+     *
+     * @throws Exception
+     */
+    public function setSeo(?Offer $offer): self
+    {
+        if (!$offer) {
+            return $this;
+        }
+
+        global $APPLICATION;
+
+        $cache = (new BitrixCache())->withTag(\sprintf(
+            'iblock:item:%d',
+            $offer->getId()
+        ));
+
+        $properties = $cache->resultOf(function () use ($offer) {
+            return \array_map(function ($meta) use ($offer) {
+                return \str_replace(
+                    [
+                        '#BRAND#',
+                        '#NAME#',
+                        '#PRICE#'
+                    ],
+                    [
+                        $offer->getProduct()
+                            ->getBrandName(),
+                        $offer->getName(),
+                        $offer->getCatalogPrice()
+                    ],
+                    $meta
+                );
+            }, (new ElementValues($offer->getIblockId(), $offer->getId()))->getValues());
+        });
+
+        $APPLICATION->SetTitle($properties['ELEMENT_META_TITLE']);
+        $APPLICATION->SetPageProperty('description', $properties['ELEMENT_META_DESCRIPTION']);
+
+        return $this;
     }
 
     /**
@@ -179,10 +233,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             $offerCollection = null;
             switch ($type) {
                 case 'color':
-                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_COLOUR_COMBINATION' => $val])->exec();
+                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_COLOUR_COMBINATION' => $val])
+                        ->exec();
                     break;
                 case 'flavour':
-                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])->exec();
+                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])
+                        ->exec();
                     break;
             }
             if (null !== $offerCollection) {
@@ -190,6 +246,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             }
 
         }
+
         return $this->unionOffers[$type][$val];
     }
 
@@ -212,9 +269,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         $res = (new ProductQuery())
             ->withFilterParameter('CODE', $code)
             ->exec();
-        if($res->count() === 0){
+        if ($res->count() === 0) {
             throw new CatalogProductNotFoundException('Товар по коду не найден');
         }
+
         return $res->first();
     }
 
@@ -227,7 +285,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     {
         $sectionChain = [];
         if ($sectionId > 0) {
-            $items = \CIBlockSection::GetNavChain(false, $sectionId, ['ID', 'NAME']);
+            $items = \CIBlockSection::GetNavChain(false, $sectionId, [
+                'ID',
+                'NAME'
+            ]);
             /** @noinspection PhpAssignmentInConditionInspection */
             while ($item = $items->getNext(true, false)) {
                 $sectionChain[] = $item;
@@ -257,6 +318,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     /**
      * Добавление в просмотренные товары при генерации результата
+     *
      * @throws ObjectNotFoundException
      * @throws NotSupportedException
      * @throws LoaderException
@@ -269,7 +331,8 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             if (Basket::isNotCrawler()) {
                 /** @var Product $product */
                 $product = $this->arResult['PRODUCT'];
-                $currentOffer = $product->getOffers()->first();
+                $currentOffer = $product->getOffers()
+                    ->first();
                 $parentId = $product->getId();
                 $productId = $currentOffer ? $currentOffer->getId() : 0;
                 $productId = $productId > 0 ? $productId : $parentId;
@@ -312,11 +375,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         }
 
         $counterData = [
-            'product_id' => $product->getId(),
-            'iblock_id' => $product->getIblockId(),
+            'product_id'    => $product->getId(),
+            'iblock_id'     => $product->getIblockId(),
             'product_title' => $product->getName(),
-            'category_id' => $categoryId,
-            'category' => $categoryPath,
+            'category_id'   => $categoryId,
+            'category'      => $categoryPath,
         ];
 
         $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
@@ -332,8 +395,8 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         $this->arResult['counterDataSource'] = $counterData;
         $this->arResult['counterData'] = [
-            'item' => base64_encode(json_encode($counterData)),
-            'user_id' => new JsExpression(
+            'item'           => base64_encode(json_encode($counterData)),
+            'user_id'        => new JsExpression(
                 'function(){return BX.message("USER_ID") ? BX.message("USER_ID") : 0;}'
             ),
             'recommendation' => new JsExpression(
@@ -363,7 +426,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     return rcmId;
                 }'
             ),
-            'v' => '2',
+            'v'              => '2',
         ];
     }
 
@@ -380,20 +443,8 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     }
 
     /**
-     * @todo from inheritedProperties
-     */
-    protected function setMeta(): void
-    {
-        global $APPLICATION;
-
-        if ($this->arParams['SET_TITLE'] === 'Y') {
-            $APPLICATION->SetTitle($this->arResult['PRODUCT']->getName());
-        }
-    }
-
-    /**
      * @param Product $product
-     * @param int $offerId
+     * @param int     $offerId
      *
      * @throws LoaderException
      * @throws NotSupportedException
@@ -405,13 +456,16 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     {
         if ($offerId > 0) {
             $offer = OfferQuery::getById($offerId);
-            if($offer === null){
+            if ($offer === null) {
                 $offers = $product->getOffers();
             }
         } else {
             $offers = $product->getOffers();
             foreach ($offers as $offer) {
-                if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+                if ($offer->getImages()
+                        ->count() >= 1
+                    && $offer->getImages()
+                           ->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
                     break;
                 }
             }
