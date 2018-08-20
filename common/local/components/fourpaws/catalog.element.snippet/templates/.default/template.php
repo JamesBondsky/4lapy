@@ -65,7 +65,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
             <span class="b-clipped-text b-clipped-text--three">
                 <span>
                     <?php if ($product->getBrand()) { ?>
-                        <strong><?= $product->getBrand()->getName() ?></strong>
+                        <span class="span-strong"><?= $product->getBrand()->getName() ?></span>
                     <?php } ?>
                     <?= $product->getName() ?>
                 </span>

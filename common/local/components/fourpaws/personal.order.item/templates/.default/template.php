@@ -19,13 +19,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
+ * @global CMain                                  $APPLICATION
+ * @var array                                     $arParams
+ * @var array                                     $arResult
  * @var FourPawsPersonalCabinetOrderItemComponent $component
- * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $componentPath
+ * @var CBitrixComponentTemplate                  $this
+ * @var string                                    $templateName
+ * @var string                                    $componentPath
  */
 
 /** @var Order $order */
@@ -39,13 +39,16 @@ $isOrderSubscribePage = $orderSubscribe ? true : false;
 /**
  * Подписка на доставку заказа
  * (элементы управления подпиской и попап c формой)
+ *
  * @todo Сделать вызов попапа через ajax
  */
 $subscribeOrderAddControls = '';
 $subscribeOrderEditControls = '';
 
 $genSubscribeControls = false;
-if (!$genSubscribeControls && $component->getOrderSubscribeService()->canBeSubscribed($order)) {
+if (!$genSubscribeControls
+    && $component->getOrderSubscribeService()
+        ->canBeSubscribed($order)) {
     $genSubscribeControls = true;
 }
 if (!$genSubscribeControls && $orderSubscribe) {
@@ -55,7 +58,8 @@ $tmpOrderSubscribe = null;
 if (!$genSubscribeControls && !$orderSubscribe) {
     // здесь проверяем, нет ли уже оформленной подписки на заказ,
     // на который по новым условиям уже подписаться нельзя
-    $tmpOrderSubscribe = $component->getOrderSubscribeService()->getSubscribeByOrderId($order->getId());
+    $tmpOrderSubscribe = $component->getOrderSubscribeService()
+        ->getSubscribeByOrderId($order->getId());
     $genSubscribeControls = $tmpOrderSubscribe ? true : false;
 }
 
@@ -65,7 +69,7 @@ if ($genSubscribeControls) {
         'fourpaws:personal.orders.subscribe.form',
         'popup',
         [
-            'ORDER_ID' => $order->getId(),
+            'ORDER_ID'          => $order->getId(),
             // Y - вставлять html через отложенные функции
             'OUTPUT_VIA_BUFFER' => 'Y',
         ],
@@ -110,7 +114,8 @@ if ($orderSubscribe) {
                         ?>
                         <span class="b-accordion-order-item__number-order">
                             <?php
-                            echo $orderSubscribe->getDeliveryFrequencyEntity()->getValue();
+                            echo $orderSubscribe->getDeliveryFrequencyEntity()
+                                ->getValue();
                             echo ', ';
                             echo $orderSubscribe->getDateStartWeekdayRu();
                             ?>
@@ -156,7 +161,8 @@ if ($orderSubscribe) {
                         echo '<span>';
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
-                            $orderSubscribe->getNextDeliveryDate()->format('d #n# Y'),
+                            $orderSubscribe->getNextDeliveryDate()
+                                ->format('d #n# Y'),
                             DateHelper::GENITIVE,
                             true
                         );
@@ -180,7 +186,8 @@ if ($orderSubscribe) {
                 </div>
                 <?php if (!$order->isFastOrder()) { ?>
                     <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
-                        <?= $order->getDelivery()->getDeliveryName() ?>
+                        <?= $order->getDelivery()
+                            ->getDeliveryName() ?>
                         <span><?= $order->getDateDelivery() ?></span>
                     </div>
                 <?php }
@@ -224,7 +231,9 @@ if ($orderSubscribe) {
                         if ($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
                             /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
                             /** @var OrderService $orderService */
-                            $orderService = SymfoniApplication::getInstance()->getContainer()->get(OrderService::class);
+                            $orderService = SymfoniApplication::getInstance()
+                                ->getContainer()
+                                ->get(OrderService::class);
                             $bitrixOrder = BitrixOrder::load($order->getId());
                             if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
                                 $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
@@ -233,7 +242,11 @@ if ($orderSubscribe) {
                                 }
                             }
                         }
-                        if ($order->isFastOrder() && \in_array($order->getStatusId(), ['N', 'Q'], true)) {
+                        if ($order->isFastOrder()
+                            && \in_array($order->getStatusId(), [
+                                'N',
+                                'Q'
+                            ], true)) {
                             $paymentName = 'Постоплата';
                         }
                         if ($paymentName && $paymentName !== 'Постоплата') {
@@ -247,13 +260,19 @@ if ($orderSubscribe) {
             <div class="b-accordion-order-item__button js-button-default">
                 <?php
                 if (!$isOrderSubscribePage && (!$order->isManzana() || $order->isNewManzana())) {
-                    $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-                    $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]);
+                    $uri = new Uri(Application::getInstance()
+                        ->getContext()
+                        ->getRequest()
+                        ->getRequestUri());
+                    $uri->addParams([
+                        'reply_order' => 'Y',
+                        'id'          => $order->getId()
+                    ]);
                     if ($order->isNewManzana()) {
 
                         $uri->addParams([
                             'is_manzana' => true,
-                            'item_ids' => json_encode($order->getItemIdsQuantity()),
+                            'item_ids'   => json_encode($order->getItemIdsQuantity()),
                         ]);
                     } ?>
                     <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
@@ -284,8 +303,8 @@ if ($orderSubscribe) {
                 <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
                     <?php
                     /**
-                    * [LP03-908] В подписке на доставку не отображаем бонусы
-                    */
+                     * [LP03-908] В подписке на доставку не отображаем бонусы
+                     */
                     echo $isOrderSubscribePage ? $order->getFormattedPriceReal() : $order->getFormattedPrice();
                     ?>
                     <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
@@ -325,11 +344,11 @@ if ($orderSubscribe) {
                                     </div>
                                 <?php } ?>
                                 <div class="b-clipped-text b-clipped-text--account">
-                                <span>
-                                    <?php if (!empty($item->getBrand())) { ?>
-                                        <strong><?= $item->getBrand() ?>  </strong>
+                                    <span>
+                                        <?php if (!empty($item->getBrand())) { ?>
+                                        <spa class="span-strong"><?= $item->getBrand() ?>  </span>
                                     <?php } ?><?= $item->getName() ?>
-                                </span>
+                                    </span>
                                 </div>
                                 <div class="b-list-order__option">
                                     <?php if (!empty($item->getFlavour())) { ?>
@@ -337,19 +356,22 @@ if ($orderSubscribe) {
                                             Вкус:
                                             <span><?= $item->getFlavour() ?></span>
                                         </div>
-                                    <?php } ?>
-                                    <?php if (!empty($item->getOfferSelectedProp())) { ?>
+                                    <?php }
+
+                                    if (!empty($item->getOfferSelectedProp())) { ?>
                                         <div class="b-list-order__option-text">
                                             <?= $item->getOfferSelectedPropName() ?>:
                                             <span><?= $item->getOfferSelectedProp() ?></span>
                                         </div>
-                                    <?php } ?>
-                                    <?php if ($item->getWeight() > 0) { ?>
+                                    <?php }
+
+                                    if ($item->getWeight() > 0) { ?>
                                         <div class="b-list-order__option-text">Вес:
                                             <span><?= WordHelper::showWeight($item->getWeight(), true) ?></span>
                                         </div>
-                                    <?php } ?>
-                                    <?php if (!empty($item->getArticle())) { ?>
+                                    <?php }
+
+                                    if (!empty($item->getArticle())) { ?>
                                         <div class="b-list-order__option-text">Артикул:
                                             <span><?= $item->getArticle() ?></span>
                                         </div>
@@ -360,7 +382,9 @@ if ($orderSubscribe) {
                                 <div class="b-list-order__sum b-list-order__sum--item"><?= $item->getFormattedSum() ?>
                                     <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
                                 </div>
-                                <?php if (($item->getQuantity() > 1) || !$item->getDetachedItems()->isEmpty()) { ?>
+                                <?php if (($item->getQuantity() > 1)
+                                          || !$item->getDetachedItems()
+                                        ->isEmpty()) { ?>
                                     <div class="b-list-order__calculation"><?= $item->getFormattedPrice() ?> ₽
                                         × <?= $item->getQuantity() ?> шт
                                     </div>
@@ -391,14 +415,16 @@ if ($orderSubscribe) {
                             <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                         </div>
                     </li>
-                    <?php if ($order->getDelivery()->getPriceDelivery() > 0) { ?>
+                    <?php if ($order->getDelivery()
+                                  ->getPriceDelivery() > 0) { ?>
                         <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                             <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
                                 <span>Доставка</span>
                                 <div class="b-characteristics-tab__dots"></div>
                             </div>
                             <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
-                                <?= $order->getDelivery()->getFormatedPriceDelivery() ?>
+                                <?= $order->getDelivery()
+                                    ->getFormatedPriceDelivery() ?>
                                 <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                             </div>
                         </li>
