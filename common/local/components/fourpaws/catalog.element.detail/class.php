@@ -151,9 +151,6 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара'),
                     true
                 )
-                /**
-                 * @todo впилить seo
-                 */
             ];
 
 
@@ -191,10 +188,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         global $APPLICATION;
 
-        $cache = (new BitrixCache())->withTag(\sprintf(
-            'iblock:item:%d',
-            $offer->getId()
-        ));
+        $cache = (new BitrixCache())
+            ->withTag(\sprintf(
+                'iblock:item:%d',
+                $offer->getId()
+            ))
+            ->withId(__METHOD__ . $offer->getId())
+            ->withTime($this->arParams['CACHE_TIME']);
 
         $properties = $cache->resultOf(function () use ($offer) {
             return \array_map(function ($meta) use ($offer) {
