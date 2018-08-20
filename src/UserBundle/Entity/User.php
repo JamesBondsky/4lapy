@@ -10,7 +10,6 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use function foo\func;
 use FourPaws\Enum\UserGroup;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -973,7 +972,7 @@ class User implements UserInterface
      *
      * @return bool
      */
-    public function addRole(Role $role)
+    public function addRole(Role $role): bool
     {
         return $this->getRolesCollection()->add($role);
     }
@@ -983,7 +982,7 @@ class User implements UserInterface
      *
      * @return bool
      */
-    public function removeRole(Role $role)
+    public function removeRole(Role $role): bool
     {
         return $this->getRolesCollection()->removeElement($role);
     }
