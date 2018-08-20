@@ -340,7 +340,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     protected function isOfferExcluded(Offer $offer): bool
     {
-        $badWordsTemplate = '~новинка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|new|sale~iu';
+        $badWordsTemplate = '~новинка|подарка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|подарок|new|sale~iu';
 
         if (!$offer->getXmlId()) {
             return true;
@@ -589,6 +589,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->isDeliveryForbidden()) {
             return new ArrayCollection();
         }
+
 
         $deliveryInfo = clone $this->getDeliveryInfo();
 
