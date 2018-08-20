@@ -62,7 +62,7 @@ class DeliveryTimeHelper
 
         $options = array_merge($defaultOptions, $options);
 
-        if ($options['SHOW_TIME'] && abs($date->getTimestamp() - $currentDate->getTimestamp()) <= 2 * 3600) {
+        if ($options['SHOW_TIME'] && abs($date->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
             $result = 'через час';
         } else {
             if (!$options['DATE_FORMAT']) {
