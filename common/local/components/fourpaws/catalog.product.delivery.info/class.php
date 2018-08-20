@@ -125,29 +125,35 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
 
     /**
      * @param PickupResultInterface $pickup
-     * @return int
+     *
+     * @return int[]
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
      * @throws NotFoundException
      */
-    protected function getShopCount(PickupResultInterface $pickup)
+    protected function getShopCount(PickupResultInterface $pickup): array
     {
         $shops = $pickup->getBestShops();
         $pickup = clone $pickup;
 
-        $count = 0;
+        $countTotal = 0;
+        $countWithinAnHour = 0;
+        $currentDate = new \DateTime();
         /** @var Store $shop */
         foreach ($shops as $shop) {
             $pickup->setSelectedStore($shop);
-            if ($pickup->isSuccess()) {
-                $count++;
-            } else {
+            if (!$pickup->isSuccess()) {
                 break;
             }
+
+            if (abs($pickup->getDeliveryDate()->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
+                $countWithinAnHour++;
+            }
+            $countTotal++;
         }
 
-        return $count;
+        return ['AVAILABLE' => $countWithinAnHour, 'TOTAL' => $countTotal];
     }
 
     /**

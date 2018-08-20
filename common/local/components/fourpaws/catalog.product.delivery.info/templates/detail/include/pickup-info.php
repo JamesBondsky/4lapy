@@ -18,15 +18,47 @@ use FourPaws\Helpers\WordHelper;
     <div class="b-product-information__title-info">Самовывоз</div>
     <div class="b-product-information__value">
         <?php if ($pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
-            <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
-                    'DATE_FORMAT' => 'XX',
-                    'SHOW_TIME' => true
-            ]) ?>
-            <?php if ($pickup['SHOP_COUNT']) { ?>
-                из <?= $pickup['SHOP_COUNT'] . ' ' . WordHelper::declension(
-                    (int)$pickup['SHOP_COUNT'],
-                    ['магазина', 'магазинов', 'магазинов']
+            <?php
+            $totalCount = $pickup['SHOP_COUNT']['TOTAL'];
+            $availableCount = $pickup['SHOP_COUNT']['AVAILABLE'];
+            $unavailableCount = $pickup['SHOP_COUNT']['TOTAL'] - $pickup['SHOP_COUNT']['AVAILABLE'];
+            if ($availableCount) { ?>
+                из <?= $availableCount . ' ' . WordHelper::declension(
+                    (int)$availableCount,
+                    [
+                        'магазина',
+                        'магазинов',
+                        'магазинов',
+                    ]
                 ); ?>
+                <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
+                    'DATE_FORMAT' => 'XX',
+                    'SHOW_TIME'   => true,
+                ]);
+                if ($unavailableCount) { ?>
+                    и из <?= $unavailableCount?> <?= WordHelper::declension(
+                        (int)$unavailableCount,
+                        [
+                            'магазина',
+                            'магазинов',
+                            'магазинов',
+                        ]
+                    ); ?> позже
+                    <?php
+                }
+            } else { ?>
+                из <?= $totalCount . ' ' . WordHelper::declension(
+                    (int)$totalCount,
+                    [
+                        'магазина',
+                        'магазинов',
+                        'магазинов',
+                    ]
+                ); ?>
+                <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
+                    'DATE_FORMAT' => 'XX',
+                    'SHOW_TIME'   => true,
+                ]) ?>
             <?php } ?>
         <?php } else { ?>
             <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, ['DATE_FORMAT' => 'XX']) ?>
