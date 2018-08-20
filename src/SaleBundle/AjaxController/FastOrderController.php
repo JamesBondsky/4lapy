@@ -43,6 +43,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use SplObjectStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -159,7 +160,7 @@ class FastOrderController extends Controller
                     'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 ];
 
-                $temporaryItem = clone $basketItem;
+                $temporaryItem = $basketItem->createClone(new SplObjectStorage());
                 $temporaryItem->setFieldNoDemand('QUANTITY', $quantity);
                 $addData['command'] = $this->ecommerceService->renderScript(
                     $this->salePreset->createAddFromBasketItem($temporaryItem),
@@ -168,7 +169,7 @@ class FastOrderController extends Controller
 
             } catch (BaseExceptionInterface $e) {
                 return $this->ajaxMess->getSystemError();
-            } catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
+            } catch (LoaderException | ObjectNotFoundException | \RuntimeException $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
