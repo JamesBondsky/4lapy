@@ -185,6 +185,386 @@ class Offer
     protected $barcode;
 
     /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return Offer
+     */
+    public function setId(int $id): Offer
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAvailable(): bool
+    {
+        return $this->available;
+    }
+
+    /**
+     * @param bool $available
+     *
+     * @return Offer
+     */
+    public function setAvailable(bool $available): Offer
+    {
+        $this->available = $available;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    /**
+     * @param string $url
+     *
+     * @return Offer
+     */
+    public function setUrl(string $url): Offer
+    {
+        $this->url = $url;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getPrice(): float
+    {
+        return $this->price;
+    }
+
+    /**
+     * @param float $price
+     *
+     * @return Offer
+     */
+    public function setPrice(float $price): Offer
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCpa(): int
+    {
+        return $this->cpa;
+    }
+
+    /**
+     * @param int $cpa
+     *
+     * @return Offer
+     */
+    public function setCpa(int $cpa): Offer
+    {
+        $this->cpa = $cpa;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDelivery(): bool
+    {
+        return $this->delivery;
+    }
+
+    /**
+     * @param bool $delivery
+     *
+     * @return Offer
+     */
+    public function setDelivery(bool $delivery): Offer
+    {
+        $this->delivery = $delivery;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|DeliveryOption[]
+     */
+    public function getDeliveryOptions()
+    {
+        return $this->deliveryOptions;
+    }
+
+    /**
+     * @param Collection|DeliveryOption[] $deliveryOptions
+     *
+     * @return Offer
+     */
+    public function setDeliveryOptions($deliveryOptions): Offer
+    {
+        $this->deliveryOptions = $deliveryOptions;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrencyId(): string
+    {
+        return $this->currencyId;
+    }
+
+    /**
+     * @param string $currencyId
+     *
+     * @return Offer
+     */
+    public function setCurrencyId(string $currencyId): Offer
+    {
+        $this->currencyId = $currencyId;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCategoryId(): int
+    {
+        return $this->categoryId;
+    }
+
+    /**
+     * @param int $categoryId
+     *
+     * @return Offer
+     */
+    public function setCategoryId(int $categoryId): Offer
+    {
+        $this->categoryId = $categoryId;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPicture(): string
+    {
+        return $this->picture;
+    }
+
+    /**
+     * @param string $picture
+     *
+     * @return Offer
+     */
+    public function setPicture(string $picture): Offer
+    {
+        $this->picture = $picture;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStore(): bool
+    {
+        return $this->store;
+    }
+
+    /**
+     * @param bool $store
+     *
+     * @return Offer
+     */
+    public function setStore(bool $store): Offer
+    {
+        $this->store = $store;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPickup(): bool
+    {
+        return $this->pickup;
+    }
+
+    /**
+     * @param bool $pickup
+     *
+     * @return Offer
+     */
+    public function setPickup(bool $pickup): Offer
+    {
+        $this->pickup = $pickup;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return Offer
+     */
+    public function setName(string $name): Offer
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVendor(): string
+    {
+        return $this->vendor;
+    }
+
+    /**
+     * @param string $vendor
+     *
+     * @return Offer
+     */
+    public function setVendor(string $vendor): Offer
+    {
+        $this->vendor = $vendor;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param string $description
+     *
+     * @return Offer
+     */
+    public function setDescription(string $description): Offer
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVendorCode(): string
+    {
+        return $this->vendorCode;
+    }
+
+    /**
+     * @param string $vendorCode
+     *
+     * @return Offer
+     */
+    public function setVendorCode(string $vendorCode): Offer
+    {
+        $this->vendorCode = $vendorCode;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isManufacturerWarranty(): bool
+    {
+        return $this->manufacturerWarranty;
+    }
+
+    /**
+     * @param bool $manufacturerWarranty
+     *
+     * @return Offer
+     */
+    public function setManufacturerWarranty(bool $manufacturerWarranty): Offer
+    {
+        $this->manufacturerWarranty = $manufacturerWarranty;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCountryOfOrigin(): string
+    {
+        return $this->countryOfOrigin;
+    }
+
+    /**
+     * @param string $countryOfOrigin
+     *
+     * @return Offer
+     */
+    public function setCountryOfOrigin(string $countryOfOrigin): Offer
+    {
+        $this->countryOfOrigin = $countryOfOrigin;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBarcode(): string
+    {
+        return $this->barcode;
+    }
+
+    /**
+     * @param string $barcode
+     *
+     * @return Offer
+     */
+    public function setBarcode(string $barcode): Offer
+    {
+        $this->barcode = $barcode;
+
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getSalesNotes(): string

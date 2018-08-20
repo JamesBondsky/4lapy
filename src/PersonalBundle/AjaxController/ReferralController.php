@@ -7,6 +7,11 @@
 namespace FourPaws\PersonalBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -16,11 +21,15 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Card;
+use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -80,14 +89,13 @@ class ReferralController extends Controller
             /** если не нашли карту валидируем ее, иначе делаем вид что ок */
             try {
                 $this->referralService->manzanaService->searchCardByNumber($data['UF_CARD']);
-            } catch(CardNotFoundException $e){
+            } catch (CardNotFoundException $e) {
                 if (!$this->referralService->manzanaService->validateCardByNumber($data['UF_CARD'])) {
                     return $this->ajaxMess->getWrongCardNumber();
                 }
             }
 
-        }
-        catch (ManzanaServiceException $e) {
+        } catch (ManzanaServiceException $e) {
             $logger = LoggerFactory::create('manzana');
             $logger->error('Ошибка манзаны - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
@@ -139,7 +147,7 @@ class ReferralController extends Controller
         if (empty($card)) {
             return $this->ajaxMess->getEmptyCardNumber();
         }
-        if(\mb_strlen($card) < 13){
+        if (\mb_strlen($card) < 13) {
             return $this->ajaxMess->getWrongCardNumber();
         }
         /** @var Card $currentCard */
@@ -156,13 +164,104 @@ class ReferralController extends Controller
                 'Информация о карте получена',
                 ['card' => $cardInfo]
             );
-        } catch(CardNotFoundException $e){
+        } catch (CardNotFoundException $e) {
             return $this->ajaxMess->getCardNotFoundError();
-        }
-        catch (ManzanaServiceException $e) {
+        } catch (ManzanaServiceException $e) {
             $logger = LoggerFactory::create('manzana');
             $logger->error('Ошибка манзаны - ' . $e->getMessage());
         }
+        return $this->ajaxMess->getSystemError();
+    }
+
+    /**
+     * @Route("/refresh_referrals/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function refreshReferrals(Request $request): JsonResponse
+    {
+        $userId = (int)$request->get('user_id');
+        $itemIds = explode(',', $request->get('item_ids'));
+        if(!\is_array($itemIds)){
+            $itemIds = [];
+        }
+
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('referrals_ajax');
+            $logger->error(sprintf('ошибка загрузки контейнера: %s', $e->getMessage()));
+            return $this->ajaxMess->getSystemError();
+        }
+        $referralService = $container->get('referral.service');
+
+        try {
+            /** @var ArrayCollection $items
+             * @var bool $redirect
+             */
+            [$items, $redirect, $bonus] = $referralService->getAllUserReferralsWithManzana($userId);
+            if ($bonus > 0) {
+                /** отбрасываем дробную часть - нужно ли? */
+                $bonus = floor($bonus);
+            }
+            if ($redirect) {
+                /** нефиг дальше обрабатывать делаем перезагрузку */
+                TaggedCacheHelper::clearManagedCache(['personal:referral:'.$userId]);
+                return JsonSuccessResponse::createWithData('успех', ['reload' => true]);
+            }
+        } catch (NotAuthorizedException $e) {
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (ObjectPropertyException|ArgumentException|SystemException|EmptyEntityClass|ApplicationCreateException $e) {
+            return $this->ajaxMess->getSystemError();
+        } catch (NotFoundException $e) {
+            return $this->ajaxMess->getUsernameNotFoundException();
+        }
+
+        if (!$items->isEmpty()) {
+            /** @var Referral $item */
+            $resultItems = [];
+            foreach ($items as $item) {
+                if ($item instanceof Referral) {
+                    $cardId = $item->getCard();
+                    $itemId = $item->getId();
+                    if(empty($itemIds) || \in_array((string)$itemId, $itemIds, true)){
+                        $resultItems[$itemId] = [
+                            'id'     => $item->getId(),
+                            'bonus'     => $item->getBonus(),
+                            'card'      => $cardId,
+                            'fio'       => $item->getFullName(),
+                            'email'     => $item->getEmail(),
+                            'phone'     => PhoneHelper::formatPhone($item->getPhone(), PhoneHelper::FORMAT_FULL),
+                            'moderated' => $item->isModerate(),
+//                            'dateEndActive' => $item->getDateEndActive(),
+                        ];
+                    }
+                }
+            }
+
+            try {
+                $count = $referralService->getAllCountByUser();
+                $countActive = $referralService->getActiveCountByUser();
+                $countModerate = $referralService->getModeratedCountByUser();
+            } catch (ArgumentException|SystemException $e) {
+                /** @todo залогировать ошибку */
+                return $this->ajaxMess->getSystemError();
+            }
+
+            return JsonSuccessResponse::createWithData('успех',
+                [
+                    'items'  => $resultItems,
+                    'counts' => [
+                        'all'      => $count,
+                        'active'   => $countActive,
+                        'moderate' => $countModerate,
+                    ],
+                    'bonus'  => $bonus,
+                    'reload' => false,
+                ]);
+        }
+
         return $this->ajaxMess->getSystemError();
     }
 }

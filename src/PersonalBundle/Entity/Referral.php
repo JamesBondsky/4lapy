@@ -106,9 +106,13 @@ class Referral extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $dateEndActive;
-    
+
     /**
      * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_BONUS")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $bonus;
     

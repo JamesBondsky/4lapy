@@ -9,7 +9,7 @@ namespace FourPaws\CatalogBundle\Translate;
  *
  * @package FourPaws\CatalogBundle\Translate
  */
-class Configuration
+class Configuration implements ConfigurationInterface
 {
     protected $iblockId           = 0;
     protected $siteId             = '';

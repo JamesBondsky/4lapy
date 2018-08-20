@@ -125,7 +125,7 @@ if ($request->offsetExists('phone')) {
                         <span class="b-clipped-text b-clipped-text--shopping-cart">
                             <span>
                                 <?php if ($useOffer) { ?>
-                                    <strong><?= $offer->getProduct()->getBrandName() ?>  </strong>
+                                    <span class="span-strong"><?= $offer->getProduct()->getBrandName() ?>  </span>
                                 <?php } ?>
                                 <?= $basketItem->getField('NAME') ?>
                             </span>

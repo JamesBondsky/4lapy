@@ -26,7 +26,7 @@ class DeliveryOption
     /**
      * @Required()
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      *
      * @var int
      */
@@ -36,10 +36,18 @@ class DeliveryOption
      * @Serializer\SerializedName("order-before")
      * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var int
      */
     protected $daysBefore;
+
+    /**
+     * @Serializer\Exclude()
+     *
+     * @var int
+     */
+    protected $freeFrom;
 
     /**
      * @return float
@@ -62,19 +70,19 @@ class DeliveryOption
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getDays(): int
+    public function getDays(): string
     {
         return $this->days;
     }
 
     /**
-     * @param int $days
+     * @param string $days
      *
      * @return DeliveryOption
      */
-    public function setDays(int $days): DeliveryOption
+    public function setDays(string $days): DeliveryOption
     {
         $this->days = $days;
 
@@ -94,9 +102,29 @@ class DeliveryOption
      *
      * @return DeliveryOption
      */
-    public function setDaysBefore(int $daysBefore): DeliveryOption
+    public function setDaysBefore(?int $daysBefore): DeliveryOption
     {
         $this->daysBefore = $daysBefore;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFreeFrom(): int
+    {
+        return $this->freeFrom;
+    }
+
+    /**
+     * @param int $freeFrom
+     *
+     * @return $this
+     */
+    public function setFreeFrom(int $freeFrom): DeliveryOption
+    {
+        $this->freeFrom = $freeFrom;
 
         return $this;
     }
