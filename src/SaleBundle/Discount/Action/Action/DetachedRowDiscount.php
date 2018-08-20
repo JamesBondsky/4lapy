@@ -452,7 +452,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                         'apply_count' => $detachQuantity
                     ]
                 ]),
-                'BASKET_CODE' => $basketRow['ID'],
+                'BASKET_CODE' => $basketCode,
             ];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
         }

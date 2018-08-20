@@ -56,20 +56,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
-
-            // @todo костыль. при частичном получении корзина заказа пересчитывается и для скидок basketCode приходят как ''
-            // меня всеж беспокоит то что костыль какой-то странный, особенно момент с "приходят".
-            // Как в массиве может быть несколько элементов с одинаковым ключом?
-            $basketItems = $this->order->getBasket()->getBasket()->getBasketItems();
-            /** @var BasketItem $firstItem */
-            $firstItem = reset($basketItems);
-            $lastBasketCode = $firstItem ? $firstItem->getBasketCode() : '';
-
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
-                $realBasketCode = $basketCode;
-                if ('' === $basketCode) {
-                    $basketCode = $lastBasketCode;
-                }
                 if (is_iterable($discounts)) {
                     foreach ($discounts as $discount) {
                         if (
@@ -156,7 +143,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         }
                     }
                 }
-                $lastBasketCode = ('' === $realBasketCode) ? $lastBasketCode : $realBasketCode;
             }
         }
     }
