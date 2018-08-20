@@ -10,6 +10,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use function foo\func;
 use FourPaws\Enum\UserGroup;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -18,11 +19,15 @@ use Symfony\Component\Security\Core\Role\Role;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Class User
+ * @package FourPaws\UserBundle\Entity
+ */
 class User implements UserInterface
 {
-    const BITRIX_TRUE = 'Y';
+    public const BITRIX_TRUE = 'Y';
 
-    const BITRIX_FALSE = 'N';
+    public const BITRIX_FALSE = 'N';
 
     /**
      * @var int
@@ -433,14 +438,15 @@ class User implements UserInterface
      */
     public function getNormalizePersonalPhone(): string
     {
+        $result = '';
         if ($this->hasPhone()) {
             try {
-                return PhoneHelper::normalizePhone($this->getPersonalPhone());
+                $result = PhoneHelper::normalizePhone($this->getPersonalPhone());
             } catch (WrongPhoneNumberException $e) {
             }
         }
 
-        return '';
+        return $result;
     }
 
     /**
@@ -477,6 +483,9 @@ class User implements UserInterface
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     public function hasPhone(): bool
     {
         return !empty($this->getPersonalPhone()) ? true : false;
@@ -759,29 +768,26 @@ class User implements UserInterface
      */
     public function getManzanaBirthday()
     {
+        $result = null;
         $birthday = $this->getBirthday();
         if ($birthday !== null) {
-            if((int)$birthday->format('Y') < 1900){
-                return null;
+            if ((int)$birthday->format('Y') >= 1900) {
+                $result = new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
             }
-            return new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
         }
-
-        return null;
+        return $result;
     }
 
     /**
      * @return null|Date
-     *
      */
-    public function getBirthday()
+    public function getBirthday(): ?Date
     {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        if ($this->birthday instanceof Date) {
-            return $this->birthday;
+        $result = null;
+        if ($this->birthday instanceof Date) { // а зачем этот if ?
+            $result = $this->birthday;
         }
-
-        return null;
+        return $result;
     }
 
     /**
@@ -863,12 +869,12 @@ class User implements UserInterface
     {
         $dateRegister = $this->getDateRegister();
         if ($dateRegister instanceof DateTime) {
-            if((int)$dateRegister->format('Y') < 1900){
+            if ((int)$dateRegister->format('Y') < 1900) {
                 return null;
             }
             return new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s'));
         }
-        return null;
+        return null; // @todo либо тайпхинт неверный либо null
     }
 
     /**
@@ -985,10 +991,27 @@ class User implements UserInterface
     /**
      * @return ArrayCollection|Collection|Group[]
      */
+    // @todo конкретизировать возвращаемый тип
     public function getGroups(): Collection
     {
         $this->groups = $this->groups ?: new ArrayCollection();
         return $this->groups;
+    }
+
+    /**
+     * @return array
+     */
+    public function getGroupsIds(): array
+    {
+        $result = [];
+        if ($groups = $this->getGroups()) {
+            $result = $groups->map(
+                function (Group $e) {
+                    return $e->getId();
+                }
+            )->toArray();
+        }
+        return $result;
     }
 
     /**
