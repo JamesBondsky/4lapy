@@ -93,7 +93,7 @@ $adviceCount = 2;
                        target="_blank">
                         <span class="b-clipped-text b-clipped-text--advice">
                             <span>
-                                <strong>{{title}}  </strong>{{description}}
+                                <span class="span-strong">{{title}}  </span>{{description}}
                             </span>
                         </span>
                     </a>
