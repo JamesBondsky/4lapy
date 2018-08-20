@@ -62,7 +62,7 @@ $offer = $arParams['OFFER'];
                             Время работы
                         </li>
                         <li class="b-tab-delivery__header-item b-tab-delivery__header-item--amount">
-                            Товара
+                            Товар
                         </li>
                         <li class="b-tab-delivery__header-item b-tab-delivery__header-item--self-picked">
                             Самовывоз
