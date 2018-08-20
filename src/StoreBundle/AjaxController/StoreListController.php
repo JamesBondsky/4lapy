@@ -8,9 +8,13 @@ namespace FourPaws\StoreBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Exception;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
@@ -178,6 +182,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws \RuntimeException
+     * @throws ApplicationCreateException
      */
     public function getByItemAction(Request $request): JsonResponse
     {
@@ -185,12 +190,16 @@ class StoreListController extends Controller implements LoggerAwareInterface
 
         if ((int)$offerId > 0) {
             try {
-                [$storeCollection, $hideTab] = $this->storeService->getActiveStoresByProduct($offerId);
+                try {
+                    $storeCollection = $this->storeService->getActiveStoresByProduct($offerId);
+                } catch (NoStoresAvailableException $e) {
+                    $storeCollection = new StoreCollection();
+                }
+
+                $result = $this->storeService->getFormatedStoreByCollection(['storeCollection' => $storeCollection]);
+                $result['hideTab'] = $storeCollection->isEmpty();
                 return JsonSuccessResponse::createWithData(
-                    'Подгрузка успешна',
-                    $this->storeService->getFormatedStoreByCollection(
-                        ['storeCollection' => $storeCollection, 'hideTab' => $hideTab]
-                    )
+                    'Подгрузка успешна', $result
                 );
             } catch (Exception $e) {
                 $this->log()->error($e->getMessage());
