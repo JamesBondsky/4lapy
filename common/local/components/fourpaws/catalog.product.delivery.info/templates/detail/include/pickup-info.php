@@ -36,6 +36,7 @@ use FourPaws\Helpers\WordHelper;
                     'SHOW_TIME'   => true,
                 ]);
                 if ($unavailableCount) { ?>
+                    <br>
                     и из <?= $unavailableCount?> <?= WordHelper::declension(
                         (int)$unavailableCount,
                         [
