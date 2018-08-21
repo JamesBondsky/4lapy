@@ -169,7 +169,7 @@ class CatalogProduct
     /**
      * @return float
      */
-    public function getWeight(): float
+    public function getWeight(): ?float
     {
         return $this->weight;
     }
@@ -189,7 +189,7 @@ class CatalogProduct
     /**
      * @return float
      */
-    public function getHeight(): float
+    public function getHeight(): ?float
     {
         return $this->height;
     }
@@ -209,7 +209,7 @@ class CatalogProduct
     /**
      * @return float
      */
-    public function getWidth(): float
+    public function getWidth(): ?float
     {
         return $this->width;
     }
@@ -229,7 +229,7 @@ class CatalogProduct
     /**
      * @return float
      */
-    public function getLength(): float
+    public function getLength(): ?float
     {
         return $this->length;
     }
