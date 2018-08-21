@@ -236,6 +236,15 @@ class Store extends Base
     protected $region = [];
 
     /**
+     * @var array
+     * @Serializer\SerializedName("UF_BASE_SHOP_LOC")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Type("array_or_false<string>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $baseShopLocations = [];
+
+    /**
      * @var int
      * @Serializer\SerializedName("UF_METRO")
      * @Serializer\SkipWhenEmpty()
@@ -829,6 +838,25 @@ class Store extends Base
     public function setRegion(string $region): Store
     {
         $this->region = $region;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getBaseShopLocations(): array
+    {
+        return $this->baseShopLocations;
+    }
+
+    /**
+     * @param array $baseShopLocations
+     * @return Store
+     */
+    public function setBaseShopLocations(array $baseShopLocations): Store
+    {
+        $this->baseShopLocations = $baseShopLocations;
 
         return $this;
     }

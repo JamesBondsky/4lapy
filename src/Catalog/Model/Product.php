@@ -2001,14 +2001,23 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isDeliveryForbidden(): bool
+    {
+        return $this->isLowTemperatureRequired()
+               || $this->isTransportOnlyRefrigerator()
+               || $this->isDeliveryAreaRestrict();
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @return array
      */
     public function getFullDeliveryAvailability(): array
     {
         if (null === $this->fullDeliveryAvailability) {
-            $canDeliver = !($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator()
-                || $this->isDeliveryAreaRestrict());
+            $canDeliver = !$this->isDeliveryForbidden();
             /** @var DeliveryService $deliveryService */
             $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
             $zones = array_keys($deliveryService->getAllZones());

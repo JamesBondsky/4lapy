@@ -16,7 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var ArrayCollection $items */
 $items = $arResult['ITEMS'];
 $noItems = $items->isEmpty();
-$showTab = !$noItems || !empty($arResult['search']) || !empty($arResult['referral_type'])
+$showTab = !$noItems || !empty($arResult['search']) || !empty($arResult['referral_type']);
+$templateData['USER_ID'] = $arResult['USER_ID'];
 ?>
 <div class="b-account-referal">
     <div class="b-account-referal-top">
@@ -66,14 +67,14 @@ $showTab = !$noItems || !empty($arResult['search']) || !empty($arResult['referra
                                 <ul class="b-tab-title__list b-tab-title__list--referal">
                                     <?php foreach ($arResult['TABS'] as $code => $tab) { ?>
                                         <li class="b-tab-title__item <?= ($arResult['referral_type']
-                                                                          === $code ? ' active' : '') ?> js-tab-referal-item">
+                                                                          === $code ? ' active' : '') ?> js-tab-referal-item js-count-<?=$code?>">
                                             <a class="b-tab-title__link js-referal-link"
                                                href="<?= $tab['URI'] ?>"
                                                title="<?= $tab['NAME'] ?> ">
-                                        <span class="b-tab-title__text">
-                                            <?= $tab['NAME'] ?>
-                                            <span class="b-tab-title__number">(<?= $tab['COUNT'] ?>)</span>
-                                        </span>
+                                                    <span class="b-tab-title__text">
+                                                        <?= $tab['NAME'] ?>
+                                                        <span class="b-tab-title__number">(<?= $tab['COUNT'] ?>)</span>
+                                                    </span>
                                             </a>
                                         </li>
                                     <?php } ?>
@@ -81,15 +82,16 @@ $showTab = !$noItems || !empty($arResult['search']) || !empty($arResult['referra
                             </div>
                         <?php } ?>
                         <div class="b-account-referal__text-number">Начислено за все время
-                            <span><?= $arResult['FORMATED_BONUS'] ?></span>
+                            <span class="js-number"><?= $arResult['FORMATED_BONUS'] ?></span>
                             <span class="b-ruble b-ruble--referal">&nbsp;₽</span>
                         </div>
                     </div>
                     <?php if(!$noItems){ ?>
                         <ul class="b-account-referal__list js-referal-list">
                             <?php /** @var Referral $item */
-                            foreach ($items as $item) { ?>
-                                <li class="b-account-referal-item js-item-referal"
+                            foreach ($items as $item) {
+                                $templateData['ITEM_IDS'][] = $item->getId();?>
+                                <li class="b-account-referal-item js-item-referal js-referral-<?= $item->getId() ?>"
                                     data-referal="<?= $item->isModerate() ? 'moderate' : 'active-referal' ?>">
                                     <div class="b-account-referal-item__wrapper">
                                         <div class="b-account-referal-item__column">
@@ -109,7 +111,7 @@ $showTab = !$noItems || !empty($arResult['search']) || !empty($arResult['referra
                                         <div class="b-account-referal-item__column">
                                             <div class="b-account-referal-item__bonus">Начислено бонусов
                                                 <span class="b-account-referal-item__number">
-                                                    <span><?= WordHelper::numberFormat($item->getBonus()) ?></span>
+                                                    <span class="js-number"><?= WordHelper::numberFormat($item->getBonus()) ?></span>
                                                     <span class="b-ruble b-ruble--referal-item">&nbsp;₽</span></span>
                                             </div>
                                             <?php

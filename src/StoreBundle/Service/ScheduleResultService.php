@@ -411,8 +411,14 @@ class ScheduleResultService implements LoggerAwareInterface
                     $maxTransitions++;
                 }
 
-                foreach ($from as $date) {
+                foreach ($from as $hour => $date) {
+                    /** по ТЗ при доставке со склада поставщика далее расчеты ведутся для времени 9:00 */
                     $date->setTime(9, 0, 0, 0);
+
+                    /** время у стартовых дат нужно тоже изменить, чтобы корректно работал diff */
+                    /** @var \DateTime $startDate */
+                    $startDate = $startDates[$hour];
+                    $startDate->setTime(9, 0, 0, 0);
                 }
 
                 $modifier += static::SUPPLIER_DATE_MODIFIER;

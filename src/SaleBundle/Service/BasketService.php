@@ -26,6 +26,8 @@ use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Collection\ShareCollection;
+use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -38,6 +40,7 @@ use FourPaws\SaleBundle\Discount\Utils\CleanerInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SapBundle\Repository\ShareRepository;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -72,19 +75,26 @@ class BasketService implements LoggerAwareInterface
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $fUserId;
+    /**
+     * @var ShareRepository
+     */
+    private $shareRepository;
 
     /**
      * BasketService constructor.
      *
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param ManzanaPosService $manzanaPosService
+     * @param ShareRepository $shareRepository
      */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
-        ManzanaPosService $manzanaPosService
+        ManzanaPosService $manzanaPosService,
+        ShareRepository $shareRepository
     ) {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
+        $this->shareRepository = $shareRepository;
     }
 
     /**
@@ -655,12 +665,12 @@ class BasketService implements LoggerAwareInterface
 
     /**
      *
-     *
      * @param BasketItem $basketItem
      * @param Order|null $order
      *
+     * @throws InvalidArgumentException
+     *
      * @return int
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      */
     public function getBonusAwardingQuantity(BasketItem $basketItem, ?Order $order = null): int
     {
@@ -677,9 +687,8 @@ class BasketService implements LoggerAwareInterface
             }
             $this->getOfferCollection()->add($offer);
         }
-
+        $resultQuantity = 0;
         if ($offer->isBonusExclude()) {
-            $resultQuantity = 0;
             $basketDiscounts = true;
         } else {
             /**
@@ -708,43 +717,35 @@ class BasketService implements LoggerAwareInterface
             ) {
                 throw new InvalidArgumentException('У элемента корзины не расчитаны скидки');
             }
+
             $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
             if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
                 $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
             }
 
+            // Проверяем не подарок ли это
             if (!$basketDiscounts) {
-                $basketDiscounts = [];
                 /** @var BasketPropertyItem $basketPropertyItem */
                 foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
                     $propCode = $basketPropertyItem->getField('CODE');
                     if ($propCode === 'IS_GIFT') {
-                        $discountId = $basketPropertyItem->getField('VALUE');
-                        if (\is_iterable($applyResult['DISCOUNT_LIST'])) {
-                            foreach ($applyResult['DISCOUNT_LIST'] as $appliedDiscount) {
-                                if ((int)$appliedDiscount['REAL_DISCOUNT_ID'] === (int)$discountId) {
-                                    $basketDiscounts[] = [
-                                        'DISCOUNT_ID' => $appliedDiscount['ID'],
-                                        'COUPON_ID' => '',
-                                        'APPLY' => 'Y',
-                                        'DESCR' => $appliedDiscount['ACTIONS_DESCR']['BASKET'],
-                                    ];
-                                }
-                            }
-                        }
+                        $basketDiscounts = true;
+                        break;
                     }
                 }
             }
 
-
-            $resultQuantity
-                = (int)$basketItem->getQuantity() - $this->getPremisesQuantity($applyResult, $basketItem, $order);
+            if (!$basketDiscounts) {
+                $resultQuantity = (int)$basketItem->getQuantity() - $this->getPremisesQuantity(
+                        $applyResult, $basketItem, $order
+                    );
+            }
         }
         return (bool)$basketDiscounts ? 0 : $resultQuantity;
     }
 
     /**
-     *
+     * Возвращает количество предпосылок на которое НЕ начисляются бонусы
      *
      * @param array $applyResult
      * @param BasketItem $basketItem
@@ -762,6 +763,8 @@ class BasketService implements LoggerAwareInterface
                 ($params = json_decode($discountDesc['ACTIONS_DESCR']['BASKET'], true))
                 &&
                 \is_array($params)
+                &&
+                !$this->isDiscountWithBonus($applyResult, (int)$discountDesc['REAL_DISCOUNT_ID'])
             ) {
                 if ($params['discountType'] === 'DETACH') {
                     $premises = (array)$params['params']['premises'];
@@ -928,7 +931,7 @@ class BasketService implements LoggerAwareInterface
     protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts): array
     {
         foreach ($appliedDiscounts as $k => $appliedDiscount) {
-            // Подарки нужно чистить потому что они вешаются на предпосылки.
+            // Описания подарочных скидок нужно чистить потому что они вешаются на предпосылки.
             if (
                 $appliedDiscount['DESCR']
                 &&
@@ -1098,6 +1101,43 @@ class BasketService implements LoggerAwareInterface
             );
         }
 
+        return $result;
+    }
+
+    /**
+     *
+     * @param array $applyResult - только для того чтобы не генерировать много запросов
+     * @param int $discountId - настоящий id правила
+     *
+     * @return bool
+     */
+    private function isDiscountWithBonus(array $applyResult, int $discountId): bool
+    {
+        static $shareCollection;
+        static $discountIdsString = '';
+        $discountIds = [];
+        $result = false;
+        foreach ($applyResult['DISCOUNT_LIST'] as $discount) {
+            if ($discount['APPLY'] === 'Y') {
+                $discountIds[] = (int)$discount['REAL_DISCOUNT_ID'];
+            }
+        }
+        if ($discountIds) {
+            if ($discountIdsString !== implode($discountIds)) {
+                /** @todo закешировать как-нибудь получше */
+                /** @var ShareCollection $shareCollection */
+                $shareCollection = $this->shareRepository->findBy(['PROPERTY_BASKET_RULES' => $discountIds]);
+                $discountIdsString = implode($discountIds);
+            }
+
+            /** @var Share $share */
+            foreach ($shareCollection as $share) {
+                if(\in_array($discountId, $share->getPropertyBasketRules())) {
+                    $result = $share->isBonus();
+                    break;
+                }
+            }
+        }
         return $result;
     }
 }

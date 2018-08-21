@@ -317,7 +317,7 @@ class Offer
      *
      * @return Offer
      */
-    public function setDeliveryOptions($deliveryOptions)
+    public function setDeliveryOptions($deliveryOptions): Offer
     {
         $this->deliveryOptions = $deliveryOptions;
 

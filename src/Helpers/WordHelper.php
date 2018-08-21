@@ -50,6 +50,16 @@ class WordHelper
     }
 
     /**
+     * @param float $lengthMm - длинна в миллиметрах
+     *
+     * @return string
+     */
+    public static function showLength(?float $lengthMm): string
+    {
+        return static::numberFormat($lengthMm / 10, 1, true) . ' см';
+    }
+
+    /**
      * @param      $number
      * @param int  $decimals
      *

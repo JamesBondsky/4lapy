@@ -15,6 +15,7 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Components\BasketMiniComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
+
 $basket = $arResult['BASKET'];
 /** @var Basket $orderableItems */
 $orderableItems = $component->getBasketItemsWithoutGifts($basket->getOrderableItems());
@@ -76,7 +77,7 @@ if (true !== $arParams['IS_AJAX']) {
                                    href="<?= $basketItem->getField('DETAIL_PAGE_URL') ?>"
                                    title="<?= $basketItem->getField('NAME') ?>">
                                     <?php if ($offer) { ?>
-                                        <strong><?= $offer->getProduct()->getBrandName() ?> </strong>
+                                        <span class="span-strong"><?= $offer->getProduct()->getBrandName() ?> </span>
                                     <?php } ?>
                                     <?= $basketItem->getField('NAME') ?>
                                 </a>

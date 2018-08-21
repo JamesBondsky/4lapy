@@ -26,7 +26,7 @@ class DeliveryOption
     /**
      * @Required()
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      *
      * @var int
      */
@@ -70,19 +70,19 @@ class DeliveryOption
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getDays(): int
+    public function getDays(): string
     {
         return $this->days;
     }
 
     /**
-     * @param int $days
+     * @param string $days
      *
      * @return DeliveryOption
      */
-    public function setDays(int $days): DeliveryOption
+    public function setDays(string $days): DeliveryOption
     {
         $this->days = $days;
 
@@ -122,7 +122,7 @@ class DeliveryOption
      *
      * @return $this
      */
-    public function setFreeFrom(int $freeFrom)
+    public function setFreeFrom(int $freeFrom): DeliveryOption
     {
         $this->freeFrom = $freeFrom;
 

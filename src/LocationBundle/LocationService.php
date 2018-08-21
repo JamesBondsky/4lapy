@@ -719,6 +719,29 @@ class LocationService
     }
 
     /**
+     * Возвращает коды текущего местоположения и всех его предков
+     *
+     * @param string $locationCode
+     *
+     * @return string[]
+     * @throws ArgumentException
+     * @throws CityNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getLocationPathCodes(string $locationCode): array
+    {
+        $data = $this->findLocationCityByCode($locationCode);
+        $result = [];
+        foreach ($data['PATH'] as $pathItem) {
+            $result[] = $pathItem['CODE'];
+        }
+        $result[] = $locationCode;
+
+        return $result;
+    }
+
+    /**
      * Возвращает дефолтное местоположение
      *
      * @return array

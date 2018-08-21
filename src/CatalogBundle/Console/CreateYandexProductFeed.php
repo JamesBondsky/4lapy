@@ -126,7 +126,13 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
                 return FeedFactory::EXIT_CODE_CONTINUE;
             }
         } catch (\Throwable $e) {
-            dump($e);
+            $this->log()
+                ->error(
+                    \sprintf(
+                        'Export error: code %s, message %s in %s:%d',
+                        $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine()
+                    )
+                );
         }
 
         $this->log()

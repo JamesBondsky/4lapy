@@ -83,7 +83,7 @@ if ($mainCombinationType === 'SIZE') {
                 <span class="b-clipped-text b-clipped-text--three">
                     <span>
                         <?php if ($product->getBrand()) {
-                            echo '<strong>' . $product->getBrand()->getName() . '</strong> ';
+                            echo '<span class="span-strong">' . $product->getBrand()->getName() . '</span> ';
                         }
 
                         echo $product->getName(); ?>
