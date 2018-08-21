@@ -9,7 +9,6 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Location\LocationTable;
@@ -67,6 +66,11 @@ class StoreService implements LoggerAwareInterface
      * Склады поставщиков
      */
     public const TYPE_SUPPLIER = 'TYPE_SUPPLIER';
+
+    /**
+     * Базовые магазины
+     */
+    public const TYPE_BASE_SHOP = 'TYPE_BASE_SHOP';
 
     /**
      * @var LocationService
@@ -280,6 +284,43 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $stores;
+    }
+
+    /**
+     * @param string $locationCode
+     * @return StoreCollection
+     */
+    public function getBaseShops(string $locationCode): StoreCollection
+    {
+        $getStores = function () use ($locationCode) {
+            return [
+                'result' => $this->getStores(
+                    static::TYPE_BASE_SHOP,
+                    [
+                        'UF_BASE_SHOP_LOC' => $this->locationService->getLocationPathCodes($locationCode)
+                    ])
+            ];
+        };
+
+        try {
+            $result = (new BitrixCache())
+                ->withId(__METHOD__ . $locationCode)
+                ->withTag('catalog:store')
+                ->resultOf($getStores);
+
+            /** @var StoreCollection $stores */
+            $stores = $result['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf(
+                    'failed to get base shops for location: %s',
+                    $e->getMessage()
+                ),
+                ['location' => $locationCode]
+            );
+        }
+
+        return $stores ?? new StoreCollection();
     }
 
     /**
@@ -713,8 +754,8 @@ class StoreService implements LoggerAwareInterface
                             ->getTotalAmount();
                     if ($amount) {
                         $item['amount'] = $amount > 5 ? 'много' : 'мало';
-                    } elseif ($storeAmount) {
-                        $item['amount'] = 'под заказ';
+                    } else {
+                        $item['amount'] = 'под&nbsp;заказ';
                     }
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $tmpPickup,
@@ -939,16 +980,19 @@ class StoreService implements LoggerAwareInterface
     {
         $filter = [];
         switch ($type) {
-            case self::TYPE_SHOP:
+            case static::TYPE_BASE_SHOP:
+                $filter = ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0, 'UF_IS_BASE_SHOP' => 1];
+                break;
+            case static::TYPE_SHOP:
                 $filter = ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
                 break;
-            case self::TYPE_STORE:
+            case static::TYPE_STORE:
                 $filter = ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
                 break;
-            case self::TYPE_ALL:
+            case static::TYPE_ALL:
                 $filter = ['UF_IS_SUPPLIER' => 0];
                 break;
-            case self::TYPE_SUPPLIER:
+            case static::TYPE_SUPPLIER:
                 $filter = ['UF_IS_SUPPLIER' => 1];
                 break;
         }
