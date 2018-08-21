@@ -14,9 +14,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** установка бонусов за товар */
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
-$bonus = $currentOffer->getBonusFormattedText((int)$component->getCurrentUserService()->getDiscount());
+$bonus = $currentOffer->getBonusFormattedText((int)$component->getCurrentUserService()
+    ->getDiscount());
 if (!empty($bonus)) { ?>
-    <script type="text/javascript">
+    <script>
         $(function () {
             var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
             if ($jsBonus.length > 0) {
@@ -25,7 +26,7 @@ if (!empty($bonus)) { ?>
         });
     </script>
 <?php } ?>
-    <script type="text/javascript">
+    <script>
         $(function () {
             $('.js-plus-minus-count')
                 .data('cont-max', '<?=$currentOffer->getQuantity()?>')
@@ -34,13 +35,14 @@ if (!empty($bonus)) { ?>
     </script>
 <?php
 /** установка количество товаров в корзине для офферов */
-$container = Application::getInstance()->getContainer();
+$container = Application::getInstance()
+    ->getContainer();
 $basketService = $container->get(BasketService::class);
 $basket = $basketService->getBasket();
 
 /** @var BasketItem $basketItem */
 foreach ($basket->getBasketItems() as $basketItem) { ?>
-    <script type="text/javascript">
+    <script>
         $(function () {
             var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
             if ($offerInCart.length > 0) {
@@ -57,7 +59,7 @@ $offers = $product->getOffers(true, true);
 /** @var Offer $offer */
 foreach ($offers as $offer) {
     /** установка цен, скидочных цен, акции, нет в наличии */ ?>
-    <script type="text/javascript">
+    <script>
         $(function () {
             var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
             if ($offerLink.length > 0) {
@@ -72,5 +74,11 @@ foreach ($offers as $offer) {
                 <?php }?>
             }
         });
+    </script>
+<?php }
+
+if ($currentOffer->isAvailable()) { ?>
+    <script>
+        $('.js-product-controls').addClass('active');
     </script>
 <?php }
