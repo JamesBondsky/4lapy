@@ -51,6 +51,10 @@ services:
     FourPaws\UserBundle\Repository\UserRepository:
         public: true
 
+    FourPaws\UserBundle\Service\UserPasswordService:
+        class: FourPaws\UserBundle\Service\UserPasswordService
+        public: true
+
     # Временное решение. Ввиду вызова из компонентов
 #    FourPaws\UserBundle\Service\UserService:
 #        public: true

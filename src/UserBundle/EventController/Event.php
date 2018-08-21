@@ -25,6 +25,7 @@ use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserPasswordService;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -63,52 +64,53 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
 
-        $module = 'main';
         /** установка обязательного поля при регистрации через соц. сеть */
-        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkSocserviseRegisterHandler'], $module);
+        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkSocserviseRegisterHandler'], 'main');
 
         /** События форматирования телефона */
-        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkPhoneFormat'], $module);
-        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], $module);
+        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkPhoneFormat'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], 'main');
 
         /** замена логина */
-        static::initHandlerCompatible('OnBeforeUserLogon', [self::class, 'replaceLogin'], $module);
+        static::initHandlerCompatible('OnBeforeUserLogon', [self::class, 'replaceLogin'], 'main');
 
         /** фикс базовой авторизации */
-        static::initHandlerCompatible('onBeforeUserLoginByHttpAuth', [self::class, 'deleteBasicAuth'], $module);
+        static::initHandlerCompatible('onBeforeUserLoginByHttpAuth', [self::class, 'deleteBasicAuth'], 'main');
 
         /** деактивация перед регистрацией */
-        static::initHandlerCompatible('OnBeforeUserRegister', [self::class, 'preventAuthorizationOnRegister'], $module);
+        static::initHandlerCompatible('OnBeforeUserRegister', [self::class, 'preventAuthorizationOnRegister'], 'main');
 
         /** отправка email после регистрации */
-        static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'sendEmail'], $module);
+        static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'sendEmail'], 'main');
 
         /** обновление данных в манзане */
-        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], $module);
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], 'main');
 
         /** обновляем логин если он равняется телефону или email */
-        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], $module);
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], 'main');
+
+        /** Проверка возможности смены пароля */
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPasswordChange'], 'main');
 
         /** очистка кеша пользователя */
-        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], $module);
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
 
         /** чистим кеш юзера при авторизации */
-        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], $module);
-        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'clearUserCache'], $module);
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], 'main');
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'clearUserCache'], 'main');
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], 'main');
 
         /** действия при авторизации(обновление группы оптовиков, обновление карты) */
-        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], $module);
-        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], $module);
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'refreshUserOnAuth'], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], 'main');
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'refreshUserOnAuth'], 'main');
 
         /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
-        static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], $module);
-        static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], $module);
+        static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], 'main');
+        static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], 'main');
 
-        $module = 'socialservices';
         /** поиск юзера по email при регистрации из соцсетей */
-        static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'], $module);
+        static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'], 'socialservices');
     }
 
     /**
@@ -232,13 +234,16 @@ class Event extends BaseServiceHandler
     /**
      * @param $fields
      *
-     * @return bool
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     *
+     * @return bool
      */
     public static function updateManzana($fields): bool
     {
@@ -432,9 +437,39 @@ class Event extends BaseServiceHandler
                         ->get('flash.message')
                         ->add('Пользователь с таким e-mail уже зарегистрирован');
                 }
-            } catch (NotFoundException $e) {}
+            } catch (NotFoundException $e) {
+            }
         }
 
+        return $result;
+    }
+
+    /**
+     * Проверяет можно ли пользователю сменить пароль и если нельзя ансетит поля пароля
+     *
+     * @param array $fields
+     *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     *
+     * @return true
+     */
+    public function checkPasswordChange(array &$fields): bool
+    {
+        global $APPLICATION;
+        $result = true;
+        if ($fields['PASSWORD'] || $fields['CONFIRM_PASSWORD']) {
+            $serviceContainer = App::getInstance()->getContainer();
+            $userPasswordService = $serviceContainer->get(UserPasswordService::class);
+            if (!$userPasswordService->isChangePasswordPossible($fields['ID'])) {
+                unset($fields['PASSWORD'], $fields['CONFIRM_PASSWORD']);
+                $APPLICATION->ThrowException('Вам запрещено менять пароль');
+                $result = false;
+            }
+        }
         return $result;
     }
 }
