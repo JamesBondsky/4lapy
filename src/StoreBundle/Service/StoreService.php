@@ -755,7 +755,7 @@ class StoreService implements LoggerAwareInterface
                     if ($amount) {
                         $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     } else {
-                        $item['amount'] = 'под заказ';
+                        $item['amount'] = 'под&nbsp;заказ';
                     }
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $tmpPickup,
