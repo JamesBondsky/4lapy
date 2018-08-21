@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
@@ -14,14 +15,11 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
-use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Exception;
 use FourPaws\SaleBundle\EventController\Event;
-use FourPaws\SaleBundle\Service\BasketRulesService;
 use Psr\Log\LoggerAwareInterface;
-use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
@@ -38,7 +36,18 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    protected const OPT_ALL = 'all';
+    protected const OPT_TYPE         = 'type';
+    protected const OPT_SELECT_LIMIT = 'limit';
+
+    protected const TYPE_ALL        = 'all';
+    protected const TYPE_DUPLICATES = 'duplicates';
+    protected const TYPE_ZERO_PRICE = 'zero_price';
+
+    protected const TYPES = [
+        self::TYPE_ALL,
+        self::TYPE_DUPLICATES,
+        self::TYPE_ZERO_PRICE,
+    ];
 
     /**
      * @var int
@@ -46,7 +55,7 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
     protected $deleteCount = 0;
 
     /**
-     * DiscountResave constructor.
+     * DeleteManzanaOrders constructor.
      *
      * @param null $name
      *
@@ -63,12 +72,18 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
     protected function configure(): void
     {
         $this->setName('fourpaws:sale:order:manzana:delete')
-            ->setDescription('Delete manzana orders')
+            ->setDescription('Type of deletion: all, duplicates, zero_price')
             ->addOption(
-                static::OPT_ALL,
-                'a',
-                InputOption::VALUE_NONE,
+                static::OPT_TYPE,
+                't',
+                InputOption::VALUE_REQUIRED,
                 'Delete all orders'
+            )
+            ->addOption(
+                static::OPT_SELECT_LIMIT,
+                'l',
+                InputOption::VALUE_OPTIONAL,
+                'SQL select limit'
             );
     }
 
@@ -89,73 +104,79 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
      */
     protected function execute(InputInterface $input, OutputInterface $output): void
     {
-        $deleteAll = $input->getOption(static::OPT_ALL);
+        $type = $input->getOption(static::OPT_TYPE);
+        $limit = (int)$input->getOption(static::OPT_SELECT_LIMIT);
 
         Event::disableEvents();
 
-        if ($deleteAll) {
-            $this->log()->info('Deleting manzana orders...');
+        switch ($type) {
+            case self::TYPE_ALL:
+                $this->log()->info('Deleting all manzana orders...');
+                $query = $this->getClearAllOrdersQuery();
+                break;
+            case self::TYPE_DUPLICATES:
+                $this->log()->info('Deleting manzana order duplicates...');
+                $query = $this->getClearDuplicatesQuery();
+                break;
+            case self::TYPE_ZERO_PRICE:
+                $this->log()->info('Deleting manzana zero price orders...');
+                $query = $this->getClearZeroPriceOrdersQuery();
+                break;
+            default:
+                throw new \InvalidArgumentException(
+                    \sprintf('"--type" option must be one of: %s', implode(', ', self::TYPES))
+                );
+        }
 
-        } else {
-            $this->log()->info('Deleting manzana order duplicates');
-            $this->clearDuplicates();
-            $this->log()->info('Deleting manzana zero price orders');
-            $this->clearZeroPriceOrders();
+        if ($limit) {
+            $query->setLimit($limit);
+        }
+
+        $orders = $query->exec();
+
+        while ($order = $orders->fetch()) {
+            $this->deleteOrder($order['ORDER_ID']);
         }
 
         Event::enableEvents();
 
-        $this->log()->info(\sprintf('Deleted %s orders', $this->deleteCount));
+        $this->log()->info(\sprintf('Deleted %s orders with type "%s"', $this->deleteCount, $type));
     }
 
     /**
+     * @param int $limit
+     *
+     * @return Query
      * @throws ArgumentException
-     * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotImplementedException
-     * @throws ObjectException
-     * @throws ObjectNotFoundException
-     * @throws \Exception
      */
-    protected function clearDuplicates(): void
+    protected function getClearDuplicatesQuery(): Query
     {
-        $duplicates = OrderPropsValueTable::query()
-            ->setSelect([
-                'VALUE',
-                'CNT',
-            ])
+        $query = OrderPropsValueTable::query()
+            ->setSelect(['ORDER_ID'])
             ->setFilter([
                 '=CODE'  => 'MANZANA_NUMBER',
                 '!VALUE' => false,
             ])
-            ->registerRuntimeField('CNT', [
-                'data_type'  => 'integer',
-                'expression' => ['COUNT(*)'],
-            ])
-            ->setOrder(['ORDER_ID' => 'ASC'])
-            ->setGroup(['VALUE'])
-            ->having('CNT', '>', '1')
-            ->exec();
+            ->registerRuntimeField(new ReferenceField(
+                'ORDER_PROPS', OrderPropsValueTable::class,
+                Query\Join::on('this.VALUE', 'ref.VALUE')
+                    ->where('this.ORDER_ID', '!=', new Query\Filter\Expression\Column('ref.ORDER_ID'))
+                    ->where('ref.CODE', '=', 'MANZANA_NUMBER'),
+                ['join_type' => 'INNER']
+            ));
 
-        while ($duplicate = $duplicates->fetch()) {
-            $orderIds = $this->getDuplicates($duplicate['VALUE'], $duplicate['CNT'] - 1);
-            foreach ($orderIds as $orderId) {
-                $this->deleteOrder($orderId);
-            }
-        }
+        return $query;
     }
 
     /**
+     * @return Query
      * @throws ArgumentException
-     * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Exception
      */
-    protected function clearZeroPriceOrders(): void
+    protected function getClearZeroPriceOrdersQuery(): Query
     {
-        $zeroPriceOrders = OrderPropsValueTable::query()
+        $query = OrderPropsValueTable::query()
             ->setSelect([
                 'ORDER_ID',
                 'VALUE',
@@ -174,70 +195,29 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
                     ['=this.ORDER_ID' => 'ref.ID'],
                     ['join_type' => 'INNER']
                 )
-            )
-            ->exec();
+            );
 
-        while ($zeroPriceOrder = $zeroPriceOrders->fetch()) {
-            $this->deleteOrder($zeroPriceOrder['ORDER_ID']);
-        }
+        return $query;
     }
 
     /**
+     * @return Query
      * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws Exception
-     * @throws NotImplementedException
-     * @throws ObjectException
-     * @throws ObjectNotFoundException
-     * @throws ObjectPropertyException
      * @throws SystemException
      */
-    protected function clearAllOrders(): void
+    protected function getClearAllOrdersQuery(): Query
     {
-        $orders = OrderPropsValueTable::query()
+        $query = OrderPropsValueTable::query()
             ->setSelect(['ORDER_ID'])
             ->setOrder(['ORDER_ID' => 'DESC'])
             ->setFilter(
                 [
-                    'CODE' => 'MANZANA_NUMBER',
+                    'CODE'   => 'MANZANA_NUMBER',
+                    '!VALUE' => false,
                 ]
-            )
-            ->exec();
+            );
 
-        while ($manzanaOrder = $orders->fetch()) {
-            $this->deleteOrder($manzanaOrder['ORDER_ID']);
-        }
-    }
-
-    /**
-     * @param string $manzanaNumber
-     * @param int    $maxCount
-     * @return array
-     * @throws ArgumentException
-     * @throws SystemException
-     */
-    protected function getDuplicates(string $manzanaNumber, $maxCount = 0): array
-    {
-        $query = OrderPropsValueTable::query()
-            ->setSelect([
-                'ORDER_ID',
-            ])
-            ->setFilter([
-                'VALUE' => $manzanaNumber,
-                'CODE'  => 'MANZANA_NUMBER',
-            ]);
-
-        if ($maxCount) {
-            $query->setLimit($maxCount);
-        }
-        $orders = $query->exec();
-        $result = [];
-        while ($order = $orders->fetch()) {
-            $result[] = $order['ORDER_ID'];
-        }
-
-        return $result;
+        return $query;
     }
 
     /**
