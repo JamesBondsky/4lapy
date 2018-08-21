@@ -1879,17 +1879,18 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
-     * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
+     * @internal Специально для Elasitcsearch храним коллецию без ключей,
+     *           т.к. ассоциативный массив с торговыми предложениями туда
+     *           передавать нельзя: это будет объект, а не массив объектов.
      *
      * @param bool $skipZeroPrice
-     * @param bool $reload
      * @param array $additionalFilter
-     * @return Collection
+     *
+     * @return Collection|Offer[]
      */
-    public function getOffers($skipZeroPrice = true, bool $reload = false, array $additionalFilter = []): Collection
+    public function getOffers($skipZeroPrice = true, array $additionalFilter = []): Collection
     {
-        if (null === $this->offers || $reload) {
+        if (null === $this->offers) {
             $offerQuery = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
                 ->withOrder(['CATALOG_WEIGHT' => 'ASC']);
             if (!empty($additionalFilter)) {

@@ -1,21 +1,32 @@
 <?php
 
 use Bitrix\Sale\BasketItem;
-use FourPaws\App\Application;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\SaleBundle\Service\BasketService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-/** установка бонусов за товар */
-/** @var Offer $currentOffer */
+/**
+ * @var array                         $arResult
+ * @var Offer                         $currentOffer
+ * @var Product                       $product
+ * @var CatalogElementDetailComponent $this
+ */
 $currentOffer = $arResult['CURRENT_OFFER'];
-$bonus = $currentOffer->getBonusFormattedText((int)$component->getCurrentUserService()
-    ->getDiscount());
+$product = $arResult['PRODUCT'];
+
+$userService = $this->getCurrentUserService();
+$basketService = $this->getBasketService();
+
+/**
+ * 1 запрос к user_table. Нужно бы убрать.
+ */
+$bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
+
 if (!empty($bonus)) { ?>
     <script>
         $(function () {
@@ -34,10 +45,7 @@ if (!empty($bonus)) { ?>
         });
     </script>
 <?php
-/** установка количество товаров в корзине для офферов */
-$container = Application::getInstance()
-    ->getContainer();
-$basketService = $container->get(BasketService::class);
+/** установка количества товаров в корзине для офферов */
 $basket = $basketService->getBasket();
 
 /** @var BasketItem $basketItem */
@@ -45,6 +53,7 @@ foreach ($basket->getBasketItems() as $basketItem) { ?>
     <script>
         $(function () {
             var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
+
             if ($offerInCart.length > 0) {
                 $offerInCart.find('.b-weight-container__number').html('<?=$basketItem->getQuantity()?>');
                 $offerInCart.css('display', 'inline-block');
@@ -52,12 +61,9 @@ foreach ($basket->getBasketItems() as $basketItem) { ?>
         });
     </script>
 <?php }
-/** @var Product $product */
-$product = $arResult['PRODUCT'];
-/** перегружаем для актуальности - иначе будут данные из кеша - они могут быть устаревшие */
-$offers = $product->getOffers(true, true);
-/** @var Offer $offer */
-foreach ($offers as $offer) {
+
+
+foreach ($product->getOffers() as $offer) {
     /** установка цен, скидочных цен, акции, нет в наличии */ ?>
     <script>
         $(function () {
