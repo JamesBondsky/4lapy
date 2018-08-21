@@ -10,13 +10,21 @@
 namespace FourPaws\UserBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserPasswordService;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -40,17 +48,18 @@ class FrontOfficeUsersPasswordReset extends Command implements LoggerAwareInterf
     /**
      * FrontOfficeUsersPasswordReset constructor.
      *
-     * @param null $name
      * @param UserPasswordService $userPasswordService
      *
-     * @throws \Symfony\Component\Console\Exception\LogicException
+     * @param UserRepository $userRepository
+     *
+     * @throws LogicException
      */
-    public function __construct($name = null, UserPasswordService $userPasswordService, UserRepository $userRepository)
+    public function __construct(UserPasswordService $userPasswordService, UserRepository $userRepository)
     {
-        parent::__construct($name);
-
         $this->userPasswordService = $userPasswordService;
         $this->userRepository = $userRepository;
+
+        parent::__construct();
     }
 
 
@@ -65,13 +74,13 @@ class FrontOfficeUsersPasswordReset extends Command implements LoggerAwareInterf
      * @param InputInterface $input
      * @param OutputInterface $output
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws RuntimeException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ArgumentException
+     * @throws ArgumentTypeException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     protected function execute(InputInterface $input, OutputInterface $output): void
     {

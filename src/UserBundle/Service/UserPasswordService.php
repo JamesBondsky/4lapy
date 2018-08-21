@@ -10,7 +10,11 @@
 namespace FourPaws\UserBundle\Service;
 
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Mail\Event;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -63,47 +67,74 @@ class UserPasswordService
      *
      * @param int $userId
      *
-     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws ArgumentTypeException
      * @throws BitrixRuntimeException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws NotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function resetPassword(int $userId): void
     {
         /** @var User $user */
-        if ($user = $this->userRepository->find($userId)) {
+        $user = $this->userRepository->find($userId);
 
-            // Генерируем и меняем пароль
-            $policy = \CUser::GetGroupPolicy($user->getGroupsIds());
-            do {
-                $password = randString($policy['PASSWORD_LENGTH'], $this->chars);
-            } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)));
+        if ($user) {
+            // Генерируем, меняем отправляем пользователю пароль
+            $password = $this->generatePassword($user);
             $this->setChangePasswordPossibleForAll(true);
             $this->userRepository->updatePassword($userId, $password);
             $this->setChangePasswordPossibleForAll(false);
-
-            //отправляем письмо СРАЗУ БЕЗ ЗАПИСИ В БАЗУ
-            Event::sendImmediate([
-                'EVENT_NAME' => 'FRONT_OFFICE_PASSWORD_RESET',
-                'LID' => 's1',
-                'C_FIELDS' => [
-                    'NEW_PASSWORD' => $password,
-                    'USER_ID' => $userId,
-                    'USER_NAME' => $user->getName(),
-                    'USER_LAST_NAME' => $user->getLastName(),
-                    'USER_FULL_NAME' => $user->getFullName(),
-                    'USER_EMAIL' => $user->getEmail(),
-                    'USER_LOGIN' => $user->getLogin(),
-                ],
-                //'DUPLICATE' => 'N', // по дефолтут тут стоит Y - отправлять копию на специальный адрес для копий
-            ]);
+            $this->sendNewPassword($password, $user);
         } else {
             throw new NotFoundException('Пользователь "' . $userId . '" не найден.');
         }
+    }
+
+    /**
+     *
+     * @param User $user
+     *
+     * @return string
+     */
+    public function generatePassword(User $user): string
+    {
+        $policy = \CUser::GetGroupPolicy($user->getGroupsIds());
+        do {
+            $password = randString($policy['PASSWORD_LENGTH'] + \random_int(1, 3), $this->chars);
+        } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)));
+
+        return $password;
+    }
+
+    /**
+     *
+     * @param string $password
+     * @param User $user
+     *
+     * @throws ArgumentTypeException
+     *
+     * @return string
+     */
+    private function sendNewPassword(string $password, User $user): string
+    {
+        $result = Event::sendImmediate([
+            'EVENT_NAME' => 'FRONT_OFFICE_PASSWORD_RESET',
+            'LID' => 's1',
+            'C_FIELDS' => [
+                'NEW_PASSWORD' => $password,
+                'USER_ID' => $user->getId(),
+                'USER_NAME' => $user->getName(),
+                'USER_LAST_NAME' => $user->getLastName(),
+                'USER_FULL_NAME' => $user->getFullName(),
+                'USER_EMAIL' => $user->getEmail(),
+                'USER_LOGIN' => $user->getLogin(),
+            ],
+            'DUPLICATE' => 'N',
+        ]);
+        return $result;
     }
 
     /**
@@ -111,9 +142,9 @@ class UserPasswordService
      *
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @return bool
      */
     public function isChangePasswordPossible(int $userId): bool
