@@ -16,27 +16,27 @@ class MarkupBuild
     /**
      * Папка, в которой собирается статика от корня сайта
      */
-    const STATIC_BUILD_DIR = '/static';
+    public const STATIC_BUILD_DIR = '/static';
     
     /**
      * Сборка js из dev-режима tars
      */
-    const STATIC_DEV_JS = '/static/src/dev/static/js/main.js';
+    public const STATIC_DEV_JS = '/static/src/dev/static/js/main.js';
     
     /**
      * Сборка css из dev-режима tars
      */
-    const STATIC_DEV_CSS = '/static/src/dev/static/css/main.css';
+    public const STATIC_DEV_CSS = '/static/src/dev/static/css/main.css';
     
     /**
      * Сборка svg из dev-режима tars
      */
-    const STATIC_DEV_SVG = '/static/src/dev/svg-symbols.svg';
+    public const STATIC_DEV_SVG = '/static/src/dev/svg-symbols.svg';
     
     /**
      * Заглушка при отсутствии фото
      */
-    const NO_PHOTO_IMG = '/static/img/assets/product-card/no-photo.png';
+    public const NO_PHOTO_IMG = '/static/img/assets/product-card/no-photo.png';
     
     /**
      * @var string
@@ -57,7 +57,10 @@ class MarkupBuild
      * @var string
      */
     private $productNoImageFile;
-    
+
+    /**
+     * MarkupBuild constructor.
+     */
     public function __construct()
     {
         $this->withProductNoImageFile(self::STATIC_BUILD_DIR . self::NO_PHOTO_IMG);

@@ -71,12 +71,9 @@ if (null === $offer) {
     /** нет оффера что-то пошло не так */
     $logger->error('Нет оффера');
     return;
-}
-
-
-?>
+} ?>
 <div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>"
-     data-url="/ajax/catalog/product-info/product/" data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/">
+     data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/">
     <div class="b-container">
         <?php $APPLICATION->IncludeComponent(
             'fourpaws:breadcrumbs',
