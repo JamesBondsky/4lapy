@@ -40,7 +40,7 @@ $getOnClick = function (Offer $offer) use ($ecommerceService, $arParams) {
 
 /** @var Product $product */
 $product = $arResult['PRODUCT'];
-$product->setOffers($product->getOffers(true, false, $arParams['OFFER_FILTER']));
+$product->setOffers($product->getOffers(true, $arParams['OFFER_FILTER']));
 $offers = $product->getOffersSorted();
 /** @var Offer $currentOffer */
 
