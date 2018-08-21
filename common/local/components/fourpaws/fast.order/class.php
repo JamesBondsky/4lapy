@@ -38,6 +38,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException as SaleInvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -175,6 +176,8 @@ class FourPawsFastOrderComponent extends CBitrixComponent
             $orderId = (int)$this->request->get('orderId');
             if ($orderId) {
                 $order = Order::load($orderId);
+                $this->arResult['USER_NAME'] = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'NAME')->getValue();
+                $this->arResult['ACCOUNT_NUMBER'] = $order->getField('ACCOUNT_NUMBER');
                 $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->ecommerceService->renderScript(
                     $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
                     true

@@ -32,6 +32,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use RuntimeException;
@@ -59,6 +60,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      * @var GoogleEcommerceService
      */
     private $ecommerceService;
+    /**
+     * @var BasketService
+     */
+    private $basketService;
 
     /**
      * CatalogElementDetailComponent constructor.
@@ -70,14 +75,16 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      */
     public function __construct(?CBitrixComponent $component = null)
     {
-        parent::__construct($component);
         try {
             $container = App::getInstance()
                 ->getContainer();
             $this->ecommerceService = $container->get(GoogleEcommerceService::class);
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+            $this->basketService = $container->get(BasketService::class);
         } catch (ApplicationCreateException | ServiceCircularReferenceException | ServiceNotFoundException $e) {
         }
+
+        parent::__construct($component);
     }
 
     /**
@@ -296,6 +303,14 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         }
 
         return $sectionChain;
+    }
+
+    /**
+     * @return BasketService
+     */
+    public function getBasketService(): BasketService
+    {
+        return $this->basketService;
     }
 
     /**

@@ -9,7 +9,6 @@ use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
@@ -79,7 +78,7 @@ class CatalogElementSnippet extends CBitrixComponent
      * @throws SystemException
      * @throws LoaderException
      */
-    public function executeComponent()
+    public function executeComponent(): void
     {
         if ($this->startResultCache()) {
             parent::executeComponent();
@@ -114,7 +113,7 @@ class CatalogElementSnippet extends CBitrixComponent
         if (!empty($this->arParams['CURRENT_OFFER']) && $this->arParams['CURRENT_OFFER'] instanceof Offer) {
             $currentOffer = $this->arParams['CURRENT_OFFER'];
         } else {
-            $product->getOffers(true, false, $this->arParams['OFFER_FILTER']);
+            $product->getOffers(true, $this->arParams['OFFER_FILTER']);
             $offers = $product->getOffersSorted();
             /** @var Offer $offer */
             $foundOfferWithImages = false;
@@ -132,7 +131,7 @@ class CatalogElementSnippet extends CBitrixComponent
     /**
      * @return GoogleEcommerceService
      */
-    public function getEcommerceService()
+    public function getEcommerceService(): GoogleEcommerceService
     {
         return $this->ecommerceService;
     }
