@@ -754,7 +754,7 @@ class StoreService implements LoggerAwareInterface
                             ->getTotalAmount();
                     if ($amount) {
                         $item['amount'] = $amount > 5 ? 'много' : 'мало';
-                    } elseif ($storeAmount) {
+                    } else {
                         $item['amount'] = 'под заказ';
                     }
                     $item['pickup'] = DeliveryTimeHelper::showTime(
