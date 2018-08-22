@@ -240,40 +240,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
     }
 
     /**
-     * @Route("/product/", methods={"GET"})
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     *
-     * @global \CMain $APPLICATION
-     */
-    public function infoProductAction(Request $request): JsonResponse
-    {
-        $currentOffer = null;
-        $offerId = (int)$request->get('offer', 0);
-
-        /** @var LocationService $locationService */
-        $location = $this->locationService->getCurrentLocation();
-
-        $offer = OfferQuery::getById($offerId);
-
-        $response = [
-            'products' => [],
-        ];
-
-        if ($offer !== null) {
-            $response['products'][$offer->getCml2Link()][$offer->getId()] = $this->getProductInfo(
-                $offer->getProduct(),
-                $offer,
-                $location
-            );
-        }
-
-        return JsonSuccessResponse::createWithData('', $response);
-    }
-
-    /**
      * @Route("/product/deliverySet/", methods={"GET"})
      *
      * @param Request $request

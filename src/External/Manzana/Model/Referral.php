@@ -76,4 +76,28 @@ class Referral
     {
         return \in_array($this->isQuestionnaireActual, static::CANCEL_MODERATE, true);
     }
+
+    /**
+     * @return float
+     */
+    public function getBonus(): float
+    {
+        return (float)$this->sumReferralBonus;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCardNumber(): string
+    {
+        return $this->cardNumber ?? '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getReferralNumber(): string
+    {
+        return $this->referralNumber ?? '';
+    }
 }
