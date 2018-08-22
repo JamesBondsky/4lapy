@@ -33,7 +33,7 @@ use FourPaws\Helpers\WordHelper;
                 ); ?>
                 <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
                     'DATE_FORMAT' => 'XX',
-                    'SHOW_TIME'   => true,
+                    'SHOW_TIME'   => $pickup['SHOP_COUNT']['HAS_TODAY'],
                 ]);
                 if ($unavailableCount) { ?>
                     <br>
@@ -58,7 +58,7 @@ use FourPaws\Helpers\WordHelper;
                 ); ?>
                 <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
                     'DATE_FORMAT' => 'XX',
-                    'SHOW_TIME'   => true,
+                    'SHOW_TIME'   => false,
                 ]) ?>
             <?php } ?>
         <?php } else { ?>

@@ -90,7 +90,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
 
     /**
      * @param string $locationCode
-     * @param array $possibleDeliveryCodes
+     * @param array  $possibleDeliveryCodes
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -138,7 +138,9 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         $pickup = clone $pickup;
 
         $countTotal = 0;
-        $countWithinAnHour = 0;
+        $hasToday = false;
+        $countFirst = 0;
+        $firstDate = null;
         $currentDate = new \DateTime();
         /** @var Store $shop */
         foreach ($shops as $shop) {
@@ -148,12 +150,26 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
             }
 
             if (abs($pickup->getDeliveryDate()->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
-                $countWithinAnHour++;
+                $hasToday = true;
+                $countFirst++;
+            }
+
+            if (!$hasToday) {
+                if (null === $firstDate) {
+                    $firstDate = $pickup->getDeliveryDate();
+                }
+                if ($pickup->getDeliveryDate()->format('z') === $firstDate->format('z')) {
+                    $countFirst++;
+                }
             }
             $countTotal++;
         }
 
-        return ['AVAILABLE' => $countWithinAnHour, 'TOTAL' => $countTotal];
+        return [
+            'AVAILABLE' => $countFirst,
+            'HAS_TODAY' => $hasToday,
+            'TOTAL'     => $countTotal,
+        ];
     }
 
     /**
