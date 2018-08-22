@@ -84,40 +84,6 @@ class ReferralRepository extends BaseHlRepository
      */
     public function findByCurUser(): ArrayCollection
     {
-        $cacheTime = 360000;
-        try {
-            $instance = Application::getInstance();
-        } catch (SystemException $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->error('Ошибка получения инстанса'.$e->getMessage());
-            return new ArrayCollection();
-        }
-        $curUserId = $this->curUserService->getCurrentUserId();
-        $cache = $instance->getCache();
-        $referrals = new ArrayCollection();
-
-        if ($cache->initCache($cacheTime,
-            serialize(['userId' => $curUserId]),
-            __FUNCTION__)) {
-            $result = $cache->getVars();
-            $referrals = $result['referrals'];
-        } elseif ($cache->startDataCache()) {
-            $tagCache = new TaggedCacheHelper(__FUNCTION__);
-
-            $referrals = $this->findBy(
-                [
-                    'filter' => ['UF_USER_ID' => $this->curUserService->getCurrentUserId()],
-                ]
-            );
-
-            $tagCache->addTag('hlb:field:referral_user:'. $curUserId);
-
-            $tagCache->end();
-            $cache->endDataCache([
-                'referrals' => $referrals,
-            ]);
-        }
-
-        return $referrals;
+        return $this->findBy(['filter' => ['UF_USER_ID' => $this->curUserService->getCurrentUserId()]]);
     }
 }
