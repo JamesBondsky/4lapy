@@ -28,11 +28,6 @@ trait DeliveryResultTrait
     protected $selectedInterval;
 
     /**
-     * @var Interval
-     */
-    protected $firstInterval;
-
-    /**
      * @var int
      */
     protected $dateOffset = 0;
@@ -169,12 +164,8 @@ trait DeliveryResultTrait
      */
     protected function getFirstInterval(): Interval
     {
-        if (null === $this->firstInterval) {
-            /** @var IntervalService $intervalService */
-            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
-            $this->firstInterval = $intervalService->getFirstInterval($this);
-        }
-
-        return $this->firstInterval;
+        /** @var IntervalService $intervalService */
+        $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+        return $intervalService->getFirstInterval($this);
     }
 }
