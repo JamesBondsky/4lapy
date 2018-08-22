@@ -322,7 +322,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         $result = $storeService->getBaseShops($locationCode);
                         if ($result->isEmpty()) {
                             $result = $storeService
-                                ->getStoresByLocation($locationCode, StoreService::TYPE_ALL)
+                                ->getStoresByLocation($locationCode, StoreService::TYPE_BASE_SHOP)
                                 ->getBaseShops();
                         }
                         break;
