@@ -67,10 +67,10 @@
 - ./bin/symfony_console f:s:a:a:c
 ```
 
-## Выгрузка фида для Yandex Market
+## Фабрика фидов
 
 ```
-- ./bin/symfony_console b:p:f:c --type yandex-market %id% # id - ид профиля выгрузки
+- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market)
 ```
 
 ## Сервисы вагранта
