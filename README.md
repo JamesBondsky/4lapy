@@ -90,6 +90,11 @@ password: guest
 - ./bin/symfony_console f:i:r -f # С пересозданием индекса 
 ```
 
+## Сбросить пароль для пользователей группы FRONT_OFFICE_USERS
+```
+- ./bin/symfony_console f:f:p:r
+```
+
 ## Запуск тестов
 
 При первом запуске выполнить: 
