@@ -130,9 +130,9 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             ]),
             $this->cachePath)) {
             $result = $this->cache->getVars();
-            $nav = $result['NAV'];
+            $this->arResult['NAV'] = unserialize($result['NAV']);
             $this->arResult['BONUS'] = $result['BONUS'];
-            $cacheItems = $result['cacheItems'];
+            $cacheItems = unserialize($result['cacheItems']);
 
             $this->arResult['COUNT'] = $result['COUNT'];
             $this->arResult['COUNT_ACTIVE'] = $result['COUNT_ACTIVE'];
@@ -140,7 +140,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         } elseif ($this->cache->startDataCache()) {
             $tagCache = new TaggedCacheHelper($this->cachePath);
 
-            $cacheItems = $this->loadData($nav, $tagCache);
+            $cacheItems = $this->loadData($tagCache);
             $this->loadCounters();
 
             $tagCache->addTags([
@@ -150,9 +150,9 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
             $tagCache->end();
             $this->cache->endDataCache([
-                'NAV'        => $nav,
+                'NAV'        => serialize($this->arResult['NAV']),
                 'BONUS'      => $this->arResult['BONUS'],
-                'cacheItems' => $cacheItems,
+                'cacheItems' => serialize($cacheItems),
 
                 'COUNT'          => $this->arResult['COUNT'],
                 'COUNT_ACTIVE'   => $this->arResult['COUNT_ACTIVE'],
@@ -160,10 +160,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             ]);
         }
 
-        $this->arResult['NAV'] = $nav;
-
         $this->showTemplate($cacheItems);
-
 
         return true;
     }
@@ -270,17 +267,15 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
     }
 
     /**
-     * @param PageNavigation    $nav
      * @param TaggedCacheHelper $tagCache
      *
      * @return ArrayCollection|null
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
-     * @throws ObjectException
-     * @throws SystemException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    protected function loadData(PageNavigation $nav, TaggedCacheHelper $tagCache): ?ArrayCollection
+    protected function loadData(TaggedCacheHelper $tagCache): ?ArrayCollection
     {
         $cacheItems = $items = new ArrayCollection();
         try {
@@ -288,7 +283,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
              * @var bool $redirect
              */
             $main = empty($this->arResult['referralType']) && empty($this->arResult['search']);
-            [$items, $redirect, $this->arResult['BONUS']] = $this->referralService->getCurUserReferrals($nav,
+            [$items, $redirect, $this->arResult['BONUS'], $this->arResult['NAV']] = $this->referralService->getCurUserReferrals($this->arResult['NAV'],
                 $main, false);
             if ($this->arResult['BONUS'] > 0) {
                 /** отбрасываем дробную часть - нужно ли? */
