@@ -53,9 +53,10 @@ if ($arResult['POST']['FORGOT']) {
 }
 ShowMessage($arParams['~AUTH_RESULT']);
 ShowMessage($arResult['ERROR_MESSAGE']);
+
 ?>
 
-<div class="bx-auth">
+<div class="bx-auth"<?= $arResult['POST']['FORGOT'] ? ' style="display: none;"' : ''; ?>>
     <?php if ($arResult['AUTH_SERVICES']): ?>
         <div class="bx-auth-title"><?php echo GetMessage('AUTH_TITLE') ?></div>
     <? endif ?>
@@ -70,7 +71,7 @@ ShowMessage($arResult['ERROR_MESSAGE']);
         <? endif ?>
         <?php
         foreach ($arResult['POST'] as $key => $value) {
-            if ($key === 'g-recaptcha-response') {
+            if ($key === 'g-recaptcha-response' || $key === 'FORGOT') {
                 continue;
             }
             ?>
@@ -148,6 +149,10 @@ ShowMessage($arResult['ERROR_MESSAGE']);
                                                          name="Login"
                                                          value="<?= GetMessage('AUTH_AUTHORIZE') ?>"/></td>
             </tr>
+            <tr>
+                <td></td>
+                <td><a href="#" data-show="js-forgot">Забыли пароль?</a></td>
+            </tr>
         </table>
 
         <?php if ($arParams['NOT_SHOW_LINKS'] !== 'Y'): ?>
@@ -172,7 +177,9 @@ ShowMessage($arResult['ERROR_MESSAGE']);
 
     </form>
 </div>
-<div>
+<div class="js-forgot" <?= $arResult['POST']['FORGOT'] ? '' : ' style="display: none;"'; ?>>
+
+    <p><br>Введите E-mail и мы вышлем вам новый пароль</p>
     <form name="forgot_password" method="post" action="">
         <table class="bx-auth-table">
             <tr>
@@ -196,6 +203,10 @@ ShowMessage($arResult['ERROR_MESSAGE']);
                 <td><input type="submit"
                            name="FORGOT"
                            value="Выслать новый пароль"/></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><a href="#" data-show="bx-auth">Авторизоваться</a></td>
             </tr>
         </table>
 
