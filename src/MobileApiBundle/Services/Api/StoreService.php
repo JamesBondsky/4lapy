@@ -37,8 +37,9 @@ class StoreService
      */
     public function getList(StoreListRequest $storeListRequest): Collection
     {
-        $appStoreCollection = $this->appStoreService->getStoreCollection(
-            $this->getParams($storeListRequest)
+        $appStoreCollection = $this->appStoreService->getStores(
+            $this->appStoreService::TYPE_SHOP,
+            ...$this->getParams($storeListRequest)
         );
         if (0 === $appStoreCollection->count()) {
             $cloneRequest = clone $storeListRequest;
@@ -46,8 +47,9 @@ class StoreService
             /**
              * @todo nearest city
              */
-            $appStoreCollection = $this->appStoreService->getStoreCollection(
-                $this->getParams($cloneRequest)
+            $appStoreCollection = $this->appStoreService->getStores(
+                $this->appStoreService::TYPE_SHOP,
+                ...$this->getParams($storeListRequest)
             );
         }
         $storeInfo = $this->appStoreService->getFullStoreInfo($appStoreCollection);

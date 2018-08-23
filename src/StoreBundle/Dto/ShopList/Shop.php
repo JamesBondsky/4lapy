@@ -8,6 +8,11 @@ namespace FourPaws\StoreBundle\Dto\ShopList;
 class Shop
 {
     /**
+     * @var int
+     */
+    protected $id;
+
+    /**
      * @Serializer\SerializedName("id")
      * @Serializer\Type("string")
      * @Serializer\SkipWhenEmpty()
@@ -131,7 +136,26 @@ class Shop
      *
      * @var bool
      */
-    protected $active;
+    protected $active = false;
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     * @return Shop
+     */
+    public function setId(int $id): Shop
+    {
+        $this->id = $id;
+
+        return $this;
+    }
 
     /**
      * @return string

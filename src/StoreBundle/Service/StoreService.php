@@ -9,34 +9,20 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sale\Location\LocationTable;
-use Bitrix\Sale\UserMessageException;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
-use FourPaws\DeliveryBundle\Entity\StockResult;
-use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
 class StoreService implements LoggerAwareInterface
@@ -82,17 +68,11 @@ class StoreService implements LoggerAwareInterface
      */
     protected $storeRepository;
 
-    /** @var  PickupResultInterface */
-    protected $pickupDelivery;
-
     /** @var DeliveryService $deliveryService */
     protected $deliveryService;
 
     /** @var array */
     protected $stores = [];
-
-    /** @var Offer[] $offers */
-    private $offers;
 
     public function __construct(
         LocationService $locationService,
@@ -516,6 +496,7 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
+     * @todo выпилить (см. StoreListController)
      * @param array $params
      *
      * @throws ArgumentException
@@ -627,212 +608,6 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
-     * @param array $params
-     *
-     * @throws ArgumentException
-     * @return StoreCollection
-     */
-    public function getStoreCollection(array $params = []): StoreCollection
-    {
-        $params['filter'] =
-            array_merge((array)$params['filter'], $this->getTypeFilter($this::TYPE_SHOP));
-
-        /** @var StoreCollection $storeCollection */
-        return $this->storeRepository->findBy($params['filter'], (array)$params['order']);
-    }
-
-    /**
-     * @param array $params
-     *
-     * @throws ArgumentException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws \Exception
-     * @throws FileNotFoundException
-     * @return array
-     */
-    public function getFormatedStoreByCollection(
-        array $params
-    ): array {
-        $result = [];
-        /** @var StoreCollection $storeCollection */
-        $storeCollection = $params['storeCollection'];
-        if (!$storeCollection->isEmpty()) {
-            [$servicesList, $metroList] = $this->getFullStoreInfo($storeCollection);
-
-            $storeAmount = 0;
-            if ($this->pickupDelivery) {
-                $storeAmount = reset($this->offers)->getStocks()
-                    ->filterByStores(
-                        $this->getStoresByCurrentLocation(
-                            static::TYPE_STORE
-                        )
-                    )->getTotalAmount();
-            }
-
-            /** @var Store $store */
-            $avgGpsN = 0;
-            $avgGpsS = 0;
-
-            $sortHtml = '';
-            if ($params['returnSort']) {
-                $sortHtml = '<option value="" disabled="disabled">выберите</option>';
-                $sortHtml .= '<option value="address" ' . ($params['sortVal']
-                    === 'address' ? ' selected="selected" ' : '')
-                    . '>по адресу</option>';
-            }
-            $haveMetro = false;
-            foreach ($storeCollection as $key => $store) {
-                $metro = $store->getMetro();
-
-                if ($metro > 0 && !$haveMetro) {
-                    $haveMetro = true;
-                }
-
-                $image = $store->getImageId();
-                $imageSrc = '';
-                if (!empty($image) && is_numeric($image) && $image > 0) {
-                    $imageSrc =
-                        CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(360)->getSrc();
-                }
-
-                $services = [];
-                if (\is_array($servicesList) && !empty($servicesList)) {
-                    foreach ($servicesList as $service) {
-                        if (\in_array((int)$service['ID'], $store->getServices(), true)) {
-                            $services[] = $service['UF_NAME'];
-                        }
-                    }
-                }
-
-                if(empty($store->getAddress())){
-                    //скипаем если нет адреса
-                    continue;
-                }
-
-                $gpsS = $store->getLongitude();
-                $gpsN = $store->getLatitude();
-
-                /** скипаем если нет местоположения, кординаты могут быть отрицательными, скипаем до усреднения, чтобы не портить координаты */
-                if($gpsN === 0 || $gpsS === 0){
-                    continue;
-                }
-
-                $avgGpsN += $gpsN;
-                $avgGpsS += $gpsS;
-
-                $item = [
-                    'id'         => $store->getXmlId(),
-                    'addr'       => $store->getAddress(),
-                    'adress'     => WordHelper::clear($store->getDescription()),
-                    'phone'      => $store->getPhone(),
-                    'schedule'   => $store->getScheduleString(),
-                    'photo'      => $imageSrc,
-                    'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
-                    'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
-                    'services'   => $services,
-                    'gps_s'      => $gpsN, //revert $gpsS
-                    'gps_n'      => $gpsS, //revert $gpsN
-                ];
-
-                if (($params['activeStoreId'] === 'first' && $key === 0) || ($params['activeStoreId'] !== 'first' && $store->getId() === (int)$params['activeStoreId'])) {
-                    $item['active'] = true;
-                }
-
-                if ($this->pickupDelivery) {
-                    $tmpPickup = clone $this->pickupDelivery;
-                    $tmpPickup->setSelectedStore($store);
-                    if (!$tmpPickup->isSuccess()) {
-                        continue;
-                    }
-                    /** @var StockResult $stockResultByStore */
-                    $stockResultByStore = $tmpPickup->getStockResult()->first();
-                    $amount = $stockResultByStore->getOffer()
-                            ->getStocks()
-                            ->filterByStore($store)
-                            ->getTotalAmount();
-                    if ($amount) {
-                        $item['amount'] = $amount > 5 ? 'много' : 'мало';
-                    } else {
-                        $item['amount'] = 'под&nbsp;заказ';
-                    }
-                    $item['pickup'] = DeliveryTimeHelper::showTime(
-                        $tmpPickup,
-                        [
-                            'SHOW_TIME' => true,
-                            'SHORT'     => true,
-                        ]
-                    );
-                }
-                $result['items'][] = $item;
-            }
-            if ($haveMetro && $params['returnSort']) {
-                $sortHtml .= '<option value="metro" ' . ($params['sortVal']
-                    === 'metro' ? ' selected="selected" ' : '')
-                    . '>по метро</option>';
-            }
-            $countStores = $storeCollection->count();
-            $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
-            $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
-            $result['sortHtml'] = $sortHtml;
-            $result['all_cities'] = false;
-            /** имя местоположения для страницы магазинов */
-            if (!empty($params['region_id']) || !empty($params['city_code'])) {
-                $result['location_name'] = '';//если пустое что-то пошло не так
-                $loc = null;
-                if (!empty($params['region_id'])) {
-                    $loc = LocationTable::query()->setFilter(['ID' => $params['region_id']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
-                } elseif (!empty($params['city_code'])) {
-                    $loc = LocationTable::query()->setFilter(['=CODE' => $params['city_code']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
-                }
-                if ($loc !== null && empty($result['location_name'])) {
-                    $result['location_name'] = $loc['LOC_NAME'];
-                }
-            } else {
-                $result['location_name'] = 'Все города';
-                $result['all_cities'] = true;
-            }
-            if ($params['returnActiveServices']) {
-                $result['services'] = $servicesList;
-            }
-        }
-
-        $result['hideTab'] = $params['hideTab'] ?? false;
-
-        return $result;
-    }
-
-    /**
-     * @param int $offerId
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws DeliveryNotFoundException
-     * @throws NoStoresAvailableException
-     * @throws NotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws UserMessageException
-     * @return StoreCollection
-     */
-    public function getActiveStoresByProduct(int $offerId): StoreCollection
-    {
-        $offer = $this->offers[$offerId] = OfferQuery::getById($offerId);
-        if ($offer &&
-            $offer->isAvailable() &&
-            ($this->deliveryService->getCurrentDeliveryZone() !== DeliveryService::ZONE_4) &&
-            ($pickupDelivery = $this->getPickupDelivery($offer))
-        ) {
-            $result = $pickupDelivery->getBestShops();
-        } else {
-            throw new NoStoresAvailableException(sprintf('No available stores for offer #%s', $offerId));
-        }
-
-        return $result;
-    }
-
-    /**
      * Возвращает дату ближайшей для $date отгрузки со склада
      *
      * @param Store     $store
@@ -931,109 +706,6 @@ class StoreService implements LoggerAwareInterface
             $services,
             $metro,
         ];
-    }
-
-    /**
-     * @param Request $request
-     *
-     * @return array
-     */
-    public function getFilterByRequest(Request $request): array
-    {
-        $result = [];
-        $storesSort = $request->get('stores-sort');
-        if (\is_array($storesSort) && !empty($storesSort)) {
-            $result['UF_SERVICES'] = $storesSort;
-        }
-        $code = $request->get('code');
-        if (!empty($code)) {
-            $codeList = json_decode($code, true);
-            if (\is_array($codeList)) {
-                $dadataLocationAdapter = new DaDataLocationAdapter();
-                /** @var BitrixLocation $bitrixLocation */
-                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
-                $result['UF_LOCATION'] = $bitrixLocation->getCode();
-            } else {
-                $result['UF_LOCATION'] = $code;
-            }
-        }
-
-        $search = $request->get('search');
-        if (!empty($search)) {
-            $result[] = [
-                'LOGIC'          => 'OR',
-                '%ADDRESS'       => $search,
-                '%METRO.UF_NAME' => $search,
-            ];
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param Request $request
-     *
-     * @return array
-     */
-    public function getOrderByRequest(Request $request): array
-    {
-        $result = [];
-        $sort = $request->get('sort');
-        if (!empty($sort)) {
-            switch ($sort) {
-                case 'city':
-                    $result = ['LOCATION.NAME.NAME' => 'asc'];
-                    break;
-                case 'address':
-                    $result = ['ADDRESS' => 'asc'];
-                    break;
-                case 'metro':
-                    $result = ['METRO.UF_NAME' => 'asc'];
-                    break;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param Offer|null $offer
-     *
-     * @return PickupResultInterface|null
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws DeliveryNotFoundException
-     * @throws NotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws UserMessageException
-     */
-    protected function getPickupDelivery(Offer $offer = null): ?PickupResultInterface
-    {
-        if (!$this->pickupDelivery) {
-            $selectedOffer = null;
-            if ($offer !== null) {
-                $selectedOffer = $offer;
-            } else {
-                if (!empty($this->offers)) {
-                    $selectedOffer = reset($this->offers);
-                }
-            }
-            if ($selectedOffer !== null) {
-                $deliveries = $this->deliveryService->getByProduct($selectedOffer);
-
-                foreach ($deliveries as $delivery) {
-                    if ($this->deliveryService->isInnerPickup($delivery)) {
-                        $this->pickupDelivery = $delivery;
-                        break;
-                    }
-                }
-            } else {
-                $this->pickupDelivery = null;
-            }
-        }
-
-        return $this->pickupDelivery;
     }
 
     /**

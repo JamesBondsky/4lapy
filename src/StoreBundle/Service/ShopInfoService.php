@@ -8,11 +8,11 @@ namespace FourPaws\StoreBundle\Service;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\UserMessageException;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -34,6 +34,8 @@ use FourPaws\StoreBundle\Exception\EmptyCoordinatesException;
 use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\PickupUnavailableException;
+use JMS\Serializer\ArrayTransformerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 class ShopInfoService
 {
@@ -53,15 +55,22 @@ class ShopInfoService
     protected $locationService;
 
     /**
+     * @var ArrayTransformerInterface
+     */
+    protected $arrayTransformer;
+
+    /**
      * ShopInfoService constructor.
-     * @param StoreService    $storeService
-     * @param DeliveryService $deliveryService
-     * @param LocationService $locationService
+     * @param StoreService              $storeService
+     * @param DeliveryService           $deliveryService
+     * @param LocationService           $locationService
+     * @param ArrayTransformerInterface $arrayTransformer
      */
     public function __construct(
         StoreService $storeService,
         DeliveryService $deliveryService,
-        LocationService $locationService
+        LocationService $locationService,
+        ArrayTransformerInterface $arrayTransformer
     )
     {
         $this->storeService = $storeService;
@@ -71,8 +80,8 @@ class ShopInfoService
 
     /**
      * @param Offer $offer
-     * @param array $params
-     * @return ShopList
+     *
+     * @return StoreCollection
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException
@@ -80,10 +89,10 @@ class ShopInfoService
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws PickupUnavailableException
      * @throws UserMessageException
-     * @throws \Exception
      */
-    public function getShopListByOffer(Offer $offer, array $params): ShopList
+    public function getShopsByOffer(Offer $offer): StoreCollection
     {
         if ($offer->isAvailable() &&
             ($this->deliveryService->getCurrentDeliveryZone() !== DeliveryService::ZONE_4) &&
@@ -98,20 +107,99 @@ class ShopInfoService
             throw new NoStoresAvailableException(sprintf('No available stores for offer #%s', $offer->getId()));
         }
 
-        return $this->getShopList($result, $params);
+        return $result;
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return StoreCollection
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     */
+    public function getShopsByRequest(Request $request): StoreCollection
+    {
+        return $this->storeService->getStores(
+            StoreService::TYPE_SHOP,
+            $this->getFilterByRequest($request),
+            $this->getOrderByRequest($request)
+        );
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     */
+    protected function getFilterByRequest(Request $request): array
+    {
+        $result = [];
+        $storesSort = $request->get('stores-sort');
+        if (\is_array($storesSort) && !empty($storesSort)) {
+            $result['UF_SERVICES'] = $storesSort;
+        }
+        $code = $request->get('code');
+        if (!empty($code)) {
+            $codeList = json_decode($code, true);
+            if (\is_array($codeList)) {
+                $dadataLocationAdapter = new DaDataLocationAdapter();
+                /** @var BitrixLocation $bitrixLocation */
+                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
+                $result['UF_LOCATION'] = $bitrixLocation->getCode();
+            } else {
+                $result['UF_LOCATION'] = $code;
+            }
+        }
+
+        $search = $request->get('search');
+        if (!empty($search)) {
+            $result[] = [
+                'LOGIC'          => 'OR',
+                '%ADDRESS'       => $search,
+                '%METRO.UF_NAME' => $search,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return array
+     */
+    protected function getOrderByRequest(Request $request): array
+    {
+        $result = [];
+        $sort = $request->get('sort');
+        if (!empty($sort)) {
+            switch ($sort) {
+                case 'city':
+                    $result = ['LOCATION.NAME.NAME' => 'asc'];
+                    break;
+                case 'address':
+                    $result = ['ADDRESS' => 'asc'];
+                    break;
+                case 'metro':
+                    $result = ['METRO.UF_NAME' => 'asc'];
+                    break;
+            }
+        }
+
+        return $result;
     }
 
     /**
      * @param StoreCollection $stores
-     * @param                 $params
      * @param Offer           $offer
+     *
      * @return ShopList
      * @throws ArgumentException
-     * @throws ObjectPropertyException
      * @throws SystemException
      * @throws \Exception
      */
-    public function getShopList(StoreCollection $stores, $params, Offer $offer = null): ShopList
+    public function getShopList(StoreCollection $stores, Offer $offer = null): ShopList
     {
         [
             $servicesList,
@@ -120,26 +208,44 @@ class ShopInfoService
 
         $avgLatitude = 0;
         $avgLongitude = 0;
-        $haveMetro = false;
         $shops = new ArrayCollection();
+        $services = new ArrayCollection();
+
         /** @var Store $store */
         $i = 0;
         foreach ($stores as $store) {
             try {
-                $shop = $this->getStoreInfo($store, $servicesList, $metroList, $offer);
+                $shop = $this->getStoreInfo($store, $servicesList, $metroList);
 
-                $activeStoreId = $params['activeStoreId'];
-                if (($activeStoreId === 'first' && $i === 0) ||
-                    ($store->getId() === $activeStoreId)
-                ) {
-                    $shop->setActive(true);
+                if ($offer) {
+                    $pickupResult = $this->getPickupResultByStore($store, $offer);
+
+                    /** @var StockResult $stockResultByStore */
+                    $stockResultByStore = $pickupResult->getStockResult()->first();
+                    $amount = $stockResultByStore->getOffer()
+                        ->getStocks()
+                        ->filterByStore($store)
+                        ->getTotalAmount();
+
+                    $amountString = 'под заказ';
+                    if ($amount) {
+                        $amountString = $amount > 5 ? 'много' : 'мало';
+                    }
+
+                    $shop
+                        ->setPickupDate(
+                            DeliveryTimeHelper::showTime(
+                                $pickupResult,
+                                [
+                                    'SHOW_TIME' => true,
+                                    'SHORT'     => true,
+                                ]
+                            )
+                        )
+                        ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString));
                 }
             } catch (PickupUnavailableException|EmptyCoordinatesException|EmptyAddressException $e) {
                 continue;
-            }
-
-            if ($store->getMetro()) {
-                $haveMetro = true;
             }
 
             $avgLatitude += $store->getLatitude();
@@ -148,42 +254,25 @@ class ShopInfoService
             $shops->add($shop);
             $i++;
         }
-        $shopCount = $shops->count();
 
-        /* @todo */
-        $locationName = 'Все города';
-        if (!empty($params['region_id']) || !empty($params['city_code'])) {
-            $result['location_name'] = '';//если пустое что-то пошло не так
-            $loc = null;
-            if (!empty($params['region_id'])) {
-                $loc = LocationTable::query()->setFilter(['ID' => $params['region_id']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
-            } elseif (!empty($params['city_code'])) {
-                $loc = LocationTable::query()->setFilter(['=CODE' => $params['city_code']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
+        if ($shopCount = $shops->count()) {
+            /** @var array $service */
+            foreach ($servicesList as $service) {
+                $services->add(
+                    (new Service())
+                        ->setId($service['ID'])
+                        ->setXmlId($service['UF_XML_ID'])
+                        ->setSort($service['UF_SORT'])
+                        ->setName($service['UF_NAME'])
+                        ->setLink($service['UF_LINK'])
+                        ->setDescription($service['UF_DESCRIPTION'])
+                        ->setFullDescription($service['UF_FULL_DESCRIPTION'])
+                );
             }
-            if ($loc !== null && empty($result['location_name'])) {
-                $locationName = $loc['LOC_NAME'];
-            }
-        }
-
-        /** @var array $service */
-        $services = new ArrayCollection();
-        foreach ($servicesList as $service) {
-            $services->add(
-                (new Service())
-                    ->setId($service['ID'])
-                    ->setXmlId($service['UF_XML_ID'])
-                    ->setSort($service['UF_SORT'])
-                    ->setName($service['UF_NAME'])
-                    ->setLink($service['UF_LINK'])
-                    ->setDescription($service['UF_DESCRIPTION'])
-                    ->setFullDescription($service['UF_FULL_DESCRIPTION'])
-            );
         }
 
         $shopList = (new ShopList())
             ->setItems(new ArrayCollection($shops))
-            ->setSortHtml($this->getSortHtml($params, $haveMetro))
-            ->setLocationName($locationName)
             ->setAvgLatitude($shopCount ? $avgLatitude / $shopCount : $avgLatitude)
             ->setAvgLongitude($shopCount ? $avgLongitude / $shopCount : $avgLongitude)
             ->setHideTab((bool)$shopCount)
@@ -196,25 +285,15 @@ class ShopInfoService
      * @param Store      $store
      * @param array      $metroList
      * @param array      $servicesList
-     * @param Offer|null $offer
      *
      * @return Shop
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws DeliveryNotFoundException
      * @throws EmptyAddressException
      * @throws EmptyCoordinatesException
-     * @throws NotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws PickupUnavailableException
-     * @throws UserMessageException
      */
     public function getStoreInfo(
         Store $store,
         array $metroList,
-        array $servicesList,
-        Offer $offer = null
+        array $servicesList
     ): Shop
     {
         if (!$store->getAddress()) {
@@ -228,41 +307,13 @@ class ShopInfoService
             throw new EmptyCoordinatesException(\sprintf('Store #%s coordinates are not defined', $store->getId()));
         }
 
-
         $shop = (new Shop())
+            ->setId($store->getId())
             ->setXmlId($store->getXmlId())
             ->setAddress($store->getAddress())
             ->setDescription(WordHelper::clear($store->getDescription()))
             ->setPhone($store->getPhone())
             ->setSchedule($store->getScheduleString());
-
-        if ($offer) {
-            $pickupResult = $this->getPickupResultByStore($store, $offer);
-
-            /** @var StockResult $stockResultByStore */
-            $stockResultByStore = $pickupResult->getStockResult()->first();
-            $amount = $stockResultByStore->getOffer()
-                ->getStocks()
-                ->filterByStore($store)
-                ->getTotalAmount();
-
-            $amountString = 'под заказ';
-            if ($amount) {
-                $amountString = $amount > 5 ? 'много' : 'мало';
-            }
-
-            $shop
-                ->setPickupDate(
-                    DeliveryTimeHelper::showTime(
-                        $pickupResult,
-                        [
-                            'SHOW_TIME' => true,
-                            'SHORT'     => true,
-                        ]
-                    )
-                )
-                ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString));
-        }
 
         if ($metroId = $store->getMetro()) {
             $shop
@@ -295,21 +346,29 @@ class ShopInfoService
     }
 
     /**
-     * @param array $params
-     * @param bool  $haveMetro
+     * @param ShopList $shopList
+     *
+     * @return array
+     */
+    public function shopListToArray(ShopList $shopList): array
+    {
+        return $this->arrayTransformer->toArray($shopList);
+    }
+
+    /**
+     * @param string $sort
+     * @param bool   $haveMetro
      *
      * @return string
      */
-    protected function getSortHtml(array $params, bool $haveMetro = false): string
+    public function getSortHtml(string $sort, bool $haveMetro = false): string
     {
         $result = '<option value="" disabled="disabled">выберите</option>';
-        $result .= '<option value="address" ' . ($params['sortVal']
-            === 'address' ? ' selected="selected" ' : '')
+        $result .= '<option value="address" ' . ($sort === 'address' ? ' selected="selected" ' : '')
             . '>по адресу</option>';
 
-        if ($haveMetro && $params['returnSort']) {
-            $result .= '<option value="metro" ' . ($params['sortVal']
-                === 'metro' ? ' selected="selected" ' : '')
+        if ($haveMetro) {
+            $result .= '<option value="metro" ' . ($sort === 'metro' ? ' selected="selected" ' : '')
                 . '>по метро</option>';
         }
 
@@ -384,7 +443,7 @@ class ShopInfoService
         }
 
         if (false === $results[$offer->getId()]) {
-            throw new PickupUnavailableException(\sprintf('Pickup is unavailable for offer #%s', $offer->getId());
+            throw new PickupUnavailableException(\sprintf('Pickup is unavailable for offer #%s', $offer->getId()));
         }
 
         return $results[$offer->getId()];
