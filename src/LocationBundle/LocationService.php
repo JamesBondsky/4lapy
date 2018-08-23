@@ -255,7 +255,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();
@@ -281,7 +281,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();

@@ -9,11 +9,14 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Entity\StoreSearchResult;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 use Psr\Log\LoggerAwareInterface;
@@ -89,6 +92,9 @@ class StoreService implements LoggerAwareInterface
      *
      * @return StoreCollection
      * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getStores(
         string $type = self::TYPE_ALL,
@@ -188,6 +194,7 @@ class StoreService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws ApplicationCreateException
      * @return StoreCollection
+     * @throws SystemException
      */
     public function getStoresByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
@@ -196,7 +203,7 @@ class StoreService implements LoggerAwareInterface
             $type = self::TYPE_STORE;
         }
 
-        return $this->getStoresByLocation($location, $type);
+        return $this->getStoresByLocation($location, $type)->getStores();
     }
 
     /**
@@ -207,13 +214,14 @@ class StoreService implements LoggerAwareInterface
      * @param bool   $strict
      *
      * @throws ArgumentException
-     * @return StoreCollection
+     * @return StoreSearchResult
+     * @throws SystemException
      */
     public function getStoresByLocation(
         string $locationCode,
         string $type = self::TYPE_ALL,
         bool $strict = false
-    ): StoreCollection
+    ): StoreSearchResult
     {
         $getStores = function () use ($locationCode, $type) {
             $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
@@ -221,6 +229,7 @@ class StoreService implements LoggerAwareInterface
             return ['result' => $storeCollection];
         };
 
+        $location = $this->locationService->findLocationByCode($locationCode);
         try {
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $locationCode . $type)
@@ -243,13 +252,18 @@ class StoreService implements LoggerAwareInterface
             $stores = new StoreCollection();
         }
 
+        $storeSearchResult = (new StoreSearchResult())
+            ->setType(StoreSearchResult::TYPE_LOCAL)
+            ->setLocationName($location['NAME'] ?? '')
+            ->setStores($stores);
+
         /**
          * Ищем склады района и региона
          */
-        if (!$strict && $stores->isEmpty()) {
-            $stores = $this->getSubRegionalStores($locationCode, $type);
-            if ($stores->isEmpty()) {
-                $stores = $this->getRegionalStores($locationCode, $type);
+        if (!$strict && $storeSearchResult->getStores()->isEmpty()) {
+            $storeSearchResult = $this->getSubRegionalStores($locationCode, $type);
+            if ($storeSearchResult->getStores()->isEmpty()) {
+                $storeSearchResult = $this->getRegionalStores($locationCode, $type);
             }
         }
 
@@ -262,21 +276,24 @@ class StoreService implements LoggerAwareInterface
                 self::TYPE_STORE,
                 self::TYPE_ALL,
             ], true) &&
-            $stores->getStores()->isEmpty()
+            $storeSearchResult->getStores()->getStores()->isEmpty()
         ) {
-            $moscowStores = $this->getStoresByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE);
-            $stores = new StoreCollection(array_merge($stores->toArray(), $moscowStores->toArray()));
+            $moscowStores = $this->getStoresByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE)->getStores();
+            $storeSearchResult->setStores(
+                new StoreCollection(
+                    array_merge($storeSearchResult->getStores()->toArray(), $moscowStores->toArray()))
+            );
         }
 
-        return $stores;
+        return $storeSearchResult;
     }
 
     /**
      * @param string $type
      *
-     * @return StoreCollection
+     * @return StoreSearchResult
      */
-    public function getAllStores(string $type = self::TYPE_ALL): StoreCollection
+    public function getAllStores(string $type = self::TYPE_ALL): StoreSearchResult
     {
         $getStores = function () use ($type) {
             $storeCollection = $this->getStores($type);
@@ -302,7 +319,10 @@ class StoreService implements LoggerAwareInterface
             $stores = new StoreCollection();
         }
 
-        return $stores;
+        return (new StoreSearchResult())
+            ->setType(StoreSearchResult::TYPE_ALL)
+            ->setStores($stores)
+            ->setLocationName('Все города');
     }
 
     /**
@@ -346,11 +366,15 @@ class StoreService implements LoggerAwareInterface
      * @param string $locationCode
      * @param string $type
      *
-     * @return StoreCollection
+     * @return StoreSearchResult
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getSubRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
+    public function getSubRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreSearchResult
     {
-        if ($subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE']) {
+        $subregion = $this->locationService->findLocationSubRegion($locationCode);
+        if ($subregionCode = $subregion['CODE']) {
             $getStores = function () use ($type, $subregionCode) {
                 return ['result' => $this->getStores($type, ['UF_SUBREGION' => $subregionCode])];
             };
@@ -377,18 +401,25 @@ class StoreService implements LoggerAwareInterface
             }
         }
 
-        return $stores ?? new StoreCollection();
+        return (new StoreSearchResult())
+            ->setStores($stores ?? new StoreCollection())
+            ->setLocationName($subregion['NAME'] ?? '')
+            ->setType(StoreSearchResult::TYPE_SUBREGIONAL);
     }
 
     /**
      * @param string $locationCode
      * @param string $type
      *
-     * @return StoreCollection
+     * @return StoreSearchResult
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
+    public function getRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreSearchResult
     {
-        if ($regionCode = $this->locationService->findLocationRegion($locationCode)['CODE']) {
+        $region = $this->locationService->findLocationRegion($locationCode);
+        if ($regionCode = $region['CODE']) {
             $getStores = function () use ($type, $regionCode) {
                 return ['result' => $this->getStores($type, ['UF_REGION' => $regionCode])];
             };
@@ -415,7 +446,10 @@ class StoreService implements LoggerAwareInterface
             }
         }
 
-        return $stores ?? new StoreCollection();
+        return (new StoreSearchResult())
+            ->setStores($stores ?? new StoreCollection())
+            ->setType(StoreSearchResult::TYPE_REGIONAL)
+            ->setLocationName($region['NAME'] ?? '');
     }
 
     /**

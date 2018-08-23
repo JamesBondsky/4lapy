@@ -92,7 +92,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $shops = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_SHOP);
+        $shops = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_SHOP)->getStores();
         if ($shops->isEmpty()) {
             $result->addError(new Error('Нет доступных магазинов'));
             return $result;

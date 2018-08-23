@@ -29,6 +29,7 @@ use FourPaws\StoreBundle\Dto\ShopList\Service;
 use FourPaws\StoreBundle\Dto\ShopList\Shop;
 use FourPaws\StoreBundle\Dto\ShopList\ShopList;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Entity\StoreSearchResult;
 use FourPaws\StoreBundle\Exception\EmptyAddressException;
 use FourPaws\StoreBundle\Exception\EmptyCoordinatesException;
 use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
@@ -122,10 +123,10 @@ class ShopInfoService
      */
     public function getShopListByRequest(Request $request): ShopList
     {
-        $stores = $this->getStoresByRequest($request);
+        $storeSearchResult = $this->getStoresByRequest($request);
 
         $stores = $this->sortByRequest(
-            $this->filterByRequest($stores, $request),
+            $this->filterByRequest($storeSearchResult->getStores(), $request),
             $request
         );
 
@@ -153,9 +154,7 @@ class ShopInfoService
             )
         );
 
-        /** @todo */
-        $locationName = 'Все города';
-        $shopList->setLocationName($locationName);
+        $shopList->setLocationName($storeSearchResult->getLocationName());
 
         return $shopList;
     }
@@ -184,7 +183,7 @@ class ShopInfoService
         /** @var Store $store */
         foreach ($stores as $store) {
             try {
-                $shop = $this->getStoreInfo($store, $servicesList, $metroList);
+                $shop = $this->getStoreInfo($store, $metroList, $servicesList);
 
                 if ($offer) {
                     $pickupResult = $this->getPickupResultByStore($store, $offer);
@@ -262,11 +261,12 @@ class ShopInfoService
     /**
      * @param Request $request
      *
-     * @return StoreCollection
+     * @return StoreSearchResult
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      */
-    protected function getStoresByRequest(Request $request)
+    protected function getStoresByRequest(Request $request): StoreSearchResult
     {
         $locationCode = $request->get('code', '');
         if (!empty($locationCode)) {
@@ -280,20 +280,18 @@ class ShopInfoService
         }
 
         if ($locationCode) {
-            $stores = $this->storeService->getStoresByLocation($locationCode, StoreService::TYPE_SHOP);
-        } else {
-            $stores = new StoreCollection();
+            $storeSearchResult = $this->storeService->getStoresByLocation($locationCode);
         }
 
         /**
          * если не задано местоположение или не нашлось ни одного магазина в городе/районе/регионе
          * возвращаем все магазины
          */
-        if ($stores->isEmpty()) {
-            $stores = $this->storeService->getAllStores(StoreService::TYPE_SHOP);
+        if (!$locationCode || $storeSearchResult->getStores()->isEmpty()) {
+            $storeSearchResult = $this->storeService->getAllStores(StoreService::TYPE_SHOP);
         }
 
-        return $stores;
+        return $storeSearchResult;
     }
 
     /**

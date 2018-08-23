@@ -299,13 +299,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 $result = $storeService->getStoresByLocation(
                     $locationCode,
                     StoreService::TYPE_STORE
-                );
+                )->getStores();
                 break;
             case DeliveryService::INNER_PICKUP_CODE:
                 $result = $storeService->getStoresByLocation(
                     $locationCode,
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 break;
             case DeliveryService::INNER_DELIVERY_CODE:
                 switch ($deliveryZone) {
@@ -313,7 +313,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         /**
                          * условие доставки в эту зону - наличие на складе
                          */
-                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_STORE);
+                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_STORE)->getStores();
                         break;
                     case DeliveryService::ZONE_2:
                         /**
@@ -323,6 +323,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         if ($result->isEmpty()) {
                             $result = $storeService
                                 ->getStoresByLocation($locationCode, StoreService::TYPE_BASE_SHOP)
+                                ->getStores()
                                 ->getBaseShops();
                         }
                         break;
