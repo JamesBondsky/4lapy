@@ -5,6 +5,8 @@
 
 namespace FourPaws\StoreBundle\Dto\ShopList;
 
+use JMS\Serializer\Annotation as Serializer;
+
 class Service
 {
     /**

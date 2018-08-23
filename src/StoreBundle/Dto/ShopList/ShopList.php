@@ -6,12 +6,13 @@
 namespace FourPaws\StoreBundle\Dto\ShopList;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use JMS\Serializer\Annotation as Serializer;
 
 class ShopList
 {
     /**
      * @Serializer\SerializedName("items")
-     * @Serializer\Type("ArrayCollection<FourPaws\StoreBundle\Dto\Shops\Shop>")
+     * @Serializer\Type("ArrayCollection<FourPaws\StoreBundle\Dto\ShopList\Shop>")
      * @Serializer\SkipWhenEmpty()
      *
      * @var ArrayCollection
@@ -29,7 +30,7 @@ class ShopList
 
     /**
      * @Serializer\SerializedName("services")
-     * @Serializer\Type("ArrayCollection<FourPaws\StoreBundle\Dto\Shops\Service>")
+     * @Serializer\Type("ArrayCollection<FourPaws\StoreBundle\Dto\ShopList\Service>")
      * @Serializer\SkipWhenEmpty()
      *
      * @var ArrayCollection
@@ -49,7 +50,7 @@ class ShopList
     /**
      * @todo может быть, это нужно делать на фронте?
      * @Serializer\SerializedName("avg_gps_s")
-     * @Serializer\Type("bool")
+     * @Serializer\Type("float")
      *
      * @var float
      */

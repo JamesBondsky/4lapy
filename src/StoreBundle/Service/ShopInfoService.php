@@ -76,6 +76,7 @@ class ShopInfoService
         $this->storeService = $storeService;
         $this->deliveryService = $deliveryService;
         $this->locationService = $locationService;
+        $this->arrayTransformer = $arrayTransformer;
     }
 
     /**
@@ -212,7 +213,6 @@ class ShopInfoService
         $services = new ArrayCollection();
 
         /** @var Store $store */
-        $i = 0;
         foreach ($stores as $store) {
             try {
                 $shop = $this->getStoreInfo($store, $servicesList, $metroList);
@@ -252,7 +252,6 @@ class ShopInfoService
             $avgLongitude += $store->getLongitude();
 
             $shops->add($shop);
-            $i++;
         }
 
         if ($shopCount = $shops->count()) {
@@ -262,17 +261,17 @@ class ShopInfoService
                     (new Service())
                         ->setId($service['ID'])
                         ->setXmlId($service['UF_XML_ID'])
-                        ->setSort($service['UF_SORT'])
-                        ->setName($service['UF_NAME'])
-                        ->setLink($service['UF_LINK'])
-                        ->setDescription($service['UF_DESCRIPTION'])
-                        ->setFullDescription($service['UF_FULL_DESCRIPTION'])
+                        ->setSort((int)$service['UF_SORT'])
+                        ->setName((string)$service['UF_NAME'])
+                        ->setLink((string)$service['UF_LINK'])
+                        ->setDescription((string)$service['UF_DESCRIPTION'])
+                        ->setFullDescription((string)$service['UF_FULL_DESCRIPTION'])
                 );
             }
         }
 
         $shopList = (new ShopList())
-            ->setItems(new ArrayCollection($shops))
+            ->setItems($shops)
             ->setAvgLatitude($shopCount ? $avgLatitude / $shopCount : $avgLatitude)
             ->setAvgLongitude($shopCount ? $avgLongitude / $shopCount : $avgLongitude)
             ->setHideTab((bool)$shopCount)
@@ -313,7 +312,9 @@ class ShopInfoService
             ->setAddress($store->getAddress())
             ->setDescription(WordHelper::clear($store->getDescription()))
             ->setPhone($store->getPhone())
-            ->setSchedule($store->getScheduleString());
+            ->setSchedule($store->getScheduleString())
+            ->setLatitude($store->getLatitude())
+            ->setLongitude($store->getLongitude());
 
         if ($metroId = $store->getMetro()) {
             $shop
@@ -439,6 +440,8 @@ class ShopInfoService
 
             if (null === $pickup) {
                 $results[$offer->getId()] = false;
+            } else {
+                $results[$offer->getId()] = $pickup;
             }
         }
 
