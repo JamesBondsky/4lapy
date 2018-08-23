@@ -23,7 +23,7 @@ $order = $arResult['ORDER'];
 $relatedOrder = $arResult['RELATED_ORDER'];
 $bonusCount = $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] + $arResult['RELATED_ORDER_PROPERTIES']['BONUS_COUNT'];
 
-if ($bonusCount > 0) {
+if ($bonusCount > 0) { // самое место
     $bonusCount = floor($bonusCount);//округляем до целого
 }
 

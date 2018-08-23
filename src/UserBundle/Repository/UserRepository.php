@@ -272,12 +272,14 @@ class UserRepository
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @return User[]
+     * @return User[]  //todo find ONE
      */
     public function findOneByEmail(string $email): array
     {
         $result = [];
         if (!empty($email)) {
+            // в случае если каким-то образом у нескольких пользователей одинаковое мыло мы об этом не узнаем,
+            // todo имхо надо тровить исключение + имхо хороший тон прописывать мыло в логин автоматом, что исключит такую ситуацию
             $result = $this->findBy(['=EMAIL' => $email], [], 1);
         }
 
