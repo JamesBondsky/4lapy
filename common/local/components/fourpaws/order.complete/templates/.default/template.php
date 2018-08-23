@@ -23,7 +23,7 @@ $order = $arResult['ORDER'];
 $relatedOrder = $arResult['RELATED_ORDER'];
 $bonusCount = $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] + $arResult['RELATED_ORDER_PROPERTIES']['BONUS_COUNT'];
 
-if ($bonusCount > 0) {
+if ($bonusCount > 0) { // самое место
     $bonusCount = floor($bonusCount);//округляем до целого
 }
 
@@ -231,7 +231,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED']) {
                     <?php } ?>
                     <p>
                         Перейти в
-                        <a class="b-link b-link--inherit b-link--orange <?= $arResult['IS_AUTH'] ? '' : ' js-open-popup' ?>" <?= $arResult['IS_AUTH'] ? ' href="/personal/index.php"' : ' data-popup-id="authorization" href="javascript:void(0)"' ?>
+                        <a class="b-link b-link--inherit b-link--orange js-open-popup" data-popup-id="authorization"
+                           href="javascript:void(0)"
                            title="личный кабинет">личный
                             кабинет</a>.
                     </p>

@@ -20,39 +20,35 @@ if ($arParams['LOAD_TYPE'] !== 'default') { ?>
     </div>
 <?php } ?>
 <div class="b-popup-one-click__form">
-    <?php
-    if ($USER->IsAuthorized()) {
-        ?>
-        <p class="b-popup-one-click__description b-popup-one-click__description--complite">
-            Спасибо за заказ! В ближайшее время с вами свяжется наш менеджер для подтверждения заказа.
-        </p>
-        <div class="b-text-block b-text-block--one-click">
-            <h5 class="b-text-block__list-heading">Так же мы создали вам личный кабинет где вы можете:
-            </h5>
-            <ul class="b-text-block__list">
-                <li>отслеживать статус заказа;</li>
-                <li>повторять заказы в 1 клик;</li>
-                <li>управлять адресами доставки.</li>
-            </ul>
-            <p>
-                Перейти в <a class="b-link b-link--orange b-link--inherit" href="/personal/" title="Личный кабинет">личный
-                    кабинет</a>.
-            </p>
-        </div>
-        <?php
-    } else {
-        ?>
+
         <p class="b-popup-one-click__description b-popup-one-click__description--complite">
             <?= $arResult['USER_NAME']; ?>, спасибо за заказ!
         </p>
         <p class="b-popup-one-click__description b-popup-one-click__description--complite">
             Номер вашего заказа № <?= $arResult['ACCOUNT_NUMBER']; ?>. Оператор свяжется с вами для уточнения деталей
             доставки. <br>
-            Теперь у вас есть <a class="b-link b-link--orange b-link--inherit" href="/personal/" title="Личный кабинет">личный
-                кабинет</a>, в котором можно узнать статус своего заказа или добавить адрес доставки.
+            <?php
+            if($USER->IsAuthorized()) {
+                ?>
+                Перейти в <a class="b-link b-link--orange b-link--inherit" href="/personal/"
+                                     title="Личный кабинет">личный
+                    кабинет</a>.
+            <?php
+            } else {
+                ?>
+                Теперь у вас есть <a class="b-link b-link--inherit b-link--orange <?= $arResult['IS_AUTH'] ? '' : ' js-open-popup' ?>" <?= $arResult['IS_AUTH'] ? ' href="/personal/index.php"' : ' data-popup-id="authorization" href="javascript:void(0)"' ?>
+                                     title="личный кабинет">личный
+                    кабинет</a>, в котором можно узнать статус своего заказа или добавить адрес доставки.
+                <?php
+            }
+            ?>
         </p>
-        <?php
-    }
+        <p>
+            <a class="b-link b-link--orange b-link--inherit" href="/catalog/" title="Продолжить покупки.">Продолжить
+                покупки</a>.
+        </p>
+    <?php
+
     if ($arParams['LOAD_TYPE'] !== 'default') {
         ?>
         <button class="b-button b-button--one-click b-close js-close-popup">Хорошо</button>
