@@ -21,15 +21,12 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
-use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
-use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -43,10 +40,8 @@ use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
@@ -71,7 +66,6 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
-use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -1008,23 +1002,6 @@ class OrderService implements LoggerAwareInterface
                     ]);
                 }
             }
-        }
-
-        try {
-            if ($this->userAvatarAuthorization->isAvatarAuthorized()) {
-                if ($operator = $this->userProvider->findOne($this->userAvatarAuthorization->getAvatarHostUserId())) {
-                    $order->setField(
-                        'COMMENTS',
-                        sprintf('Оператор: %s (%s)', $operator->getLogin(), $operator->getFullName())
-                    );
-                }
-            }
-        } catch (UserNotFoundException $e) {
-            $this->log()->error('avatar not found', [
-                'fuserId' => $storage->getFuserId(),
-                'userId'  => $storage->getUserId(),
-                'avatarId' => $this->userAvatarAuthorization->getAvatarHostUserId()
-            ]);
         }
 
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address);
