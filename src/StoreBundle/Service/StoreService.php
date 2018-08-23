@@ -9,10 +9,7 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use FourPaws\Adapter\DaDataLocationAdapter;
-use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -21,8 +18,6 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use WebArch\BitrixCache\BitrixCache;
 
 class StoreService implements LoggerAwareInterface
@@ -78,7 +73,8 @@ class StoreService implements LoggerAwareInterface
         LocationService $locationService,
         StoreRepository $storeRepository,
         DeliveryService $deliveryService
-    ) {
+    )
+    {
         $this->locationService = $locationService;
         $this->storeRepository = $storeRepository;
         $this->deliveryService = $deliveryService;
@@ -98,8 +94,10 @@ class StoreService implements LoggerAwareInterface
         string $type = self::TYPE_ALL,
         array $filter = [],
         array $order = []
-    ): StoreCollection {
+    ): StoreCollection
+    {
         $filter = \array_merge($this->getTypeFilter($type), $filter);
+
         return $this->storeRepository->findBy($filter, $order);
     }
 
@@ -121,9 +119,9 @@ class StoreService implements LoggerAwareInterface
 
         try {
             $store = (new BitrixCache())
-                ->withId(__METHOD__ . $id)
-                ->withTag('catalog:store')
-                ->resultOf($getStore)['result'];
+                         ->withId(__METHOD__ . $id)
+                         ->withTag('catalog:store')
+                         ->resultOf($getStore)['result'];
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf('failed to get store with id %s: %s', $id, $e->getMessage())
@@ -163,9 +161,9 @@ class StoreService implements LoggerAwareInterface
             $store = null;
             try {
                 $store = (new BitrixCache())
-                    ->withId(__METHOD__ . $xmlId)
-                    ->withTag('catalog:store')
-                    ->resultOf($getStore)['result'];
+                             ->withId(__METHOD__ . $xmlId)
+                             ->withTag('catalog:store')
+                             ->resultOf($getStore)['result'];
             } catch (\Exception $e) {
                 $this->logger->error(
                     sprintf('failed to get store by xmlId: %s: %s', \get_class($e), $e->getMessage()),
@@ -215,7 +213,8 @@ class StoreService implements LoggerAwareInterface
         string $locationCode,
         string $type = self::TYPE_ALL,
         bool $strict = false
-    ): StoreCollection {
+    ): StoreCollection
+    {
         $getStores = function () use ($locationCode, $type) {
             $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
 
@@ -236,7 +235,10 @@ class StoreService implements LoggerAwareInterface
                     'failed to get stores for location: %s',
                     $e->getMessage()
                 ),
-                ['location' => $locationCode, 'type' => $type]
+                [
+                    'location' => $locationCode,
+                    'type'     => $type,
+                ]
             );
             $stores = new StoreCollection();
         }
@@ -256,11 +258,48 @@ class StoreService implements LoggerAwareInterface
          */
         if (!$strict &&
             $locationCode !== LocationService::LOCATION_CODE_MOSCOW &&
-            \in_array($type, [self::TYPE_STORE, self::TYPE_ALL], true) &&
+            \in_array($type, [
+                self::TYPE_STORE,
+                self::TYPE_ALL,
+            ], true) &&
             $stores->getStores()->isEmpty()
         ) {
             $moscowStores = $this->getStoresByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE);
             $stores = new StoreCollection(array_merge($stores->toArray(), $moscowStores->toArray()));
+        }
+
+        return $stores;
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return StoreCollection
+     */
+    public function getAllStores(string $type = self::TYPE_ALL): StoreCollection
+    {
+        $getStores = function () use ($type) {
+            $storeCollection = $this->getStores($type);
+
+            return ['result' => $storeCollection];
+        };
+
+        try {
+            $result = (new BitrixCache())
+                ->withId(__METHOD__ . $type)
+                ->withTag('catalog:store')
+                ->resultOf($getStores);
+
+            /** @var StoreCollection $stores */
+            $stores = $result['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                'failed to get all stores by type',
+                [
+                    'type' => $type,
+                ]
+            );
+            $stores = new StoreCollection();
         }
 
         return $stores;
@@ -277,8 +316,8 @@ class StoreService implements LoggerAwareInterface
                 'result' => $this->getStores(
                     static::TYPE_BASE_SHOP,
                     [
-                        'UF_BASE_SHOP_LOC' => $this->locationService->getLocationPathCodes($locationCode)
-                    ])
+                        'UF_BASE_SHOP_LOC' => $this->locationService->getLocationPathCodes($locationCode),
+                    ]),
             ];
         };
 
@@ -330,7 +369,10 @@ class StoreService implements LoggerAwareInterface
                         'failed to get stores for location: %s',
                         $e->getMessage()
                     ),
-                    ['location' => $locationCode, 'type' => $type]
+                    [
+                        'location' => $locationCode,
+                        'type'     => $type,
+                    ]
                 );
             }
         }
@@ -365,7 +407,10 @@ class StoreService implements LoggerAwareInterface
                         'failed to get stores for location: %s',
                         $e->getMessage()
                     ),
-                    ['location' => $locationCode, 'type' => $type]
+                    [
+                        'location' => $locationCode,
+                        'type'     => $type,
+                    ]
                 );
             }
         }
@@ -388,9 +433,9 @@ class StoreService implements LoggerAwareInterface
 
         try {
             $result = (new BitrixCache())
-                ->withId(__METHOD__)
-                ->withTag('catalog:store')
-                ->resultOf($getStores)['result'];
+                          ->withId(__METHOD__)
+                          ->withTag('catalog:store')
+                          ->resultOf($getStores)['result'];
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf('failed to get supplier stores: %s', $e->getMessage())
@@ -496,118 +541,6 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
-     * @todo выпилить (см. StoreListController)
-     * @param array $params
-     *
-     * @throws ArgumentException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws FileNotFoundException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @return array
-     */
-    public function getStoresInfo(array $params = []): array
-    {
-        if (!isset($params['storesAlways'])) {
-            $params['storesAlways'] = false;
-        }
-
-        /** отсееваем магазины без названия и без местоположения */
-        $params['filter']['!ADDRESS'] = ['', null];
-        $params['filter']['!UF_LOCATION'] = ['', null];
-        $locRegion = '';
-
-        $loc = $params['filter']['UF_LOCATION'];
-        if ($this->deliveryService->getDeliveryZoneByLocation($loc) === DeliveryService::ZONE_4) {
-            $loc = '';
-            unset($params['activeStoreId']);
-            //сортировку - $params['order'] - сохраняем
-            $serviceFilter = null;
-            $params['filter'] = [];
-            /** отсееваем магазины без названия и без местоположения */
-            $params['filter']['!ADDRESS'] = ['', null];
-            $params['filter']['!UF_LOCATION'] = ['', null];
-
-            //сохраняем фильтрацию по сервисам
-            if (!empty($params['filter']['UF_SERVICES'])) {
-                $serviceFilter = $params['filter']['UF_SERVICES'];
-            }
-            if ($serviceFilter !== null) {
-                $params['filter']['UF_SERVICES'] = $serviceFilter;
-                unset($serviceFilter);
-            }
-            $storeCollection = $this->getStoreCollection($params);
-        } else {
-            /** city */
-            $storeCollection = $this->getStoreCollection($params);
-            /** region */
-            if (!empty($loc) && $params['storesAlways'] && $storeCollection->isEmpty()) {
-                $code = $params['filter']['UF_LOCATION'];
-                $codeList = json_decode($code, true);
-                if (\is_array($codeList)) {
-                    $dadataLocationAdapter = new DaDataLocationAdapter();
-                    /** @var BitrixLocation $bitrixLocation */
-                    $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
-                    $regionId = LocationService::getRegion($bitrixLocation->getRegionId());
-                } else {
-                    $regionId = LocationService::getRegion($code);
-                }
-                if ($regionId > 0) {
-                    unset($params['activeStoreId']);
-                    //сортировку - $params['order'] - сохраняем
-                    $serviceFilter = null;
-                    $params['filter'] = [];
-                    /** отсееваем магазины без названия и без местоположения */
-                    $params['filter']['!ADDRESS'] = ['', null];
-                    $params['filter']['!UF_LOCATION'] = ['', null];
-
-                    //сохраняем фильтрацию по сервисам
-                    if (!empty($params['filter']['UF_SERVICES'])) {
-                        $serviceFilter = $params['filter']['UF_SERVICES'];
-                    }
-                    if ($serviceFilter !== null) {
-                        $params['filter']['UF_SERVICES'] = $serviceFilter;
-                        unset($serviceFilter);
-                    }
-
-                    $locRegion = $regionId;
-                    $params['filter'][] = [
-                        'LOGIC'              => 'OR',
-                        'LOCATION.PARENT_ID' => $regionId,
-                        'LOCATION.REGION_ID' => $regionId,
-                    ];
-                    $storeCollection = $this->getStoreCollection($params);
-                }
-            }
-        }
-        if (!isset($params['returnActiveServices']) || !\is_bool($params['returnActiveServices'])) {
-            $params['returnActiveServices'] = false;
-        }
-        if (!isset($params['returnSort']) || !\is_bool($params['returnSort'])) {
-            $params['returnSort'] = false;
-        }
-        if (!isset($params['sortVal'])) {
-            $params['sortVal'] = '';
-        }
-        if (!isset($params['activeStoreId'])) {
-            $params['activeStoreId'] = 0;
-        }
-
-        return $this->getFormatedStoreByCollection(
-            [
-                'storeCollection'      => $storeCollection,
-                'returnActiveServices' => $params['returnActiveServices'],
-                'returnSort'           => $params['returnSort'],
-                'sortVal'              => $params['sortVal'],
-                'activeStoreId'        => $params['activeStoreId'],
-                'region_id'            => $locRegion,
-                'city_code'            => $loc,
-            ]
-        );
-    }
-
-    /**
      * Возвращает дату ближайшей для $date отгрузки со склада
      *
      * @param Store     $store
@@ -628,7 +561,7 @@ class StoreService implements LoggerAwareInterface
         $results = [];
 
         /**
-         * @var int $maxHour
+         * @var int   $maxHour
          * @var array $days
          */
         foreach ($items as $maxHour => $days) {
@@ -718,13 +651,23 @@ class StoreService implements LoggerAwareInterface
         $filter = [];
         switch ($type) {
             case static::TYPE_BASE_SHOP:
-                $filter = ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0, 'UF_IS_BASE_SHOP' => 1];
+                $filter = [
+                    'UF_IS_SHOP'      => 1,
+                    'UF_IS_SUPPLIER'  => 0,
+                    'UF_IS_BASE_SHOP' => 1,
+                ];
                 break;
             case static::TYPE_SHOP:
-                $filter = ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
+                $filter = [
+                    'UF_IS_SHOP'     => 1,
+                    'UF_IS_SUPPLIER' => 0,
+                ];
                 break;
             case static::TYPE_STORE:
-                $filter = ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
+                $filter = [
+                    'UF_IS_SHOP'     => 0,
+                    'UF_IS_SUPPLIER' => 0,
+                ];
                 break;
             case static::TYPE_ALL:
                 $filter = ['UF_IS_SUPPLIER' => 0];

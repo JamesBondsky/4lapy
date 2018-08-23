@@ -114,81 +114,50 @@ class ShopInfoService
     /**
      * @param Request $request
      *
-     * @return StoreCollection
+     * @return ShopList
+     * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws \Exception
      */
-    public function getShopsByRequest(Request $request): StoreCollection
+    public function getShopListByRequest(Request $request): ShopList
     {
-        return $this->storeService->getStores(
-            StoreService::TYPE_SHOP,
-            $this->getFilterByRequest($request),
-            $this->getOrderByRequest($request)
+        $stores = $this->getStoresByRequest($request);
+
+        $stores = $this->sortByRequest(
+            $this->filterByRequest($stores, $request),
+            $request
         );
-    }
 
-    /**
-     * @param Request $request
-     *
-     * @return array
-     * @throws ApplicationCreateException
-     */
-    protected function getFilterByRequest(Request $request): array
-    {
-        $result = [];
-        $storesSort = $request->get('stores-sort');
-        if (\is_array($storesSort) && !empty($storesSort)) {
-            $result['UF_SERVICES'] = $storesSort;
-        }
-        $code = $request->get('code');
-        if (!empty($code)) {
-            $codeList = json_decode($code, true);
-            if (\is_array($codeList)) {
-                $dadataLocationAdapter = new DaDataLocationAdapter();
-                /** @var BitrixLocation $bitrixLocation */
-                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
-                $result['UF_LOCATION'] = $bitrixLocation->getCode();
-            } else {
-                $result['UF_LOCATION'] = $code;
+        $shopList = $this->getShopList($stores);
+
+        $haveMetro = false;
+        $activeStoreId = $request->get('active_store_id', 0);
+        /** @var Shop $item */
+        foreach ($shopList->getItems() as $i => $item) {
+            if ($item->getMetro()) {
+                $haveMetro = true;
+            }
+
+            if (($activeStoreId === 'first' && $i === 0) ||
+                ($item->getId() === $activeStoreId)
+            ) {
+                $item->setActive(true);
             }
         }
 
-        $search = $request->get('search');
-        if (!empty($search)) {
-            $result[] = [
-                'LOGIC'          => 'OR',
-                '%ADDRESS'       => $search,
-                '%METRO.UF_NAME' => $search,
-            ];
-        }
+        $shopList->setSortHtml(
+            $this->getSortHtml(
+                $request->get('sort', ''),
+                $haveMetro
+            )
+        );
 
-        return $result;
-    }
+        /** @todo */
+        $locationName = 'Все города';
+        $shopList->setLocationName($locationName);
 
-    /**
-     * @param Request $request
-     *
-     * @return array
-     */
-    protected function getOrderByRequest(Request $request): array
-    {
-        $result = [];
-        $sort = $request->get('sort');
-        if (!empty($sort)) {
-            switch ($sort) {
-                case 'city':
-                    $result = ['LOCATION.NAME.NAME' => 'asc'];
-                    break;
-                case 'address':
-                    $result = ['ADDRESS' => 'asc'];
-                    break;
-                case 'metro':
-                    $result = ['METRO.UF_NAME' => 'asc'];
-                    break;
-            }
-        }
-
-        return $result;
+        return $shopList;
     }
 
     /**
@@ -281,15 +250,133 @@ class ShopInfoService
     }
 
     /**
-     * @param Store      $store
-     * @param array      $metroList
-     * @param array      $servicesList
+     * @param ShopList $shopList
+     *
+     * @return array
+     */
+    public function shopListToArray(ShopList $shopList): array
+    {
+        return $this->arrayTransformer->toArray($shopList);
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return StoreCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     */
+    protected function getStoresByRequest(Request $request)
+    {
+        $locationCode = $request->get('code', '');
+        if (!empty($locationCode)) {
+            $codeList = json_decode($locationCode, true);
+            if (\is_array($codeList)) {
+                $dadataLocationAdapter = new DaDataLocationAdapter();
+                /** @var BitrixLocation $bitrixLocation */
+                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
+                $locationCode = $bitrixLocation->getCode();
+            }
+        }
+
+        if ($locationCode) {
+            $stores = $this->storeService->getStoresByLocation($locationCode, StoreService::TYPE_SHOP);
+        } else {
+            $stores = new StoreCollection();
+        }
+
+        /**
+         * если не задано местоположение или не нашлось ни одного магазина в городе/районе/регионе
+         * возвращаем все магазины
+         */
+        if ($stores->isEmpty()) {
+            $stores = $this->storeService->getAllStores(StoreService::TYPE_SHOP);
+        }
+
+        return $stores;
+    }
+
+    /**
+     * @param StoreCollection $stores
+     * @param Request         $request
+     * @return StoreCollection
+     */
+    protected function filterByRequest(StoreCollection $stores, Request $request): StoreCollection
+    {
+        $services = (array)$request->get('stores-sort');
+        $name = $request->get('search', '');
+
+        return $stores->filter(function (Store $store) use ($services, $name) {
+            if ($services && empty(\array_intersect($services, $store->getServices()))) {
+                return false;
+            }
+
+            if ($name) {
+                if (false === mb_stripos($store->getAddress(), $name)) {
+                    return false;
+                }
+                /* @todo фильтр по метро */
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * @param StoreCollection $stores
+     * @param Request         $request
+     * @return StoreCollection
+     */
+    protected function sortByRequest(StoreCollection $stores, Request $request): StoreCollection
+    {
+        /* @todo сортировка */
+        if ($sortField = $request->get('sort', '')) {
+            $iterator = $stores->getIterator();
+            $iterator->uasort(function (Store $store1, Store $store2) use ($sortField) {
+                $result = 0;
+                switch ($sortField) {
+                    case 'city':
+
+                        break;
+                    case 'address':
+
+                        break;
+                    case 'metro':
+
+                        break;
+                }
+
+                return $result;
+            });
+        }
+
+        /*
+        switch ($sort) {
+            case 'city':
+                $order = ['LOCATION.NAME.NAME' => 'asc'];
+                break;
+            case 'address':
+                $order = ['ADDRESS' => 'asc'];
+                break;
+            case 'metro':
+                $order = ['METRO.UF_NAME' => 'asc'];
+                break;
+        }
+        */
+
+        return new StoreCollection(iterator_to_array($iterator));
+    }
+
+    /**
+     * @param Store $store
+     * @param array $metroList
+     * @param array $servicesList
      *
      * @return Shop
      * @throws EmptyAddressException
      * @throws EmptyCoordinatesException
      */
-    public function getStoreInfo(
+    protected function getStoreInfo(
         Store $store,
         array $metroList,
         array $servicesList
@@ -347,22 +434,12 @@ class ShopInfoService
     }
 
     /**
-     * @param ShopList $shopList
-     *
-     * @return array
-     */
-    public function shopListToArray(ShopList $shopList): array
-    {
-        return $this->arrayTransformer->toArray($shopList);
-    }
-
-    /**
      * @param string $sort
      * @param bool   $haveMetro
      *
      * @return string
      */
-    public function getSortHtml(string $sort, bool $haveMetro = false): string
+    protected function getSortHtml(string $sort, bool $haveMetro = false): string
     {
         $result = '<option value="" disabled="disabled">выберите</option>';
         $result .= '<option value="address" ' . ($sort === 'address' ? ' selected="selected" ' : '')

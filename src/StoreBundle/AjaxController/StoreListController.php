@@ -14,7 +14,6 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Dto\ShopList\Shop;
 use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
 use FourPaws\StoreBundle\Service\ShopInfoService;
 use Psr\Log\LoggerAwareInterface;
@@ -66,13 +65,11 @@ class StoreListController extends Controller implements LoggerAwareInterface
     public function orderAction(Request $request): JsonResponse
     {
         try {
-            $shops = $this->shopInfoService->getShopList(
-                $this->shopInfoService->getShopsByRequest($request)
-            );
-
             $result = JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $this->shopInfoService->shopListToArray($shops)
+                $this->shopInfoService->shopListToArray(
+                    $this->shopInfoService->getShopListByRequest($request)
+                )
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
@@ -93,13 +90,11 @@ class StoreListController extends Controller implements LoggerAwareInterface
     public function checkboxFilterAction(Request $request): JsonResponse
     {
         try {
-            $shops = $this->shopInfoService->getShopList(
-                $this->shopInfoService->getShopsByRequest($request)
-            );
-
             $result = JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $this->shopInfoService->shopListToArray($shops)
+                $this->shopInfoService->shopListToArray(
+                    $this->shopInfoService->getShopListByRequest($request)
+                )
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
@@ -120,13 +115,11 @@ class StoreListController extends Controller implements LoggerAwareInterface
     public function searchAction(Request $request): JsonResponse
     {
         try {
-            $shops = $this->shopInfoService->getShopList(
-                $this->shopInfoService->getShopsByRequest($request)
-            );
-
             $result = JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $this->shopInfoService->shopListToArray($shops)
+                $this->shopInfoService->shopListToArray(
+                    $this->shopInfoService->getShopListByRequest($request)
+                )
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
@@ -151,48 +144,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
                 $request->query->set('code', $request->get('codeNearest'));
             }
 
-            $shops = $this->shopInfoService->getShopsByRequest($request);
-            $shopList = $this->shopInfoService->getShopList($shops);
-
-            $haveMetro = false;
-            $activeStoreId = $request->get('active_store_id', 0);
-            /** @var Shop $item */
-            foreach ($shopList->getItems() as $i => $item) {
-                if ($item->getMetro()) {
-                    $haveMetro = true;
-                }
-
-                if (($activeStoreId === 'first' && $i === 0) ||
-                    ($item->getId() === $activeStoreId)
-                ) {
-                    $item->setActive(true);
-                }
-            }
-
-            $shopList->setSortHtml(
-                $this->shopInfoService->getSortHtml(
-                    $request->get('sort', ''),
-                    $haveMetro
-                )
-            );
-
-            /* @todo */
-            $locationName = 'Все города';
-            if (!empty($params['region_id']) || !empty($params['city_code'])) {
-                $result['location_name'] = '';//если пустое что-то пошло не так
-                $loc = null;
-                if (!empty($params['region_id'])) {
-                    $loc = LocationTable::query()->setFilter(['ID' => $params['region_id']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
-                } elseif (!empty($params['city_code'])) {
-                    $loc = LocationTable::query()->setFilter(['=CODE' => $params['city_code']])->setCacheTtl(360000)->setSelect(['LOC_NAME' => 'NAME.NAME'])->exec()->fetch();
-                }
-                if ($loc !== null && empty($result['location_name'])) {
-                    $locationName = $loc['LOC_NAME'];
-                }
-            }
-
-            $shopList->setLocationName($locationName);
-
+            $shopList = $this->shopInfoService->getShopListByRequest($request);
             $result = JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
                 $this->shopInfoService->shopListToArray($shopList)
@@ -226,7 +178,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
                 }
 
                 $result = $this->shopInfoService->shopListToArray(
-                    $this->shopInfoService->getShopList($shops, OfferQuery::getById($offerId))
+                    $this->shopInfoService->getShopList($shops, $offer)
                 );
 
                 $result = JsonSuccessResponse::createWithData(
