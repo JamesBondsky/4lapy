@@ -45,7 +45,7 @@ if ($arParams['LOAD_TYPE'] !== 'default') { ?>
         }
         ?>
     </p>
-    <p>
+    <p class="b-popup-one-click__description b-popup-one-click__description--complite">
         <a class="b-link b-link--orange b-link--inherit" href="/catalog/" title="Продолжить покупки.">Продолжить
             покупки</a>.
     </p>
