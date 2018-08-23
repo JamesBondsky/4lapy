@@ -72,12 +72,12 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
     protected function configure(): void
     {
         $this->setName('fourpaws:sale:order:manzana:delete')
-            ->setDescription('Type of deletion: all, duplicates, zero_price')
+            ->setDescription('Deletes orders from manzana')
             ->addOption(
                 static::OPT_TYPE,
                 't',
                 InputOption::VALUE_REQUIRED,
-                'Delete all orders'
+                'Type of deletion: all, duplicates, zero_price'
             )
             ->addOption(
                 static::OPT_SELECT_LIMIT,
@@ -144,8 +144,6 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
     }
 
     /**
-     * @param int $limit
-     *
      * @return Query
      * @throws ArgumentException
      * @throws SystemException
