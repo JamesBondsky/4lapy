@@ -49,7 +49,7 @@ class StoreService
              */
             $appStoreCollection = $this->appStoreService->getStores(
                 $this->appStoreService::TYPE_SHOP,
-                ...$this->getParams($storeListRequest)
+                ...$this->getParams($cloneRequest)
             );
         }
         $storeInfo = $this->appStoreService->getFullStoreInfo($appStoreCollection);
