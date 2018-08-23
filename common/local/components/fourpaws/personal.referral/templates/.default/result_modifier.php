@@ -26,7 +26,7 @@ $request                   = Application::getInstance()->getContext()->getReques
 $requestUri                = $request->getRequestUri();
 foreach ($arResult['TABS'] as $code => &$tab) {
     $uri = new Uri($requestUri);
-    $uri->deleteParams(['referral_type']);
+    $uri->deleteParams(['referral_type', 'nav-referral', 'search']);
     if($code !== 'all') {
         $uri->addParams(['referral_type' => $code]);
     }

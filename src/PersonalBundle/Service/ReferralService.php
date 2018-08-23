@@ -69,7 +69,7 @@ class ReferralService
     /** @var LoggerInterface */
     private $logger;
     /** @var bool */
-    private $haveAdd = false;
+    private $haveAddOrDelete = false;
 
     /**
      * ReferralService constructor.
@@ -146,8 +146,9 @@ class ReferralService
 
         return [
             $referrals,
-            $this->haveAdd,
+            $this->haveAddOrDelete,
             $allBonus,
+            $nav,
         ];
     }
 
@@ -180,7 +181,7 @@ class ReferralService
 
         return [
             $referrals,
-            $this->haveAdd,
+            $this->haveAddOrDelete,
             $allBonus,
         ];
     }
@@ -197,6 +198,9 @@ class ReferralService
         $referralType = (string)$request->get('referral_type');
         $search = (string)$request->get('search');
         if (!empty($search)) {
+            $referralType = 'all';
+        }
+        if(empty($referralType)){
             $referralType = 'all';
         }
 
@@ -446,7 +450,7 @@ class ReferralService
         $arReferralCards = [];
         $referralsList = [];
         $allBonus = 0;
-        $this->haveAdd = false;
+        $this->haveAddOrDelete = false;
         $success = false;
         if (!$referrals->isEmpty()) {
             $referralsList = $referrals->toArray();
@@ -506,6 +510,7 @@ class ReferralService
             }
         }
 
+        $manzanaCards = [];
         if (\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
             /** @var ManzanaReferal $item */
             foreach ($manzanaReferrals as $item) {
@@ -513,6 +518,7 @@ class ReferralService
                 if (empty($cardNumber) || $cardNumber === 0) {
                     continue;
                 }
+                $manzanaCards[]=(string)$cardNumber;
                 $allBonus += (float)$item->sumReferralBonus;
                 if (!\array_key_exists($cardNumber, $arReferralCards)) {
                     if (!$main) {
@@ -531,6 +537,18 @@ class ReferralService
                     }
                 }
                 unset($referral);
+            }
+        }
+
+        /** удаление не найденных в манзане рефераллов*/
+        foreach ($arReferralCards as $cardNumber => $arReferralCard) {
+            if (!\in_array((string)$cardNumber, $manzanaCards, true)) {
+                /** @var Referral $referral */
+                $referral =& $fullReferralsList[$arReferralCards[$cardNumber]];
+                if($this->delete($referral->getId(), $referral->getUserId())){
+                    /** ставим флаг для того чтобы перезагрузить страницу */
+                    $this->haveAddOrDelete = true;
+                }
             }
         }
         $success = true;
@@ -553,34 +571,8 @@ class ReferralService
      */
     private function getReferralsByFilter(User $curUser, array $filter): ArrayCollection
     {
-        $filter['UF_USER_ID'] = $curUserId = $curUser->getId();
-        $cacheTime = 360000;
-
-        $cache = Application::getInstance()->getCache();
-        $referrals = new ArrayCollection();
-
-        if ($cache->initCache($cacheTime,
-            serialize($filter),
-            __FUNCTION__ . '\ReferralsByFilter')) {
-            $result = $cache->getVars();
-            $referrals = $result['referrals'];
-        } elseif ($cache->startDataCache()) {
-            $tagCache = new TaggedCacheHelper(__FUNCTION__ . '\ReferralsByFilter');
-
-            $referrals = $this->referralRepository->findBy(
-                [
-                    'filter' => $filter,
-                ]
-            );
-
-            $tagCache->addTag('hlb:field:referral_user:' . $curUserId);
-
-            $tagCache->end();
-            $cache->endDataCache([
-                'referrals' => $referrals,
-            ]);
-        }
-        return $referrals;
+        $filter['UF_USER_ID'] = $curUser->getId();
+        return $this->referralRepository->findBy(['filter' => $filter]);
     }
 
     /**
@@ -662,7 +654,7 @@ class ReferralService
                 );
                 try {
                     if ($this->add($data)) {
-                        $this->haveAdd = true;
+                        $this->haveAddOrDelete = true;
                     }
                 } catch (BitrixRuntimeException $e) {
                     $this->logger->error('Ошибка добавления реферрала - ' . $e->getMessage());
@@ -687,23 +679,23 @@ class ReferralService
     private function setDataByExistManzanaItemInSite(Referral $referral, ManzanaReferal $item): Referral
     {
         $cardDate = '';
-
         $oldBonus = $referral->getBonus();
-        $bonus = (float)$item->sumReferralBonus;
+        $bonus = $item->getBonus();
         $referral->setBonus($bonus);
         $lastModerate = $referral->isModerate();
         $lastCancelModerate = $referral->isCancelModerate();
         $referral->setModerate($item->isModerated());
         $referral->setCancelModerate($item->isCancelModerate());
 
-        if (!empty($cardDate) || $lastModerate !== $referral->isModerate()
-            || $lastCancelModerate !== $referral->isCancelModerate() || $oldBonus !== $bonus) {
+        if ($oldBonus !== $bonus || !empty($cardDate) || $lastModerate !== $referral->isModerate()
+                    || $lastCancelModerate !== $referral->isCancelModerate()) {
             $data = [
                 'ID'         => $referral->getId(),
                 'UF_CARD'    => $referral->getCard(),
                 'UF_USER_ID' => $referral->getUserId(),
             ];
 
+            /** @noinspection NotOptimalIfConditionsInspection */
             if($oldBonus !== $bonus){
                 $data['UF_BONUS'] = $bonus;
             }

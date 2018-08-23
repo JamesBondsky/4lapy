@@ -2,6 +2,8 @@
 
 namespace FourPaws\UserBundle\Repository;
 
+use Bitrix\Main\DB\Result;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\UserTable;
@@ -117,6 +119,10 @@ class UserRepository
      *
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     *
      * @return null|User
      */
     public function find(int $id): ?User
@@ -127,17 +133,23 @@ class UserRepository
         return \reset($result) ?: null;
     }
 
+    /** @todo UserCollection */
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
-     * @param array    $criteria
-     * @param array    $orderBy
+     * @param array $criteria
+     * @param array $orderBy
      * @param null|int $limit
      * @param null|int $offset
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      *
      * @return User[]
      */
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
+        /** @var Result $result */
         $result = UserTable::query()
             ->setSelect(['*', 'UF_*'])
             ->setFilter($criteria)
@@ -145,46 +157,90 @@ class UserRepository
             ->setLimit($limit)
             ->setOffset($offset)
             ->exec();
-        if (0 === $result->getSelectedRowsCount()) {
-            return [];
+
+        return $this->collectionFactory($result);
+    }
+
+    /**
+     * @param Result $DBResult
+     *
+     * @return array
+     */
+    private function collectionFactory(Result $DBResult): array
+    {
+        /** @todo UserCollection */
+        $result = [];
+        if ($DBResult->getSelectedRowsCount() > 0) {
+            /**
+             * todo change group name to constant
+             */
+            $users = $this->arrayTransformer->fromArray(
+                $DBResult->fetchAll(),
+                sprintf('array<%s>', User::class),
+                DeserializationContext::create()->setGroups(['read'])
+            );
+
+            $result = array_map(
+                function (User $user) {
+                    /**
+                     * @var Collection|VirtualProxyInterface $groups
+                     */
+                    $groups = $this->lazyCallbackValueLoader->load(
+                        ArrayCollection::class,
+                        function () use ($user) {
+                            return $this->getUserGroups($user->getId());
+                        }
+                    );
+                    $user->setGroups($groups);
+
+                    return $user;
+                },
+                $users ?: []
+            );
         }
+        return $result;
+    }
 
-        /**
-         * todo change group name to constant
-         */
-        $users = $this->arrayTransformer->fromArray(
-            $result->fetchAll(),
-            sprintf('array<%s>', User::class),
-            DeserializationContext::create()->setGroups(['read'])
-        );
+    /**
+     * Получить пользователей по коду их группы
+     *
+     * @param string|array $groupCode - склеиваются по ИЛИ
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     *
+     * @return array
+     */
+    public function findByGroupCode($groupCode): array
+    {
+        $result = UserTable::getList([
+            'select' => ['*', 'UF_*'],
+            'filter' => ['USER_GROUP.GROUP.STRING_ID' => (array)$groupCode],
+            'runtime' => [
+                new ReferenceField(
+                    'USER_GROUP',
+                    UserGroupTable::class,
+                    ['=this.ID' => 'ref.USER_ID']
+                ),
+            ],
 
-        return array_map(
-            function (User $user) {
-                /**
-                 * @var Collection|VirtualProxyInterface $groups
-                 */
-                $groups = $this->lazyCallbackValueLoader->load(
-                    ArrayCollection::class,
-                    function () use ($user) {
-                        return $this->getUserGroups($user->getId());
-                    }
-                );
-                $user->setGroups($groups);
+        ]);
 
-                return $user;
-            },
-            $users ?: []
-        );
+        return $this->collectionFactory($result);
     }
 
     /**
      * @param string $rawLogin
      *
-     * @param bool   $onlyActive
+     * @param bool $onlyActive
      *
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
      * @throws WrongPhoneNumberException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @return int
      */
     public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true): int
@@ -195,11 +251,14 @@ class UserRepository
     /**
      * @param string $rawLogin
      *
-     * @param bool   $onlyActive
+     * @param bool $onlyActive
      *
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
      * @throws WrongPhoneNumberException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @return string
      */
     public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true): string
@@ -210,6 +269,9 @@ class UserRepository
     /**
      * @param string $email
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @return User[]
      */
     public function findOneByEmail(string $email): array
@@ -225,6 +287,9 @@ class UserRepository
     /**
      * @param string $phone
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @return User[]
      */
     public function findOneByPhone(string $phone): array
@@ -240,9 +305,12 @@ class UserRepository
 
     /**
      * @param string $rawLogin
-     * @param bool   $onlyActive
+     * @param bool $onlyActive
      *
      * @throws TooManyUserFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @return bool
      */
     public function isExist(string $rawLogin, bool $onlyActive = true): bool
@@ -385,6 +453,7 @@ class UserRepository
      *
      * @return array
      */
+    // @todo не уверен что это правильное место для размещения этого метода создам такойже в User
     public function getUserGroupsIds(int $id): array
     {
         return $this->getUserGroups($id)->map(function (Group $group) {
@@ -395,6 +464,9 @@ class UserRepository
     /**
      * @param array $params
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @return array
      */
     public function havePhoneAndEmailByUsers(array $params): array
@@ -526,11 +598,14 @@ class UserRepository
     /**
      * @param string $rawLogin
      *
-     * @param bool   $onlyActive
+     * @param bool $onlyActive
      *
-     * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
+     * @throws UsernameNotFoundException
      * @throws WrongPhoneNumberException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @return array
      */
     protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true): array
