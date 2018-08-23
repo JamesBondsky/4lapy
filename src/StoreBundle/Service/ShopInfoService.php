@@ -124,9 +124,10 @@ class ShopInfoService
     public function getShopListByRequest(Request $request): ShopList
     {
         $storeSearchResult = $this->getStoresByRequest($request);
+        [, $metroList] = $this->storeService->getFullStoreInfo($storeSearchResult->getStores());
 
         $stores = $this->sortByRequest(
-            $this->filterByRequest($storeSearchResult->getStores(), $request),
+            $this->filterByRequest($storeSearchResult->getStores(), $request, $metroList),
             $request
         );
 
@@ -154,18 +155,25 @@ class ShopInfoService
             )
         );
 
-        $shopList->setLocationName($storeSearchResult->getLocationName());
+        $shopList
+            ->setLocationName($storeSearchResult->getLocationName())
+            ->setHideTab($shopList->getItems()->isEmpty());
 
         return $shopList;
     }
 
     /**
      * @param StoreCollection $stores
-     * @param Offer           $offer
+     * @param Offer|null      $offer
      *
      * @return ShopList
+     * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws SystemException
+     * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
      * @throws \Exception
      */
     public function getShopList(StoreCollection $stores, Offer $offer = null): ShopList
@@ -297,72 +305,62 @@ class ShopInfoService
     /**
      * @param StoreCollection $stores
      * @param Request         $request
+     * @param array           $metroList
+     *
      * @return StoreCollection
      */
-    protected function filterByRequest(StoreCollection $stores, Request $request): StoreCollection
+    protected function filterByRequest(StoreCollection $stores, Request $request, array $metroList = []): StoreCollection
     {
         $services = (array)$request->get('stores-sort');
         $name = $request->get('search', '');
-
-        return $stores->filter(function (Store $store) use ($services, $name) {
+        $result = $stores->filter(function (Store $store) use ($services, $name, $metroList) {
             if ($services && empty(\array_intersect($services, $store->getServices()))) {
                 return false;
             }
 
             if ($name) {
-                if (false === mb_stripos($store->getAddress(), $name)) {
-                    return false;
+                $result = false;
+                $result |= mb_stripos($store->getAddress(), $name) !== false;
+                if ($metroList && $store->getMetro()) {
+                    $result |= mb_stripos($metroList[$store->getMetro()]['UF_NAME'], $name) !== false;
                 }
-                /* @todo фильтр по метро */
+                return $result;
             }
 
             return true;
         });
+
+        return $result;
     }
 
     /**
      * @param StoreCollection $stores
      * @param Request         $request
+     * @param array           $metroList
+     *
      * @return StoreCollection
      */
-    protected function sortByRequest(StoreCollection $stores, Request $request): StoreCollection
+    protected function sortByRequest(StoreCollection $stores, Request $request, array $metroList = []): StoreCollection
     {
-        /* @todo сортировка */
         if ($sortField = $request->get('sort', '')) {
             $iterator = $stores->getIterator();
-            $iterator->uasort(function (Store $store1, Store $store2) use ($sortField) {
+            $iterator->uasort(function (Store $store1, Store $store2) use ($sortField, $metroList) {
                 $result = 0;
                 switch ($sortField) {
-                    case 'city':
-
-                        break;
                     case 'address':
-
+                        $result = $store1->getAddress() <=> $store2->getAddress();
                         break;
                     case 'metro':
-
+                        $result = $metroList[$store1->getMetro()] <=> $store2->getMetro();
                         break;
                 }
 
                 return $result;
             });
+            $stores = new StoreCollection(iterator_to_array($iterator));
         }
 
-        /*
-        switch ($sort) {
-            case 'city':
-                $order = ['LOCATION.NAME.NAME' => 'asc'];
-                break;
-            case 'address':
-                $order = ['ADDRESS' => 'asc'];
-                break;
-            case 'metro':
-                $order = ['METRO.UF_NAME' => 'asc'];
-                break;
-        }
-        */
-
-        return new StoreCollection(iterator_to_array($iterator));
+        return $stores;
     }
 
     /**
