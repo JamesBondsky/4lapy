@@ -49,6 +49,7 @@ if ($arParams['LOAD_TYPE'] !== 'default') { ?>
         <a class="b-link b-link--orange b-link--inherit" href="/catalog/" title="Продолжить покупки.">Продолжить
             покупки</a>.
     </p>
+    <br><br>
     <?php
 
     if ($arParams['LOAD_TYPE'] !== 'default') {
