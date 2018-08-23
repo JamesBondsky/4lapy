@@ -61,8 +61,8 @@ class StoreService
     protected function getParams(StoreListRequest $storeListRequest)
     {
         return [
-            'filter' => $this->getFilter($storeListRequest),
-            'order'  => $this->getOrder($storeListRequest),
+            $this->getFilter($storeListRequest),
+            $this->getOrder($storeListRequest),
         ];
     }
 
