@@ -299,7 +299,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $orderType = 'delay';
         }
 
-        $partsFull = $this->getItemData($fullResult->getStockResult());
         $partsDelayed = $this->getItemData($delayed);
 
         /**
@@ -349,7 +348,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             'order'             => $orderType,
             'parts_available'   => $partsAvailable,
             'parts_delayed'     => $partsDelayed,
-            'full'              => $partsFull,
             'price'             => WordHelper::numberFormat($price),
             'full_price'        => WordHelper::numberFormat($fullResult->getStockResult()->getPrice()),
             /* @todo поменять местами gps_s и gps_n */
