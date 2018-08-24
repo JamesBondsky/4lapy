@@ -24,6 +24,7 @@ use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Enum\OrderAvailability;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Dto\ShopList\Service;
 use FourPaws\StoreBundle\Dto\ShopList\Shop;
@@ -218,7 +219,12 @@ class ShopInfoService
                                 ]
                             )
                         )
-                        ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString));
+                        ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString))
+                        ->setAvailability(
+                            $stockResultByStore->getType() === StockResult::TYPE_AVAILABLE
+                                ? OrderAvailability::AVAILABLE
+                                : OrderAvailability::DELAYED
+                        );
                 }
             } catch (PickupUnavailableException|EmptyCoordinatesException|EmptyAddressException $e) {
                 continue;

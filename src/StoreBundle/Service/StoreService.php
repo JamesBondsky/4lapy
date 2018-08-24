@@ -84,7 +84,6 @@ class StoreService implements LoggerAwareInterface
         $this->setLogger(LoggerFactory::create('StoreService'));
     }
 
-
     /**
      * @param string $type
      * @param array  $filter
@@ -328,6 +327,25 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $stores ?? new StoreCollection();
+    }
+
+    /**
+     * @param string $locationCode
+     *
+     * @return StoreCollection
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getShopsByLocation(string $locationCode): StoreCollection
+    {
+        if ($locationCode === LocationService::LOCATION_CODE_MOSCOW) {
+            $storeSearchResult = $this->getLocalStores($locationCode, static::TYPE_SHOP);
+        } else {
+            $storeSearchResult = $this->getRegionalStores($locationCode, static::TYPE_SHOP);
+        }
+
+        return $storeSearchResult->getStores();
     }
 
     /**

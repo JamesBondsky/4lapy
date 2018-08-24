@@ -122,6 +122,16 @@ class Shop
      */
     protected $pickupDate;
 
+
+    /**
+     * @Serializer\SerializedName("order")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var string
+     */
+    protected $availability;
+
     /**
      * @Serializer\SerializedName("amount")
      * @Serializer\Type("string")
@@ -395,6 +405,25 @@ class Shop
     public function setPickupDate(string $pickupDate): Shop
     {
         $this->pickupDate = $pickupDate;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAvailability(): string
+    {
+        return $this->availability;
+    }
+
+    /**
+     * @param string $availability
+     * @return Shop
+     */
+    public function setAvailability(string $availability): Shop
+    {
+        $this->availability = $availability;
 
         return $this;
     }
