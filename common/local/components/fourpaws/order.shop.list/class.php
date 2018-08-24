@@ -25,6 +25,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -33,6 +34,7 @@ use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Enum\StoreLocationType;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -78,6 +80,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     protected $pickup;
 
     /**
+     * @var LocationService
+     */
+    protected $locationService;
+
+    /**
      * FourPawsOrderShopListComponent constructor.
      *
      * @param null $component
@@ -97,6 +104,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $this->orderSplitService = $serviceContainer->get(OrderSplitService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->paymentService = $serviceContainer->get(PaymentService::class);
+        $this->locationService = $serviceContainer->get('location.service');
     }
 
     /**
@@ -154,17 +162,23 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         $stores = $pickup->getBestShops();
+
         if (!$stores->isEmpty()) {
             $avgGpsN = 0;
             $avgGpsS = 0;
-
+            $locationCode = $this->locationService->getCurrentLocation();
+            $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
             $metroList = $this->getMetroInfo($stores);
 
             /** @var Store $store */
             $shopCount = 0;
             foreach ($stores as $store) {
                 try {
-                    $result['items'][] = $this->getShopData($pickup, $store, $metroList, false);
+                    $item = $this->getShopData($pickup, $store, $metroList, false);
+                    $item['location_type'] = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
+                        ? StoreLocationType::SUBREGIONAL
+                        : StoreLocationType::REGIONAL;
+                    $result['items'][] = $item;
                     $shopCount++;
                     $avgGpsN += $store->getLongitude();
                     $avgGpsS += $store->getLatitude();
@@ -207,12 +221,18 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $pickup = $pickup instanceof PickupResultInterface ? $pickup : $this->getPickupResult();
         if ($pickup) {
             $stores = $pickup->getBestShops();
+            $locationCode = $this->locationService->getCurrentLocation();
+            $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
             $metroList = $this->getMetroInfo($stores);
             /** @var Store $store */
             foreach ($stores as $store) {
                 try {
                     if ($store->getXmlId() === $xmlId) {
-                        $result['items'][] = $this->getShopData($pickup, $store, $metroList, true);
+                        $item = $this->getShopData($pickup, $store, $metroList, true);
+                        $item['location_type'] = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
+                            ? StoreLocationType::SUBREGIONAL
+                            : StoreLocationType::REGIONAL;
+                        $result['items'][] = $item;
                     }
                 } catch (DeliveryNotAvailableException $e) {
                 }
@@ -223,6 +243,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
+     * @todo перевести на DTO
      * @param PickupResultInterface $pickup
      * @param Store                 $store
      * @param array                 $metroList
