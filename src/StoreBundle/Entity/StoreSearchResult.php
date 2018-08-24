@@ -10,11 +10,6 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 
 class StoreSearchResult
 {
-    public const TYPE_LOCAL = 'local';
-    public const TYPE_SUBREGIONAL = 'subregional';
-    public const TYPE_REGIONAL = 'regional';
-    public const TYPE_ALL = 'all';
-
     /**
      * @var string
      */

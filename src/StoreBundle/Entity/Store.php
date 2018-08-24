@@ -807,7 +807,7 @@ class Store extends Base
      */
     public function getSubRegion(): string
     {
-        return $this->subregion;
+        return $this->subregion ?? '';
     }
 
     /**

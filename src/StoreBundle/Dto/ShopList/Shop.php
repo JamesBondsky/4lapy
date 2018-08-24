@@ -122,7 +122,6 @@ class Shop
      */
     protected $pickupDate;
 
-
     /**
      * @Serializer\SerializedName("order")
      * @Serializer\Type("string")
@@ -140,6 +139,15 @@ class Shop
      * @var string
      */
     protected $availableAmount;
+
+    /**
+     * @Serializer\SerializedName("location_type")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var string
+     */
+    protected $locationType;
 
     /**
      * @Serializer\SerializedName("active")
@@ -444,6 +452,25 @@ class Shop
     public function setAvailableAmount(string $availableAmount): Shop
     {
         $this->availableAmount = $availableAmount;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLocationType(): string
+    {
+        return $this->locationType;
+    }
+
+    /**
+     * @param string $locationType
+     * @return Shop
+     */
+    public function setLocationType(string $locationType): Shop
+    {
+        $this->locationType = $locationType;
 
         return $this;
     }

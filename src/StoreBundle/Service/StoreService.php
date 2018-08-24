@@ -17,6 +17,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\StoreSearchResult;
+use FourPaws\StoreBundle\Enum\StoreLocationType;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 use Psr\Log\LoggerAwareInterface;
@@ -287,7 +288,7 @@ class StoreService implements LoggerAwareInterface
         }
 
         return (new StoreSearchResult())
-            ->setType(StoreSearchResult::TYPE_ALL)
+            ->setType(StoreLocationType::ALL)
             ->setStores($stores)
             ->setLocationName('Все города');
     }
@@ -388,7 +389,7 @@ class StoreService implements LoggerAwareInterface
         }
 
         return (new StoreSearchResult())
-            ->setType(StoreSearchResult::TYPE_LOCAL)
+            ->setType(StoreLocationType::LOCAL)
             ->setLocationName($location['NAME'] ?? '')
             ->setStores($stores ?? new StoreCollection());
     }
@@ -435,7 +436,7 @@ class StoreService implements LoggerAwareInterface
         return (new StoreSearchResult())
             ->setStores($stores ?? new StoreCollection())
             ->setLocationName($subregion['NAME'] ?? '')
-            ->setType(StoreSearchResult::TYPE_SUBREGIONAL);
+            ->setType(StoreLocationType::SUBREGIONAL);
     }
 
     /**
@@ -479,7 +480,7 @@ class StoreService implements LoggerAwareInterface
 
         return (new StoreSearchResult())
             ->setStores($stores ?? new StoreCollection())
-            ->setType(StoreSearchResult::TYPE_REGIONAL)
+            ->setType(StoreLocationType::REGIONAL)
             ->setLocationName($region['NAME'] ?? '');
     }
 

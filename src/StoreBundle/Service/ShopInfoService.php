@@ -31,6 +31,7 @@ use FourPaws\StoreBundle\Dto\ShopList\Shop;
 use FourPaws\StoreBundle\Dto\ShopList\ShopList;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\StoreSearchResult;
+use FourPaws\StoreBundle\Enum\StoreLocationType;
 use FourPaws\StoreBundle\Exception\EmptyAddressException;
 use FourPaws\StoreBundle\Exception\EmptyCoordinatesException;
 use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
@@ -125,14 +126,17 @@ class ShopInfoService
     public function getShopListByRequest(Request $request): ShopList
     {
         $storeSearchResult = $this->getStoresByRequest($request);
-        [, $metroList] = $this->storeService->getFullStoreInfo($storeSearchResult->getStores());
+        [
+            ,
+            $metroList,
+        ] = $this->storeService->getFullStoreInfo($storeSearchResult->getStores());
 
         $stores = $this->sortByRequest(
             $this->filterByRequest($storeSearchResult->getStores(), $request, $metroList),
             $request
         );
 
-        $shopList = $this->getShopList($stores);
+        $shopList = $this->getShopList($stores, $this->getLocationByRequest($request));
 
         $haveMetro = false;
         $activeStoreId = $request->get('active_store_id', 0);
@@ -165,6 +169,7 @@ class ShopInfoService
 
     /**
      * @param StoreCollection $stores
+     * @param string          $locationCode
      * @param Offer|null      $offer
      *
      * @return ShopList
@@ -174,10 +179,12 @@ class ShopInfoService
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Exception
      */
-    public function getShopList(StoreCollection $stores, Offer $offer = null): ShopList
+    public function getShopList(StoreCollection $stores, string $locationCode, Offer $offer = null): ShopList
     {
         [
             $servicesList,
@@ -188,6 +195,8 @@ class ShopInfoService
         $avgLongitude = 0;
         $shops = new ArrayCollection();
         $services = new ArrayCollection();
+
+        $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
 
         /** @var Store $store */
         foreach ($stores as $store) {
@@ -224,6 +233,10 @@ class ShopInfoService
                             $stockResultByStore->getType() === StockResult::TYPE_AVAILABLE
                                 ? OrderAvailability::AVAILABLE
                                 : OrderAvailability::DELAYED
+                        )->setLocationType(
+                            (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
+                                ? StoreLocationType::SUBREGIONAL
+                                : StoreLocationType::REGIONAL
                         );
                 }
             } catch (PickupUnavailableException|EmptyCoordinatesException|EmptyAddressException $e) {
@@ -260,6 +273,29 @@ class ShopInfoService
             ->setServices($services);
 
         return $shopList;
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getLocationByRequest(Request $request): string
+    {
+        if ($locationCode = $request->get('code', '')) {
+            $codeList = json_decode($locationCode, true);
+            if (\is_array($codeList)) {
+                $dadataLocationAdapter = new DaDataLocationAdapter();
+                /** @var BitrixLocation $bitrixLocation */
+                $bitrixLocation = $dadataLocationAdapter->convertFromArray($codeList);
+                $locationCode = $bitrixLocation->getCode();
+            }
+        } else {
+            $locationCode = $this->locationService->getCurrentLocation();
+        }
+
+        return $locationCode;
     }
 
     /**
@@ -330,6 +366,7 @@ class ShopInfoService
                 if ($metroList && $store->getMetro()) {
                     $result |= mb_stripos($metroList[$store->getMetro()]['UF_NAME'], $name) !== false;
                 }
+
                 return $result;
             }
 

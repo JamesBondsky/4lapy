@@ -23,6 +23,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
+ * @todo ParamConverter
  * Class StoreListController
  *
  * @package FourPaws\UserBundle\Controller
@@ -178,7 +179,11 @@ class StoreListController extends Controller implements LoggerAwareInterface
                 }
 
                 $result = $this->shopInfoService->shopListToArray(
-                    $this->shopInfoService->getShopList($shops, $offer)
+                    $this->shopInfoService->getShopList(
+                        $shops,
+                        $this->shopInfoService->getLocationByRequest($request),
+                        $offer
+                    )
                 );
 
                 $result = JsonSuccessResponse::createWithData(
