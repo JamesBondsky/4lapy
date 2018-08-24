@@ -441,6 +441,8 @@ class BasketComponent extends CBitrixComponent
                         $basketItem->getBasketCode() !== $tItem->getBasketCode()
                         &&
                         !$this->arResult['ROWS_MAP'][$tItem->getBasketCode()]
+                        &&
+                        !isset($tItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])
                     ) {
                         $this->arResult['ROWS_MAP'][$basketItem->getBasketCode()]['ROWS'][] = $tItem->getBasketCode();
                         $this->arResult['SKIP_ROWS'][] = $tItem->getBasketCode();

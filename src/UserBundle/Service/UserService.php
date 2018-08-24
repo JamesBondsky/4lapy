@@ -94,7 +94,8 @@ class UserService implements
     public function __construct(
         UserRepository $userRepository,
         LocationService $locationService
-    ) {
+    )
+    {
         /**
          * todo move to factory service
          */
@@ -135,6 +136,7 @@ class UserService implements
 
             throw new InvalidCredentialException($result['MESSAGE']);
         }
+
         return false;
     }
 
@@ -149,6 +151,7 @@ class UserService implements
 
             return !$this->isAuthorized();
         }
+
         return false;
     }
 
@@ -160,6 +163,7 @@ class UserService implements
         if ($this->bitrixUserService !== null) {
             return $this->bitrixUserService->IsAuthorized();
         }
+
         return false;
     }
 
@@ -175,14 +179,14 @@ class UserService implements
 
             return $this->isAuthorized();
         }
+
         return false;
     }
 
     /**
      * @throws NotAuthorizedException
      * @throws UsernameNotFoundException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
+     *
      * @return User
      */
     public function getCurrentUser(): User
@@ -191,10 +195,17 @@ class UserService implements
         if ($userId <= 0) {
             throw new NotAuthorizedException('не авторизованы');
         }
-        $user = $this->userRepository->find($userId);
+
+        try {
+            $user = $this->userRepository->find($userId);
+        } catch (\Exception $e) {
+            $user = null;
+        }
+
         if ($user === null) {
             throw new UsernameNotFoundException('пользователь c id - ' . $userId . ' не найден');
         }
+
         return $user;
     }
 
@@ -237,12 +248,14 @@ class UserService implements
      */
     public function register(User $user): User
     {
-        $validationResult = $this->userRepository->getValidator()->validate($user, null, ['create']);
+        $validationResult = $this->userRepository->getValidator()
+            ->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
 
-        Application::getConnection()->startTransaction();
+        Application::getConnection()
+            ->startTransaction();
 
         $session = $_SESSION;
         try {
@@ -262,7 +275,8 @@ class UserService implements
             }
             /** отправка письма происходи на событие after в этот момент */
         } catch (\Exception $e) {
-            Application::getConnection()->rollbackTransaction();
+            Application::getConnection()
+                ->rollbackTransaction();
             $_SESSION = $session;
             throw new BitrixRuntimeException($e->getMessage(), $e->getCode());
         }
@@ -271,7 +285,8 @@ class UserService implements
         $id = (int)$result['ID'];
 
         if ($id <= 0) {
-            Application::getConnection()->rollbackTransaction();
+            Application::getConnection()
+                ->rollbackTransaction();
             $_SESSION = $session;
             if ($this->bitrixUserService !== null) {
                 throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
@@ -284,18 +299,21 @@ class UserService implements
             ->setId($id)
             ->setActive(true);
         if (!$this->userRepository->update($user)) {
-            Application::getConnection()->rollbackTransaction();
+            Application::getConnection()
+                ->rollbackTransaction();
             $_SESSION = $session;
             throw new RuntimeException('Cant update registred user');
         }
 
         $registeredUser = $this->userRepository->find($id);
         if (!($registeredUser instanceof User)) {
-            Application::getConnection()->rollbackTransaction();
+            Application::getConnection()
+                ->rollbackTransaction();
             $_SESSION = $session;
             throw new RuntimeException('Cant fetch registred user');
         }
-        Application::getConnection()->commitTransaction();
+        Application::getConnection()
+            ->commitTransaction();
 
         return $registeredUser;
     }
@@ -385,7 +403,10 @@ class UserService implements
     public function setClientPersonalDataByCurUser(Client $client, User $user = null): void
     {
         if (!($user instanceof User)) {
-            $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
+            $user = App::getInstance()
+                ->getContainer()
+                ->get(CurrentUserProviderInterface::class)
+                ->getCurrentUser();
         }
 
         $client->birthDate = $user->getManzanaBirthday();
@@ -558,7 +579,8 @@ class UserService implements
     {
         if ($this->isAuthorized()) {
             try {
-                return $this->getCurrentUser()->getDiscount();
+                return $this->getCurrentUser()
+                    ->getDiscount();
             } catch (NotAuthorizedException $e) {
                 /** показываем базовую скидку если не авторизованы */
             } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
@@ -566,6 +588,7 @@ class UserService implements
                 $logger->error('Ошибка парамеров - ' . $e->getMessage());
             }
         }
+
         return static::BASE_DISCOUNT;
     }
 
@@ -590,28 +613,32 @@ class UserService implements
             try {
                 $userBonus = BonusService::getManzanaBonusInfo($user);
             } catch (ManzanaServiceContactSearchMoreOneException $e) {
-                $this->log()->info(
-                    \sprintf(
-                        'Найдено больше одного пользователя в манзане по телефону %s',
-                        $user->getPersonalPhone()
-                    )
-                );
+                $this->log()
+                    ->info(
+                        \sprintf(
+                            'Найдено больше одного пользователя в манзане по телефону %s',
+                            $user->getPersonalPhone()
+                        )
+                    );
             } catch (ManzanaServiceContactSearchNullException $e) {
-                $this->log()->info(
-                    \sprintf(
-                        'Не найдено пользователей в манзане по телефону %s',
-                        $user->getPersonalPhone()
-                    )
-                );
+                $this->log()
+                    ->info(
+                        \sprintf(
+                            'Не найдено пользователей в манзане по телефону %s',
+                            $user->getPersonalPhone()
+                        )
+                    );
             } catch (EmptyPhoneException $e) {
-                $this->log()->info('Нет телефона у пользователя - ' . $user->getId());
+                $this->log()
+                    ->info('Нет телефона у пользователя - ' . $user->getId());
             } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException | ConstraintDefinitionException | InvalidIdentifierException | ManzanaServiceException $e) {
-                $this->log()->error(
-                    \sprintf(
-                        'Ошибка получения процента бонуса %s',
-                        $e->getMessage()
-                    )
-                );
+                $this->log()
+                    ->error(
+                        \sprintf(
+                            'Ошибка получения процента бонуса %s',
+                            $e->getMessage()
+                        )
+                    );
             } catch (NotAuthorizedException $e) {
                 return static::BASE_DISCOUNT;
             }
@@ -669,15 +696,17 @@ class UserService implements
 
         if ($user->getDiscount() !== $newDiscount) {
             try {
-                $this->getUserRepository()->updateData($user->getId(), ['UF_DISCOUNT' => $newDiscount]);
+                $this->getUserRepository()
+                    ->updateData($user->getId(), ['UF_DISCOUNT' => $newDiscount]);
             } catch (BitrixRuntimeException $e) {
-                $this->log()->error(
-                    \sprintf(
-                        'User #%d update error: %s',
-                        $user->getId(),
-                        $e->getMessage()
-                    )
-                );
+                $this->log()
+                    ->error(
+                        \sprintf(
+                            'User #%d update error: %s',
+                            $user->getId(),
+                            $e->getMessage()
+                        )
+                    );
             }
         }
     }
@@ -693,29 +722,40 @@ class UserService implements
             return false;
         }
         try {
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+            $manzanaService = App::getInstance()
+                ->getContainer()
+                ->get('manzana.service');
         } catch (ApplicationCreateException $e) {
-            $this->log()->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
+            $this->log()
+                ->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
+
             return false;
         }
         try {
             $contact = $manzanaService->getContactByUser($user);
         } catch (ApplicationCreateException $e) {
             /** не должно сюда доходить, так как передаем объект юзера */
-            $this->log()->error('ошибка загрузки сервиса', $e->getTrace());
+            $this->log()
+                ->error('ошибка загрузки сервиса', $e->getTrace());
+
             return false;
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $this->log()->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+            $this->log()
+                ->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+
             return false;
         } catch (ManzanaServiceContactSearchNullException $e) {
             /** ошибка нам не нужна */
             return false;
         } catch (ManzanaServiceException $e) {
-            $this->log()->error('ошибка манзаны', $e->getTrace());
+            $this->log()
+                ->error('ошибка манзаны', $e->getTrace());
+
             return false;
         }
         $groupsList = [];
-        $groups = $user->getGroups()->toArray();
+        $groups = $user->getGroups()
+            ->toArray();
         /** @var Group $group */
         foreach ($groups as $group) {
             $groupsList[$group->getCode()] = $group->getId();
@@ -723,15 +763,24 @@ class UserService implements
         if ($contact->isOpt() && !$user->isOpt()) {
             /** установка оптовика */
             try {
-                $groupsList[] = GroupTable::query()->setFilter(['STRING_ID' => UserGroup::OPT_CODE])->setLimit(1)->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+                $groupsList[] = GroupTable::query()
+                                    ->setFilter(['STRING_ID' => UserGroup::OPT_CODE])
+                                    ->setLimit(1)
+                                    ->setSelect(['ID'])
+                                    ->setCacheTtl(360000)
+                                    ->exec()
+                                    ->fetch()['ID'];
             } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
-                $this->log()->error('ошибка получения группы пользователя', $e->getTrace());
+                $this->log()
+                    ->error('ошибка получения группы пользователя', $e->getTrace());
+
                 return false;
             }
             \CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
             TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
+
             return true;
         }
         if (!$contact->isOpt() && $user->isOpt()) {
@@ -741,8 +790,10 @@ class UserService implements
             $this->logout();
             $this->authorize($user->getId());
             TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
+
             return true;
         }
+
         return false;
     }
 
@@ -757,41 +808,58 @@ class UserService implements
             return false;
         }
         try {
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+            $manzanaService = App::getInstance()
+                ->getContainer()
+                ->get('manzana.service');
         } catch (ApplicationCreateException $e) {
-            $this->log()->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
+            $this->log()
+                ->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
+
             return false;
         }
         try {
             $contact = $manzanaService->getContactByUser($user);
         } catch (ApplicationCreateException $e) {
             /** не должно сюда доходить, так как передаем объект юзера */
-            $this->log()->error('ошибка загрузки сервиса', $e->getTrace());
+            $this->log()
+                ->error('ошибка загрузки сервиса', $e->getTrace());
+
             return false;
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $this->log()->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+            $this->log()
+                ->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+
             return false;
         } catch (ManzanaServiceContactSearchNullException $e) {
             /** ошибка нам не нужна */
             return false;
         } catch (ManzanaServiceException $e) {
-            $this->log()->error('ошибка манзаны', $e->getTrace());
+            $this->log()
+                ->error('ошибка манзаны', $e->getTrace());
+
             return false;
         }
         try {
             $manzanaService->updateUserCardByClient($contact);
+
             return true;
         } catch (ManzanaCardIsNotFound $e) {
-            $this->log()->info('активных карт не найдено', $e->getTrace());
+            $this->log()
+                ->info('активных карт не найдено', $e->getTrace());
         } catch (TooManyUserFoundException $e) {
-            $this->log()->info('найдено больше одного пользователя', $e->getTrace());
+            $this->log()
+                ->info('найдено больше одного пользователя', $e->getTrace());
         } catch (UsernameNotFoundException $e) {
-            $this->log()->info('пользователей в манзане не найдено по телефону', $e->getTrace());
+            $this->log()
+                ->info('пользователей в манзане не найдено по телефону', $e->getTrace());
         } catch (TooManyActiveCardFound $e) {
-            $this->log()->info('найдено больше одной активной карты', $e->getTrace());
+            $this->log()
+                ->info('найдено больше одной активной карты', $e->getTrace());
         } catch (ManzanaServiceException|\Exception $e) {
-            $this->log()->error('ошибка манзаны', $e->getTrace());
+            $this->log()
+                ->error('ошибка манзаны', $e->getTrace());
         }
+
         return false;
     }
 
@@ -878,9 +946,10 @@ class UserService implements
 
     /**
      * @todo для того чтобы заработал перед отправкой письма, необходимо сгенерирвоать и передать хеш в пиьсмо с типом auth_by_hash
-     * @param string $hash
-     * @param string $email
-     * @param string $type
+     *
+     * @param string             $hash
+     * @param string             $email
+     * @param string             $type
      * @param ConfirmCodeService $confirmService
      *
      * @return bool
@@ -892,12 +961,14 @@ class UserService implements
      * @throws NotFoundConfirmedCodeException
      * @throws AuthException
      */
-    public function authByHash(string $hash, string $email, string $type='auth_by_hash', ConfirmCodeService $confirmService=null): bool
+    public function authByHash(string $hash, string $email, string $type = 'auth_by_hash', ConfirmCodeService $confirmService = null): bool
     {
         if (!empty($email) && !empty($hash)) {
             /** @var ConfirmCodeService $confirmService */
-            if($confirmService === null) {
-                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            if ($confirmService === null) {
+                $confirmService = App::getInstance()
+                    ->getContainer()
+                    ->get(ConfirmCodeInterface::class);
             }
             if ($confirmService::checkCode($hash, $type)) {
                 $userRepository = $this->getUserRepository();
@@ -915,7 +986,7 @@ class UserService implements
                         $user = $userRepository->find($userId);
                     }
                     if ($user !== null) {
-                        if(!$isAuthorized) {
+                        if (!$isAuthorized) {
                             $this->authorize($userId);
                         }
                     } else {
@@ -924,11 +995,13 @@ class UserService implements
                 } else {
                     throw new AuthException('Не найден активный пользователь c эл. почтой ' . $email);
                 }
+
                 return true;
             }
 
             throw new AuthException('Проверка не пройдена');
         }
+
         return false;
     }
 

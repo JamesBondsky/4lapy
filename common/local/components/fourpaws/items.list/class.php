@@ -51,6 +51,7 @@ class CItemsListComponent extends CBitrixComponent
         } elseif (is_numeric($params['IBLOCK_ID']) && (int)$params['IBLOCK_ID'] > 0) {
             $params['IBLOCK_ID'] = (int)$params['IBLOCK_ID'];
         }
+
         if (empty($params['IBLOCK_ID'])) {
             /**Получение инфоблоков если не установлены*/
 
@@ -369,8 +370,10 @@ class CItemsListComponent extends CBitrixComponent
             ];
             $res = IblockTable::getList($params);
             while ($item = $res->fetch()) {
+                /**@var array $item */
+
                 $template = '';
-                if (array_key_exists('LIST_PAGE_URL', $item)) {
+                if (\array_key_exists('LIST_PAGE_URL', $item)) {
                     $template = $item['LIST_PAGE_URL'];
                 }
 
@@ -560,13 +563,14 @@ class CItemsListComponent extends CBitrixComponent
                 'PREVIEW_PICTURE',
             ]
         );
+
         $getProperty = count($this->arParams['PROPERTY_CODE']) > 0;
         if ($getProperty) {
             $select[] = 'PROPERTY_*';
         }
+
         $filter = [
             'IBLOCK_ID'         => $this->arParams['IBLOCK_ID'],
-//            'IBLOCK_LID'        => SITE_ID,
             'ACTIVE'            => 'Y',
             'CHECK_PERMISSIONS' => $this->arParams['CHECK_PERMISSIONS'] ? 'Y' : 'N',
         ];

@@ -24,9 +24,7 @@ if (!is_array($arResult['IBLOCKS']) || empty($arResult['IBLOCKS'])) {
     return;
 }
 
-use FourPaws\Decorators\SvgDecorator;
-
-$frame = $this->createFrame(); ?>
+use FourPaws\Decorators\SvgDecorator; ?>
 <section class="b-common-section">
     <div class="b-common-section__title-box b-common-section__title-box--latest-event b-common-section__title-box--wrap">
         <h2 class="b-title b-title--latest-event b-title--wrap">Последние события</h2>
@@ -38,8 +36,6 @@ $frame = $this->createFrame(); ?>
             <?php } ?>
         </div>
     </div>
-    <?php /** @noinspection PhpUnhandledExceptionInspection */
-    $frame->begin(''); ?>
     <?php if (is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) { ?>
         <div class="b-common-section__content b-common-section__content--latest-event b-common-section__content--wrap">
             <div class="b-news-wrapper">
@@ -108,7 +104,5 @@ $frame = $this->createFrame(); ?>
             </div>
         </div>
     <?php } ?>
-    <?php /** @noinspection PhpUnhandledExceptionInspection */
-    $frame->end(); ?>
 </section>
 <div class="b-line b-line--news-main"></div>
