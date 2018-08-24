@@ -454,7 +454,7 @@ class PaymentService
 
             $tax = (new ItemTax())->setType($vatGateway[$taxType]);
 
-            $itemPrice = floor($basketItem->getPrice() * 100);
+            $itemPrice = round($basketItem->getPrice() * 100);
             $item = (new Item())
                 ->setPositionId(++$position)
                 ->setName($basketItem->getField('NAME') ?: '')
