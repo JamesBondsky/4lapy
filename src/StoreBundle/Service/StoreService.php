@@ -223,39 +223,7 @@ class StoreService implements LoggerAwareInterface
         bool $strict = false
     ): StoreSearchResult
     {
-        $getStores = function () use ($locationCode, $type) {
-            $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
-
-            return ['result' => $storeCollection];
-        };
-
-        $location = $this->locationService->findLocationByCode($locationCode);
-        try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__ . $locationCode . $type)
-                ->withTag('catalog:store')
-                ->resultOf($getStores);
-
-            /** @var StoreCollection $stores */
-            $stores = $result['result'];
-        } catch (\Exception $e) {
-            $this->logger->error(
-                sprintf(
-                    'failed to get stores for location: %s',
-                    $e->getMessage()
-                ),
-                [
-                    'location' => $locationCode,
-                    'type'     => $type,
-                ]
-            );
-            $stores = new StoreCollection();
-        }
-
-        $storeSearchResult = (new StoreSearchResult())
-            ->setType(StoreSearchResult::TYPE_LOCAL)
-            ->setLocationName($location['NAME'] ?? '')
-            ->setStores($stores);
+        $storeSearchResult = $this->getLocalStores($locationCode);
 
         /**
          * Ищем склады района и региона
@@ -360,6 +328,51 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $stores ?? new StoreCollection();
+    }
+
+    /**
+     * @param string $locationCode
+     * @param string $type
+     *
+     * @return StoreSearchResult
+     */
+    public function getLocalStores(string $locationCode, string $type = self::TYPE_ALL): StoreSearchResult
+    {
+        $location = $this->locationService->findLocationByCode($locationCode);
+
+        if ($locationCode = $location['CODE']) {
+            $getStores = function () use ($locationCode, $type) {
+                $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
+
+                return ['result' => $storeCollection];
+            };
+
+            try {
+                $result = (new BitrixCache())
+                    ->withId(__METHOD__ . $locationCode . $type)
+                    ->withTag('catalog:store')
+                    ->resultOf($getStores);
+
+                /** @var StoreCollection $stores */
+                $stores = $result['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf(
+                        'failed to get stores for location: %s',
+                        $e->getMessage()
+                    ),
+                    [
+                        'location' => $locationCode,
+                        'type'     => $type,
+                    ]
+                );
+            }
+        }
+
+        return (new StoreSearchResult())
+            ->setType(StoreSearchResult::TYPE_LOCAL)
+            ->setLocationName($location['NAME'] ?? '')
+            ->setStores($stores ?? new StoreCollection());
     }
 
     /**
