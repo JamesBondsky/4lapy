@@ -2,8 +2,6 @@
 
 namespace FourPaws\App\Response;
 
-use FourPaws\App\Model\ResponseContent\JsonContent;
-
 /**
  * Class JsonSuccessResponse
  *

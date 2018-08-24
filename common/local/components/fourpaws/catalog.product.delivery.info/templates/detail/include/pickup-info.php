@@ -21,23 +21,38 @@ use FourPaws\Helpers\WordHelper;
             <?php
             $totalCount = $pickup['SHOP_COUNT']['TOTAL'];
             $availableCount = $pickup['SHOP_COUNT']['AVAILABLE'];
+            $hasToday = $pickup['SHOP_COUNT']['HAS_TODAY'];
             $unavailableCount = $pickup['SHOP_COUNT']['TOTAL'] - $pickup['SHOP_COUNT']['AVAILABLE'];
-            if ($availableCount) { ?>
-                из <?= $availableCount . ' ' . WordHelper::declension(
-                    (int)$availableCount,
-                    [
-                        'магазина',
-                        'магазинов',
-                        'магазинов',
-                    ]
-                ); ?>
-                <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
-                    'DATE_FORMAT' => 'XX',
-                    'SHOW_TIME'   => $pickup['SHOP_COUNT']['HAS_TODAY'],
-                ]);
+            if ($availableCount) {
+                if ($hasToday) { ?>
+                    из <?= $availableCount . ' ' . WordHelper::declension(
+                        (int)$availableCount,
+                        [
+                            'магазина',
+                            'магазинов',
+                            'магазинов',
+                        ]
+                    ); ?>
+                    <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
+                        'DATE_FORMAT' => 'XX',
+                        'SHOW_TIME'   => $hasToday,
+                    ]);
+                } else { ?>
+                    <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, [
+                        'DATE_FORMAT' => 'XX',
+                        'SHOW_TIME'   => $hasToday,
+                    ]); ?> из <?= $availableCount . ' ' . WordHelper::declension(
+                        (int)$availableCount,
+                        [
+                            'магазина',
+                            'магазинов',
+                            'магазинов',
+                        ]
+                    );
+                }
                 if ($unavailableCount) { ?>
                     <br>
-                    и из <?= $unavailableCount?> <?= WordHelper::declension(
+                    и из <?= $unavailableCount ?> <?= WordHelper::declension(
                         (int)$unavailableCount,
                         [
                             'магазина',
