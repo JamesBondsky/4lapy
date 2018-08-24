@@ -18,6 +18,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
@@ -179,6 +180,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         ? StoreLocationType::SUBREGIONAL
                         : StoreLocationType::REGIONAL;
                     $result['items'][] = $item;
+                    $result['offers'] = $this->getOfferInfo($pickup->getFullStockResult());
                     $shopCount++;
                     $avgGpsN += $store->getLongitude();
                     $avgGpsS += $store->getLatitude();
@@ -233,6 +235,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                             ? StoreLocationType::SUBREGIONAL
                             : StoreLocationType::REGIONAL;
                         $result['items'][] = $item;
+                        $result['offers'] = $this->getOfferInfo($pickup->getFullStockResult());
                     }
                 } catch (DeliveryNotAvailableException $e) {
                 }
@@ -449,10 +452,27 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         /** @var StockResult $item */
         foreach ($stockResultCollection as $item) {
             $result[] = [
-                'name'     => $item->getOffer()->getName(),
+                'id'       => $item->getOffer()->getId(),
                 'quantity' => $item->getAmount(),
                 'price'    => $item->getPrice(),
-                'weight'   => $item->getOffer()->getCatalogProduct()->getWeight(),
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param StockResultCollection $stockResultCollection
+     * @return array
+     */
+    protected function getOfferInfo(StockResultCollection $stockResultCollection): array
+    {
+        $result = [];
+        /** @var Offer $offer */
+        foreach ($stockResultCollection->getOffers(false) as $offer) {
+            $result[$offer->getId()] = [
+                'name' => $offer->getName(),
+                'weight' => $offer->getCatalogProduct()->getWeight()
             ];
         }
 
