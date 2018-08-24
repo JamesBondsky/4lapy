@@ -1,7 +1,4 @@
 <?php
-$header = <<<EOF
-@copyright Copyright (c) ADV/web-engineering co
-EOF;
 
 $finder = \PhpCsFixer\Finder::create();
 $finder
@@ -20,12 +17,6 @@ return \PhpCsFixer\Config::create()
     ->setRiskyAllowed(true)
     ->setRules([
         '@PSR2'                                     => true,
-        'header_comment'                            => [
-            'commentType' => 'comment',
-            'header'      => $header,
-            'location'    => 'after_declare_strict',
-            'separate'    => 'both',
-        ],
         'linebreak_after_opening_tag'               => true,
         'no_multiline_whitespace_before_semicolons' => true,
         'no_php4_constructor'                       => true,
