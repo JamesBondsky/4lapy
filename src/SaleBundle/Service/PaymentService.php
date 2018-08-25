@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -38,6 +39,8 @@ use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemTax;
 use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
+use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
+use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
@@ -50,14 +53,17 @@ use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
+use Psr\Log\LoggerAwareInterface;
 
 /**
  * Class PaymentService
  *
  * @package FourPaws\SaleBundle\Service
  */
-class PaymentService
+class PaymentService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /**
      * @var ArrayTransformerInterface
      */
@@ -219,9 +225,14 @@ class PaymentService
      * @param float $amount
      * @param array $fiscalization
      *
-     * @throws ObjectNotFoundException
-     * @throws PaymentException
      * @return bool
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws InvalidPathException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws PaymentException
+     * @throws SystemException
      */
     public function depositPayment(Order $order, float $amount, array $fiscalization = null): bool
     {
@@ -553,6 +564,48 @@ class PaymentService
     }
 
     /**
+     * @param string $number
+     *
+     * @return OrderInfo
+     * @throws SberbankOrderNotFoundException
+     * @throws ArgumentException
+     */
+    public function getSberbankOrderStatusByOrderNumber(string $number): OrderInfo
+    {
+        $response = $this->getSberbankProcessing()->getOrderStatusByOrderNumber($number);
+
+        /** @var OrderInfo $result */
+        $result = $this->arrayTransformer->fromArray($response, OrderInfo::class);
+
+        if ($result->getErrorCode() === Sberbank::ERROR_ORDER_NOT_FOUND) {
+            throw new SberbankOrderNotFoundException($result->getErrorMessage(), $result->getErrorCode());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $invoiceId
+     *
+     * @return OrderInfo
+     * @throws ArgumentException
+     * @throws SberbankOrderNotFoundException
+     */
+    public function getSberbankOrderStatusByOrderId(string $invoiceId): OrderInfo
+    {
+        $response = $this->getSberbankProcessing()->getOrderStatusByOrderId($invoiceId);
+
+        /** @var OrderInfo $result */
+        $result = $this->arrayTransformer->fromArray($response, OrderInfo::class);
+
+        if ($result->getErrorCode() === Sberbank::ERROR_ORDER_NOT_FOUND) {
+            throw new SberbankOrderNotFoundException($result->getErrorMessage(), $result->getErrorCode());
+        }
+
+        return $result;
+    }
+
+    /**
      * @param Order $order
      * @param       $sberbankOrderId
      * @throws ArgumentException
@@ -574,7 +627,7 @@ class PaymentService
         if (!$this->isOnlinePayment($order)) {
             throw new PaymentException('Invalid order payment type');
         }
-        $response = $this->getSberbankProcessing()->getOrderStatusByOrderId($sberbankOrderId);
+        $response = $this->getSberbankOrderStatusByOrderId($sberbankOrderId);
         $this->processOnlinePayment($order, $response);
     }
 
@@ -600,7 +653,7 @@ class PaymentService
             throw new PaymentException('Invalid order payment type');
         }
 
-        $response = $this->getSberbankProcessing()->getOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER'));
+        $response = $this->getSberbankOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER'));
         $this->processOnlinePayment($order, $response);
     }
 
@@ -614,7 +667,7 @@ class PaymentService
      * @throws SystemException
      * @throws ApplicationCreateException
      */
-    public function processOnlinePaymentError(Order $order)
+    public function processOnlinePaymentError(Order $order): void
     {
         /** @todo костыль */
         if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => OrderPayment::PAYMENT_CASH]])->fetch()) {
@@ -669,7 +722,8 @@ class PaymentService
 
     /**
      * @param Order $order
-     * @param array $response
+     * @param OrderInfo $response
+     *
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
@@ -679,19 +733,18 @@ class PaymentService
      * @throws PaymentException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
-     * @throws SberbankOrderNotFoundException
      * @throws SberbankPaymentException
      * @throws SystemException
      * @throws \Exception
      */
-    protected function processOnlinePayment(Order $order, array $response): void
+    protected function processOnlinePayment(Order $order, OrderInfo $response): void
     {
-        $isSuccess = (int)$response['errorCode'] === Sberbank::SUCCESS_CODE;
+        $isSuccess = $response->getErrorCode() === Sberbank::SUCCESS_CODE;
         if ($isSuccess && \in_array(
-                (int)$response['orderStatus'],
+                $response->getOrderStatus(),
                 [
                     Sberbank::ORDER_STATUS_HOLD,
-                    Sberbank::ORDER_STATUS_PAID
+                    Sberbank::ORDER_STATUS_PAID,
                 ],
                 true
             )
@@ -699,9 +752,10 @@ class PaymentService
             $onlinePayment = $this->getOrderPayment($order);
 
             $sberbankOrderId = '';
-            foreach ($response['attributes'] as $attribute) {
-                if ($attribute['name'] === Sberbank::ORDER_NUMBER_ATTRIBUTE) {
-                    $sberbankOrderId = $attribute['value'];
+            /** @var Attribute $attribute */
+            foreach ($response->getAttributes() as $attribute) {
+                if ($attribute->getName() === Sberbank::ORDER_NUMBER_ATTRIBUTE) {
+                    $sberbankOrderId = $attribute->getValue();
                 }
             }
             if (!$sberbankOrderId) {
@@ -709,34 +763,31 @@ class PaymentService
             }
 
             $onlinePayment->setPaid('Y');
-            $onlinePayment->setField('PS_SUM', $response['amount'] / 100);
-            $onlinePayment->setField('PS_CURRENCY', $response['currency']);
+            $onlinePayment->setField('PS_SUM', $response->getAmount() / 100);
+            $onlinePayment->setField('PS_CURRENCY', $response->getCurrency());
             $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\DateTime());
             $onlinePayment->setField('PS_INVOICE_ID', $sberbankOrderId);
             $onlinePayment->setField('PS_STATUS', 'Y');
             $onlinePayment->setField(
                 'PS_STATUS_DESCRIPTION',
-                $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName']
+                $response->getCardAuthInfo()->getPan() . ';' . $response->getCardAuthInfo()->getCardHolderName()
             );
             $onlinePayment->setField('PS_STATUS_CODE', 'Y');
-            $onlinePayment->setField('PS_STATUS_MESSAGE', $response['paymentAmountInfo']['paymentState']);
+            $onlinePayment->setField('PS_STATUS_MESSAGE', $response->getPaymentAmountInfo()->getPaymentState());
             $onlinePayment->save();
             $order->save();
         } else {
-            if ((int)$response['orderStatus'] === Sberbank::ORDER_STATUS_DECLINED) {
+            if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_DECLINED) {
                 throw new SberbankOrderPaymentDeclinedException('Order not paid');
             }
 
-            if ((int)$response['orderStatus'] === Sberbank::ORDER_STATUS_CREATED) {
+            if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_CREATED) {
                 throw new SberbankOrderNotPaidException('Order still can be paid');
             }
 
-            if ((int)$response['errorCode'] === Sberbank::ERROR_ORDER_NOT_FOUND) {
-                throw new SberbankOrderNotFoundException($response['errorMessage'], $response['errorCode']);
-            }
             throw new SberbankPaymentException(
-                $isSuccess ? $response['actionCodeDescription'] : $response['errorMessage'],
-                $response['errorCode']
+                $isSuccess ? $response->getActionDescription() : $response->getErrorMessage(),
+                $response->getErrorCode()
             );
         }
     }
