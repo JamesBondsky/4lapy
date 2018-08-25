@@ -32,4 +32,61 @@ class OrderBundle
      * @Serializer\Type("FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\CartItems")
      */
     protected $cartItems;
+
+    /**
+     * @return int
+     */
+    public function getOrderCreationDate(): int
+    {
+        return $this->orderCreationDate;
+    }
+
+    /**
+     * @param int $orderCreationDate
+     * @return OrderBundle
+     */
+    public function setOrderCreationDate(int $orderCreationDate): OrderBundle
+    {
+        $this->orderCreationDate = $orderCreationDate;
+
+        return $this;
+    }
+
+    /**
+     * @return CustomerDetails
+     */
+    public function getCustomerDetails(): CustomerDetails
+    {
+        return $this->customerDetails;
+    }
+
+    /**
+     * @param CustomerDetails $customerDetails
+     * @return OrderBundle
+     */
+    public function setCustomerDetails(CustomerDetails $customerDetails): OrderBundle
+    {
+        $this->customerDetails = $customerDetails;
+
+        return $this;
+    }
+
+    /**
+     * @return CartItems
+     */
+    public function getCartItems(): CartItems
+    {
+        return $this->cartItems;
+    }
+
+    /**
+     * @param CartItems $cartItems
+     * @return OrderBundle
+     */
+    public function setCartItems(CartItems $cartItems): OrderBundle
+    {
+        $this->cartItems = $cartItems;
+
+        return $this;
+    }
 }

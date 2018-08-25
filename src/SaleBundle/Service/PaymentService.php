@@ -40,8 +40,12 @@ use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemTax;
 use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
+use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderItem;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionAmountExceededException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
@@ -141,6 +145,63 @@ class PaymentService implements LoggerAwareInterface
             ->setCartItems($this->getCartItems($order, $skipGifts));
 
         return (new Fiscalization())->setFiscal($fiscal);
+    }
+
+    /**
+     * @param Fiscalization $fiscalization
+     * @param OrderInfo     $orderInfo
+     *
+     * @throws InvalidItemCodeException
+     * @throws NoMatchingFiscalItemException
+     * @throws PositionAmountExceededException
+     */
+    public function validateFiscalization(Fiscalization $fiscalization, OrderInfo $orderInfo): void
+    {
+        $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+        $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
+        /** @var Item $fiscalItem */
+        foreach ($fiscalItems as $fiscalItem) {
+            /** @var SberbankOrderItem $matchingItem */
+            $matchingItem = null;
+            /** @var SberbankOrderItem $orderItem */
+            foreach ($sberbankOrderItems as $orderItem) {
+                if ($orderItem->getPositionId() === $fiscalItem->getPositionId()) {
+                    $matchingItem = $orderItem;
+                    break;
+                }
+            }
+
+            if (null === $matchingItem) {
+                throw new NoMatchingFiscalItemException(
+                    \sprintf(
+                        'No matching item found for position %s',
+                        $fiscalItem->getPositionId()
+                    )
+                );
+            }
+
+            if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
+                throw new InvalidItemCodeException(
+                    \sprintf(
+                        'Item code %s for position %s doesn\'t, match existing item code',
+                        $fiscalItem->getCode(),
+                        $fiscalItem->getPositionId()
+                    )
+                );
+            }
+
+            if ($matchingItem->getItemAmount() < $fiscalItem->getTotal()) {
+                throw new PositionAmountExceededException(
+                    \sprintf(
+                        'Item %s amount (%s) for position %s exceeds item amount (%s)',
+                        $fiscalItem->getCode(),
+                        $fiscalItem->getTotal(),
+                        $fiscalItem->getPositionId(),
+                        $matchingItem->getItemAmount()
+                    )
+                );
+            }
+        }
     }
 
     /**

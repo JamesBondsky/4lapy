@@ -56,4 +56,118 @@ class Item
      * @Serializer\Type("string")
      */
     protected $itemCode = '';
+
+    /**
+     * @return string
+     */
+    public function getPositionId(): string
+    {
+        return $this->positionId;
+    }
+
+    /**
+     * @param string $positionId
+     * @return Item
+     */
+    public function setPositionId(string $positionId): Item
+    {
+        $this->positionId = $positionId;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     * @return Item
+     */
+    public function setName(string $name): Item
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return ItemQuantity
+     */
+    public function getQuantity(): ItemQuantity
+    {
+        return $this->quantity;
+    }
+
+    /**
+     * @param ItemQuantity $quantity
+     * @return Item
+     */
+    public function setQuantity(ItemQuantity $quantity): Item
+    {
+        $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getItemAmount(): int
+    {
+        return $this->itemAmount;
+    }
+
+    /**
+     * @param int $itemAmount
+     * @return Item
+     */
+    public function setItemAmount(int $itemAmount): Item
+    {
+        $this->itemAmount = $itemAmount;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getItemCurrency(): int
+    {
+        return $this->itemCurrency;
+    }
+
+    /**
+     * @param int $itemCurrency
+     * @return Item
+     */
+    public function setItemCurrency(int $itemCurrency): Item
+    {
+        $this->itemCurrency = $itemCurrency;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getItemCode(): string
+    {
+        return $this->itemCode;
+    }
+
+    /**
+     * @param string $itemCode
+     * @return Item
+     */
+    public function setItemCode(string $itemCode): Item
+    {
+        $this->itemCode = $itemCode;
+
+        return $this;
+    }
 }
