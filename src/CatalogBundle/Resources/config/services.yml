@@ -50,3 +50,7 @@ services:
     FourPaws\CatalogBundle\Service\BrandService:
             class: FourPaws\CatalogBundle\Service\BrandService
             public: true
+
+    FourPaws\CatalogBundle\Service\CategoriesService:
+            class: FourPaws\CatalogBundle\Service\CategoriesService
+            public: true
