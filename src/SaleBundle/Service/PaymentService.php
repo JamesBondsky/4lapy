@@ -173,7 +173,7 @@ class PaymentService implements LoggerAwareInterface
             $matchingItem = null;
             /** @var SberbankOrderItem $orderItem */
             foreach ($sberbankOrderItems as $orderItem) {
-                if ($orderItem->getPositionId() === $fiscalItem->getPositionId()) {
+                if ((int)$orderItem->getPositionId() === $fiscalItem->getPositionId()) {
                     $matchingItem = $orderItem;
                     break;
                 }
@@ -212,7 +212,9 @@ class PaymentService implements LoggerAwareInterface
 
             if ($fiscalItem->getTotal() > $matchingItem->getItemAmount()) {
                 if ($priceFix) {
-                    $matchingItem->setItemAmount($fiscalItem->getTotal());
+                    $fiscalItem
+                        ->setTotal($matchingItem->getItemAmount())
+                        ->setPrice(null); // сбрасываем цену за единицу, чтобы не бороться с округлением
                 } else {
                     throw new PositionAmountExceededException(
                         \sprintf(
