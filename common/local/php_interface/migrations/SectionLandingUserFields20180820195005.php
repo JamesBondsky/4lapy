@@ -6,10 +6,11 @@ namespace Sprint\Migration;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 
 /**
- * Class SectionLandingUserFields
+ * Class SectionLandingUserFields20180820195005
+ *
  * @package Sprint\Migration
  */
-class SectionLandingUserFields extends SprintMigrationBase
+class SectionLandingUserFields20180820195005 extends SprintMigrationBase
 {
 
     protected $description = 'Создание пользовательских полей разделов каталога для лендинга';
