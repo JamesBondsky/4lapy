@@ -60,9 +60,10 @@ class Item
      * @var int
      *
      * @Serializer\SerializedName("itemPrice")
+     * @Serializer\SkipWhenEmpty()
      * @Serializer\Type("string")
      */
-    protected $price = 0;
+    protected $price;
 
     /**
      * @var ItemTax
@@ -189,10 +190,10 @@ class Item
     }
 
     /**
-     * @param int $price
+     * @param int|null $price
      * @return Item
      */
-    public function setPrice(int $price): Item
+    public function setPrice(?int $price): Item
     {
         $this->price = $price;
         return $this;
