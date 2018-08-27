@@ -238,6 +238,9 @@ class SalePreset
          * @var BasketItem $basketItem
          */
         foreach ($basket as $basketItem) {
+            if (!$basketItem->getQuantity()) {
+                continue;
+            }
             /**
              * @var ProductModel $product
              */
