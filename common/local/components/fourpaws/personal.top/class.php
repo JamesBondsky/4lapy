@@ -216,7 +216,7 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
         $result = [];
         foreach ($offers as $offer) {
             if ($product = ProductQuery::getById($offer->getCml2Link())) {
-                $result[$offer->getCml2Link()] = $product;
+                $result[$offer->getId()] = $product;
             }
         }
 
