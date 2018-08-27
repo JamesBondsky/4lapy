@@ -46,6 +46,7 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\PositionAmountExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
@@ -85,7 +86,8 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * PaymentService constructor.
-     * @param BasketService $basketService
+     * @param BasketService             $basketService
+     * @param ArrayTransformerInterface $arrayTransformer
      */
     public function __construct(BasketService $basketService, ArrayTransformerInterface $arrayTransformer)
     {
@@ -150,12 +152,18 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Fiscalization $fiscalization
      * @param OrderInfo     $orderInfo
+     * @param bool          $priceFix
      *
      * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
      * @throws PositionAmountExceededException
+     * @throws PositionQuantityExceededException
      */
-    public function validateFiscalization(Fiscalization $fiscalization, OrderInfo $orderInfo): void
+    public function validateFiscalization(
+        Fiscalization $fiscalization,
+        OrderInfo $orderInfo,
+        bool $priceFix = false
+    ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
         $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
@@ -190,16 +198,32 @@ class PaymentService implements LoggerAwareInterface
                 );
             }
 
-            if ($matchingItem->getItemAmount() < $fiscalItem->getTotal()) {
-                throw new PositionAmountExceededException(
+            if ($fiscalItem->getQuantity()->getValue() > $matchingItem->getQuantity()->getValue()) {
+                throw new PositionQuantityExceededException(
                     \sprintf(
-                        'Item %s amount (%s) for position %s exceeds item amount (%s)',
+                        'Item %s quantity (%s) for position %s exceeds existing item quantity (%s)',
                         $fiscalItem->getCode(),
-                        $fiscalItem->getTotal(),
+                        $fiscalItem->getQuantity()->getValue(),
                         $fiscalItem->getPositionId(),
-                        $matchingItem->getItemAmount()
+                        $matchingItem->getQuantity()->getValue()
                     )
                 );
+            }
+
+            if ($fiscalItem->getTotal() > $matchingItem->getItemAmount()) {
+                if ($priceFix) {
+                    $matchingItem->setItemAmount($fiscalItem->getTotal());
+                } else {
+                    throw new PositionAmountExceededException(
+                        \sprintf(
+                            'Item %s amount (%s) for position %s exceeds existing item amount (%s)',
+                            $fiscalItem->getCode(),
+                            $fiscalItem->getTotal(),
+                            $fiscalItem->getPositionId(),
+                            $matchingItem->getItemAmount()
+                        )
+                    );
+                }
             }
         }
     }
