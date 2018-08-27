@@ -8,6 +8,7 @@ namespace FourPaws\CatalogBundle\Console;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\SystemException;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use Psr\Log\LoggerAwareInterface;
@@ -152,6 +153,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
      *
      * @return string
      *
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      */
     public function getFeedProcessName(int $id, string $type, $step = 0): string
@@ -175,7 +177,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
         return \sprintf(
             '%s %s/bin/symfony_console %s %s --%s %s --%s %d',
             $php,
-            \getcwd(),
+            Application::getInstance()->getRootDir(),
             $command,
             $id,
             self::OPT_FEED_TYPE,
