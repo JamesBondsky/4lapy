@@ -107,6 +107,14 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
 
         $offerIds = $this->getPopularOffers($userId);
         $offers = $this->getAllOffers($offerIds);
+
+        /**
+         * сортировка по убыванию цены
+         */
+        uasort($offers, function (Offer $offer1, Offer $offer2) {
+            return $offer2->getPrice() <=> $offer1->getPrice();
+        });
+
         $products = $this->getAllProducts($offers);
 
         if (!$offers || !$products) {
