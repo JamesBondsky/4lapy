@@ -7,11 +7,24 @@
 namespace FourPaws\CatalogBundle\EventController;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\PriceTable;
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Entity\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\CatalogBundle\Exception\NoSectionsForProductException;
+use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -56,6 +69,9 @@ class Event extends BaseServiceHandler
 
         /** очистка кеша при изменении элемента инфоблока */
         static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'clearIblockItemCache'], $module);
+
+        static::initHandler('SectionOnAfterUpdate', [self::class, 'updateMainProductSectionD7'], $module);
+        static::initHandlerCompatible('OnAfterIBlockSectionUpdate', [self::class, 'updateMainProductSection'], $module);
     }
 
     /**
@@ -129,8 +145,81 @@ class Event extends BaseServiceHandler
                 'CATALOG_GROUP_ID' => '2',
                 'PRICE' => 0,
                 'CURRENCY' => CurrencyManager::getBaseCurrency(),
-                'PRICE_SCALE' => 0
+                'PRICE_SCALE' => 0,
             ]);
+        }
+    }
+
+    /**
+     * @param array $fields
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public static function updateMainProductSection(array $fields): void
+    {
+        if ($fields['ID'] && $fields['ACTIVE'] && $fields['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE) {
+            static::updateProductSections($fields['ID']);
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ArgumentTypeException
+     */
+    public static function updateMainProductSectionD7(BitrixEvent $event)
+    {
+        $id = $event->getParameter('id');
+        $fields = $event->getParameter('fields');
+        if ($id['ID'] && $fields['ACTIVE'] && $fields['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE) {
+            static::updateProductSections($id['ID']);
+        }
+    }
+
+    /**
+     * @param int $categoryId
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws LoaderException
+     */
+    protected static function updateProductSections(int $categoryId): void
+    {
+        $categoryProducts = (new ProductQuery())
+            ->withFilterParameter('IBLOCK_SECTION_ID', $categoryId)
+            ->exec();
+
+        foreach ($categoryProducts as $product) {
+            /** @var CategoriesService $categoryService */
+            $categoryService = Application::getInstance()->getContainer()->get(CategoriesService::class);
+            try {
+                $categories = $categoryService->getActiveByProduct($product);
+                /** @var Category $maxDepthCategory */
+                $maxDepthCategory = null;
+                /** @var Category $category */
+                foreach ($categories as $category) {
+                    if ((null === $maxDepthCategory) ||
+                        ($maxDepthCategory->getDepthLevel() < $category->getDepthLevel())
+                    ) {
+                        $maxDepthCategory = $category;
+                    }
+                    $category->getDepthLevel();
+                }
+                $e = new \CIBlockElement();
+                $e->Update($product->getId(), ['IBLOCK_SECTION_ID' => $maxDepthCategory->getId()]);
+            } catch (NoSectionsForProductException $e) {
+                // ничего не нужно делать
+            }
         }
     }
 }

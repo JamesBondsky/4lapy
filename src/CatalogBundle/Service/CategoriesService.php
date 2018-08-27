@@ -6,11 +6,19 @@
 
 namespace FourPaws\CatalogBundle\Service;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\SectionElementTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use CIBlockFindTools;
+use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\CatalogBundle\Exception\NoSectionsForProductException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Psr\Log\LoggerAwareInterface;
@@ -130,5 +138,37 @@ class CategoriesService implements LoggerAwareInterface
         return Category::createRoot([
             'NAME' => 'Результаты поиска',
         ]);
+    }
+
+    /**
+     * @param Product $product
+     *
+     * @return CategoryCollection
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getActiveByProduct(Product $product): CategoryCollection
+    {
+        $sections = SectionElementTable::query()
+            ->setSelect(['IBLOCK_SECTION_ID'])
+            ->setFilter(['IBLOCK_ELEMENT_ID' => $product->getId()])
+            ->exec();
+
+        $sectionIds = [];
+        while ($section = $sections->fetch()) {
+            $sectionIds[] = $section['IBLOCK_SECTION_ID'];
+        }
+
+        if (empty($sectionIds)) {
+            throw new NoSectionsForProductException(\sprintf('No sections defined for product #%s', $product->getId()));
+        }
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return (new CategoryQuery())
+            ->withFilterParameter('ID', $sectionIds)
+            ->withFilterParameter('ACTIVE', BitrixUtils::BX_BOOL_TRUE)
+            ->withFilterParameter('SECTION_ELEMENT.IBLOCK_ELEMENT_ID', $product->getId())
+            ->exec();
     }
 }
