@@ -88,23 +88,26 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws RuntimeException
      */
 
-    public const FORGOT_BASKET_LIST_ID = 7765;//old 7115
-    public const FORGOT_BASKET2_LIST_ID = 7767;//old 7117
-    public const CHANGE_EMAIL_LIST_ID = 7766;//old 7070
-    public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;//old 7071
-    public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;//old 7197
-    public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;//old 7198
-    public const NEW_ORDER_PAY_LIST_ID = 7774;//old 7103
-    public const NEW_ORDER_NOT_PAY_LIST_ID = 7775;//old 7104
-    public const NEW_ORDER_NOT_REG_PAY_LIST_ID = 7776;//old 7150
-    public const NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID = 7777;//old 7148
-    public const COMPLETE_ORDER_LIST_ID = 7778;//old 7122
-    public const FORGOT_PASSWORD_LIST_ID = 7779;//old 7072
-    public const CHANGE_PASSWORD_LIST_ID = 7780;//old 7073
+    public const FORGOT_BASKET_LIST_ID = 7765;
+    public const FORGOT_BASKET2_LIST_ID = 7767;
+    public const CHANGE_EMAIL_LIST_ID = 7766;
+    public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;
+    public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;
+    public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;
+    public const NEW_ORDER_PAY_LIST_ID = 7774;
+    public const NEW_ORDER_NOT_PAY_LIST_ID = 7775;
+    public const NEW_ORDER_NOT_REG_PAY_LIST_ID = 7776;
+    public const NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID = 7777;
+    public const COMPLETE_ORDER_LIST_ID = 7778;
+    public const FORGOT_PASSWORD_LIST_ID = 7779;
+    public const CHANGE_PASSWORD_LIST_ID = 7780;
 
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
 
+    /**
+     * ExpertsenderService constructor.
+     */
     public function __construct()
     {
         $client = new Client();

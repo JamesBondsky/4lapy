@@ -1,29 +1,27 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
+ namespace FourPaws\UserBundle\AjaxController;
 
-namespace FourPaws\UserBundle\AjaxController;
-
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Elastica\Exception\Connection\GuzzleException;
+use Exception;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
-use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidArgumentException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
+use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -32,145 +30,129 @@ use Symfony\Component\HttpFoundation\Request;
  * @package FourPaws\UserBundle\AjaxController
  * @Route("/subscribe")
  */
-class SubscribeController extends Controller
+class SubscribeController extends Controller implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
 
     /** @var AjaxMess */
     private $ajaxMess;
+    /**
+     * @var UserService
+     */
+    private $userService;
+    /**
+     * @var ExpertsenderService
+     */
+    private $expertsenderService;
+    /**
+     * @var UserRepository
+     */
+    private $userRepository;
 
-    public function __construct(AjaxMess $ajaxMess)
+    /**
+     * SubscribeController constructor.
+     *
+     * @param AjaxMess                     $ajaxMess
+     * @param CurrentUserProviderInterface $userService
+     * @param ExpertsenderService          $expertsenderService
+     * @param UserRepository               $userRepository
+     */
+    public function __construct(AjaxMess $ajaxMess, CurrentUserProviderInterface $userService, ExpertsenderService $expertsenderService, UserRepository $userRepository)
     {
         $this->ajaxMess = $ajaxMess;
+        $this->userService = $userService;
+        $this->expertsenderService = $expertsenderService;
+        $this->userRepository = $userRepository;
     }
 
     /**
      * @Route("/subscribe/", methods={"POST"})
      * @param Request $request
      *
-     * @return JsonErrorResponse
+     * @return JsonResponse
+     *
+     * @throws \RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function subscribeAction(Request $request): JsonResponse
     {
         $type = $request->get('type', '');
         $email = $request->get('email', '');
 
-        try{
-            $container = Application::getInstance()->getContainer();
-        } catch (ApplicationCreateException $e) {
-            return $this->ajaxMess->getSystemError();
-        }
-
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             return $this->ajaxMess->getWrongEmailError();
         }
 
-        $success = false;
-
-        /** В эксперт сендере только о новостях список есть */
         try {
-            $userService = $container->get(CurrentUserProviderInterface::class);
-        } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            $user = $this->getCurrentUser();
 
-            return $this->ajaxMess->getSystemError();
-        }
-        if ($type === 'all') {
-            try {
-                try {
-                    $user = $userService->getCurrentUser();
-                    $oldEmail = $user->getEmail();
-                } catch (NotAuthorizedException $e) {
-                    $user = new User();
-                }
-                $user->setEmail($email);
-                $expertSenderService = $container->get('expertsender.service');
-                if ($expertSenderService->sendEmailSubscribeNews($user)) {
-                    $success = true;
-                    if($user->getId() <= 0){
-                        $users = $userService->getUserRepository()->findBy(['=EMAIL'=>$user->getEmail()]);
-                        if(\count($users) === 1){
-                            $user = current($users);
-                        }
-                    }
-                    if($user->getId() > 0) {
-                        if(isset($oldEmail)) {
-                            $user->setEmail($oldEmail);
-                        }
-                        $user->setEsSubscribed(true);
-                        $userService->getUserRepository()->update($user);
-                    }
-                } else {
-                    $success = false;
-                }
-            } catch (ExpertsenderServiceException $e) {
-                $success = false;
-                $logger = LoggerFactory::create('expertSender');
-                $logger->critical('ES error - ' . $e->getMessage());
-            } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
-                $success = false;
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\BadMethodCallException|InvalidIdentifierException|ConstraintDefinitionException|\InvalidArgumentException $e) {
-                $success = false;
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка параметров - ' . $e->getMessage());
-            } catch (\RuntimeException|\Exception $e) {
-                $success = false;
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            $oldEmail = $user->getEmail();
+            $user->setEmail($email);
+
+            $subscriptionResult = ($type === 'all')
+                ? $this->expertsenderService->sendEmailSubscribeNews($user)
+                : $this->expertsenderService->sendEmailUnSubscribeNews($user);
+
+            if ($subscriptionResult) {
+                $this->updateUserEmail($user, $oldEmail, $type === 'all');
             }
-        } else {
-            try {
-                try {
-                    $user = $userService->getCurrentUser();
-                    $oldEmail = $user->getEmail();
-                } catch (NotAuthorizedException $e) {
-                    $user = new User();
-                }
-                $user->setEmail($email);
-                $expertSenderService = $container->get('expertsender.service');
-                if ($expertSenderService->sendEmailUnSubscribeNews($user)) {
-                    $success = true;
-                    if($user->getId() <= 0){
-                        $users = $userService->getUserRepository()->findBy(['=EMAIL'=>$user->getEmail()]);
-                        if(\count($users) === 1){
-                            $user = current($users);
-                        }
-                    }
-                    if($user->getId() > 0) {
-                        if(isset($oldEmail)) {
-                            $user->setEmail($oldEmail);
-                        }
-                        $user->setEsSubscribed(false);
-                        $userService->getUserRepository()->update($user);
-                    }
-                } else {
-                    $success = false;
-                }
-            } catch (ExpertsenderServiceException $e) {
+
+            if ($subscriptionResult) {
+                $success = true;
+
+            } else {
                 $success = false;
-                $logger = LoggerFactory::create('expertSender');
-                $logger->critical('ES error - ' . $e->getMessage());
-            } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
-                $success = false;
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (\BadMethodCallException|InvalidIdentifierException|ConstraintDefinitionException|\InvalidArgumentException $e) {
-                $success = false;
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка параметров - ' . $e->getMessage());
-            } catch (\RuntimeException|\Exception $e) {
-                $success = false;
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             }
+        } catch (Exception | GuzzleException $e) {
+            $success = false;
+            $this->log()
+                ->error(\sprintf(
+                    'Subscription error: %s',
+                    $e->getMessage()
+                ));
         }
 
-        if ($success) {
-            return JsonSuccessResponse::create('Ваша подписка успешно изменена');
+        return $success ? JsonSuccessResponse::create('Ваша подписка успешно изменена') : $this->ajaxMess->getSystemError();
+    }
+
+    /**
+     * @return User
+     */
+    protected function getCurrentUser(): User
+    {
+        try {
+            $user = $this->userService->getCurrentUser();
+        } catch (NotAuthorizedException $e) {
+            $user = new User();
         }
 
-        return $this->ajaxMess->getSystemError();
+        return $user;
+    }
+
+    /**
+     * @param User   $user
+     * @param string $email
+     * @param bool   $isSubscribed
+     *
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @throws NotFoundException
+     */
+    protected function updateUserEmail(User $user, string $email, bool $isSubscribed): void
+    {
+        if (!$user->getId()) {
+            $user = $this->userService->findOneByEmail($user->getEmail());
+        }
+
+        if ($user->getId()) {
+            if ($email) {
+                $user->setEmail($email);
+            }
+
+            $user->setEsSubscribed($isSubscribed);
+            $this->userRepository->update($user);
+        }
     }
 }

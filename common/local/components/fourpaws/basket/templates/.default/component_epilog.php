@@ -15,14 +15,16 @@ if ($arParams['IS_AJAX']) {
 
 /** @var Bitrix\Sale\Basket\ $basket */
 $basket = $arResult['BASKET']->getOrderableItems();
-$userDiscount = $component->getCurrentUserService()->getDiscount();
+$userDiscount = $component->getCurrentUserService()
+    ->getDiscount();
 $offers = $templateData['OFFERS'];
 $bonus = [];
 if (\is_array($offers) && !empty($offers)) {
     /** @var \Bitrix\Sale\BasketItem $basketItem */
     $bonusAwardingQuantity = [];
     foreach ($basket as $basketItem) {
-        $bonusAwardingQuantity[$basketItem->getProductId()] += $basketItem->getPropertyCollection()->getPropertyValues()['HAS_BONUS']['VALUE'];
+        $bonusAwardingQuantity[$basketItem->getProductId()] += $basketItem->getPropertyCollection()
+                                                                   ->getPropertyValues()['HAS_BONUS']['VALUE'];
     }
 
     $bonusAwardingQuantity = \array_filter($bonusAwardingQuantity);
@@ -38,15 +40,14 @@ if (\is_array($offers) && !empty($offers)) {
     }
 }
 
-if ($bonus) {
-    ?>
+if ($bonus) { ?>
+    <!--suppress ALL -->
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             let bonus = <?= CUtil::PhpToJSObject($bonus) ?>;
             for (let productId in bonus) {
                 $('.js-bonus-' + productId).text(bonus[productId]);
             }
         })
     </script>
-    <?php
-}
+<?php }

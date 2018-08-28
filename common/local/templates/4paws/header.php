@@ -11,10 +11,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\Enum\IblockCode;use FourPaws\Enum\IblockType;use FourPaws\SaleBundle\Service\BasketViewService;
 
 /** @var MainTemplate $template */
-$template = MainTemplate::getInstance(Application::getInstance()->getContext());
+$template = MainTemplate::getInstance(Application::getInstance()
+    ->getContext());
 $markup = PawsApplication::markup(); ?><!DOCTYPE html>
 <html lang="ru">
 <head>
+    <base href="<?= PawsApplication::getInstance()
+        ->getSiteDomain() ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no">
     <meta name="skype_toolbar" content="skype_toolbar_parser_compatible">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -109,18 +112,18 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
                     'fourpaws:iblock.main.menu',
                     'fp.17.0.top',
                     [
-                        'MENU_IBLOCK_TYPE' => IblockType::MENU,
-                        'MENU_IBLOCK_CODE' => IblockCode::MAIN_MENU,
-                        'PRODUCTS_IBLOCK_TYPE' => IblockType::CATALOG,
-                        'PRODUCTS_IBLOCK_CODE' => IblockCode::PRODUCTS,
-                        'CACHE_TIME' => 3600,
-                        'CACHE_TYPE' => 'A',
-                        'MAX_DEPTH_LEVEL' => '4',
+                        'MENU_IBLOCK_TYPE'          => IblockType::MENU,
+                        'MENU_IBLOCK_CODE'          => IblockCode::MAIN_MENU,
+                        'PRODUCTS_IBLOCK_TYPE'      => IblockType::CATALOG,
+                        'PRODUCTS_IBLOCK_CODE'      => IblockCode::PRODUCTS,
+                        'CACHE_TIME'                => 3600,
+                        'CACHE_TYPE'                => 'A',
+                        'MAX_DEPTH_LEVEL'           => '4',
                         // N - шаблон кэшируется
-                        'CACHE_SELECTED_ITEMS' => 'N',
-                        'TEMPLATE_NO_CACHE' => 'N',
+                        'CACHE_SELECTED_ITEMS'      => 'N',
+                        'TEMPLATE_NO_CACHE'         => 'N',
                         // количество популярных брендов в пункте меню "Товары по питомцу"
-                        'BRANDS_POPULAR_LIMIT' => '6',
+                        'BRANDS_POPULAR_LIMIT'      => '6',
                         // количество популярных брендов в пункте меню "По бренду"
                         'BRANDS_MENU_POPULAR_LIMIT' => '8',
                     ],
@@ -170,8 +173,8 @@ $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
                             $APPLICATION->IncludeComponent('bitrix:breadcrumb',
                                 'breadcrumb',
                                 [
-                                    'PATH' => '',
-                                    'SITE_ID' => SITE_ID,
+                                    'PATH'       => '',
+                                    'SITE_ID'    => SITE_ID,
                                     'START_FROM' => '0',
                                 ]); ?>
                             <h1 class="b-title b-title--h1">
@@ -192,19 +195,19 @@ $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
                         <?php $APPLICATION->IncludeComponent('bitrix:menu',
                             'personal.menu',
                             [
-                                'COMPONENT_TEMPLATE' => 'personal.menu',
-                                'ROOT_MENU_TYPE' => 'personal_cab',
-                                'MENU_CACHE_TYPE' => 'A',
-                                'MENU_CACHE_TIME' => '360000',
+                                'COMPONENT_TEMPLATE'    => 'personal.menu',
+                                'ROOT_MENU_TYPE'        => 'personal_cab',
+                                'MENU_CACHE_TYPE'       => 'A',
+                                'MENU_CACHE_TIME'       => '360000',
                                 'MENU_CACHE_USE_GROUPS' => 'Y',
-                                'CACHE_SELECTED_ITEMS' => 'N',
-                                'TEMPLATE_NO_CACHE' => 'N',
-                                'MENU_CACHE_GET_VARS' => [],
-                                'MAX_LEVEL' => '1',
-                                'CHILD_MENU_TYPE' => 'personal_cab',
-                                'USE_EXT' => 'N',
-                                'DELAY' => 'N',
-                                'ALLOW_MULTI_SELECT' => 'N',
+                                'CACHE_SELECTED_ITEMS'  => 'N',
+                                'TEMPLATE_NO_CACHE'     => 'N',
+                                'MENU_CACHE_GET_VARS'   => [],
+                                'MAX_LEVEL'             => '1',
+                                'CHILD_MENU_TYPE'       => 'personal_cab',
+                                'USE_EXT'               => 'N',
+                                'DELAY'                 => 'N',
+                                'ALLOW_MULTI_SELECT'    => 'N',
                             ],
                             false); ?>
                         <main class="b-account__content" role="main">
@@ -230,7 +233,7 @@ if ($template->hasContent()) {
         '',
         [
             'AREA_FILE_SHOW' => 'file',
-            'PATH' => sprintf('/include/%s.php', trim($template->getPath(), '/')),
+            'PATH'           => sprintf('/include/%s.php', trim($template->getPath(), '/')),
         ],
         false);
 }

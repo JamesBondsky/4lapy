@@ -23,7 +23,7 @@ $order = $arResult['ORDER'];
 $relatedOrder = $arResult['RELATED_ORDER'];
 $bonusCount = $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] + $arResult['RELATED_ORDER_PROPERTIES']['BONUS_COUNT'];
 
-if ($bonusCount > 0) {
+if ($bonusCount > 0) { // самое место
     $bonusCount = floor($bonusCount);//округляем до целого
 }
 
@@ -38,7 +38,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED']) {
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
-        <?= $arResult['ORDER_PROPERTIES']['NAME'] ?>, спасибо за заказ!
+        <strong><?= $arResult['ORDER_PROPERTIES']['NAME'] ?></strong>, спасибо за заказ!
     </h1>
     <div class="b-order">
         <?php /*
@@ -71,7 +71,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED']) {
         <div class="b-order__block b-order__block--no-border">
             <div class="b-order__content b-order__content--no-border b-order__content--step-five">
                 <h2 class="b-title b-title--order-heading b-title--block">
-                    Заказ № <?= $order->getField('ACCOUNT_NUMBER') ?> оформлен
+                    Заказ № <strong><?= $order->getField('ACCOUNT_NUMBER') ?></strong> оформлен
                 </h2>
                 <div class="b-order__text-block">
                     <?php if ($arResult['ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_SMS) { ?>

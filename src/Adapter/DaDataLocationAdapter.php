@@ -195,7 +195,7 @@ class DaDataLocationAdapter extends BaseAdapter
         $path = $location['PATH'];
         unset($location['PATH']);
 
-        return \array_merge([$location], $path);
+        return \array_merge($path, [$location]);
     }
 
     /**
