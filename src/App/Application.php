@@ -190,10 +190,30 @@ class Application extends AppKernel
             ->getContext();
 
         return \sprintf(
-            'http%s:\\\\%s',
+            'http%s://%s',
             $context->getRequest()
                 ->isHttps() ? 's' : '',
             $context->getServer()
+                ->getHttpHost()
+        );
+    }
+
+    /**
+     * @todo moveit moveit
+     *
+     * @return string
+     */
+    public function getSiteCurrentDomain(): string
+    {
+        $context = \Bitrix\Main\Application::getInstance()
+            ->getContext();
+
+        return \sprintf(
+            'http%s://%s',
+            $context->getRequest()
+                ->isHttps() ? 's' : '',
+            $context->getRequest()
+                ->get('landing') ?: $context->getServer()
                 ->getHttpHost()
         );
     }
