@@ -8,20 +8,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main;
 use Bitrix\Main\Application;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\LoaderException;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\AppBundle\Bitrix\FourPawsComponent;
-use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Helpers\WordHelper;
@@ -29,16 +24,12 @@ use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
+class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
 {
     /**
      * @var OrderService
@@ -88,24 +79,13 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
     }
 
     /**
-     * {@inheritdoc}
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \RuntimeException
-     * @throws EmptyEntityClass
-     * @throws SystemException
-     * @throws IblockNotFoundException
-     * @throws ObjectException
-     * @throws ArgumentException
-     * @throws \Exception
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws LoaderException
+     * @throws Exception
      */
-    public function prepareResult(): void
+    public function executeComponent(): void
     {
+        $activeOrders = new ArrayCollection();
+        $closedOrders = new ArrayCollection();
         try {
             $user = $this->currentUserProvider->getCurrentUser();
             $instance = Application::getInstance();
@@ -149,8 +129,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             /** имитация постранички */
             $nav = new PageNavigation('nav-orders');
             $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-            $activeOrders = $closedOrders = new ArrayCollection();
-            $this->arResult['ACTIVE_ORDERS'] = $activeOrders = $this->orderService->getActiveSiteOrders();
+            $activeOrders = $this->orderService->getActiveSiteOrders();
             /** @noinspection PhpUndefinedVariableInspection */
             $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                 $manzanaOrders->toArray());
@@ -163,7 +142,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
 
             /** имитация постранички */
             $nav->setRecordCount($allClosedOrders->count());
-            $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
+            $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                 $nav->getOffset(), $nav->getPageSize(), true));
             $this->arResult['NAV'] = $nav;
 
@@ -175,7 +154,20 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             define('NEED_AUTH', true);
 
             return;
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('my_orders');
+            $logger->error('error - ' . $e->getMessage());
+            /** Показываем пустую страницу с заказами */
         }
+
+        if (!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
+            $storeService = App::getInstance()->getContainer()->get('store.service');
+            $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
+        }
+        $this->arResult['CLOSED_ORDERS'] = $closedOrders;
+        $this->arResult['ACTIVE_ORDERS'] = $activeOrders;
+
+        $this->includeComponentTemplate();
     }
 
     /**
@@ -218,7 +210,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
     /**
      * @param OrderItem $item
      * @param int       $percent
-     * @param int       $precision
      *
      * @return string
      */
