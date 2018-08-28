@@ -944,13 +944,23 @@ class OrderService implements LoggerAwareInterface
                 try {
                     if (!$address->getRegion()) {
                         $location = $this->locationService->findLocationByCode($storage->getCityCode());
+                        $area = [];
                         foreach ($location['PATH'] as $locationPathItem) {
-                            if ($locationPathItem['TYPE']['CODE'] === LocationService::TYPE_REGION) {
+                            $locationCode = $locationPathItem['CODE'];
+                            $locationType = $locationPathItem['TYPE']['CODE'];
+                            if (($locationType === LocationService::TYPE_REGION) ||
+                                ($locationType === LocationService::TYPE_CITY && $locationCode === LocationService::LOCATION_CODE_MOSCOW)
+                            ) {
                                 $address->setRegion($locationPathItem['NAME']);
-                            } elseif ($locationPathItem['TYPE']['CODE'] === LocationService::TYPE_SUBREGION) {
-                                $address->setArea($locationPathItem['NAME']);
+                            } elseif (
+                                \in_array($locationType, [
+                                    LocationService::TYPE_SUBREGION, LocationService::TYPE_CITY
+                                ], true)
+                            ) {
+                                $area[] = $locationPathItem['NAME'];
                             }
                         }
+                        $address->setArea(\implode(', ', $area));
                     }
 
                     $address = $this->locationService->splitAddress((string)$address, $storage->getCityCode());
