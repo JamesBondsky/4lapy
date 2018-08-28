@@ -42,6 +42,11 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
     protected $currentUserProvider;
 
     /**
+     * @var BasketService
+     */
+    protected $basketService;
+
+    /**
      * AutoloadingIssuesInspection constructor.
      *
      * @param null|\CBitrixComponent $component
@@ -55,6 +60,7 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
         parent::__construct($component);
         $container = App::getInstance()->getContainer();
         $this->orderService = $container->get('order.service');
+        $this->basketService = $container->get(BasketService::class);
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
@@ -310,6 +316,9 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
 
                     /** @var Sale\BasketItem $oldBasketItem */
                     foreach ($oldBasketItems as $oldBasketItem) {
+                        if ($this->basketService->isGiftProduct($oldBasketItem)) {
+                            continue;
+                        }
                         $propertyList = [];
                         if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
                             $propertyList = $oldPropertyCollection->getPropertyValues();
