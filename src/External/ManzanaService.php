@@ -714,7 +714,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param string $chequeId
      *
      * @return ChequeItem[]
-     * @throws \Exception
      * @throws ManzanaServiceException
      */
     public function getItemsByCheque(string $chequeId): array
