@@ -21,7 +21,7 @@ interface CurrentUserProviderInterface
      * @throws ConstraintDefinitionException
      * @return User|null
      */
-    public function getCurrentUser(): ?User;
+    public function getCurrentUser(): User;
 
     /**
      * @throws NotAuthorizedException

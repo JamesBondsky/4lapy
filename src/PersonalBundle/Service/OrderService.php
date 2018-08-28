@@ -69,21 +69,29 @@ class OrderService
         'G',
         'J',
     ];
+
     public static $cancelStatuses = [
         'A',
         'K',
     ];
+
     protected static $manzanaFinalStatus = 'G';
-    protected $manzanaFinalStatusSort = 110;
+
     /**
      * @var OrderRepository
      */
     private $orderRepository;
-    /** @var CurrentUserProviderInterface $currentUser */
+
+    /**
+     * @var CurrentUserProviderInterface $currentUser
+     */
     private $currentUser;
-    /** @var ManzanaService */
+
+    /**
+     * @var ManzanaService
+     */
     private $manzanaService;
-    private $siteManzanaOrders;
+
     private $manzanaOrderOffers;
 
     /**
@@ -122,6 +130,7 @@ class OrderService
         } catch (ManzanaServiceException $e) {
             $manzanaOrders = [];
         }
+
         return $this->mergeAllClosedOrders($closedSiteOrders, $manzanaOrders);
     }
 
@@ -144,6 +153,7 @@ class OrderService
                 unset($manzanaOrders[$key]);
             }
         }
+
         return new ArrayCollection(array_merge($closedSiteOrders, $manzanaOrders));
     }
 
@@ -258,6 +268,7 @@ class OrderService
                 LocalRedirect(Application::getInstance()->getContext()->getRequest()->getRequestUri());
             }
         }
+
         return $orders;
     }
 
@@ -421,6 +432,7 @@ class OrderService
                         if ($store !== null && !$store->isActive()) {
                             $store->setActive(true);
                         }
+
                         return $store;
                     } catch (\Exception $exception) {
                         return null;
@@ -436,6 +448,7 @@ class OrderService
                         if (!$store->isActive()) {
                             $store->setActive(true);
                         }
+
                         return $store;
                     } catch (\Exception $exception) {
                         return null;
@@ -523,6 +536,7 @@ class OrderService
      */
     protected function hasOrderByManzana(Order $order): bool
     {
+        return false;
         $filter = [
             'USER_ID'        => $order->getUserId(),
             'PROPERTY.CODE'  => 'MANZANA_NUMBER',
@@ -540,26 +554,26 @@ class OrderService
      */
     protected function getSiteManzanaOrders($userId): array
     {
-        if ($this->siteManzanaOrders === null) {
-            $res = OrderTable::query()->setFilter([
-                'USER_ID'         => $userId,
-                'PROPERTY.CODE'   => 'MANZANA_NUMBER',
-                '!PROPERTY.VALUE' => [
-                    null,
-                    '',
-                ],
-            ])->setSelect([
-                'ID',
-                'PROPERTY_CODE'  => 'PROPERTY.CODE',
-                'PROPERTY_VALUE' => 'PROPERTY.VALUE',
-            ])->exec();
-            while ($item = $res->fetch()) {
-                if ($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
-                    $this->siteManzanaOrders[$item['ID']] = $item['PROPERTY_VALUE'];
-                }
+        $result = [];
+        $items = OrderTable::query()->setFilter([
+            'USER_ID'         => $userId,
+            'PROPERTY.CODE'   => 'MANZANA_NUMBER',
+            '!PROPERTY.VALUE' => [
+                null,
+                '',
+            ],
+        ])->setSelect([
+            'ID',
+            'PROPERTY_CODE'  => 'PROPERTY.CODE',
+            'PROPERTY_VALUE' => 'PROPERTY.VALUE',
+        ])->exec();
+        while ($item = $items->fetch()) {
+            if ($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
+                $result[$item['ID']] = $item['PROPERTY_VALUE'];
             }
         }
-        return $this->siteManzanaOrders ?? [];
+
+        return $result;
     }
 
     /**
@@ -614,14 +628,14 @@ class OrderService
             $basketItem = $orderBasket->createItem('catalog', $productId);
             $basketItem->setPrice($item->getPrice(), true);
             $basketItem->setFields([
-                'QUANTITY'        => $item->getQuantity(),
-                'CURRENCY'        => CurrencyManager::getBaseCurrency(),
-                'NAME'            => $offer->getName(),
-                'WEIGHT'          => $offer->getCatalogProduct()->getWeight(),
-                'DETAIL_PAGE_URL' => $offer->getLink(),
+                'QUANTITY'               => $item->getQuantity(),
+                'CURRENCY'               => CurrencyManager::getBaseCurrency(),
+                'NAME'                   => $offer->getName(),
+                'WEIGHT'                 => $offer->getCatalogProduct()->getWeight(),
+                'DETAIL_PAGE_URL'        => $offer->getLink(),
                 'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-                'CATALOG_XML_ID' => $offerIblockId,
-                'PRODUCT_XML_ID' => $item->getArticle()
+                'CATALOG_XML_ID'         => $offerIblockId,
+                'PRODUCT_XML_ID'         => $item->getArticle(),
             ]);
             $allBonuses += $item->getBonus();
         }
@@ -716,6 +730,7 @@ class OrderService
             ]
         );
         Manager::enableExtendsDiscount();
+
         return $result->isSuccess();
     }
 }
