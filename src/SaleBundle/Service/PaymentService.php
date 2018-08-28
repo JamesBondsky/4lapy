@@ -212,9 +212,11 @@ class PaymentService implements LoggerAwareInterface
 
             if ($fiscalItem->getTotal() > $matchingItem->getItemAmount()) {
                 if ($priceFix) {
+                    $price = round($matchingItem->getItemAmount() / $matchingItem->getQuantity()->getValue());
+
                     $fiscalItem
                         ->setTotal($matchingItem->getItemAmount())
-                        ->setPrice(null); // сбрасываем цену за единицу, чтобы не бороться с округлением
+                        ->setPrice($price);
                 } else {
                     throw new PositionAmountExceededException(
                         \sprintf(
