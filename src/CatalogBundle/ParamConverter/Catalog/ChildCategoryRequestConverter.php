@@ -122,6 +122,7 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
         $value = $request->attributes->get($pathAttribute, '');
 
         if ($this->landingService->isLanding($request)) {
+            $object->setIsLanding(true);
             $object->setLandingCollection($this->categoriesService->getLandingCollectionByDomain($this->landingService->getLandingName($request)));
         }
 
@@ -132,6 +133,7 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
         } catch (CategoryNotFoundException $e) {
             throw new NotFoundHttpException(sprintf('Категория %s не найдена', $value));
         }
+
         try {
             $this->filterService
                 ->getFilterHelper()

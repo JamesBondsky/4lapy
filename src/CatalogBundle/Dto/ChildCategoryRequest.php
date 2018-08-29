@@ -20,6 +20,10 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
      * @var CategoryCollection
      */
     protected $landingCollection;
+    /**
+     * @var bool
+     */
+    protected $isLanding = false;
 
     /**
      * @return Category
@@ -57,6 +61,26 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     public function setLandingCollection(CategoryCollection $landingCollection): CatalogCategorySearchRequestInterface
     {
         $this->landingCollection = $landingCollection;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isLanding(): bool
+    {
+        return $this->isLanding;
+    }
+
+    /**
+     * @param bool $isLanding
+     *
+     * @return CatalogCategorySearchRequestInterface
+     */
+    public function setIsLanding(bool $isLanding): CatalogCategorySearchRequestInterface
+    {
+        $this->isLanding = $isLanding;
 
         return $this;
     }
