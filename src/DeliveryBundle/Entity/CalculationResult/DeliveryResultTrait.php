@@ -38,6 +38,11 @@ trait DeliveryResultTrait
     protected $intervalOffset;
 
     /**
+     * @var array
+     */
+    protected $weekDays;
+
+    /**
      * @throws ApplicationCreateException
      * @return Interval|null
      */
@@ -110,6 +115,26 @@ trait DeliveryResultTrait
     public function setDateOffset(int $dateOffset): DeliveryResultInterface
     {
         $this->dateOffset = $dateOffset;
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getWeekDays(): array
+    {
+        return $this->weekDays ?? [];
+    }
+
+    /**
+     * @param int[] $weekDays
+     * @return DeliveryResultInterface
+     */
+    public function setWeekDays(array $weekDays): DeliveryResultInterface
+    {
+        $this->weekDays = $weekDays;
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this;

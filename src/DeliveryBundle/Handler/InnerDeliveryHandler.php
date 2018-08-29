@@ -59,6 +59,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
     /**
      * @param Shipment $shipment
      * @return bool
+     * @throws ObjectNotFoundException
      */
     public function isCompatible(Shipment $shipment): bool
     {
@@ -128,6 +129,28 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
     /**
      * @param Shipment $shipment
      *
+     * @return int[]
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     */
+    public function getWeekDays(Shipment $shipment): array
+    {
+        $result = [];
+
+        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment);
+        $config = $this->getConfig();
+        /** @var int[] $days */
+        $days = $config['DAYS']['ITEMS'][$deliveryZone]['VALUE'];
+        foreach ($days as $day) {
+            $result[] = $day + 1;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Shipment $shipment
+     *
      * @throws ApplicationCreateException
      * @throws SystemException
      * @throws ArgumentException
@@ -181,6 +204,11 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $stockResult = static::getStocks($basket, $offers, $availableStores);
 
         $data['STOCK_RESULT'] = $stockResult;
+        $data['WEEK_DAYS'] = $this->getWeekDays($shipment);
+        if (empty($data['WEEK_DAYS'])) {
+            $result->addError(new Error('Не найдены дни доставки'));
+        }
+
         $result->setData($data);
         if ($stockResult->getOrderable()->isEmpty()) {
             $result->addError(new Error('Отсутствуют товары в наличии'));

@@ -39,7 +39,16 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
     {
         $date = parent::getDeliveryDate();
 
-        return (clone $date)->modify(sprintf('+%s days', $this->getFullOffset()));
+        $result = (clone $date)->modify(sprintf('+%s days', $this->getFullOffset()));
+
+        if ($availableDays = $this->getWeekDays()) {
+            $deliveryDay = (int)$result->format('N');
+            while (!\in_array($deliveryDay, $availableDays, true)) {
+                $deliveryDay = (int)$result->modify('+1 day')->format('N');
+            }
+        }
+
+        return $result;
     }
 
     /**
