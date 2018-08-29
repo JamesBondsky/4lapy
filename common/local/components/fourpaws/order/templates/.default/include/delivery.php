@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array                   $arResult
  * @var OrderStorage            $storage
  * @var DeliveryResultInterface $delivery
+ * @var FourPawsOrderComponent  $component
  */
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -18,7 +19,7 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 
 $storage = $arResult['STORAGE'];
-
+$deliveryService = $component->getDeliveryService();
 /** @var ArrayCollection $addresses */
 $addresses = $arResult['ADDRESSES'];
 $selectedAddressId = 0;
@@ -44,6 +45,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
 }
 
 $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
+$nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery, 10);
 ?>
 <script>
     window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>;
@@ -259,6 +261,7 @@ $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
     $storage1 = $arResult['SPLIT_RESULT']['1']['STORAGE'];
     $delivery2 = $arResult['SPLIT_RESULT']['2']['DELIVERY'];
     $storage2 = $arResult['SPLIT_RESULT']['2']['STORAGE'];
+    $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery1, 10);
     ?>
     <div class="delivery-block__type <?= !$storage->isSplit() ? 'js-hidden-valid-fields' : 'visible' ?>"
          data-delivery="<?= $delivery1->getPrice() ?>"
@@ -270,7 +273,6 @@ $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
             </div>
             <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date">
                 <?php
-                $selectorDelivery = $delivery1;
                 $selectorStorage = $storage1;
                 $selectorName = 'deliveryDate1';
                 include 'delivery_date_select.php'
@@ -278,7 +280,6 @@ $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
             </div>
         </div>
         <?php if (!$delivery->getIntervals()->isEmpty()) {
-            $selectorDelivery = $delivery1;
             $selectorStorage = $storage1;
             $selectorName = 'deliveryInterval1';
             include 'delivery_interval_select.php';
@@ -295,6 +296,9 @@ $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
                 </div>
             </div>
         </div>
+        <?php
+        $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery2, 10);
+        ?>
         <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
             <div class="b-input-line__label-wrapper"><span
                         class="b-input-line__label">Желаемая дата доставки второго заказа</span>

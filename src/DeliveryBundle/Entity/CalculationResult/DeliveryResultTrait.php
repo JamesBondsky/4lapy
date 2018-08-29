@@ -100,27 +100,6 @@ trait DeliveryResultTrait
     }
 
     /**
-     * @return int
-     */
-    public function getDateOffset(): int
-    {
-        return $this->dateOffset;
-    }
-
-    /**
-     * @param int $dateOffset
-     *
-     * @return DeliveryResultInterface
-     */
-    public function setDateOffset(int $dateOffset): DeliveryResultInterface
-    {
-        $this->dateOffset = $dateOffset;
-
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this;
-    }
-
-    /**
      * @return int[]
      */
     public function getWeekDays(): array
@@ -141,33 +120,20 @@ trait DeliveryResultTrait
     }
 
     /**
-     * @param int|null $dateIndex
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
-     * @throws SystemException
      * @return IntervalCollection
      */
-    public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection
+    public function getAvailableIntervals(): IntervalCollection
     {
         $result = new IntervalCollection();
 
-        if (null === $dateIndex) {
-            $dateIndex = $this->getDateOffset();
-        }
+        $days = $this->getIntervalOffset();
+        $tmpDelivery = clone $this;
+        /** @var Interval $interval */
+        foreach ($this->getIntervals() as $interval) {
+            $intervalDays = $tmpDelivery->setSelectedInterval($interval)->getIntervalOffset();
 
-        $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
-        if (($dateIndex >= 0) && ($dateIndex <= $diff)) {
-            $days = $this->getIntervalOffset() + $dateIndex;
-            $tmpDelivery = clone $this;
-            /** @var Interval $interval */
-            foreach ($this->getIntervals() as $interval) {
-                $intervalDays = $tmpDelivery->setSelectedInterval($interval)->getIntervalOffset();
-
-                if ($intervalDays <= $days) {
-                    $result->add($interval);
-                }
+            if ($intervalDays <= $days) {
+                $result->add($interval);
             }
         }
 

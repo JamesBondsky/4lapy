@@ -40,7 +40,12 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         $date = parent::getDeliveryDate();
 
         $this->deliveryDate = $this->getNextDeliveryDate($date);
-        $date->modify(sprintf('+%s days', $this->getFullOffset()));
+        $date->modify(
+            sprintf(
+                '+%s days',
+                (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset()
+            )
+        );
         $this->deliveryDate = $this->getNextDeliveryDate($date);
         return clone $this->deliveryDate;
     }
@@ -78,23 +83,6 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         }
 
         return $this->intervalOffset;
-    }
-
-    /**
-     * Комбинирует выбранную дату доставки и результат применения правил интервалов
-     *
-     * @throws ApplicationCreateException
-     * @throws NotFoundException
-     * @return int
-     */
-    protected function getFullOffset(): int
-    {
-        $result = $this->getDateOffset();
-        if (!$this->getIntervals()->isEmpty()) {
-            $result += (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
-        }
-
-        return $result;
     }
 
     /**

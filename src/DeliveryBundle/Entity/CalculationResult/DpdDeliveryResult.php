@@ -36,8 +36,6 @@ class DpdDeliveryResult extends BaseResult implements DeliveryResultInterface
          */
         $modifier += 2;
 
-        $modifier += $this->getDateOffset();
-
         if ($modifier > 0) {
             $date = (clone $date)->modify(sprintf('+%s days', $modifier));
         }

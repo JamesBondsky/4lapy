@@ -11,18 +11,6 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 interface DeliveryResultInterface extends CalculationResultInterface
 {
     /**
-     * @return int
-     */
-    public function getDateOffset(): int;
-
-    /**
-     * @param int $dateOffset
-     *
-     * @return DeliveryResultInterface
-     */
-    public function setDateOffset(int $dateOffset): DeliveryResultInterface;
-
-    /**
      * @return IntervalCollection
      */
     public function getIntervals(): IntervalCollection;

@@ -775,6 +775,7 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param CalculationResultInterface $delivery
      * @param int                        $count
+     *
      * @return \DateTime[]
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -783,27 +784,48 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function getNextDeliveryDates(CalculationResultInterface $delivery, int $count = 1): array
     {
-        $delivery = clone $delivery;
+        $result = [];
+        $nextDeliveries = $this->getNextDeliveries($delivery, $count);
+        foreach ($nextDeliveries as $nextDelivery) {
+            $result[] = $nextDelivery->getDeliveryDate();
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param CalculationResultInterface $delivery
+     * @param int                        $count
+     *
+     * @return CalculationResultInterface[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getNextDeliveries(CalculationResultInterface $delivery, int $count = 1): array
+    {
         /** @var \DateTime $lastDate */
         $lastDate = null;
         $currentDate = $delivery->getDeliveryDate();
-        $dates = [];
+        $result = [];
         do {
+            $currentDelivery = clone $delivery;
             if (null !== $lastDate) {
                 $currentDate->modify('+1 day');
             }
 
-            $currentDeliveryDate = $delivery->setCurrentDate($currentDate)->getDeliveryDate();
+            $currentDeliveryDate = $currentDelivery->setCurrentDate($currentDate)->getDeliveryDate();
             if ((null === $lastDate) ||
                 ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
             ) {
-                $dates[] = $currentDeliveryDate;
+                $result[] = $currentDelivery;
             }
 
             $lastDate = $currentDeliveryDate;
-        } while (\count($dates) < $count);
+        } while (\count($result) < $count);
 
-        return $dates;
+        return $result;
     }
 
     /**
