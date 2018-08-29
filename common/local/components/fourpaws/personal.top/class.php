@@ -139,7 +139,7 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
         $offersIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
         /**
          * Все элементы корзины из заказов, принадлежащих данному пользователю,
-         * у которых цена > 0 и активен оффер
+         * у которых цена > 0 и активен оффер, оффер не является подарком
          */
         $query = BasketTable::query()
             ->setSelect([
@@ -148,6 +148,7 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
             ->setFilter([
                 '>CATALOG_PRICE.PRICE' => 0,
                 'ORDER.USER_ID'        => $userId,
+                '!ELEMENT.XML_ID' => '3%'
             ])
             ->setGroup(['PRODUCT_ID'])
             ->registerRuntimeField(
