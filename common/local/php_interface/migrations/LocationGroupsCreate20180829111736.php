@@ -22,12 +22,12 @@ class LocationGroupsCreate20180829111736 extends SprintMigrationBase
             'SORT' => 100,
         ],
         DeliveryService::ZONE_5 => [
-            'NAME' => ['ru' => ['NAME' => 'Зона 5 (30 - 60км от МКАД)']],
+            'NAME' => ['ru' => ['NAME' => 'Зона 5 (10 - 30км от МКАД)']],
             'SORT' => 200,
             'CODE' => DeliveryService::ZONE_5
         ],
         DeliveryService::ZONE_6 => [
-            'NAME' => ['ru' => ['NAME' => 'Зона 6 (10 - 30км от МКАД)']],
+            'NAME' => ['ru' => ['NAME' => 'Зона 6 (30 - 60км от МКАД)']],
             'SORT' => 300,
             'CODE' => DeliveryService::ZONE_6
         ],

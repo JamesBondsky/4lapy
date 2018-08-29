@@ -29,14 +29,14 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
         foreach ($params['ZONES'] as $code => $zone) {
             $found = false;
             foreach ($params['VALUE'] as $i => $value) {
+                if (!isset($params['VALUE'][$i]['RULES'][\FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule::TYPE_ADD_DAYS])) {
+                    $params['VALUE'][$i]['RULES'][BaseRule::TYPE_ADD_DAYS] = [];
+                }
+
                 if ($value['ZONE_CODE'] === $code) {
                     $found = true;
                     $params['VALUE'][$i]['ZONE_NAME'] = $zone['NAME'];
                     break;
-                }
-
-                if (!isset($params['VALUE'][$i]['RULES'][\FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule::TYPE_ADD_DAYS])) {
-                    $params['VALUE'][$i]['RULES'][BaseRule::TYPE_ADD_DAYS] = [];
                 }
             }
 
