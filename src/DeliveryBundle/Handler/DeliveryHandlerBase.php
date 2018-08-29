@@ -310,8 +310,10 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             case DeliveryService::INNER_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
+                    case DeliveryService::ZONE_5:
+                    case DeliveryService::ZONE_6:
                         /**
-                         * условие доставки в эту зону - наличие на складе
+                         * условие доставки в эти зоны - наличие на складе
                          */
                         $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_STORE);
                         break;

@@ -69,6 +69,8 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_2 = 'ZONE_2';
     public const ZONE_3 = 'ZONE_3';
     public const ZONE_4 = 'ZONE_4';
+    public const ZONE_5 = 'ZONE_5';
+    public const ZONE_6 = 'ZONE_6';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,

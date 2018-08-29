@@ -718,6 +718,8 @@ class OrderService implements LoggerAwareInterface
                             switch ($selectedDelivery->getDeliveryZone()) {
                                 case DeliveryService::ZONE_1:
                                 case DeliveryService::ZONE_3:
+                                case DeliveryService::ZONE_5:
+                                case DeliveryService::ZONE_6:
                                     $value = 'DC01';
                                     break;
                                 case DeliveryService::ZONE_2:
