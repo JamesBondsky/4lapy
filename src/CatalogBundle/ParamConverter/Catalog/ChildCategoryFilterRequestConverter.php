@@ -10,6 +10,11 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class ChildCategoryFilterRequestConverter
+ *
+ * @package FourPaws\CatalogBundle\ParamConverter\Catalog
+ */
 class ChildCategoryFilterRequestConverter extends AbstractCatalogRequestConverter
 {
     /**

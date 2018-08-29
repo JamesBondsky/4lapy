@@ -2,6 +2,11 @@
 
 namespace FourPaws\CatalogBundle\Exception;
 
-class NoBrandFilterInRootDirectory extends RuntimeException
+/**
+ * Class NoBrandFilterInRootDirectory
+ *
+ * @package FourPaws\CatalogBundle\Exception
+ */
+class NoBrandFilterInRootDirectory extends RuntimeException implements CatalogExceptionInterface
 {
 }
