@@ -18,6 +18,7 @@ use FourPaws\Catalog\Exception\CategoryNotFoundException;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\CatalogBundle\Exception\LandingIsNotFoundException;
 use FourPaws\CatalogBundle\Exception\NoSectionsForProductException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -25,6 +26,11 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use WebArch\BitrixCache\BitrixCache;
 
+/**
+ * Class CategoriesService
+ *
+ * @package FourPaws\CatalogBundle\Service
+ */
 class CategoriesService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
@@ -46,6 +52,7 @@ class CategoriesService implements LoggerAwareInterface
 
     /**
      * @param string $path
+     *
      * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return int
@@ -111,7 +118,8 @@ class CategoriesService implements LoggerAwareInterface
             return Category::createRoot();
         }
 
-        $categoryCollection = (new CategoryQuery())->withFilterParameter('=ID', $id)->exec();
+        $categoryCollection = (new CategoryQuery())->withFilterParameter('=ID', $id)
+            ->exec();
         if ($categoryCollection->isEmpty()) {
             throw new CategoryNotFoundException(
                 sprintf('Категория каталога #%d не найдена.', $id)
@@ -156,6 +164,9 @@ class CategoriesService implements LoggerAwareInterface
             ->exec();
 
         $sectionIds = [];
+        /**
+         * @var array $section
+         */
         while ($section = $sections->fetch()) {
             $sectionIds[] = $section['IBLOCK_SECTION_ID'];
         }
@@ -170,5 +181,34 @@ class CategoriesService implements LoggerAwareInterface
             ->withFilterParameter('ACTIVE', BitrixUtils::BX_BOOL_TRUE)
             ->withFilterParameter('SECTION_ELEMENT.IBLOCK_ELEMENT_ID', $product->getId())
             ->exec();
+    }
+
+    /**
+     * @param string $landingName
+     *
+     * @return Category
+     *
+     * @throws LandingIsNotFoundException
+     */
+    public function getDefaultLandingByDomain(string $landingName): Category
+    {
+        $landing = (new CategoryQuery())
+            ->withFilter([
+                'UF_LANDING'         => true,
+                'UF_SUB_DOMAIN'      => $landingName,
+                'UF_DEF_FOR_LANDING' => true,
+            ])
+            ->withNav(['nTopCount' => 1])
+            ->exec()
+            ->first();
+
+        if (!$landing) {
+            throw new LandingIsNotFoundException(\sprintf(
+                'Landing %s is not found.',
+                $landingName
+            ));
+        }
+
+        return $landing;
     }
 }

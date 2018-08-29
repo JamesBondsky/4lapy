@@ -4,6 +4,11 @@ namespace FourPaws\CatalogBundle\Dto;
 
 use FourPaws\Catalog\Model\Category;
 
+/**
+ * Class ChildCategoryRequest
+ *
+ * @package FourPaws\CatalogBundle\Dto
+ */
 class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCategorySearchRequestInterface
 {
     /**
@@ -22,11 +27,12 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     /**
      * @param Category $category
      *
-     * @return static
+     * @return CatalogCategorySearchRequestInterface
      */
     public function setCategory(Category $category): CatalogCategorySearchRequestInterface
     {
         $this->category = $category;
+
         return $this;
     }
 }

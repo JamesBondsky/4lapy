@@ -1,11 +1,13 @@
 <?php
-/*
- * @copyright Copyright (c) ADV/web-engineering co.
- */
 
 namespace FourPaws\CatalogBundle\Exception;
 
-class NoSectionsForProductException extends RuntimeException
+/**
+ * Class NoSectionsForProductException
+ *
+ * @package FourPaws\CatalogBundle\Exception
+ */
+class NoSectionsForProductException extends RuntimeException implements CatalogExceptionInterface
 {
 
 }
