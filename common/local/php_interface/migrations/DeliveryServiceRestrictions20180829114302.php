@@ -106,12 +106,12 @@ class DeliveryServiceRestrictions20180829114302 extends SprintMigrationBase
             [
                 'CLASS_NAME' => LocationExceptRestriction::class,
                 'PARAMS'     => [
-                    DeliveryService::ZONE_1 => BitrixUtils::BX_BOOL_TRUE,
-                    DeliveryService::ZONE_2 => BitrixUtils::BX_BOOL_TRUE,
-                    DeliveryService::ZONE_3 => BitrixUtils::BX_BOOL_FALSE,
-                    DeliveryService::ZONE_4 => BitrixUtils::BX_BOOL_FALSE,
-                    DeliveryService::ZONE_5 => BitrixUtils::BX_BOOL_TRUE,
-                    DeliveryService::ZONE_6 => BitrixUtils::BX_BOOL_TRUE,
+                    DeliveryService::ZONE_1 => BitrixUtils::BX_BOOL_FALSE,
+                    DeliveryService::ZONE_2 => BitrixUtils::BX_BOOL_FALSE,
+                    DeliveryService::ZONE_3 => BitrixUtils::BX_BOOL_TRUE,
+                    DeliveryService::ZONE_4 => BitrixUtils::BX_BOOL_TRUE,
+                    DeliveryService::ZONE_5 => BitrixUtils::BX_BOOL_FALSE,
+                    DeliveryService::ZONE_6 => BitrixUtils::BX_BOOL_FALSE,
                 ],
             ],
         ],
@@ -119,12 +119,12 @@ class DeliveryServiceRestrictions20180829114302 extends SprintMigrationBase
             [
                 'CLASS_NAME' => LocationExceptRestriction::class,
                 'PARAMS'     => [
-                    DeliveryService::ZONE_1 => BitrixUtils::BX_BOOL_TRUE,
-                    DeliveryService::ZONE_2 => BitrixUtils::BX_BOOL_TRUE,
-                    DeliveryService::ZONE_3 => BitrixUtils::BX_BOOL_TRUE,
-                    DeliveryService::ZONE_4 => BitrixUtils::BX_BOOL_FALSE,
-                    DeliveryService::ZONE_5 => BitrixUtils::BX_BOOL_TRUE,
-                    DeliveryService::ZONE_6 => BitrixUtils::BX_BOOL_TRUE,
+                    DeliveryService::ZONE_1 => BitrixUtils::BX_BOOL_FALSE,
+                    DeliveryService::ZONE_2 => BitrixUtils::BX_BOOL_FALSE,
+                    DeliveryService::ZONE_3 => BitrixUtils::BX_BOOL_FALSE,
+                    DeliveryService::ZONE_4 => BitrixUtils::BX_BOOL_TRUE,
+                    DeliveryService::ZONE_5 => BitrixUtils::BX_BOOL_FALSE,
+                    DeliveryService::ZONE_6 => BitrixUtils::BX_BOOL_FALSE,
                 ],
             ],
             [
@@ -211,6 +211,7 @@ class DeliveryServiceRestrictions20180829114302 extends SprintMigrationBase
                         'SERVICE_ID'   => $deliveryService['ID'],
                         'SERVICE_TYPE' => 0,
                         'CLASS_NAME'   => $restriction['CLASS_NAME'],
+                        'PARAMS'       => $restriction['PARAMS']
                     ]
                 );
 
