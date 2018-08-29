@@ -10,20 +10,18 @@ use FourPaws\SaleBundle\Enum\OrderStorage;
  * @var DeliveryResultInterface $selectorDelivery
  * @var OrderStorage            $selectorStorage
  * @var string                  $selectorName
+ * @var FourPawsOrderComponent  $component
  */
 
-$start = $selectorDelivery->getPeriodFrom();
-$end = $selectorDelivery->getPeriodTo();
-for ($i = 0; $i < ($end - $start); $i++) {
-    $date = (new DateTime())->modify('+' . ($start + $i) . ' days');
-
-    $dates[$i] = FormatDate('l, d.m.Y', $date->getTimestamp());
-}
+$deliveryService = $component->getDeliveryService();
+$dates = $deliveryService->getNextDeliveryDates($selectorDelivery, 10);
 ?>
 <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date"
         name="<?= $selectorName ?>">
     <option value="" disabled="disabled" selected="selected">выберите</option>
     <?php foreach ($dates as $i => $date) { ?>
-        <option value="<?= $i ?>" <?= ($selectorStorage->getDeliveryDate() === $i) ? 'selected="selected"' : '' ?>><?= $date ?></option>';
+        <option value="<?= $i ?>" <?= ($selectorStorage->getDeliveryDate() === $i) ? 'selected="selected"' : '' ?>>
+            <?= FormatDate('l, d.m.Y', $date->getTimestamp()) ?>
+        </option>
     <?php } ?>
 </select>

@@ -34,7 +34,7 @@ $availableIntervals = $tmpDelivery->getAvailableIntervals();
             foreach ($availableIntervals as $i => $interval) { ?>
                 <option value="<?= ($i + 1) ?>" <?= (($selectorStorage->getDeliveryInterval() === $i + 1) ? 'selected = "selected"' : '') ?>>
                     <?= (string)$interval ?>
-                </option>\';
+                </option>
             <?php } ?>
         </select>
     </div>

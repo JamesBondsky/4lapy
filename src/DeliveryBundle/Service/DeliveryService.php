@@ -773,6 +773,40 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param CalculationResultInterface $delivery
+     * @param int                        $count
+     * @return \DateTime[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getNextDeliveryDates(CalculationResultInterface $delivery, int $count = 1): array
+    {
+        $delivery = clone $delivery;
+        /** @var \DateTime $lastDate */
+        $lastDate = null;
+        $currentDate = $delivery->getDeliveryDate();
+        $dates = [];
+        do {
+            if (null !== $lastDate) {
+                $currentDate->modify('+1 day');
+            }
+
+            $currentDeliveryDate = $delivery->setCurrentDate($currentDate)->getDeliveryDate();
+            if ((null === $lastDate) ||
+                ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
+            ) {
+                $dates[] = $currentDeliveryDate;
+            }
+
+            $lastDate = $currentDeliveryDate;
+        } while (\count($dates) < $count);
+
+        return $dates;
+    }
+
+    /**
      * @param $code
      *
      * @return Terminal|null
