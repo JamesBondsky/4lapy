@@ -42,8 +42,7 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         $this->deliveryDate = $this->getNextDeliveryDate($date);
         $date->modify(sprintf('+%s days', $this->getFullOffset()));
         $this->deliveryDate = $this->getNextDeliveryDate($date);
-
-        return clone $date;
+        return clone $this->deliveryDate;
     }
 
     /**
