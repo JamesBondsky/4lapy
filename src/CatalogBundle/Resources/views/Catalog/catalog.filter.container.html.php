@@ -261,6 +261,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             'SHOW_ALWAYS' => false,
             'PAGE_PARAMETER' => 'page',
             'AJAX_MODE' => 'Y',
+            'DELETE_URI' => $category->getSectionPageUrl(),
+            'RELATIVE_PATH' => 'Y'
         ],
         null,
         [
