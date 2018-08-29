@@ -1,6 +1,7 @@
 <?php
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
+
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 
@@ -122,15 +123,24 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
     }
 
     /**
-     * @param \DateTime  $date
+     * @param \DateTime $date
      *
      * @return \DateTime
      */
     public function apply(\DateTime $date): \DateTime
     {
         $result = clone $date;
+        $currentDate = (new \DateTime())->setTime(
+            $date->format('H'),
+            $date->format('i'),
+            $date->format('s'),
+            $date->format('u')
+        );
 
-        $result->modify(sprintf('+%s days', $this->getValue()));
+        $diff = $this->getValue() - $result->diff($currentDate)->days;
+        if ($diff > 0) {
+            $result->modify(sprintf('+%s days', $diff));
+        }
 
         return $result;
     }

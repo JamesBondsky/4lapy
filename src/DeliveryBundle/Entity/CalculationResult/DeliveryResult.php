@@ -39,16 +39,11 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
     {
         $date = parent::getDeliveryDate();
 
-        $result = (clone $date)->modify(sprintf('+%s days', $this->getFullOffset()));
+        $this->deliveryDate = $this->getNextDeliveryDate($date);
+        $date->modify(sprintf('+%s days', $this->getFullOffset()));
+        $this->deliveryDate = $this->getNextDeliveryDate($date);
 
-        if ($availableDays = $this->getWeekDays()) {
-            $deliveryDay = (int)$result->format('N');
-            while (!\in_array($deliveryDay, $availableDays, true)) {
-                $deliveryDay = (int)$result->modify('+1 day')->format('N');
-            }
-        }
-
-        return $result;
+        return clone $date;
     }
 
     /**
@@ -101,6 +96,24 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @param \DateTime $date
+     *
+     * @return \DateTime
+     */
+    protected function getNextDeliveryDate(\DateTime $date): \DateTime
+    {
+        $date = clone $date;
+        if ($availableDays = $this->getWeekDays()) {
+            $deliveryDay = (int)$date->format('N');
+            while (!\in_array($deliveryDay, $availableDays, true)) {
+                $deliveryDay = (int)$date->modify('+1 day')->format('N');
+            }
+        }
+
+        return $date;
     }
 
     /**
