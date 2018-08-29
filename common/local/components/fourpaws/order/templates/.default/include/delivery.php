@@ -4,16 +4,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @var array $arParams
- * @var array $arResult
- * @var OrderStorage $storage
+ * @var array                   $arParams
+ * @var array                   $arResult
+ * @var OrderStorage            $storage
  * @var DeliveryResultInterface $delivery
  */
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
-use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -45,54 +44,9 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
 }
 
 $orderPrice = $delivery->getStockResult()->getOrderable()->getPrice();
-
-function showDeliveryDateSelector(DeliveryResultInterface $delivery, OrderStorage $storage, string $name)
-{
-    $result = '
-    <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date" name="' . $name . '">
-        <option value="" disabled="disabled" selected="selected">выберите</option>';
-    $start = $delivery->getPeriodFrom();
-    $end = $delivery->getPeriodTo();
-    for ($i = 0; $i < ($end - $start); $i++) {
-        $date = (new DateTime())->modify('+' . ($start + $i) . ' days');
-        $dateString = FormatDate('l, d.m.Y', $date->getTimestamp());
-        $result .= '<option value="' . $i . '" ' . (($storage->getDeliveryDate() === $i) ? 'selected="selected"' : '') . '>
-        ' . $dateString . '</option>';
-    }
-    $result .= '</select>';
-    return $result;
-}
-
-function showDeliveryIntervalSelector(DeliveryResultInterface $delivery, OrderStorage $storage, string $name)
-{
-    $tmpDelivery = clone $delivery;
-    $tmpDelivery->setDateOffset($storage->getDeliveryDate());
-    $availableIntervals = $tmpDelivery->getAvailableIntervals();
-    $result = '
-        <div class="b-input-line b-input-line--interval">
-            <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
-                <span class="b-input-line__label">интервал</span>
-            </div>
-            <div class="b-select b-select--recall b-select--feedback-page b-select--interval">
-                <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval js-select-recovery"
-                        name="' . $name . '">
-                    <option value="" disabled="disabled" selected="selected">
-                        выберите
-                    </option>';
-    /** @var Interval $interval */
-    foreach ($availableIntervals as $i => $interval) {
-        $result .= '
-            <option value="' . ($i + 1) . '" ' . (($storage->getDeliveryInterval() === $i + 1) ? 'selected = "selected"' : '') . '>' . (string)$interval . '</option>';
-    }
-    $result .= '</select>
-            </div>
-        </div>';
-    return $result;
-}
-
 ?>
 <script>
-    window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>
+    window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>;
 </script>
 <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address"
     <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
@@ -259,12 +213,20 @@ function showDeliveryIntervalSelector(DeliveryResultInterface $delivery, OrderSt
             <span class="b-input-line__label">Желаемая дата доставки</span>
         </div>
         <div class="b-select b-select--recall b-select--feedback-page">
-            <?= showDeliveryDateSelector($delivery, $storage, 'deliveryDate') ?>
+            <?php
+            $selectorDelivery = $delivery;
+            $selectorStorage = $storage;
+            $selectorName = 'deliveryDate';
+            include 'delivery_date_select.php'
+            ?>
         </div>
     </div>
-    <?php if (!$delivery->getIntervals()->isEmpty()) { ?>
-        <?= showDeliveryIntervalSelector($delivery, $storage, 'deliveryInterval') ?>
-    <?php } ?>
+    <?php if (!$delivery->getIntervals()->isEmpty()) {
+        $selectorDelivery = $delivery;
+        $selectorStorage = $storage;
+        $selectorName = 'deliveryInterval';
+        include 'delivery_interval_select.php';
+    } ?>
     <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
         <div class="b-input-line__label-wrapper">
             <label class="b-input-line__label" for="order-comment">
@@ -307,12 +269,20 @@ function showDeliveryIntervalSelector(DeliveryResultInterface $delivery, OrderSt
                         class="b-input-line__label">Желаемая дата доставки первого заказа</span>
             </div>
             <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date">
-                <?= showDeliveryDateSelector($delivery1, $storage1, 'deliveryDate1') ?>
+                <?php
+                $selectorDelivery = $delivery1;
+                $selectorStorage = $storage1;
+                $selectorName = 'deliveryDate1';
+                include 'delivery_date_select.php'
+                ?>
             </div>
         </div>
-        <?php if (!$delivery->getIntervals()->isEmpty()) { ?>
-            <?= showDeliveryIntervalSelector($delivery1, $storage1, 'deliveryInterval1') ?>
-        <?php } ?>
+        <?php if (!$delivery->getIntervals()->isEmpty()) {
+            $selectorDelivery = $delivery1;
+            $selectorStorage = $storage1;
+            $selectorName = 'deliveryInterval1';
+            include 'delivery_interval_select.php';
+        } ?>
         <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-comment1">Комментарий к заказу
@@ -330,12 +300,20 @@ function showDeliveryIntervalSelector(DeliveryResultInterface $delivery, OrderSt
                         class="b-input-line__label">Желаемая дата доставки второго заказа</span>
             </div>
             <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date">
-                <?= showDeliveryDateSelector($delivery2, $storage2, 'deliveryDate2') ?>
+                <?php
+                $selectorDelivery = $delivery2;
+                $selectorStorage = $storage2;
+                $selectorName = 'deliveryDate2';
+                include 'delivery_date_select.php'
+                ?>
             </div>
         </div>
-        <?php if (!$delivery->getIntervals()->isEmpty()) { ?>
-            <?= showDeliveryIntervalSelector($delivery2, $storage2, 'deliveryInterval2') ?>
-        <?php } ?>
+        <?php if (!$delivery->getIntervals()->isEmpty()) {
+            $selectorDelivery = $delivery2;
+            $selectorStorage = $storage2;
+            $selectorName = 'deliveryInterval2';
+            include 'delivery_interval_select.php';
+        } ?>
         <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-comment2">Комментарий к заказу
