@@ -33,6 +33,12 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
                     $params['VALUE'][$i]['RULES'][BaseRule::TYPE_ADD_DAYS] = [];
                 }
 
+                foreach ($value['INTERVALS'] as $j => $interval) {
+                    if (!isset($interval['RULES']['ADD_DAYS'])) {
+                        $params['VALUE'][$i]['INTERVALS'][$j]['RULES'][BaseRule::TYPE_ADD_DAYS] = [];
+                    }
+                }
+
                 if ($value['ZONE_CODE'] === $code) {
                     $found = true;
                     $params['VALUE'][$i]['ZONE_NAME'] = $zone['NAME'];
