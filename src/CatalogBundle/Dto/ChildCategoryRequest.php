@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Dto;
 
+use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Model\Category;
 
 /**
@@ -15,6 +16,10 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
      * @var Category
      */
     protected $category;
+    /**
+     * @var CategoryCollection
+     */
+    protected $landingCollection;
 
     /**
      * @return Category
@@ -32,6 +37,26 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     public function setCategory(Category $category): CatalogCategorySearchRequestInterface
     {
         $this->category = $category;
+
+        return $this;
+    }
+
+    /**
+     * @return CategoryCollection
+     */
+    public function getLandingCollection(): CategoryCollection
+    {
+        return $this->landingCollection;
+    }
+
+    /**
+     * @param CategoryCollection $landingCollection
+     *
+     * @return CatalogCategorySearchRequestInterface
+     */
+    public function setLandingCollection(CategoryCollection $landingCollection): CatalogCategorySearchRequestInterface
+    {
+        $this->landingCollection = $landingCollection;
 
         return $this;
     }

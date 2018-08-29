@@ -192,15 +192,19 @@ class CategoriesService implements LoggerAwareInterface
      */
     public function getDefaultLandingByDomain(string $landingName): Category
     {
-        $landing = (new CategoryQuery())
-            ->withFilter([
-                'UF_LANDING'         => true,
-                'UF_SUB_DOMAIN'      => $landingName,
-                'UF_DEF_FOR_LANDING' => true,
-            ])
-            ->withNav(['nTopCount' => 1])
-            ->exec()
-            ->first();
+        $landing =
+            $landingName
+                ? (new CategoryQuery())
+                ->withFilter([
+                    '=UF_SUB_DOMAIN'     => $landingName,
+                    'UF_DEF_FOR_LANDING' => true,
+                    'ACTIVE'             => 'Y'
+                ])
+                ->withNav(['nTopCount' => 1])
+                ->exec()
+                ->first()
+                : null;
+
 
         if (!$landing) {
             throw new LandingIsNotFoundException(\sprintf(
@@ -210,5 +214,36 @@ class CategoriesService implements LoggerAwareInterface
         }
 
         return $landing;
+    }
+
+    /**
+     * @param string $landingName
+     *
+     * @return CategoryCollection
+     */
+    public function getLandingCollectionByDomain(string $landingName): CategoryCollection
+    {
+        /**
+         * @var CategoryCollection $landingCollection
+         */
+        $landingCollection =
+            $landingName
+                ? (new CategoryQuery())
+                ->withFilter([
+                    '=UF_SUB_DOMAIN' => $landingName,
+                    'ACTIVE'         => 'Y'
+                ])
+                ->exec()
+                : null;
+
+
+        if (!$landingCollection) {
+            throw new LandingIsNotFoundException(\sprintf(
+                'Landing collection %s is not found.',
+                $landingName
+            ));
+        }
+
+        return $landingCollection;
     }
 }
