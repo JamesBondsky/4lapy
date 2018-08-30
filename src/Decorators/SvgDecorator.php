@@ -24,10 +24,8 @@ class SvgDecorator
      * SvgDecorator constructor.
      *
      * @param string $image
-     * @param int    $width
-     * @param int    $height
-     *
-     * @throws InvalidArgumentException
+     * @param int $width
+     * @param int $height
      */
     public function __construct(string $image, int $width, int $height)
     {
@@ -151,7 +149,7 @@ html;
         } else {
             try {
                 $baseDomain = Application::getInstance()
-                    ->getSiteCurrentDomain();
+                    ->getSiteDomain();
             } catch (ApplicationCreateException $e) {
                 $baseDomain = '';
             }
