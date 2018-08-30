@@ -108,7 +108,9 @@ abstract class HlbItemBase implements ItemInterface, ToArrayInterface
         return $this;
     }
 
-
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         $result = [];

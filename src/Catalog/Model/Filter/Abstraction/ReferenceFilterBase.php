@@ -11,8 +11,16 @@ use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Variant;
 use WebArch\BitrixCache\BitrixCache;
 
+/**
+ * Class ReferenceFilterBase
+ *
+ * @package FourPaws\Catalog\Model\Filter\Abstraction
+ */
 abstract class ReferenceFilterBase extends FilterBase
 {
+    /**
+     * @return array
+     */
     protected function getVariantOrder(): array {
         return [
             'UF_SORT' => 'asc',
@@ -20,6 +28,9 @@ abstract class ReferenceFilterBase extends FilterBase
         ];
     }
 
+    /**
+     * @return string
+     */
     abstract protected function getHlBlockServiceName(): string;
 
     /**
