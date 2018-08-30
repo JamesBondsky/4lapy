@@ -24,6 +24,10 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
      * @var bool
      */
     protected $isLanding = false;
+    /**
+     * @var string
+     */
+    protected $currentPath;
 
     /**
      * @return Category
@@ -81,6 +85,26 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     public function setIsLanding(bool $isLanding): CatalogCategorySearchRequestInterface
     {
         $this->isLanding = $isLanding;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentPath(): string
+    {
+        return $this->currentPath;
+    }
+
+    /**
+     * @param string $currentPath
+     *
+     * @return CatalogCategorySearchRequestInterface
+     */
+    public function setCurrentPath(string $currentPath): CatalogCategorySearchRequestInterface
+    {
+        $this->currentPath = $currentPath;
 
         return $this;
     }

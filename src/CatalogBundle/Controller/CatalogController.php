@@ -193,10 +193,10 @@ class CatalogController extends Controller
         }
 
         return $this->render($tpl, [
-            'request'             => $request,
             'productSearchResult' => $result,
             'catalogRequest'      => $categoryRequest,
             'ecommerceService'    => $this->ecommerceService,
+            'request'             => $request,
         ]);
     }
 }

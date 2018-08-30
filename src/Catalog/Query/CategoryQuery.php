@@ -45,6 +45,7 @@ class CategoryQuery extends IblockSectionQuery
             'UF_FORM_TEMPLATE',
             'UF_DEF_FOR_LANDING',
             'UF_SUB_DOMAIN',
+            'UF_SHOW_FITTING',
         ];
     }
 

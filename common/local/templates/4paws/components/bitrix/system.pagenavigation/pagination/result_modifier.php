@@ -13,6 +13,12 @@ use Bitrix\Main\Web\Uri;
 $arResult['NavQueryString'] = html_entity_decode($arResult['NavQueryString']);
 $arResult['BASE_URI'] = $arResult['sUrlPath'];
 $arResult['BASE_URI'] .= $arResult['NavQueryString'] !== '' ? '?' . $arResult['NavQueryString'] : '';
+$replaceTemplate = \sprintf(
+    '~^%s~',
+    $arParams['DELETE_URI'] ?? ''
+);
+$arResult['BASE_URI'] = \preg_replace($replaceTemplate, '', $arResult['BASE_URI']);
+$isRelativePath = $arParams['RELATIVE_PATH'] === 'Y';
 
 $countItemsBetweenDot = 5;
 $leftCount = 2;
@@ -32,7 +38,7 @@ if ($curPage > 1) {
         $arResult['PREV_URL'] = $uri->getUri();
     } else {
         if ($curPage > 2) {
-            $arResult['PREV_URL'] = $uri->getUri();
+            $arResult['PREV_URL'] = $isRelativePath ? ltrim($uri->getUri(), '/') : $uri->getUri();
         } else {
             $arResult['PREV_URL'] = $arResult['BASE_URI'];
         }
@@ -43,7 +49,7 @@ if ($curPage > 1) {
 if ($curPage < $countPages) {
     $uri = new Uri($arResult['BASE_URI']);
     $uri->addParams([$pageParameter => $curPage + 1]);
-    $arResult['NEXT_URL'] = $uri->getUri();
+    $arResult['NEXT_URL'] = $isRelativePath ? ltrim($uri->getUri(), '/') : $uri->getUri();
 }
 
 $arResult['URLS'] = [];
@@ -62,7 +68,8 @@ while ($navRecordGroup <= $countPages) {
     /** установка юрлов */
     $uri = new Uri($arResult['BASE_URI']);
     $uri->addParams([$pageParameter => $navRecordGroup]);
-    $arResult['URLS'][$navRecordGroup] = $uri->getUri();
+
+    $arResult['URLS'][$navRecordGroup] = $isRelativePath ? ltrim($uri->getUri(), '/') : $uri->getUri();
 
     /** установка хидденов*/
     if ($i > $noneHiddenCount && $navRecordGroup !== $curPage) {
@@ -85,7 +92,7 @@ while ($navRecordGroup <= $countPages) {
             }
         } elseif ($navRecordGroup === $countItemsBetweenDot && $curPage < ($countItemsBetweenDot - 1)) {
             $arResult['START_BETWEEN_BEGIN'] = $navRecordGroup;
-            $arResult['START_BETWEEN_END'] = $navRecordGroup = $countPages-1;
+            $arResult['START_BETWEEN_END'] = $navRecordGroup = $countPages - 1;
             $arResult['END_BETWEEN_BEGIN'] = $arResult['END_BETWEEN_END'] = -1;
             $i = 0;
             continue;
@@ -95,7 +102,7 @@ while ($navRecordGroup <= $countPages) {
             && $navRecordGroup !== $countPages && $arResult['END_BETWEEN_BEGIN'] === 0) {
 
             $arResult['END_BETWEEN_BEGIN'] = $navRecordGroup;
-            $arResult['END_BETWEEN_END'] = $navRecordGroup = $countPages-1;
+            $arResult['END_BETWEEN_END'] = $navRecordGroup = $countPages - 1;
             $i = 0;
         }
     }
