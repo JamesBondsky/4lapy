@@ -208,15 +208,6 @@ class CatalogHLBlockClothMeasuresCreate20180830174011 extends SprintMigrationBas
             'UF_NECK_MAX'  => '27',
         ],
         [
-            'UF_CODE'      => 'M',
-            'UF_BACK_MIN'  => '24',
-            'UF_BACK_MAX'  => '28',
-            'UF_CHEST_MIN' => '37',
-            'UF_CHEST_MAX' => '42',
-            'UF_NECK_MIN'  => '24',
-            'UF_NECK_MAX'  => '27',
-        ],
-        [
             'UF_CODE'      => 'L',
             'UF_BACK_MIN'  => '29',
             'UF_BACK_MAX'  => '33',
