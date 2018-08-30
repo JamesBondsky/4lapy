@@ -22,7 +22,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
           method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
-        <?php if (CatalogLandingService::isLandingPage()) { ?>
+        <?php if (!CatalogLandingService::isLandingPage()) { ?>
             <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <?php } ?>
         <div class="b-input-line">

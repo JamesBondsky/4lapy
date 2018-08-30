@@ -38,6 +38,9 @@ class IblockElementQuery extends IblockQueryBase
         );
     }
 
+    /**
+     * @return array
+     */
     public function getBaseSelect(): array
     {
         return [
