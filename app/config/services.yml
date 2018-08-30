@@ -103,3 +103,7 @@ services:
 
   form.service:
       class: FourPaws\Form\FormService
+
+  front_office.manzana_integration.service:
+    class: FourPaws\FrontOffice\ManzanaIntegrationService
+    arguments: ['@manzana.service']
