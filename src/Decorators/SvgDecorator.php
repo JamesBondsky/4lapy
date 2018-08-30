@@ -16,8 +16,8 @@ class SvgDecorator
 {
     private $path;
     private $image;
-    private $width;
-    private $height;
+    private $width = 0;
+    private $height = 0;
     private $domain;
 
     /**
@@ -27,12 +27,19 @@ class SvgDecorator
      * @param int $width
      * @param int $height
      */
-    public function __construct(string $image, int $width, int $height)
+    public function __construct(string $image, int $width = 0, int $height = 0)
     {
         $this->setPath();
         $this->setImage($image);
-        $this->setWidth($width);
-        $this->setHeight($height);
+
+        if ($width) {
+            $this->setWidth($width);
+        }
+
+        if ($height) {
+            $this->setHeight($height);
+        }
+
         $this->setDomain();
     }
 
@@ -41,8 +48,13 @@ class SvgDecorator
      */
     public function __toString()
     {
+        $viewBox = ($this->getWidth() || $this->getHeight()) ? <<<viewbox
+viewBox="0 0 {$this->getWidth()} {$this->getHeight()}" width="{$this->getWidth()}px" height="{$this->getHeight()}px"
+viewbox
+            : '';
+
         $html = <<<html
-<svg class="b-icon__svg" viewBox="0 0 {$this->getWidth()} {$this->getHeight()}" width="{$this->getWidth()}px" height="{$this->getHeight()}px">
+<svg class="b-icon__svg"{$viewBox}>
     <use class="b-icon__use" xlink:href="{$this->domain}{$this->path}#{$this->getImage()}"></use>
 </svg>
 html;
