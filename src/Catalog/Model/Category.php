@@ -90,6 +90,8 @@ class Category extends IblockSection implements FilterInterface
     protected $UF_FORM_TEMPLATE;
     /** @var string */
     protected $UF_SUB_DOMAIN;
+    /** @var bool */
+    protected $UF_SHOW_FITTING = false;
     /**
      * @var FilterCollection
      */
@@ -564,6 +566,7 @@ class Category extends IblockSection implements FilterInterface
     {
         $this->UF_FAQ_SECTION = $ufFaqSection;
     }
+
     /**
      * @return bool
      */
@@ -620,6 +623,26 @@ class Category extends IblockSection implements FilterInterface
     public function setSubDomain(string $subDomain): self
     {
         $this->UF_SUB_DOMAIN = $subDomain;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isShowFitting(): bool
+    {
+        return $this->UF_SHOW_FITTING;
+    }
+
+    /**
+     * @param bool $isShowFitting
+     *
+     * @return Category
+     */
+    public function setShowFitting(bool $isShowFitting): self
+    {
+        $this->UF_SHOW_FITTING = $isShowFitting;
 
         return $this;
     }
