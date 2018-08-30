@@ -9,6 +9,7 @@ use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -40,26 +41,32 @@ class CatalogController extends Controller
      * @var GoogleEcommerceService
      */
     private $ecommerceService;
+    /**
+     * @var CatalogLandingService
+     */
+    private $landingService;
 
     /**
      * CatalogController constructor.
      *
-     * @param SearchService $searchService
-     * @param ValidatorInterface $validator
+     * @param SearchService          $searchService
+     * @param ValidatorInterface     $validator
      * @param GoogleEcommerceService $ecommerceService
+     * @param CatalogLandingService  $landingService
      */
-    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService)
+    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService, CatalogLandingService $landingService)
     {
         $this->searchService = $searchService;
         $this->validator = $validator;
         $this->ecommerceService = $ecommerceService;
+        $this->landingService = $landingService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection
      *
      * @Route("/search/")
      *
-     * @param Request $request
+     * @param Request       $request
      * @param SearchRequest $searchRequest
      *
      * @return Response
@@ -73,11 +80,14 @@ class CatalogController extends Controller
     {
         $result = null;
 
-        if (!$this->validator->validate($searchRequest)->count()) {
+        if (!$this->validator->validate($searchRequest)
+            ->count()) {
             /** @var ProductSearchResult $result */
             $result = $this->searchService->searchProducts(
-                $searchRequest->getCategory()->getFilters(),
-                $searchRequest->getSorts()->getSelected(),
+                $searchRequest->getCategory()
+                    ->getFilters(),
+                $searchRequest->getSorts()
+                    ->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
             );
@@ -94,19 +104,35 @@ class CatalogController extends Controller
         }
 
         return $this->render($tpl, [
-            'request' => $request,
+            'request'             => $request,
             'productSearchResult' => $result,
-            'catalogRequest' => $searchRequest,
-            'categories' => $categories,
-            'ecommerceService' => $this->ecommerceService,
+            'catalogRequest'      => $searchRequest,
+            'categories'          => $categories,
+            'ecommerceService'    => $this->ecommerceService,
         ]);
+    }
+
+    /**
+     * @Route(
+     *      "/{path}/",
+     *      condition="request.get('landing', null) !== null",
+     *      name="category.landing"
+     * )
+     *
+     * @param RootCategoryRequest $rootCategoryRequest
+     *
+     * @return Response
+     */
+    public function categoryLandingAction(RootCategoryRequest $rootCategoryRequest): Response
+    {
+        return $this->redirect($this->landingService->getLandingDefaultPage($rootCategoryRequest), 301);
     }
 
     /**
      * @Route("/{path}/")
      *
      * @param RootCategoryRequest $rootCategoryRequest
-     * @param Request $request
+     * @param Request             $request
      *
      * @return Response
      *
@@ -118,8 +144,10 @@ class CatalogController extends Controller
     public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest, Request $request): Response
     {
         $result = $this->searchService->searchProducts(
-            $rootCategoryRequest->getCategory()->getFilters(),
-            $rootCategoryRequest->getSorts()->getSelected(),
+            $rootCategoryRequest->getCategory()
+                ->getFilters(),
+            $rootCategoryRequest->getSorts()
+                ->getSelected(),
             $rootCategoryRequest->getNavigation(),
             $rootCategoryRequest->getSearchString()
         );
@@ -128,8 +156,8 @@ class CatalogController extends Controller
             'FourPawsCatalogBundle:Catalog:rootCategory.html.php',
             [
                 'rootCategoryRequest' => $rootCategoryRequest,
-                'request' => $request,
-                'result' => $result,
+                'request'             => $request,
+                'result'              => $result,
             ]
         );
     }
@@ -137,7 +165,7 @@ class CatalogController extends Controller
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
      *
-     * @param Request $request
+     * @param Request              $request
      * @param ChildCategoryRequest $categoryRequest
      *
      * @return Response
@@ -150,8 +178,10 @@ class CatalogController extends Controller
     public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest): Response
     {
         $result = $this->searchService->searchProducts(
-            $categoryRequest->getCategory()->getFilters(),
-            $categoryRequest->getSorts()->getSelected(),
+            $categoryRequest->getCategory()
+                ->getFilters(),
+            $categoryRequest->getSorts()
+                ->getSelected(),
             $categoryRequest->getNavigation(),
             $categoryRequest->getSearchString()
         );
@@ -163,10 +193,10 @@ class CatalogController extends Controller
         }
 
         return $this->render($tpl, [
-            'request' => $request,
             'productSearchResult' => $result,
-            'catalogRequest' => $categoryRequest,
-            'ecommerceService' => $this->ecommerceService,
+            'catalogRequest'      => $categoryRequest,
+            'ecommerceService'    => $this->ecommerceService,
+            'request'             => $request,
         ]);
     }
 }

@@ -72,6 +72,9 @@ class Event extends BaseServiceHandler
 
         static::initHandler('SectionOnAfterUpdate', [self::class, 'updateMainProductSectionD7'], $module);
         static::initHandlerCompatible('OnAfterIBlockSectionUpdate', [self::class, 'updateMainProductSection'], $module);
+
+        /** Замена домена svg для лендингов */
+        static::initHandler('OnEndBufferContent', [self::class, 'fixLandingSvg'], 'main');
     }
 
     /**
@@ -220,6 +223,28 @@ class Event extends BaseServiceHandler
             } catch (NoSectionsForProductException $e) {
                 // ничего не нужно делать
             }
+        }
+    }
+
+    /**
+     * @todo HARD CODE
+     *
+     * @param $buffer
+     */
+    public static function fixLandingSvg(&$buffer)
+    {
+        $context = \Bitrix\Main\Application::getInstance()->getContext();
+
+        if ($context->getRequest()->get('landing')) {
+            $buffer = \preg_replace(
+                \sprintf(
+                    '~(xlink:href="https?://)%s/~',
+                    $context->getServer()->getHttpHost()
+                ),
+                \sprintf('$1%s/',
+                    $context->getRequest()->get('landing')
+                ), $buffer
+            );
         }
     }
 }

@@ -41,10 +41,17 @@ class CategoryQuery extends IblockSectionQuery
             'PICTURE',
             'UF_LANDING',
             'UF_LANDING_BANNER',
-            'UF_FAQ_SECTION'
+            'UF_FAQ_SECTION',
+            'UF_FORM_TEMPLATE',
+            'UF_DEF_FOR_LANDING',
+            'UF_SUB_DOMAIN',
+            'UF_SHOW_FITTING',
         ];
     }
 
+    /**
+     * @return array
+     */
     public function getBaseFilter(): array
     {
         return ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)];

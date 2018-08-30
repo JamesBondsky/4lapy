@@ -27,6 +27,11 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
+/**
+ * Class Category
+ *
+ * @package FourPaws\Catalog\Model
+ */
 class Category extends IblockSection implements FilterInterface
 {
     public const UNSORTED_CATEGORY_CODE = 'unsorted';
@@ -67,22 +72,30 @@ class Category extends IblockSection implements FilterInterface
      * @var string
      */
     protected $UF_SUFFIX = '';
-
+    /**
+     * @var bool
+     */
     protected $UF_LANDING;
-
+    /**
+     * @var bool
+     */
+    protected $UF_DEF_FOR_LANDING;
     /**
      * @var string
      */
     protected $UF_LANDING_BANNER;
-
     /** @var string */
     protected $UF_FAQ_SECTION;
-
+    /** @var string */
+    protected $UF_FORM_TEMPLATE;
+    /** @var string */
+    protected $UF_SUB_DOMAIN;
+    /** @var bool */
+    protected $UF_SHOW_FITTING = false;
     /**
      * @var FilterCollection
      */
     private $filterList;
-
     /**
      * @var FilterService
      */
@@ -100,7 +113,9 @@ class Category extends IblockSection implements FilterInterface
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
-        $this->filterService = Application::getInstance()->getContainer()->get(FilterService::class);
+        $this->filterService = Application::getInstance()
+            ->getContainer()
+            ->get(FilterService::class);
         //По умолчанию фильтр по категории невидим.
         $this->setVisible(false);
         $this->child = new ArrayCollection();
@@ -151,6 +166,7 @@ class Category extends IblockSection implements FilterInterface
     public function setPictureId(int $pictureId)
     {
         $this->PICTURE = $pictureId;
+
         return $this;
     }
 
@@ -170,6 +186,7 @@ class Category extends IblockSection implements FilterInterface
     public function withDisplayName($name)
     {
         $this->UF_DISPLAY_NAME = $name;
+
         return $this;
     }
 
@@ -182,13 +199,14 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
-     * @param $name
+     * @param $suffix
      *
      * @return $this
      */
     public function withSuffix($suffix)
     {
         $this->UF_SUFFIX = $suffix;
+
         return $this;
     }
 
@@ -248,6 +266,7 @@ class Category extends IblockSection implements FilterInterface
     public function withParent(Category $parent): Category
     {
         $this->parent = $parent;
+
         return $this;
     }
 
@@ -329,7 +348,7 @@ class Category extends IblockSection implements FilterInterface
              * Обязательно запрашивается активный раздел, т.к. на него будет ссылка
              * и при деактивации целевого раздела показывать битую ссылку плохо.
              */
-             $res = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
+            $res = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
                 ->exec();
             $this->symlink = $res->isEmpty() ? null : $res->current();
         }
@@ -429,9 +448,14 @@ class Category extends IblockSection implements FilterInterface
     {
         $suffix = '';
         if ($this->getParent()) {
-            $suffix = $this->getParent()->getSuffix();
+            $suffix = $this->getParent()
+                ->getSuffix();
         }
-        return $this->getDisplayName() ?: trim(implode(' ', [$this->getName(), $suffix]));
+
+        return $this->getDisplayName() ?: trim(implode(' ', [
+            $this->getName(),
+            $suffix
+        ]));
     }
 
     /**
@@ -490,7 +514,12 @@ class Category extends IblockSection implements FilterInterface
      */
     public function isLanding(): bool
     {
-        return \in_array($this->getUfLanding(), ['Y', '1', 1, true], true);
+        return \in_array($this->getUfLanding(), [
+            'Y',
+            '1',
+            1,
+            true
+        ], true);
     }
 
     public function getUfLanding()
@@ -536,5 +565,85 @@ class Category extends IblockSection implements FilterInterface
     public function setUfFaqSection($ufFaqSection): void
     {
         $this->UF_FAQ_SECTION = $ufFaqSection;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDefForLanding(): bool
+    {
+        return $this->UF_DEF_FOR_LANDING;
+    }
+
+    /**
+     * @param bool $defForLanding
+     *
+     * @return Category
+     */
+    public function setDefForLanding(bool $defForLanding): self
+    {
+        $this->UF_DEF_FOR_LANDING = $defForLanding;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFormTemplate(): string
+    {
+        return $this->UF_FORM_TEMPLATE;
+    }
+
+    /**
+     * @param string $formTemplate
+     *
+     * @return Category
+     */
+    public function setFormTemplate(string $formTemplate): self
+    {
+        $this->UF_FORM_TEMPLATE = $formTemplate;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSubDomain(): string
+    {
+        return $this->UF_SUB_DOMAIN;
+    }
+
+    /**
+     * @param string $subDomain
+     *
+     * @return Category
+     */
+    public function setSubDomain(string $subDomain): self
+    {
+        $this->UF_SUB_DOMAIN = $subDomain;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isShowFitting(): bool
+    {
+        return $this->UF_SHOW_FITTING;
+    }
+
+    /**
+     * @param bool $isShowFitting
+     *
+     * @return Category
+     */
+    public function setShowFitting(bool $isShowFitting): self
+    {
+        $this->UF_SHOW_FITTING = $isShowFitting;
+
+        return $this;
     }
 }

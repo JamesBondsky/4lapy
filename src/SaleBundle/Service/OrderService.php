@@ -694,6 +694,8 @@ class OrderService implements LoggerAwareInterface
                 'COM_WAY',
                 'DELIVERY_PLACE_CODE',
                 'IS_FAST_ORDER',
+                'OPERATOR_EMAIL',
+                'OPERATOR_SHOP',
             ];
 
             /** @var PropertyValue $propertyValue */
