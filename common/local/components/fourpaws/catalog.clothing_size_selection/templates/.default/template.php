@@ -23,6 +23,6 @@ foreach ($arResult['ITEMS'] as $item) {
     ];
 }
 ?>
-<script>
+<script data-skip-moving="true">
     window.clothingSizeSelection = <?= CUtil::PhpToJSObject($items) ?>;
 </script>
