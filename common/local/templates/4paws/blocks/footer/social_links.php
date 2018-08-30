@@ -26,7 +26,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <li class="b-social__item">
             <a class="b-social__link" href="<?= tplvar('social_link_vk') ?>" title="ВКонтакте" target="_blank">
                 <span class="b-icon b-icon--vk">
-                    <?= new SvgDecorator('icon-fb', 22, 13) ?>
+                    <?= new SvgDecorator('icon-vk', 22, 18) ?>
                 </span>
             </a>
             <?= tplinvis('social_link_vk') ?>

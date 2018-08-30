@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Service;
 
+use Bitrix\Main\Application;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Exception\LandingIsNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -79,5 +80,24 @@ class CatalogLandingService
     public function getLandingDocRoot(Request $request): string
     {
         return $request->server->get(self::LANDING_DOCROOT_KEY);
+    }
+
+    /**
+     * @todo HARDCODE
+     *
+     * @return bool
+     */
+    public static function isLandingPage(): bool
+    {
+        try {
+            $request = Application::getInstance()
+                ->getContext()
+                ->getRequest();
+            $isLanding = $request->get(self::IS_LANDING_REQUEST_KEY);
+        } catch (\Throwable $e) {
+            $isLanding = false;
+        }
+
+        return (bool)$isLanding;
     }
 }

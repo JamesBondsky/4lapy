@@ -49,6 +49,11 @@ echo $view->render(
 if ($catalogRequest->isLanding()) {
     echo '</div></div>';
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+
+    if ($category->getFormTemplate()) {
+        echo $view->render('FourPawsCatalogBundle:Catalog:landing.form.html.php', ['formTemplate' => $category->getFormTemplate()]);
+    }
+
 } else { ?>
     </div>
     <?php if ($category->isLanding()) {
