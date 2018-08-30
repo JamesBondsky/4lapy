@@ -78,27 +78,11 @@ class DeliveryServiceRestrictions20180829114302 extends SprintMigrationBase
                 'CLASS_NAME' => ByLocation::class,
                 'ITEMS'      => [
                     [
-                        'LOCATION_CODE' => DeliveryService::ZONE_1,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
-                        'LOCATION_CODE' => DeliveryService::ZONE_2,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
                         'LOCATION_CODE' => DeliveryService::ZONE_3,
                         'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                     [
                         'LOCATION_CODE' => DeliveryService::ZONE_4,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
-                        'LOCATION_CODE' => DeliveryService::ZONE_5,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
-                        'LOCATION_CODE' => DeliveryService::ZONE_6,
                         'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                 ],
@@ -131,27 +115,7 @@ class DeliveryServiceRestrictions20180829114302 extends SprintMigrationBase
                 'CLASS_NAME' => ByLocation::class,
                 'ITEMS'      => [
                     [
-                        'LOCATION_CODE' => DeliveryService::ZONE_1,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
-                        'LOCATION_CODE' => DeliveryService::ZONE_2,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
-                        'LOCATION_CODE' => DeliveryService::ZONE_3,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
                         'LOCATION_CODE' => DeliveryService::ZONE_4,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
-                        'LOCATION_CODE' => DeliveryService::ZONE_5,
-                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
-                    ],
-                    [
-                        'LOCATION_CODE' => DeliveryService::ZONE_6,
                         'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                 ],
