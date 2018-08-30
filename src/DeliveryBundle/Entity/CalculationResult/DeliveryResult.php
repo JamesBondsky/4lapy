@@ -8,6 +8,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 
@@ -37,9 +38,16 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
      */
     public function getDeliveryDate(): \DateTime
     {
-        $date = parent::getDeliveryDate();
+        $date = $this->getNextDeliveryDate(parent::getDeliveryDate());
+        $date->modify(
+            sprintf(
+                '+%s days',
+                $this->getFullOffset()
+            )
+        );
+        $date = $this->getNextDeliveryDate($date);
 
-        return (clone $date)->modify(sprintf('+%s days', $this->getFullOffset()));
+        return clone $date;
     }
 
     /**
@@ -53,14 +61,23 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         if (null === $this->intervalOffset) {
             $this->intervalOffset = 0;
             if ($interval = $this->getSelectedInterval()) {
-                $defaultDate = clone ($this->deliveryDate ?? $this->getCurrentDate());
+                /**
+                 * для всех зон, кроме 2, при поставке со склада поставщика
+                 * должны быть доступны интервалы для 9:00 с даты доступности товара на РЦ
+                 */
+                if (($this->getDeliveryZone() !== DeliveryService::ZONE_2) && (bool)$this->getShipmentResults()) {
+                    $defaultDate = clone $this->deliveryDate;
+                } else {
+                    $defaultDate = clone $this->currentDate;
+                }
+
                 $date = clone $defaultDate;
                 foreach ($interval->getRules() as $rule) {
                     if (!$rule instanceof TimeRuleInterface) {
                         continue;
                     }
 
-                    if (!$rule->isSuitable($defaultDate, $this)) {
+                    if (!$rule->isSuitable($defaultDate)) {
                         continue;
                     }
 
@@ -68,30 +85,19 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                     break;
                 }
 
-                $this->intervalOffset = (clone $date)->setTime(0, 0, 0, 0)
-                    ->diff((clone $defaultDate)->setTime(0, 0, 0, 0))
-                    ->days;
+                $date->setTime(0, 0, 0, 0);
+                $deliveryDate = (clone $this->deliveryDate)->setTime(0, 0, 0, 0);
+                $defaultDate->setTime(0,0,0,0);
+
+                $addedDays = $date->diff($defaultDate)->days;
+                $deliveryDateDiff = $deliveryDate->diff($defaultDate)->days;
+
+                $intervalOffset = $addedDays - $deliveryDateDiff;
+                $this->intervalOffset = $intervalOffset > 0 ? $intervalOffset : 0;
             }
         }
 
         return $this->intervalOffset;
-    }
-
-    /**
-     * Комбинирует выбранную дату доставки и результат применения правил интервалов
-     *
-     * @throws ApplicationCreateException
-     * @throws NotFoundException
-     * @return int
-     */
-    protected function getFullOffset(): int
-    {
-        $result = $this->getDateOffset();
-        if (!$this->getIntervals()->isEmpty()) {
-            $result += (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
-        }
-
-        return $result;
     }
 
     /**

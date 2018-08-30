@@ -207,6 +207,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
+     * @return DeliveryService
+     */
+    public function getDeliveryService(): DeliveryService
+    {
+        return $this->deliveryService;
+    }
+
+    /**
      * @throws RuntimeException
      * @throws Exception
      * @throws OrderCreateException
