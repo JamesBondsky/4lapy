@@ -7,6 +7,11 @@ use Elastica\Aggregation\Nested;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\Nested as NestedQuery;
 
+/**
+ * Class ReferenceFilterNested
+ *
+ * @package FourPaws\Catalog\Model\Filter\Abstraction
+ */
 abstract class ReferenceFilterNested extends ReferenceFilterBase
 {
     /**
@@ -21,11 +26,17 @@ abstract class ReferenceFilterNested extends ReferenceFilterBase
      */
     abstract public function getNestedRuleCode(): string;
 
+    /**
+     * @return string
+     */
     public function getRuleCode(): string
     {
         return implode('.', [$this->getPath(), $this->getNestedRuleCode()]);
     }
 
+    /**
+     * @return AbstractAggregation
+     */
     public function getAggRule(): AbstractAggregation
     {
         return (new Nested($this->getFilterCode(), $this->getPath()))->addAggregation(

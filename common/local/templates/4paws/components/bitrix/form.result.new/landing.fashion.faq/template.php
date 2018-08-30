@@ -117,10 +117,10 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                             <div class="remained_questions__checkbox_text">Я даю согласие на получение информации о
                                 выгодных предложениях
                             </div>
-                            <input type="checkbox" id="remained_questions_agree">
+                            <input type="checkbox" id="remained_questions_agree" checked class="js-no-valid">
                         </label>
                     </div>
-                    <input class="remained_questions__button--secondary js-add-question" type="submit"
+                    <input class="remained_questions__button--secondary js-add-question js-no-valid" type="submit"
                            value="Отправить">
                 </div>
             </form>
