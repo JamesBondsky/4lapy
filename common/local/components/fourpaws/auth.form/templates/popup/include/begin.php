@@ -32,7 +32,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
               data-url="/ajax/user/auth/login/"
               method="post">
             <input type="hidden" name="action" value="login" class="js-no-valid">
-            <?php if (CatalogLandingService::isLandingPage()) { ?>
+            <?php if (!CatalogLandingService::isLandingPage()) { ?>
                 <input type="hidden" name="backurl" value="<?= $backUrl ?>" class="js-no-valid">
             <?php } ?>
             <div class="b-input-line b-input-line--popup-authorization">

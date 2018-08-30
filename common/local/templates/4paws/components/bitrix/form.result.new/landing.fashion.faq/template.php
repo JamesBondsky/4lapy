@@ -17,7 +17,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
     return;
 } ?>
 
-<div class="remained_questions__wrapper">
+<div class="remained_questions__wrapper js-form-content">
     <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
         <div class="content_dropdown__title">Остались вопросы?
             <div class="content_dropdown__arrow">
