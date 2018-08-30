@@ -26,7 +26,17 @@ if ($category->isLanding() || $catalogRequest->isLanding()) {
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.slider.html.php', \compact('category'));
 }
 
-if (!$catalogRequest->isLanding()) { ?>
+if ($catalogRequest->isLanding()) {
+    echo $view->render(
+        'FourPawsCatalogBundle:Catalog:landing.header.html.php',
+        [
+            'landingCollection' => $catalogRequest->getLandingCollection(),
+            'currentPath'       => $catalogRequest->getCurrentPath(),
+        ]
+    );
+
+    echo '<div class="b-catalog js-preloader-fix"><div class="b-container b-container--catalog-filter">';
+} else { ?>
     <div class="b-catalog js-preloader-fix">
     <div class="b-container b-container--catalog-filter">
 <?php }
@@ -37,6 +47,7 @@ echo $view->render(
 );
 
 if ($catalogRequest->isLanding()) {
+    echo '</div></div>';
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
 } else { ?>
     </div>

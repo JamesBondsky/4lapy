@@ -11,7 +11,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var string $currentPath
  * @var PhpEngine $view
  */ ?>
-<div class="b-container b-container--catalog-filter">
+<div class="b-container">
     <div class="main_categories">
         <?php foreach ($landingCollection as $landing) { ?>
             <a class="main_categories__item<?= strpos($currentPath, $landing->getSectionPageUrl()) !== false ? '--active' : '' ?>"
