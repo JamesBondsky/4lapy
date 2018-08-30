@@ -3,7 +3,7 @@
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
-use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
@@ -16,12 +16,14 @@ global $APPLICATION;
 /**
  * @var Category $category
  * @var Request $request
- * @var CatalogCategorySearchRequestInterface $catalogRequest
+ * @var ChildCategoryRequest $catalogRequest
  * @var ProductSearchResult $productSearchResult
  * @var GoogleEcommerceService $ecommerceService
  * @var PhpEngine $view
+ * @var string $currentPath
  * @var CMain $APPLICATION
  */
+
 $category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category',
     '',
@@ -35,30 +37,43 @@ $category = $APPLICATION->IncludeComponent(
 );
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
-$count = $productSearchResult->getResultSet()->getTotalHits(); ?>
-<div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
-    <?php
-    $APPLICATION->IncludeComponent(
-        'fourpaws:breadcrumbs',
-        '',
+$count = $productSearchResult->getResultSet()->getTotalHits();
+
+if ($catalogRequest->isLanding()) {
+    echo $view->render(
+        'FourPawsCatalogBundle:Catalog:landing.header.html.php',
         [
-            'IBLOCK_SECTION' => $category,
-        ],
-        null,
-        ['HIDE_ICONS' => 'Y']
+            'landingCollection' => $catalogRequest->getLandingCollection(),
+            'currentPath'       => $catalogRequest->getCurrentPath(),
+        ]
     );
-    ?>
-    <h1 class="b-title b-title--h1 b-title--catalog-filter">
-        <?= in_array($category->getId(), [148, 332], true) ? $category->getName() : implode(' ', [$category->getName(), $category->getParent()->getSuffix()]) ?>
-    </h1>
-</div>
+
+    echo '<div class="b-catalog js-preloader-fix"><div class="b-container b-container--catalog-filter">';
+} else { ?>
+    <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
+        <?php $APPLICATION->IncludeComponent(
+            'fourpaws:breadcrumbs',
+            '',
+            [
+                'IBLOCK_SECTION' => $category,
+            ],
+            null,
+            ['HIDE_ICONS' => 'Y']
+        ); ?>
+        <h1 class="b-title b-title--h1 b-title--catalog-filter">
+            <?= \in_array($category->getId(), [148, 332], true) ? $category->getName() : implode(' ', [$category->getName(), $category->getParent()->getSuffix()]) ?>
+        </h1>
+    </div>
+<?php } ?>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
         <a class="b-filter__close js-close-filter" href="javascript:void(0);" title=""></a>
         <div class="b-filter__title">Фильтры</div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>"
+        <?php /** @todo from server variable */ ?>
+        <form class="b-form js-filter-form"
+              action="<?= $catalogRequest->isLanding() ? '/' . $category->getCode() . '/' : $APPLICATION->GetCurDir() ?>"
               data-url="/ajax/catalog/product-info/count-by-filter-list/">
             <div class="b-filter__block" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                 <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox"
@@ -270,3 +285,6 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         ]
     ); ?>
 </main>
+<?php if ($catalogRequest->isLanding()) {
+    echo '</div></div>';
+}

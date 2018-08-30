@@ -142,6 +142,7 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
         }
 
         $object->setCategory($category);
+        $object->setCurrentPath($request->getPathInfo());
 
         return true;
     }
