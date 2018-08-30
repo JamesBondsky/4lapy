@@ -6,6 +6,8 @@
 
 namespace FourPaws\DeliveryBundle\InputTypes;
 
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Internals\Input\StringInput;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 
@@ -22,21 +24,26 @@ class DeliveryInterval extends StringInput
     }
 
     /**
-     * @param $name
+     * @param       $name
      * @param array $input
-     * @param $value
+     * @param       $value
+     *
+     * @throws ArgumentTypeException
+     * @throws SystemException
      */
     public static function getEditHtmlSingle($name, array $input, $value)
     {
         global $APPLICATION;
         foreach ($input['ZONES'] as $code => $zone) {
-            if (!in_array(
+            if (!\in_array(
                 $code,
                 [
                     DeliveryService::ZONE_1,
                     DeliveryService::ZONE_2,
                     DeliveryService::ZONE_3,
                     DeliveryService::ZONE_4,
+                    DeliveryService::ZONE_5,
+                    DeliveryService::ZONE_6,
                 ],
                 true
             )) {
