@@ -100,6 +100,26 @@ trait DeliveryResultTrait
     }
 
     /**
+     * @return int
+     */
+    public function getDateOffset(): int
+    {
+        return $this->dateOffset;
+    }
+
+    /**
+     * @param int $dateOffset
+     * @return DeliveryResultInterface
+     */
+    public function setDateOffset(int $dateOffset): DeliveryResultInterface
+    {
+        $this->dateOffset = $dateOffset;
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this;
+    }
+
+    /**
      * @return int[]
      */
     public function getWeekDays(): array
@@ -121,12 +141,14 @@ trait DeliveryResultTrait
 
     /**
      * @return IntervalCollection
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
      */
     public function getAvailableIntervals(): IntervalCollection
     {
         $result = new IntervalCollection();
 
-        $days = $this->getIntervalOffset();
+        $days = $this->getFullOffset();
         $tmpDelivery = clone $this;
         /** @var Interval $interval */
         foreach ($this->getIntervals() as $interval) {
@@ -158,5 +180,18 @@ trait DeliveryResultTrait
         /** @var IntervalService $intervalService */
         $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
         return $intervalService->getFirstInterval($this);
+    }
+
+    /**
+     * @return int
+     *
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     */
+    protected function getFullOffset(): int
+    {
+        $intervalOffset = (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
+
+        return max($intervalOffset, $this->getDateOffset());
     }
 }

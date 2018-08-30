@@ -103,23 +103,15 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
 
     /**
      * @param \DateTime                  $date
-     * @param CalculationResultInterface $delivery
+     *
      * @return bool
      */
-    public function isSuitable(\DateTime $date, CalculationResultInterface $delivery): bool
+    public function isSuitable(\DateTime $date): bool
     {
-        /** Не применять для второй зоны с поставкой с другого склада */
-        if (($delivery->getDeliveryZone() === DeliveryService::ZONE_2) &&
-            (bool)$delivery->getShipmentResults()
-        ) {
-            $result = false;
-        } else {
-            $hour = $date->format('G');
-            $to = ($this->getTo() === 0) ? 24 : $this->getTo();
-            $result = ($hour >= $this->getFrom()) && ($hour < $to);
-        }
+        $hour = $date->format('G');
+        $to = ($this->getTo() === 0) ? 24 : $this->getTo();
 
-        return $result;
+        return ($hour >= $this->getFrom()) && ($hour < $to);
     }
 
     /**
@@ -130,18 +122,7 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
     public function apply(\DateTime $date): \DateTime
     {
         $result = clone $date;
-        $currentDate = (new \DateTime())->setTime(
-            $date->format('H'),
-            $date->format('i'),
-            $date->format('s'),
-            $date->format('u')
-        );
 
-        $diff = $this->getValue() - $result->diff($currentDate)->days;
-        if ($diff > 0) {
-            $result->modify(sprintf('+%s days', $diff));
-        }
-
-        return $result;
+        return $result->modify(sprintf('+%s days', $this->getValue()));
     }
 }

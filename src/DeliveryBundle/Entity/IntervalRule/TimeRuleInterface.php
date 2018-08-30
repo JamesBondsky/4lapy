@@ -23,13 +23,14 @@ interface TimeRuleInterface
 
     /**
      * @param \DateTime                  $date
-     * @param CalculationResultInterface $delivery
+     *
      * @return bool
      */
-    public function isSuitable(\DateTime $date, CalculationResultInterface $delivery): bool;
+    public function isSuitable(\DateTime $date): bool;
 
     /**
      * @param \DateTime $date
+     *
      * @return \DateTime
      */
     public function apply(\DateTime $date): \DateTime;

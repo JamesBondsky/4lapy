@@ -23,6 +23,18 @@ interface DeliveryResultInterface extends CalculationResultInterface
     public function setIntervals(IntervalCollection $intervals): DeliveryResultInterface;
 
     /**
+     * @return int
+     */
+    public function getDateOffset(): int;
+
+    /**
+     * @param int $offset
+     *
+     * @return DeliveryResultInterface
+     */
+    public function setDateOffset(int $offset): DeliveryResultInterface;
+
+    /**
      * @return int[]
      */
     public function getWeekDays(): array;
@@ -35,11 +47,9 @@ interface DeliveryResultInterface extends CalculationResultInterface
     public function setWeekDays(array $days): DeliveryResultInterface;
 
     /**
-     * @param int|null $dateIndex
-     *
      * @return IntervalCollection
      */
-    public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection;
+    public function getAvailableIntervals(): IntervalCollection;
 
     /**
      * @return Interval
