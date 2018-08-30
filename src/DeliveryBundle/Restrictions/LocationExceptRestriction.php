@@ -2,6 +2,7 @@
 
 namespace FourPaws\DeliveryBundle\Restrictions;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Sale\Delivery\Restrictions;
 use Bitrix\Sale\Internals\Entity;
 use Bitrix\Sale\Shipment;
@@ -20,7 +21,7 @@ class LocationExceptRestriction extends Restrictions\Base
         return 'доставка будет доступна для всех местоположений, кроме заданных групп';
     }
 
-    public static function check($locationCode, array $restrictionParams, $deliveryId = 0)
+    public static function check($locationCode, array $restrictionParams)
     {
         if (!$locationCode) {
             return false;
@@ -28,20 +29,13 @@ class LocationExceptRestriction extends Restrictions\Base
 
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-
-        if (!$deliveryZone = $deliveryService->getDeliveryZoneByDelivery(
-            $locationCode,
-            $deliveryId
-        )) {
-            return false;
-        }
-
+        $deliveryZone = $deliveryService->getDeliveryZoneByLocation($locationCode);
         foreach ($restrictionParams as $zone => $value) {
-            if ($deliveryZone != $zone) {
+            if ($deliveryZone !== $zone) {
                 continue;
             }
 
-            if ($value == 'Y') {
+            if ($value === BitrixUtils::BX_BOOL_TRUE) {
                 return false;
             }
         }

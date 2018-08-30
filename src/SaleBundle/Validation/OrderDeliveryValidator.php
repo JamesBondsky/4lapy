@@ -64,8 +64,7 @@ class OrderDeliveryValidator extends ConstraintValidator
     }
 
     /**
-     * @param mixed $entity
-     *
+     * @param mixed      $entity
      * @param Constraint $constraint
      *
      * @throws ApplicationCreateException
@@ -74,6 +73,7 @@ class OrderDeliveryValidator extends ConstraintValidator
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws UserMessageException
+     * @throws DeliveryNotFoundException
      */
     public function validate($entity, Constraint $constraint)
     {
@@ -94,9 +94,9 @@ class OrderDeliveryValidator extends ConstraintValidator
                 $this->context->addViolation($constraint->deliveryDateMessage);
             }
 
-            $delivery->setDateOffset($dateIndex);
-
-            if ($delivery->getIntervals()->isEmpty()) {
+            /** @var DeliveryResultInterface $delivery */
+            $delivery = $this->deliveryService->getNextDeliveries($delivery, 10)[$dateIndex];
+            if (!$delivery || $delivery->getIntervals()->isEmpty()) {
                 return;
             }
 

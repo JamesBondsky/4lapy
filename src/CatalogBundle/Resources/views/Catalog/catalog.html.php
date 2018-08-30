@@ -6,11 +6,11 @@ use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\Templating\PhpEngine;
 
 /**
- * @var ChildCategoryRequest $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
+ * @var ChildCategoryRequest   $catalogRequest
+ * @var ProductSearchResult    $productSearchResult
+ * @var PhpEngine              $view
  * @var GoogleEcommerceService $ecommerceService
- * @var CMain $APPLICATION
+ * @var CMain                  $APPLICATION
  */
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -36,7 +36,9 @@ echo $view->render(
     \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request')
 );
 
-if (!$catalogRequest->isLanding()) { ?>
+if ($catalogRequest->isLanding()) {
+    echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+} else { ?>
     </div>
     <?php if ($category->isLanding()) {
         echo $view->render('FourPawsCatalogBundle:Catalog:old.landing.catalog.footer.html.php', \compact('category'));
@@ -47,8 +49,8 @@ if (!$catalogRequest->isLanding()) { ?>
         '',
         [
             'AREA_FILE_SHOW' => 'file',
-            'PATH' => '/local/include/blocks/viewed_products.php',
-            'EDIT_TEMPLATE' => '',
+            'PATH'           => '/local/include/blocks/viewed_products.php',
+            'EDIT_TEMPLATE'  => '',
         ],
         null,
         [

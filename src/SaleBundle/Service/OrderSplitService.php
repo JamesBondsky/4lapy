@@ -272,7 +272,12 @@ class OrderSplitService implements LoggerAwareInterface
 
         $orderable = $delivery->getStockResult()->getOrderable();
         if (!$this->deliveryService->isDpdPickup($delivery) &&
-            \in_array($delivery->getDeliveryZone(), [DeliveryService::ZONE_1, DeliveryService::ZONE_2], true) &&
+            \in_array($delivery->getDeliveryZone(), [
+                DeliveryService::ZONE_1,
+                DeliveryService::ZONE_2,
+                DeliveryService::ZONE_5,
+                DeliveryService::ZONE_6,
+            ], true) &&
             !$orderable->getByRequest(true)->isEmpty()
         ) {
             $available = $orderable->getRegular();
