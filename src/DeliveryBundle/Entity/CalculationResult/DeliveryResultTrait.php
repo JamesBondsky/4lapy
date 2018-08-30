@@ -5,15 +5,12 @@
 
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\IntervalService;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 trait DeliveryResultTrait
 {
@@ -141,14 +138,14 @@ trait DeliveryResultTrait
 
     /**
      * @return IntervalCollection
-     * @throws ApplicationCreateException
-     * @throws NotFoundException
      */
     public function getAvailableIntervals(): IntervalCollection
     {
         $result = new IntervalCollection();
 
-        $days = $this->getFullOffset();
+        /** @var \DateTime $deliveryDate */
+        $deliveryDate = $this->getDeliveryDate();
+        $days = $deliveryDate->diff($this->deliveryDate)->days;
         $tmpDelivery = clone $this;
         /** @var Interval $interval */
         foreach ($this->getIntervals() as $interval) {
@@ -193,5 +190,23 @@ trait DeliveryResultTrait
         $intervalOffset = (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
 
         return max($intervalOffset, $this->getDateOffset());
+    }
+
+    /**
+     * @param \DateTime $date
+     *
+     * @return \DateTime
+     */
+    protected function getNextDeliveryDate(\DateTime $date): \DateTime
+    {
+        $date = clone $date;
+        if ($availableDays = $this->getWeekDays()) {
+            $deliveryDay = (int)$date->format('N');
+            while (!\in_array($deliveryDay, $availableDays, true)) {
+                $deliveryDay = (int)$date->modify('+1 day')->format('N');
+            }
+        }
+
+        return $date;
     }
 }

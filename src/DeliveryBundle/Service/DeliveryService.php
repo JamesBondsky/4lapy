@@ -868,6 +868,7 @@ class DeliveryService implements LoggerAwareInterface
             return ['result' => $terminal];
         };
 
+        $result = null;
         try {
             $terminal = (new BitrixCache())
                 ->withId(__METHOD__ . $code)
@@ -881,7 +882,6 @@ class DeliveryService implements LoggerAwareInterface
             $this->log()->error(sprintf('failed to get dpd terminal: %s', $e->getMessage()), [
                 'code' => $code,
             ]);
-            return $result;
         }
 
         return $result;

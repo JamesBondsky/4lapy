@@ -38,9 +38,7 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
      */
     public function getDeliveryDate(): \DateTime
     {
-        $date = parent::getDeliveryDate();
-
-        $this->deliveryDate = $this->getNextDeliveryDate($date);
+        $date = $this->getNextDeliveryDate(parent::getDeliveryDate());
         $date->modify(
             sprintf(
                 '+%s days',
@@ -100,24 +98,6 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         }
 
         return $this->intervalOffset;
-    }
-
-    /**
-     * @param \DateTime $date
-     *
-     * @return \DateTime
-     */
-    protected function getNextDeliveryDate(\DateTime $date): \DateTime
-    {
-        $date = clone $date;
-        if ($availableDays = $this->getWeekDays()) {
-            $deliveryDay = (int)$date->format('N');
-            while (!\in_array($deliveryDay, $availableDays, true)) {
-                $deliveryDay = (int)$date->modify('+1 day')->format('N');
-            }
-        }
-
-        return $date;
     }
 
     /**
