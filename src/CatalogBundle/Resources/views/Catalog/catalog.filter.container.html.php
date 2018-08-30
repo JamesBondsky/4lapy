@@ -286,5 +286,10 @@ if ($catalogRequest->isLanding()) {
     ); ?>
 </main>
 <?php if ($catalogRequest->isLanding()) {
-    echo '</div></div>';
+    echo '</div>';
+    if ($category->isShowFitting()) {
+        echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+    }
+
+    echo '</div>';
 }

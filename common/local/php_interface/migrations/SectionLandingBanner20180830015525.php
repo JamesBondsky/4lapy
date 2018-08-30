@@ -14,9 +14,9 @@ use FourPaws\Enum\IblockType;
  *
  * @package Sprint\Migration
  */
-class SectionLandingUserFields20180830015525 extends SprintMigrationBase
+class SectionLandingBanner20180830015525 extends SprintMigrationBase
 {
-    protected $description = 'Коррекция полей разделов для лендинга - множественный баннер';
+    protected $description = 'Коррекция баннера для лендинга - множественный баннер';
 
     /**
      * @return bool|void
