@@ -1,12 +1,15 @@
 <?php
 
 use Bitrix\Main\Application;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-$request = Application::getInstance()->getContext()->getRequest();
+$request = Application::getInstance()
+    ->getContext()
+    ->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
 /** @var string $phone */ ?>
@@ -19,7 +22,9 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
           method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
-        <input type="hidden" name="backurl" value="<?=$backUrl?>">
+        <?php if (CatalogLandingService::isLandingPage()) { ?>
+            <input type="hidden" name="backurl" value="<?= $backUrl ?>">
+        <?php } ?>
         <div class="b-input-line">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="mobile-number-1">Мобильный телефон</label>
@@ -30,9 +35,8 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                        name="phone"
                        value="<?= $phone ?>"
                        id="mobile-number-1"
-                       placeholder="" />
-                <div class="b-error"><span class="js-message"></span>
-                </div>
+                       placeholder=""/>
+                <div class="b-error"><span class="js-message"></span></div>
             </div>
         </div>
         <button class="b-button b-button--social b-button--full-width">Отправить код</button>
