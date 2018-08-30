@@ -56,8 +56,6 @@ class CatalogCategoryLandingArticlesField20180830182203 extends SprintMigrationB
         $field = $this->field;
         $field['SETTINGS']['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES);
 
-//        var_dump($field);
-//        die();
         if ($this->getHelper()->UserTypeEntity()->addUserTypeEntityIfNotExists(static::ENTITY_ID, $field['FIELD_NAME'], $field)) {
             $this->log()->info('Пользовательское свойство ' . $field['FIELD_NAME'] . ' создано');
         } else {
