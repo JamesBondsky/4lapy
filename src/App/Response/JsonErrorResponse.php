@@ -2,6 +2,8 @@
 
 namespace FourPaws\App\Response;
 
+use FourPaws\App\Exceptions\ApplicationCreateException;
+
 /**
  * Class JsonErrorResponse
  *
@@ -16,7 +18,7 @@ class JsonErrorResponse extends JsonResponse
      *
      * @inheritdoc
      */
-    public static function create($message = null, $status = 200, $headers = [], array $options = [])
+    public static function create($message = null, $status = 200, $headers = [], array $options = []): JsonResponse
     {
         $content = static::buildContent($message, false, null, $options);
 
@@ -32,6 +34,7 @@ class JsonErrorResponse extends JsonResponse
      * @param array  $options
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
     public static function createWithData(
         string $message = '',
