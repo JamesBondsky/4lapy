@@ -20,7 +20,10 @@ class HlbReferenceItem extends HlbItemBase
     protected $UF_FULL_DESCRIPTION = '';
 
     //TODO UF_DEF типа "Да/Нет"
-    //TODO UF_FILE типа "Файл"
+    /**
+     * @var int
+     */
+    protected $UF_FILE = 0;
 
     /**
      * @var string
@@ -43,6 +46,7 @@ class HlbReferenceItem extends HlbItemBase
     public function withCode(string $code)
     {
         $this->UF_CODE = $code;
+
         return $this;
     }
 
@@ -102,6 +106,26 @@ class HlbReferenceItem extends HlbItemBase
     public function withFullDescription(string $fullDescription)
     {
         $this->UF_FULL_DESCRIPTION = $fullDescription;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFile(): int
+    {
+        return $this->UF_FILE;
+    }
+
+    /**
+     * @param int $file
+     *
+     * @return $this
+     */
+    public function withFile(int $file)
+    {
+        $this->UF_FILE = $file;
 
         return $this;
     }

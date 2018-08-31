@@ -1,6 +1,8 @@
 <?php
 
 namespace FourPaws\Catalog\Model;
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 
 /**
  * Class Variant
@@ -33,6 +35,16 @@ class Variant
      * @var bool Вариант доступен - его выбор даст непустой результат фильтрации.
      */
     private $available = true;
+
+    /**
+     * @var int ID файла картинки
+     */
+    private $image = 0;
+
+    /**
+     * @var string код цвета данного варианта
+     */
+    private $color = '';
 
     /**
      * @return string
@@ -134,4 +146,62 @@ class Variant
         return $this;
     }
 
+    /**
+     * @return int
+     */
+    public function getImage(): int
+    {
+        return $this->image;
+    }
+
+    /**
+     * @param int $image
+     * @return $this
+     */
+    public function withImage(int $image)
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getColor(): string
+    {
+        return $this->color;
+    }
+
+    /**
+     * @param string $color
+     *
+     * @return $this
+     */
+    public function withColor(string $color)
+    {
+        $this->color = $color;
+
+        return $this;
+    }
+
+    /**
+     * @param int $width
+     * @param int $height
+     *
+     * @return string
+     */
+    public function getImageSrc(int $width, int $height): string
+    {
+        try {
+            $result = ResizeImageDecorator::createFromPrimary($this->getImage())
+                ->setResizeHeight($width)
+                ->setResizeWidth($height)
+                ->getSrc();
+        } catch (FileNotFoundException $e) {
+            $result = '';
+        }
+
+        return $result;
+    }
 }
