@@ -2,10 +2,10 @@
 
 /**
  * @var FilterCollection $filters
- * @var FilterBase $filter
- * @var PhpEngine $view
- * @var Variant $variant
- * @var CMain $APPLICATION
+ * @var FilterBase       $filter
+ * @var PhpEngine        $view
+ * @var Variant          $variant
+ * @var CMain            $APPLICATION
  */
 
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -15,11 +15,8 @@ use FourPaws\Catalog\Model\Variant;
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
 
-foreach ($filters
-
-         as $filter) {
-    if ($filter instanceof PriceFilter) {
-        ?>
+foreach ($filters as $filter) {
+    if ($filter instanceof PriceFilter) { ?>
         <div class="b-filter__block">
             <h3 class="b-title b-title--filter-header">
                 <?= $filter->getName() ?>
@@ -48,7 +45,11 @@ foreach ($filters
     }
 
     if ($filter instanceof FilterBase) {
-        if ($isBrand && \in_array($filter->getFilterCode(), ['Sections', 'Categories'])) {
+        if ($isBrand
+            && \in_array($filter->getFilterCode(), [
+                'Sections',
+                'Categories'
+            ])) {
             continue;
         } ?>
         <div class="b-filter__block">
@@ -123,4 +124,3 @@ foreach ($filters
         <?php
     }
 }
-?>
