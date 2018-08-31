@@ -28,27 +28,27 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
             <div class="measure_dog__img"></div>
             <form class="measure_dog__size js-measure-dog-form">
                 <label class="measure_dog__label">1. Обхват груди
-                    <input class="measure_dog__input" id="chest_size" type="number" min="1" required>
+                    <input class="measure_dog__input" pattern="[0-9]" id="chest_size" type="number" min="1" required>
                 </label>
                 <label class="measure_dog__label">2. Длина спинки
-                    <input class="measure_dog__input" id="back_size" type="number" min="1" required>
+                    <input class="measure_dog__input" pattern="[0-9]" id="back_size" type="number" min="1" required>
                 </label>
                 <label class="measure_dog__label">3. Обхват шеи
-                    <input class="measure_dog__input" id="neck_size" type="number" min="1" required>
+                    <input class="measure_dog__input" pattern="[0-9]" id="neck_size" type="number" min="1" required>
                 </label>
                 <input class="measure_dog__button" type="submit" value="Узнать размер">
             </form>
         </div>
     </div>
     <div class="measure_dog--custom_size">
-        <div class="content_dropdown mobile_mq">
+        <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
             <div class="content_dropdown__title">Узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
             </div>
         </div>
-        <div class="content_dropdown__content">
+        <div class="content_dropdown__content js-content-dropdown-content">
             <div class="measure_dog__content_wrapper">
                 <div class="measure_dog__img"></div>
                 <div class="measure_dog__title">У вашей собаки нестандартный размер</div>
@@ -65,14 +65,14 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
     </div>
     <div class="measure_dog--default_size">
-        <div class="content_dropdown mobile_mq">
+        <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
             <div class="content_dropdown__title">Узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
             </div>
         </div>
-        <div class="content_dropdown__content">
+        <div class="content_dropdown__content js-content-dropdown-content">
             <div class="measure_dog__content_wrapper">
                 <div class="measure_dog__img"></div>
                 <div class="measure_dog__title">Скорее всего у вашей собаки размер <span></span></div>
@@ -114,8 +114,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                         </div>
                         <div class="free_fitting_step__title">1. Проверьте наличие<br>товара в магазинах
                         </div>
-                        <div class="free_fitting_step__paragraph"></div>
-                        Наличие в магазинах вы можете посмотреть в карточке товара
+                        <div class="free_fitting_step__paragraph">Наличие в магазинах вы можете посмотреть в карточке товара</div>
                         <div class="free_fitting_step__paragraph">Так же вы можете посмотреть<br><a
                                     href="#">список всех магазинов</a> в вашем городе
                         </div>
@@ -191,7 +190,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                     </div>
                 </div>
             </div>
-            <input class="free_fitting__button" type="submit" value="Перейти в каталог">
+            <input class="free_fitting__button js-scroll-to-catalog" type="submit" value="Перейти в каталог">
         </div>
     </div>
 </div>

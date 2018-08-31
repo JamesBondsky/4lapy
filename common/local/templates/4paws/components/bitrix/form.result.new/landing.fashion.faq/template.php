@@ -21,7 +21,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
     <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
         <div class="content_dropdown__title">Остались вопросы?
             <div class="content_dropdown__arrow">
-                <?= new SvgDecorator('up_arrow') ?>
+                <?= new SvgDecorator('icon-up-arrow') ?>
             </div>
         </div>
     </div>
@@ -92,10 +92,9 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                             } ?>
                             <?php
                         }
-                    } ?>
+                    }
 
-                    <?php if ($arResult['isUseCaptcha']) {
-                        ?>
+                    if ($arResult['isUseCaptcha']) { ?>
                         <div class="b-feedback-page__capcha remained_questions__input_block">
                             <?php try {
                                 echo Application::getInstance()
@@ -123,6 +122,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                     <input class="remained_questions__button--secondary js-add-question js-no-valid" type="submit"
                            value="Отправить">
                 </div>
+                <div class="bottom_separator desktop_mq"></div>
             </form>
             <div class="b-message-block b-hidden">
                 <div class="b-message-block__icon">

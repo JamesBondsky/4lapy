@@ -19,6 +19,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Search\Model\Navigation;
@@ -31,7 +32,9 @@ use Symfony\Component\Templating\PhpEngine;
 if ($isBrand && !empty($brand)) {
     $cacheTime = 24 * 60 * 60;
     $instance = Application::getInstance();
-    $requestSections = explode(',', $instance->getContext()->getRequest()->get('Sections'));
+    $requestSections = explode(',', $instance->getContext()
+        ->getRequest()
+        ->get('Sections'));
     $childs = null;
     $cache = $instance->getCache();
 
@@ -39,16 +42,20 @@ if ($isBrand && !empty($brand)) {
     $nav = new Navigation();
     $nav->withPageSize(9999);//нам нужны все итемы
     $searchResult = $searchService->searchProducts(
-        $catalogRequest->getCategory()->getFilters(),
-        $catalogRequest->getSorts()->getSelected(),
+        $catalogRequest->getCategory()
+            ->getFilters(),
+        $catalogRequest->getSorts()
+            ->getSelected(),
         $nav,
         $catalogRequest->getSearchString()
     );
     $productIds = $searchResult->getProductIds();
 
-    if(!empty($productIds)) {
+    if (!empty($productIds)) {
         if ($cache->initCache($cacheTime,
-            serialize(['brand' => $brand, 'itemsMd5' => md5(serialize($productIds))]))) {
+            serialize(['brand'    => $brand,
+                       'itemsMd5' => md5(serialize($productIds))
+            ]))) {
             $result = $cache->getVars();
             $childs = $result['childs'];
         } elseif ($cache->startDataCache()) {
@@ -56,7 +63,8 @@ if ($isBrand && !empty($brand)) {
 
             $sectionIds = [];
             $res = SectionElementTable::query()
-                ->whereIn('IBLOCK_ELEMENT_ID', $productIds)->setSelect(['DISTINCT_SECTION_ID'])
+                ->whereIn('IBLOCK_ELEMENT_ID', $productIds)
+                ->setSelect(['DISTINCT_SECTION_ID'])
                 ->registerRuntimeField(new ExpressionField('DISTINCT_SECTION_ID', 'distinct IBLOCK_SECTION_ID'))
                 ->exec();
             while ($sect = $res->fetch()) {
@@ -67,7 +75,9 @@ if ($isBrand && !empty($brand)) {
                     '=ID'            => $sectionIds,
                     '=ACTIVE'        => 'Y',
                     '=GLOBAL_ACTIVE' => 'Y',
-                ])->withOrder(['DEPTH_LEVEL' => 'asc'])->exec();
+                ])
+                    ->withOrder(['DEPTH_LEVEL' => 'asc'])
+                    ->exec();
                 /** @var Category $section */
                 $rootSections = [];
                 foreach ($childs as $key => $section) {
@@ -76,7 +86,10 @@ if ($isBrand && !empty($brand)) {
                             '>LEFT_MARGIN'  => $section->getLeftMargin(),
                             '<RIGHT_MARGIN' => $section->getRightMargin(),
                             '=DEPTH_LEVEL'  => 1,
-                        ])->withNav(['nTopCount' => 1])->exec()->first();
+                        ])
+                            ->withNav(['nTopCount' => 1])
+                            ->exec()
+                            ->first();
                         if ($parent instanceof Category && !\in_array($parent->getId(), $rootSections, true)) {
                             $childs->add($parent);
                             $rootSections[] = $parent->getId();
@@ -100,7 +113,8 @@ if ($childs !== null && $childs->count()) { ?>
         <h3 class="b-title b-title--filter-header">
             Категория
         </h3>
-        <div class="b-select js-filter-select b-select--filter" data-filter="<?=$isBrand ? 'Sections' : 'section_id'?>">
+        <div class="b-select js-filter-select b-select--filter"
+             data-filter="<?= $isBrand ? 'Sections' : 'section_id' ?>">
             <ul class="b-filter-link-list b-filter-link-list--filter b-filter-link-list--select-filter js-accordion-filter-select js-filter-checkbox">
                 <?php foreach ($childs as $child) { ?>
                     <li class="b-filter-link-list__item">
@@ -111,8 +125,7 @@ if ($childs !== null && $childs->count()) { ?>
                                        name="Sections"
                                        value="<?= $child->getId() ?>"
                                        id="Sections-<?= $child->getId() ?>"
-                                    <?= \in_array($child->getId(), $requestSections) ? 'checked' : '' ?>
-                                />
+                                    <?= \in_array($child->getId(), $requestSections) ? 'checked' : '' ?>/>
                                 <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
                                    href="javascript:void(0);"
                                    title="<?= $child->getName() ?>"
@@ -120,7 +133,8 @@ if ($childs !== null && $childs->count()) { ?>
                             </label>
                         <?php } else { ?>
                             <a class="b-filter-link-list__link"
-                               href="<?= $child->getSectionPageUrl() ?>"
+                               href="<?= $catalogRequest instanceof
+                                         ChildCategoryRequest ? $catalogRequest->getCategoryPathByCategory($category) : $category->getSectionPageUrl() ?>"
                                title="<?= $child->getCanonicalName() ?>">
                                 <?= $child->getCanonicalName() ?>
                             </a>

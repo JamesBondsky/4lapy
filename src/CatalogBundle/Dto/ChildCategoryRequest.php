@@ -31,7 +31,7 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     /**
      * @var string
      */
-    protected $landingPath;
+    protected $landingDocRoot;
     /**
      * @var string
      */
@@ -40,9 +40,9 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     /**
      * @return string
      */
-    public function getLandingPath(): string
+    public function getLandingDocRoot(): string
     {
-        return $this->landingPath;
+        return $this->landingDocRoot;
     }
 
     /**
@@ -52,7 +52,7 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
      */
     public function setLandingDocRoot(string $landingPath): ChildCategoryRequest
     {
-        $this->landingPath = $landingPath;
+        $this->landingDocRoot = $landingPath;
 
         return $this;
     }
@@ -165,7 +165,7 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
         return \sprintf(
             '%s%s',
             $this->getLandingDomain(),
-            \str_replace($this->getLandingPath(), '', $this->getCurrentPath())
+            \str_replace($this->getLandingDocRoot(), '', $this->getCurrentPath())
         );
     }
 
@@ -174,11 +174,20 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
      */
     public function getBaseCategoryPath(): string
     {
-        $path = $this->getCategory()
-            ->getSectionPageUrl();
+        return $this->getCategoryPathByCategory($this->getCategory());
+    }
+
+    /**
+     * @param Category $category
+     *
+     * @return string
+     */
+    public function getCategoryPathByCategory(Category $category): string
+    {
+        $path = $category->getSectionPageUrl();
 
         if ($this->isLanding()) {
-            $path = \str_replace($this->getLandingPath(), \ltrim($this->getAbsoluteLandingPath()), $path);
+            $path = \str_replace($this->getLandingDocRoot(), \ltrim($this->getAbsoluteLandingPath()), $path);
         }
 
         return $path;
