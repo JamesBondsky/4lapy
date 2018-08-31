@@ -91,24 +91,15 @@ if (!$catalogRequest->isLanding()) { ?>
                     </li>
                 </ul>
             </div>
-            <?= $view->render(
-                'FourPawsCatalogBundle:Catalog:catalog.filter.backLink.html.php',
-                [
-                    'category' => $category,
-                ]
-            ) ?>
+            <?= $view->render('FourPawsCatalogBundle:Catalog:catalog.filter.backLink.html.php', \compact('category', 'catalogRequest')) ?>
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilter() ? 'style="display:block"' : '' ?>>
                 <a class="b-link b-link--reset js-reset-filter"
-                   href="<?= $APPLICATION->GetCurDir() ?>"
+                   href="<?= $catalogRequest->getBaseCategoryPath() ?>"
                    title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <?= $view->render(
-                'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
-                [
-                    'category' => $category,
-                ]
-            ) ?>
+                'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',\compact('category', 'catalogRequest')) ?>
             <?php $filterToShow = $filterCollection->getFiltersToShow();
             $filterActions = $filterCollection->getActionsFilter();
             ?>

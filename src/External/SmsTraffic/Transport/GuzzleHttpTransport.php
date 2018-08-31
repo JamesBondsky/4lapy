@@ -8,7 +8,7 @@ use GuzzleHttp\Client as HttpClient;
  */
 class GuzzleHttpTransport implements TransportInterface
 {
-    const REQUEST_TIMEOUT = 120;
+    public const REQUEST_TIMEOUT = 120;
 
     /**
      * Makes post http request

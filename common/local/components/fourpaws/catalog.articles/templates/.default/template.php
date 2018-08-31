@@ -21,11 +21,11 @@ if (!$articles->count()) {
     <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
         <div class="content_dropdown__title">На заметку
             <div class="content_dropdown__arrow">
-                <?= new SvgDecorator('up_arrow'); ?>
+                <?= new SvgDecorator('icon-up-arrow'); ?>
             </div>
         </div>
     </div>
-    <div class="content_dropdown__content--unpadded js-content-dropdown-content">
+    <div class="content_dropdown__content unpadded js-content-dropdown-content">
         <div class="to_note">
             <div class="to_note__title tablet_up_mq">На заметку</div>
             <div class="to_note_article__wrapper">

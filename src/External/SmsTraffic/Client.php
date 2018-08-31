@@ -20,11 +20,11 @@ class Client
     /**
      * API Url by default
      */
-    public const DEFAULT_API_URL = 'http://sds.smstraffic.ru/smartdelivery-in/multi.php';
+    public const DEFAULT_API_URL = 'https://api.smstraffic.ru/multi.php';
     /**
      * Reserved API Url
      */
-    public const RESERVE_API_URL = 'http://91.238.120.150/smartdelivery-in/multi.php';
+    public const RESERVE_API_URL = 'https://api2.smstraffic.ru/multi.php';
     /**
      * Sms Traffic Login
      *
