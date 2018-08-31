@@ -26,6 +26,16 @@ abstract class SubmitForm extends Base
 
     /**
      * @param string $fieldName
+     * @param $value
+     */
+    protected function setFormFieldValue(string $fieldName, $value)
+    {
+        $this->arResult['~FIELD_VALUES'][$fieldName] = $value;
+        $this->arResult['FIELD_VALUES'][$fieldName] = $this->walkRequestValues($value);
+    }
+
+    /**
+     * @param string $fieldName
      * @param array|string $errorMsg
      * @param string $errCode
      */

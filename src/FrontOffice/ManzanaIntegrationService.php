@@ -14,12 +14,16 @@ use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\CardValidateResult;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\ManzanaService;
+use FourPaws\FrontOffice\Exception\InvalidArgumentException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerAwareInterface;
+use JMS\Serializer\Serializer;
 
 /**
  * Class ManzanaIntegrationService
@@ -33,6 +37,9 @@ class ManzanaIntegrationService implements LoggerAwareInterface
     /** @var ManzanaService $manzanaService */
     private $manzanaService;
 
+    /** @var Serializer $serializer */
+    private $serializer;
+
     /** @var UserService $userCurrentUserService */
     private $userCurrentUserService;
 
@@ -42,11 +49,13 @@ class ManzanaIntegrationService implements LoggerAwareInterface
     /**
      * ManzanaIntegrationService constructor.
      *
+     * @param Serializer $serializer
      * @param ManzanaService $manzanaService
      */
-    public function __construct(ManzanaService $manzanaService)
+    public function __construct(Serializer $serializer, ManzanaService $manzanaService)
     {
         $this->manzanaService = $manzanaService;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -55,6 +64,14 @@ class ManzanaIntegrationService implements LoggerAwareInterface
     public function getManzanaService()
     {
         return $this->manzanaService;
+    }
+
+    /**
+     * @return Serializer
+     */
+    public function getSerializer()
+    {
+        return $this->serializer;
     }
 
     /**
@@ -70,6 +87,21 @@ class ManzanaIntegrationService implements LoggerAwareInterface
         }
 
         return $this->userCurrentUserService;
+    }
+
+    /**
+     * @param string $phone
+     * @return string
+     */
+    public function prepareManzanaPhoneNumberValue(string $phone)
+    {
+        try {
+            $phone = PhoneHelper::getManzanaPhone($phone);
+        } catch (\Exception $exception) {
+            $phone = '';
+        }
+
+        return $phone;
     }
 
     /**
@@ -193,6 +225,7 @@ class ManzanaIntegrationService implements LoggerAwareInterface
                 // Потрачено баллов (pl_debet)
                 'DEBET' => (double) $cardsItem->debit,
                 '_IS_BONUS_CARD_' => 'N',
+                '~RAW~' => $cardsItem,
             ];
             // исправляем тип карты
             // товарищи из манзаны гарантируют: ненулевой pl_debet означает, что карта бонусная
@@ -205,6 +238,99 @@ class ManzanaIntegrationService implements LoggerAwareInterface
             [
                 'cards' => $cards,
                 'cardsRaw' => $cardsRaw,
+            ]
+        );
+
+        return $result;
+    }
+
+    /**
+     * @param string $contactId
+     * @return CardByContractCards|null
+     */
+    public function getActualCardByContactId(string $contactId)
+    {
+        $actualCard = null;
+        try {
+            $cardsRaw = $this->getManzanaService()->getCardsByContactId($contactId);
+
+            $activeCards = array_filter(
+                $cardsRaw,
+                function (CardByContractCards $card) {
+                    return $card->isActive();
+                }
+            );
+
+            if (count($activeCards) == 1) {
+                $actualCard = reset($activeCards);
+            }
+        } catch (\Exception $exception) {
+            // просто null вернем
+        }
+
+        return $actualCard;
+    }
+
+    /**
+     * @param string $phoneNumber
+     * @return Result
+     */
+    public function getUserDataByPhone(string $phoneNumber)
+    {
+        $result = new Result();
+
+        $phoneNumber = $this->prepareManzanaPhoneNumberValue($phoneNumber);
+        if ($phoneNumber === '') {
+            $result->addError(
+                new Error('Не задан номер телефона', 'emptyPhoneNumber')
+            );
+        }
+
+        $clientsRaw = null;
+        if ($result->isSuccess()) {
+            try {
+                /** @var Clients $clients */
+                $clientsRaw = $this->getManzanaService()->getUserDataByPhone($phoneNumber);
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), 'getUserDataByPhoneException')
+                );
+
+                $this->log()->error(
+                    sprintf(
+                        '%s exception: %s',
+                        __FUNCTION__,
+                        $exception->getMessage()
+                    )
+                );
+            }
+        }
+
+        $clients = [];
+        if ($clientsRaw) {
+            foreach ($clientsRaw->clients as $client) {
+                /** @var Client $client */
+                $clients[] = [
+                    'CONTACT_ID' => trim($client->contactId),
+                    'FIRST_NAME' => trim($client->firstName),
+                    'SECOND_NAME' => trim($client->secondName),
+                    'LAST_NAME' => trim($client->lastName),
+                    'BIRTHDAY' => $client->birthDate,
+                    'PHONE' => trim($client->phone),
+                    'EMAIL' => trim($client->email),
+                    'CARD_NUMBER' => trim($client->cardnumber),
+                    'GENDER_CODE' => trim($client->genderCode),
+                    '_IS_ACTUAL_CONTACT_' => $client->isActualContact() ? 'Y' : 'N',
+                    '_IS_LP_CONTACT_' => $client->isLoyaltyProgramContact() ? 'Y' : 'N',
+                    '~RAW~' => $client,
+                ];
+            }
+        }
+
+        $result->setData(
+            [
+                'clients' => $clients,
+                'clientsRaw' => $clientsRaw,
             ]
         );
 
@@ -407,7 +533,7 @@ class ManzanaIntegrationService implements LoggerAwareInterface
 
         if ($chequeId === '') {
             $result->addError(
-                new Error('Не задан id чека', 'emptyСhequeId')
+                new Error('Не задан id чека', 'emptyChequeId')
             );
         }
 
@@ -459,6 +585,187 @@ class ManzanaIntegrationService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $phoneNumber
+     * @return Client|null
+     * @throws InvalidArgumentException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     */
+    public function getContactByPhone(string $phoneNumber)
+    {
+        $contact = null;
+
+        // делаем эту проверку, т.к. на исключение ManzanaServiceContactSearchNullException в getContactByPhone
+        // повешено две разнотипных ошибки
+        $phoneManzana = $this->prepareManzanaPhoneNumberValue($phoneNumber);
+        if ($phoneManzana === '') {
+            throw new InvalidArgumentException('Argument phoneNumber is empty');
+        }
+
+        try {
+            $contact = $this->getManzanaService()->getContactByPhone($phoneManzana);
+        } catch (ManzanaServiceContactSearchNullException $exception) {
+            // контакта с заданным номером телефона в Манзане нет, но может быть создан
+            $this->log()->debug(
+                sprintf(
+                    '%s exception: %s',
+                    __FUNCTION__,
+                    $exception->getMessage()
+                ),
+                [
+                    'phoneNumber' => $phoneNumber,
+                    'phoneManzana' => $phoneManzana,
+                ]
+            );
+        }
+
+        return $contact;
+    }
+
+    /**
+     * @param User $user
+     * @param array $params
+     * @param Client|null $currentContact
+     * @return Result
+     */
+    public function updateContact(User $user, array $params = [], ?Client $currentContact = null)
+    {
+        $result = new Result();
+
+        $updatedContactId = $currentContact ? $currentContact->contactId : '';
+        $userId = (int)$user->getId();
+        $cardNumber = $user->getDiscountCardNumber();
+        $phoneManzana = $user->getManzanaNormalizePersonalPhone();
+        $logContext = [
+            'userId' => $userId,
+            'phoneManzana' => $phoneManzana,
+            'cardNumber' => $cardNumber,
+            'existingContactId' => $updatedContactId,
+        ];
+
+        $manzanaService = $this->getManzanaService();
+        $resultContact = new Client();
+        try {
+            // заполнение $resultContact по полям $user
+            $this->getCurrentUserService()->setClientPersonalDataByCurUser($resultContact, $user);
+            if ($updatedContactId !== '') {
+                $resultContact->contactId = $updatedContactId;
+            }
+
+            if ($cardNumber) {
+                $resultContact->cardnumber = $cardNumber;
+            }
+
+            // Код места активации карты
+            $val = $params['shopOfActivation'] ?? '';
+            if ($val !== '') {
+                $resultContact->shopOfActivation = $val;
+            }
+            // Код места регистрации карты (от юзера, заданного в праметрах компонента определяется)
+            $val = $params['shopRegistration'] ?? '';
+            if ($val !== '') {
+                $resultContact->shopRegistration = $val;
+            }
+            // автоматическая установка флага актуальности контакта
+            if ($params['setActualContact']) {
+                $resultContact->setActualContact(true);
+            }
+
+            // ML: установка карты из карточки юзера в качестве активной карты контакта
+            if ($currentContact && $cardNumber) {
+                $currentActiveCardId = '';
+                /** @var \Doctrine\Common\Collections\ArrayCollection $contactCards */
+                $contactCards = $currentContact->cards ?? null;
+                if ($contactCards && is_object($contactCards) && !$contactCards->isEmpty()) {
+                    foreach ($contactCards as $tmpContactCard) {
+                        $tmpCard = $manzanaService->getCardInfo($tmpContactCard->cardNumber, $updatedContactId);
+                        if ($tmpCard && $tmpCard->isActive()) {
+                            $currentActiveCardId = $tmpCard->cardId;
+                            break;
+                        }
+                    }
+                }
+
+                $this->log()->debug(
+                    sprintf(
+                        '%s currentActiveCardId: %s',
+                        __FUNCTION__,
+                        $currentActiveCardId
+                    ),
+                    $logContext
+                );
+
+                if ($currentActiveCardId) {
+                    $validateResultData = $this->validateCardByNumber($cardNumber, true)->getData();
+                    if (isset($validateResultData['validate']['CARD_ID'])) {
+                        $newActivateCardId = $validateResultData['validate']['CARD_ID'];
+                        $this->log()->debug(
+                            sprintf(
+                                '%s newActivateCardId: %s',
+                                __FUNCTION__,
+                                $newActivateCardId
+                            ),
+                            $logContext
+                        );
+
+                        if ($currentActiveCardId !== $newActivateCardId) {
+                            $tmpRes = $manzanaService->changeCard($currentActiveCardId, $newActivateCardId);
+                            $this->log()->debug(
+                                sprintf(
+                                    '%s changeCard: %s',
+                                    __FUNCTION__,
+                                    $tmpRes ? 'success' : 'fail'
+                                ),
+                                $logContext
+                            );
+                            if (!$tmpRes) {
+                                throw new ContactUpdateException('Не удалось привязать карту');
+                            }
+                        }
+                    }
+                }
+            }
+
+            $manzanaService->updateContact($resultContact);
+
+            $this->log()->debug(
+                sprintf(
+                    '%s updateContact: %s',
+                    __FUNCTION__,
+                    'success'
+                ),
+                $logContext
+            );
+
+        } catch (\Exception $exception) {
+            $result->addError(
+                new Error($exception->getMessage(), 'manzanaUpdateContactException')
+            );
+            $this->log()->error(
+                sprintf(
+                    '%s exception: %s',
+                    __FUNCTION__,
+                    $exception->getMessage()
+                ),
+                $logContext
+            );
+        }
+
+        // сброс тегированного кеша
+        $this->clearUserTaggedCache($userId);
+
+        $result->setData(
+            [
+                'user' => $user,
+                'updatedContactId' => $updatedContactId,
+                'resultContact' => $resultContact
+            ]
+        );
+
+        return $result;
+    }
+
+    /**
      * Обновление информации в ML, используя для поиска контакта номер телефона из карточки пользователя
      *
      * @param User $user
@@ -479,31 +786,16 @@ class ManzanaIntegrationService implements LoggerAwareInterface
             );
         }
 
-        $manzanaClient = null;
-        $contactId = '';
-        $userId = $user->getId();
-
+        $updateResult = null;
         if ($result->isSuccess()) {
-            $manzanaService = $this->getManzanaService();
-            // поиск контакта в Манзане по телефону
-            $contact = null;
             try {
-                if (!empty($phoneManzana)) {
-                    $contact = $manzanaService->getContactByPhone($phoneManzana);
-                    $contactId = $contact->contactId;
-                }
-            } catch (ManzanaServiceContactSearchNullException $exception) {
-                // контакта с заданным номером телефона в Манзане нет - будет создан
-                $this->log()->debug(
-                    sprintf(
-                        '%s exception: %s',
-                        __FUNCTION__,
-                        $exception->getMessage()
-                    )
-                );
+                // поиск контакта в Манзане по телефону
+                $currentContact = $this->getContactByPhone($phoneManzana);
+                // обновление найденного контакта или добавление нового
+                $updateResult = $this->updateContact($user, $params, $currentContact);
             } catch (\Exception $exception) {
                 $result->addError(
-                    new Error($exception->getMessage(), 'manzanaContactIdByPhoneException')
+                    new Error($exception->getMessage(), 'updateContactByUserPhoneException')
                 );
                 $this->log()->error(
                     sprintf(
@@ -513,138 +805,29 @@ class ManzanaIntegrationService implements LoggerAwareInterface
                     )
                 );
             }
-
-            if ($result->isSuccess()) {
-                $cardNumber = $user->getDiscountCardNumber();
-                $logContext = [
-                    'userId' => $userId,
-                    'phoneManzana' => $phoneManzana,
-                    'contactId' => $contactId,
-                    'cardNumber' => $cardNumber,
-                ];
-
-                try {
-                    $manzanaClient = new Client();
-                    // заполнение $manzanaClient по полям $user
-                    $this->getCurrentUserService()->setClientPersonalDataByCurUser($manzanaClient, $user);
-                    if ($contactId !== '') {
-                        $manzanaClient->contactId = $contactId;
-                    }
-
-                    $manzanaClient->cardnumber = $cardNumber;
-
-                    // Код места активации карты
-                    $val = $params['shopOfActivation'] ?? '';
-                    if ($val !== '') {
-                        $manzanaClient->shopOfActivation = $val;
-                    }
-                    // Код места регистрации карты (от юзера, заданного в праметрах компонента определяется)
-                    $val = $params['shopRegistration'] ?? '';
-                    if ($val !== '') {
-                        $manzanaClient->shopRegistration = $val;
-                    }
-                    // автоматическая установка флага актуальности контакта
-                    if ($params['setActualContact']) {
-                        $manzanaClient->setActualContact(true);
-                    }
-
-                    // ML: установка введенной карты в качестве активной карты контакта
-                    if ($cardNumber) {
-                        $currentActiveCardId = '';
-                        /** @var \Doctrine\Common\Collections\ArrayCollection $contactCards */
-                        $contactCards = $contact->cards;
-                        if ($contactCards && is_object($contactCards) && !$contactCards->isEmpty()) {
-                            foreach ($contactCards as $tmpContactCard) {
-                                $tmpCard = $manzanaService->getCardInfo($tmpContactCard->cardNumber, $contactId);
-                                if ($tmpCard && $tmpCard->isActive()) {
-                                    $currentActiveCardId = $tmpCard->cardId;
-                                    break;
-                                }
-                            }
-                        }
-
-                        $this->log()->debug(
-                            sprintf(
-                                '%s currentActiveCardId: %s',
-                                __FUNCTION__,
-                                $currentActiveCardId
-                            ),
-                            $logContext
-                        );
-
-                        if ($currentActiveCardId) {
-                            $validateResultData = $this->validateCardByNumber($cardNumber, true)->getData();
-                            if (isset($validateResultData['validate']['CARD_ID'])) {
-                                $newActivateCardId = $validateResultData['validate']['CARD_ID'];
-                                $this->log()->debug(
-                                    sprintf(
-                                        '%s newActivateCardId: %s',
-                                        __FUNCTION__,
-                                        $newActivateCardId
-                                    ),
-                                    $logContext
-                                );
-
-                                if ($currentActiveCardId !== $newActivateCardId) {
-                                    $tmpRes = $manzanaService->changeCard($currentActiveCardId, $newActivateCardId);
-                                    $this->log()->debug(
-                                        sprintf(
-                                            '%s changeCard: %s',
-                                            __FUNCTION__,
-                                            $tmpRes ? 'success' : 'fail'
-                                        ),
-                                        $logContext
-                                    );
-                                    if (!$tmpRes) {
-                                        throw new ContactUpdateException('Не удалось привязать карту');
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    $manzanaService->updateContact($manzanaClient);
-
-                    $this->log()->debug(
-                        sprintf(
-                            '%s updateContact: %s',
-                            __FUNCTION__,
-                            'success'
-                        ),
-                        $logContext
-                    );
-
-                } catch (\Exception $exception) {
-                    $result->addError(
-                        new Error($exception->getMessage(), 'manzanaUpdateContactException')
-                    );
-                    $this->log()->error(
-                        sprintf(
-                            '%s exception: %s',
-                            __FUNCTION__,
-                            $exception->getMessage()
-                        ),
-                        $logContext
-                    );
-                }
-            }
-        }
-
-        // сброс тегированного кеша, относящегося к юзеру, используемого в компонентах сайта
-        $clearTags = [];
-        $clearTags[] = 'personal:bonus:'.$userId;
-        if ($clearTags) {
-            TaggedCacheHelper::clearManagedCache($clearTags);
         }
 
         $result->setData(
             [
                 'user' => $user,
-                'contactId' => $contactId,
-                'manzanaClient' => $manzanaClient
+                'contactId' => $updateResult ? $updateResult->getData()['updatedContactId'] : '',
+                'manzanaClient' => $updateResult ? $updateResult->getData()['resultContact'] : null,
             ]
         );
 
         return $result;
+    }
+
+    /**
+     * Сброс тегированного кеша, используемого в компонентах сайта
+     *
+     * @param int $userId
+     */
+    protected function clearUserTaggedCache(int $userId)
+    {
+        $clearTags = [];
+        $clearTags[] = 'user:'.$userId;
+        $clearTags[] = 'personal:bonus:'.$userId;
+        TaggedCacheHelper::clearManagedCache($clearTags);
     }
 }

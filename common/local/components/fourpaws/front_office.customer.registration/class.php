@@ -1,20 +1,14 @@
 <?php
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\FrontOffice\Bitrix\Component\CustomerRegistration;
 use FourPaws\FrontOffice\Traits\SmsTrait;
 use FourPaws\UserBundle\Entity\User;
-use JMS\Serializer\DeserializationContext;
-use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializerInterface;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -111,11 +105,9 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
             $this->processPhoneNumber();
             $this->processPersonalData();
             $this->processEmail();
-
             if (empty($this->arResult['ERROR']['FIELD'])) {
                 if ($this->trimValue($this->getFormFieldValue('doCustomerRegistration')) === 'Y') {
                     $registrationResult = $this->doCustomerRegistration();
-
                     if ($registrationResult->isSuccess()) {
                         $this->arResult['REGISTRATION_STATUS'] = 'SUCCESS';
                     } else {
@@ -139,57 +131,53 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         $this->includeComponentTemplate();
     }
 
-    protected function processCardNumber()
+    /**
+     * @throws ApplicationCreateException
+     */
+    protected function processPhoneNumber()
     {
-        $fieldName = 'cardNumber';
-        $cardNumber = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($cardNumber === '') {
-            $this->setFieldError($fieldName, 'Номер карты не задан', 'empty');
-        } elseif (strlen($cardNumber) != 13) {
-            $this->setFieldError($fieldName, 'Неверный номер карты', 'incorrect_value');
+        $fieldName = 'phone';
+        $value = $this->trimValue($this->getFormFieldValue($fieldName));
+        if ($value === '') {
+            $this->setFieldError($fieldName, 'Не задан номер телефона', 'empty');
         } else {
-            $continue = true;
-            if ($continue) {
-                $validateResult = $this->validateCardByNumber($cardNumber);
-                $validateResultData = $validateResult->getData();
-                if (!$validateResult->isSuccess()) {
-                    $this->setFieldError($fieldName, $validateResult->getErrors(), 'runtime');
-                } elseif (empty($validateResultData['validate'])) {
-                    $this->setFieldError($fieldName, 'Карта не найдена', 'not_found');
-                }
-
-                if ($validateResultData['validate']) {
-                    // validationResultCode == 2
-                    if ($validateResultData['validate']['_IS_CARD_OWNED_'] === 'Y') {
-                        $searchCardResult = $this->searchCardByNumber($cardNumber);
-                        $searchCardResultData = $searchCardResult->getData();
-                        if (!$searchCardResult->isSuccess()) {
-                            $this->setFieldError($fieldName, $searchCardResult->getErrors(), 'runtime');
-                        } elseif (empty($searchCardResultData['card'])) {
-                            $this->setFieldError($fieldName, 'Карта не найдена', 'not_found');
-                        } else {
-                            if ($searchCardResultData['card']['_IS_ACTIVATED_'] === 'Y') {
-                                $this->setFieldError($fieldName, 'Карта уже активирована', 'activated');
-                            } else {
-                                $this->arResult['CARD_DATA']['IS_ACTUAL_CONTACT'] = $searchCardResultData['card']['_IS_ACTUAL_CONTACT_'];
-                                $this->arResult['CARD_DATA']['IS_BONUS_CARD'] = $searchCardResultData['card']['_IS_BONUS_CARD_'];
-                                $this->arResult['CARD_DATA']['USER'] = [
-                                    'CONTACT_ID' => $searchCardResultData['card']['CONTACT_ID'],
-                                    'LAST_NAME' => $searchCardResultData['card']['LAST_NAME'],
-                                    'FIRST_NAME' => $searchCardResultData['card']['FIRST_NAME'],
-                                    'SECOND_NAME' => $searchCardResultData['card']['SECOND_NAME'],
-                                    'BIRTHDAY' => $searchCardResultData['card']['BIRTHDAY'],
-                                    'PHONE' => $searchCardResultData['card']['PHONE'],
-                                    'EMAIL' => $searchCardResultData['card']['EMAIL'],
-                                    'GENDER_CODE' => $searchCardResultData['card']['GENDER_CODE'],
-                                    '_PHONE_NORMALIZED_' => $this->cleanPhoneNumberValue($searchCardResultData['card']['PHONE']),
+            $phone = $this->cleanPhoneNumberValue($value);
+            if ($phone !== '') {
+                // Наличие юзера с таким номером в БД сайта
+                $user = $this->searchUserByPhoneNumber($phone);
+                if ($user) {
+                    $this->setRegisteredUserId($user->getId());
+                    $this->setFieldError(
+                        $fieldName,
+                        'Данный телефонный номер есть в базе данных сайта',
+                        'already_registered'
+                    );
+                } else {
+                    $searchResult = $this->getUserDataByPhone($phone);
+                    if (!$searchResult->isSuccess()) {
+                        $this->setFieldError($fieldName, $searchResult->getErrors(), 'runtime');
+                    } else {
+                        $searchResultData = $searchResult->getData();
+                        if ($searchResultData['clients']) {
+                            foreach ($searchResultData['clients'] as $clientData) {
+                                $this->arResult['CONTACT_DATA']['USER'][] = [
+                                    'CONTACT_ID' => $clientData['CONTACT_ID'],
+                                    'LAST_NAME' => $clientData['LAST_NAME'],
+                                    'FIRST_NAME' => $clientData['FIRST_NAME'],
+                                    'SECOND_NAME' => $clientData['SECOND_NAME'],
+                                    'BIRTHDAY' => $clientData['BIRTHDAY'],
+                                    'PHONE' => $clientData['PHONE'],
+                                    'EMAIL' => $clientData['EMAIL'],
+                                    'GENDER_CODE' => $clientData['GENDER_CODE'],
+                                    '_PHONE_NORMALIZED_' => $this->cleanPhoneNumberValue($clientData['PHONE']),
+                                    '_BX_GENDER_CODE_' => $this->getBitrixGenderByExternalGender($clientData['GENDER_CODE']),
                                 ];
                             }
                         }
-                    } elseif ($validateResultData['validate']['_IS_CARD_NOT_EXISTS_'] === 'Y') {
-                        $this->setFieldError($fieldName, 'Not found', 'not_found');
                     }
                 }
+            } else {
+                $this->setFieldError($fieldName, 'Номер телефона задан некорректно', 'not_valid');
             }
         }
     }
@@ -240,32 +228,6 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @throws ApplicationCreateException
      */
-    protected function processPhoneNumber()
-    {
-        $fieldName = 'phone';
-        $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($value === '') {
-            $this->setFieldError($fieldName, 'Не задан номер телефона', 'empty');
-        } else {
-            $phone = $this->cleanPhoneNumberValue($value);
-            if ($phone !== '') {
-                // Наличие юзера с таким номером в БД сайта
-                if ($this->searchUserByPhoneNumber($phone)) {
-                    $this->setFieldError(
-                        $fieldName,
-                        'Данный телефонный номер есть в базе данных сайта',
-                        'already_registered'
-                    );
-                }
-            } else {
-                $this->setFieldError($fieldName, 'Номер телефона задан некорректно', 'not_valid');
-            }
-        }
-    }
-
-    /**
-     * @throws ApplicationCreateException
-     */
     protected function processEmail()
     {
         $fieldName = 'email';
@@ -286,13 +248,29 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     }
 
     /**
+     * @return bool
+     */
+    protected function canSendUserRegistrationSms()
+    {
+        return $this->arParams['SEND_USER_REGISTRATION_SMS'] === 'Y';
+    }
+
+    /**
+     * @param int $userId
+     */
+    protected function setRegisteredUserId(int $userId)
+    {
+        $this->arResult['REGISTERED_USER_ID'] = $userId > 0 ? $userId : 0;
+    }
+
+    /**
      * @return Result
      * @throws ApplicationCreateException
      * @throws SystemException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    protected function doCardRegistration()
+    protected function doCustomerRegistration()
     {
         $result = new Result();
 
@@ -303,160 +281,76 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
             );
         }
 
-        $cardNumber = $this->trimValue($this->getFormFieldValue('cardNumber'));
-        if ($cardNumber === '') {
-            $result->addError(
-                new Error('Не задан номер карты', 'emptyCardNumberField')
-            );
+        $resultData = [];
+        $userId = 0;
+        $user4Sms = null;
+
+        // создание пользователя на сайте
+        if ($result->isSuccess()) {
+            $createResult = $this->createUserByFormFields();
+            if (!$createResult->isSuccess()) {
+                $result->addErrors($createResult->getErrors());
+            } else {
+                /** @var User $tmpCreatedUser */
+                $tmpCreatedUser = $createResult->getData()['user'];
+                $userId = (int)$tmpCreatedUser->getId();
+
+                if ($this->canSendUserRegistrationSms()) {
+                    // для sms нужно брать объект юзера от createResult, т.к. в нем хранится пароль
+                    $user4Sms = clone $tmpCreatedUser;
+                }
+            }
+            $resultData['createUserResult'] = $createResult;
         }
 
-        $resultData = [];
+        $this->setRegisteredUserId($userId);
+
+        // для Манзаны берем карточку из базы (нужны все поля)
+        $user4Manzana = null;
         if ($result->isSuccess()) {
-            $users = $this->getUserListByParams(
-                [
-                    'filter' => [
-                        'ACTIVE' => 'Y',
-                        [
-                            'LOGIC' => 'OR',
-                            [
-                                '=PERSONAL_PHONE' => $phone
-                            ],
-                            [
-                                '=UF_DISCOUNT_CARD' => $cardNumber
-                            ],
-                        ]
-                    ]
-                ]
-            );
-
-            $createNewUser = true;
-            foreach ($users as $user) {
-                /** @var User $user */
-                if ($user->isFastOrderUser()) {
-                    continue;
-                }
-                $createNewUser = false;
-                $cardNumberUser = trim($user->getDiscountCardNumber());
-                $phoneUser = $this->cleanPhoneNumberValue($user->getPersonalPhone());
-                $userId = $user->getId();
-                $updateUser = false;
-                if ($phoneUser == $phone) {
-                    /*
-                    // Если найден пользователь с указанным телефоном без привязанной бонусной карты,
-                    // бонусная карта привязывается к профилю пользователя.
-                    // Если найден пользователь с указанным телефоном и другим номером бонусной карты,
-                    // данные о номере бонусной карты обновляются в профиле пользователя.
-                    if ($cardNumberUser === '' || $cardNumberUser != $cardNumber) {
-                        $updateUser = true;
-                    }
-                    */
-                    // 25.01.2018: обсудили с Марией Цегельник в чате и решили делать апдейт профиля по полям всей формы
-                    $updateUser = true;
-                } elseif ($cardNumberUser == $cardNumber) {
-                    /*
-                    // Если найден пользователь с указанным номером бонусной карты без номера телефона или
-                    // с другим номером телефона, данные о номере телефона обновляются в профиле пользователя.
-                    // Бонусная карта привязывается к профилю пользователя
-                    if ($phoneUser === '' || $phoneUser != $phone) {
-                        $updateUser = true;
-                    }
-                    */
-                    // 25.01.2018: обсудили с Марией Цегельник в чате и решили делать апдейт профиля по полям всей формы
-                    $updateUser = true;
-                }
-
-                $userManzana = clone $user;
-                if ($updateUser) {
-                    /**
-                     * С транзакциями вылетает ошибка "MySQL server has gone away", вероятно, из-за долгих запросов к ML.
-                     * Отключил нафиг.
-                     **/
-                    //$this->startTransaction();
-                    $updateResult = $this->updateUserByFormFields($userId);
-                    if ($updateResult->isSuccess()) {
-                        // для отправки в Манзану берем обновленную карточку из базы
-                        $userManzana = $this->searchUserById($userId);
-                        if (!$userManzana) {
-                            $result->addError(
-                                new Error('Не найден пользователь по id: '.$userId, 'doCardRegistrationUserNotFound')
-                            );
-                        }
-                    } else {
-                        // откатываем транзакцию БД
-                        //$this->rollbackTransaction();
-                        $result->addErrors($updateResult->getErrors());
-                        $userManzana = null;
-                    }
-                    $resultData['updateUserResults'][$userId]['result'] = $updateResult;
-                }
-                if ($userManzana) {
-                    // отправка контактов юзера в Манзану
-                    $updateManzanaResult = $this->doManzanaUpdateContact($userManzana);
-                    if (!$updateManzanaResult->isSuccess()) {
-                        // в Манзану данные не ушли - откатываемся
-                        //$this->rollbackTransaction();
-                        $result->addErrors($updateManzanaResult->getErrors());
-                    }
-                    $resultData['updateUserResults'][$userId]['manzana'] = $updateManzanaResult;
-                }
-                // внутри метода проверяется открыта ли транзакциия, поэтому его можно здесь вызывать
-                //$this->commitTransaction();
+            $user4Manzana = $this->searchUserById($userId);
+            if (!$user4Manzana) {
+                $result->addError(
+                    new Error(
+                        'Не найден пользователь по id: '.$userId,
+                        'doCustomerRegistrationUserNotFound'
+                    )
+                );
+                // раз пользователь в базе не найден, то не нужно и sms слать
+                $user4Sms = null;
             }
+        }
 
-            if ($createNewUser) {
-                // Если пользователь не найден, Система создает новую учетную запись пользователя
-                // с указанными личными данными.
-                // Бонусная карта привязывается к профилю пользователя.
-                $userSms = null;
-                $userManzana = null;
-                //$this->startTransaction();
-                $createResult = $this->createUserByFormFields();
-                if ($createResult->isSuccess()) {
-                    $createResultData = $createResult->getData();
-                    // для sms нужно от createResult брать объект юзера, т.к. в нем хранится пароль
-                    $userSms = clone $createResultData['user'];
-                    // для Манзаны берем карточку из базы (нужны все поля)
-                    /** @var User $createdUser */
-                    $createdUser = $createResultData['user'];
-                    $userManzana = $this->searchUserById($createdUser->getId());
-                    if (!$userManzana) {
-                        $result->addError(
-                            new Error('Не найден пользователь по id: '.$createdUser->getId(), 'doCardRegistrationUserNotFound')
-                        );
-                        // не будем слать sms
-                        $userSms = null;
-                    }
+        // Отправка актуальных данных юзера в Манзану (обновление или создание контакта)
+        $contact = null;
+        if ($result->isSuccess()) {
+            $updateManzanaResult = null;
+            try {
+                $updateManzanaResult = $this->doManzanaUpdateContact($user4Manzana);
+                if (!$updateManzanaResult->isSuccess()) {
+                    $result->addErrors($updateManzanaResult->getErrors());
                 } else {
-                    // откатываем транзакцию БД
-                    //$this->rollbackTransaction();
-                    $result->addErrors($createResult->getErrors());
+                    $contact = $updateManzanaResult->getData()['resultContact'];
                 }
-                $resultData['createUserResults'][0]['result'] = $createResult;
-
-                if ($userManzana) {
-                    // отправка контактов юзера в Манзану
-                    $updateManzanaResult = $this->doManzanaUpdateContact($userManzana);
-                    if (!$updateManzanaResult->isSuccess()) {
-                        // в Манзану данные не ушли - откатываемся
-                        //$this->rollbackTransaction();
-                        $result->addErrors($updateManzanaResult->getErrors());
-                        // не будем отправлять sms
-                        $userSms = null;
-                    }
-                    $resultData['createUserResults'][0]['manzana'] = $updateManzanaResult;
-                }
-                //$this->commitTransaction();
-
-                if ($userSms) {
-                    // отправка юзеру sms о регистрации на сайте
-                    if ($this->arParams['SEND_USER_REGISTRATION_SMS'] === 'Y') {
-                        $resultData['createUserResults'][0]['sms'] = $this->sendUserRegistrationSms(
-                            $userSms,
-                            $this->arParams['REGISTRATION_SMS_TEXT']
-                        );
-                    }
-                }
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), 'manzanaUpdateContactException')
+                );
             }
+            $resultData['manzanaUpdateContactResult'] = $updateManzanaResult;
+        }
+
+        // Привязка карты к юзеру
+        if ($contact instanceof Client) {
+            $this->bindUserDiscountCard($userId, $contact);
+        }
+
+        // Отправка юзеру sms о регистрации на сайте
+        if ($user4Sms && $this->canSendUserRegistrationSms()) {
+            $resultData['smsSendResult'] = $this->sendUserRegistrationSms(
+                $user4Sms,
+                $this->arParams['REGISTRATION_SMS_TEXT']
+            );
         }
 
         $result->setData($resultData);
@@ -465,49 +359,17 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     }
 
     /**
-     * @return array
+     * @return Result
      */
-    protected function userArrayByFormFields()
+    protected function createUserByFormFields()
     {
-        $fields = [];
-        $fields['NAME'] = $this->trimValue(
-            $this->getFormFieldValue('firstName')
-        );
-        $fields['SECOND_NAME'] = $this->trimValue(
-            $this->getFormFieldValue('secondName')
-        );
-        $fields['LAST_NAME'] = $this->trimValue(
-            $this->getFormFieldValue('lastName')
-        );
-        $fields['PERSONAL_GENDER'] = $this->getBitrixGenderByExternalGender(
-            $this->getFormFieldValue('genderCode')
-        );
-        $fields['PERSONAL_PHONE'] = $this->cleanPhoneNumberValue(
-            $this->getFormFieldValue('phone')
-        );
-/*
-        $fields['UF_DISCOUNT_CARD'] = $this->trimValue(
-            $this->getFormFieldValue('cardNumber')
-        );
-*/
+        $user = $this->userByFormFields();
 
-        $value = $this->trimValue(
-            $this->getFormFieldValue('email')
-        );
-        if ($value !== '') {
-            $fields['EMAIL'] = $value;
-        }
+        $user->setActive('Y');
+        $user->setLogin($user->getPersonalPhone());
+        $user->setPassword($this->genPassword());
 
-        $value = $this->trimValue(
-            $this->getFormFieldValue('birthDay')
-        );
-        if ($value !== '') {
-            try {
-                $fields['PERSONAL_BIRTHDAY'] = (new \Bitrix\Main\Type\Date($value, 'd.m.Y'));
-            } catch (\Exception $exception) {}
-        }
-
-        return $fields;
+        return $this->createUser($user);
     }
 
     /**
@@ -515,12 +377,6 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
      */
     protected function userByFormFields()
     {
-        /*
-        $user = $this->convertUserFromArray(
-            $this->userArrayByFormFields()
-        );
-        */
-
         $user = new User();
         $user->setName(
             $this->trimValue(
@@ -547,13 +403,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
                 $this->getFormFieldValue('phone')
             )
         );
-/*
-        $user->setDiscountCardNumber(
-            $this->trimValue(
-                $this->getFormFieldValue('cardNumber')
-            )
-        );
-*/
+
         $value = $this->trimValue(
             $this->getFormFieldValue('email')
         );
@@ -577,47 +427,39 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
 
     /**
      * @param User $user
-     * @return array
-     * @throws SystemException
-     */
-    protected function convertUserToArray(User $user)
-    {
-        return $this->getSerializer()->toArray($user, SerializationContext::create()->setGroups(['update']));
-    }
-
-    /**
-     * @param array $fields
-     * @return User
-     * @throws SystemException
-     */
-    protected function convertUserFromArray(array $fields)
-    {
-        return $this->getSerializer()->fromArray($fields, DeserializationContext::create()->setGroups(['update']));
-    }
-
-    /**
      * @return Result
+     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\FrontOffice\Exception\InvalidArgumentException
      */
-    protected function createUserByFormFields()
+    protected function doManzanaUpdateContact(User $user)
     {
-        $user = $this->userByFormFields();
+        try {
+            $currentContact = $this->getManzanaIntegrationService()->getContactByPhone(
+                $user->getManzanaNormalizePersonalPhone()
+            );
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
+            // если найдено несколько контактов, то создаем еще один
+            $currentContact = null;
+        }
 
-        $user->setActive('Y');
-        $user->setLogin($user->getPersonalPhone());
-        $user->setPassword($this->genPassword());
+        $result = $this->getManzanaIntegrationService()->updateContact(
+            $user,
+            [
+                // Код места активации карты
+                'shopOfActivation' => $this->getShopOfActivation(),
+                // Код места регистрации карты (от юзера, заданного в параметрах компонента определяется)
+                'shopRegistration' => $this->getShopRegistration(),
+                // автоматическая установка флага актуальности контакта
+                'setActualContact' => $this->shouldSetActualContact(),
+            ],
+            $currentContact
+        );
 
-        return $this->createUser($user);
-    }
-
-    /**
-     * @param int $userId
-     * @return Result
-     */
-    protected function updateUserByFormFields(int $userId)
-    {
-        $fields = $this->userArrayByFormFields();
-
-        return $this->updateUser($userId, $fields);
+        return $result;
     }
 
     /**
@@ -656,70 +498,28 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         return in_array($this->getShopOfActivation(), ['UpdatedByTab', 'UpdatedByСassa']);
     }
 
+
     /**
-     * @param User $user
-     * @return Result
+     * @param int $userId
+     * @param Client $contact
      * @throws ApplicationCreateException
-     * @throws SystemException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
      */
-    protected function doManzanaUpdateContact(User $user)
+    protected function bindUserDiscountCard(int $userId, Client $contact)
     {
-        $result = $this->getManzanaIntegrationService()->updateContactByUserPhone(
-            $user,
-            [
-                // Код места активации карты
-                'shopOfActivation' => $this->getShopOfActivation(),
-                // Код места регистрации карты (от юзера, заданного в праметрах компонента определяется)
-                'shopRegistration' => $this->getShopRegistration(),
-                // автоматическая установка флага актуальности контакта
-                'setActualContact' => $this->shouldSetActualContact(),
-            ]
-        );
-
-        return $result;
-    }
-
-    /**
-     * @return Serializer
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws SystemException
-     */
-    public function getSerializer(): Serializer
-    {
-        if (!$this->serializer) {
-            try {
-                $container = Application::getInstance()->getContainer();
-            } catch (ApplicationCreateException $e) {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-                /** @noinspection PhpUnhandledExceptionInspection */
-                throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+        if ($contact->contactId) {
+            $actualCard = $this->getManzanaIntegrationService()->getActualCardByContactId(
+                $contact->contactId
+            );
+            $cardNumber = $actualCard ? trim($actualCard->cardNumber) : '';
+            if ($cardNumber !== '') {
+                $res = $this->getUserService()->getUserRepository()->updateDiscountCard(
+                    $userId,
+                    $cardNumber
+                );
+                if ($res) {
+                    $this->clearUserTaggedCache($userId);
+                }
             }
-
-            $this->serializer = $container->get(SerializerInterface::class);
         }
-
-        return $this->serializer;
     }
-
-    /**
-     * @param string $externalGenderCode
-     * @return string
-     */
-    public function getBitrixGenderByExternalGender(string $externalGenderCode)
-    {
-        $result = '';
-        $externalGenderCode = (int)$externalGenderCode;
-        if ($externalGenderCode === static::EXTERNAL_GENDER_CODE_M) {
-            $result = static::BITRIX_GENDER_CODE_M;
-        } elseif ($externalGenderCode === static::EXTERNAL_GENDER_CODE_F) {
-            $result = static::BITRIX_GENDER_CODE_F;
-        }
-
-        return $result;
-    }
-
 }

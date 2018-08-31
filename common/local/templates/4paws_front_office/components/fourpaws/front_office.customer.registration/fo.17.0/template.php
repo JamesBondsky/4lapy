@@ -25,20 +25,27 @@ $showForm = true;
 $errBlock = '<div class="form-page__message b-icon"><i class="icon icon-warning"></i><span class="text-h4 text-icon">%s</span></div>';
 
 echo '<div id="refreshingBlockContainer">';
-
 if (isset($arResult['REGISTRATION_STATUS'])) {
     if ($arResult['REGISTRATION_STATUS'] === 'SUCCESS') {
         $showForm = false;
-    
         ?>
         <h2 class="text-h3">
-            Поздравляем! Вы успешно зарегистрировали бонусную карту и теперь можете оплачивать покупки бонусами!
+            <?php
+            if ($arResult['PRINT_FIELDS']['phone']['VALUE']) {
+                echo 'Создан аккаунт по номеру телефона: '.$arResult['PRINT_FIELDS']['phone']['VALUE'];
+            } else {
+                echo 'Аккаунт создан';
+            }
+            ?>
         </h2>
-        <h3 class="text-h4 mb-l">
-            Предъявляйте карту при каждом посещении магазина, получайте и накапливайте бонусы.
-            Оплачивайте Ваши покупки бонусами без ограничений!
-        </h3>
-        <div><a href="<?= $arParams['CURRENT_PAGE'] ?>" class="btn inline-block">Следующий клиент</a></div><?php
+        <br><br>
+        <div>
+            <a href="javascript:void(0)" data-user-id="<?= $arResult['REGISTERED_USER_ID'] ?>" class="btn inline-block avatarAuth">
+                Войти в ЛК
+            </a>
+            <a href="<?= $arParams['CURRENT_PAGE'] ?>" class="btn inline-block">Отказаться</a>
+        </div>
+        <?php
     }
 }
 
@@ -46,6 +53,8 @@ if ($showForm) {
     $attr = '';
     $attr .= ' data-ajax-url="' . $componentPath . '/ajax.php"';
     $attr .= ' data-result-container="#refreshingBlockContainer"';
+
+    $showAuthButton = false;
     ?>
     <form class="form-page mb-l" action=""<?= $attr ?> method="post">
         <div>
@@ -76,6 +85,10 @@ if ($showForm) {
                         case 'not_valid':
                             $errMess = 'Телефон задан в неверном формате';
                             break;
+                        case 'already_registered':
+                            $errMess = 'Данный телефонный номер есть в базе данных сайта, авторизоваться под пользователем?';
+                            $showAuthButton = true;
+                            break;
                         default:
                             $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
                             break;
@@ -94,15 +107,6 @@ if ($showForm) {
                     <?php
                     if ($errMess) {
                         echo sprintf($errBlock, $errMess);
-                        /*
-                    } else {
-                        if ($arResult['POSTED_STEP'] >= 3) {
-                            ?><div class="form-page__message b-icon">
-                                <i class="icon icon-warning-ok"></i>
-                                <span class="text-h4 text-icon">Подтверждён</span>
-                            </div><?php
-                        }
-                        */
                     }
                     ?>
                 </div>
@@ -126,7 +130,7 @@ if ($showForm) {
                             $errMess = $error->getMessage();
                             break;
                         case 'empty':
-                            $errMess = 'Как к вам обращаться?';
+                            $errMess = 'Данные не заданы';
                             break;
                         case 'not_valid':
                             $errMess = 'Введите корректные данные';
@@ -164,7 +168,7 @@ if ($showForm) {
                             $errMess = $error->getMessage();
                             break;
                         case 'empty':
-                            $errMess = 'Как к Вам обращаться?';
+                            $errMess = 'Данные не заданы';
                             break;
                         case 'not_valid':
                             $errMess = 'Введите корректные данные';
@@ -202,7 +206,7 @@ if ($showForm) {
                             $errMess = $error->getMessage();
                             break;
                         case 'empty':
-                            $errMess = 'Как к Вам обращаться?';
+                            $errMess = 'Данные не заданы';
                             break;
                         case 'not_valid':
                             $errMess = 'Введите корректные данные';
@@ -229,6 +233,7 @@ if ($showForm) {
                 $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
+                $optAttr = $fieldMeta['READONLY'] ? ' disabled="disabled"' : '';
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
@@ -239,7 +244,7 @@ if ($showForm) {
                             break;
                         case 'empty':
                         case 'not_valid':
-                            $errMess = 'Укажите свой пол';
+                            $errMess = 'Укажите пол';
                             break;
                         default:
                             $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
@@ -250,10 +255,11 @@ if ($showForm) {
                 $female = $component::EXTERNAL_GENDER_CODE_F;
                 ?>
                 <div class="form-page__field-wrap">
+                    <label for="<?= $fieldName ?>" class="form-page__label">Пол</label>
                     <select name="<?= $fieldName ?>">
-                        <option value="">Укажите свой пол</option>
-                        <option<?= ($value == $male ? ' selected="selected"' : '') ?> value="<?= $male ?>">Мужской</option>
-                        <option<?= ($value == $female ? ' selected="selected"' : '') ?> value="<?= $female ?>">Женский</option>
+                        <option<?=$optAttr?> value="">Укажите пол</option>
+                        <option<?= ($value == $male ? ' selected="selected"' : $optAttr) ?> value="<?= $male ?>">Мужской</option>
+                        <option<?= ($value == $female ? ' selected="selected"' : $optAttr) ?> value="<?= $female ?>">Женский</option>
                     </select>
                     <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
                 </div>
@@ -288,7 +294,7 @@ if ($showForm) {
             
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldName ?>" class="form-page__label">Дата вашего рождения дд.мм.гггг</label>
+                    <label for="<?= $fieldName ?>" class="form-page__label">Дата рождения дд.мм.гггг</label>
                     <input id="<?= $fieldName ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
@@ -297,9 +303,7 @@ if ($showForm) {
                     <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
                 </div>
                 <?php
-            }
-        
-            if ($arResult['STEP'] >= 4) {
+
                 // Поле: Ваш email(поле необязательно для заполнения)
                 $fieldName = 'email';
                 $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
@@ -320,7 +324,7 @@ if ($showForm) {
                             $errMess = 'E-mail задан некорректно';
                             break;
                         case 'already_registered':
-                            $errMess = 'Пользователь с таким e-mail уже есть в системе. Для продолжения активации бонусной карты введите другой e-mail или очистите поле';
+                            $errMess = 'Пользователь с таким e-mail уже есть в системе. Для продолжения введите другой e-mail или очистите поле';
                             break;
                     }
                 }
@@ -348,14 +352,27 @@ if ($showForm) {
                     $errMessages[] = $errCode !== '' ? '[' . $errCode . '] ' . $errMsg : $errMsg;
                 }
                 echo '<div class="form-page__field-wrap">';
-                echo sprintf($errBlock, 'Ошибка регистрации карты:<br>' . implode('<br>', $errMessages));
+                echo sprintf($errBlock, 'Ошибка регистрации пользователя:<br>' . implode('<br>', $errMessages));
                 echo '</div>';
             }
-        
-            $btnText = $arResult['STEP'] >= 4 ? 'Зарегистрировать карту' : 'ДАЛЕЕ';
+
             ?>
             <div class="form-page__submit-wrap">
-                <input id="ajaxSubmitButton" class="form-page__btn inline-block" type="submit" value="<?= $btnText ?>">
+                <?php
+                if ($showAuthButton) {
+                    ?>
+                    <a href="javascript:void(0)" data-user-id="<?= $arResult['REGISTERED_USER_ID'] ?>" class="btn inline-block avatarAuth">
+                        Войти в ЛК
+                    </a>
+                    <a href="<?= $arParams['CURRENT_PAGE'] ?>" class="btn inline-block">Отказаться</a>
+                    <?php
+                } else {
+                    $btnText = $arResult['STEP'] >= 2 ? 'Добавить личный кабинет' : 'ДАЛЕЕ';
+                    ?>
+                    <input id="ajaxSubmitButton" class="form-page__btn inline-block" type="submit" value="<?= $btnText ?>">
+                    <?php
+                }
+                ?>
             </div>
         </div>
     </form><?php
@@ -373,14 +390,15 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                     '#email',
                     function (ev) {
                         var p = /^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/;
-                        if (this.value != '' && !p.test(this.value)) {
+                        if (this.value !== '' && !p.test(this.value)) {
                             ev.preventDefault();
                             alert('В поле Email введены недопустимые символы!');
                         }
                     }
                 );
+                var body = $('body');
     
-                $('body').on(
+                body.on(
                     'click',
                     '#ajaxSubmitButton',
                     function (event) {
@@ -441,7 +459,27 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                             }
                         );
                     }
-                )
+                );
+
+                body.on(
+                    'click',
+                    '.avatarAuth',
+                    function (event) {
+                        event.preventDefault();
+                        var submitButton = $(this);
+                        var userId = submitButton.data('user-id');
+                        var actionUrl = '<?=\CUtil::JSEscape($arResult['AVATAR_AUTH_PAGE'])?>';
+                        if (userId > 0) {
+                            $('body').append(
+                                '<form action="' + actionUrl + '" method="post" id="avatarForceAuthForm">' +
+                                    '<input type="hidden" name="action" value="forceAuth">' +
+                                    '<input type="hidden" name="userId" value="' + userId + '">' +
+                                '</form>'
+                            );
+                            $('#avatarForceAuthForm').submit();
+                        }
+                    }
+                );
             }
         );
     </script>

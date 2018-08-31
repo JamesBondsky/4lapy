@@ -5,13 +5,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @global CMain                                     $APPLICATION
- * @var array                                        $arParams
- * @var array                                        $arResult
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  * @var CBitrixComponent $component
- * @var CBitrixComponentTemplate                     $this
- * @var string                                       $templateName
- * @var string                                       $componentPath
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $componentPath
  */
 
 if ($arResult['CAN_ACCESS'] !== 'Y') {
@@ -38,15 +38,17 @@ if ($arResult['IS_AJAX_REQUEST'] !== 'Y') {
 if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
     ?>
     <script data-name="front_office_avatar" type="text/javascript">
-        var avatarComponent = new FourPawsFrontOfficeAvatarComponent({
-                                                                         siteId:            '<?=\CUtil::JSEscape(SITE_ID)?>',
-                                                                         siteTemplateId:    '<?=\CUtil::JSEscape(SITE_TEMPLATE_ID)?>',
-                                                                         componentPath:     '<?=\CUtil::JSEscape($componentPath)?>',
-                                                                         template:          '<?=\CUtil::JSEscape($arResult['JS']['signedTemplate'])?>',
-                                                                         parameters:        '<?=\CUtil::JSEscape($arResult['JS']['signedParams'])?>',
-                                                                         sessid:            '<?=\CUtil::JSEscape(bitrix_sessid())?>',
-                                                                         containerSelector: '#refreshingBlockContainer'
-                                                                     });
+        var avatarComponent = new FourPawsFrontOfficeAvatarComponent(
+            {
+                siteId: '<?=\CUtil::JSEscape(SITE_ID)?>',
+                siteTemplateId: '<?=\CUtil::JSEscape(SITE_TEMPLATE_ID)?>',
+                componentPath: '<?=\CUtil::JSEscape($componentPath)?>',
+                template: '<?=\CUtil::JSEscape($arResult['JS']['signedTemplate'])?>',
+                parameters: '<?=\CUtil::JSEscape($arResult['JS']['signedParams'])?>',
+                sessid: '<?=\CUtil::JSEscape(bitrix_sessid())?>',
+                containerSelector: '#refreshingBlockContainer'
+            }
+        );
         
         $(document).ready(
             function () {
@@ -58,7 +60,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                         event.preventDefault();
     
                         var submitButton = $(this);
-                        var submitForm   = submitButton.closest('form');
+                        var submitForm = submitButton.closest('form');
                         submitButton.attr('disabled', true);
                         submitForm.find('.form-page__submit-wrap').addClass('loading');
     
@@ -75,7 +77,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                             sendData,
                             {
                                 callbackComplete: function (jqXHR, textStatus, component) {
-                                    if (textStatus == 'success') {
+                                    if (textStatus === 'success') {
                                         $(component.containerSelector).html(jqXHR.responseText);
                                         $('html, body').animate(
                                             {
@@ -100,7 +102,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                         event.preventDefault();
     
                         var actionElement = $(this);
-                        var userId        = actionElement.data('id');
+                        var userId = actionElement.data('id');
                         actionElement.addClass('preloader');
     
                         var actionContainer = actionElement.closest('.user-list');
@@ -109,7 +111,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                         }
     
                         var submitButton = $('#ajaxSubmitButton');
-                        var submitForm   = submitButton.closest('form');
+                        var submitForm = submitButton.closest('form');
                         submitButton.attr('disabled', true);
                         submitForm.find('.form-page__submit-wrap').addClass('loading');
     
@@ -119,14 +121,14 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                             avatarComponent.sendRequest(
                                 {
                                     formName: 'avatar',
-                                    action:   'userAuth',
-                                    sessid:   avatarComponent.sessid,
-                                    userId:   userId
+                                    action: 'userAuth',
+                                    sessid: avatarComponent.sessid,
+                                    userId: userId
                                 },
                                 {
-                                    dataType:         'json',
-                                    callbackComplete: function (jqXHR, textStatus, component) {
-                                        if (textStatus == 'success') {
+                                    dataType: 'json',
+                                    callbackComplete: function(jqXHR, textStatus, component) {
+                                        if (textStatus === 'success') {
                                             var result = $.parseJSON(jqXHR.responseText);
                                             if (result.message !== '') {
                                                 alert(result.message);
@@ -144,10 +146,10 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                         submitButton.attr('disabled', false);
                                         submitForm.find('.form-page__submit-wrap').removeClass('loading');
                                     },
-                                    callbackError:    function (jqXHR, textStatus, component) {
-                                        if (jqXHR.status == 403) {
+                                    callbackError: function(jqXHR, textStatus, component) {
+                                        if (jqXHR.status === 403) {
                                             alert('Отказано в доступе');
-                                        } else if (jqXHR.status == 401) {
+                                        } else if (jqXHR.status === 401) {
                                             alert('Пожалуйста, авторизуйтесь');
                                         } else {
                                             console.error('Request error: ' + jqXHR.status + ' ' + jqXHR.statusText);

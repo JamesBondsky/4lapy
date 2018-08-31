@@ -1,20 +1,12 @@
 <?php
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\FrontOffice\Bitrix\Component\CustomerRegistration;
 use FourPaws\FrontOffice\Traits\SmsTrait;
 use FourPaws\UserBundle\Entity\User;
-use JMS\Serializer\DeserializationContext;
-use JMS\Serializer\SerializationContext;
-use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializerInterface;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -23,9 +15,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 class FourPawsFrontOfficeCardRegistrationComponent extends CustomerRegistration
 {
     use SmsTrait;
-
-    /** @var Serializer $serializer */
-    protected $serializer;
 
     /**
      * FourPawsFrontOfficeCardRegistrationComponent constructor.
@@ -93,30 +82,6 @@ class FourPawsFrontOfficeCardRegistrationComponent extends CustomerRegistration
         }
 
         return $action;
-    }
-
-    /**
-     * @return Serializer
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws SystemException
-     */
-    public function getSerializer(): Serializer
-    {
-        if (!$this->serializer) {
-            try {
-                $container = Application::getInstance()->getContainer();
-            } catch (ApplicationCreateException $e) {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-                /** @noinspection PhpUnhandledExceptionInspection */
-                throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
-            }
-
-            $this->serializer = $container->get(SerializerInterface::class);
-        }
-
-        return $this->serializer;
     }
 
     protected function initialLoadAction()
@@ -542,12 +507,6 @@ class FourPawsFrontOfficeCardRegistrationComponent extends CustomerRegistration
      */
     protected function userByFormFields()
     {
-        /*
-        $user = $this->convertUserFromArray(
-            $this->userArrayByFormFields()
-        );
-        */
-
         $user = new User();
         $user->setName(
             $this->trimValue(
@@ -599,26 +558,6 @@ class FourPawsFrontOfficeCardRegistrationComponent extends CustomerRegistration
         }
 
         return $user;
-    }
-
-    /**
-     * @param User $user
-     * @return array
-     * @throws SystemException
-     */
-    protected function convertUserToArray(User $user)
-    {
-        return $this->getSerializer()->toArray($user, SerializationContext::create()->setGroups(['update']));
-    }
-
-    /**
-     * @param array $fields
-     * @return User
-     * @throws SystemException
-     */
-    protected function convertUserFromArray(array $fields)
-    {
-        return $this->getSerializer()->fromArray($fields, DeserializationContext::create()->setGroups(['update']));
     }
 
     /**
@@ -697,7 +636,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends CustomerRegistration
             [
                 // Код места активации карты
                 'shopOfActivation' => $this->getShopOfActivation(),
-                // Код места регистрации карты (от юзера, заданного в праметрах компонента определяется)
+                // Код места регистрации карты (от юзера, заданного в параметрах компонента определяется)
                 'shopRegistration' => $this->getShopRegistration(),
                 // автоматическая установка флага актуальности контакта
                 'setActualContact' => $this->shouldSetActualContact(),

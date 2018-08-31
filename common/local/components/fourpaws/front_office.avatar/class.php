@@ -64,6 +64,8 @@ class FourPawsFrontOfficeAvatarComponent extends \FourPaws\FrontOffice\Bitrix\Co
             } elseif ($this->request->get('action') === 'userAuth') {
                 $action = 'userAuth';
             }
+        } elseif ($this->request->get('action') === 'forceAuth') {
+            $action = 'forceAuth';
         }
 
         return $action;
@@ -93,55 +95,83 @@ class FourPawsFrontOfficeAvatarComponent extends \FourPaws\FrontOffice\Bitrix\Co
     }
 
     /**
+     * @throws ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     */
+    protected function forceAuthAction()
+    {
+        //$this->initPostFields();
+        $this->setFormFieldValue('userId', $this->request->get('userId'));
+
+        if ($this->canEnvUserAccess()) {
+            $this->doAuth();
+        }
+
+        $this->loadData();
+    }
+
+    /**
      * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     protected function userAuthAction()
     {
         $this->initPostFields();
 
         if ($this->canEnvUserAccess()) {
-            $this->arResult['AUTH_ACTION_SUCCESS'] = 'N';
-            $fieldsList = [
-                'userId',
-            ];
-            $filter = $this->getFilterByFormFields($fieldsList);
-            if (!empty($filter)) {
-                $usersList = $this->getUserListByFilter($filter);
-                if ($usersList) {
-                    $user = reset($usersList);
-                    $authResult = false;
-                    try {
-                        $authResult = $this->getUserService()->avatarAuthorize($user['ID']);
-                    } catch (\Exception $exception) {}
-                    if ($authResult) {
-                        $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
-                    } else {
-                        $this->setExecError(
-                            'authFailed',
-                            'Не удалось авторизоваться под указанным пользователем',
-                            'authFailed'
-                        );
-                    }
+            $this->doAuth();
+        }
+
+        $this->loadData();
+    }
+
+    /**
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function doAuth()
+    {
+        $this->arResult['AUTH_ACTION_SUCCESS'] = 'N';
+        $fieldsList = [
+            'userId',
+        ];
+        $filter = $this->getFilterByFormFields($fieldsList);
+        if (!empty($filter)) {
+            $usersList = $this->getUserListByFilter($filter);
+            if ($usersList) {
+                $user = reset($usersList);
+                $authResult = false;
+                try {
+                    $authResult = $this->getUserService()->avatarAuthorize($user['ID']);
+                } catch (\Exception $exception) {}
+                if ($authResult) {
+                    $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
                 } else {
                     $this->setExecError(
-                        'canNotLogin',
-                        'Невозможно авторизоваться под указанным пользователем',
-                        'canNotLogin'
+                        'authFailed',
+                        'Не удалось авторизоваться под указанным пользователем',
+                        'authFailed'
                     );
                 }
             } else {
                 $this->setExecError(
-                    'emptyUserId',
-                    'Не задан идентификатор пользователя',
-                    'emptyUserId'
+                    'canNotLogin',
+                    'Невозможно авторизоваться под указанным пользователем',
+                    'canNotLogin'
                 );
             }
+        } else {
+            $this->setExecError(
+                'emptyUserId',
+                'Не задан идентификатор пользователя',
+                'emptyUserId'
+            );
         }
-
-        $this->loadData();
     }
 
     /**

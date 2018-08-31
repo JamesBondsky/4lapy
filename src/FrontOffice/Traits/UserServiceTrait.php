@@ -4,6 +4,7 @@ namespace FourPaws\FrontOffice\Traits;
 
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserService;
 use Bitrix\Main\SystemException;
@@ -233,5 +234,18 @@ trait UserServiceTrait
         }
 
         return $user;
+    }
+
+    /**
+     * Сброс тегированного кеша, используемого в компонентах сайта
+     *
+     * @param int $userId
+     */
+    protected function clearUserTaggedCache(int $userId)
+    {
+        $clearTags = [];
+        $clearTags[] = 'user:'.$userId;
+        $clearTags[] = 'personal:bonus:'.$userId;
+        TaggedCacheHelper::clearManagedCache($clearTags);
     }
 }

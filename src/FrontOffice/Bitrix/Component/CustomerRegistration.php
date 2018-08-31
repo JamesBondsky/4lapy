@@ -8,6 +8,9 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\FrontOffice\Traits\ManzanaIntegrationServiceTrait;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
+use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\Serializer;
 
 
 abstract class CustomerRegistration extends SubmitForm
@@ -47,6 +50,20 @@ abstract class CustomerRegistration extends SubmitForm
         $result = $this->getManzanaIntegrationService()->validateCardByNumber(
             $cardNumber,
             $getFromCache
+        );
+
+        return $result;
+    }
+
+    /**
+     * @param string $phoneNumber
+     * @return Result
+     * @throws ApplicationCreateException
+     */
+    public function getUserDataByPhone(string $phoneNumber)
+    {
+        $result = $this->getManzanaIntegrationService()->getUserDataByPhone(
+            $phoneNumber
         );
 
         return $result;
@@ -135,7 +152,6 @@ abstract class CustomerRegistration extends SubmitForm
             if ($createResult) {
                 if ($user->getId()) {
                     // привязка пользователя к группе "Зарегистрированные пользователи"
-                    //$registeredUserGroupId = \CGroup::GetIDByCode('REGISTERED_USERS');
                     $registeredUserGroupId = $this->getGroupIdByCode('REGISTERED_USERS');
                     if ($registeredUserGroupId) {
                         \CUser::AppendUserGroup($user->getId(), [$registeredUserGroupId]);
@@ -206,12 +222,8 @@ abstract class CustomerRegistration extends SubmitForm
             }
         }
 
-        // сброс тегированного кеша, используемого в компонентах сайта, относящегося к юзеру
-        $clearTags = [];
-        $clearTags[] = 'user:'.$userId;
-        if ($clearTags) {
-            TaggedCacheHelper::clearManagedCache($clearTags);
-        }
+        // сброс тегированного кеша
+        $this->clearUserTaggedCache($userId);
 
         $result->setData(
             [
@@ -221,5 +233,34 @@ abstract class CustomerRegistration extends SubmitForm
         );
 
         return $result;
+    }
+
+    /**
+     * @return Serializer
+     * @throws ApplicationCreateException
+     */
+    protected function getSerializer()
+    {
+        return $this->getManzanaIntegrationService()->getSerializer();
+    }
+
+    /**
+     * @param User $user
+     * @return array
+     * @throws ApplicationCreateException
+     */
+    protected function convertUserToArray(User $user)
+    {
+        return $this->getSerializer()->toArray($user, SerializationContext::create()->setGroups(['update']));
+    }
+
+    /**
+     * @param array $fields
+     * @return User
+     * @throws ApplicationCreateException
+     */
+    protected function convertUserFromArray(array $fields)
+    {
+        return $this->getSerializer()->fromArray($fields, DeserializationContext::create()->setGroups(['update']));
     }
 }

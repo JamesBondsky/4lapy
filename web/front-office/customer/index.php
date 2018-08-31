@@ -6,7 +6,7 @@ $APPLICATION->IncludeComponent(
     'fourpaws:front_office.customer.registration',
     'fo.17.0',
     [
-        'SEND_USER_REGISTRATION_SMS' => 'N',
+        'SEND_USER_REGISTRATION_SMS' => 'N', // запрет отправки пользователю смс о создании аккаунта
     ],
     null,
     [

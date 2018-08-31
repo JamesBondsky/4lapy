@@ -51,21 +51,40 @@ foreach ($printFields as $fieldName) {
         'READONLY' => false,
     ];
 }
+/**
+ * [LP22-275]:
+ *  Если учетки нет, но номер телефона найден в Manzana:
+ *   - отобразить данные покупателя.
+ *  Если учетки нет и номер телефона не найден в Manzana/в Manzana найдено более 1 номера:
+ *  - выводится форма регистрации нового покупателя
+ */
+if (!empty($arResult['CONTACT_DATA']['USER']) && count($arResult['CONTACT_DATA']['USER']) == 1) {
+    $contactData = reset($arResult['CONTACT_DATA']['USER']);
+    $arResult['PRINT_FIELDS']['lastName']['VALUE'] = htmlspecialcharsbx($contactData['LAST_NAME']);
+    $arResult['PRINT_FIELDS']['lastName']['READONLY'] = $contactData['LAST_NAME'] !== '';
 
-// если номер телефона прошел проверку, то по умолчанию заполним данными этого контакта
-if (!empty($arResult['CARD_DATA']['USER'])) {
-    $arResult['PRINT_FIELDS']['lastName']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['LAST_NAME']);
-    $arResult['PRINT_FIELDS']['firstName']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['FIRST_NAME']);
-    $arResult['PRINT_FIELDS']['secondName']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['SECOND_NAME']);
+    $arResult['PRINT_FIELDS']['firstName']['VALUE'] = htmlspecialcharsbx($contactData['FIRST_NAME']);
+    $arResult['PRINT_FIELDS']['firstName']['READONLY'] = $contactData[''] !== '';
+
+    $arResult['PRINT_FIELDS']['secondName']['VALUE'] = htmlspecialcharsbx($contactData['SECOND_NAME']);
+    $arResult['PRINT_FIELDS']['secondName']['READONLY'] = $contactData[''] !== '';
+
     $arResult['PRINT_FIELDS']['birthDay']['VALUE'] = '';
-    if (is_object($arResult['CARD_DATA']['USER']['BIRTHDAY'])) {
+    if (is_object($contactData['BIRTHDAY'])) {
         /** @var \DateTimeImmutable $date */
-        $date = $arResult['CARD_DATA']['USER']['BIRTHDAY'];
+        $date = $contactData['BIRTHDAY'];
         $arResult['PRINT_FIELDS']['birthDay']['VALUE'] = $date->format('d.m.Y');
+        $arResult['PRINT_FIELDS']['birthDay']['READONLY'] = $arResult['PRINT_FIELDS']['birthDay']['VALUE'] !== '';
     }
-    $arResult['PRINT_FIELDS']['genderCode']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['GENDER_CODE']);
-    $arResult['PRINT_FIELDS']['phone']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['_PHONE_NORMALIZED_']);
-    $arResult['PRINT_FIELDS']['email']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['EMAIL']);
+
+    $arResult['PRINT_FIELDS']['genderCode']['VALUE'] = htmlspecialcharsbx($contactData['GENDER_CODE']);
+    $arResult['PRINT_FIELDS']['genderCode']['READONLY'] = $contactData['GENDER_CODE'] !== '';
+
+    $arResult['PRINT_FIELDS']['phone']['VALUE'] = htmlspecialcharsbx($contactData['_PHONE_NORMALIZED_']);
+    $arResult['PRINT_FIELDS']['phone']['READONLY'] = $contactData['_PHONE_NORMALIZED_'] !== '';
+
+    $arResult['PRINT_FIELDS']['email']['VALUE'] = htmlspecialcharsbx($contactData['EMAIL']);
+    $arResult['PRINT_FIELDS']['email']['READONLY'] = $contactData['EMAIL'] !== '';
 }
 
 // заполним значениями результата отправки формы
@@ -143,12 +162,14 @@ foreach ($printFields as $fieldName) {
     if ($arResult['STEP'] > 2 && in_array($fieldName, $secondStepFields)) {
         $readonly = true;
     }
+    /*
     if ($arResult['STEP'] > 3 && in_array($fieldName, $thirdStepFields)) {
         $readonly = true;
     }
     if ($arResult['STEP'] > 4 && in_array($fieldName, $fourthStepFields)) {
         $readonly = true;
     }
+    */
     if ($readonly) {
         $arResult['PRINT_FIELDS'][$fieldName]['READONLY'] = true;
     }
@@ -164,6 +185,7 @@ foreach ($printFields as $fieldName) {
             $error = $arResult['ERROR']['FIELD'][$fieldName];
         }
     }
+    /*
     if ($arResult['POSTED_STEP'] >= 3 && in_array($fieldName, $thirdStepFields)) {
         if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {
             $error = $arResult['ERROR']['FIELD'][$fieldName];
@@ -174,7 +196,19 @@ foreach ($printFields as $fieldName) {
             $error = $arResult['ERROR']['FIELD'][$fieldName];
         }
     }
+    */
     if ($error) {
         $arResult['PRINT_FIELDS'][$fieldName]['ERROR'] = $error;
     }
+}
+
+$arResult['AVATAR_AUTH_PAGE'] = '/front-office/avatar/';
+$arResult['AVATAR_AUTH_URL'] = '';
+$arResult['REGISTERED_USER_ID'] = $arResult['REGISTERED_USER_ID'] ? (int)$arResult['REGISTERED_USER_ID'] : 0;
+if ($arResult['REGISTERED_USER_ID'] > 0) {
+    $queryParams = [
+        'action' => 'forceAuth',
+        'userId' => $arResult['REGISTERED_USER_ID']
+    ];
+    $arResult['AVATAR_AUTH_URL'] .= $arResult['AVATAR_AUTH_PAGE'] . '?' . http_build_query($queryParams);
 }
