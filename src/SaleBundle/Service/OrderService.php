@@ -400,9 +400,9 @@ class OrderService implements LoggerAwareInterface
         }
         $locationProp->setValue($storage->getCityCode());
 
-        if ($this->deliveryService->isDelivery($selectedDelivery)) {
-            /** @var DeliveryResultInterface $selectedDelivery */
-            $selectedDelivery->setDateOffset($storage->getDeliveryDate());
+        if ($this->deliveryService->isDelivery($selectedDelivery) &&
+            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()]
+        ) {
             if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
                 /** @var Interval $interval */
                 if ($interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex]) {
@@ -694,6 +694,8 @@ class OrderService implements LoggerAwareInterface
                 'COM_WAY',
                 'DELIVERY_PLACE_CODE',
                 'IS_FAST_ORDER',
+                'OPERATOR_EMAIL',
+                'OPERATOR_SHOP',
             ];
 
             /** @var PropertyValue $propertyValue */
@@ -718,6 +720,8 @@ class OrderService implements LoggerAwareInterface
                             switch ($selectedDelivery->getDeliveryZone()) {
                                 case DeliveryService::ZONE_1:
                                 case DeliveryService::ZONE_3:
+                                case DeliveryService::ZONE_5:
+                                case DeliveryService::ZONE_6:
                                     $value = 'DC01';
                                     break;
                                 case DeliveryService::ZONE_2:

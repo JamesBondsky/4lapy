@@ -92,6 +92,8 @@ class Category extends IblockSection implements FilterInterface
     protected $UF_SUB_DOMAIN;
     /** @var bool */
     protected $UF_SHOW_FITTING = false;
+    /** @var bool */
+    protected $UF_LANDING_ARTICLES = false;
     /**
      * @var FilterCollection
      */
@@ -623,6 +625,26 @@ class Category extends IblockSection implements FilterInterface
     public function setSubDomain(string $subDomain): self
     {
         $this->UF_SUB_DOMAIN = $subDomain;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLandingArticlesSectionId(): int
+    {
+        return $this->UF_LANDING_ARTICLES ?? -1;
+    }
+
+    /**
+     * @param int $articlesSectionId
+     *
+     * @return Category
+     */
+    public function setLandingArticlesSectionId(int $articlesSectionId): self
+    {
+        $this->UF_LANDING_ARTICLES = $articlesSectionId;
 
         return $this;
     }

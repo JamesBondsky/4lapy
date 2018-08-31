@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Service;
 
+use Bitrix\Main\Application;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Exception\LandingIsNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,7 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CatalogLandingService
 {
-    public const IS_LANDING_REQUEST_KEY = 'landing';
+    public const        IS_LANDING_REQUEST_KEY = 'landing';
+    public const        LANDING_DOCROOT_KEY    = 'HTTP_LANDING_DOCROOT';
 
     /**
      * @param Request $request
@@ -53,5 +55,49 @@ class CatalogLandingService
             $rootCategoryRequest->getLanding()
                 ->getCode()
         );
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return string
+     *
+     * @throws LandingIsNotFoundException
+     */
+    public function getLandingDomain(Request $request): string
+    {
+        return \sprintf(
+            'https://%s',
+            $this->getLandingName($request)
+        );
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return string
+     */
+    public function getLandingDocRoot(Request $request): string
+    {
+        return $request->server->get(self::LANDING_DOCROOT_KEY);
+    }
+
+    /**
+     * @todo HARDCODE
+     *
+     * @return bool
+     */
+    public static function isLandingPage(): bool
+    {
+        try {
+            $request = Application::getInstance()
+                ->getContext()
+                ->getRequest();
+            $isLanding = $request->get(self::IS_LANDING_REQUEST_KEY);
+        } catch (\Throwable $e) {
+            $isLanding = false;
+        }
+
+        return (bool)$isLanding;
     }
 }

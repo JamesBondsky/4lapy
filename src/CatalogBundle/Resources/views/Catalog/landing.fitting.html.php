@@ -3,6 +3,10 @@
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
 
+global $APPLICATION;
+
+$APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [], ['HIDE_ICONS' => 'Y']);
+
 /**
  * @var PhpEngine $view
  */ ?>

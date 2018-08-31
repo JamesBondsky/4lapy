@@ -28,6 +28,54 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
      * @var string
      */
     protected $currentPath;
+    /**
+     * @var string
+     */
+    protected $landingPath;
+    /**
+     * @var string
+     */
+    protected $landingDomain;
+
+    /**
+     * @return string
+     */
+    public function getLandingPath(): string
+    {
+        return $this->landingPath;
+    }
+
+    /**
+     * @param string $landingPath
+     *
+     * @return ChildCategoryRequest
+     */
+    public function setLandingDocRoot(string $landingPath): ChildCategoryRequest
+    {
+        $this->landingPath = $landingPath;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLandingDomain(): string
+    {
+        return $this->landingDomain;
+    }
+
+    /**
+     * @param string $landingDomain
+     *
+     * @return ChildCategoryRequest
+     */
+    public function setLandingDomain(string $landingDomain): ChildCategoryRequest
+    {
+        $this->landingDomain = $landingDomain;
+
+        return $this;
+    }
 
     /**
      * @return Category
@@ -107,5 +155,32 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
         $this->currentPath = $currentPath;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAbsoluteLandingPath(): string
+    {
+        return \sprintf(
+            '%s%s',
+            $this->getLandingDomain(),
+            \str_replace($this->getLandingPath(), '', $this->getCurrentPath())
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getBaseCategoryPath(): string
+    {
+        $path = $this->getCategory()
+            ->getSectionPageUrl();
+
+        if ($this->isLanding()) {
+            $path = \str_replace($this->getLandingPath(), \ltrim($this->getAbsoluteLandingPath()), $path);
+        }
+
+        return $path;
     }
 }

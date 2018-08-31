@@ -5,15 +5,12 @@
 
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\IntervalService;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 trait DeliveryResultTrait
 {
@@ -36,6 +33,11 @@ trait DeliveryResultTrait
      * @var int
      */
     protected $intervalOffset;
+
+    /**
+     * @var array
+     */
+    protected $weekDays;
 
     /**
      * @throws ApplicationCreateException
@@ -104,7 +106,6 @@ trait DeliveryResultTrait
 
     /**
      * @param int $dateOffset
-     *
      * @return DeliveryResultInterface
      */
     public function setDateOffset(int $dateOffset): DeliveryResultInterface
@@ -116,33 +117,42 @@ trait DeliveryResultTrait
     }
 
     /**
-     * @param int|null $dateIndex
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws StoreNotFoundException
-     * @throws SystemException
+     * @return int[]
+     */
+    public function getWeekDays(): array
+    {
+        return $this->weekDays ?? [];
+    }
+
+    /**
+     * @param int[] $weekDays
+     * @return DeliveryResultInterface
+     */
+    public function setWeekDays(array $weekDays): DeliveryResultInterface
+    {
+        $this->weekDays = $weekDays;
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this;
+    }
+
+    /**
      * @return IntervalCollection
      */
-    public function getAvailableIntervals(?int $dateIndex = null): IntervalCollection
+    public function getAvailableIntervals(): IntervalCollection
     {
         $result = new IntervalCollection();
 
-        if (null === $dateIndex) {
-            $dateIndex = $this->getDateOffset();
-        }
+        /** @var \DateTime $deliveryDate */
+        $deliveryDate = $this->getDeliveryDate();
+        $days = $deliveryDate->diff($this->deliveryDate)->days;
+        $tmpDelivery = clone $this;
+        /** @var Interval $interval */
+        foreach ($this->getIntervals() as $interval) {
+            $intervalDays = $tmpDelivery->setSelectedInterval($interval)->getIntervalOffset();
 
-        $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
-        if (($dateIndex >= 0) && ($dateIndex <= $diff)) {
-            $days = $this->getIntervalOffset() + $dateIndex;
-            $tmpDelivery = clone $this;
-            /** @var Interval $interval */
-            foreach ($this->getIntervals() as $interval) {
-                $intervalDays = $tmpDelivery->setSelectedInterval($interval)->getIntervalOffset();
-
-                if ($intervalDays <= $days) {
-                    $result->add($interval);
-                }
+            if ($intervalDays <= $days) {
+                $result->add($interval);
             }
         }
 
@@ -167,5 +177,36 @@ trait DeliveryResultTrait
         /** @var IntervalService $intervalService */
         $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
         return $intervalService->getFirstInterval($this);
+    }
+
+    /**
+     * @return int
+     *
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     */
+    protected function getFullOffset(): int
+    {
+        $intervalOffset = (clone $this)->setSelectedInterval($this->getFirstInterval())->getIntervalOffset();
+
+        return max($intervalOffset, $this->getDateOffset());
+    }
+
+    /**
+     * @param \DateTime $date
+     *
+     * @return \DateTime
+     */
+    protected function getNextDeliveryDate(\DateTime $date): \DateTime
+    {
+        $date = clone $date;
+        if ($availableDays = $this->getWeekDays()) {
+            $deliveryDay = (int)$date->format('N');
+            while (!\in_array($deliveryDay, $availableDays, true)) {
+                $deliveryDay = (int)$date->modify('+1 day')->format('N');
+            }
+        }
+
+        return $date;
     }
 }

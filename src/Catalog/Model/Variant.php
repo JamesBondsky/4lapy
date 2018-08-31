@@ -2,6 +2,11 @@
 
 namespace FourPaws\Catalog\Model;
 
+/**
+ * Class Variant
+ * 
+ * @package FourPaws\Catalog\Model
+ */
 class Variant
 {
     /**

@@ -6,6 +6,7 @@
 
 namespace FourPaws\DeliveryBundle\Handler;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
@@ -58,6 +59,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
     /**
      * @param Shipment $shipment
      * @return bool
+     * @throws ObjectNotFoundException
      */
     public function isCompatible(Shipment $shipment): bool
     {
@@ -127,6 +129,28 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
     /**
      * @param Shipment $shipment
      *
+     * @return int[]
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     */
+    public function getWeekDays(Shipment $shipment): array
+    {
+        $result = [];
+
+        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment);
+        $config = $this->getConfig();
+        /** @var int[] $days */
+        $days = $config['DAYS']['ITEMS'][$deliveryZone]['VALUE'];
+        foreach ($days as $day) {
+            $result[] = $day + 1;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Shipment $shipment
+     *
      * @throws ApplicationCreateException
      * @throws SystemException
      * @throws ArgumentException
@@ -140,6 +164,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
         if (!$deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment)) {
             $result->addError(new Error('Не задано местоположение доставки'));
+
             return $result;
         }
 
@@ -162,6 +187,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $data['INTERVALS'] = $this->getIntervals($shipment);
         if (!$offers = static::getOffers($basket)) {
             $result->setData($data);
+
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
@@ -171,12 +197,18 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
         if ($availableStores->isEmpty()) {
             $result->addError(new Error('Не найдено доступных складов'));
+
             return $result;
         }
 
         $stockResult = static::getStocks($basket, $offers, $availableStores);
 
         $data['STOCK_RESULT'] = $stockResult;
+        $data['WEEK_DAYS'] = $this->getWeekDays($shipment);
+        if (empty($data['WEEK_DAYS'])) {
+            $result->addError(new Error('Не найдены дни доставки'));
+        }
+
         $result->setData($data);
         if ($stockResult->getOrderable()->isEmpty()) {
             $result->addError(new Error('Отсутствуют товары в наличии'));
@@ -199,35 +231,58 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $result['MAIN']['DESCRIPTION'] = 'Настройки интервалов';
 
         $result['MAIN']['ITEMS']['INTERVALS'] = [
-            'TYPE' => 'DELIVERY_INTERVALS',
-            'NAME' => 'Интервалы доставок',
+            'TYPE'    => 'DELIVERY_INTERVALS',
+            'NAME'    => 'Интервалы доставок',
             'DEFAULT' => [],
-            'ZONES' => $zones,
+            'ZONES'   => $zones,
         ];
 
         $result['PRICES'] = [
-            'TITLE' => 'Стоимости доставок по зонам',
+            'TITLE'       => 'Стоимости доставок по зонам',
             'DESCRIPTION' => 'Стоимости доставок по зонам',
-            'ITEMS' => [],
+            'ITEMS'       => [],
         ];
 
         $result['FREE_FROM'] = [
-            'TITLE' => 'Пороги бесплатной доставки по зонам',
+            'TITLE'       => 'Пороги бесплатной доставки по зонам',
             'DESCRIPTION' => 'Пороги бесплатной доставки по зонам',
-            'ITEMS' => [],
+            'ITEMS'       => [],
         ];
 
+        $result['DAYS'] = [
+            'TITLE'       => 'Дни доставки',
+            'DESCRIPTION' => 'Дни недели, в которые курьер доставляет заказы',
+            'ITEMS'       => [],
+        ];
+
+        $days = [
+            'Понедельник',
+            'Вторник',
+            'Среда',
+            'Четверг',
+            'Пятница',
+            'Суббота',
+            'Воскресенье',
+        ];
         foreach ($zones as $code => $zone) {
             $result['PRICES']['ITEMS'][$code] = [
-                'TYPE' => 'NUMBER',
-                'NAME' => 'Зона ' . $zone['NAME'],
+                'TYPE'    => 'NUMBER',
+                'NAME'    => 'Зона ' . $zone['NAME'],
                 'DEFAULT' => 0,
             ];
 
             $result['FREE_FROM']['ITEMS'][$code] = [
-                'TYPE' => 'NUMBER',
-                'NAME' => 'Зона ' . $zone['NAME'],
+                'TYPE'    => 'NUMBER',
+                'NAME'    => 'Зона ' . $zone['NAME'],
                 'DEFAULT' => 0,
+            ];
+
+            $result['DAYS']['ITEMS'][$code] = [
+                'TYPE'         => 'ENUM',
+                'NAME'         => 'Дни доставок для зоны ' . $zone['NAME'],
+                'MULTIPLE'     => BitrixUtils::BX_BOOL_TRUE,
+                'MULTIELEMENT' => BitrixUtils::BX_BOOL_TRUE,
+                'OPTIONS'      => $days,
             ];
         }
 
