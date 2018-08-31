@@ -8,6 +8,8 @@
  * @var CMain $APPLICATION
  */
 
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
@@ -57,14 +59,27 @@ foreach ($filters
             </h3>
             <?php if ($filter->isShowWithPicture()) { ?>
                 <div class="size_filter js-size-filter color_filter js-color-filter js-accordion-filter js-filter-checkbox quoter">
-                    <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
-                        /** @todo если изображение или код цвета */
-                        if (false) {
-                            $style = $variant->getImage()
-                                ? \sprintf('background-image: url(%s)', $variant->getImage())
+                    <?php
+                    /**
+                     * @var int $id
+                     * @var Variant $variant
+                     */
+                    foreach ($filter->getAvailableVariants() as $id => $variant) {
+                        $image = null;
+                        try {
+                            $image = ResizeImageDecorator::createFromPrimary($variant->getImage())
+                                ->setResizeHeight(40)
+                                ->setResizeWidth(40)
+                                ->getSrc();
+                        } catch (FileNotFoundException $e) {
+                        }
+
+                        if ($image || $variant->getColor()) {
+                            $style = $image
+                                ? \sprintf('background-image: url(%s)', $image)
                                 : \sprintf('background-color: #%s;', \ltrim($variant->getColor(), ' #'));
                             ?>
-                            <label class="color_filter__item js-color-filter-item" style="">
+                            <label class="color_filter__item js-color-filter-item" style="<?= $style ?>">
                                 <input <?= $variant->isChecked() ? 'checked' : '' ?>
                                         class="js-checkbox-change js-filter-control"
                                         id="<?= $filter->getFilterCode() ?>-<?= $id ?>"

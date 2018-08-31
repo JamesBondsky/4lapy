@@ -35,6 +35,16 @@ class Variant
     private $available = true;
 
     /**
+     * @var int ID файла картинки
+     */
+    private $image = 0;
+
+    /**
+     * @var string код цвета данного варианта
+     */
+    private $color = '';
+
+    /**
      * @return string
      */
     public function getName(): string
@@ -134,4 +144,42 @@ class Variant
         return $this;
     }
 
+    /**
+     * @return int
+     */
+    public function getImage(): int
+    {
+        return $this->image;
+    }
+
+    /**
+     * @param int $image
+     * @return $this
+     */
+    public function withImage(int $image)
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getColor(): string
+    {
+        return $this->color;
+    }
+
+    /**
+     * @param string $color
+     *
+     * @return $this
+     */
+    public function withColor(string $color)
+    {
+        $this->color = $color;
+
+        return $this;
+    }
 }
