@@ -187,7 +187,7 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
         $path = $category->getSectionPageUrl();
 
         if ($this->isLanding()) {
-            $path = \str_replace($this->getLandingDocRoot(), \ltrim($this->getAbsoluteLandingPath()), $path);
+            $path = \str_replace($this->getLandingDocRoot(), $this->getAbsoluteLandingPath(), $path);
         }
 
         return $path;
