@@ -92,10 +92,9 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                             } ?>
                             <?php
                         }
-                    } ?>
+                    }
 
-                    <?php if ($arResult['isUseCaptcha']) {
-                        ?>
+                    if ($arResult['isUseCaptcha']) { ?>
                         <div class="b-feedback-page__capcha remained_questions__input_block">
                             <?php try {
                                 echo Application::getInstance()
