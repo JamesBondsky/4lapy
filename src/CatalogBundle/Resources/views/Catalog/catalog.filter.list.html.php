@@ -8,8 +8,6 @@
  * @var CMain $APPLICATION
  */
 
-use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
-use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
@@ -65,16 +63,9 @@ foreach ($filters
                      * @var Variant $variant
                      */
                     foreach ($filter->getAvailableVariants() as $id => $variant) {
-                        $image = null;
-                        try {
-                            $image = ResizeImageDecorator::createFromPrimary($variant->getImage())
-                                ->setResizeHeight(40)
-                                ->setResizeWidth(40)
-                                ->getSrc();
-                        } catch (FileNotFoundException $e) {
-                        }
 
-                        if ($image || $variant->getColor()) {
+
+                        if (($image = $variant->getImageSrc(40, 40)) || $variant->getColor()) {
                             $style = $image
                                 ? \sprintf('background-image: url(%s)', $image)
                                 : \sprintf('background-color: #%s;', \ltrim($variant->getColor(), ' #'));

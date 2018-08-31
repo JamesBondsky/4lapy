@@ -1,6 +1,8 @@
 <?php
 
 namespace FourPaws\Catalog\Model;
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 
 /**
  * Class Variant
@@ -181,5 +183,25 @@ class Variant
         $this->color = $color;
 
         return $this;
+    }
+
+    /**
+     * @param int $width
+     * @param int $height
+     *
+     * @return string
+     */
+    public function getImageSrc(int $width, int $height): string
+    {
+        try {
+            $result = ResizeImageDecorator::createFromPrimary($this->getImage())
+                ->setResizeHeight($width)
+                ->setResizeWidth($height)
+                ->getSrc();
+        } catch (FileNotFoundException $e) {
+            $result = '';
+        }
+
+        return $result;
     }
 }
