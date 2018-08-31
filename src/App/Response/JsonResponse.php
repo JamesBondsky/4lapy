@@ -2,6 +2,8 @@
 
 namespace FourPaws\App\Response;
 
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Model\ResponseContent\JsonContent;
 use Symfony\Component\HttpFoundation\JsonResponse as BaseJsonResponse;
 
@@ -35,5 +37,41 @@ class JsonResponse extends BaseJsonResponse
         }
 
         return $content;
+    }
+
+    /**
+     * @param null  $data
+     * @param int   $status
+     * @param array $headers
+     *
+     * @return static
+     * @throws ApplicationCreateException
+     */
+    public static function create($data = null, $status = 200, $headers = []): JsonResponse
+    {
+        $headers = static::setAllowOrigin($headers);
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return parent::create($data, $status, $headers);
+    }
+
+    /**
+     * @param array $headers
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     */
+    protected static function setAllowOrigin(array $headers): array
+    {
+        if ($request = Application::getInstance()->getContainer()->get('request_stack')->getCurrentRequest()) {
+            $origin = $request->headers->get('Origin');
+
+            if (mb_strpos($origin, $request->server->get('SERVER_NAME')) !== false) {
+                $headers['Access-Control-Allow-Origin'] = $origin;
+                $headers['Vary'] = 'Origin';
+            }
+        }
+
+        return $headers;
     }
 }
