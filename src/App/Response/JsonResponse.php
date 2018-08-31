@@ -68,6 +68,7 @@ class JsonResponse extends BaseJsonResponse
 
             if (mb_strpos($origin, $request->server->get('SERVER_NAME')) !== false) {
                 $headers['Access-Control-Allow-Origin'] = $origin;
+                $headers['Access-Control-Allow-Credentials'] = 'true';
                 $headers['Vary'] = 'Origin';
             }
         }
