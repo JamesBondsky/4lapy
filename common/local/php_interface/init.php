@@ -39,3 +39,14 @@ SCR;
 
     Asset::getInstance()->addString($cookieScript);
 }
+
+/**
+ * Одна сессионная cookie на все поддомены
+ */
+$cookieDomain = $_SERVER['HTTP_HOST'];
+if (mb_strpos($cookieDomain, '4lapy') === 0 || mb_strrpos($cookieDomain, 'stage') === 0) {
+    $cookieDomain = '.' . $cookieDomain;
+} else {
+    $cookieDomain = mb_substr($cookieDomain, mb_strpos($cookieDomain, '.'));
+}
+ini_set('session.cookie_domain', $cookieDomain);
