@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 class CatalogLandingService
 {
     public const        IS_LANDING_REQUEST_KEY = 'landing';
-    public const        LANDING_DOCROOT_KEY    = 'HTTP_LANDING_DOCROOT';
+    public const        LANDING_DOCROOT_KEY = 'HTTP_LANDING_DOCROOT';
 
     /**
      * @param Request $request
@@ -99,5 +99,23 @@ class CatalogLandingService
         }
 
         return (bool)$isLanding;
+    }
+
+    /**
+     * @param string $data
+     * @param Request $request
+     *
+     * @return string
+     */
+    public function replaceLinksToLanding(string $data, Request $request): string
+    {
+        return \preg_replace(
+            \sprintf(
+                '~%s~',
+                $this->getLandingDocRoot($request)
+            ),
+            $this->getLandingDomain($request),
+            $data
+        );
     }
 }

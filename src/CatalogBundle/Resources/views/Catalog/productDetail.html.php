@@ -1,7 +1,9 @@
 <?php
 /**
- * @var ProductDetailRequest $productDetailRequest
- * @var CMain                $APPLICATION
+ * @var ProductDetailRequest  $productDetailRequest
+ * @var CatalogLandingService $landingService
+ * @var Request               $request
+ * @var CMain                 $APPLICATION
  */
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -15,6 +17,7 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
@@ -22,6 +25,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\HighloadHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
@@ -75,7 +79,9 @@ if (null === $offer) {
 <div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>"
      data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/">
     <div class="b-container">
-        <?php $APPLICATION->IncludeComponent(
+        <?php
+        ob_start();
+        $APPLICATION->IncludeComponent(
             'fourpaws:breadcrumbs',
             '',
             [
@@ -83,7 +89,10 @@ if (null === $offer) {
             ],
             null,
             ['HIDE_ICONS' => 'Y']
-        ); ?>
+        );
+        $breadcrumbs = ob_get_clean();
+        echo $landingService->replaceLinksToLanding($breadcrumbs, $request);
+        ?>
         <div class="b-product-card__top">
             <div class="b-product-card__title-product">
                 <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>

@@ -197,6 +197,7 @@ class CatalogController extends Controller
             'catalogRequest'      => $categoryRequest,
             'ecommerceService'    => $this->ecommerceService,
             'request'             => $request,
+            'landingService'      => $this->landingService
         ]);
     }
 }

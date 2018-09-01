@@ -4,6 +4,7 @@ use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
@@ -17,6 +18,7 @@ global $APPLICATION;
  * @var Category               $category
  * @var Request                $request
  * @var ChildCategoryRequest   $catalogRequest
+ * @var CatalogLandingService  $landingService
  * @var ProductSearchResult    $productSearchResult
  * @var GoogleEcommerceService $ecommerceService
  * @var PhpEngine              $view
@@ -237,39 +239,7 @@ if (!$catalogRequest->isLanding()) { ?>
             true
         );
 
-        foreach ($collection as $product) {
-            $i++;
-
-            $APPLICATION->IncludeComponent(
-                'fourpaws:catalog.element.snippet',
-                '',
-                [
-                    'PRODUCT'               => $product,
-                    'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по питомцу'
-                ],
-                null,
-                ['HIDE_ICONS' => 'Y']
-            );
-
-            if ($catalogRequest->getCategory()
-                    ->isLanding()
-                && !empty($catalogRequest->getCategory()
-                    ->getUfLandingBanner())) {
-                if ($i === 3 || ($i === $countItems && $i < 3)) { ?>
-                    <div class="b-fleas-protection-banner b-tablet">
-                        <?= htmlspecialcharsback($catalogRequest->getCategory()
-                            ->getUfLandingBanner()) ?>
-                    </div>
-                <?php }
-
-                if ($i === 4 || ($i === $countItems && $i < 4)) { ?>
-                    <div class="b-fleas-protection-banner">
-                        <?= htmlspecialcharsback($catalogRequest->getCategory()
-                            ->getUfLandingBanner()) ?>
-                    </div>
-                <?php }
-            }
-        } ?>
+        echo $landingService->replaceLinksToLanding($view->render('FourPawsCatalogBundle:Catalog:catalog.snippet.list.html.php', \compact('collection', 'catalogRequest')), $request); ?>
     </div>
     <div class="b-line b-line--catalog-filter"></div>
     <?php $APPLICATION->IncludeComponent(
