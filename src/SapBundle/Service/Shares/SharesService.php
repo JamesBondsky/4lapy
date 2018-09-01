@@ -79,7 +79,8 @@ class SharesService implements LoggerAwareInterface
         ShareRepository $repository,
         SlugifyInterface $slugify,
         BasketRulesRepository $basketRulesRepository
-    ) {
+    )
+    {
         $this->connection = Application::getConnection();
         $this->repository = $repository;
         $this->slugify = $slugify;
@@ -204,8 +205,8 @@ class SharesService implements LoggerAwareInterface
         /** @noinspection BadExceptionsProcessingInspection */
         try {
             $type = $share->getType();
-            $activeFrom = $promo->getStartDate();
-            $activeTo = $promo->getEndDate();
+            $activeFrom = $promo->getStartDate()->setTime(0, 0, 0);
+            $activeTo = $promo->getEndDate()->setTime(23, 59, 59);
             $name = $share->getDescription();
             $xmlId = $share->getShareNumber();
         } /** @noinspection PhpUndefinedClassInspection */

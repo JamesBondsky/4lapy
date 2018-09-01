@@ -73,8 +73,7 @@ if (!$catalogRequest->isLanding()) { ?>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
         <?php /** @todo from server variable */ ?>
         <form class="b-form js-filter-form"
-              action="<?= $catalogRequest->isLanding() ? '/' . $category->getCode()
-                                                         . '/' : $APPLICATION->GetCurDir() ?>"
+              action="<?= $catalogRequest->isLanding() ? $catalogRequest->getBaseCategoryPath() : $APPLICATION->GetCurDir() ?>"
               data-url="/ajax/catalog/product-info/count-by-filter-list/">
             <div class="b-filter__block" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                 <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox"
