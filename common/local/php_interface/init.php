@@ -5,12 +5,12 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Page\Asset;
 use FourPaws\App\EventInitializer;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
+use WebArch\BitrixUserPropertyType\HyperLinkType;
+use WebArch\BitrixUserPropertyType\IblockSectionLinkType;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
 
 BitrixNeverInclude::registerModuleAutoload();
-
-YesNoPropertyType::init();
 
 /**
  * Регистрируем события
@@ -41,6 +41,8 @@ SCR;
 }
 
 /**
+ * @todo HardCode
+ *
  * Одна сессионная cookie на все поддомены
  */
 $cookieDomain = $_SERVER['HTTP_HOST'];
@@ -50,3 +52,10 @@ if (mb_strpos($cookieDomain, '4lapy') === 0 || mb_strrpos($cookieDomain, 'stage'
     $cookieDomain = mb_substr($cookieDomain, mb_strpos($cookieDomain, '.'));
 }
 ini_set('session.cookie_domain', $cookieDomain);
+
+/**
+ * Property initialize
+ */
+YesNoPropertyType::init();
+IblockSectionLinkType::init();
+HyperLinkType::init();

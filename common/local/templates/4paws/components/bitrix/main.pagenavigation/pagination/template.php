@@ -1,4 +1,7 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php use Bitrix\Main\Web\Uri;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
@@ -27,7 +30,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         <li class="b-pagination__item b-pagination__item--prev <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] > 1) { ?>
                 <a class="b-pagination__link<?= $class ?>"
-                   title="<?=$arResult['CURRENT_PAGE'] - 1?>"
+                   title="<?= $arResult['CURRENT_PAGE'] - 1 ?>"
                    href="<?= $arResult['CURRENT_PAGE'] > 2 ? htmlspecialcharsbx(
                        $component->replaceUrlTemplate(
                            $arResult['CURRENT_PAGE'] - 1
@@ -39,10 +42,13 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         </li>
         <?php $page = 1;
         while ($page <= $arResult['PAGE_COUNT']):
-            $url = $page >= 2 ? htmlspecialcharsbx($component->replaceUrlTemplate($page)) : $arResult['URL'];?>
+            $url = $page >= 2 ? htmlspecialcharsbx($component->replaceUrlTemplate($page)) : $arResult['URL'];
+            $uri = (new Uri($url))->deleteParams([CatalogLandingService::IS_LANDING_REQUEST_KEY]);
+            dump($uri);
+            ?>
             <li class="b-pagination__item <?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $arResult['HIDDEN'][$page] ?? '' ?>">
                 <a class="b-pagination__link<?= $class ?> <?= $page === (int)$arResult['CURRENT_PAGE'] ? 'active' : '' ?>"
-                   href="<?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $url ?>"
+                   href="<?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $uri->getUri() ?>"
                    title="<?= $page ?>">
                     <?= $page ?>
                 </a>
@@ -61,7 +67,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         <li class="b-pagination__item b-pagination__item--next <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] < (int)$arResult['END_PAGE']) { ?>
                 <a class="b-pagination__link<?= $class ?>"
-                   title="<?=$arResult['CURRENT_PAGE'] + 1?>"
+                   title="<?= $arResult['CURRENT_PAGE'] + 1 ?>"
                    href="<?= htmlspecialcharsbx($component->replaceUrlTemplate($arResult['CURRENT_PAGE'] + 1)) ?>">
                     Вперед
                 </a>

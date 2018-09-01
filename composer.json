@@ -114,7 +114,8 @@
     "theiconic/php-ga-measurement-protocol": "^2.0",
     "twig/twig": "^1.0",
     "webarchitect609/bitrix-cache": "^1.0",
-    "webarchitect609/bitrix-neverinclude": "^0.4.2"
+    "webarchitect609/bitrix-neverinclude": "^0.4.2",
+    "webarchitect609/bitrix-user-type": "^0.1.0"
   },
   "require-dev": {
     "codeception/codeception": "^2.3",

@@ -19,6 +19,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Search\Model\Navigation;
@@ -132,7 +133,7 @@ if ($childs !== null && $childs->count()) { ?>
                             </label>
                         <?php } else { ?>
                             <a class="b-filter-link-list__link"
-                               href="<?= $child->getSectionPageUrl() ?>"
+                               href="<?= $catalogRequest instanceof ChildCategoryRequest ? $catalogRequest->getCategoryPathByCategory($child) : $parent->getSectionPageUrl() ?>"
                                title="<?= $child->getCanonicalName() ?>">
                                 <?= $child->getCanonicalName() ?>
                             </a>
