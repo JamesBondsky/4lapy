@@ -1,21 +1,19 @@
 <?php
 
-use FourPaws\Catalog\Collection\CategoryCollection;
-use FourPaws\Catalog\Model\Category;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
 
 /**
- * @var CategoryCollection $landingCollection
- * @var Category $landing
+ * @var ChildCategoryRequest $catalogRequest
  * @var string $currentPath
  * @var PhpEngine $view
  */ ?>
 <div class="b-container">
     <div class="main_categories">
-        <?php foreach ($landingCollection as $landing) { ?>
-            <a class="main_categories__item<?= strpos($currentPath, $landing->getSectionPageUrl()) !== false ? '--active' : '' ?>"
-               href="/<?= $landing->getCode() ?>/"><?= $landing->getName() ?></a>
+        <?php foreach ($catalogRequest->getLandingCollection() as $landing) { ?>
+            <a class="main_categories__item<?= strpos($catalogRequest->getCurrentPath(), $landing->getSectionPageUrl()) !== false ? '--active' : '' ?>"
+               href="<?= $catalogRequest->getCategoryPathByCategory($landing) ?>"><?= $landing->getName() ?></a>
         <?php } ?>
     </div>
 </div>

@@ -158,14 +158,16 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     }
 
     /**
+     * @param string $path
+     *
      * @return string
      */
-    public function getAbsoluteLandingPath(): string
+    public function getAbsoluteLandingPath($path = ''): string
     {
         return \sprintf(
             '%s%s',
             $this->getLandingDomain(),
-            \str_replace($this->getLandingDocRoot(), '', $this->getCurrentPath())
+            \str_replace($this->getLandingDocRoot(), '', $path ?: $this->getCurrentPath())
         );
     }
 
@@ -187,7 +189,7 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
         $path = $category->getSectionPageUrl();
 
         if ($this->isLanding()) {
-            $path = \str_replace($this->getLandingDocRoot(), $this->getAbsoluteLandingPath(), $path);
+            $path = $this->getAbsoluteLandingPath($path);
         }
 
         return $path;

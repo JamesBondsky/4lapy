@@ -2,10 +2,10 @@
 
 /**
  * @var FilterCollection $filters
- * @var FilterBase $filter
- * @var PhpEngine $view
- * @var Variant $variant
- * @var CMain $APPLICATION
+ * @var FilterBase       $filter
+ * @var PhpEngine        $view
+ * @var Variant          $variant
+ * @var CMain            $APPLICATION
  */
 
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -15,11 +15,8 @@ use FourPaws\Catalog\Model\Variant;
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
 
-foreach ($filters
-
-         as $filter) {
-    if ($filter instanceof PriceFilter) {
-        ?>
+foreach ($filters as $filter) {
+    if ($filter instanceof PriceFilter) { ?>
         <div class="b-filter__block">
             <h3 class="b-title b-title--filter-header">
                 <?= $filter->getName() ?>
@@ -48,7 +45,11 @@ foreach ($filters
     }
 
     if ($filter instanceof FilterBase) {
-        if ($isBrand && \in_array($filter->getFilterCode(), ['Sections', 'Categories'])) {
+        if ($isBrand
+            && \in_array($filter->getFilterCode(), [
+                'Sections',
+                'Categories'
+            ])) {
             continue;
         } ?>
         <div class="b-filter__block">
@@ -63,25 +64,23 @@ foreach ($filters
                      * @var Variant $variant
                      */
                     foreach ($filter->getAvailableVariants() as $id => $variant) {
-
-
                         if (($image = $variant->getImageSrc(40, 40)) || $variant->getColor()) {
                             $style = $image
                                 ? \sprintf('background-image: url(%s)', $image)
                                 : \sprintf('background-color: #%s;', \ltrim($variant->getColor(), ' #'));
                             ?>
-                            <label class="color_filter__item js-color-filter-item" style="<?= $style ?>">
+                            <label class="color_filter__item<?= $variant->isChecked() ? '--checked' : '' ?> js-color-filter-item" style="<?= $style ?>">
                                 <input <?= $variant->isChecked() ? 'checked' : '' ?>
-                                        class="js-checkbox-change js-filter-control"
+                                        class="js-checkbox-change js-filter-control js-filter-select"
                                         id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
                                         type="checkbox"
                                         name="<?= $filter->getFilterCode() ?>"
                                         value="<?= $variant->getValue() ?>">
                             </label>
                         <?php } else { ?>
-                            <label class="size_filter__item js-size-filter-item">
+                            <label class="size_filter__item<?= $variant->isChecked() ? '--active' : '' ?> js-size-filter-item">
                                 <input <?= $variant->isChecked() ? 'checked' : '' ?>
-                                        class="js-checkbox-change js-filter-control"
+                                        class="js-checkbox-change js-filter-control js-filter-select"
                                         id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
                                         type="checkbox"
                                         name="<?= $filter->getFilterCode() ?>"
@@ -123,4 +122,3 @@ foreach ($filters
         <?php
     }
 }
-?>
