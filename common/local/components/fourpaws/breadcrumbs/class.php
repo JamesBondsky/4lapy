@@ -4,16 +4,23 @@ namespace FourPaws\Components;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\SystemException;
 use FourPaws\App\MainTemplate;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\IblockSection;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsBreadCrumbs extends \CBitrixComponent
 {
+    /**
+     * @param $params
+     * @return array
+     * @throws SystemException
+     */
     public function onPrepareComponentParams($params): array
     {
         if (!isset($params['CACHE_TIME'])) {
@@ -39,10 +46,14 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
          */
         $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $params['IS_CATALOG'] = $template->isCatalog();
+        $params['IS_LANDING'] = CatalogLandingService::isLandingPage();
 
         return parent::onPrepareComponentParams($params);
     }
 
+    /**
+     * @return mixed|void
+     */
     public function executeComponent()
     {
         try {
@@ -58,6 +69,9 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
         }
     }
 
+    /**
+     * @return $this
+     */
     protected function prepareResult()
     {
         /** @var IblockElement $iblockElement */

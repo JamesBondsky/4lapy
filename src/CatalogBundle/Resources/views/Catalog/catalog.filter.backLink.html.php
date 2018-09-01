@@ -30,6 +30,10 @@ do {
 
 $parents = array_reverse($parents);
 
+if ($catalogRequest instanceof ChildCategoryRequest && $catalogRequest->isLanding()) {
+    \array_shift($parents);
+}
+
 if (!empty($parents)) { ?>
     <div class="b-filter__block b-filter__block--back">
         <ul class="b-back">
