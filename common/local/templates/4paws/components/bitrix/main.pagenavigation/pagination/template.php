@@ -43,9 +43,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         <?php $page = 1;
         while ($page <= $arResult['PAGE_COUNT']):
             $url = $page >= 2 ? htmlspecialcharsbx($component->replaceUrlTemplate($page)) : $arResult['URL'];
-            $uri = (new Uri($url))->deleteParams([CatalogLandingService::IS_LANDING_REQUEST_KEY]);
-            dump($uri);
-            ?>
+            $uri = (new Uri($url))->deleteParams([CatalogLandingService::IS_LANDING_REQUEST_KEY]); ?>
             <li class="b-pagination__item <?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $arResult['HIDDEN'][$page] ?? '' ?>">
                 <a class="b-pagination__link<?= $class ?> <?= $page === (int)$arResult['CURRENT_PAGE'] ? 'active' : '' ?>"
                    href="<?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $uri->getUri() ?>"
