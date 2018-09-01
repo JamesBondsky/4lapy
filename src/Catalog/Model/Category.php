@@ -94,6 +94,8 @@ class Category extends IblockSection implements FilterInterface
     protected $UF_SHOW_FITTING = false;
     /** @var bool */
     protected $UF_LANDING_ARTICLES = false;
+    /** @var array */
+    protected $UF_RECOMMENDED;
     /**
      * @var FilterCollection
      */
@@ -140,8 +142,8 @@ class Category extends IblockSection implements FilterInterface
                 $fields,
                 [
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-                    'ID'        => 0,
-                    'CODE'      => '',
+                    'ID' => 0,
+                    'CODE' => '',
                 ]
             )
         );
@@ -590,10 +592,21 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
+     * @param bool $withParent
+     *
      * @return string
      */
-    public function getFormTemplate(): string
+    public function getFormTemplate(bool $withParent = true): ?string
     {
+        if ($withParent && !$this->UF_FORM_TEMPLATE) {
+            /** @var Category $parent */
+            $parent = $this->findFromParent(function (Category $category) {
+                return (bool)$category->getFormTemplate(false);
+            });
+
+            $this->UF_FORM_TEMPLATE = $parent ? $parent->getFormTemplate(false) : [];
+        }
+
         return $this->UF_FORM_TEMPLATE;
     }
 
@@ -650,10 +663,21 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
+     * @param bool $withParent
+     *
      * @return bool
      */
-    public function isShowFitting(): bool
+    public function isShowFitting($withParent = true): bool
     {
+        if ($withParent && !$this->UF_SHOW_FITTING) {
+            /** @var Category $parent */
+            $parent = $this->findFromParent(function (Category $category) {
+                return $category->isShowFitting(false);
+            });
+
+            $this->UF_SHOW_FITTING = $parent !== false;
+        }
+
         return $this->UF_SHOW_FITTING;
     }
 
@@ -667,5 +691,46 @@ class Category extends IblockSection implements FilterInterface
         $this->UF_SHOW_FITTING = $isShowFitting;
 
         return $this;
+    }
+
+    /**
+     * @param bool $withParent
+     *
+     * @return array|int[]
+     */
+    public function getRecommendedProductIds($withParent = true): array
+    {
+        if ($withParent && !$this->UF_RECOMMENDED) {
+            /** @var Category $parent */
+            $parent = $this->findFromParent(function (Category $category) {
+                return \count($category->getRecommendedProductIds(false)) > 0;
+            });
+
+            $this->UF_RECOMMENDED = $parent ? $parent->getRecommendedProductIds(false) : [];
+        }
+
+        return $this->UF_RECOMMENDED ?? [];
+    }
+
+    /**
+     * @param array|int[] $recommendedProductIds
+     *
+     * @return Category
+     */
+    public function setRecommendedProductIds(array $recommendedProductIds): self
+    {
+        $this->UF_RECOMMENDED = $recommendedProductIds;
+
+        return $this;
+    }
+
+    /**
+     * @param callable $find
+     *
+     * @return Collection
+     */
+    protected function findFromParent(callable $find)
+    {
+        return $this->getFullPathCollection()->filter($find)->last();
     }
 }
