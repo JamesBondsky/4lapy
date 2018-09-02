@@ -20,8 +20,9 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
-use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Serializer\Serializer;
 
 class AvailabilityReportService
 {
@@ -37,9 +38,9 @@ class AvailabilityReportService
     protected $storeService;
 
     /**
-     * @var SerializerInterface
+     * @var ArrayTransformerInterface
      */
-    protected $serializer;
+    protected $arrayTransformer;
 
     /**
      * @var Filesystem
@@ -47,16 +48,28 @@ class AvailabilityReportService
     protected $fileSystem;
 
     /**
-     * AvailabilityReportService constructor.
-     * @param StoreService        $storeService
-     * @param Filesystem          $filesystem
-     * @param SerializerInterface $serializer
+     * @var Serializer
      */
-    public function __construct(StoreService $storeService, Filesystem $filesystem, SerializerInterface $serializer)
+    protected $serializer;
+
+    /**
+     * AvailabilityReportService constructor.
+     * @param StoreService              $storeService
+     * @param Filesystem                $filesystem
+     * @param ArrayTransformerInterface $arrayTransformer
+     * @param Serializer                $serializer
+     */
+    public function __construct(
+        StoreService $storeService,
+        Filesystem $filesystem,
+        ArrayTransformerInterface $arrayTransformer,
+        Serializer $serializer
+    )
     {
+        $this->serializer = $serializer;
         $this->storeService = $storeService;
         $this->fileSystem = $filesystem;
-        $this->serializer = $serializer;
+        $this->arrayTransformer = $arrayTransformer;
     }
 
     /**
@@ -74,12 +87,6 @@ class AvailabilityReportService
      */
     public function export(string $path, int $step, array $articles = []): ReportResult
     {
-        if (\in_array($step, [
-            static::STEP_ALL,
-            static::STEP_FIRST,
-        ], true)) {
-            $this->fileSystem->dumpFile($path, implode(',', $this->getHeader()));
-        }
         $productIds = $this->getProductIds($articles);
         $countTotal = \count($productIds);
         $productIds = \array_chunk($productIds, static::CHUNK_SIZE);
@@ -92,22 +99,45 @@ class AvailabilityReportService
             $currentStep = static::STEP_ALL;
         }
 
+        $append = $currentStep !== 0;
         $countProcessed = 0;
         foreach ($productIds as $chunk) {
             $data = $this->findProducts($chunk);
-            /** @todo сериализация */
-//            $this->fileSystem->appendToFile(
-//                $path,
-//                $this->serializer->serialize($data, 'csv')
-//            );
+
+            $result = [];
+            foreach ($data as $product) {
+                $result[] = $this->arrayTransformer->toArray($product);
+            }
+
+            $this->write($path, $this->serializer->encode($result, 'csv'), $append);
             $currentStep++;
             $countProcessed += \count($data);
+            $append = true;
         }
 
         return (new ReportResult())
             ->setCountProcessed($countProcessed)
             ->setCountTotal($countTotal)
             ->setProgress($currentStep / $stepCount);
+    }
+
+    /**
+     * @param string $path
+     * @param string $result
+     * @param bool   $append
+     */
+    protected function write(string $path, string $result, bool $append): void
+    {
+        if ($append) {
+            // удаление заголовка
+            $data = \explode(PHP_EOL, $result);
+            array_shift($data);
+            $result = \implode(PHP_EOL, $data);
+
+            $this->fileSystem->appendToFile($path, $result);
+        } else {
+            $this->fileSystem->dumpFile($path, $result);
+        }
     }
 
     /**
@@ -139,23 +169,6 @@ class AvailabilityReportService
         }
 
         return $result;
-    }
-
-    /**
-     * @return string[]
-     */
-    protected function getHeader(): array
-    {
-        return [
-            'Внешний код',
-            'Название',
-            'Картинки',
-            'Описание',
-            'Активен',
-            'Дата создания',
-            'Количество на РЦ',
-            'Цена',
-        ];
     }
 
     /**

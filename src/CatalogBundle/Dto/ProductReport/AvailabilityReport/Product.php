@@ -12,7 +12,7 @@ class Product
     /**
      * @var string
      *
-     * @Serializer\SerializedName("XML_ID")
+     * @Serializer\SerializedName("Внешний код")
      * @Serializer\Type("string")
      */
     protected $xmlId;
@@ -20,7 +20,7 @@ class Product
     /**
      * @var string
      *
-     * @Serializer\SerializedName("NAME")
+     * @Serializer\SerializedName("Название")
      * @Serializer\Type("string")
      */
     protected $name;
@@ -28,7 +28,7 @@ class Product
     /**
      * @var bool
      *
-     * @Serializer\SerializedName("IMAGE")
+     * @Serializer\SerializedName("Наличие изображения")
      * @Serializer\Type("bitrix_bool")
      */
     protected $image;
@@ -36,7 +36,7 @@ class Product
     /**
      * @var bool
      *
-     * @Serializer\SerializedName("DESCRIPTION")
+     * @Serializer\SerializedName("Наличие описания")
      * @Serializer\Type("bitrix_bool")
      */
     protected $description;
@@ -44,7 +44,7 @@ class Product
     /**
      * @var bool
      *
-     * @Serializer\SerializedName("ACTIVE")
+     * @Serializer\SerializedName("Активен")
      * @Serializer\Type("bitrix_bool")
      */
     protected $active;
@@ -52,7 +52,7 @@ class Product
     /**
      * @var \DateTimeImmutable
      *
-     * @Serializer\SerializedName("DATE_CREATE")
+     * @Serializer\SerializedName("Дата создания")
      * @Serializer\Type("DateTimeImmutable<'Y-m-d H:i:s'>")
      */
     protected $dateCreate;
@@ -60,7 +60,7 @@ class Product
     /**
      * @var int
      *
-     * @Serializer\SerializedName("STOCKS")
+     * @Serializer\SerializedName("Остаток на РЦ")
      * @Serializer\Type("int")
      */
     protected $stocks;
@@ -68,7 +68,7 @@ class Product
     /**
      * @var float
      *
-     * @Serializer\SerializedName("PRICE")
+     * @Serializer\SerializedName("Цена")
      * @Serializer\Type("float")
      */
     protected $price;
