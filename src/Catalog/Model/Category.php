@@ -604,7 +604,7 @@ class Category extends IblockSection implements FilterInterface
                 return (bool)$category->getFormTemplate(false);
             });
 
-            $this->UF_FORM_TEMPLATE = $parent ? $parent->getFormTemplate(false) : [];
+            $this->UF_FORM_TEMPLATE = $parent ? $parent->getFormTemplate(false) : '';
         }
 
         return $this->UF_FORM_TEMPLATE;

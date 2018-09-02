@@ -44,7 +44,9 @@ echo $view->render(
 
 if ($catalogRequest->isLanding()) {
     echo '</div></div>';
-    echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+    if ($category->isShowFitting()) {
+        echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+    }
 
     if ($category->getLandingArticlesSectionId()) {
         echo $view->render('FourPawsCatalogBundle:Catalog:landing.articles.html.php', ['sectionId' => $category->getLandingArticlesSectionId()]);
