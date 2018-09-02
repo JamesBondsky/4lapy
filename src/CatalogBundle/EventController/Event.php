@@ -54,27 +54,60 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
 
+        $module = 'main';
+        static::initHandlerCompatible('OnBuildGlobalMenu', [
+            self::class,
+            'addProductReportToAdminMenu',
+        ], $module);
+
         $module = 'catalog';
 
         /** Очистка кеша при изменении количества и оффера*/
-        static::initHandlerCompatible('OnStoreProductUpdate', [self::class, 'clearProductCache'], $module);
-        static::initHandlerCompatible('OnStoreProductAdd', [self::class, 'clearProductCache'], $module);
-        static::initHandlerCompatible('OnProductUpdate', [self::class, 'clearProductCache'], $module);
-        static::initHandlerCompatible('OnProductAdd', [self::class, 'clearProductCache'], $module);
+        static::initHandlerCompatible('OnStoreProductUpdate', [
+            self::class,
+            'clearProductCache',
+        ], $module);
+        static::initHandlerCompatible('OnStoreProductAdd', [
+            self::class,
+            'clearProductCache',
+        ], $module);
+        static::initHandlerCompatible('OnProductUpdate', [
+            self::class,
+            'clearProductCache',
+        ], $module);
+        static::initHandlerCompatible('OnProductAdd', [
+            self::class,
+            'clearProductCache',
+        ], $module);
 
         $module = 'iblock';
 
         /** задание нулевой цены при создании оффера */
-        static::initHandler('OnAfterIBlockElementAdd', [self::class, 'createOfferPrice'], $module);
+        static::initHandler('OnAfterIBlockElementAdd', [
+            self::class,
+            'createOfferPrice',
+        ], $module);
 
         /** очистка кеша при изменении элемента инфоблока */
-        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [self::class, 'clearIblockItemCache'], $module);
+        static::initHandlerCompatible('OnAfterIBlockElementUpdate', [
+            self::class,
+            'clearIblockItemCache',
+        ], $module);
 
-        static::initHandler('SectionOnAfterUpdate', [self::class, 'updateMainProductSectionD7'], $module);
-        static::initHandlerCompatible('OnAfterIBlockSectionUpdate', [self::class, 'updateMainProductSection'], $module);
+        static::initHandler('SectionOnAfterUpdate', [
+            self::class,
+            'updateMainProductSectionD7',
+        ], $module);
+        static::initHandlerCompatible('OnAfterIBlockSectionUpdate', [
+            self::class,
+            'updateMainProductSection',
+        ], $module);
 
         /** Замена домена svg для лендингов */
-        static::initHandler('OnEndBufferContent', [self::class, 'fixLandingSvg'], 'main');
+        static::initHandler('OnEndBufferContent', [
+            self::class,
+            'fixLandingSvg',
+        ], 'main');
     }
 
     /**
@@ -222,6 +255,26 @@ class Event extends BaseServiceHandler
                 $e->Update($product->getId(), ['IBLOCK_SECTION_ID' => $maxDepthCategory->getId()]);
             } catch (NoSectionsForProductException $e) {
                 // ничего не нужно делать
+            }
+        }
+    }
+
+    /**
+     * @param $adminMenu
+     * @param $moduleMenu
+     */
+    public static function addProductReportToAdminMenu(&$adminMenu, &$moduleMenu)
+    {
+        foreach ($moduleMenu as $i => $menuItem) {
+            if ($menuItem['parent_menu'] === 'global_menu_store' &&
+                $menuItem['items_id'] === 'menu_sale_stat'
+            ) {
+                $moduleMenu[$i]['items'][] = [
+                    'text' => 'Отчет по наличию товаров',
+                    'title' => 'Отчет по наличию товаров',
+                    'url' => '/local/admin/products_report.php?lang=' . LANG,
+                    'more_url' => ''
+                ];
             }
         }
     }
