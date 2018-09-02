@@ -24,10 +24,14 @@ use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Serializer;
 
+/**
+ * Class AvailabilityReportService
+ * @package FourPaws\CatalogBundle\Service
+ */
 class AvailabilityReportService
 {
     protected const RC_STORE_CODE = 'DC01';
-    protected const CHUNK_SIZE    = 500;
+    protected const CHUNK_SIZE    = 200;
 
     protected const STEP_ALL   = 0;
     protected const STEP_FIRST = 1;
@@ -102,6 +106,10 @@ class AvailabilityReportService
         $append = $currentStep !== 0;
         $countProcessed = 0;
         foreach ($productIds as $chunk) {
+            if (!$chunk) {
+                continue;
+            }
+
             $data = $this->findProducts($chunk);
 
             $result = [];
