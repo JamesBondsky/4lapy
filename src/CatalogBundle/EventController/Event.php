@@ -272,7 +272,7 @@ class Event extends BaseServiceHandler
                 $moduleMenu[$i]['items'][] = [
                     'text' => 'Отчет по наличию товаров',
                     'title' => 'Отчет по наличию товаров',
-                    'url' => '/local/admin/products_report.php?lang=' . LANG,
+                    'url' => '/bitrix/admin/fourpaws_products_report.php?lang=' . LANG,
                     'more_url' => ''
                 ];
             }
