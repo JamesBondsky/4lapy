@@ -9,6 +9,11 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
+/**
+ * Class CatalogCategoryRecommendedProductsField20180831181342
+ *
+ * @package Sprint\Migration
+ */
 class CatalogCategoryRecommendedProductsField20180831181342 extends SprintMigrationBase
 {
 
@@ -17,10 +22,10 @@ class CatalogCategoryRecommendedProductsField20180831181342 extends SprintMigrat
 
     protected $field = [
         'FIELD_NAME'        => 'UF_RECOMMENDED',
-        'USER_TYPE_ID'      => 'iblock_element',
+        'USER_TYPE_ID'      => 'integer',
         'XML_ID'            => 'UF_RECOMMENDED',
         'SORT'              => '100',
-        'MULTIPLE'          => 'N',
+        'MULTIPLE'          => 'Y',
         'MANDATORY'         => 'N',
         'SHOW_FILTER'       => 'N',
         'SHOW_IN_LIST'      => 'Y',
@@ -33,13 +38,13 @@ class CatalogCategoryRecommendedProductsField20180831181342 extends SprintMigrat
             'ACTIVE_FILTER' => 'N',
         ],
         'EDIT_FORM_LABEL'   => [
-            'ru' => 'Рекомендуемые товары',
+            'ru' => 'Рекомендуемые товары (ID)',
         ],
         'LIST_COLUMN_LABEL' => [
-            'ru' => 'Рекомендуемые товары',
+            'ru' => 'Рекомендуемые товары (ID)',
         ],
         'LIST_FILTER_LABEL' => [
-            'ru' => 'Рекомендуемые товары',
+            'ru' => 'Рекомендуемые товары (ID)',
         ],
     ];
 
@@ -66,6 +71,7 @@ class CatalogCategoryRecommendedProductsField20180831181342 extends SprintMigrat
 
     /**
      * @return bool
+     *
      * @throws Exceptions\HelperException
      */
     public function down()

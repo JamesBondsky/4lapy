@@ -56,6 +56,19 @@ if ($catalogRequest->isLanding()) {
         echo $view->render('FourPawsCatalogBundle:Catalog:landing.form.html.php', ['formTemplate' => $category->getFormTemplate()]);
     }
 
+    if ($category->getRecommendedProductIds()) {
+        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
+            'COUNT'          => 12,
+            'PRODUCT_FILTER' => [
+                'ID' => $category->getRecommendedProductIds()
+            ],
+            'OFFER_FILTER'   => [
+                '>CATALOG_PRICE_2' => 0,
+            ],
+            'TITLE'          => 'Мы рекомендуем',
+        ], false, ['HIDE_ICONS' => 'Y']);
+    }
+
 } else { ?>
     </div>
     <?php if ($category->isLanding()) {

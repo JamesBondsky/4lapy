@@ -709,7 +709,7 @@ class Category extends IblockSection implements FilterInterface
             $this->UF_RECOMMENDED = $parent ? $parent->getRecommendedProductIds(false) : [];
         }
 
-        return $this->UF_RECOMMENDED ?? [];
+        return $this->UF_RECOMMENDED ?: [];
     }
 
     /**

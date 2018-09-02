@@ -5,8 +5,6 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Page\Asset;
 use FourPaws\App\EventInitializer;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
-use WebArch\BitrixUserPropertyType\HyperLinkType;
-use WebArch\BitrixUserPropertyType\IblockSectionLinkType;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
 
@@ -57,5 +55,10 @@ ini_set('session.cookie_domain', $cookieDomain);
  * Property initialize
  */
 YesNoPropertyType::init();
-IblockSectionLinkType::init();
-HyperLinkType::init();
+/**
+ * @todo впилить
+ *
+ * IblockSectionLinkType::init();
+ * IblockElementLinkType::init();
+ * HyperLinkType::init();
+ */
