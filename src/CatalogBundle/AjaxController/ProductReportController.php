@@ -3,11 +3,11 @@
 namespace FourPaws\CatalogBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\CatalogBundle\Service\AvailabilityReportService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -15,8 +15,6 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\Process\PhpExecutableFinder;
-use Symfony\Component\Process\Process;
 
 /**
  * Class ProductInfoController
@@ -28,10 +26,22 @@ class ProductReportController extends Controller implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    /**
+     * @var CurrentUserProviderInterface
+     */
     protected $currentUserProvider;
 
-    public function __construct(CurrentUserProviderInterface $currentUserProvider)
+    /**
+     * @var AvailabilityReportService
+     */
+    protected $availabilityReportService;
+
+    public function __construct(
+        CurrentUserProviderInterface $currentUserProvider,
+        AvailabilityReportService $availabilityReportService
+    )
     {
+        $this->availabilityReportService = $availabilityReportService;
         $this->currentUserProvider = $currentUserProvider;
     }
 
@@ -41,75 +51,46 @@ class ProductReportController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
-     *
-     * @global \CMain $APPLICATION
      * @throws ApplicationCreateException
      */
     public function availabilityAction(Request $request): JsonResponse
     {
         try {
-            $user = $this->currentUserProvider->getCurrentUser();
-            if (!\array_intersect($user->getGroupsIds(), [
-                1,
-                4,
-                25,
-            ])) {
-                throw new NotAuthorizedException('');
-            }
-        } catch (NotAuthorizedException $e) {
-            throw new AccessDeniedHttpException('Access denied');
-        }
-
-        $articles = $request->get('articles');
-
-        if ($articles) {
-            $articles = preg_replace('~\s~', ',', $articles);
-        }
-
-        $command = [];
-        $command[] = $this->getCommand('b:p:r', $_SERVER['DOCUMENT_ROOT'] . '/upload/product_report.csv');
-        if ($articles) {
-            $command[] = '--articles=' . $articles;
-        }
-        if ($step = $request->get('step')) {
-            $command[] = '--step=' . $step;
-        }
-
-        $process = new Process($command);
-        $process->run();
-        if ($process->isSuccessful()) {
-            $progress = $process->getOutput();
-
-            $response = ['progress' => $progress];
-            if ($progress === '100') {
-                $response['link'] = '/upload/product_report.csv';
+            try {
+                $user = $this->currentUserProvider->getCurrentUser();
+                if (!\array_intersect($user->getGroupsIds(), [
+                    1,
+                    4,
+                    25,
+                ])) {
+                    throw new NotAuthorizedException('Access denied');
+                }
+            } catch (NotAuthorizedException $e) {
+                throw new AccessDeniedHttpException('Access denied');
             }
 
-            $result = JsonSuccessResponse::createWithData('', $response);
-        } else {
-            $result = JsonErrorResponse::create($process->getErrorOutput());
+            $articles = \array_filter(preg_split('~[\s,]~', $request->get('articles')));
+            $reportResult = $this->availabilityReportService->export(
+                $_SERVER['DOCUMENT_ROOT'] . '/upload/product_report.csv',
+                $request->get('step', 0),
+                $articles
+            );
+
+            $result = JsonSuccessResponse::createWithData('', [
+                'progress' => round($reportResult->getProgress() * 100),
+                'url'      => '/upload/product_report.csv',
+            ]);
+        } catch (\Exception $e) {
+            $this->log()->error(
+                \sprintf(
+                    'failed to create availability report: %s: %s',
+                    \get_class($e),
+                    $e->getMessage()
+                ),
+                ['trace' => $e->getTrace()]);
+            $result = JsonErrorResponse::create($e->getMessage());
         }
 
         return $result;
-    }
-
-    /**
-     * @param string $command
-     * @param string $file
-     *
-     * @return string
-     * @throws ApplicationCreateException
-     */
-    protected function getCommand(string $command, string $file): string
-    {
-        $php = (new PhpExecutableFinder())->find();
-
-        return \sprintf(
-            '%s %s/bin/symfony_console %s --path %s',
-            $php,
-            Application::getInstance()->getRootDir(),
-            $command,
-            $file
-        );
     }
 }

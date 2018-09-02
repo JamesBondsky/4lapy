@@ -19,10 +19,10 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
                 <textarea class="typearea"
                           name="articles"
                           style="width:100%;height:200px;"
-                          placeholder="Укажите артикулы (через пробел или каждый с новой строки)"
+                          placeholder="Укажите артикулы (через пробел, запятую или каждый с новой строки)"
                 ></textarea>
                 <br>
-                <input type="submit" class="adm-btn-save" value="Сгенерировать отчет">
+                <input type="submit" class="adm-btn-save" id="product-report-start" value="Сгенерировать отчет">
             </form>
             <div id="product-report-progressbar" style="height: 30px; width: 100%"></div>
             <div style="display:none">
@@ -47,14 +47,16 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
                     dataType: 'json',
                     data: data,
                     success: function (data) {
-                        $( "#product-report-progressbar" ).progressbar({
-                            value: data.progress
-                        });
-                        step++;
-                        if (data.progress != 100) {
-                            sendRequest();
-                        } else {
-                            $('#product-report-link').attr('href', data.link).closest('div').show();
+                        if (data.success) {
+                            $("#product-report-progressbar").progressbar({
+                                value: data.data.progress
+                            });
+                            if (data.data.progress != 100) {
+                                step++;
+                                sendRequest();
+                            } else {
+                                $('#product-report-link').attr('href', data.data.url).closest('div').show();
+                            }
                         }
                     },
                     error: function (data) {
@@ -65,6 +67,10 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
 
             $('#product-report-form').submit(function (e) {
                 e.preventDefault();
+                $('#product-report-start').attr('disabled', 'disabled');
+                $("#product-report-progressbar").progressbar({
+                    value: 0
+                });
                 sendRequest();
             })
         })

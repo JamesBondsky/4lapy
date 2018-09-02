@@ -7,17 +7,12 @@
 namespace FourPaws\CatalogBundle\Console;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
+use FourPaws\CatalogBundle\Service\AvailabilityReportService;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
@@ -40,20 +35,30 @@ class ProductsReport extends Command implements LoggerAwareInterface
     protected const OPT_ARTICLES = 'articles';
     protected const OPT_STEP     = 'step';
 
-    protected const CHUNK_SIZE = 500;
+    protected const CHUNK_SIZE = 2000;
 
     /** @var StoreService */
     protected $storeService;
 
     /**
+     * @var AvailabilityReportService
+     */
+    protected $availabilityReportService;
+
+    /**
      * ProductsReport constructor.
      *
-     * @param StoreService $storeService
-     * @param string|null  $name
-     *
+     * @param StoreService              $storeService
+     * @param AvailabilityReportService $availabilityReportService
+     * @param string|null               $name
      */
-    public function __construct(StoreService $storeService, string $name = null)
+    public function __construct(
+        StoreService $storeService,
+        AvailabilityReportService $availabilityReportService,
+        string $name = null
+    )
     {
+        $this->availabilityReportService = $availabilityReportService;
         $this->storeService = $storeService;
         parent::__construct($name);
     }
@@ -86,17 +91,16 @@ class ProductsReport extends Command implements LoggerAwareInterface
             );
     }
 
-    /** @noinspection PhpMissingParentCallCommonInspection
-     *
+    /**
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
      * @throws IblockNotFoundException
-     * @throws NotFoundException
+     * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
@@ -108,100 +112,7 @@ class ProductsReport extends Command implements LoggerAwareInterface
             $articles = [];
         }
 
-        if ($path && $out = fopen($path, $step <= 1 ? 'wb' : 'ab')) {
-            $productIds = \array_chunk($this->getProductIds($articles, $step), static::CHUNK_SIZE);
-            if ($step <= 1) {
-                \fputcsv($out, [
-                    'Внешний код',
-                    'Название',
-                    'Картинки',
-                    'Описание',
-                    'Активен',
-                    'Дата создания',
-                    'Количество на РЦ',
-                    'Цена',
-                ]);
-            }
-
-            foreach ($productIds as $chunk) {
-                $products = $this->findProducts($chunk);
-                foreach ($products as $product) {
-                    \fputcsv($out, $product);
-                }
-            }
-        } else {
-            throw new \RuntimeException(\sprintf('failed to open %s', $path));
-        }
-    }
-
-    /**
-     * @param array    $articles
-     * @param int|null $step
-     *
-     * @return int[]
-     * @throws ArgumentException
-     * @throws IblockNotFoundException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
-    protected function getProductIds(array $articles = [], int $step = 0): array
-    {
-        $query = ElementTable::query()
-            ->setSelect(['ID'])
-            ->setFilter([
-                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)
-            ]);
-
-        if ($step) {
-            $query
-                ->setOffset(static::CHUNK_SIZE * ($step - 1))
-                ->setLimit(static::CHUNK_SIZE);
-        }
-
-        if ($articles) {
-            $query->addFilter('XML_ID', $articles);
-        }
-        $products = $query->exec();
-
-        $result = [];
-        while ($product = $products->fetch()) {
-            $result[] = $product['ID'];
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param array $productIds
-     *
-     * @return array
-     * @throws ApplicationCreateException
-     * @throws NotFoundException
-     */
-    protected function findProducts(array $productIds): array
-    {
-        $offers = (new OfferQuery())
-            ->withFilter(['ID' => $productIds])
-            ->exec();
-
-        $store = $this->storeService->getStoreByXmlId('DC01');
-
-        $result = [];
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            $result[] = [
-                'XML_ID'      => $offer->getXmlId(),
-                'NAME'        => $offer->getName(),
-                'IMAGE'       => !empty($offer->getImagesIds()) ? 'Y' : 'N',
-                'DESCRIPTION' => $offer->getProduct()->getDetailText()->getText() ? 'Y' : 'N',
-                'ACTIVE'      => $offer->isActive() ? 'Y' : 'N',
-                'DATE_CREATE' => $offer->getDateCreate() ? $offer->getDateCreate()->format('Y-m-d H:i:s') : '',
-                'STOCKS'      => $offer->getAllStocks()->filterByStore($store)->getTotalAmount(),
-                'PRICE'       => $offer->getPrice(),
-            ];
-        }
-
-        return $result;
+        $this->availabilityReportService->export($path, $step, $articles);
     }
 }
 
