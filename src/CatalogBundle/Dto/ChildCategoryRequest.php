@@ -167,7 +167,7 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
         return \sprintf(
             '%s%s',
             $this->getLandingDomain(),
-            \str_replace($this->getLandingDocRoot(), '', $path ?: $this->getCurrentPath())
+            $this->getLandingPath($path)
         );
     }
 
@@ -193,5 +193,14 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
         }
 
         return $path;
+    }
+
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
+    public function getLandingPath(string $path = ''): string {
+        return \str_replace($this->getLandingDocRoot(), '', $path ?: $this->getCurrentPath());
     }
 }
