@@ -109,13 +109,15 @@ class CatalogLandingService
      */
     public function replaceLinksToLanding(string $data, Request $request): string
     {
-        return \preg_replace(
-            \sprintf(
-                '~%s~',
-                $this->getLandingDocRoot($request)
-            ),
-            $this->getLandingDomain($request),
-            $data
-        );
+        return $this->isLanding($request)
+            ? \preg_replace(
+                \sprintf(
+                    '~%s~',
+                    $this->getLandingDocRoot($request)
+                ),
+                $this->getLandingDomain($request),
+                $data
+            )
+            : $data;
     }
 }

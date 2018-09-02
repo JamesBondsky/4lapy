@@ -44,7 +44,9 @@ echo $view->render(
 
 if ($catalogRequest->isLanding()) {
     echo '</div></div>';
-    echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+    if ($category->isShowFitting()) {
+        echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+    }
 
     if ($category->getLandingArticlesSectionId()) {
         echo $view->render('FourPawsCatalogBundle:Catalog:landing.articles.html.php', ['sectionId' => $category->getLandingArticlesSectionId()]);
@@ -52,6 +54,19 @@ if ($catalogRequest->isLanding()) {
 
     if ($category->getFormTemplate()) {
         echo $view->render('FourPawsCatalogBundle:Catalog:landing.form.html.php', ['formTemplate' => $category->getFormTemplate()]);
+    }
+
+    if ($category->getRecommendedProductIds()) {
+        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
+            'COUNT'          => 12,
+            'PRODUCT_FILTER' => [
+                'ID' => $category->getRecommendedProductIds()
+            ],
+            'OFFER_FILTER'   => [
+                '>CATALOG_PRICE_2' => 0,
+            ],
+            'TITLE'          => 'Мы рекомендуем',
+        ], false, ['HIDE_ICONS' => 'Y']);
     }
 
 } else { ?>
