@@ -47,6 +47,7 @@ class IblockElementQuery extends IblockQueryBase
             'ACTIVE',
             'DATE_ACTIVE_FROM',
             'DATE_ACTIVE_TO',
+            'DATE_CREATE',
             'IBLOCK_ID',
             'ID',
             'IBLOCK_SECTION_ID',

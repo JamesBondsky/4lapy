@@ -64,6 +64,7 @@ class OfferQuery extends IblockElementQuery
             'ACTIVE',
             'DATE_ACTIVE_FROM',
             'DATE_ACTIVE_TO',
+            'DATE_CREATE',
             'IBLOCK_ID',
             'ID',
             'NAME',
