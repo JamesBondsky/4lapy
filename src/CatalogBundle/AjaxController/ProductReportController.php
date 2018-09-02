@@ -69,7 +69,7 @@ class ProductReportController extends Controller implements LoggerAwareInterface
                 throw new AccessDeniedHttpException('Access denied');
             }
 
-            $articles = \array_filter(preg_split('~[\s,]~', $request->get('articles')));
+            $articles = \array_filter(\preg_split('~[\s,]~', $request->get('articles')));
             $reportResult = $this->availabilityReportService->export(
                 $_SERVER['DOCUMENT_ROOT'] . '/upload/product_report.csv',
                 $request->get('step', 0),
