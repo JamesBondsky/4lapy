@@ -96,6 +96,11 @@ class IblockElement extends BitrixArrayItemBase
     protected $DATE_ACTIVE_TO = '';
 
     /**
+     * @var string
+     */
+    protected $DATE_CREATE = '';
+
+    /**
      * @var DateTimeImmutable
      */
     protected $dateActiveFrom;
@@ -104,6 +109,11 @@ class IblockElement extends BitrixArrayItemBase
      * @var DateTimeImmutable
      */
     protected $dateActiveTo;
+
+    /**
+     * @var DateTimeImmutable
+     */
+    protected $dateCreate;
 
     /**
      * @var int[] ID всех разделов инфоблока, к которым прикреплён элемент.
@@ -274,6 +284,31 @@ class IblockElement extends BitrixArrayItemBase
     {
         $this->dateActiveTo = $dateActiveTo;
         $this->DATE_ACTIVE_TO = BitrixUtils::dateTimeImmutable2BitrixStringDate($dateActiveTo, 'FULL');
+
+        return $this;
+    }
+
+    /**
+     * @return null|DateTimeImmutable
+     */
+    public function getDateCreate(): ?DateTimeImmutable
+    {
+        if (null === $this->dateCreate && $this->DATE_CREATE) {
+            $this->dateCreate = BitrixUtils::bitrixStringDateTime2DateTimeImmutable($this->DATE_CREATE);
+        }
+
+        return $this->dateCreate;
+    }
+
+    /**
+     * @param DateTimeImmutable $dateCreate
+     *
+     * @return $this
+     */
+    public function withDateCreate(DateTimeImmutable $dateCreate)
+    {
+        $this->dateCreate = $dateCreate;
+        $this->DATE_CREATE = BitrixUtils::dateTimeImmutable2BitrixStringDate($dateCreate, 'FULL');
 
         return $this;
     }
