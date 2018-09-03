@@ -11,6 +11,7 @@ use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use Psr\Cache\InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
@@ -213,7 +214,7 @@ class Application extends AppKernel
             $context->getRequest()
                 ->isHttps() ? 's' : '',
             $context->getRequest()
-                ->get('landing') ?: $context->getServer()
+                ->get(CatalogLandingService::LANDING_REQUEST_KEY) ?: $context->getServer()
                 ->getHttpHost()
         );
     }

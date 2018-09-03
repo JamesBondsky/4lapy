@@ -54,13 +54,16 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                 <div class="measure_dog__title">У вашей собаки нестандартный размер</div>
                 <div class="measure_dog__paragraph">
                     <div>Указанные размеры не совпадают со стандартными.</div>
-                    <div>Пожалуйста, приезжайте в магазин для примерки, или обратитесь к нашим специалистам
+                    <div>
+                        Пожалуйста, приезжайте в магазин для примерки, или обратитесь к нашим специалистам
                         за помощью в подборе размера +7 (800) 770-00-22
                     </div>
                 </div>
-                <div class="measure_dog__button_set"><a
-                            class="measure_dog__button--secondary js-measure-dog-recalculate" href="#">Рассчитать
-                        еще раз</a><a class="measure_dog__button" href="/catalog/">Перейти в каталог</a></div>
+                <div class="measure_dog__button_set">
+                    <a class="measure_dog__button--secondary js-measure-dog-recalculate" href="#">
+                        Рассчитать еще раз</a>
+                    <a class="measure_dog__button js-scroll-to-catalog" href="#">Перейти в каталог</a>
+                </div>
             </div>
         </div>
     </div>
@@ -78,9 +81,11 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                 <div class="measure_dog__title">Скорее всего у вашей собаки размер <span></span></div>
                 <div class="measure_dog__paragraph">так же мы рекомендуем померить размер <span></span>
                 </div>
-                <div class="measure_dog__button_set"><a
-                            class="measure_dog__button--secondary js-measure-dog-recalculate" href="#">Рассчитать
-                        еще раз</a><a class="measure_dog__button" href="/catalog/">Перейти в каталог</a></div>
+                <div class="measure_dog__button_set">
+                    <a class="measure_dog__button--secondary js-measure-dog-recalculate" href="#">
+                        Рассчитать еще раз
+                    </a>
+                    <a class="measure_dog__button js-scroll-to-catalog" href="#">Перейти в каталог</a></div>
             </div>
         </div>
     </div>
@@ -114,9 +119,11 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                         </div>
                         <div class="free_fitting_step__title">1. Проверьте наличие<br>товара в магазинах
                         </div>
-                        <div class="free_fitting_step__paragraph">Наличие в магазинах вы можете посмотреть в карточке товара</div>
+                        <div class="free_fitting_step__paragraph">Наличие в магазинах вы можете посмотреть в карточке
+                            товара
+                        </div>
                         <div class="free_fitting_step__paragraph">Так же вы можете посмотреть<br><a
-                                    href="#">список всех магазинов</a> в вашем городе
+                                    href="/shops/">список всех магазинов</a> в вашем городе
                         </div>
                     </div>
                     <div class="free_fitting_step__item">

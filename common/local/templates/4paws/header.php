@@ -78,7 +78,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
                         <?= new SvgDecorator('icon-hamburger', 24, 18) ?>
                     </span>
                 </a>
-                <a class="b-logo" href="/" title="">
+                <a class="b-logo" href="<?= PawsApplication::getInstance()->getSiteCurrentDomain() ?>" title="">
                     <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы"/>
                 </a>
                 <?php

@@ -3,6 +3,7 @@
 namespace FourPaws\CatalogBundle\Service;
 
 use Bitrix\Main\Application;
+use FourPaws\App\Application as PawsApplication;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Exception\LandingIsNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CatalogLandingService
 {
-    public const        IS_LANDING_REQUEST_KEY = 'landing';
+    public const        LANDING_REQUEST_KEY = 'landing';
     public const        LANDING_DOCROOT_KEY = 'HTTP_LANDING_DOCROOT';
 
     /**
@@ -24,7 +25,7 @@ class CatalogLandingService
      */
     public function isLanding(Request $request): bool
     {
-        return $request->get(self::IS_LANDING_REQUEST_KEY, false) !== false;
+        return $request->get(self::LANDING_REQUEST_KEY, false) !== false;
     }
 
     /**
@@ -40,7 +41,7 @@ class CatalogLandingService
             throw new LandingIsNotFoundException('Landing is not defined');
         }
 
-        return $request->get(self::IS_LANDING_REQUEST_KEY, '');
+        return $request->get(self::LANDING_REQUEST_KEY, '');
     }
 
     /**
@@ -83,17 +84,40 @@ class CatalogLandingService
     }
 
     /**
-     * @todo HARDCODE
+     * @todo hardcode
+     */
+    protected static function getContext()
+    {
+        static $context;
+
+        if (!$context) {
+            $context = Application::getInstance()
+                ->getContext();
+        }
+
+        return $context;
+    }
+
+    /**
+     * @todo hardcode
+     *
+     * @return string
+     */
+    public static function getBackLink(): string {
+        $referer = self::getContext()->getServer()->get('HTTP_REFERER');
+
+        return $referer ?: PawsApplication::getInstance()->getSiteCurrentDomain();
+    }
+
+    /**
+     * @todo hardcode
      *
      * @return bool
      */
     public static function isLandingPage(): bool
     {
         try {
-            $request = Application::getInstance()
-                ->getContext()
-                ->getRequest();
-            $isLanding = $request->get(self::IS_LANDING_REQUEST_KEY);
+            $isLanding = self::getContext()->getRequest()->get(self::LANDING_REQUEST_KEY);
         } catch (\Throwable $e) {
             $isLanding = false;
         }
@@ -102,7 +126,7 @@ class CatalogLandingService
     }
 
     /**
-     * @param string $data
+     * @param string  $data
      * @param Request $request
      *
      * @return string

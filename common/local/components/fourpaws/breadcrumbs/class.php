@@ -74,6 +74,12 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
      */
     protected function prepareResult()
     {
+        if ($this->arParams['IS_LANDING']) {
+            $this->arResult['BACK_LINK'] = CatalogLandingService::getBackLink();
+
+            return $this;
+        }
+
         /** @var IblockElement $iblockElement */
         $iblockElement = $this->arParams['IBLOCK_ELEMENT'];
         /** @var IblockSection $iblockSection */
@@ -98,6 +104,10 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
                 continue;
             }
             $this->arResult['SECTIONS'][] = $item;
+        }
+
+        if ($this->arParams['IS_LANDING']) {
+            $this->arResult['BACK_LINK'] = CatalogLandingService::getBackLink();
         }
 
         return $this;

@@ -9,7 +9,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var string $currentPath
  * @var PhpEngine $view
  */ ?>
-<div class="b-container">
+<div class="b-container" id="catalog">
     <div class="main_categories">
         <?php foreach ($catalogRequest->getLandingCollection() as $landing) { ?>
             <a class="main_categories__item<?= strpos($catalogRequest->getCurrentPath(), $landing->getSectionPageUrl()) !== false ? '--active' : '' ?>"
