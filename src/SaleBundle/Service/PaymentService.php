@@ -580,6 +580,9 @@ class PaymentService implements LoggerAwareInterface
             $diff = $total - $bonusSum;
 
             $items->map(function (Item $item) use (&$correction, $diff, $total) {
+                if (!$item->getPrice()) {
+                    return;
+                }
                 $item->setPrice(floor($item->getPrice() * ($diff / $total)));
                 $itemOldTotal = $item->getTotal();
                 $item->setTotal($item->getPrice() * $item->getQuantity()->getValue());
@@ -594,8 +597,10 @@ class PaymentService implements LoggerAwareInterface
                 if ((int)$correction === 0) {
                     return;
                 }
+                if (!$item->getPrice()) {
+                    return;
+                }
                 $itemOldTotal = $item->getTotal();
-
 
                 $item->setPrice(
                     floor($item->getTotal() * ($item->getTotal() - $correction) / $item->getTotal() / $item->getQuantity()->getValue())
