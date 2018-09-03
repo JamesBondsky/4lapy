@@ -73,7 +73,8 @@ class ProductReportController extends Controller implements LoggerAwareInterface
             $reportResult = $this->availabilityReportService->export(
                 $_SERVER['DOCUMENT_ROOT'] . '/upload/product_report.csv',
                 $request->get('step', 0),
-                $articles
+                $articles,
+                'Windows-1251'
             );
 
             $result = JsonSuccessResponse::createWithData('', [
