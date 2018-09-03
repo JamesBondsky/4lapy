@@ -57,7 +57,7 @@ if ($catalogRequest->isLanding()) {
     }
 
     if ($category->getRecommendedProductIds()) {
-        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
+        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', 'catalog.recommended.products', [
             'COUNT'          => 12,
             'PRODUCT_FILTER' => [
                 'ID' => $category->getRecommendedProductIds()

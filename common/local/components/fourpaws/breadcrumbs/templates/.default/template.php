@@ -11,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <ul class="b-breadcrumbs__list">
         <?php if ($arParams['IS_LANDING']) { ?>
             <li class="b-breadcrumbs__item">
-                <a class="b-breadcrumbs__link" href="<?= $arResult['BACK_LINK'] ?>" title="Вернуться в каталог">Вернуться в каталог</a>
+                <a class="b-counter-basket__basket-link" style="position: static;width: auto;" href="<?= $arResult['BACK_LINK'] ?>" title="Вернуться в каталог">Вернуться в каталог</a>
             </li>
         <?php } else {
             if ($arParams['SHOW_LINK_TO_MAIN'] === 'Y' && !$arParams['IS_LANDING']) { ?>

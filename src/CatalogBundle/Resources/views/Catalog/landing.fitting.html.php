@@ -12,7 +12,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
  */ ?>
 <div class="measure_dog__wrapper js-measure-dog">
     <div class="measure_dog">
-        <div class="content_dropdown mobile_mq">
+        <div class="content_dropdown js-content-dropdown-trigger mobile_mq">
             <div class="content_dropdown__title">
                 Узнать размер собаки
                 <div class="content_dropdown__arrow">
@@ -20,7 +20,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                 </div>
             </div>
         </div>
-        <div class="content_dropdown__content">
+        <div class="content_dropdown__content js-content-dropdown-content">
             <div class="measure_dog__title tablet_up_mq">Узнайте размер вашей собаки</div>
             <div class="measure_dog__paragraph">Измерьте свою собаку и укажите параметры в сантиметрах, как
                 показано на рисунке
