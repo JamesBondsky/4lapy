@@ -34,6 +34,7 @@ class ProductsReport extends Command implements LoggerAwareInterface
     protected const OPT_PATH     = 'path';
     protected const OPT_ARTICLES = 'articles';
     protected const OPT_STEP     = 'step';
+    protected const OPT_ENCODING = 'encoding';
 
     protected const CHUNK_SIZE = 2000;
 
@@ -88,6 +89,12 @@ class ProductsReport extends Command implements LoggerAwareInterface
                 's',
                 InputOption::VALUE_OPTIONAL,
                 'Current step'
+            )
+            ->addOption(
+                static::OPT_ENCODING,
+                'c',
+                InputOption::VALUE_OPTIONAL,
+                'Encoding'
             );
     }
 
@@ -106,13 +113,14 @@ class ProductsReport extends Command implements LoggerAwareInterface
     {
         $path = $input->getOption(static::OPT_PATH);
         $step = (int)$input->getOption(static::OPT_STEP);
+        $encoding = $input->getOption(static::OPT_ENCODING);
         if ($articlesOption = $input->getOption(static::OPT_ARTICLES)) {
             $articles = explode(',', $articlesOption);
         } else {
             $articles = [];
         }
 
-        $this->availabilityReportService->export($path, $step, $articles);
+        $this->availabilityReportService->export($path, $step, $articles, $encoding);
     }
 }
 
