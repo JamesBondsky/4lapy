@@ -36,6 +36,8 @@ class AvailabilityReportService
     protected const STEP_ALL   = 0;
     protected const STEP_FIRST = 1;
 
+
+
     /**
      * @var StoreService
      */
@@ -77,9 +79,10 @@ class AvailabilityReportService
     }
 
     /**
-     * @param string   $path
-     * @param int      $step
-     * @param string[] $articles
+     * @param string      $path
+     * @param int         $step
+     * @param string[]    $articles
+     * @param string|null $encoding
      *
      * @return ReportResult
      * @throws ApplicationCreateException
@@ -89,7 +92,7 @@ class AvailabilityReportService
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function export(string $path, int $step, array $articles = []): ReportResult
+    public function export(string $path, int $step, array $articles = [], string $encoding = null): ReportResult
     {
         $productIds = $this->getProductIds($articles);
         $countTotal = \count($productIds);
@@ -117,7 +120,7 @@ class AvailabilityReportService
                 $result[] = $this->arrayTransformer->toArray($product);
             }
 
-            $this->write($path, $this->serializer->encode($result, 'csv'), $append);
+            $this->write($path, $this->serializer->encode($result, 'csv'), $append, $encoding);
             $currentStep++;
             $countProcessed += \count($data);
             $append = true;
@@ -130,12 +133,17 @@ class AvailabilityReportService
     }
 
     /**
-     * @param string $path
-     * @param string $result
-     * @param bool   $append
+     * @param string      $path
+     * @param string      $result
+     * @param bool        $append
+     * @param string|null $encoding
      */
-    protected function write(string $path, string $result, bool $append): void
+    protected function write(string $path, string $result, bool $append, string $encoding = null): void
     {
+        if (null !== $encoding && $encoding !== mb_internal_encoding()) {
+            $result = mb_convert_encoding($result, $encoding);
+        }
+
         if ($append) {
             // удаление заголовка
             $data = \explode(PHP_EOL, $result);
