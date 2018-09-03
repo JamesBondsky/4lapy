@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
@@ -22,10 +23,10 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Table as SaleDeliveryServiceTable;
-use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order as BitrixOrder;
+use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -587,8 +588,6 @@ class OrderService
 
         /** ставим даты */
         $bitrixOrder->setFieldNoDemand('STATUS_ID', 'G');
-        $bitrixOrder->setFieldNoDemand('DATE_INSERT', $order->getDateInsert());
-        $bitrixOrder->setFieldNoDemand('DATE_UPDATE', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('PAYED', 'Y');
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
@@ -618,32 +617,32 @@ class OrderService
             $allBonuses += $item->getBonus();
         }
 
-        /** свойства */
-        $orderProps = $bitrixOrder->getPropertyCollection();
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'MANZANA_NUMBER'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($order->getManzanaId());
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'USER_REGISTERED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('Y');
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'IS_EXPORTED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('Y');
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'BONUS_COUNT'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($allBonuses);
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'SHIPMENT_PLACE_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('DC01');
-
         $userCityService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
-        $city = $userCityService->getSelectedCity();
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($city['CODE']);
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($city['DISPLAY']);
+        $selectedCity = $userCityService->getSelectedCity();
+        /** @var PropertyValue $propertyValue */
+        foreach ($bitrixOrder->getPropertyCollection() as $propertyValue) {
+            switch ($propertyValue->getProperty()['CODE']) {
+                case 'MANZANA_NUMBER':
+                    $propertyValue->setValue($order->getManzanaId());
+                    break;
+                case 'USER_REGISTERED':
+                case 'IS_EXPORTED':
+                    $propertyValue->setValue(BitrixUtils::BX_BOOL_TRUE);
+                    break;
+                case 'BONUS_COUNT':
+                    $propertyValue->setValue($allBonuses);
+                    break;
+                case 'SHIPMENT_PLACE_CODE':
+                    $propertyValue->setValue('DC01');
+                    break;
+                case 'CITY_CODE':
+                    $propertyValue->setValue($selectedCity['NAME']);
+                    break;
+                case 'CITY':
+                    $propertyValue->setValue($selectedCity['CODE']);
+                    break;
+            }
+        }
 
         /** доставка */
         $shipmentCollection = $bitrixOrder->getShipmentCollection();
