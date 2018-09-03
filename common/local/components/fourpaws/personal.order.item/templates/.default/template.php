@@ -324,7 +324,7 @@ if ($orderSubscribe) {
                     if ($item->getParentItem()) {
                         continue;
                     }
-                    if (!$order->isManzana() && $item->hasDetailPageUrl()) { ?>
+                    if (!$order->isManzana() && $item->hasDetailPageUrl() && !$item->isGift()) { ?>
                         <a href="<?= $item->getDetailPageUrl() ?>">
                     <?php } ?>
                     <li class="b-list-order__item">

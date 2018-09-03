@@ -1,7 +1,5 @@
 <?php
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
@@ -9,47 +7,25 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\UserTable;
-use FourPaws\App\Application;
-use FourPaws\Helpers\PhoneHelper;
-use FourPaws\UserBundle\Repository\UserRepository;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
+class FourPawsFrontOfficeAvatarComponent extends \FourPaws\FrontOffice\Bitrix\Component\SubmitForm
 {
-    use LazyLoggerAwareTrait;
-
-    /** код группы пользователей, имеющих доступ к компоненту, если ничего не задано в параметрах подключения */
-    const DEFAULT_USER_GROUP_CODE = 'FRONT_OFFICE_USERS';
-    const BX_ADMIN_GROUP_ID = 1;
-
-    /** @var string $action */
-    private $action = '';
-    /** @var UserService $userCurrentUserService */
-    private $userCurrentUserService;
-    /** @var string $canAccess */
-    protected $canAccess = '';
-    /** @var array $userGroups */
-    private $userGroups;
-    /** @var bool $isUserAdmin */
-    private $isUserAdmin;
-    /** @var array $userOperations */
-    private $userOperations;
-    /** @var array $userSubordinateGroups */
-    private $userSubordinateGroups;
-    /** @var array $canAccessOperations */
-    protected $canAccessOperations = [
+    /** операции, к одной из которых у пользователя должен быть доступ (по умолчанию) */
+    const CAN_ACCESS_USER_OPERATIONS_DEFAULT = [
         'view_subordinate_users',
         'view_all_users',
         'edit_subordinate_users',
     ];
+
     /** @var array $checkSubordinateOperations */
     protected $checkSubordinateOperations = [
-        'view_all_users', 'edit_all_users'
+        'view_all_users',
+        'edit_all_users'
     ];
 
     /**
@@ -59,212 +35,20 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
      */
     public function __construct($component = null)
     {
-        // LazyLoggerAwareTrait не умеет присваивать имя по классам без неймспейса
-        // делаем это вручную
-        $this->logName = __CLASS__;
-
         parent::__construct($component);
+
+        $this->withLogName(__CLASS__);
     }
 
     /**
-     * @param $params
-     * @return mixed
+     * @param array $params
+     * @return array
      */
     public function onPrepareComponentParams($params)
     {
-        $params['CURRENT_PAGE'] = isset($params['CURRENT_PAGE']) ? trim($params['CURRENT_PAGE']) : '';
-        if (!strlen($params['CURRENT_PAGE'])) {
-            $params['CURRENT_PAGE'] = $this->request->getRequestedPage();
-            // отсечение index.php
-            if (substr($params['CURRENT_PAGE'], -10) === '/index.php') {
-                $params['CURRENT_PAGE'] = substr($params['CURRENT_PAGE'], 0, -9);
-            }
-        }
-
-        $this->arResult['ORIGINAL_PARAMETERS'] = $params;
-
-        $params['USER_ID'] = isset($params['USER_ID']) ? (int)$params['USER_ID'] : 0;
-        if ($params['USER_ID'] <= 0) {
-            $params['USER_ID'] = (int)$GLOBALS['USER']->getId();
-        }
-
-        // группы пользователей, имеющих доступ к функционалу
-        $params['USER_GROUPS'] = isset($params['USER_GROUPS']) && is_array($params['USER_GROUPS']) ? $params['USER_GROUPS'] : [];
-        if (empty($params['USER_GROUPS'])) {
-            try {
-                $defaultGroupId = UserGroupUtils::getGroupIdByCode(static::DEFAULT_USER_GROUP_CODE);
-                if ($defaultGroupId) {
-                    $params['USER_GROUPS'][] = $defaultGroupId;
-                }
-            } catch (\Exception $exception) {}
-        }
-
-        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
-        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
-
         $params = parent::onPrepareComponentParams($params);
 
         return $params;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function executeComponent()
-    {
-        try {
-            $this->setAction($this->prepareAction());
-            $this->doAction();
-        } catch (\Exception $exception) {
-            $this->log()->critical(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
-            throw $exception;
-        }
-    }
-
-    /**
-     * @param string $action
-     */
-    protected function setAction($action)
-    {
-        $this->action = $action;
-    }
-
-    /**
-     * @return string
-     */
-    protected function getAction()
-    {
-        return $this->action;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getUserGroups()
-    {
-        if (!isset($this->userGroups)) {
-            $this->userGroups = [];
-            try {
-                if ($this->arParams['USER_ID']) {
-                    $this->userGroups = $this->getUserService()->getUserGroups($this->arParams['USER_ID']);
-                }
-            } catch (\Exception $exception) {}
-            // группа "все пользователи"
-            $this->userGroups[] = 2;
-            $this->userGroups = array_unique($this->userGroups);
-        }
-
-        return $this->userGroups;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function isUserAdmin()
-    {
-        if (!isset($this->isUserAdmin)) {
-            $this->isUserAdmin = in_array(static::BX_ADMIN_GROUP_ID, $this->getUserGroups());
-        }
-
-        return $this->isUserAdmin;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getUserOperations()
-    {
-        if (!isset($this->userOperations)) {
-            $userGroups = $this->getUserGroups();
-            $this->userOperations = $userGroups ? array_keys($GLOBALS['USER']->GetAllOperations($userGroups)) : [];
-        }
-
-        return $this->userOperations;
-    }
-
-    /**
-     * @param string $operationName
-     * @return bool
-     */
-    protected function canUserDoOperation(string $operationName)
-    {
-        $result = false;
-        if ($this->isUserAdmin()) {
-            $result = true;
-        }
-        if (!$result) {
-            $result = in_array($operationName, $this->getUserOperations());
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getUserSubordinateGroups()
-    {
-        if (!isset($this->userSubordinateGroups)) {
-            $this->userSubordinateGroups = [];
-            $userOperations = $this->getUserOperations();
-            if (!in_array('edit_all_users', $userOperations) && !in_array('view_all_users', $userOperations)) {
-                $userGroups = $this->getUserGroups();
-                if ($userGroups) {
-                    $this->userSubordinateGroups = \CGroup::GetSubordinateGroups($userGroups);
-                }
-            }
-        }
-
-        return $this->userSubordinateGroups;
-    }
-
-    /**
-     * @return UserService
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     */
-    public function getUserService()
-    {
-        if (!$this->userCurrentUserService) {
-            $this->userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        }
-
-        return $this->userCurrentUserService;
-    }
-
-    /**
-     * @return UserRepository
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     */
-    public function getUserRepository()
-    {
-        return $this->getUserService()->getUserRepository();
-    }
-
-    /**
-     * @return bool
-     */
-    protected function canAccess()
-    {
-        if ($this->canAccess === '') {
-            $this->canAccess = 'N';
-            if ($this->isUserAdmin()) {
-                $this->canAccess = 'Y';
-            } else {
-                $userGroups = $this->getUserGroups();
-                $canAccessGroups = array_merge($this->arParams['USER_GROUPS'], [static::BX_ADMIN_GROUP_ID]);
-                if (array_intersect($canAccessGroups, $userGroups)) {
-                    // т.к. данный компонент связан с просмотром юзеров, то дополнительно проверяем операции уровней доступа
-                    foreach ($this->canAccessOperations as $operationName) {
-                        if ($this->canUserDoOperation($operationName)) {
-                            $this->canAccess = 'Y';
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $this->canAccess === 'Y';
     }
 
     /**
@@ -280,24 +64,15 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             } elseif ($this->request->get('action') === 'userAuth') {
                 $action = 'userAuth';
             }
+        } elseif ($this->request->get('action') === 'forceAuth') {
+            $action = 'forceAuth';
         }
 
         return $action;
     }
 
     /**
-     * doAction
-     */
-    protected function doAction()
-    {
-        $action = $this->getAction();
-        if (is_callable(array($this, $action.'Action'))) {
-            call_user_func(array($this, $action.'Action'));
-        }
-    }
-
-    /**
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     protected function initialLoadAction()
     {
@@ -305,15 +80,50 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     }
 
     /**
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     protected function postFormAction()
     {
         $this->initPostFields();
 
-        if ($this->canAccess()) {
+        if ($this->canEnvUserAccess()) {
             $this->processSearchFormFields();
             $this->obtainUsersList();
+        }
+
+        $this->loadData();
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function forceAuthAction()
+    {
+        //$this->initPostFields();
+        $this->setFormFieldValue('userId', $this->request->get('userId'));
+
+        if ($this->canEnvUserAccess()) {
+            $this->doAuth();
+        }
+
+        $this->loadData();
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function userAuthAction()
+    {
+        $this->initPostFields();
+
+        if ($this->canEnvUserAccess()) {
+            $this->doAuth();
         }
 
         $this->loadData();
@@ -323,80 +133,58 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function userAuthAction()
+    protected function doAuth()
     {
-        $this->initPostFields();
-
-        if ($this->canAccess()) {
-            $this->arResult['AUTH_ACTION_SUCCESS'] = 'N';
-            $fieldsList = [
-                'userId',
-            ];
-            $filter = $this->getFilterByFormFields($fieldsList);
-            if (!empty($filter)) {
-                $usersList = $this->getUserListByFilter($filter);
-                if ($usersList) {
-                    $user = reset($usersList);
-                    $authResult = false;
-                    try {
-                        $authResult = $this->getUserService()->avatarAuthorize($user['ID']);
-                    } catch (\Exception $exception) {}
-                    if ($authResult) {
-                        $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
-                    } else {
-                        $this->setExecError(
-                            'authFailed',
-                            'Не удалось авторизоваться под указанным пользователем',
-                            'authFailed'
-                        );
-                    }
+        $this->arResult['AUTH_ACTION_SUCCESS'] = 'N';
+        $fieldsList = [
+            'userId',
+        ];
+        $filter = $this->getFilterByFormFields($fieldsList);
+        if (!empty($filter)) {
+            $usersList = $this->getUserListByFilter($filter);
+            if ($usersList) {
+                $user = reset($usersList);
+                $authResult = false;
+                try {
+                    $authResult = $this->getUserService()->avatarAuthorize($user['ID']);
+                } catch (\Exception $exception) {}
+                if ($authResult) {
+                    $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
                 } else {
                     $this->setExecError(
-                        'canNotLogin',
-                        'Невозможно авторизоваться под указанным пользователем',
-                        'canNotLogin'
+                        'authFailed',
+                        'Не удалось авторизоваться под указанным пользователем',
+                        'authFailed'
                     );
                 }
             } else {
                 $this->setExecError(
-                    'emptyUserId',
-                    'Не задан идентификатор пользователя',
-                    'emptyUserId'
+                    'canNotLogin',
+                    'Невозможно авторизоваться под указанным пользователем',
+                    'canNotLogin'
                 );
             }
+        } else {
+            $this->setExecError(
+                'emptyUserId',
+                'Не задан идентификатор пользователя',
+                'emptyUserId'
+            );
         }
-
-        $this->loadData();
     }
 
     /**
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     protected function loadData()
     {
         $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
-        $this->arResult['CAN_ACCESS'] = $this->canAccess() ? 'Y' : 'N';
+        $this->arResult['CAN_ACCESS'] = $this->canEnvUserAccess() ? 'Y' : 'N';
         $this->arResult['ACTION'] = $this->getAction();
         $this->arResult['IS_AVATAR_AUTHORIZED'] = $this->getUserService()->isAvatarAuthorized() ? 'Y' : 'N';
 
         $this->includeComponentTemplate();
-    }
-
-    /**
-     * @param string $phone
-     * @return string
-     */
-    public function cleanPhoneNumberValue(string $phone)
-    {
-        try {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } catch (\Exception $exception) {
-            $phone = '';
-        }
-
-        return $phone;
     }
 
     /**
@@ -510,12 +298,12 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             $filter['!ID'] = $this->arParams['USER_ID'];
 
             foreach ($this->checkSubordinateOperations as $operation) {
-                if (!$this->canUserDoOperation($operation)) {
-                    $filter['CHECK_SUBORDINATE'] = $this->getUserSubordinateGroups();
+                if (!$this->canEnvUserDoOperation($operation)) {
+                    $filter['CHECK_SUBORDINATE'] = $this->getEnvUserSubordinateGroups();
                     break;
                 }
             }
-            if (!$this->canUserDoOperation('edit_php')) {
+            if (!$this->canEnvUserDoOperation('edit_php')) {
                 $filter['NOT_ADMIN'] = true;
             }
         }
@@ -805,111 +593,5 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         //*/
 
         return $usersList;
-    }
-
-    protected function initPostFields()
-    {
-        $this->arResult['~FIELD_VALUES'] = $this->request->getPostList()->toArray();
-        $this->arResult['FIELD_VALUES'] = $this->walkRequestValues($this->arResult['~FIELD_VALUES']);
-    }
-
-    /**
-     * @param $fieldName
-     * @param bool $getSafeValue
-     * @return mixed
-     */
-    protected function getFormFieldValue($fieldName, $getSafeValue = false)
-    {
-        $key = $getSafeValue ? 'FIELD_VALUES' : '~FIELD_VALUES';
-
-        return $this->arResult[$key][$fieldName] ?? null;
-    }
-
-    /**
-     * @param $value
-     * @return string
-     */
-    protected function trimValue($value)
-    {
-        if (is_null($value)) {
-            return '';
-        }
-
-        return is_scalar($value) ? trim($value) : '';
-    }
-
-    /**
-     * @param array|string $errorMsg
-     * @return string
-     */
-    protected function prepareErrorMsg($errorMsg)
-    {
-        // стоит ли здесь делать htmlspecialcharsbx(), вот в чем вопрос...
-        $result = '';
-        if (is_array($errorMsg)) {
-            $result = [];
-            foreach ($errorMsg as $item) {
-                if ($item instanceof Error) {
-                    $result[] = '['.$item->getCode().'] '.$item->getMessage();
-                } elseif (is_scalar($item)) {
-                    $result[] = $item;
-                }
-            }
-            $result = implode('<br>', $result);
-        } elseif (is_scalar($errorMsg)) {
-            $result = $errorMsg;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param string $fieldName
-     * @param array|string $errorMsg
-     * @param string $errCode
-     */
-    protected function setFieldError(string $fieldName, $errorMsg, string $errCode = '')
-    {
-        $errorMsg = $this->prepareErrorMsg($errorMsg);
-        $this->arResult['ERROR']['FIELD'][$fieldName] = new Error($errorMsg, $errCode);
-        //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
-    }
-
-    /**
-     * @param string $errName
-     * @param array|string $errorMsg
-     * @param string $errCode
-     */
-    protected function setExecError(string $errName, $errorMsg, $errCode = '')
-    {
-        $errorMsg = $this->prepareErrorMsg($errorMsg);
-        $this->arResult['ERROR']['EXEC'][$errName] = new Error($errorMsg, $errCode);
-        //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
-    }
-
-    /**
-     * @return bool
-     */
-    protected function isErrors()
-    {
-        return !empty($this->arResult['ERROR']);
-    }
-
-    /**
-     * @param $value
-     * @return array|mixed|string
-     */
-    protected function walkRequestValues($value)
-    {
-        if (is_scalar($value)) {
-            return htmlspecialcharsbx($value);
-        } elseif (is_array($value)) {
-            return array_map(
-                [$this, __FUNCTION__],
-                $value
-            );
-        }
-
-        return $value;
     }
 }

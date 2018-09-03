@@ -28,9 +28,7 @@ $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 
-/** @noinspection PhpUnhandledExceptionInspection */
-/** @var DeliveryService $deliveryService */
-$deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+$deliveryService = $component->getDeliveryService();
 
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];

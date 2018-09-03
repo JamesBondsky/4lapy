@@ -2,6 +2,11 @@
 
 namespace FourPaws\CatalogBundle\Exception;
 
-class RuntimeException extends \RuntimeException
+/**
+ * Class RuntimeException
+ *
+ * @package FourPaws\CatalogBundle\Exception
+ */
+class RuntimeException extends \RuntimeException implements CatalogExceptionInterface
 {
 }

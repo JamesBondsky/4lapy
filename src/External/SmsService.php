@@ -63,9 +63,9 @@ class SmsService implements LoggerAwareInterface
      * @param string $number
      *
      */
-    public function sendSmsImmediate(string $text, string $number): void
+    public function sendSmsImmediate(string $text, string $number)
     {
-        $this->sendSms($text, $number, true);
+        return $this->sendSms($text, $number, true);
     }
 
     /**
@@ -73,7 +73,7 @@ class SmsService implements LoggerAwareInterface
      * @param string $number
      * @param bool $immediate
      */
-    public function sendSms(string $text, string $number, bool $immediate = false): void
+    public function sendSms(string $text, string $number, bool $immediate = false)
     {
         $logContext = [
             'number' => $number,
@@ -131,6 +131,8 @@ class SmsService implements LoggerAwareInterface
                 $logContext
             );
         }
+
+        return $result;
     }
 
     /**

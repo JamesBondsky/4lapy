@@ -10,8 +10,13 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -31,6 +36,7 @@ use FourPaws\DeliveryBundle\Collection\PriceForAmountCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
@@ -69,6 +75,8 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_2 = 'ZONE_2';
     public const ZONE_3 = 'ZONE_3';
     public const ZONE_4 = 'ZONE_4';
+    public const ZONE_5 = 'ZONE_5';
+    public const ZONE_6 = 'ZONE_6';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
@@ -111,14 +119,20 @@ class DeliveryService implements LoggerAwareInterface
      * @param \DateTime|null $from
      *
      *
+     * @return CalculationResultInterface[]
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return CalculationResultInterface[]
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws \Exception
      */
     public function getByProduct(
         Offer $offer,
@@ -148,6 +162,7 @@ class DeliveryService implements LoggerAwareInterface
      * @param array          $codes
      * @param \DateTime|null $from
      *
+     * @return CalculationResultInterface[]
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
@@ -155,7 +170,8 @@ class DeliveryService implements LoggerAwareInterface
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @return CalculationResultInterface[]
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getByBasket(
         BasketBase $basket,
@@ -180,7 +196,6 @@ class DeliveryService implements LoggerAwareInterface
      * @param array  $codes
      *
      * @return CalculationResultInterface[]
-     * @throws ApplicationCreateException
      */
     public function getByLocation(string $locationCode = '', array $codes = []): array
     {
@@ -277,13 +292,14 @@ class DeliveryService implements LoggerAwareInterface
      * @param array          $codes
      * @param \DateTime|null $from
      *
+     * @return CalculationResultInterface[]
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
-     * @return CalculationResultInterface[]
+     * @throws SystemException
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = [], ?\DateTime $from = null): array
     {
@@ -387,6 +403,7 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @return null|string
      * @throws ObjectNotFoundException
+     * @throws ArgumentOutOfRangeException
      */
     public function getDeliveryLocation(Shipment $shipment): ?string
     {
@@ -405,7 +422,6 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param bool $reload
      *
-     * @throws ApplicationCreateException
      * @return string
      */
     public function getCurrentDeliveryZone($reload = false): string
@@ -426,9 +442,10 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @param Shipment $shipment
      *
+     * @return string
      * @param bool     $skipLocations
      * @throws ObjectNotFoundException
-     * @return string
+     * @throws ArgumentOutOfRangeException
      */
     public function getDeliveryZoneForShipment(Shipment $shipment, $skipLocations = true): string
     {
@@ -771,6 +788,60 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param CalculationResultInterface $delivery
+     * @param int                        $count
+     *
+     * @return \DateTime[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getNextDeliveryDates(CalculationResultInterface $delivery, int $count = 1): array
+    {
+        $result = [];
+        $nextDeliveries = $this->getNextDeliveries($delivery, $count);
+        foreach ($nextDeliveries as $nextDelivery) {
+            $result[] = $nextDelivery->getDeliveryDate();
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param DeliveryResultInterface $delivery
+     * @param int                        $count
+     *
+     * @return DeliveryResultInterface[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getNextDeliveries(DeliveryResultInterface $delivery, int $count = 1): array
+    {
+        /** @var \DateTime $lastDate */
+        $lastDate = null;
+        $dateOffset = 0;
+        /** @var DeliveryResultInterface[] $result */
+        $result = [];
+        do {
+            $currentDelivery = clone $delivery;
+            $currentDeliveryDate = $currentDelivery->setDateOffset($dateOffset)->getDeliveryDate();
+            if ((null === $lastDate) ||
+                ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
+            ) {
+                $result[] = $currentDelivery;
+            }
+
+            $lastDate = $currentDeliveryDate;
+            $dateOffset++;
+        } while (\count($result) < $count);
+
+        return $result;
+    }
+
+    /**
      * @param $code
      *
      * @return Terminal|null
@@ -797,18 +868,23 @@ class DeliveryService implements LoggerAwareInterface
             return ['result' => $terminal];
         };
 
+        $result = null;
         try {
             $terminal = (new BitrixCache())
                 ->withId(__METHOD__ . $code)
                 ->resultOf($getTerminal)['result'];
+
+            $result = $this->dpdTerminalToStore(
+                $terminal,
+                $terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE']
+            );
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get dpd terminal: %s', $e->getMessage()), [
                 'code' => $code,
             ]);
-            return null;
         }
 
-        return $this->dpdTerminalToStore($terminal, $terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE']);
+        return $result;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
@@ -853,10 +929,19 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param string          $locationCode
      * @param BasketBase|null $basket
+     *
      * @return Shipment
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentTypeException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @throws UserMessageException
+     * @throws \Exception
      */
     protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment
     {
@@ -908,6 +993,7 @@ class DeliveryService implements LoggerAwareInterface
     /**
      * @param array  $terminal
      * @param string $locationCode
+     *
      * @return Terminal
      */
     protected function dpdTerminalToStore(array $terminal, string $locationCode = ''): Terminal

@@ -5,9 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @global \CMain                 $APPLICATION
- * @var array                     $arParams
- * @var array                     $arResult
+ * @global \CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  * @var \CBitrixComponentTemplate $this
  */
 
@@ -15,13 +15,19 @@ $arParams['USE_AJAX'] = isset($arParams['USE_AJAX']) && $arParams['USE_AJAX'] ==
 $arResult['WAS_POSTED'] = $arResult['ACTION'] !== 'initialLoad' && !empty($arResult['FIELD_VALUES']) ? 'Y' : 'N';
 $arParams['LOGOUT_URL'] = isset($arParams['LOGOUT_URL']) && $arParams['LOGOUT_URL'] !== '' ? $arParams['LOGOUT_URL'] : 'logout.php';
 
-$arResult['USE_AJAX']        = $arParams['USE_AJAX'];
+if ($arResult['IS_AVATAR_AUTHORIZED'] === 'Y' && $arResult['ACTION'] === 'forceAuth') {
+    LocalRedirect('/', true);
+}
+
+$arResult['USE_AJAX'] = $arParams['USE_AJAX'];
 $arResult['IS_AJAX_REQUEST'] = isset($arResult['FIELD_VALUES']['ajaxContext']) ? 'Y' : 'N';
 if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
-    $signer                           = new \Bitrix\Main\Security\Sign\Signer();
+    $signer = new \Bitrix\Main\Security\Sign\Signer();
     $arResult['JS']['signedTemplate'] = $signer->sign($this->GetName(), 'front_office.avatar');
-    $arResult['JS']['signedParams']   =
-        $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'front_office.avatar');
+    $arResult['JS']['signedParams'] = $signer->sign(
+        base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])),
+        'front_office.avatar'
+    );
 }
 
 // Запрашиваемое представление страницы
@@ -36,7 +42,7 @@ if ($arResult['WAS_POSTED'] === 'Y') {
 //
 // Метаданные полей формы
 //
-$arResult['STEP']        = 1;
+$arResult['STEP'] = 1;
 $arResult['POSTED_STEP'] = 0;
 if ($arResult['WAS_POSTED'] === 'Y') {
     $arResult['POSTED_STEP'] = 1;
@@ -56,8 +62,8 @@ $printFields = $firstStepFields;
 $arResult['PRINT_FIELDS'] = [];
 foreach ($printFields as $fieldName) {
     $arResult['PRINT_FIELDS'][$fieldName] = [
-        'VALUE'    => '',
-        'ERROR'    => null,
+        'VALUE' => '',
+        'ERROR' => null,
         'READONLY' => false,
     ];
 }

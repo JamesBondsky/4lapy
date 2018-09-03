@@ -187,15 +187,16 @@ class OrderController extends Controller implements LoggerAwareInterface
         }
 
         /** @var DeliveryResultInterface $delivery */
-        $delivery->setDateOffset($date);
-        $intervals = $delivery->getAvailableIntervals($date);
+        if ($delivery = $this->deliveryService->getNextDeliveries($delivery, 10)[$date]) {
+            $intervals = $delivery->getAvailableIntervals();
 
-        /** @var Interval $interval */
-        foreach ($intervals as $i => $interval) {
-            $result[] = [
-                'name'  => (string)$interval,
-                'value' => $i + 1,
-            ];
+            /** @var Interval $interval */
+            foreach ($intervals as $i => $interval) {
+                $result[] = [
+                    'name'  => (string)$interval,
+                    'value' => $i + 1,
+                ];
+            }
         }
 
         return JsonSuccessResponse::createWithData(

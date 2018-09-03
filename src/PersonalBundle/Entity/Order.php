@@ -589,10 +589,14 @@ class Order extends BaseEntity
 
     /**
      * @param bool $manzana
+     *
+     * @return Order
      */
-    public function setManzana(bool $manzana): void
+    public function setManzana(bool $manzana): Order
     {
         $this->manzana = $manzana;
+
+        return $this;
     }
 
     /**
@@ -719,10 +723,14 @@ class Order extends BaseEntity
 
     /**
      * @param float $itemsSum
+     *
+     * @return Order
      */
-    public function setItemsSum(float $itemsSum): void
+    public function setItemsSum(float $itemsSum): Order
     {
         $this->itemsSum = $itemsSum;
+
+        return $this;
     }
 
     /**
@@ -1014,10 +1022,14 @@ class Order extends BaseEntity
 
     /**
      * @param string $manzanaId
+     *
+     * @return Order
      */
-    public function setManzanaId(string $manzanaId): void
+    public function setManzanaId(string $manzanaId): Order
     {
         $this->manzanaId = $manzanaId;
+
+        return $this;
     }
 
     /**

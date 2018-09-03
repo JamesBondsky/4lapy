@@ -255,10 +255,14 @@ class OrderItem extends BaseEntity
 
     /**
      * @param float $weight
+     *
+     * @return OrderItem
      */
-    public function setWeight(float $weight): void
+    public function setWeight(float $weight): OrderItem
     {
         $this->weight = $weight;
+
+        return $this;
     }
 
     /**
@@ -271,10 +275,14 @@ class OrderItem extends BaseEntity
 
     /**
      * @param string $article
+     *
+     * @return OrderItem
      */
-    public function setArticle(string $article): void
+    public function setArticle(string $article): OrderItem
     {
         $this->article = $article;
+
+        return $this;
     }
 
     /**
@@ -311,10 +319,14 @@ class OrderItem extends BaseEntity
 
     /**
      * @param bool $haveStock
+     *
+     * @return OrderItem
      */
-    public function setHaveStock(bool $haveStock): void
+    public function setHaveStock(bool $haveStock): OrderItem
     {
         $this->haveStock = $haveStock;
+
+        return $this;
     }
 
     /**
@@ -417,10 +429,14 @@ class OrderItem extends BaseEntity
 
     /**
      * @param string $detailPageUrl
+     *
+     * @return OrderItem
      */
-    public function setDetailPageUrl(string $detailPageUrl): void
+    public function setDetailPageUrl(string $detailPageUrl): OrderItem
     {
         $this->detailPageUrl = $detailPageUrl;
+
+        return $this;
     }
 
     /**
@@ -613,6 +629,14 @@ class OrderItem extends BaseEntity
         }
 
         return $path;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isGift(): bool
+    {
+        return mb_strpos($this->getArticle(), '3') === 0;
     }
 
     /**

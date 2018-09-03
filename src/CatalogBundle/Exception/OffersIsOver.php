@@ -2,7 +2,6 @@
 
 namespace FourPaws\CatalogBundle\Exception;
 
-
 use Exception;
 
 /**
@@ -10,7 +9,7 @@ use Exception;
  *
  * @package FourPaws\CatalogBundle\Exception
  */
-class OffersIsOver extends Exception
+class OffersIsOver extends Exception implements CatalogExceptionInterface
 {
 
 }

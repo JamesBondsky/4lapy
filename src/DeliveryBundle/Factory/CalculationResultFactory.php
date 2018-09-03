@@ -31,8 +31,8 @@ class CalculationResultFactory
 
     /**
      * @param CalculationResult $bitrixResult
-     * @param BaseService $service
-     * @param Shipment $shipment
+     * @param BaseService       $service
+     * @param Shipment          $shipment
      *
      * @return CalculationResultInterface
      * @throws UnknownDeliveryException
@@ -43,7 +43,8 @@ class CalculationResultFactory
         CalculationResult $bitrixResult,
         BaseService $service,
         Shipment $shipment
-    ): CalculationResultInterface {
+    ): CalculationResultInterface
+    {
         switch ($service->getCode()) {
             case DeliveryService::INNER_PICKUP_CODE:
                 $result = new PickupResult();
@@ -104,8 +105,8 @@ class CalculationResultFactory
 
     /**
      * @param CalculationResultInterface $result
-     * @param string $serviceCode
-     * @param Shipment $shipment
+     * @param string                     $serviceCode
+     * @param Shipment                   $shipment
      *
      * @throws DeliveryInitializeException
      * @throws ArgumentNullException
@@ -141,19 +142,32 @@ class CalculationResultFactory
             $result->setIntervals($dpdData['INTERVALS']);
         }
 
+        if ($result instanceof DeliveryResultInterface) {
+            $result->setWeekDays([
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+            ]);
+        }
+
         $result->setDeliveryZone($dpdData['DELIVERY_ZONE']);
     }
 
     /**
      * @param CalculationResultInterface $result
-     * @param CalculationResult $bitrixResult
+     * @param CalculationResult          $bitrixResult
      *
      * @return CalculationResultInterface
      */
     protected static function fillDeliveryData(
         CalculationResultInterface $result,
         CalculationResult $bitrixResult
-    ): CalculationResultInterface {
+    ): CalculationResultInterface
+    {
         $result->setDeliveryPrice($bitrixResult->getDeliveryPrice());
         $result->setExtraServicesPrice($bitrixResult->getExtraServicesPrice());
         $result->setDescription($bitrixResult->getDescription());
@@ -192,6 +206,10 @@ class CalculationResultFactory
                         $result->setIntervals($value);
                     }
                     break;
+                case 'WEEK_DAYS':
+                    if ($result instanceof DeliveryResultInterface) {
+                        $result->setWeekDays($value);
+                    }
             }
         }
 

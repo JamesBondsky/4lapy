@@ -3,16 +3,21 @@
 use Bitrix\Main\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
 global $APPLICATION;
 /** @var Cmain $APPLICATION */
-?>
-<?php if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
-    $requestUri = Application::getInstance()->getContext()->getRequest()->getRequestUri();
+
+if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
+    $requestUri = Application::getInstance()
+        ->getContext()
+        ->getRequest()
+        ->getRequestUri();
     if (strpos($requestUri, 'sale/order/complete') !== false) {
         $backUrl = '/personal';
     } else {
@@ -27,11 +32,14 @@ global $APPLICATION;
               data-url="/ajax/user/auth/login/"
               method="post">
             <input type="hidden" name="action" value="login" class="js-no-valid">
-            <input type="hidden" name="backurl" value="<?= $backUrl ?>" class="js-no-valid">
+            <?php if (!CatalogLandingService::isLandingPage()) { ?>
+                <input type="hidden" name="backurl" value="<?= $backUrl ?>" class="js-no-valid">
+            <?php } ?>
             <div class="b-input-line b-input-line--popup-authorization">
                 <div class="b-input-line__label-wrapper">
-                    <label class="b-input-line__label" for="tel-email-authorization">Телефон или
-                        эл.почта</label>
+                    <label class="b-input-line__label" for="tel-email-authorization">
+                        Телефон или эл.почта
+                    </label>
                 </div>
                 <div class="b-input b-input--registration-form">
                     <input class="b-input__input-field b-input__input-field--registration-form"
@@ -39,8 +47,7 @@ global $APPLICATION;
                            id="tel-email-authorization"
                            name="login"
                            data-type="telEmail"/>
-                    <div class="b-error"><span class="js-message"></span>
-                    </div>
+                    <div class="b-error"><span class="js-message"></span></div>
                 </div>
             </div>
             <div class="b-input-line b-input-line--popup-authorization">
@@ -62,7 +69,9 @@ global $APPLICATION;
             <?php
             if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3) {
                 try {
-                    $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+                    $recaptchaService = App::getInstance()
+                        ->getContainer()
+                        ->get(ReCaptchaInterface::class);
                     echo $recaptchaService->getCaptcha('', true);
                 } catch (ApplicationCreateException $e) {
                 }
