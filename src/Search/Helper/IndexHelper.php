@@ -9,16 +9,26 @@ namespace FourPaws\Search\Helper;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Elastica\Client;
 use Elastica\Document;
+use Elastica\Exception\InvalidException;
 use Elastica\Exception\ResponseException;
 use Elastica\Index;
 use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
+use FourPaws\Search\Exception\Index\IndexExceptionInterface;
+use FourPaws\Search\Exception\Index\NoCategoryException;
+use FourPaws\Search\Exception\Index\NoImagesException;
+use FourPaws\Search\Exception\Index\NoStocksException;
+use FourPaws\Search\Exception\Index\NotActiveException;
+use FourPaws\Search\Exception\Index\UncategorizedException;
+use FourPaws\Search\Exception\Index\WrongEntityPassedException;
+use FourPaws\Search\Exception\Index\ZeroPriceException;
 use FourPaws\Search\Factory;
 use FourPaws\Search\Model\CatalogSyncMsg;
 use JMS\Serializer\Serializer;
@@ -94,7 +104,7 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * @param bool $force
      *
-     * @throws \Elastica\Exception\InvalidException
+     * @throws InvalidException
      * @throws RuntimeException
      * @return bool
      */
@@ -360,15 +370,21 @@ class IndexHelper implements LoggerAwareInterface
         return $this->indexProducts([$product]);
     }
 
+    /**
+     * @param array $products
+     *
+     * @return bool
+     */
     public function indexProducts(array $products): bool
     {
         $products = array_filter($products, function ($data) {
-            return  $data &&
-                $data instanceof Product &&
-                $data->isActive() &&
-                !$data->getOffers()->isEmpty() &&
-                $data->getSection() &&
-                $data->getSection()->getCode() !== Category::UNSORTED_CATEGORY_CODE;
+            try {
+                $result = $this->canIndexProduct($data);
+            } catch (IndexExceptionInterface $e) {
+                $result = false;
+            }
+
+            return false;
         });
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
@@ -522,7 +538,7 @@ class IndexHelper implements LoggerAwareInterface
     }
 
     /**
-     * @throws \Elastica\Exception\InvalidException
+     * @throws InvalidException
      * @return Search
      */
     public function createProductSearch(): Search
@@ -651,5 +667,51 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         return $prefix . $indexName;
+    }
+
+    /**
+     * @param $product
+     *
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws NoCategoryException
+     * @throws NoImagesException
+     * @throws NoStocksException
+     * @throws NotActiveException
+     * @throws UncategorizedException
+     * @throws WrongEntityPassedException
+     * @throws ZeroPriceException
+     */
+    private function canIndexProduct($product): bool
+    {
+        if (!$product instanceof Product) {
+            throw new WrongEntityPassedException('Invalid entity type');
+        }
+
+        if (!$product->isActive()) {
+            throw new NotActiveException('Product is not active');
+        }
+
+        if ($product->getOffers()->isEmpty()) {
+            throw new ZeroPriceException('All offers have zero price');
+        }
+
+        if (!$product->getSection()) {
+            throw new NoCategoryException('Product\'s main category not set or is inactive');
+        }
+
+        if ($product->getSection()->getCode() === Category::UNSORTED_CATEGORY_CODE) {
+            throw new UncategorizedException('Product is uncategorized');
+        }
+
+        if (!$product->hasImages()) {
+            throw new NoImagesException('Product\'s offers have no images');
+        }
+
+        if (!$product->hasStocks()) {
+            throw new NoStocksException('Product\'s offers have no stocks');
+        }
+
+        return true;
     }
 }
