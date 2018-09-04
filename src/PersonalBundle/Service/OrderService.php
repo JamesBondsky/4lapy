@@ -209,6 +209,10 @@ class OrderService
             $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {
+                if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+                    continue;
+                }
+
                 /** @var \DateTimeImmutable $date */
                 $date = $cheque->date;
                 $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());

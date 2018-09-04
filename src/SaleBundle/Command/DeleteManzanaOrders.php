@@ -181,7 +181,7 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
             ->setFilter([
                 '=CODE'       => 'MANZANA_NUMBER',
                 '!VALUE'      => false,
-                'ORDER.PRICE' => 0,
+                '<=ORDER.PRICE' => 0,
             ])
             ->setOrder(['ORDER_ID' => 'ASC'])
             ->registerRuntimeField(
