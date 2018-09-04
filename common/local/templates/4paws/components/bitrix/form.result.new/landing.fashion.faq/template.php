@@ -49,7 +49,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                                         $type = 'tel';
                                     }
 
-                                $classes = ['remained_questions__input'];
+                                    $classes = ['remained_questions__input'];
 
                                     switch ($fieldSid) {
                                         case 'name':
@@ -65,10 +65,10 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
                                             break;
                                     } ?>
                                     <div class="remained_questions__input_block js-form-field-block-<?= $fieldSid ?>">
-
                                         <label class="remained_questions__label"
                                                for="remained_questions_<?= $fieldSid ?>"><?= $question['CAPTION'] ?></label>
                                         <input class="<?= implode(' ', $classes) ?>"
+                                               required
                                                type="<?= $type ?>" name="<?= $fieldName ?>"
                                                placeholder="<?= $prefixPlaceholder . ToLower($question['CAPTION']) ?>"
                                                id="remained_questions_<?= $fieldSid ?>"
