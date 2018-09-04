@@ -33,7 +33,7 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
         $this->withLogName(
             \sprintf(
                 'component_%s',
-                static::class
+                str_replace('\\', '_', static::class)
             )
         );
 
