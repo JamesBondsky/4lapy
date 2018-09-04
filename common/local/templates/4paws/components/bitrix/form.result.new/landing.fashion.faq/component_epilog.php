@@ -12,12 +12,11 @@ try {
         ->get(CurrentUserProviderInterface::class)
         ->getCurrentUser(); ?>
     <script>
-        $(function () {
-            var $form = $('.js-form-faq');
-            $form.find('.js-form-field-block-name input').val('<?= $user->getName() ?>');
-            $form.find('.js-form-field-block-email input').val('<?= $user->getEmail() ?>');
-            $form.find('.js-form-field-block-phone input').val('<?= $user->getPersonalPhone() ?>');
-        });
+        var $form = $('.js-form-faq');
+
+        $form.find('.js-form-field-block-email input').val('<?= $user->getEmail() ?>').addClass('js-no-valid').blur();
+        $form.find('.js-form-field-block-phone input').val('<?= $user->getPersonalPhone() ?>').addClass('js-no-valid').blur();
+        $form.find('.js-form-field-block-name input').val('<?= $user->getName() ?>').addClass('js-no-valid').blur();
     </script>
 <?php } catch (Exception $e) {
     /** пользователь неавторизован - устанавливать не надо */
