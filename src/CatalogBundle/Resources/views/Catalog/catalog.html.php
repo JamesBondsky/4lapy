@@ -62,9 +62,6 @@ if ($catalogRequest->isLanding()) {
             'PRODUCT_FILTER' => [
                 'ID' => $category->getRecommendedProductIds()
             ],
-            'OFFER_FILTER'   => [
-                '>CATALOG_PRICE_2' => 0,
-            ],
             'TITLE'          => 'Мы рекомендуем',
         ], false, ['HIDE_ICONS' => 'Y']);
     }

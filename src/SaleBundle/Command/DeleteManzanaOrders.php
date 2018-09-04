@@ -11,7 +11,6 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
@@ -99,7 +98,6 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws ObjectPropertyException
      * @throws SystemException
      */
     protected function execute(InputInterface $input, OutputInterface $output): void
@@ -183,7 +181,7 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
             ->setFilter([
                 '=CODE'       => 'MANZANA_NUMBER',
                 '!VALUE'      => false,
-                'ORDER.PRICE' => 0,
+                '<=ORDER.PRICE' => 0,
             ])
             ->setOrder(['ORDER_ID' => 'ASC'])
             ->registerRuntimeField(

@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
@@ -22,10 +23,10 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Table as SaleDeliveryServiceTable;
-use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order as BitrixOrder;
+use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -47,9 +48,11 @@ use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
-use FourPaws\PersonalBundle\Exception\ChequeItemArticleEmptyException;
-use FourPaws\PersonalBundle\Exception\ChequeItemNotExistsException;
-use FourPaws\PersonalBundle\Exception\NoItemsInChequeException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemArticleEmptyException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ManzanaChequeItemExceptionInterface;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\NoItemsInChequeException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -206,6 +209,10 @@ class OrderService
             $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {
+                if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+                    continue;
+                }
+
                 /** @var \DateTimeImmutable $date */
                 $date = $cheque->date;
                 $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
@@ -234,7 +241,7 @@ class OrderService
 
                 try {
                     $items = $this->getItemsByCheque($cheque);
-                } catch (NoItemsInChequeException|ChequeItemArticleEmptyException|ChequeItemNotExistsException $e) {
+                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
                     continue;
                 }
 
@@ -587,8 +594,6 @@ class OrderService
 
         /** ставим даты */
         $bitrixOrder->setFieldNoDemand('STATUS_ID', 'G');
-        $bitrixOrder->setFieldNoDemand('DATE_INSERT', $order->getDateInsert());
-        $bitrixOrder->setFieldNoDemand('DATE_UPDATE', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('PAYED', 'Y');
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
@@ -598,14 +603,14 @@ class OrderService
         /** @var OrderItem $item */
         $allBonuses = 0;
         $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
-        $bitrixOrder->setBasket($orderBasket);
+
         /** @var OrderItem $item */
         foreach ($order->getItems() as $item) {
             $productId = $item->getId();
-            /** @var Offer $offer */
             $basketItem = $orderBasket->createItem('catalog', $productId);
-            $basketItem->setPrice($item->getPrice(), true);
             $basketItem->setFields([
+                'PRICE'                  => $item->getPrice(),
+                'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
                 'QUANTITY'               => $item->getQuantity(),
                 'CURRENCY'               => CurrencyManager::getBaseCurrency(),
                 'NAME'                   => $item->getName(),
@@ -617,33 +622,34 @@ class OrderService
             ]);
             $allBonuses += $item->getBonus();
         }
-
-        /** свойства */
-        $orderProps = $bitrixOrder->getPropertyCollection();
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'MANZANA_NUMBER'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($order->getManzanaId());
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'USER_REGISTERED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('Y');
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'IS_EXPORTED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('Y');
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'BONUS_COUNT'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($allBonuses);
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'SHIPMENT_PLACE_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('DC01');
+        $bitrixOrder->setBasket($orderBasket);
 
         $userCityService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
-        $city = $userCityService->getSelectedCity();
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($city['CODE']);
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($city['DISPLAY']);
+        $selectedCity = $userCityService->getSelectedCity();
+        /** @var PropertyValue $propertyValue */
+        foreach ($bitrixOrder->getPropertyCollection() as $propertyValue) {
+            switch ($propertyValue->getProperty()['CODE']) {
+                case 'MANZANA_NUMBER':
+                    $propertyValue->setValue($order->getManzanaId());
+                    break;
+                case 'USER_REGISTERED':
+                case 'IS_EXPORTED':
+                    $propertyValue->setValue(BitrixUtils::BX_BOOL_TRUE);
+                    break;
+                case 'BONUS_COUNT':
+                    $propertyValue->setValue($allBonuses);
+                    break;
+                case 'SHIPMENT_PLACE_CODE':
+                    $propertyValue->setValue('DC01');
+                    break;
+                case 'CITY_CODE':
+                    $propertyValue->setValue($selectedCity['NAME']);
+                    break;
+                case 'CITY':
+                    $propertyValue->setValue($selectedCity['CODE']);
+                    break;
+            }
+        }
 
         /** доставка */
         $shipmentCollection = $bitrixOrder->getShipmentCollection();
@@ -720,6 +726,7 @@ class OrderService
      * @throws NoItemsInChequeException
      * @throws ChequeItemArticleEmptyException
      * @throws ChequeItemNotExistsException
+     * @throws ChequeItemNotActiveException
      */
     protected function getItemsByCheque(Cheque $cheque): array
     {
@@ -735,6 +742,12 @@ class OrderService
             if (null === $offer) {
                 throw new ChequeItemNotExistsException(
                     \sprintf('Cheque %s item %s not found', $cheque->chequeNumber, $chequeItem->number)
+                );
+            }
+
+            if (!$offer->isActive()) {
+                throw new ChequeItemNotActiveException(
+                    \sprintf('Catalog offer %s (#%s) is not active', $offer->getXmlId(), $offer->getId())
                 );
             }
 

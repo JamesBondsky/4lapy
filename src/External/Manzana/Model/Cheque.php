@@ -23,6 +23,9 @@ class Cheque
 {
     public const HAS_ITEMS_BY_CHEQUE = 2;
 
+    public const OPERATION_TYPE_PURCHASE = 1;
+    public const OPERATION_TYPE_RETURN = 2;
+
     /**
      * ID чека
      *
