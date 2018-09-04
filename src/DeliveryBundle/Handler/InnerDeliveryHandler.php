@@ -205,9 +205,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
         $data['STOCK_RESULT'] = $stockResult;
         $data['WEEK_DAYS'] = $this->getWeekDays($shipment);
-        if (empty($data['WEEK_DAYS'])) {
-            $result->addError(new Error('Не найдены дни доставки'));
-        }
 
         $result->setData($data);
         if ($stockResult->getOrderable()->isEmpty()) {
