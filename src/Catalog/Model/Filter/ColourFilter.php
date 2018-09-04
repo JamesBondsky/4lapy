@@ -87,6 +87,6 @@ class ColourFilter extends ReferenceFilterNested
     {
         $dataManager = Application::getHlBlockDataManager($this->getHlBlockServiceName());
 
-        return (new HlbColorQuery($dataManager::query()))->withFilter([]);
+        return (new HlbColorQuery($dataManager::query()))->withFilter($this->getDefaultFilter());
     }
 }

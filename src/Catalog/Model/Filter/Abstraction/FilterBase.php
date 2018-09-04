@@ -40,6 +40,11 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     protected $UF_SHOW_WITH_PICTURE = false;
 
     /**
+     * @var bool
+     */
+    protected $UF_HIDE_IN_FILTER = false;
+
+    /**
      * FilterBase constructor.
      *
      * @param array $fields
@@ -76,7 +81,7 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     }
 
     /**
-     * @inheritdoc
+     * @return bool
      */
     public function isShowWithPicture(): bool
     {
@@ -84,11 +89,33 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     }
 
     /**
-     * @inheritdoc
+     * @param bool $isShowWithPicture
+     *
+     * @return $this
      */
     public function withShowWithPicture(bool $isShowWithPicture)
     {
         $this->UF_SHOW_WITH_PICTURE = $isShowWithPicture;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHideInFilter(): bool
+    {
+        return (bool)$this->UF_HIDE_IN_FILTER;
+    }
+
+    /**
+     * @param bool $hide
+     *
+     * @return $this
+     */
+    public function withHideInFilter(bool $hide)
+    {
+        $this->UF_HIDE_IN_FILTER = $hide;
 
         return $this;
     }

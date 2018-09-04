@@ -77,7 +77,17 @@ abstract class ReferenceFilterBase extends FilterBase
     {
         $dataManager = Application::getHlBlockDataManager($this->getHlBlockServiceName());
 
-        return (new HlbReferenceQuery($dataManager::query()))->withFilter([]);
+        return (new HlbReferenceQuery($dataManager::query()))->withFilter($this->getDefaultFilter());
+    }
+
+    /**
+     * @return array
+     */
+    protected function getDefaultFilter(): array
+    {
+        return [
+            'UF_HIDE_IN_FILTER' => false
+        ];
     }
 
     /**
