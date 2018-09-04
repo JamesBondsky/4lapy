@@ -48,9 +48,11 @@ use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
-use FourPaws\PersonalBundle\Exception\ChequeItemArticleEmptyException;
-use FourPaws\PersonalBundle\Exception\ChequeItemNotExistsException;
-use FourPaws\PersonalBundle\Exception\NoItemsInChequeException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemArticleEmptyException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ManzanaChequeItemExceptionInterface;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\NoItemsInChequeException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -235,7 +237,7 @@ class OrderService
 
                 try {
                     $items = $this->getItemsByCheque($cheque);
-                } catch (NoItemsInChequeException|ChequeItemArticleEmptyException|ChequeItemNotExistsException $e) {
+                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
                     continue;
                 }
 
@@ -597,14 +599,14 @@ class OrderService
         /** @var OrderItem $item */
         $allBonuses = 0;
         $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
-        $bitrixOrder->setBasket($orderBasket);
+
         /** @var OrderItem $item */
         foreach ($order->getItems() as $item) {
             $productId = $item->getId();
-            /** @var Offer $offer */
             $basketItem = $orderBasket->createItem('catalog', $productId);
-            $basketItem->setPrice($item->getPrice(), true);
             $basketItem->setFields([
+                'PRICE'                  => $item->getPrice(),
+                'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
                 'QUANTITY'               => $item->getQuantity(),
                 'CURRENCY'               => CurrencyManager::getBaseCurrency(),
                 'NAME'                   => $item->getName(),
@@ -616,6 +618,7 @@ class OrderService
             ]);
             $allBonuses += $item->getBonus();
         }
+        $bitrixOrder->setBasket($orderBasket);
 
         $userCityService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
         $selectedCity = $userCityService->getSelectedCity();
@@ -719,6 +722,7 @@ class OrderService
      * @throws NoItemsInChequeException
      * @throws ChequeItemArticleEmptyException
      * @throws ChequeItemNotExistsException
+     * @throws ChequeItemNotActiveException
      */
     protected function getItemsByCheque(Cheque $cheque): array
     {
@@ -734,6 +738,12 @@ class OrderService
             if (null === $offer) {
                 throw new ChequeItemNotExistsException(
                     \sprintf('Cheque %s item %s not found', $cheque->chequeNumber, $chequeItem->number)
+                );
+            }
+
+            if (!$offer->isActive()) {
+                throw new ChequeItemNotActiveException(
+                    \sprintf('Catalog offer %s (#%s) is not active', $offer->getXmlId(), $offer->getId())
                 );
             }
 
