@@ -80,11 +80,12 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             ) {
                                 if ((int)$basketItem->getQuantity() > $applyCount) {
                                     //Детачим
+                                    $initialPrice = $basketItem->getPrice();
                                     if ($isPercent) {
                                         $price = (100 - $discountValue) * $basketItem->getPrice() / 100;
                                     } else {
                                         $price = $basketItem->getPrice() - $discountValue;
-                                        if($price < 0) {
+                                        if ($price < 0) {
                                             $price = 0;
                                         }
                                     }
@@ -94,6 +95,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                     $basketItem->setField('PRICE', $price);
                                     $basketItem->setField('DISCOUNT_PRICE', $basketItem->getBasePrice() - $price);
                                     $basketItem->setField('CUSTOM_PRICE', 'Y');
+
                                     $fields = [
                                         'PROPS' => [
                                             [
@@ -120,13 +122,19 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                         false,
                                         $this->order->getBasket()
                                     );
+                                    $newBasketItem->setField('PRICE', $initialPrice);
+                                    $newBasketItem->setField(
+                                        'DISCOUNT_PRICE',
+                                        $basketItem->getBasePrice() - $initialPrice
+                                    );
+
                                 } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
                                     //Просто проставляем поля
                                     if ($isPercent) {
                                         $price = (100 - $discountValue) * $basketItem->getPrice() / 100;
                                     } else {
                                         $price = $basketItem->getPrice() - $discountValue;
-                                        if($price < 0) {
+                                        if ($price < 0) {
                                             $price = 0;
                                         }
                                     }
