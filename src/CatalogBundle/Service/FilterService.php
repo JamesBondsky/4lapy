@@ -6,10 +6,16 @@
 
 namespace FourPaws\CatalogBundle\Service;
 
+use Bitrix\Main\ArgumentException;
+use Elastica\Query\Nested;
+use Elastica\Query\Term;
 use Elastica\QueryBuilder;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -23,10 +29,26 @@ class FilterService implements LoggerAwareInterface
     private $filterHelper;
 
     /**
-     * FilterService constructor.
-     * @param FilterHelper $filterHelper
+     * @var DeliveryService
      */
-    public function __construct(FilterHelper $filterHelper)
+    private $deliveryService;
+
+    /**
+     * @var StoreService
+     */
+    private $storeService;
+
+    /**
+     * FilterService constructor.
+     * @param FilterHelper    $filterHelper
+     * @param DeliveryService $deliveryService
+     * @param StoreService    $storeService
+     */
+    public function __construct(
+        FilterHelper $filterHelper,
+        DeliveryService $deliveryService,
+        StoreService $storeService
+    )
     {
         $this->filterHelper = $filterHelper;
     }
@@ -132,9 +154,40 @@ class FilterService implements LoggerAwareInterface
                         ->setQuery($queryBuilder->query()->term(['offers.active' => true]))
                 )
             );
+
+            $activeFilterCollection->add(
+                $this->getStocksFilter()
+            );
         } catch (\InvalidArgumentException $exception) {
         }
         return $activeFilterCollection;
+    }
+
+    /**
+     * @return InternalFilter
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     */
+    protected function getStocksFilter(): InternalFilter
+    {
+        $deliveries = $this->deliveryService->getByLocation();
+
+        $xmlIds = [];
+        foreach ($deliveries as $delivery) {
+            /** @noinspection SlowArrayOperationsInLoopInspection */
+            $xmlIds = \array_merge($xmlIds, $this->deliveryService->getStoresByDelivery($delivery)->getXmlIds());
+        }
+        $xmlIds = \array_unique(
+            \array_merge($xmlIds, $this->storeService->getSupplierStores()->getXmlIds())
+        );
+
+        $queryBuilder = new QueryBuilder();
+        return InternalFilter::create(
+            'OffersActive',
+            (new Nested())->nested()
+                ->setPath('offers')
+                ->setQuery(new Term(['offers.allStocks' => $xmlIds]))
+        );
     }
 
     protected function getRegionInternalFilter(): InternalFilter
