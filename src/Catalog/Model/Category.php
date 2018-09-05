@@ -11,7 +11,6 @@ use Elastica\Query\Simple;
 use Elastica\Query\Terms;
 use Exception;
 use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\IblockSection;
 use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -23,7 +22,6 @@ use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 

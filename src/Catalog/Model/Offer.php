@@ -377,7 +377,7 @@ class Offer extends IblockElement
 
     /**
      * @var StockCollection
-     * @Type("array<string,int>")
+     * @Type("array<string>")
      * @Accessor(getter="getAllStocksForFilter")
      * @Groups({"elastic"})
      */

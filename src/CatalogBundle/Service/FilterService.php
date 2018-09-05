@@ -8,7 +8,7 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Bitrix\Main\ArgumentException;
 use Elastica\Query\Nested;
-use Elastica\Query\Term;
+use Elastica\Query\Terms;
 use Elastica\QueryBuilder;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -51,6 +51,8 @@ class FilterService implements LoggerAwareInterface
     )
     {
         $this->filterHelper = $filterHelper;
+        $this->deliveryService = $deliveryService;
+        $this->storeService = $storeService;
     }
 
     public function getCategoryFilters(Category $category)
@@ -181,12 +183,11 @@ class FilterService implements LoggerAwareInterface
             \array_merge($xmlIds, $this->storeService->getSupplierStores()->getXmlIds())
         );
 
-        $queryBuilder = new QueryBuilder();
         return InternalFilter::create(
-            'OffersActive',
-            (new Nested())->nested()
+            'Stocks',
+            (new Nested())
                 ->setPath('offers')
-                ->setQuery(new Term(['offers.allStocks' => $xmlIds]))
+                ->setQuery(new Terms('offers.allStocks', $xmlIds))
         );
     }
 

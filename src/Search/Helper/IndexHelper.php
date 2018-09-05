@@ -382,10 +382,17 @@ class IndexHelper implements LoggerAwareInterface
             try {
                 $result = $this->canIndexProduct($data);
             } catch (IndexExceptionInterface $e) {
+                $this->log()->debug(
+                    \sprintf(
+                        'Skipping product #%s: %s',
+                        $data instanceof Product ? $data->getId() : 'N',
+                        $e->getMessage()
+                    )
+                );
                 $result = false;
             }
 
-            return false;
+            return $result;
         });
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
