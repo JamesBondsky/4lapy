@@ -287,6 +287,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_IS_POPULAR'       => ['type' => 'boolean'],
                                 'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
                                 'currency'                  => ['type' => 'keyword'],
+                                'allStocks'                 => ['type' => 'keyword'],
 //                                'prices'                   => [
 //                                    'type'       => 'nested',
 //                                    'properties' => [
