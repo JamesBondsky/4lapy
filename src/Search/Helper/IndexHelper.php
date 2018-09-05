@@ -16,15 +16,12 @@ use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Exception\Index\IndexExceptionInterface;
 use FourPaws\Search\Exception\Index\NoCategoryException;
-use FourPaws\Search\Exception\Index\NoImagesException;
-use FourPaws\Search\Exception\Index\NoStocksException;
 use FourPaws\Search\Exception\Index\NotActiveException;
 use FourPaws\Search\Exception\Index\UncategorizedException;
 use FourPaws\Search\Exception\Index\WrongEntityPassedException;
@@ -681,10 +678,7 @@ class IndexHelper implements LoggerAwareInterface
      * @param $product
      *
      * @return bool
-     * @throws ApplicationCreateException
      * @throws NoCategoryException
-     * @throws NoImagesException
-     * @throws NoStocksException
      * @throws NotActiveException
      * @throws UncategorizedException
      * @throws WrongEntityPassedException
@@ -710,14 +704,6 @@ class IndexHelper implements LoggerAwareInterface
 
         if ($product->getSection()->getCode() === Category::UNSORTED_CATEGORY_CODE) {
             throw new UncategorizedException('Product is uncategorized');
-        }
-
-        if (!$product->hasImages()) {
-            throw new NoImagesException('Product\'s offers have no images');
-        }
-
-        if (!$product->hasStocks()) {
-            throw new NoStocksException('Product\'s offers have no stocks');
         }
 
         return true;

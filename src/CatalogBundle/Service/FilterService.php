@@ -158,6 +158,20 @@ class FilterService implements LoggerAwareInterface
             );
 
             $activeFilterCollection->add(
+                InternalFilter::create(
+                    'HasImages',
+                    $queryBuilder->query()->term(['hasImages' => true])
+                )
+            );
+
+            $activeFilterCollection->add(
+                InternalFilter::create(
+                    'HasStocks',
+                    $queryBuilder->query()->term(['hasStocks' => true])
+                )
+            );
+
+            $activeFilterCollection->add(
                 $this->getStocksFilter()
             );
         } catch (\InvalidArgumentException $exception) {
