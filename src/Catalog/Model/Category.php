@@ -100,26 +100,17 @@ class Category extends IblockSection implements FilterInterface
      * @var FilterCollection
      */
     private $filterList;
-    /**
-     * @var FilterService
-     */
-    private $filterService;
 
     /**
      * Category constructor.
      *
      * @param array $fields
      *
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
      */
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
-        $this->filterService = Application::getInstance()
-            ->getContainer()
-            ->get(FilterService::class);
         //По умолчанию фильтр по категории невидим.
         $this->setVisible(false);
         $this->child = new ArrayCollection();
@@ -130,9 +121,7 @@ class Category extends IblockSection implements FilterInterface
      *
      * @throws IblockNotFoundException
      * @return Category
-     * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      */
     public static function createRoot(array $fields = []): Category
     {
@@ -371,7 +360,9 @@ class Category extends IblockSection implements FilterInterface
          * т.к. её состояние в процессе поиска товаров будет меняться.
          */
         if (null === $this->filterList) {
-            $this->filterList = $this->filterService->getCategoryFilters($this);
+            $this->filterList = Application::getInstance()
+                ->getContainer()
+                ->get(FilterService::class)->getCategoryFilters($this);
         }
 
         return $this->filterList;
