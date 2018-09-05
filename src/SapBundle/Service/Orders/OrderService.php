@@ -601,6 +601,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             default:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
+                    case DeliveryService::ZONE_5:
+                    case DeliveryService::ZONE_6:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
@@ -1078,6 +1080,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             switch ($deliveryZone) {
                 case DeliveryService::ZONE_1:
+                case DeliveryService::ZONE_5:
+                case DeliveryService::ZONE_6:
                     $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
                     break;
                 case DeliveryService::ZONE_2:

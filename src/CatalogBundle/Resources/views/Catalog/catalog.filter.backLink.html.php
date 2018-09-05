@@ -1,16 +1,18 @@
 <?php
 
 /**
- * @var Request $request
+ * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
- * @var Category $category
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var ChildCategoryRequest                  $catalogRequest
+ * @var PhpEngine                             $view
+ * @var Category                              $category
+ * @var CMain                                 $APPLICATION
  */
 
 use FourPaws\Catalog\Model\Category;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
@@ -25,15 +27,20 @@ do {
         $parents[] = $parent;
     }
 } while ($parent->getId());
+
 $parents = array_reverse($parents);
-?>
-<?php if (!empty($parents)) { ?>
+
+if ($catalogRequest instanceof ChildCategoryRequest && $catalogRequest->isLanding()) {
+    \array_shift($parents);
+}
+
+if (!empty($parents)) { ?>
     <div class="b-filter__block b-filter__block--back">
         <ul class="b-back">
             <?php /** @var Category $parent */ ?>
             <?php foreach ($parents as $parent) { ?>
                 <li class="b-back__item">
-                    <a class="b-link b-link--back" href="<?= $parent->getSectionPageUrl() ?>"
+                    <a class="b-link b-link--back" href="<?= $catalogRequest instanceof ChildCategoryRequest ? $catalogRequest->getCategoryPathByCategory($parent) : $parent->getSectionPageUrl() ?>"
                        title="<?= $parent->getCanonicalName() ?>">
                         <?= $parent->getCanonicalName() ?>
                     </a>

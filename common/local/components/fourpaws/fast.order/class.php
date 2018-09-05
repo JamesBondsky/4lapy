@@ -169,6 +169,25 @@ class FourPawsFastOrderComponent extends CBitrixComponent
                     $order->setBasket($basket);
                 }
                 $this->arResult['BASKET'] = $basket;
+                $basketRows = [];
+                /** @var BasketItem $basketItem */
+                foreach ($basket as $basketItem) {
+                    $productId = $basketItem->getProductId();
+                    $basketRows[$productId]['ITEMS'][$basketItem->getBasketCode()] = $basketItem;
+                    $basketRows[$productId]['QUANTITY'] += $basketItem->getQuantity();
+                    if ($basketItem->getId()) {
+                        $basketRows[$productId]['MAIN_ITEM'] = $basketItem;
+                    }
+                    if (!isset($basketRows[$productId]['OFFER'])) {
+                        $basketRows[$productId]['OFFER'] = $this->getOffer($basketItem->getProductId());
+                    }
+                    $hasBonus = $basketItem->getPropertyCollection()->getPropertyValues()['HAS_BONUS']['VALUE'];
+                    $basketRows[$productId]['TOTAL_PRICE'] += $basketItem->getQuantity() * $basketItem->getPrice();
+                    $basketRows[$productId]['TOTAL_BASE_PRICE'] += $basketItem->getQuantity() * $basketItem->getBasePrice();
+                    $basketRows[$productId]['TOTAL_WEIGHT'] += $basketItem->getQuantity() * $basketItem->getWeight();
+                    $basketRows[$productId]['BONUS_AWARDING_QUANTITY'] += $hasBonus;
+                }
+                $this->arResult['BASKET_ROWS'] = $basketRows;
                 $this->loadImages();
                 $this->calcTemplateFields();
             }

@@ -27,15 +27,28 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     /**
      * Знак разделения множественных значений фильтра
      */
-    const VARIANT_DELIMITER = ',';
+    public const VARIANT_DELIMITER = ',';
 
     use FilterTrait;
-
     /**
      * @var bool
      */
     protected $UF_ACTIVE = true;
+    /**
+     * @var bool
+     */
+    protected $UF_SHOW_WITH_PICTURE = false;
 
+    /**
+     * @var bool
+     */
+    protected $UF_HIDE_IN_FILTER = false;
+
+    /**
+     * FilterBase constructor.
+     *
+     * @param array $fields
+     */
     public function __construct(array $fields = [])
     {
         if (isset($fields['UF_ACTIVE'])) {
@@ -63,9 +76,53 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     public function withActive(bool $active)
     {
         $this->UF_ACTIVE = $active;
+
         return $this;
     }
 
+    /**
+     * @return bool
+     */
+    public function isShowWithPicture(): bool
+    {
+        return (bool)$this->UF_SHOW_WITH_PICTURE;
+    }
+
+    /**
+     * @param bool $isShowWithPicture
+     *
+     * @return $this
+     */
+    public function withShowWithPicture(bool $isShowWithPicture)
+    {
+        $this->UF_SHOW_WITH_PICTURE = $isShowWithPicture;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHideInFilter(): bool
+    {
+        return (bool)$this->UF_HIDE_IN_FILTER;
+    }
+
+    /**
+     * @param bool $hide
+     *
+     * @return $this
+     */
+    public function withHideInFilter(bool $hide)
+    {
+        $this->UF_HIDE_IN_FILTER = $hide;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         $array = parent::toArray();
@@ -75,6 +132,9 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
         return $array;
     }
 
+    /**
+     * @return AbstractAggregation
+     */
     public function getAggRule(): AbstractAggregation
     {
         return (new AggTerms($this->getFilterCode()))

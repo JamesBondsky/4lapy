@@ -298,7 +298,7 @@ class ReferralService
             $client->contactId = $contactId;
         }
         $client->cardNumber = $referral->getCard();
-        $client->phone = $referral->getPhone();
+        $client->phone = PhoneHelper::formatPhone($referral->getPhone(),PhoneHelper::FORMAT_MANZANA);
         $client->email = $referral->getEmail();
         $client->lastName = $referral->getLastName();
         $client->secondName = $referral->getSecondName();

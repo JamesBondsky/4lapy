@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
@@ -11,7 +12,9 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
@@ -20,16 +23,17 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Table as SaleDeliveryServiceTable;
-use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
-use Bitrix\Sale\Order as BitrixOrderService;
+use Bitrix\Sale\Order as BitrixOrder;
+use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -44,6 +48,11 @@ use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemArticleEmptyException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\ManzanaChequeItemExceptionInterface;
+use FourPaws\PersonalBundle\Exception\ManzanaCheque\NoItemsInChequeException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -69,38 +78,58 @@ class OrderService
         'G',
         'J',
     ];
+
     public static $cancelStatuses = [
         'A',
         'K',
     ];
+
     protected static $manzanaFinalStatus = 'G';
-    protected $manzanaFinalStatusSort = 110;
+
     /**
      * @var OrderRepository
      */
-    private $orderRepository;
-    /** @var CurrentUserProviderInterface $currentUser */
-    private $currentUser;
-    /** @var ManzanaService */
-    private $manzanaService;
-    private $siteManzanaOrders;
-    private $manzanaOrderOffers;
+    protected $orderRepository;
+
+    /**
+     * @var CurrentUserProviderInterface $currentUser
+     */
+    protected $currentUser;
+
+    /**
+     * @var ManzanaService
+     */
+    protected $manzanaService;
+
+    /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
+    /**
+     * @var Offer[]
+     */
+    protected $manzanaOrderOffers;
 
     /**
      * OrderService constructor.
      *
-     * @param OrderRepository $orderRepository
-     *
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     * @param OrderRepository              $orderRepository
+     * @param DeliveryService              $deliveryService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param ManzanaService               $manzanaService
      */
-    public function __construct(OrderRepository $orderRepository)
+    public function __construct(
+        OrderRepository $orderRepository,
+        DeliveryService $deliveryService,
+        CurrentUserProviderInterface $currentUserProvider,
+        ManzanaService $manzanaService
+    )
     {
-        $container = App::getInstance()->getContainer();
         $this->orderRepository = $orderRepository;
-        $this->currentUser = $container->get(CurrentUserProviderInterface::class);
-        $this->manzanaService = $container->get('manzana.service');
+        $this->currentUser = $currentUserProvider;
+        $this->manzanaService = $manzanaService;
+        $this->deliveryService = $deliveryService;
     }
 
     /**
@@ -122,6 +151,7 @@ class OrderService
         } catch (ManzanaServiceException $e) {
             $manzanaOrders = [];
         }
+
         return $this->mergeAllClosedOrders($closedSiteOrders, $manzanaOrders);
     }
 
@@ -144,29 +174,30 @@ class OrderService
                 unset($manzanaOrders[$key]);
             }
         }
+
         return new ArrayCollection(array_merge($closedSiteOrders, $manzanaOrders));
     }
 
     /**
      * @return ArrayCollection
-     * @throws ObjectPropertyException
-     * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
-     * @throws ObjectNotFoundException
-     * @throws ObjectException
-     * @throws NotImplementedException
-     * @throws ArgumentOutOfRangeException
-     * @throws ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
      * @throws ApplicationCreateException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentTypeException
+     * @throws DeliveryNotFoundException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
-     * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderCreateException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getManzanaOrders(): ArrayCollection
@@ -175,89 +206,59 @@ class OrderService
         $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByUser()));
         if (!$cheques->isEmpty()) {
             $hasAdd = false;
+            $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {
-                $order = new Order();
+                if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+                    continue;
+                }
+
                 /** @var \DateTimeImmutable $date */
                 $date = $cheque->date;
                 $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
-                $order->setDateInsert($bitrixDate);
-                $order->setDatePayed($bitrixDate);
-                $order->setDateStatus($bitrixDate);
-                $order->setDateUpdate($bitrixDate);
-                $order->setManzana(true);
-                $order->setUserId($this->currentUser->getCurrentUserId());
-                $order->setPayed(true);
-                $order->setStatusId(static::$manzanaFinalStatus);
-                $order->setPrice($cheque->sum);
-                $order->setItemsSum($cheque->sum);
-                $order->setManzanaId('' . $cheque->chequeNumber);
-                $order->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID']);
-                $order->setDeliveryId(SaleDeliveryServiceTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID']);
-                $items = [];
-                $newManzana = true;
-                /** если заказ уже на сайте то не делаем доп. запрос в манзану на получение твоаров */
-                if ($cheque->hasItemsBool() && !$this->hasOrderByManzana($order)) {
-                    $chequeItems = new ArrayCollection($this->manzanaService->getItemsByCheque($cheque->chequeId));
-                    if (!$chequeItems->isEmpty()) {
-                        /** @var ChequeItem $chequeItem */
-                        $i = -1;
-                        foreach ($chequeItems as $chequeItem) {
-                            $i++;
-                            if ((int)$chequeItem->number < 2000000) {
-                                $item = new OrderItem();
-                                if ((int)$chequeItem->number > 1000000) {
-                                    $item->setArticle($chequeItem->number);
-                                    /** @todo лучше вынести вниз в групповой запрос */
-                                    $offer = null;
-                                    if (!empty($item->getArticle())) {
-                                        /** @var Offer $offer */
-                                        $offer = (new OfferQuery())->withFilter(['=XML_ID' => $item->getArticle()])->withSelect(['ID'])->withNav(['nTopCount' => 1])->exec()->first();
-                                        $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()] = $offer;
-                                    }
-                                    if ($offer !== null && $offer instanceof Offer && $offer->getId() > 0) {
-                                        $item->setId($offer->getId());
-                                    } else {
-                                        $item->setId($chequeItem->number);
-                                        $newManzana = false;
-                                    }
-                                } else {
-                                    $item->setId($chequeItem->number);
-                                    $newManzana = false;
-                                }
-                                $item->setBonus($chequeItem->bonus);
-                                $item->setPrice($chequeItem->price);
-                                $item->setQuantity($chequeItem->quantity);
-                                $item->setSum($chequeItem->sum);
-                                $item->setName($chequeItem->name);
-                                $item->setHaveStock(false);
-                                $item->setWeight(0);
-                                $items[!empty($item->getArticle()) ? $item->getArticle() : $i] = $item;
-                            } else {
-                                $newManzana = false;
-                            }
-                        }
-                    }
-                } else {
-                    // пропускаем чеки без товаров и те что уже на сайте
+                $order = (new Order())
+                    ->setDateInsert($bitrixDate)
+                    ->setDatePayed($bitrixDate)
+                    ->setDateStatus($bitrixDate)
+                    ->setDateUpdate($bitrixDate)
+                    ->setManzana(true)
+                    ->setUserId($this->currentUser->getCurrentUserId())
+                    ->setPayed(true)
+                    ->setStatusId(static::$manzanaFinalStatus)
+                    ->setPrice($cheque->sum)
+                    ->setItemsSum($cheque->sum)
+                    ->setManzanaId('' . $cheque->chequeNumber)
+                    ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID'])
+                    ->setDeliveryId($deliveryId);
+
+                if (!$cheque->hasItemsBool()) {
                     continue;
                 }
-                $order->setNewManzana($newManzana);
+
+                if ($this->hasOrderByManzana($order)) {
+                    continue;
+                }
+
+                try {
+                    $items = $this->getItemsByCheque($cheque);
+                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
+                    continue;
+                }
+
+                $order->setNewManzana(true);
                 $order->setItems(new ArrayCollection($items));
-                /** если все позиции на сайте ищутся то сохраняем на сайте и исключаем из массива - но будет принудительная перезагрузка
-                 */
-                if ($order->isNewManzana()) {
-                    if (!$this->hasOrderByManzana($order)) {
-                        $hasAdd = $this->addOrder($order);
-                    }
+                if (!$this->hasOrderByManzana($order)) {
+                    $hasAdd = $this->addOrder($order);
                 } else {
                     $orders[$order->getId()] = $order;
                 }
             }
+
             if ($hasAdd) {
                 LocalRedirect(Application::getInstance()->getContext()->getRequest()->getRequestUri());
             }
         }
+
         return $orders;
     }
 
@@ -421,6 +422,7 @@ class OrderService
                         if ($store !== null && !$store->isActive()) {
                             $store->setActive(true);
                         }
+
                         return $store;
                     } catch (\Exception $exception) {
                         return null;
@@ -436,6 +438,7 @@ class OrderService
                         if (!$store->isActive()) {
                             $store->setActive(true);
                         }
+
                         return $store;
                     } catch (\Exception $exception) {
                         return null;
@@ -540,46 +543,45 @@ class OrderService
      */
     protected function getSiteManzanaOrders($userId): array
     {
-        if ($this->siteManzanaOrders === null) {
-            $res = OrderTable::query()->setFilter([
-                'USER_ID'         => $userId,
-                'PROPERTY.CODE'   => 'MANZANA_NUMBER',
-                '!PROPERTY.VALUE' => [
-                    null,
-                    '',
-                ],
-            ])->setSelect([
-                'ID',
-                'PROPERTY_CODE'  => 'PROPERTY.CODE',
-                'PROPERTY_VALUE' => 'PROPERTY.VALUE',
-            ])->exec();
-            while ($item = $res->fetch()) {
-                if ($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
-                    $this->siteManzanaOrders[$item['ID']] = $item['PROPERTY_VALUE'];
-                }
+        $result = [];
+        $items = OrderTable::query()->setFilter([
+            'USER_ID'         => $userId,
+            'PROPERTY.CODE'   => 'MANZANA_NUMBER',
+            '!PROPERTY.VALUE' => [
+                null,
+                '',
+            ],
+        ])->setSelect([
+            'ID',
+            'PROPERTY_CODE'  => 'PROPERTY.CODE',
+            'PROPERTY_VALUE' => 'PROPERTY.VALUE',
+        ])->exec();
+        while ($item = $items->fetch()) {
+            if ($item['PROPERTY_CODE'] === 'MANZANA_NUMBER') {
+                $result[$item['ID']] = $item['PROPERTY_VALUE'];
             }
         }
-        return $this->siteManzanaOrders ?? [];
+
+        return $result;
     }
 
     /**
      * @param Order $order
-     *
      * @return bool
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ObjectPropertyException
-     * @throws \RuntimeException
+     * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws SystemException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
      * @throws OrderCreateException
-     * @throws OrderCreateException
-     * @throws \Exception
+     * @throws SystemException
+     * @throws ArgumentTypeException
+     * @throws NotSupportedException
      * @throws \Exception
      */
     protected function addOrder(Order $order): bool
@@ -588,70 +590,66 @@ class OrderService
             return false;
         }
         Manager::disableExtendsDiscount();
-        $bitrixOrder = BitrixOrderService::create(SITE_ID, $order->getUserId(), $order->getCurrency());
+        $bitrixOrder = BitrixOrder::create(SITE_ID, $order->getUserId(), $order->getCurrency());
 
         /** ставим даты */
         $bitrixOrder->setFieldNoDemand('STATUS_ID', 'G');
-        $bitrixOrder->setFieldNoDemand('DATE_INSERT', $order->getDateInsert());
-        $bitrixOrder->setFieldNoDemand('DATE_UPDATE', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('PAYED', 'Y');
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
-        /** ставим account_number = id чека с обрезкой в 100 символов на всякий случай */
-        $bitrixOrder->setFieldNoDemand('ACCOUNT_NUMBER', \sprintf('%sm', \substr($order->getManzanaId(), 0, 100)));
-
-        /** корзина */
+        /** @var Basket $orderBasket */
         $orderBasket = Basket::create(SITE_ID);
         /** @var OrderItem $item */
         $allBonuses = 0;
         $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
-        $bitrixOrder->setBasket($orderBasket);
+
+        /** @var OrderItem $item */
         foreach ($order->getItems() as $item) {
             $productId = $item->getId();
-            /** @var Offer $offer */
-            $offer = $this->manzanaOrderOffers[$order->getManzanaId()][$item->getArticle()];
             $basketItem = $orderBasket->createItem('catalog', $productId);
-            $basketItem->setPrice($item->getPrice(), true);
             $basketItem->setFields([
-                'QUANTITY'        => $item->getQuantity(),
-                'CURRENCY'        => CurrencyManager::getBaseCurrency(),
-                'NAME'            => $offer->getName(),
-                'WEIGHT'          => $offer->getCatalogProduct()->getWeight(),
-                'DETAIL_PAGE_URL' => $offer->getLink(),
+                'PRICE'                  => $item->getPrice(),
+                'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
+                'QUANTITY'               => $item->getQuantity(),
+                'CURRENCY'               => CurrencyManager::getBaseCurrency(),
+                'NAME'                   => $item->getName(),
+                'WEIGHT'                 => $item->getWeight(),
+                'DETAIL_PAGE_URL'        => $item->getDetailPageUrl(),
                 'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-                'CATALOG_XML_ID' => $offerIblockId,
-                'PRODUCT_XML_ID' => $item->getArticle()
+                'CATALOG_XML_ID'         => $offerIblockId,
+                'PRODUCT_XML_ID'         => $item->getArticle(),
             ]);
             $allBonuses += $item->getBonus();
         }
-
-        /** свойства */
-        $orderProps = $bitrixOrder->getPropertyCollection();
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'MANZANA_NUMBER'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($order->getManzanaId());
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'USER_REGISTERED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('Y');
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'IS_EXPORTED'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('Y');
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'BONUS_COUNT'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($allBonuses);
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'SHIPMENT_PLACE_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue('DC01');
+        $bitrixOrder->setBasket($orderBasket);
 
         $userCityService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
-        $city = $userCityService->getSelectedCity();
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY_CODE'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($city['CODE']);
-        $propId = (int)OrderPropsTable::query()->setFilter(['=CODE' => 'CITY'])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-        $orderProp = $orderProps->getItemByOrderPropertyId($propId);
-        $orderProp->setValue($city['DISPLAY']);
+        $selectedCity = $userCityService->getSelectedCity();
+        /** @var PropertyValue $propertyValue */
+        foreach ($bitrixOrder->getPropertyCollection() as $propertyValue) {
+            switch ($propertyValue->getProperty()['CODE']) {
+                case 'MANZANA_NUMBER':
+                    $propertyValue->setValue($order->getManzanaId());
+                    break;
+                case 'USER_REGISTERED':
+                case 'IS_EXPORTED':
+                    $propertyValue->setValue(BitrixUtils::BX_BOOL_TRUE);
+                    break;
+                case 'BONUS_COUNT':
+                    $propertyValue->setValue($allBonuses);
+                    break;
+                case 'SHIPMENT_PLACE_CODE':
+                    $propertyValue->setValue('DC01');
+                    break;
+                case 'CITY_CODE':
+                    $propertyValue->setValue($selectedCity['NAME']);
+                    break;
+                case 'CITY':
+                    $propertyValue->setValue($selectedCity['CODE']);
+                    break;
+            }
+        }
 
         /** доставка */
         $shipmentCollection = $bitrixOrder->getShipmentCollection();
@@ -716,6 +714,95 @@ class OrderService
             ]
         );
         Manager::enableExtendsDiscount();
+
         return $result->isSuccess();
+    }
+
+    /**
+     * @param Cheque $cheque
+     *
+     * @return OrderItem[]
+     * @throws ManzanaServiceException
+     * @throws NoItemsInChequeException
+     * @throws ChequeItemArticleEmptyException
+     * @throws ChequeItemNotExistsException
+     * @throws ChequeItemNotActiveException
+     */
+    protected function getItemsByCheque(Cheque $cheque): array
+    {
+        if (!$chequeItems = $this->manzanaService->getItemsByCheque($cheque->chequeId)) {
+            throw new NoItemsInChequeException(\sprintf('Cheque %s has no items', $cheque->chequeNumber));
+        }
+        $this->loadOffersByCheque($cheque, $chequeItems);
+
+        $result = [];
+
+        foreach ($chequeItems as $chequeItem) {
+            $offer = $this->manzanaOrderOffers[$chequeItem->number];
+            if (null === $offer) {
+                throw new ChequeItemNotExistsException(
+                    \sprintf('Cheque %s item %s not found', $cheque->chequeNumber, $chequeItem->number)
+                );
+            }
+
+            if (!$offer->isActive()) {
+                throw new ChequeItemNotActiveException(
+                    \sprintf('Catalog offer %s (#%s) is not active', $offer->getXmlId(), $offer->getId())
+                );
+            }
+
+            $item = new OrderItem();
+            $item
+                ->setArticle($chequeItem->number)
+                ->setBonus($chequeItem->bonus)
+                ->setPrice($chequeItem->price)
+                ->setQuantity($chequeItem->quantity)
+                ->setSum($chequeItem->sum)
+                ->setName($chequeItem->name)
+                ->setHaveStock(false)
+                ->setWeight($offer->getCatalogProduct()->getWeight())
+                ->setDetailPageUrl($offer->getLink())
+                ->setId($offer->getId());
+            $result[$item->getArticle()] = $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Cheque       $cheque
+     * @param ChequeItem[] $chequeItems
+     *
+     * @return Offer[]
+     * @throws ChequeItemArticleEmptyException
+     */
+    protected function loadOffersByCheque(Cheque $cheque, array $chequeItems): array
+    {
+        $result = [];
+        $xmlIds = [];
+        foreach ($chequeItems as $i => $chequeItem) {
+            if (!$xmlId = $chequeItem->number) {
+                throw new ChequeItemArticleEmptyException(
+                    \sprintf('Cheque %s item #%s has no article', $cheque->chequeNumber, $i)
+                );
+            }
+
+            if ($this->manzanaOrderOffers[$xmlId]) {
+                $result[] = $this->manzanaOrderOffers[$xmlId];
+            } else {
+                $xmlIds[] = $xmlId;
+            }
+        }
+
+        if (!empty($xmlIds)) {
+            $offers = (new OfferQuery())->withFilter(['XML_ID' => $xmlIds])->exec();
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
+                $this->manzanaOrderOffers[$offer->getXmlId()] = $offer;
+                $result[] = $offer;
+            }
+        }
+
+        return $result;
     }
 }

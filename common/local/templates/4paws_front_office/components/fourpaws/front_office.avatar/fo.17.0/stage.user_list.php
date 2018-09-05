@@ -61,8 +61,9 @@ if (!empty($arResult['USERS_LIST'])) {
                     <div class="cell-value"><?= ($user['PERSONAL_BIRTHDAY'] ? htmlspecialcharsbx($user['PERSONAL_BIRTHDAY']) : '-') ?></div>
                 </td>
                 <td class="user-list__auth">
-                    <div class="cell-value"><span class="_action-auth"
-                                                  data-id="<?= $user['ID'] ?>">авторизоваться</span></div>
+                    <div class="cell-value">
+                        <span class="_action-auth" data-id="<?= $user['ID'] ?>">авторизоваться</span>
+                    </div>
                 </td>
             </tr>
             <?php

@@ -22,11 +22,11 @@ if ($arParams['LOAD_TYPE'] !== 'default') { ?>
 <div class="b-popup-one-click__form">
 
     <p class="b-popup-one-click__description b-popup-one-click__description--complite">
-        <?= $arResult['USER_NAME']; ?>, спасибо за заказ!
+        <strong><?= $arResult['USER_NAME'] ?></strong>, спасибо за заказ!
     </p>
     <p class="b-popup-one-click__description b-popup-one-click__description--complite">
-        Номер вашего заказа № <?= $arResult['ACCOUNT_NUMBER']; ?>. Оператор свяжется с вами для уточнения деталей
-        доставки. <br>
+        Номер вашего заказа № <strong><?= $arResult['ACCOUNT_NUMBER'] ?></strong>.
+        Оператор свяжется с вами для уточнения деталей доставки. <br>
         <?php
         if ($USER->IsAuthorized()) {
             ?>

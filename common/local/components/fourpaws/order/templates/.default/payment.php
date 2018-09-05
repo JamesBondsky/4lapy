@@ -18,10 +18,10 @@ use FourPaws\UserBundle\Entity\User;
  * @var array $arResult
  * @var array $arParams
  * @var CMain $APPLICATION
+ * @var FourPawsOrderComponent $component
  */
 
-/** @var DeliveryService $deliveryService */
-$deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+$deliveryService = $component->getDeliveryService();
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 

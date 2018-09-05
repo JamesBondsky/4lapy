@@ -832,8 +832,9 @@ class LocationService
             return $result;
         };
 
+        $result = [];
         try {
-            return (new BitrixCache())
+            $result = (new BitrixCache())
                 ->withId(__METHOD__ . (int)$withLocations)
                 ->withTag('location:groups')
                 ->resultOf($getGroups);
@@ -841,8 +842,9 @@ class LocationService
             $this->log()->error(sprintf('failed to get location groups: %s', $e->getMessage()), [
                 'withLocations' => (int)$withLocations,
             ]);
-            return [];
         }
+
+        return $result;
     }
 
     /**

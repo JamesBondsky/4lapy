@@ -1,4 +1,7 @@
 User-agent: *
+Disallow /catalog/sobaki/odezhda-i-obuv/
+Disallow /catalog/sobaki/igrushki-sobaki//
+Disallow /catalog/sobaki/bizhuteriya/
 Disallow: /catalog/*?
 Disallow: /catalog/*&
 Allow: /catalog/*?page

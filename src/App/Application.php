@@ -11,6 +11,7 @@ use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use Psr\Cache\InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
@@ -46,7 +47,8 @@ class Application extends AppKernel
     public static function markup(): MarkupBuild
     {
         if (null === self::$markupBuild) {
-            $cache = new FilesystemAdapter('4lapy', 86400, self::getInstance()->getCacheDir());
+            $cache = new FilesystemAdapter('4lapy', 86400, self::getInstance()
+                ->getCacheDir());
 
             $markupBuildItem = $cache->getItem('markup_build');
 
@@ -162,7 +164,9 @@ class Application extends AppKernel
      */
     public static function getHlBlockDataManager(string $hlblockServiceName): DataManager
     {
-        $dataManager = self::getInstance()->getContainer()->get($hlblockServiceName);
+        $dataManager = self::getInstance()
+            ->getContainer()
+            ->get($hlblockServiceName);
 
         /** Если это метод для HL-сущностей, то правильней проверять все же \Bitrix\Highloadblock\DataManager */
         if (!($dataManager instanceof DataManager)) {
@@ -174,5 +178,44 @@ class Application extends AppKernel
         }
 
         return $dataManager;
+    }
+
+    /**
+     * @todo moveit moveit
+     *
+     * @return string
+     */
+    public function getSiteDomain(): string
+    {
+        $context = \Bitrix\Main\Application::getInstance()
+            ->getContext();
+
+        return \sprintf(
+            'http%s://%s',
+            $context->getRequest()
+                ->isHttps() ? 's' : '',
+            $context->getServer()
+                ->getHttpHost()
+        );
+    }
+
+    /**
+     * @todo moveit moveit
+     *
+     * @return string
+     */
+    public function getSiteCurrentDomain(): string
+    {
+        $context = \Bitrix\Main\Application::getInstance()
+            ->getContext();
+
+        return \sprintf(
+            'http%s://%s',
+            $context->getRequest()
+                ->isHttps() ? 's' : '',
+            $context->getRequest()
+                ->get(CatalogLandingService::LANDING_REQUEST_KEY) ?: $context->getServer()
+                ->getHttpHost()
+        );
     }
 }

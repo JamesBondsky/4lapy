@@ -31,11 +31,9 @@ use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Dto\Out\Payment\Debit as OutDebit;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\NotFoundOrderException;
-use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
 use FourPaws\SapBundle\Exception\PaymentException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -54,10 +52,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
     private const MODULE_PROVIDER_CODE = 'sberbank.ecom';
     private const OPTION_FISCALIZATION_CODE = 'FISCALIZATION';
 
-    /**
-     * @var SaleOrderService
-     */
-    private $saleOrderService;
     /**
      * @var OrderService
      */
@@ -78,10 +72,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @var SalePaymentService
      */
     private $salePaymentService;
-    /**
-     * @var UserService
-     */
-    private $userService;
 
     /**
      * PaymentService constructor.
@@ -102,11 +92,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         UserService $userService
     )
     {
-        $this->saleOrderService = $saleOrderService;
         $this->orderService = $orderService;
         $this->serializer = $serializer;
         $this->salePaymentService = $salePaymentService;
-        $this->userService = $userService;
         $this->setFilesystem($filesystem);
     }
 
@@ -134,23 +122,19 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                 sprintf('Order with number %s not found', $paymentTask->getBitrixOrderId())
             );
         }
-        $user = $this->userService->getUserRepository()->find($order->getUserId());
-
-        if (null === $user) {
-            throw new NotFoundOrderUserException(
-                \sprintf(
-                    'User with id %s is not found',
-                    $order->getUserId()
-                )
-            );
-        }
 
         if (!$paymentTask->getSumPayed() && !$paymentTask->getSumTotal()) {
             throw new PaymentException('Сумма на списание и сумма заказа равны нулю');
         }
 
-        $fiscalization = $this->getFiscalization($order, $user, $paymentTask);
-        $orderInvoiceId = $this->salePaymentService->getOrderInvoiceId($order);
+        if (!$orderInvoiceId = $this->salePaymentService->getOrderInvoiceId($order)) {
+            throw new PaymentException('У заказа не указан номер инвойса');
+        }
+
+        $orderInfo = $this->salePaymentService->getSberbankOrderStatusByOrderId($orderInvoiceId);
+        if ($fiscalization = $this->getFiscalization($order, $paymentTask)) {
+            $this->salePaymentService->validateFiscalization($fiscalization, $orderInfo);
+        }
 
         $amount = $paymentTask->getSumPayed();
         $return = $paymentTask->getSumReturned();
@@ -231,7 +215,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param SaleOrder $order
-     * @param User      $user
      * @param Order     $paymentTask
      *
      * @return Fiscalization|null
@@ -244,7 +227,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws InvalidPathException
      * @throws ObjectPropertyException
      */
-    private function getFiscalization(SaleOrder $order, User $user, Order $paymentTask): ?Fiscalization
+    private function getFiscalization(SaleOrder $order, Order $paymentTask): ?Fiscalization
     {
         $config = Option::get(self::MODULE_PROVIDER_CODE, self::OPTION_FISCALIZATION_CODE, []);
         /** @noinspection UnserializeExploitsInspection */

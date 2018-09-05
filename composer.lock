@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "d845b9cf37b51080f4e749e8160829a8",
+    "content-hash": "57df3cccdbaf831c5a430dd6202db585",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -4040,6 +4040,48 @@
                 "module"
             ],
             "time": "2017-09-27T11:01:14+00:00"
+        },
+        {
+            "name": "webarchitect609/bitrix-user-type",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/webarchitect609/bitrix-user-type.git",
+                "reference": "3ea2ab02dcd79450599d14b0dff7de9e2571ceb8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/webarchitect609/bitrix-user-type/zipball/3ea2ab02dcd79450599d14b0dff7de9e2571ceb8",
+                "reference": "3ea2ab02dcd79450599d14b0dff7de9e2571ceb8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5",
+                "webarchitect609/bitrix-cache": "^1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WebArch\\BitrixUserPropertyType\\": "src/main"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sergey Gripinskiy",
+                    "email": "web-architect@mail.ru"
+                }
+            ],
+            "description": "Set of custom Bitrix user property types and basic auxiliary functionality to help develop new types as easy and fast as it possible.",
+            "keywords": [
+                "bitrix",
+                "userfield",
+                "usertype"
+            ],
+            "time": "2018-08-01T14:50:07+00:00"
         },
         {
             "name": "willdurand/jsonp-callback-validator",

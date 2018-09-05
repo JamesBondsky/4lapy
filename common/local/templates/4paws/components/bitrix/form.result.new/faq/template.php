@@ -13,7 +13,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
 }
 
 ?>
-<div class="fleas-protection-block__form">
+<div class="fleas-protection-block__form js-form-content">
     <div class="fleas-protection-block__form--title">Не нашли ответа на свой вопрос?</div>
     <form data-url="/ajax/form/faq/add/" method="post" class="js-form-validation js-form-faq fleas-protection__form">
         <?= bitrix_sessid_post() ?>

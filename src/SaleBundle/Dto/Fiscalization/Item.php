@@ -62,7 +62,7 @@ class Item
      * @Serializer\SerializedName("itemPrice")
      * @Serializer\Type("string")
      */
-    protected $price = 0;
+    protected $price;
 
     /**
      * @var ItemTax

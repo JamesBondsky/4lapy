@@ -87,6 +87,13 @@ class CatalogElementSnippet extends CBitrixComponent
                 /** @var Product $product */
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
+
+                if (!$currentOffer) {
+                    $this->abortResultCache();
+
+                    return;
+                }
+
                 TaggedCacheHelper::addManagedCacheTags([
                     'iblock:item:' . $currentOffer->getId(),
                     'iblock:item:' . $product->getId(),

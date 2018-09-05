@@ -2,117 +2,88 @@
 
 namespace FourPaws\Components;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\Application;
+use Bitrix\Main\SystemException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
-use FourPaws\BitrixOrm\Model\IblockElement;
-use FourPaws\BitrixOrm\Model\IblockSection;
-use FourPaws\BitrixOrm\Query\IblockElementQuery;
+use FourPaws\AppBundle\Bitrix\FourPawsComponent;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsBreadCrumbs extends \CBitrixComponent
+class FourPawsBreadCrumbs extends FourPawsComponent
 {
+    /**
+     * @param $params
+     * @return array
+     * @throws SystemException
+     */
     public function onPrepareComponentParams($params): array
     {
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 36000000;
         }
 
-        $params['SHOW_LINK_TO_MAIN'] = ($params['SHOW_LINK_TO_MAIN'] === 'N') ? 'N' : 'Y';
-
-        if (!$params['IBLOCK_SECTION'] && !empty($params['SECTION_CODE'])) {
-            $params['IBLOCK_SECTION'] = $this->getSection($params['SECTION_CODE']);
-        }
-
-        if (!$params['IBLOCK_ELEMENT'] && !empty($params['ELEMENT_CODE'])) {
-            $params['IBLOCK_ID'] = $params['IBLOCK_ID'] ?? null;
-            $params['IBLOCK_ELEMENT'] = $this->getElement($params['ELEMENT_CODE'], $params['IBLOCK_ID']);
-        }
-
-        $params['IBLOCK_SECTION'] = $params['IBLOCK_SECTION'] instanceof IblockSection ? $params['IBLOCK_SECTION'] : null;
-        $params['IBLOCK_ELEMENT'] = $params['IBLOCK_ELEMENT'] instanceof IblockElement ? $params['IBLOCK_ELEMENT'] : null;
+        $params['SHOW_LINK_TO_MAIN'] = ($params['SHOW_LINK_TO_MAIN'] === BitrixUtils::BX_BOOL_FALSE)
+            ? BitrixUtils::BX_BOOL_FALSE
+            : BitrixUtils::BX_BOOL_TRUE;
+        $params['SHOW_CURRENT'] = $params['SHOW_CURRENT'] ?? false;
+        $params['IBLOCK_SECTION'] = $params['IBLOCK_SECTION'] instanceof Category ? $params['IBLOCK_SECTION'] : null;
+        $params['IBLOCK_ELEMENT'] = $params['IBLOCK_ELEMENT'] instanceof Product ? $params['IBLOCK_ELEMENT'] : null;
 
         /**
          * @var MainTemplate $template
          */
         $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $params['IS_CATALOG'] = $template->isCatalog();
+        $params['IS_LANDING'] = CatalogLandingService::isLandingPage();
 
         return parent::onPrepareComponentParams($params);
     }
 
-    public function executeComponent()
+    /**
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     */
+    public function prepareResult(): void
     {
-        try {
-            $this->prepareResult();
-
-            $this->includeComponentTemplate();
-        } catch (\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
-            }
+        if ($this->arParams['IS_LANDING']) {
+            $this->arResult['BACK_LINK'] = CatalogLandingService::getBackLink();
         }
-    }
 
-    protected function prepareResult()
-    {
-        /** @var IblockElement $iblockElement */
-        $iblockElement = $this->arParams['IBLOCK_ELEMENT'];
-        /** @var IblockSection $iblockSection */
-        $iblockSection = $this->arParams['IBLOCK_SECTION'];
-        $skipId = null;
         if ($this->arParams['IBLOCK_ELEMENT']) {
-            $iblockId = $iblockElement->getIblockId();
-            $iblockSectionId = $iblockElement->getIblockSectionId();
-        } elseif ($this->arParams['IBLOCK_SECTION']) {
-            $iblockId = $iblockSection->getIblockId();
-            $iblockSectionId = $iblockSection->getId();
-            // не показываем сам раздел в крошках
-            $skipId = $iblockSectionId;
-        } else {
+            /** @var Product $product */
+            $product = $this->arParams['IBLOCK_ELEMENT'];
+            $this->arParams['IBLOCK_SECTION'] = $product->getSection();
+        }
+
+        if (null === $this->arParams['IBLOCK_SECTION']) {
             throw new \InvalidArgumentException('Invalid component parameters');
         }
 
-        $this->arResult['SECTIONS'] = [];
-        $navChain = \CIBlockSection::GetNavChain($iblockId, $iblockSectionId);
-        while ($item = $navChain->GetNext()) {
-            if ($item['ID'] == $skipId) {
+        /** @var Category $category */
+        $category = $this->arParams['IBLOCK_SECTION'];
+        $parentSections = [];
+        /** @var Category $parent */
+        foreach ($category->getFullPathCollection() as $parent) {
+            if (!$this->arParams['SHOW_CURRENT'] && $parent->getId() === $category->getId()) {
                 continue;
             }
-            $this->arResult['SECTIONS'][] = $item;
+
+            $parentSections[] = [
+                'ID'   => $parent->getId(),
+                'CODE' => $parent->getCode(),
+                'URL'  => $parent->getSectionPageUrl(),
+                'NAME' => $parent->getName(),
+            ];
         }
+        $this->arResult['SECTIONS'] = \array_reverse($parentSections);
 
-        return $this;
-    }
-
-    /**
-     * @param string $code
-     * @param int $iblockId
-     *
-     * @return null|Product
-     */
-    protected function getElement(string $code, $iblockId = null)
-    {
-        return (new IblockElementQuery($iblockId))
-            ->withFilterParameter('CODE', $code)
-            ->exec()
-            ->first();
-    }
-
-    /**
-     * @param string $code
-     *
-     * @return null|IblockSection
-     */
-    protected function getSection(string $code)
-    {
-        return (new CategoryQuery())
-            ->withFilterParameter('CODE', $code)
-            ->exec()
-            ->first();
+        if ($this->arParams['IS_LANDING']) {
+            $this->arResult['BACK_LINK'] = CatalogLandingService::getBackLink();
+        }
     }
 }

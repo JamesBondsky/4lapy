@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main\Application;
 use FourPaws\App\Application as PawsApplication;
 use FourPaws\App\MainTemplate;
+use FourPaws\Decorators\SvgDecorator;
 
 $markup = PawsApplication::markup();
 /** @var MainTemplate $template */
@@ -35,8 +36,20 @@ if ($template->hasMainWrapper()) {
         </div>
         <?php include __DIR__ . '/blocks/preloader.php'; ?>
         </div>
-    <?php }
-    /** Основной прелоадер из gui */ ?>
+    <?php } ?>
+    <div class="article_popup__wrapper--hidden js-article-popup">
+        <div class="article_popup">
+            <div class="article_popup_nav">
+                <div class="article_popup_nav__cross js-article-close">
+                    <?= new SvgDecorator('cross') ?>
+                </div>
+            </div>
+            <div class="article_popup__title js-popup-title"></div>
+            <div class="article_popup__image js-popup-image"></div>
+            <div class="article_popup__text_container js-popup-text"></div>
+        </div>
+    </div>
+    <?php /** Основной прелоадер из gui */ ?>
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
     </main>
 <?php } ?>

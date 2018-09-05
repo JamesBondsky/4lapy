@@ -8,20 +8,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main;
 use Bitrix\Main\Application;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\LoaderException;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Helpers\WordHelper;
@@ -29,29 +24,27 @@ use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserService;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
-
-class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
+class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
 {
     /**
      * @var OrderService
      */
-    private $orderService;
+    protected $orderService;
 
-    /** @var UserAuthorizationInterface */
-    private $authUserProvider;
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    protected $currentUserProvider;
 
-    /** @var UserAuthorizationInterface */
-    private $currentUserProvider;
+    /**
+     * @var BasketService
+     */
+    protected $basketService;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -60,21 +53,15 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
      *
      * @throws \RuntimeException
      * @throws SystemException
+     * @throws ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
-        try {
-            $container = App::getInstance()->getContainer();
-            $this->orderService = $container->get('order.service');
-            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
-            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
-            $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            /** @noinspection PhpUnhandledExceptionInspection */
-            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
-        }
+        $container = App::getInstance()->getContainer();
+        $this->orderService = $container->get('order.service');
+        $this->basketService = $container->get(BasketService::class);
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
     /**
@@ -98,99 +85,81 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     }
 
     /**
-     * {@inheritdoc}
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \RuntimeException
-     * @throws EmptyEntityClass
-     * @throws SystemException
-     * @throws IblockNotFoundException
-     * @throws ObjectException
-     * @throws ArgumentException
-     * @throws \Exception
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws LoaderException
+     * @throws Exception
      */
-    public function executeComponent()
+    public function executeComponent(): void
     {
-        if (!$this->authUserProvider->isAuthorized()) {
-            define('NEED_AUTH', true);
-
-            return null;
-        }
-
-        $instance = Application::getInstance();
-
-        $request = $instance->getContext()->getRequest();
-        if ($request->get('reply_order') === 'Y') {
-            $orderId = (int)$request->get('id');
-            if ($orderId > 0) {
-                $this->copyOrder2CustomerBasket($orderId, $request);
-            }
-        }
-
+        $activeOrders = new ArrayCollection();
+        $closedOrders = new ArrayCollection();
         try {
-            $userId = $this->currentUserProvider->getCurrentUserId();
-        } catch (NotAuthorizedException $e) {
-            /** запрашиваем авторизацию */
-            \define('NEED_AUTH', true);
-            return null;
-        }
+            $user = $this->currentUserProvider->getCurrentUser();
+            $instance = Application::getInstance();
 
-        $cache = $instance->getCache();
-        // здесь всегда будет работать $this->getPath(), который вернет не тот путь
-        //$cachePath = $this->getCachePath() ?: $this->getPath();
-        $cachePath = $instance->getManagedCache()->getCompCachePath(
-            $this->getRelativePath()
-        );
-        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $userId]),
-            $cachePath)
-        ) {
-            $result = $cache->getVars();
-            $manzanaOrders = $result['manzanaOrders'];
-        } elseif ($cache->startDataCache()) {
-            $tagCache = new TaggedCacheHelper($cachePath);
-            try {
-                $manzanaOrders = $this->orderService->getManzanaOrders();
-            } catch (ManzanaServiceException $e) {
-                $manzanaOrders = new ArrayCollection();
+            $request = $instance->getContext()->getRequest();
+            if ($request->get('reply_order') === 'Y') {
+                $orderId = (int)$request->get('id');
+                if ($orderId > 0) {
+                    $this->copyOrder2CustomerBasket($orderId, $request);
+                }
+            }
+            $cache = $instance->getCache();
+            // здесь всегда будет работать $this->getPath(), который вернет не тот путь
+            //$cachePath = $this->getCachePath() ?: $this->getPath();
+            $cachePath = $instance->getManagedCache()->getCompCachePath(
+                $this->getRelativePath()
+            );
+            if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
+                serialize(['userId' => $user->getId()]),
+                $cachePath)
+            ) {
+                $result = $cache->getVars();
+                $manzanaOrders = $result['manzanaOrders'];
+            } elseif ($cache->startDataCache()) {
+                $tagCache = new TaggedCacheHelper($cachePath);
+                try {
+                    $manzanaOrders = $this->orderService->getManzanaOrders();
+                } catch (ManzanaServiceException $e) {
+                    $manzanaOrders = new ArrayCollection();
+                }
+
+                $tagCache->addTags([
+                    'personal:orders:' . $user->getId(),
+                    'order:' . $user->getId(),
+                ]);
+
+                $tagCache->end();
+                $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
             }
 
-            $tagCache->addTags([
-                'personal:orders:' . $userId,
-                'order:' . $userId,
-            ]);
-
-            $tagCache->end();
-            $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
-        }
-
-        /** имитация постранички */
-        $nav = new PageNavigation('nav-orders');
-        $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-        $activeOrders = $closedOrders = new ArrayCollection();
-        try {
-            $this->arResult['ACTIVE_ORDERS'] = $activeOrders = $this->orderService->getActiveSiteOrders();
+            /** имитация постранички */
+            $nav = new PageNavigation('nav-orders');
+            $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+            $activeOrders = $this->orderService->getActiveSiteOrders();
             /** @noinspection PhpUndefinedVariableInspection */
             $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                 $manzanaOrders->toArray());
             /** Сортировка по дате и статусу общих заказов */
             $allClosedOrdersList = $allClosedOrders->toArray();
-            usort($allClosedOrdersList, ['FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate']);
+            usort($allClosedOrdersList, [
+                'FourPawsPersonalCabinetOrdersComponent',
+                'sortByStatusAndDate',
+            ]);
 
             /** имитация постранички */
             $nav->setRecordCount($allClosedOrders->count());
-            $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
+            $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                 $nav->getOffset(), $nav->getPageSize(), true));
             $this->arResult['NAV'] = $nav;
+
+            if (!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
+                $storeService = App::getInstance()->getContainer()->get('store.service');
+                $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
+            }
         } catch (NotAuthorizedException $e) {
-            /** запрашиваем авторизацию */
-            \define('NEED_AUTH', true);
-            return null;
+            define('NEED_AUTH', true);
+
+            return;
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('my_orders');
             $logger->error('error - ' . $e->getMessage());
@@ -201,10 +170,10 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $storeService = App::getInstance()->getContainer()->get('store.service');
             $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
         }
+        $this->arResult['CLOSED_ORDERS'] = $closedOrders;
+        $this->arResult['ACTIVE_ORDERS'] = $activeOrders;
 
         $this->includeComponentTemplate();
-
-        return $this;
     }
 
     /**
@@ -247,7 +216,6 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     /**
      * @param OrderItem $item
      * @param int       $percent
-     * @param int       $precision
      *
      * @return string
      */
@@ -266,7 +234,11 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $bonusText = \sprintf(
                 '+ %s %s',
                 $bonus,
-                WordHelper::declension($bonus, ['бонус', 'бонуса', 'бонусов'])
+                WordHelper::declension($bonus, [
+                    'бонус',
+                    'бонуса',
+                    'бонусов',
+                ])
             );
         }
 
@@ -276,7 +248,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     /**
      * Взято из компонента списка заказов Битиркса common/bitrix/components/bitrix/sale.personal.order.list/class.php
      *
-     * @param int          $id Order id
+     * @param int $id Order id
      *
      * @param Main\Request $request
      *
@@ -344,6 +316,9 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
                     /** @var Sale\BasketItem $oldBasketItem */
                     foreach ($oldBasketItems as $oldBasketItem) {
+                        if ($this->basketService->isGiftProduct($oldBasketItem)) {
+                            continue;
+                        }
                         $propertyList = [];
                         if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
                             $propertyList = $oldPropertyCollection->getPropertyValues();

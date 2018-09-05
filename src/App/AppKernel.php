@@ -16,9 +16,9 @@ use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
 use FourPaws\EcommerceBundle\EcommerceBundle;
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\LocationBundle\FourPawsLocationBundle;
-use FourPaws\ReCaptchaBundle\FourPawsReCaptchaBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
+use FourPaws\ReCaptchaBundle\FourPawsReCaptchaBundle;
 use FourPaws\SaleBundle\FourPawsSaleBundle;
 use FourPaws\SapBundle\FourPawsSapBundle;
 use FourPaws\StoreBundle\FourPawsStoreBundle;
@@ -107,11 +107,15 @@ class AppKernel extends Kernel
             new EcommerceBundle(),
         ];
 
-        if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
+        if (\in_array($this->getEnvironment(), [
+            'dev',
+            'test'
+        ], true)) {
             $bundles[] = new DebugBundle();
             $bundles[] = new WebProfilerBundle();
             $bundles[] = new SensioDistributionBundle();
         }
+
         return $bundles;
     }
 
@@ -130,7 +134,7 @@ class AppKernel extends Kernel
     /**
      * {@inheritdoc}
      */
-    public function getRootDir()
+    public function getRootDir(): string
     {
         return \dirname(static::getDocumentRoot());
     }
@@ -138,7 +142,7 @@ class AppKernel extends Kernel
     /**
      * {@inheritdoc}
      */
-    public function getCacheDir()
+    public function getCacheDir(): string
     {
         /**
          * Ввиду использования вагранта симфони не может очистить директорию, которая используется по умолчанию
@@ -153,7 +157,7 @@ class AppKernel extends Kernel
     /**
      * {@inheritdoc}
      */
-    public function getLogDir()
+    public function getLogDir(): string
     {
         return getenv('WWW_LOG_DIR') ?: $this->getRootDir() . '/var/logs/';
     }

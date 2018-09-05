@@ -1,4 +1,10 @@
-<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
+<?
+/**
+ * [LP22-275]: убрать функционал регистрации карт
+ */
+return;
+
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Зарегистрировать карту");
 ?>
 <? $APPLICATION->IncludeComponent('fourpaws:front_office.card.registration',

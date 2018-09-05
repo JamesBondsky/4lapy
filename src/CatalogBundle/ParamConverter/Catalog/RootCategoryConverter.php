@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: pinchuk
- * Date: 12/24/17
- * Time: 6:43 PM
- */
 
 namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
@@ -12,14 +6,24 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
+use FourPaws\CatalogBundle\Exception\LandingIsNotFoundException;
+use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterService;
+use FourPaws\CatalogBundle\Service\SortService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use JMS\Serializer\ArrayTransformerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Class RootCategoryConverter
+ *
+ * @package FourPaws\CatalogBundle\ParamConverter\Catalog
+ */
 class RootCategoryConverter extends AbstractCatalogRequestConverter
 {
     /**
@@ -31,6 +35,30 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
      * @var FilterService
      */
     private $filterService;
+    /**
+     * @var CatalogLandingService
+     */
+    private $landingService;
+
+    /**
+     * AbstractCatalogRequestConverter constructor.
+     *
+     * @param ArrayTransformerInterface $arrayTransformer
+     * @param ValidatorInterface        $validator
+     * @param SortService               $sortService
+     * @param CatalogLandingService     $landingService
+     */
+    public function __construct(
+        ArrayTransformerInterface $arrayTransformer,
+        ValidatorInterface $validator,
+        SortService $sortService,
+        CatalogLandingService $landingService
+    )
+    {
+        $this->landingService = $landingService;
+
+        parent::__construct($arrayTransformer, $validator, $sortService);
+    }
 
     /**
      * @param CategoriesService $categoriesService
@@ -41,17 +69,20 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
     public function setCategoriesService(CategoriesService $categoriesService)
     {
         $this->categoriesService = $categoriesService;
+
         return $this;
     }
 
     /**
      * @param FilterService $filterService
+     *
      * @return static
      * @required
      */
     public function setFilterService(FilterService $filterService)
     {
         $this->filterService = $filterService;
+
         return $this;
     }
 
@@ -76,8 +107,8 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
     }
 
     /**
-     * @param Request $request
-     * @param ParamConverter $configuration
+     * @param Request             $request
+     * @param ParamConverter      $configuration
      * @param RootCategoryRequest $object
      *
      * @throws NotFoundHttpException
@@ -95,15 +126,25 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
         $value = $request->attributes->get($pathAttribute, '');
 
         try {
-            $category = $this->categoriesService->getByPath($value);
+            if ($this->landingService->isLanding($request)) {
+                $object->setLanding($this->categoriesService->getDefaultLandingByDomain($this->landingService->getLandingName($request)));
+
+                return true;
+            } else {
+                $category = $this->categoriesService->getByPath($value);
+            }
         } catch (IblockNotFoundException $e) {
             throw new NotFoundHttpException('Инфоблок каталога не найден');
         } catch (CategoryNotFoundException $e) {
             throw new NotFoundHttpException(sprintf('Категория %s не найдена', $value));
+        } catch (LandingIsNotFoundException $e) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            throw new NotFoundHttpException(sprintf('Лендинг %s не найдена', $this->landingService->getLandingName($request)));
         }
 
         try {
-            $this->filterService->getFilterHelper()->initCategoryFilters($category, $request);
+            $this->filterService->getFilterHelper()
+                ->initCategoryFilters($category, $request);
         } catch (\Exception $e) {
         }
 
@@ -117,6 +158,7 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
             IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
             $variables
         );
+
         if ($result) {
             $object->setCategorySlug($variables['SECTION_CODE']);
             $request->attributes->set('rootCategoryRequest', $object);

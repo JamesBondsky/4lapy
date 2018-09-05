@@ -38,12 +38,16 @@ class IblockElementQuery extends IblockQueryBase
         );
     }
 
+    /**
+     * @return array
+     */
     public function getBaseSelect(): array
     {
         return [
             'ACTIVE',
             'DATE_ACTIVE_FROM',
             'DATE_ACTIVE_TO',
+            'DATE_CREATE',
             'IBLOCK_ID',
             'ID',
             'IBLOCK_SECTION_ID',
