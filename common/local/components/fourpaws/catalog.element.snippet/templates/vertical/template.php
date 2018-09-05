@@ -49,6 +49,17 @@ if (!$arParams['ITEM_ATTR_ID']) {
     $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
 }
 
+$offerWithImages = $currentOffer;
+if (!$currentOffer->getImagesIds()) {
+    /** @var Offer $offer */
+    foreach ($offers as $offer) {
+        if (!$offer->getImagesIds()) {
+            continue;
+        }
+        $offerWithImages = $offer;
+    }
+}
+
 $value = '';
 if ($mainCombinationType === 'SIZE') {
     if ($currentOffer->getClothingSize()) {
@@ -67,11 +78,11 @@ if ($mainCombinationType === 'SIZE') {
          data-productid="<?= $product->getId() ?>">
         <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
         <span class="b-common-item__image-wrap">
-            <?php if ($currentOffer->getImagesIds()) { ?>
+            <?php if ($offerWithImages->getImagesIds()) { ?>
                 <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
                    onclick="<?= $getOnClick($currentOffer) ?>">
                     <img class="b-common-item__image js-weight-img"
-                         src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                         src="<?= $offerWithImages->getResizeImages(240, 240)->first() ?>"
                          alt="<?= $currentOffer->getName() ?>"
                          title="">
                 </a>

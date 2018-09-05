@@ -44,21 +44,30 @@ $product->setOffers($product->getOffers(true, $arParams['OFFER_FILTER'] ?? []));
 $offers = $product->getOffersSorted();
 /** @var Offer $currentOffer */
 
-$currentOffer = $arResult['CURRENT_OFFER']; ?>
+$currentOffer = $arResult['CURRENT_OFFER'];
+$offerWithImages = $currentOffer;
+if (!$currentOffer->getImagesIds()) {
+    /** @var Offer $offer */
+    foreach ($offers as $offer) {
+        if (!$offer->getImagesIds()) {
+            continue;
+        }
+        $offerWithImages = $offer;
+    }
+}
+?>
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
     <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
-    <?php if ($currentOffer->getImages()->count() > 0) { ?>
-        <span class="b-common-item__image-wrap">
-            <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
-               onclick="<?= $getOnClick($currentOffer) ?>">
-                <img class="b-common-item__image js-weight-img"
-                     src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
-                     alt="<?= $product->getName() ?>"
-                     title="<?= $product->getName() ?>"/>
-            </a>
-        </span>
-    <?php } ?>
+    <span class="b-common-item__image-wrap">
+        <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
+           onclick="<?= $getOnClick($currentOffer) ?>">
+            <img class="b-common-item__image js-weight-img"
+                 src="<?= $offerWithImages->getResizeImages(240, 240)->first() ?>"
+                 alt="<?= $product->getName() ?>"
+                 title="<?= $product->getName() ?>"/>
+        </a>
+    </span>
     <div class="b-common-item__info-center-block">
         <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>"
            onclick="<?= $getOnClick($currentOffer) ?>" title="">
