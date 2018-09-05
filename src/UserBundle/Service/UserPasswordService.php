@@ -32,7 +32,7 @@ class UserPasswordService
     /**
      * Массив кодов групп пользователей, пароль которых можно изменить только методом resetPassword
      */
-    private const GROUPS_WITH_LOCKED_PASSWORD = ['FRONT_OFFICE_USERS'];
+    public const GROUPS_WITH_LOCKED_PASSWORD = ['FRONT_OFFICE_USERS'];
     /**
      * @var bool
      */
@@ -118,7 +118,7 @@ class UserPasswordService
      *
      * @return string
      */
-    private function sendNewPassword(string $password, User $user): string
+    public function sendNewPassword(string $password, User $user): string
     {
         $result = Event::sendImmediate([
             'EVENT_NAME' => 'FRONT_OFFICE_PASSWORD_RESET',
