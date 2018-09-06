@@ -343,6 +343,7 @@ class OrderService implements LoggerAwareInterface
          * Привязываем корзину
          */
         if ($checkAvailability) {
+            $basket = $basket->createClone();
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
