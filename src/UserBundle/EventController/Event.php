@@ -9,8 +9,6 @@ namespace FourPaws\UserBundle\EventController;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
-use Bitrix\Main\GroupTable;
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -19,13 +17,12 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundException;
-use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
@@ -95,8 +92,7 @@ class Event extends BaseServiceHandler
 
         /** Работа с паролями некоторых групп пользователей (see FRONT_OFFICE_USERS)*/
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPasswordChange'], 'main');
-        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'replacePasswordIfNeed'], 'main');
-        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'sendPasswordIfNeed'], 'main');
+        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'resetStoreUserPassword'], 'main');
 
         /** очистка кеша пользователя */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
@@ -116,7 +112,8 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], 'main');
 
         /** поиск юзера по email при регистрации из соцсетей */
-        static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'], 'socialservices');
+        static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'],
+            'socialservices');
     }
 
     /**
@@ -473,7 +470,11 @@ class Event extends BaseServiceHandler
         if ($fields['PASSWORD'] || $fields['CONFIRM_PASSWORD']) {
             $serviceContainer = App::getInstance()->getContainer();
             $userPasswordService = $serviceContainer->get(UserPasswordService::class);
-            if (!$userPasswordService->isChangePasswordPossible($fields['ID'])) {
+            if (
+                !$userPasswordService->isChangePasswordPossibleForAll()
+                &&
+                !$userPasswordService->isChangePasswordPossible($fields['ID'])
+            ) {
                 unset($fields['PASSWORD'], $fields['CONFIRM_PASSWORD']);
                 $APPLICATION->ThrowException('Вам запрещено менять пароль');
                 $result = false;
@@ -483,73 +484,28 @@ class Event extends BaseServiceHandler
     }
 
     /**
-     *
-     * @param array $fields
-     *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     *
-     * @return bool
-     */
-    public function replacePasswordIfNeed(array &$fields): bool
-    {
-        if (ADMIN_SECTION) {
-            $groups = array_column($fields['GROUP_ID'], 'GROUP_ID');
-            $groupsToReplace = GroupTable::getList([
-                'filter' => ['STRING_ID' => UserPasswordService::GROUPS_WITH_LOCKED_PASSWORD],
-                'select' => ['ID']
-            ])->fetchAll();
-            $groupsToReplace = array_column($groupsToReplace, 'ID');
-            if (array_intersect($groups, $groupsToReplace)) {
-                //Надо менять
-                $collection = new ArrayCollection();
-                foreach ($groups as $id) {
-                    $collection->add(
-                        (new Group())->setId($id)
-                    );
-                }
-                $user = (new User())->setGroups($collection);
-                $serviceContainer = App::getInstance()->getContainer();
-                $userPasswordService = $serviceContainer->get(UserPasswordService::class);
-                $password = $userPasswordService->generatePassword($user);
-                $fields['PASSWORD'] = $fields['CONFIRM_PASSWORD'] = $password;
-                $fields['NEED_SEND_PASSWORD'] = true;
-            }
-        }
-        return true;
-    }
-
-    /**
-     *
      * @param array $fields
      *
      * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
-     * @throws NotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws ApplicationCreateException
+     * @throws NotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function sendPasswordIfNeed(array &$fields)
+    public function resetStoreUserPassword(array &$fields)
     {
-        if ($fields['NEED_SEND_PASSWORD'] && $fields['RESULT']) {
+        if ($fields['RESULT'] && \defined('ADMIN_SECTION') && ADMIN_SECTION) {
+            dump($fields);
             $serviceContainer = App::getInstance()->getContainer();
             $userPasswordService = $serviceContainer->get(UserPasswordService::class);
-            $userRepository = $serviceContainer->get(UserRepository::class);
-            if ($user = $userRepository->find($fields['RESULT'])) {
-                $userPasswordService->sendNewPassword($fields['CONFIRM_PASSWORD'], $user); //в PASSWORD тут уже хеш
-            } else {
-                throw new NotFoundException(
-                    'Ошибка попытки отправки письма: пользователь не найден'
-                );
+            if (!$userPasswordService->isChangePasswordPossible($fields['RESULT'])) {
+                $userPasswordService->resetPassword($fields['RESULT']);
             }
         }
     }
