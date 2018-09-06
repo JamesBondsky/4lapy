@@ -13,7 +13,7 @@ use FourPaws\Decorators\SvgDecorator;
 
 ?>
     <div class="b-feedback js-feedback-permutation">
-        <h4 class="b-feedback__header">Получайте рекомендации и выгодные предложения на почту</h4>
+        <div class="b-feedback__header">Получайте рекомендации и выгодные предложения на почту</div>
         <div class="b-form-inline b-form-inline--feedback">
             <form class="b-form-inline__form b-form-inline__form--feedback js-form-validation js-subscription-query"
                   data-url="/ajax/user/subscribe/subscribe/"

@@ -110,9 +110,9 @@ if ($isBrand && !empty($brand)) {
 }
 if ($childs !== null && $childs->count()) { ?>
     <div class="b-filter__block b-filter__block--select">
-        <h3 class="b-title b-title--filter-header">
+        <div class="b-title b-title--filter-header">
             Категория
-        </h3>
+        </div>
         <div class="b-select js-filter-select b-select--filter"
              data-filter="<?= $isBrand ? 'Sections' : 'section_id' ?>">
             <ul class="b-filter-link-list b-filter-link-list--filter b-filter-link-list--select-filter js-accordion-filter-select js-filter-checkbox">

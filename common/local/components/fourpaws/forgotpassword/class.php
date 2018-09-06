@@ -371,7 +371,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         $phone = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_FULL);
         ob_start(); ?>
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+            <div class="b-title b-title--h1 b-title--registration"><?= $title ?></div>
         </header>
         <?php /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot() . '/local/components/fourpaws/forgotpassword/templates/.default/include/'

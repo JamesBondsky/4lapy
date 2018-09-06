@@ -30,7 +30,7 @@ $this->setFrameMode(true);
 $offer = $arParams['OFFER'];
 ?>
 <div class="b-tab-content__container js-tab-content" data-tab-content="availability">
-    <h2 class="b-title b-title--advice b-title--stock">Наличие в магазинах</h2>
+    <div class="b-title b-title--advice b-title--stock">Наличие в магазинах</div>
     <div class="b-availability">
         <a class="b-link b-link--show-map js-product-map"
            href="javascript:void(0);" title="">

@@ -5,7 +5,7 @@
        title="Закрыть"></a>
     <div class="b-registration b-registration--add-pet">
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration"></h1>
+            <div class="b-title b-title--h1 b-title--registration"></div>
         </header>
         <form class="b-registration__form js-form-validation js-add-pet-query"
               method="post"

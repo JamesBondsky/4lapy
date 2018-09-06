@@ -18,11 +18,12 @@ use FourPaws\Components\ProductsByProp;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
 $offers = $arResult['OFFERS'];
 if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
     return;
 } ?>
-<h3 class="b-title b-title--light"><?=$arParams['TITLE']?></h3>
+<div class="b-title b-title--light"><?=$arParams['TITLE']?></div>
 <div class="b-common-wrapper b-common-wrapper--stock js-product-stock-mobile">
     <?php foreach ($offers as $offer) {
         $params = ['PRODUCT' => $offer->getProduct(), 'CURRENT_OFFER' => $offer];

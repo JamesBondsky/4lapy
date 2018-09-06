@@ -5,7 +5,7 @@
     <section class="b-popup-pick-city b-popup-pick-city--choose-gift js-popup-section js-popup-choose-gift" data-popup="popup-choose-gift">
         <a class="b-popup-pick-city__close b-popup-pick-city__close--choose-gift js-close-popup" href="javascript:void(0);" title="Закрыть"></a>
         <header class="b-popup-pick-city__header-popup b-popup-pick-city__header-popup--choose-gift">
-            <h1 class="b-title b-title--h1 b-title--choose-gift"></h1>
+            <div class="b-title b-title--h1 b-title--choose-gift"></div>
         </header>
         <div class="b-common-item b-common-item--popup-gift js-presents-item" style="display: none;">
             <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift">
