@@ -18,9 +18,9 @@ use Symfony\Component\Templating\PhpEngine;
 foreach ($filters as $filter) {
     if ($filter instanceof PriceFilter) { ?>
         <div class="b-filter__block">
-            <h3 class="b-title b-title--filter-header">
+            <div class="b-title b-title--filter-header">
                 <?= $filter->getName() ?>
-            </h3>
+            </div>
             <div class="b-range js-filter-input">
                 <div class="b-range__price-block">
                     <input
@@ -53,9 +53,9 @@ foreach ($filters as $filter) {
             continue;
         } ?>
         <div class="b-filter__block">
-            <h3 class="b-title b-title--filter-header">
+            <div class="b-title b-title--filter-header">
                 <?= $filter->getName() ?>
-            </h3>
+            </div>
             <?php if ($filter->isShowWithPicture()) { ?>
                 <div class="size_filter js-size-filter color_filter js-color-filter js-accordion-filter js-filter-checkbox quoter">
                     <?php

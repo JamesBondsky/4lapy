@@ -1,7 +1,7 @@
 <?php
 /**
  * @var RootCategoryRequest $rootCategoryRequest
- * @var CMain $APPLICATION
+ * @var CMain               $APPLICATION
  */
 
 use FourPaws\App\Templates\ViewsEnum;
@@ -15,21 +15,23 @@ global $APPLICATION;
 
 /**
  * @var Category $category
- * @var Request $request
+ * @var Request  $request
+ * @var string   $retailRocketViewScript
  */
+
+echo $retailRocketViewScript;
+
 $category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category.root',
     '',
     [
         'SECTION_CODE' => $rootCategoryRequest->getCategorySlug(),
-        'SET_TITLE' => 'Y',
-        'CACHE_TIME' => 10
+        'SET_TITLE'    => 'Y',
+        'CACHE_TIME'   => 10
     ],
     null,
     ['HIDE_ICONS' => 'Y']
-);
-
-?>
+); ?>
     <div class="b-catalog">
         <div class="b-container b-container--catalog-main">
             <div class="b-catalog__wrapper-title">
@@ -38,7 +40,7 @@ $category = $APPLICATION->IncludeComponent(
                     'fourpaws:breadcrumbs',
                     '',
                     [
-                        'IBLOCK_SECTION' => $category,
+                        'IBLOCK_SECTION'   => $category,
                         'ADDITIONAL_CLASS' => 'b-breadcrumbs--catalog-main'
                     ],
                     null,
@@ -62,8 +64,8 @@ $category = $APPLICATION->IncludeComponent(
                 ],
                 [
                     'SHOW_BORDER' => false,
-                    'NAME' => 'Блок популярных брендов',
-                    'MODE' => 'php',
+                    'NAME'        => 'Блок популярных брендов',
+                    'MODE'        => 'php',
                 ]
             );
             ?>
@@ -77,15 +79,15 @@ $category = $APPLICATION->IncludeComponent(
             '',
             [
                 'AREA_FILE_SHOW' => 'file',
-                'PATH' => '/local/include/blocks/viewed_products.php',
-                'EDIT_TEMPLATE' => '',
+                'PATH'           => '/local/include/blocks/viewed_products.php',
+                'EDIT_TEMPLATE'  => '',
             ],
             null,
             [
                 'HIDE_ICONS' => 'Y',
             ]
         );
-    ?></div>
+        ?></div>
 <?php
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';

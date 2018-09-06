@@ -18,7 +18,7 @@ $adviceCount = 2;
 
 
 <div class="b-advice">
-    <h2 class="b-title b-title--advice">Соберите набор и получите подарки</h2>
+    <div class="b-title b-title--advice">Соберите набор и получите подарки</div>
     <p class="b-advice__description">
         <?= $arResult['PROMO_DESCRIPTION']; ?>
     </p>

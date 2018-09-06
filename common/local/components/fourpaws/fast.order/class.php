@@ -38,6 +38,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException as SaleInvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -58,6 +59,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class FourPawsFastOrderComponent
+ *
  * @package FourPaws\Components
  */
 class FourPawsFastOrderComponent extends CBitrixComponent
@@ -84,6 +86,10 @@ class FourPawsFastOrderComponent extends CBitrixComponent
      * @var DeliveryService
      */
     private $deliveryService;
+    /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -106,6 +112,7 @@ class FourPawsFastOrderComponent extends CBitrixComponent
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         $this->basketService = $container->get(BasketService::class);
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
+        $this->retailRocketService = $container->get(RetailRocketService::class);
         $this->deliveryService = $container->get(DeliveryService::class);
         $this->salePreset = $container->get(SalePreset::class);
     }
@@ -183,7 +190,8 @@ class FourPawsFastOrderComponent extends CBitrixComponent
                     }
                     $hasBonus = $basketItem->getPropertyCollection()->getPropertyValues()['HAS_BONUS']['VALUE'];
                     $basketRows[$productId]['TOTAL_PRICE'] += $basketItem->getQuantity() * $basketItem->getPrice();
-                    $basketRows[$productId]['TOTAL_BASE_PRICE'] += $basketItem->getQuantity() * $basketItem->getBasePrice();
+                    $basketRows[$productId]['TOTAL_BASE_PRICE'] += $basketItem->getQuantity()
+                                                                   * $basketItem->getBasePrice();
                     $basketRows[$productId]['TOTAL_WEIGHT'] += $basketItem->getQuantity() * $basketItem->getWeight();
                     $basketRows[$productId]['BONUS_AWARDING_QUANTITY'] += $hasBonus;
                 }
@@ -195,12 +203,19 @@ class FourPawsFastOrderComponent extends CBitrixComponent
             $orderId = (int)$this->request->get('orderId');
             if ($orderId) {
                 $order = Order::load($orderId);
-                $this->arResult['USER_NAME'] = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'NAME')->getValue();
+                $this->arResult['USER_NAME'] = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'NAME')
+                                                           ->getValue();
                 $this->arResult['ACCOUNT_NUMBER'] = $order->getField('ACCOUNT_NUMBER');
-                $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->ecommerceService->renderScript(
-                    $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
-                    true
-                );
+                $this->arResult['ECOMMERCE_VIEW_SCRIPT'] =
+                    \sprintf(
+                        "<script>%s\n%s</script>",
+                        $this->ecommerceService->renderScript(
+                            $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик')
+                        ),
+                        $this->retailRocketService->renderOrderTransaction(
+                            $this->salePreset->createRetailRocketTransactionFromBitrixOrder($order)
+                        )
+                    );
             }
 
             $this->includeComponentTemplate($this->arParams['TYPE']);
@@ -238,12 +253,13 @@ class FourPawsFastOrderComponent extends CBitrixComponent
                 return $item;
             }
         }
+
         return null;
     }
 
     /**
      * @param Offer $offer
-     * @param bool $showToday
+     * @param bool  $showToday
      *
      * @return string
      *
@@ -264,7 +280,8 @@ class FourPawsFastOrderComponent extends CBitrixComponent
 
         foreach ($res as $item) {
             $periodType = $item->getPeriodType();
-            if ($periodType === CalculationResult::PERIOD_TYPE_DAY || $periodType === CalculationResult::PERIOD_TYPE_MONTH) {
+            if ($periodType === CalculationResult::PERIOD_TYPE_DAY
+                || $periodType === CalculationResult::PERIOD_TYPE_MONTH) {
                 $periodFrom = $item->getPeriodFrom();
                 switch ($periodFrom) {
                     case 0:
@@ -320,6 +337,9 @@ class FourPawsFastOrderComponent extends CBitrixComponent
         }
     }
 
+    /**
+     * @return void
+     */
     private function calcTemplateFields(): void
     {
         $weight = 0;

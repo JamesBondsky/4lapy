@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        title="Закрыть"></a>
     <div class="b-registration b-registration--add-referal">
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration">Новый реферал</h1>
+            <div class="b-title b-title--h1 b-title--registration">Новый реферал</div>
         </header>
         <form class="b-registration__form js-form-validation js-referal-form" data-url="/ajax/personal/referral/add/"
               method="post">

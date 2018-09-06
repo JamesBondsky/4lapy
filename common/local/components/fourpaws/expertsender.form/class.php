@@ -1,85 +1,92 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\SystemException;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
+use FourPaws\UserBundle\Service\UserService;
+use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsExpertsenderFormComponent extends \CBitrixComponent
+class FourPawsExpertsenderFormComponent extends CBitrixComponent implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
     /**
-     * @var CurrentUserProviderInterface
+     * @var UserService
      */
-    private $currentUserProvider;
-    
+    private $userService;
     /**
-     * @var UserAuthorizationInterface
+     * @var RetailRocketService
      */
-    private $authorizationProvider;
-    
+    private $retailRocketService;
+
+    /**
+     * FourPawsExpertsenderFormComponent constructor.
+     *
+     * @param CBitrixComponent|null $component
+     *
+     * @throws RuntimeException
+     */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
+
         try {
             $container = Application::getInstance()->getContainer();
-            /** @noinspection PhpUnhandledExceptionInspection */
-            $this->authorizationProvider = $container->get(UserAuthorizationInterface::class);
-            /** @noinspection PhpUnhandledExceptionInspection */
-            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        } catch (ApplicationCreateException $e) {
-            /** @noinspection PhpUnhandledExceptionInspection */
-            $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            /** @noinspection PhpUnhandledExceptionInspection */
-            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+
+            $this->userService = $container->get(UserService::class);
+            $this->retailRocketService = $container->get(RetailRocketService::class);
+        } catch (ApplicationCreateException | ServiceCircularReferenceException | ServiceNotFoundException $e) {
+            $this->log()
+                 ->critical(
+                     \sprintf(
+                         'Component execute error: [%s] %s in %s:%d',
+                         $e->getCode(),
+                         $e->getMessage(),
+                         $e->getFile(),
+                         $e->getLine()
+                     )
+                 );
         }
     }
-    
-    /** {@inheritdoc} */
-    public function executeComponent()
+
+    /**
+     * @throws RuntimeException
+     */
+    public function executeComponent(): void
     {
         try {
             $this->arResult['EMAIL'] = '';
-            if ($this->getAuthorizationProvider()->isAuthorized()) {
-                $curUser = $this->getCurrentUserProvider()->getCurrentUser();
-                $this->arResult['EMAIL'] = $curUser !== null ? $curUser->getEmail() : '';
-                $this->arResult['CONFIRMED'] = $curUser !== null ?  $curUser->isEmailConfirmed() : false;
+
+            if ($this->userService->isAuthorized()) {
+                $curUser = $this->userService->getCurrentUser();
+
+                $this->arResult['EMAIL'] = $curUser->getEmail();
+                $this->arResult['CONFIRMED'] = $curUser->isEmailConfirmed();
                 $this->arResult['IS_SUBSCRIBED'] = $curUser->isEsSubscribed();
             }
+
+            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'', $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'));
+
+            parent::executeComponent();
             $this->includeComponentTemplate();
-        } catch (\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
-            }
+        } catch (Exception $e) {
+            $this->log()
+                 ->critical(
+                     \sprintf(
+                         'Component execute error: [%s] %s in %s:%d',
+                         $e->getCode(),
+                         $e->getMessage(),
+                         $e->getFile(),
+                         $e->getLine()
+                     )
+                 );
         }
-    }
-    
-    /**
-     * @return UserAuthorizationInterface
-     */
-    public function getAuthorizationProvider() : UserAuthorizationInterface
-    {
-        return $this->authorizationProvider;
-    }
-    
-    /**
-     * @return CurrentUserProviderInterface
-     */
-    public function getCurrentUserProvider() : CurrentUserProviderInterface
-    {
-        return $this->currentUserProvider;
     }
 }

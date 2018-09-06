@@ -9,6 +9,7 @@ use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\HighloadHelper;
 use FourPaws\Helpers\WordHelper;
 
@@ -17,25 +18,32 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @var $ecommerceService GoogleEcommerceService
- * @var array $arParams
- * @var array $arResult
+ * @var                       $ecommerceService    GoogleEcommerceService
+ * @var                       $retailRocketService RetailRocketService
+ *
+ * @var array                 $arParams
+ * @var array                 $arResult
  *
  * @var CatalogElementSnippet $component
  *
- * @var Product $product
- * @var OfferCollection $offers
- * @var Offer $offer
- * @var Offer $currentOffer
+ * @var Product               $product
+ * @var OfferCollection       $offers
+ * @var Offer                 $offer
+ * @var Offer                 $currentOffer
  *
- * @global CMain $APPLICATION
+ * @global CMain              $APPLICATION
  */
 $ecommerceService = $component->getEcommerceService();
+$retailRocketService = $component->getRetailRocketService();
 $getOnClick = function (Offer $offer) use ($ecommerceService, $arParams) {
-    return \str_replace('"', '\'', $ecommerceService->renderScript(
-        $ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']),
-        false
-    ));
+    return \str_replace(
+        '"', '\'', $ecommerceService->renderScript($ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']))
+    );
+};
+$getOnMouseDown = function (Offer $offer) use ($retailRocketService) {
+    return \str_replace(
+        '"', '\'', $retailRocketService->renderAddToBasket($offer->getXmlId())
+    );
 };
 
 /** @var Product $product */
@@ -45,7 +53,8 @@ $offers = $product->getOffersSorted();
 /** @var Offer $currentOffer */
 
 $currentOffer = $arResult['CURRENT_OFFER']; ?>
-<div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
+<div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS']
+                              !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
      data-productid="<?= $product->getId() ?>">
     <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
     <?php if ($currentOffer->getImages()->count() > 0) { ?>
@@ -78,13 +87,14 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                 'fourpaws:comments',
                 'catalog.snippet',
                 [
-                    'HL_ID' => HighloadHelper::getIdByName('Comments'),
-                    'OBJECT_ID' => $productId,
-                    'SORT_DESC' => 'Y',
-                    'ITEMS_COUNT' => 5,
+                    'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                    'OBJECT_ID'          => $productId,
+                    'SORT_DESC'          => 'Y',
+                    'ITEMS_COUNT'        => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
-                    'TYPE' => 'catalog',
-                    'ITEM_LINK' => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])->getUri(),
+                    'TYPE'               => 'catalog',
+                    'ITEM_LINK'          => (new Uri($currentOffer->getLink()))->addParams(['new-review' => 'y'])
+                                                                               ->getUri(),
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
@@ -146,7 +156,8 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                         }
                     }
                 } ?>
-                <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : '' ?> js-mobile-select js-select-mobile-package"
+                <a class="b-weight-container__link <?= ($offers->count()
+                                                        > 1) ? ' b-weight-container__link--mobile ' : '' ?> js-mobile-select js-select-mobile-package"
                    href="javascript:void(0);"
                    title=""><?= $value ?></a>
                 <div class="b-weight-container__dropdown-list__wrapper">
@@ -179,12 +190,15 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                         if ($value) { ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
-                                   class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?>"
-                                   data-oldprice="<?= $offer->getCatalogOldPrice() !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : ''?>"
+                                   class="b-weight-container__link js-price<?= $currentOffer->getId()
+                                                                               === $offer->getId() ? ' active-link' : '' ?>"
+                                   data-oldprice="<?= $offer->getCatalogOldPrice()
+                                                      !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
                                    data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                    data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-onclick="<?= $getOnClick($offer) ?>"
+                                   data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
                             </li>
@@ -192,12 +206,14 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                             <li class="b-weight-container__item" style="display: none">
                                 <a href="javascript:void(0)"
                                    class="b-weight-container__link js-price active-link"
-                                   data-oldprice="<?= $offer->getCatalogOldPrice() !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
+                                   data-oldprice="<?= $offer->getCatalogOldPrice()
+                                                      !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
                                    data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                    data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                    data-onclick="<?= $getOnClick($offer) ?>"
+                                   data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                    data-link="<?= $offer->getLink() ?>"></a>
                             </li>
                         <?php } ?>
@@ -211,12 +227,14 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
                     <li class="b-weight-container__item">
                         <a href="javascript:void(0)"
                            class="b-weight-container__link js-price active-link"
-                           data-oldprice="<?= $currentOffer->getOldPrice() !== $currentOffer->getCatalogPrice() ? $currentOffer->getOldPrice() : ''?>"
+                           data-oldprice="<?= $currentOffer->getOldPrice()
+                                              !== $currentOffer->getCatalogPrice() ? $currentOffer->getOldPrice() : '' ?>"
                            data-price="<?= $currentOffer->getCatalogPrice() ?>"
                            data-discount="<?= ($currentOffer->getDiscountPrice() ?: '') ?>"
                            data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
                            data-onclick="<?= $getOnClick($currentOffer) ?>"
+                           data-onmousedown="<?= $getOnMouseDown($currentOffer) ?>"
                            data-link="<?= $currentOffer->getLink() ?>"></a>
                     </li>
                 </ul>
@@ -241,6 +259,7 @@ $currentOffer = $arResult['CURRENT_OFFER']; ?>
         if ($offerId > 0) { ?>
             <a class="b-common-item__add-to-cart js-basket-add"
                href="javascript:void(0);"
+               onmousedown="<?= $getOnMouseDown($currentOffer) ?>"
                title=""
                data-url="/ajax/sale/basket/add/"
                data-offerid="<?= $offerId ?>">

@@ -10,20 +10,21 @@ use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\WordHelper;
 
 /**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
+ * @global CMain              $APPLICATION
+ * @var array                 $arParams
+ * @var array                 $arResult
  * @var CatalogElementSnippet $component
- * @var string $templateName
- * @var string $componentPath
+ * @var string                $templateName
+ * @var string                $componentPath
  *
- * @var Product $product
- * @var OfferCollection $offers
- * @var Offer $offer
- * @var Offer $currentOffer
+ * @var Product               $product
+ * @var OfferCollection       $offers
+ * @var Offer                 $offer
+ * @var Offer                 $currentOffer
  */
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffersSorted();
@@ -31,14 +32,21 @@ $offers = $product->getOffersSorted();
 $pickupText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST');
 
 /**
- * @var $ecommerceService GoogleEcommerceService
+ * @var $ecommerceService    GoogleEcommerceService
+ * @var $retailRocketService RetailRocketService
  */
 $ecommerceService = $component->getEcommerceService();
+$retailRocketService = $component->getRetailRocketService();
+
 $getOnClick = function (Offer $offer) use ($ecommerceService, $arParams) {
-    return \str_replace('"', '\'', $ecommerceService->renderScript(
-        $ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']),
-        false
-    ));
+    return \str_replace(
+        '"', '\'', $ecommerceService->renderScript($ecommerceService->buildClickFromOffer($offer, $arParams['GOOGLE_ECOMMERCE_TYPE']))
+    );
+};
+$getOnMouseDown = function (Offer $offer) use ($retailRocketService) {
+    return \str_replace(
+        '"', '\'', $retailRocketService->renderAddToBasket($offer->getXmlId())
+    );
 };
 
 $currentOffer = $arResult['CURRENT_OFFER'];
@@ -104,7 +112,8 @@ if ($mainCombinationType === 'SIZE') {
 
                 ob_start(); ?>
                 <div class="b-weight-container b-weight-container--list">
-                    <a class="b-weight-container__link <?= ($offers->count() > 1) ? ' b-weight-container__link--mobile ' : '' ?>js-mobile-select js-select-mobile-package"
+                    <a class="b-weight-container__link <?= ($offers->count()
+                                                            > 1) ? ' b-weight-container__link--mobile ' : '' ?>js-mobile-select js-select-mobile-package"
                        href="javascript:void(0);"><?= $value ?></a>
                     <div class="b-weight-container__dropdown-list__wrapper">
                         <div class="b-weight-container__dropdown-list"></div>
@@ -144,7 +153,10 @@ if ($mainCombinationType === 'SIZE') {
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
                             $addAttr .= ' data-onclick="' . $getOnClick($offer) . '"';
-                            $addAttr .= ' data-oldprice="' . ($offer->getCatalogOldPrice() !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : ''). '"';
+                            $addAttr .= ' data-onmousedown="' . $getOnMouseDown($offer) . '"';
+                            $addAttr .= ' data-oldprice="' . ($offer->getCatalogOldPrice()
+                                                              !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '')
+                                        . '"';
                             $addAttr .= ' data-discount="' . ($offer->getDiscountPrice() ?: '') . '"';
                             $addAttr .= ' data-available="' . (!$offer->isAvailable() ? 'Нет в наличии' : '') . '"';
 
@@ -169,9 +181,11 @@ if ($mainCombinationType === 'SIZE') {
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price active-link"
-                               data-oldprice="<?= ($currentOffer->getCatalogOldPrice() !== $currentOffer->getCatalogPrice() ? $currentOffer->getCatalogOldPrice() : '') ?>"
+                               data-oldprice="<?= ($currentOffer->getCatalogOldPrice()
+                                                   !== $currentOffer->getCatalogPrice() ? $currentOffer->getCatalogOldPrice() : '') ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
+                               data-onmousedown="<?= $getOnMouseDown($currentOffer) ?>"
                                data-pickup="<?= $currentOffer->isByRequest() ? $pickupText : '' ?>"
                                data-available="<?= !$currentOffer->isAvailable() ? 'Нет в наличии' : '' ?>"
                                data-price="<?= $currentOffer->getCatalogPrice() ?>"
@@ -184,6 +198,7 @@ if ($mainCombinationType === 'SIZE') {
             <?php } ?>
             <a class="b-common-item__add-to-cart js-basket-add track-recommendation"
                href="javascript:void(0);"
+               onmousedown="<?= $getOnMouseDown($currentOffer) ?>"
                data-url="/ajax/sale/basket/add/"
                data-offerid="<?= $currentOffer->getId() ?>">
                 <span class="b-common-item__wrapper-link">
@@ -243,19 +258,19 @@ if ($mainCombinationType === 'SIZE') {
 //
 if (isset($arParams['BIG_DATA']['RCM_ID']) && !empty($arParams['BIG_DATA']['RCM_ID'])) {
     $jsProduct = [
-        'ID' => $product->getId(),
+        'ID'     => $product->getId(),
         'RCM_ID' => $arParams['BIG_DATA']['RCM_ID'] ?? '',
     ];
     $jsSelectors = [
-        'item' => '#' . $arParams['ITEM_ATTR_ID'],
+        'item'                => '#' . $arParams['ITEM_ATTR_ID'],
         'trackRecommendation' => '#' . $arParams['ITEM_ATTR_ID'] . ' .track-recommendation',
     ];
     $jsParams = [
         'cookiePrefix' => $arParams['BIG_DATA']['cookiePrefix'] ?? '',
         'cookieDomain' => $arParams['BIG_DATA']['cookieDomain'] ?? '',
-        'serverTime' => $arParams['BIG_DATA']['serverTime'] ?? 0,
-        'product' => $jsProduct,
-        'selectors' => $jsSelectors,
+        'serverTime'   => $arParams['BIG_DATA']['serverTime'] ?? 0,
+        'product'      => $jsProduct,
+        'selectors'    => $jsSelectors,
     ];
 
     ?>
