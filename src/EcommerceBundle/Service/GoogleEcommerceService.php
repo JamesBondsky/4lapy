@@ -24,13 +24,11 @@ use FourPaws\EcommerceBundle\Storage\KeyValueStaticStorage;
 use InvalidArgumentException as MainInvalidArgumentException;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
-use RuntimeException;
 use Symfony\Component\Templating\EngineInterface;
 
 /**
  * Class GoogleEcommerceService
  *
- * @todo    add base ecommerce service class
  * @todo    add ua settings
  * @todo    add ga/gtm render
  * @todo    add render configuration
@@ -40,14 +38,8 @@ use Symfony\Component\Templating\EngineInterface;
  */
 class GoogleEcommerceService implements ScriptRenderedInterface
 {
-    /**
-     * @var SerializerInterface
-     */
-    private $serializer;
-    /**
-     * @var EngineInterface
-     */
-    private $renderer;
+    use InlineScriptRendererTrait;
+
     /**
      * @var ArrayTransformerInterface
      */
@@ -65,39 +57,6 @@ class GoogleEcommerceService implements ScriptRenderedInterface
         $this->serializer = $serializer;
         $this->renderer = $renderer;
         $this->arrayTransformer = $arrayTransformer;
-    }
-
-    /**
-     * @param object $data
-     * @param bool   $addScriptTag
-     *
-     * @return string
-     *
-     * @throws RuntimeException
-     */
-    public function renderScript($data, bool $addScriptTag): string
-    {
-        /** @noinspection PhpParamsInspection */
-        $data = $this->serializer->serialize($data, 'json');
-
-        return \trim($this->renderer->render('EcommerceBundle:GoogleEcommerce:inline.script.php', \compact('data', 'addScriptTag')));
-    }
-
-    /**
-     * @param object $data
-     * @param string $presetName
-     * @param bool   $addScriptTag
-     *
-     * @return string
-     *
-     * @throws RuntimeException
-     */
-    public function renderPreset($data, string $presetName, bool $addScriptTag): string
-    {
-        /** @noinspection PhpParamsInspection */
-        $data = $this->serializer->serialize($data, 'json');
-
-        return \trim($this->renderer->render('EcommerceBundle:GoogleEcommerce:preset.inline.script.php', \compact('data', 'presetName', 'addScriptTag')));
     }
 
     /**
@@ -182,7 +141,8 @@ class GoogleEcommerceService implements ScriptRenderedInterface
                 (new Product())
                     ->setId($offer->getXmlId())
                     ->setName(\preg_replace('~\'|"~', '', $offer->getName()))
-                    ->setBrand(\preg_replace('~"|\'~', '', $offer->getProduct()->getBrandName()))
+                    ->setBrand(\preg_replace('~"|\'~', '', $offer->getProduct()
+                        ->getBrandName()))
                     ->setPrice($offer->getPrice())
                     ->setCategory(\implode('|', \array_reverse($offer->getProduct()
                         ->getFullPathCollection()
