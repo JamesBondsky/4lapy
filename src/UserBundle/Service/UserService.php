@@ -16,6 +16,10 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
+use CAllUser;
+use CUser;
+use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\UserGroup;
@@ -71,19 +75,21 @@ class UserService implements
 
     public const BASE_DISCOUNT = 3;
     /**
-     * @var \CAllUser|\CUser
+     * @var CAllUser|CUser
      */
     private $bitrixUserService;
-
     /**
      * @var UserRepository
      */
     private $userRepository;
-
     /**
      * @var LocationService
      */
     private $locationService;
+    /**
+     * @var ArrayCollection
+     */
+    private $userCollection;
 
     /**
      * UserService constructor.
@@ -103,22 +109,24 @@ class UserService implements
         if (\is_object($USER)) {
             $this->bitrixUserService = $USER;
         } else {
-            $USER = new \CUser();
+            $USER = new CUser();
             if (\is_object($USER)) {
                 $this->bitrixUserService = $USER;
             } else {
                 $this->bitrixUserService = null;
             }
         }
+
         $this->userRepository = $userRepository;
         $this->locationService = $locationService;
+        $this->userCollection = new ArrayCollection();
     }
 
     /**
      * @param string $rawLogin
      * @param string $password
      *
-     * @throws \Exception
+     * @throws Exception
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
@@ -197,8 +205,13 @@ class UserService implements
         }
 
         try {
-            $user = $this->userRepository->find($userId);
-        } catch (\Exception $e) {
+            if ($this->userCollection->containsKey($userId)) {
+                $user = $this->userCollection->get($userId);
+            } else {
+                $user = $this->userRepository->find($userId);
+                $this->userCollection->set($userId, $user);
+            }
+        } catch (Exception $e) {
             $user = null;
         }
 
@@ -236,7 +249,7 @@ class UserService implements
      *
      * @param User $user
      *
-     * @throws \Exception
+     * @throws Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws RuntimeException
@@ -271,18 +284,17 @@ class UserService implements
                     $user->getEmail()
                 );
             } else {
-                throw new \Exception('не доступен сервис');
+                throw new Exception('не доступен сервис');
             }
             /** отправка письма происходи на событие after в этот момент */
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Application::getConnection()
                 ->rollbackTransaction();
             $_SESSION = $session;
             throw new BitrixRuntimeException($e->getMessage(), $e->getCode());
         }
 
-        $result['ID'] = $result['ID'] ?? '';
-        $id = (int)$result['ID'];
+        $id = (int)($result['ID'] ?? '');
 
         if ($id <= 0) {
             Application::getConnection()
@@ -323,7 +335,7 @@ class UserService implements
      * @param string            $name
      * @param string|array|null $parentName
      *
-     * @throws \Exception
+     * @throws Exception
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -428,7 +440,7 @@ class UserService implements
     /**
      * @param int $id
      *
-     * @throws \Exception
+     * @throws Exception
      * @throws InvalidIdentifierException
      * @throws NotAuthorizedException
      * @return array
@@ -450,7 +462,7 @@ class UserService implements
      *
      * @param int $id
      *
-     * @throws \Exception
+     * @throws Exception
      * @throws NotAuthorizedException
      * @throws AvatarSelfAuthorizationException
      * @return bool
@@ -521,7 +533,7 @@ class UserService implements
         if ($hostUserId > 0 && $guestUserId > 0) {
             try {
                 $curUserId = $this->getCurrentUserId();
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 $curUserId = 0;
             }
             if ($curUserId > 0 && $curUserId === $guestUserId && $curUserId !== $hostUserId) {
@@ -537,7 +549,7 @@ class UserService implements
     /**
      * Возврат к авторизации под исходным пользователем
      *
-     * @throws \Exception
+     * @throws Exception
      * @throws NotAuthorizedException
      * @return bool
      */
@@ -760,9 +772,11 @@ class UserService implements
         foreach ($groups as $group) {
             $groupsList[$group->getCode()] = $group->getId();
         }
+
         if ($contact->isOpt() && !$user->isOpt()) {
             /** установка оптовика */
             try {
+                /** @noinspection OffsetOperationsInspection */
                 $groupsList[] = GroupTable::query()
                                     ->setFilter(['STRING_ID' => UserGroup::OPT_CODE])
                                     ->setLimit(1)
@@ -776,7 +790,7 @@ class UserService implements
 
                 return false;
             }
-            \CUser::SetUserGroup($user->getId(), $groupsList);
+            CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
             TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
@@ -786,7 +800,7 @@ class UserService implements
         if (!$contact->isOpt() && $user->isOpt()) {
             /** убираем оптовика */
             unset($groupsList[UserGroup::OPT_CODE]);
-            \CUser::SetUserGroup($user->getId(), $groupsList);
+            CUser::SetUserGroup($user->getId(), $groupsList);
             $this->logout();
             $this->authorize($user->getId());
             TaggedCacheHelper::clearManagedCache(['personal:referral:' . $user->getId()]);
@@ -855,7 +869,7 @@ class UserService implements
         } catch (TooManyActiveCardFound $e) {
             $this->log()
                 ->info('найдено больше одной активной карты', $e->getTrace());
-        } catch (ManzanaServiceException|\Exception $e) {
+        } catch (ManzanaServiceException|Exception $e) {
             $this->log()
                 ->error('ошибка манзаны', $e->getTrace());
         }

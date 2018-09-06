@@ -11,14 +11,16 @@ use FourPaws\External\Manzana\Model\Client;
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
-/** @var Client $manzanaItem
+/**
+ * @var Client $manzanaItem
  * @var string $phone
+ * @var string $formSubmit
  */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step b-registration__content--back">
-    <div class="b-step-form">Шаг <span>2</span> из <span>2</span>
-    </div>
+    <div class="b-step-form">Шаг <span>2</span> из <span>2</span></div>
     <form class="b-registration__form b-registration__form--margin js-form-validation js-registration-form"
           id="reg-step5-form"
+          onsubmit="<?= $formSubmit ?>"
           data-url="/ajax/user/auth/register/"
           method="post">
         <input type="hidden" name="action" value="register">

@@ -23,6 +23,7 @@ use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -32,7 +33,6 @@ use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -73,6 +73,10 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
      * @var SalePreset
      */
     private $salePreset;
+    /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
 
     /**
      * FourPawsOrderCompleteComponent constructor.
@@ -94,6 +98,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         $this->manzanaPosService = $serviceContainer->get('manzana.pos.service');
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
         $this->ecommerceService = $serviceContainer->get(GoogleEcommerceService::class);
+        $this->retailRocketService = $serviceContainer->get(RetailRocketService::class);
         $this->salePreset = $serviceContainer->get(SalePreset::class);
 
         parent::__construct($component);
@@ -148,10 +153,16 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                 $this->arParams['HASH']
             );
 
-            $this->arResult['ECOMMERCE_VIEW_SCRIPT_ORDER'] = $this->ecommerceService->renderScript(
-                $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка через корзину'),
-                true
-            );
+            $this->arResult['ECOMMERCE_VIEW_SCRIPT'] =
+                \sprintf(
+                    "<script>%s\n%s</script>",
+                    $this->ecommerceService->renderScript(
+                        $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка через корзину')
+                    ),
+                    $this->retailRocketService->renderOrderTransaction(
+                        $this->salePreset->createRetailRocketTransactionFromBitrixOrder($order)
+                    )
+                );
 
             if ($this->orderService->hasRelatedOrder($order)) {
                 $relatedOrder = $this->orderService->getRelatedOrder($order);
@@ -161,10 +172,16 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                     $order = $tmp;
                 }
 
-                $this->arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED'] = $this->ecommerceService->renderScript(
-                    $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка через корзину'),
-                    true
-                );
+                $this->arResult['ECOMMERCE_VIEW_SCRIPT'] .=
+                    \sprintf(
+                        "<script>%s\n%s</script>",
+                        $this->ecommerceService->renderScript(
+                            $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка через корзину')
+                        ),
+                        $this->retailRocketService->renderOrderTransaction(
+                            $this->salePreset->createRetailRocketTransactionFromBitrixOrder($order)
+                        )
+                    );
             }
         } catch (NotFoundException $e) {
             Tools::process404('', true, true, true);
