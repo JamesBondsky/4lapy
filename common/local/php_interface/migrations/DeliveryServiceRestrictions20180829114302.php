@@ -132,7 +132,6 @@ class DeliveryServiceRestrictions20180829114302 extends SprintMigrationBase
      */
     public function up()
     {
-        return false;
         $deliveryServices = ServicesTable::getList(
             [
                 'filter' => [
