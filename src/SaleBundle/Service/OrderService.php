@@ -418,12 +418,6 @@ class OrderService implements LoggerAwareInterface
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
         try {
-            /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
-                $shipmentItem = $shipmentItemCollection->createItem($item);
-                $shipmentItem->setQuantity($item->getQuantity());
-            }
-
             $shipment->setFields(
                 [
                     'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
@@ -433,9 +427,16 @@ class OrderService implements LoggerAwareInterface
                     'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
+
+            /** @var BasketItem $item */
+            foreach ($order->getBasket() as $item) {
+                $shipmentItem = $shipmentItemCollection->createItem($item);
+                $shipmentItem->setQuantity($item->getQuantity());
+            }
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
                 'deliveryId' => $selectedDelivery->getDeliveryId(),
+                'trace' => $e->getTrace()
             ]);
             throw new OrderCreateException('Failed to create order shipment');
         }
@@ -1098,10 +1099,6 @@ class OrderService implements LoggerAwareInterface
          */
         $toDelete = [];
         if ($storage->isSplit()) {
-            if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
-                Manager::disableExtendsDiscount();
-            }
-
             [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($storage);
 
             $order = $splitResult1->getOrder();
@@ -1147,17 +1144,13 @@ class OrderService implements LoggerAwareInterface
                     ]);
                 }
             }
-
-            if ($isDiscountEnabled) {
-                Manager::enableExtendsDiscount();
-            }
+            $this->resetBasket($toDelete);
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);
         }
 
         $this->orderStorageService->clearStorage($storage);
-//        $this->resetBasket($toDelete);
 
         return $order;
     }
