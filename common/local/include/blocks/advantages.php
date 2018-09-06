@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
-                    <h3 class="b-avantage__title">Бонусная <br/> программа</h3>
+                    <div class="b-avantage__title">Бонусная <br/> программа</div>
                     <span class="b-avantage__info">Вернём до 7% от суммы заказа на бонусную карту</span>
                 </div>
             </div>
@@ -24,7 +24,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
-                    <h3 class="b-avantage__title">Выгодные <br/> предложения</h3>
+                    <div class="b-avantage__title">Выгодные <br/> предложения</div>
                     <span class="b-avantage__info">Скидки до 30% на самые популярные товары</span>
                 </div>
             </div>
@@ -35,7 +35,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
-                    <h3 class="b-avantage__title">Огромный <br/> выбор</h3>
+                    <div class="b-avantage__title">Огромный <br/> выбор</div>
                     <span class="b-avantage__info">Самый широкий ассортимент товаров для животных</span>
                 </div>
             </div>
@@ -46,7 +46,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
-                    <h3 class="b-avantage__title">Удобная <br/> оплата</h3>
+                    <div class="b-avantage__title">Удобная <br/> оплата</div>
                     <span class="b-avantage__info">Оплата заказа как наличными, так и банковской картой</span>
                 </div>
             </div>
@@ -57,7 +57,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
-                    <h3 class="b-avantage__title">Быстрая <br/> доставка</h3>
+                    <div class="b-avantage__title">Быстрая <br/> доставка</div>
                     <span class="b-avantage__info">Удобный сервис! Доставка заказов по всей России</span>
                 </div>
             </div>
@@ -68,7 +68,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
-                    <h3 class="b-avantage__title">Online заказ <br/> за час</h3>
+                    <div class="b-avantage__title">Online заказ <br/> за час</div>
                     <span class="b-avantage__info">Возможность забрать заказ из любого магазина через час</span>
                 </div>
             </div>

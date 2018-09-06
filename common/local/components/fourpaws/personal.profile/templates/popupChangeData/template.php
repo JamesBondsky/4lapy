@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        title="Закрыть"></a>
     <div class="b-registration b-registration--edit-data">
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration">Редактирование данных</h1>
+            <div class="b-title b-title--h1 b-title--registration">Редактирование данных</div>
         </header>
         <form class="b-registration__form js-form-validation js-edit-data-query"
               data-url="/ajax/personal/profile/changeData/"

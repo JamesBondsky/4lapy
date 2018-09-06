@@ -26,7 +26,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration">Авторизация</h1>
+            <div class="b-title b-title--h1 b-title--registration">Авторизация</div>
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
               data-url="/ajax/user/auth/login/"

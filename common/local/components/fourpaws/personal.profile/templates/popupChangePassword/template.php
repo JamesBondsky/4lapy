@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        title="Закрыть"></a>
     <div class="b-registration b-registration--new-password">
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration">Изменение пароля</h1>
+            <div class="b-title b-title--h1 b-title--registration">Изменение пароля</div>
         </header>
         <form class="b-registration__form js-form-validation js-new-password"
               data-url="/ajax/personal/profile/changePassword/"
