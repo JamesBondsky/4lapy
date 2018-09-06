@@ -51,7 +51,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
     private const MODULE_PROVIDER_CODE = 'sberbank.ecom';
     private const OPTION_FISCALIZATION_CODE = 'FISCALIZATION';
-
+    private const MAX_PRICE_DIFFERENCE = 0.25;
     /**
      * @var OrderService
      */
@@ -248,8 +248,15 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             $found = false;
             /** @var Item $pti */
             foreach ($paymentTaskItems[$xmlId] as $pti) {
-                if ($pti->getPrice() === $item->getPrice()) {
-                    $pti->setQuantity((int)$pti->getQuantity() + (int)$item->getQuantity());
+                /**
+                 * Если в SAP позиции по заказу разделены, и цена отличается менее, чем на значение константы,
+                 * то это одна позиция. Производим объединение
+                */
+                if (abs($pti->getPrice() - $item->getPrice()) <= self::MAX_PRICE_DIFFERENCE) {
+                    $newQuantity = (int)$pti->getQuantity() + (int)$item->getQuantity();
+                    $newPrice = ($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity;
+                    $pti->setQuantity($newQuantity);
+                    $pti->setPrice($newPrice);
                     $pti->setSumPrice($pti->getPrice() * (int)$pti->getQuantity());
                     $found = true;
                 }

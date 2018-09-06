@@ -344,6 +344,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             } ?>
             <a class="b-counter-basket__basket-link js-basket-add js-this-product"
                href="javascript:void(0)"
+               <?= $arResult['BASKET_LINK_EVENT'] ?>
                title=""
                data-offerId="<?= $currentOffer->getId(); ?>"
                data-url="/ajax/sale/basket/add/">

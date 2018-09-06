@@ -2,10 +2,20 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
-<!-- Global site tag (gtag.js) - Google Analytics -->
+}
+
+use FourPaws\App\Application;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
+
+/**
+ * @todo вынести всё в бандл
+ */
+$container = Application::getInstance()->getContainer();
+$retailRocket = $container->get(RetailRocketService::class);
+?>
 <?php /*<script async src="https://www.googletagmanager.com/gtag/js?id=UA-30730607-1" data-skip-moving="true"></script>*/ ?>
 <script data-skip-moving="true">
+    <?= $retailRocket->renderTracking() ?>
     window.dataLayer = window.dataLayer || [];
 
     (function (w, d, s, l, i) {

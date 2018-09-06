@@ -14,6 +14,8 @@ use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\ActionField;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Ecommerce;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\GoogleEcommerce;
 use FourPaws\EcommerceBundle\Dto\GoogleEcommerce\Product;
+use FourPaws\EcommerceBundle\Dto\RetailRocket\Item;
+use FourPaws\EcommerceBundle\Dto\RetailRocket\Transaction;
 use JMS\Serializer\ArrayTransformerInterface;
 
 /**
@@ -166,6 +168,20 @@ class SalePreset
     }
 
     /**
+     * @param Order $order
+     *
+     * @return Transaction
+     */
+    public function createRetailRocketTransactionFromBitrixOrder(Order $order): Transaction
+    {
+        return (new Transaction())
+            ->setTransaction($order->getField('ACCOUNT_NUMBER'))
+            ->setItems(
+                $this->createRetailRocketItemsFromBitrixBasket($order->getBasket())
+            );
+    }
+
+    /**
      * @param BasketItem $basketItem
      *
      * @return ArrayCollection
@@ -262,9 +278,10 @@ class SalePreset
                     'price'    => $basketItem->getPrice(),
                     'discount' => $basketItem->getDiscountPrice(),
                     'tax'      => $basketItem->getVat(),
+                    'qnt'      => $basketItem->getQuantity(),
                     'quantity' => $basketItem->getQuantity(),
-                    'name'     => \preg_replace('~"|\'~', '',$offer ? $offer->getName() : $basketItem->getField('NAME')),
-                    'brand'    =>\preg_replace('~"|\'~', '', $product ? $product->getBrandName() : ''),
+                    'name'     => \preg_replace('~"|\'~', '', $offer ? $offer->getName() : $basketItem->getField('NAME')),
+                    'brand'    => \preg_replace('~"|\'~', '', $product ? $product->getBrandName() : ''),
                     'category' => $product ? \implode('|', \array_reverse($product->getFullPathCollection()
                         ->map(function (Category $category) {
                             return $category->getName();
@@ -275,5 +292,24 @@ class SalePreset
         }
 
         return $basketArrayCollection;
+    }
+
+    /**
+     * @param Basket $basket
+     *
+     * @return ArrayCollection
+     */
+    private function createRetailRocketItemsFromBitrixBasket(Basket $basket): ArrayCollection
+    {
+        $itemCollection = new ArrayCollection();
+
+        $this->enrichBasketCollection($basket)
+            ->map(function (array $item) use ($itemCollection) {
+                $itemCollection->add(
+                    $this->arrayTransformer->fromArray($item, Item::class)
+                );
+            });
+
+        return $itemCollection;
     }
 }
