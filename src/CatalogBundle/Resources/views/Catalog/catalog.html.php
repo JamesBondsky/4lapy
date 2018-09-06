@@ -12,6 +12,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var PhpEngine              $view
  * @var GoogleEcommerceService $ecommerceService
  * @var CatalogLandingService  $landingService
+ * @var string                 $retailRocketViewScript
  * @var CMain                  $APPLICATION
  */
 
@@ -39,7 +40,7 @@ if ($catalogRequest->isLanding()) {
 
 echo $view->render(
     'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php',
-    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService')
+    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService', 'retailRocketViewScript')
 );
 
 if ($catalogRequest->isLanding()) {
