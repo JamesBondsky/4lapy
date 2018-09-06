@@ -13,13 +13,16 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
 /**
- * @var Request $request
+ * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var GoogleEcommerceService $ecommerceService
- * @var PhpEngine $view
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var GoogleEcommerceService                $ecommerceService
+ * @var string                                $retailRocketViewScript
+ * @var PhpEngine                             $view
+ * @var CMain                                 $APPLICATION
  */
+
+echo $retailRocketViewScript;
 
 global $APPLICATION;
 
@@ -95,7 +98,11 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
     </div>
     <div class="b-filter__bottom">
         <a class="b-filter__button" href="javascript:void(0);" title="">
-            Показать <?= $count . ' ' . WordHelper::declension($count, ['товар', 'товара', 'товаров']) ?>
+            Показать <?= $count . ' ' . WordHelper::declension($count, [
+                'товар',
+                'товара',
+                'товаров'
+            ]) ?>
         </a>
     </div>
 </aside>
@@ -118,7 +125,8 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                             <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
                         </span>
                     </a>
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count
+                                                                                              . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
@@ -183,7 +191,10 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
-                ['PRODUCT' => $product, 'GOOGLE_ECOMMERCE_TYPE' => 'Поиск']
+                [
+                    'PRODUCT'               => $product,
+                    'GOOGLE_ECOMMERCE_TYPE' => 'Поиск'
+                ]
             );
         } ?>
     </div>
@@ -193,11 +204,11 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE' => '',
-            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS' => false,
+            'NAV_TITLE'      => '',
+            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE' => 'Y',
+            'AJAX_MODE'      => 'Y',
         ],
         null,
         [
