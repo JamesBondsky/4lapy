@@ -18,6 +18,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -89,8 +90,9 @@ class Event extends BaseServiceHandler
         /** обновляем логин если он равняется телефону или email */
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], 'main');
 
-        /** Проверка возможности смены пароля */
+        /** Работа с паролями некоторых групп пользователей (see FRONT_OFFICE_USERS)*/
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPasswordChange'], 'main');
+        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'resetStoreUserPassword'], 'main');
 
         /** очистка кеша пользователя */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
@@ -110,7 +112,8 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], 'main');
 
         /** поиск юзера по email при регистрации из соцсетей */
-        static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'], 'socialservices');
+        static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'],
+            'socialservices');
     }
 
     /**
@@ -449,13 +452,16 @@ class Event extends BaseServiceHandler
      *
      * @param array $fields
      *
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws ApplicationCreateException
      *
-     * @return true
+     * @return bool
      */
     public function checkPasswordChange(array &$fields): bool
     {
@@ -464,12 +470,43 @@ class Event extends BaseServiceHandler
         if ($fields['PASSWORD'] || $fields['CONFIRM_PASSWORD']) {
             $serviceContainer = App::getInstance()->getContainer();
             $userPasswordService = $serviceContainer->get(UserPasswordService::class);
-            if (!$userPasswordService->isChangePasswordPossible($fields['ID'])) {
+            if (
+                !$userPasswordService->isChangePasswordPossibleForAll()
+                &&
+                !$userPasswordService->isChangePasswordPossible($fields['ID'])
+            ) {
                 unset($fields['PASSWORD'], $fields['CONFIRM_PASSWORD']);
                 $APPLICATION->ThrowException('Вам запрещено менять пароль');
                 $result = false;
             }
         }
         return $result;
+    }
+
+    /**
+     * @param array $fields
+     *
+     * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function resetStoreUserPassword(array &$fields)
+    {
+        if ($fields['RESULT'] && \defined('ADMIN_SECTION') && ADMIN_SECTION) {
+            dump($fields);
+            $serviceContainer = App::getInstance()->getContainer();
+            $userPasswordService = $serviceContainer->get(UserPasswordService::class);
+            if (!$userPasswordService->isChangePasswordPossible($fields['RESULT'])) {
+                $userPasswordService->resetPassword($fields['RESULT']);
+            }
+        }
     }
 }
