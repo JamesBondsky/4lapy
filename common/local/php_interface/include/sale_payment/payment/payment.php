@@ -84,20 +84,24 @@ $response = $rbs->register_order(
     $fiscal
 );
 
-/**
- * Разбор ответа
- *
- * @var array $response
- */
-if ((int)$response['errorCode'] !== 0) {
-    $code = null;
-    if (in_array((int)$response['errorCode'], [999, 1, 2, 3, 4, 5, 7, 8], true)) {
-        $message = $response['errorMessage'];
-        $code = $response['errorCode'];
-    } else {
-        $message = GetMessage('RBS_PAYMENT_PAY_ERROR');
-    }
-    throw new PaymentException($message, $code);
+switch ((int)$response['errorCode']) {
+    case 0:
+        $formUrl = $response['formUrl'];
+        break;
+    case 1:
+        try {
+            $orderInfo = $paymentService->getSberbankOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER'));
+            $formUrl = $paymentService = $paymentService->getSberbankPaymentUrl($orderInfo);
+            break;
+        } catch (\FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException $e) {
+            // обработка ниже
+        }
+        // no break
+    default:
+        throw new PaymentException(
+            $response['errorMessage'] ?? GetMessage('RBS_PAYMENT_PAY_ERROR'),
+            $response['errorCode']
+        );
 }
 
-echo '<script>window.location="' . $response['formUrl'] . '"</script>';
+echo '<script>window.location="' . $formUrl . '"</script>';

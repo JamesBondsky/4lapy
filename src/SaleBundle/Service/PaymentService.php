@@ -52,6 +52,7 @@ use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotPaidException;
+use FourPaws\SaleBundle\Exception\SberBankOrderNumberNotFoundException;
 use FourPaws\SaleBundle\Exception\SberbankOrderPaymentDeclinedException;
 use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
@@ -78,6 +79,8 @@ class PaymentService implements LoggerAwareInterface
      * @var BasketService
      */
     protected $basketService;
+
+    protected const SBERBANK_PAYMENT_URL_FORMAT = '%s://%s/payment/merchants/%s/payment_ru.html?mdOrder=%s';
 
     /**
      * @var Sberbank
@@ -701,6 +704,27 @@ class PaymentService implements LoggerAwareInterface
     }
 
     /**
+     * @param OrderInfo $orderInfo
+     *
+     * @return string
+     * @throws SberBankOrderNumberNotFoundException
+     */
+    public function getSberbankPaymentUrl(OrderInfo $orderInfo): string
+    {
+        $orderNumber = $this->getSberbankOrderId($orderInfo);
+        $urlParts = \parse_url($this->getSberbankProcessing()->getApiUrl());
+        $url = \sprintf(
+            self::SBERBANK_PAYMENT_URL_FORMAT,
+            $urlParts['scheme'],
+            $urlParts['host'],
+            $this->getSberbankProcessing()->getMerchantName(),
+            $orderNumber
+        );
+
+        return $url;
+    }
+
+    /**
      * @param Order $order
      * @param       $sberbankOrderId
      * @throws ArgumentException
@@ -826,6 +850,7 @@ class PaymentService implements LoggerAwareInterface
      * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws PaymentException
+     * @throws SberBankOrderNumberNotFoundException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankPaymentException
@@ -846,16 +871,7 @@ class PaymentService implements LoggerAwareInterface
         ) {
             $onlinePayment = $this->getOrderPayment($order);
 
-            $sberbankOrderId = '';
-            /** @var Attribute $attribute */
-            foreach ($response->getAttributes() as $attribute) {
-                if ($attribute->getName() === Sberbank::ORDER_NUMBER_ATTRIBUTE) {
-                    $sberbankOrderId = $attribute->getValue();
-                }
-            }
-            if (!$sberbankOrderId) {
-                throw new SberbankPaymentException('Order number not found');
-            }
+            $sberbankOrderId = $this->getSberbankOrderId($response);
 
             $onlinePayment->setPaid('Y');
             $onlinePayment->setField('PS_SUM', $response->getAmount() / 100);
@@ -885,5 +901,23 @@ class PaymentService implements LoggerAwareInterface
                 $response->getErrorCode()
             );
         }
+    }
+
+    /**
+     * @param OrderInfo $orderInfo
+     *
+     * @return string
+     * @throws SberBankOrderNumberNotFoundException
+     */
+    protected function getSberbankOrderId(OrderInfo $orderInfo): string
+    {
+        /** @var Attribute $attribute */
+        foreach ($orderInfo->getAttributes() as $attribute) {
+            if ($attribute->getName() === Sberbank::ORDER_NUMBER_ATTRIBUTE) {
+                return $attribute->getValue();
+            }
+        }
+
+        throw new SberBankOrderNumberNotFoundException('Order number not found');
     }
 }

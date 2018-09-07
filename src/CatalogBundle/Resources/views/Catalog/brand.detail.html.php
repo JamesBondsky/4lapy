@@ -132,7 +132,7 @@ if (!$isAjax) { ?>
                         IblockType::PUBLICATION,
                         IblockCode::SHARES
                     ),
-                    'NEWS_COUNT' => 16,
+                    'NEWS_COUNT' => 1492,
                     'SORT_BY1' => 'ACTIVE_FROM',
                     'SORT_ORDER1' => 'DESC,NULLS',
                     'SORT_BY2' => 'SORT',
