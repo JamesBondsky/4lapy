@@ -158,9 +158,9 @@ if ($order) {
            href="javascript:void(0);" title="Закрыть"></a>
         <div class="b-registration b-registration--subscribe-delivery">
             <header class="b-registration__header">
-                <h1 class="b-title b-title--h1 b-title--registration">
+                <div class="b-title b-title--h1 b-title--registration">
                     <?=$orderSubscribe ? 'Изменение подписки' : 'Подписка на доставку'?>
-                </h1>
+                </div>
             </header>
             <form class="b-registration__form js-form-validation js-subscribe-query"
                   method="post"

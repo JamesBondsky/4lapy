@@ -5,28 +5,19 @@
 use FourPaws\Decorators\SvgDecorator;
 
 /**
- * @var \CBitrixComponentTemplate         $this
- *
  * @var array                             $arParams
  * @var array                             $arResult
  * @var array                             $templateData
  * @var FourPawsExpertsenderFormComponent $component
- *
- * @var string                            $componentPath
- * @var string                            $templateName
- * @var string                            $templateFile
- * @var string                            $templateFolder
- *
- * @global CMain                          $APPLICATION
- * @global CDatabase                      $DB
  */
 
 ?>
     <div class="b-feedback js-feedback-permutation">
-        <h4 class="b-feedback__header">Получайте рекомендации и выгодные предложения на почту</h4>
+        <div class="b-feedback__header">Получайте рекомендации и выгодные предложения на почту</div>
         <div class="b-form-inline b-form-inline--feedback">
             <form class="b-form-inline__form b-form-inline__form--feedback js-form-validation js-subscription-query"
                   data-url="/ajax/user/subscribe/subscribe/"
+                  onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
                   method="post">
                 <input type="hidden" name="type" value="all">
                 <div class="b-input">

@@ -12,6 +12,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -26,6 +27,10 @@ class CatalogElementSnippet extends CBitrixComponent
      * @var GoogleEcommerceService
      */
     private $ecommerceService;
+    /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
 
     /**
      * CatalogElementSnippet constructor.
@@ -40,6 +45,7 @@ class CatalogElementSnippet extends CBitrixComponent
     {
         $container = Application::getInstance()->getContainer();
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
+        $this->retailRocketService = $container->get(RetailRocketService::class);
 
         parent::__construct($component);
     }
@@ -141,5 +147,13 @@ class CatalogElementSnippet extends CBitrixComponent
     public function getEcommerceService(): GoogleEcommerceService
     {
         return $this->ecommerceService;
+    }
+
+    /**
+     * @return RetailRocketService
+     */
+    public function getRetailRocketService(): RetailRocketService
+    {
+        return $this->retailRocketService;
     }
 }

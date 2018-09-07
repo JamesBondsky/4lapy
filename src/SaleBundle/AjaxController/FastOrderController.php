@@ -25,6 +25,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -85,20 +86,25 @@ class FastOrderController extends Controller
      * @var SalePreset
      */
     private $salePreset;
+    /**
+     * @var GoogleEcommerceService
+     */
+    private $retailRocketService;
 
     /**
      * OrderController constructor.
      *
-     * @param OrderService $orderService
-     * @param UserAuthorizationInterface $userAuthProvider
+     * @param OrderService                 $orderService
+     * @param UserAuthorizationInterface   $userAuthProvider
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param UserCitySelectInterface $citySelectProvider
-     * @param AjaxMess $ajaxMess
-     * @param BasketService $basketService
-     * @param BasketViewService $basketViewService
-     * @param StoreService $storeService
-     * @param GoogleEcommerceService $ecommerceService
-     * @param SalePreset $salePreset
+     * @param UserCitySelectInterface      $citySelectProvider
+     * @param AjaxMess                     $ajaxMess
+     * @param BasketService                $basketService
+     * @param BasketViewService            $basketViewService
+     * @param StoreService                 $storeService
+     * @param GoogleEcommerceService       $ecommerceService
+     * @param RetailRocketService          $retailRocketService
+     * @param SalePreset                   $salePreset
      */
     public function __construct(
         OrderService $orderService,
@@ -110,6 +116,7 @@ class FastOrderController extends Controller
         BasketViewService $basketViewService,
         StoreService $storeService,
         GoogleEcommerceService $ecommerceService,
+        RetailRocketService $retailRocketService,
         SalePreset $salePreset
     )
     {
@@ -122,6 +129,7 @@ class FastOrderController extends Controller
         $this->basketViewService = $basketViewService;
         $this->storeService = $storeService;
         $this->ecommerceService = $ecommerceService;
+        $this->retailRocketService = $ecommerceService;
         $this->salePreset = $salePreset;
     }
 
@@ -172,6 +180,7 @@ class FastOrderController extends Controller
             } catch (LoaderException | ObjectNotFoundException | \RuntimeException $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+
                 return $this->ajaxMess->getSystemError();
             }
         }
@@ -182,7 +191,7 @@ class FastOrderController extends Controller
             'fourpaws:fast.order',
             '',
             [
-                'TYPE' => 'innerForm',
+                'TYPE'         => 'innerForm',
                 'REQUEST_TYPE' => $requestType,
             ],
             null,
@@ -232,8 +241,18 @@ class FastOrderController extends Controller
             ->setName($name)
             ->setFuserId($this->currentUserProvider->getCurrentFUserId())
             /** оплата наличными при доставке ставим всегда */
-            ->setPaymentId(PaySystemActionTable::query()->setSelect(['ID'])->setFilter(['CODE' => 'cash'])->setCacheTtl(360000)->exec()->fetch()['ID'])
-            ->setDeliveryId(DeliveryTable::query()->setSelect(['ID'])->setFilter(['CODE' => '4lapy_pickup'])->setCacheTtl(360000)->exec()->fetch()['ID'])
+            ->setPaymentId(PaySystemActionTable::query()
+                                               ->setSelect(['ID'])
+                                               ->setFilter(['CODE' => 'cash'])
+                                               ->setCacheTtl(360000)
+                                               ->exec()
+                                               ->fetch()['ID'])
+            ->setDeliveryId(DeliveryTable::query()
+                                         ->setSelect(['ID'])
+                                         ->setFilter(['CODE' => '4lapy_pickup'])
+                                         ->setCacheTtl(360000)
+                                         ->exec()
+                                         ->fetch()['ID'])
             ->setDeliveryPlaceCode($currentStore->getCode())
             ->setCity($selectedCity['NAME'])
             ->setCityCode($selectedCity['CODE']);
@@ -258,18 +277,24 @@ class FastOrderController extends Controller
                 if ($request->get('type', 'basket') === 'card') {
                     ob_start();
                     require_once App::getDocumentRoot()
-                        . '/local/components/fourpaws/fast.order/templates/.default/success.php';
+                                 . '/local/components/fourpaws/fast.order/templates/.default/success.php';
                     $html = ob_get_clean();
 
                     $data = [
-                        'html' => $html,
+                        'html'       => $html,
                         'miniBasket' => $this->basketViewService->getMiniBasketHtml(),
                     ];
 
-                    $ecommerce = $this->ecommerceService->renderScript(
-                        $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик'),
-                        true
-                    );
+                    $ecommerce =
+                        \sprintf(
+                            "%s\n%s",
+                            $this->ecommerceService->renderScript(
+                                $this->salePreset->createPurchaseFromBitrixOrder($order, 'Покупка в 1 клик')
+                            ),
+                            $this->retailRocketService->renderOrderTransaction(
+                                $this->salePreset->createRetailRocketTransactionFromBitrixOrder($order)
+                            )
+                        );
 
                     if ($ecommerce) {
                         $data['command'] = $ecommerce;
@@ -290,14 +315,16 @@ class FastOrderController extends Controller
         } catch (ArgumentOutOfRangeException|ArgumentTypeException|ArgumentException $e) {
             $logger = LoggerFactory::create('params');
             $logger->error('Ошибка параметров - ' . $e->getMessage());
+
             return $this->ajaxMess->getSystemError();
         } catch (DeliveryNotAvailableException $e) {
             return $this->ajaxMess->getOrderCreateError('Доставка выбранных позиций в вашем регионе недоступна, пожалуйста попробуйте заказать другие товары или дождитесь появления данных товаров в вашем регионе');
         } catch (OrderCreateException $e) {
             return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
-        } catch (NotImplementedException|NotSupportedException|ObjectNotFoundException|Exception $e) {
+        } catch (NotImplementedException | NotSupportedException | ObjectNotFoundException | Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->error('Системная ошибка - ' . $e->getMessage());
+
             return $this->ajaxMess->getSystemError();
         }
 

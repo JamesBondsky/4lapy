@@ -41,7 +41,7 @@ if (isset($arResult['REGISTRATION_STATUS'])) {
         <br><br>
         <div>
             <a href="javascript:void(0)" data-user-id="<?= $arResult['REGISTERED_USER_ID'] ?>" class="btn inline-block avatarAuth">
-                Войти в ЛК
+                Авторизоваться
             </a>
             <a href="<?= $arParams['CURRENT_PAGE'] ?>" class="btn inline-block">Отказаться</a>
         </div>
@@ -362,12 +362,12 @@ if ($showForm) {
                 if ($showAuthButton) {
                     ?>
                     <a href="javascript:void(0)" data-user-id="<?= $arResult['REGISTERED_USER_ID'] ?>" class="btn inline-block avatarAuth">
-                        Войти в ЛК
+                        Авторизоваться
                     </a>
                     <a href="<?= $arParams['CURRENT_PAGE'] ?>" class="btn inline-block">Отказаться</a>
                     <?php
                 } else {
-                    $btnText = $arResult['STEP'] >= 2 ? 'Добавить личный кабинет' : 'ДАЛЕЕ';
+                    $btnText = $arResult['STEP'] >= 2 ? 'Зарегистрировать' : 'ДАЛЕЕ';
                     ?>
                     <input id="ajaxSubmitButton" class="form-page__btn inline-block" type="submit" value="<?= $btnText ?>">
                     <?php

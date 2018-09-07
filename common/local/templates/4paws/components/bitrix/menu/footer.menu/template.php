@@ -19,7 +19,7 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
     $outString = '<nav class="b-footer-nav">';
     foreach ($menu as $index => $item) {
         $outString .= '<div class="b-footer-nav__list">';
-        $outString .= '<h4 class="b-footer-nav__header">';
+        $outString .= '<div class="b-footer-nav__header">';
         if ($item['LINK']) {
             $outString .= '<a href="' . $item['LINK'] . '" class="b-footer-nav__header-link" title="' . $item['TEXT'] . '">';
         } else {
@@ -31,7 +31,7 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
         } else {
             $outString .= '</span>';
         }
-        $outString .= '</h4>';
+        $outString .= '</div>';
         if ($item['PARAMS']['CHILDS_BY_MENU']) {
             $menu = new \CMenu($item['PARAMS']['CHILDS_BY_MENU']);
             $menu->disableDebug();

@@ -27,15 +27,9 @@ if ($bonusCount > 0) { // самое место
     $bonusCount = floor($bonusCount);//округляем до целого
 }
 
-if ($arResult['ECOMMERCE_VIEW_SCRIPT_ORDER']) {
-    echo $arResult['ECOMMERCE_VIEW_SCRIPT_ORDER'];
-}
-
-if ($arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED']) {
-    echo $arResult['ECOMMERCE_VIEW_SCRIPT_ORDER_RELATED'];
-}
-
-?>
+if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
+    echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
+} ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
         <strong><?= $arResult['ORDER_PROPERTIES']['NAME'] ?></strong>, спасибо за заказ!

@@ -23,8 +23,11 @@ global $APPLICATION;
  * @var GoogleEcommerceService $ecommerceService
  * @var PhpEngine              $view
  * @var string                 $currentPath
+ * @var string                 $retailRocketViewScript
  * @var CMain                  $APPLICATION
  */
+
+echo $retailRocketViewScript;
 
 $category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category',

@@ -31,9 +31,6 @@ if ($arResult['POST']['FORGOT']) {
                     if($user->getGroups()->count() === 1 && $user->getGroups()->first()->getCode() === 'FRONT_OFFICE_USERS') {
                         $userPasswordService->resetPassword($user->getId());
                         unset($arResult['POST']['FORGOT']);
-                        //
-                        // нужно сделать переключалку дивов и зависимость от POST
-                        //
                         ShowMessage(['MESSAGE' => 'Проверьте почту, скоро вам прийдет новый пароль', 'TYPE' => 'OK']);
                     } else {
                         ShowMessage('Вам запрещено сбрасывать пароль');
