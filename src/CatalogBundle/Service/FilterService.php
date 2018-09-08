@@ -8,6 +8,7 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Bitrix\Main\ArgumentException;
 use Elastica\Query\Nested;
+use Elastica\Query\Script;
 use Elastica\Query\Terms;
 use Elastica\QueryBuilder;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -79,6 +80,7 @@ class FilterService implements LoggerAwareInterface
         foreach ($categoryFilters as $categoryFilter) {
             $filterCollection->add($categoryFilter);
         }
+
         return $filterCollection;
     }
 
@@ -99,6 +101,10 @@ class FilterService implements LoggerAwareInterface
 
         try {
             foreach ($this->getActiveFilters() as $filter) {
+                $internalFilterCollection->add($filter);
+            }
+
+            foreach ($this->getStockFilters() as $filter) {
                 $internalFilterCollection->add($filter);
             }
             /**
@@ -141,6 +147,16 @@ class FilterService implements LoggerAwareInterface
                 )
             );
 
+            /*@todo проверка на активность основной категории */
+            $activeFilterCollection->add(
+                InternalFilter::create(
+                    'ProductSectionDefined',
+                    $queryBuilder->query()->bool()->addMust(
+                        $queryBuilder->query()->exists('sectionIdList')
+                    )
+                )
+            );
+
             $activeFilterCollection->add(
                 InternalFilter::create(
                     'BrandActive',
@@ -157,6 +173,18 @@ class FilterService implements LoggerAwareInterface
                 )
             );
 
+            /*
+             *             if ($product->getOffers()->isEmpty()) {
+                throw new ZeroPriceException('All offers have zero price');
+            }
+             */
+            $activeFilterCollection->add(
+                InternalFilter::create(
+                    'OffersPrice',
+                    $queryBuilder->query()->exists('offers')
+                )
+            );
+
             $activeFilterCollection->add(
                 InternalFilter::create(
                     'HasImages',
@@ -170,39 +198,57 @@ class FilterService implements LoggerAwareInterface
                     $queryBuilder->query()->term(['hasStocks' => true])
                 )
             );
-
-            $activeFilterCollection->add(
-                $this->getStocksFilter()
-            );
         } catch (\InvalidArgumentException $exception) {
         }
+
         return $activeFilterCollection;
     }
 
     /**
-     * @return InternalFilter
-     * @throws ArgumentException
+     * Фильтры по остаткам
+     *
+     * @return FilterCollection
      * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
-    protected function getStocksFilter(): InternalFilter
+    protected function getStockFilters(): FilterCollection
     {
-        $deliveries = $this->deliveryService->getByLocation();
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $result = new FilterCollection();
+        $queryBuilder = new QueryBuilder();
 
-        $xmlIds = [];
-        foreach ($deliveries as $delivery) {
-            /** @noinspection SlowArrayOperationsInLoopInspection */
-            $xmlIds = \array_merge($xmlIds, $this->deliveryService->getStoresByDelivery($delivery)->getXmlIds());
+        try {
+            /** Торговые предложения товара должны иметь хоть какие-то остатки */
+            $result->add(
+                InternalFilter::create(
+                    'HasStocks',
+                    $queryBuilder->query()->term(['hasStocks' => true])
+                )
+            );
+
+            $deliveries = $this->deliveryService->getByLocation();
+            $xmlIds = [];
+            foreach ($deliveries as $delivery) {
+                /** @noinspection SlowArrayOperationsInLoopInspection */
+                $xmlIds = \array_merge($xmlIds, $this->deliveryService->getStoresByDelivery($delivery)->getXmlIds());
+            }
+            $xmlIds = \array_unique(
+                \array_merge($xmlIds, $this->storeService->getSupplierStores()->getXmlIds())
+            );
+
+            /** Торговые предложения товара должны иметь остатки на складах, доступных в текущем местоположении */
+            $result->add(
+                InternalFilter::create(
+                    'Stocks',
+                    (new Nested())
+                        ->setPath('offers')
+                        ->setQuery(new Terms('offers.allStocks', $xmlIds))
+                )
+            );
+        } catch (\InvalidArgumentException $e) {
         }
-        $xmlIds = \array_unique(
-            \array_merge($xmlIds, $this->storeService->getSupplierStores()->getXmlIds())
-        );
 
-        return InternalFilter::create(
-            'Stocks',
-            (new Nested())
-                ->setPath('offers')
-                ->setQuery(new Terms('offers.allStocks', $xmlIds))
-        );
+        return $result;
     }
 
     protected function getRegionInternalFilter(): InternalFilter

@@ -6,7 +6,10 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\SystemException;
 use CDBResult;
+use CIBlockElement;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -2221,5 +2224,30 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @return array
+     * @throws SystemException
+     */
+    public function getSectionsIdList(): array
+    {
+        if (
+            null === $this->sectionIdList
+            || (\is_array($this->sectionIdList) && \count($this->sectionIdList) === 0)
+        ) {
+            $this->sectionIdList = [];
+            $dbSectionList = CIBlockElement::GetElementGroups($this->getId(), true, ['ID', 'GLOBAL_ACTIVE']);
+
+            /** @noinspection PhpAssignmentInConditionInspection */
+            while ($section = $dbSectionList->Fetch()) {
+                if ($section['GLOBAL_ACTIVE'] !== BitrixUtils::BX_BOOL_TRUE) {
+                    continue;
+                }
+                $this->sectionIdList[] = (int)$section['ID'];
+            }
+        }
+
+        return $this->sectionIdList;
     }
 }

@@ -16,16 +16,12 @@ use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
-use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Exception\Index\IndexExceptionInterface;
-use FourPaws\Search\Exception\Index\NoCategoryException;
 use FourPaws\Search\Exception\Index\NotActiveException;
-use FourPaws\Search\Exception\Index\UncategorizedException;
 use FourPaws\Search\Exception\Index\WrongEntityPassedException;
-use FourPaws\Search\Exception\Index\ZeroPriceException;
 use FourPaws\Search\Factory;
 use FourPaws\Search\Model\CatalogSyncMsg;
 use JMS\Serializer\Serializer;
@@ -678,11 +674,8 @@ class IndexHelper implements LoggerAwareInterface
      * @param $product
      *
      * @return bool
-     * @throws NoCategoryException
      * @throws NotActiveException
-     * @throws UncategorizedException
      * @throws WrongEntityPassedException
-     * @throws ZeroPriceException
      */
     private function canIndexProduct($product): bool
     {
@@ -692,18 +685,6 @@ class IndexHelper implements LoggerAwareInterface
 
         if (!$product->isActive()) {
             throw new NotActiveException('Product is not active');
-        }
-
-        if ($product->getOffers()->isEmpty()) {
-            throw new ZeroPriceException('All offers have zero price');
-        }
-
-        if (!$product->getSection()) {
-            throw new NoCategoryException('Product\'s main category not set or is inactive');
-        }
-
-        if ($product->getSection()->getCode() === Category::UNSORTED_CATEGORY_CODE) {
-            throw new UncategorizedException('Product is uncategorized');
         }
 
         return true;
