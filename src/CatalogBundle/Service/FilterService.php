@@ -6,9 +6,7 @@
 
 namespace FourPaws\CatalogBundle\Service;
 
-use Bitrix\Main\ArgumentException;
 use Elastica\QueryBuilder;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
@@ -89,9 +87,6 @@ class FilterService implements LoggerAwareInterface
                 $internalFilterCollection->add($filter);
             }
 
-            foreach ($this->getStockFilters() as $filter) {
-                $internalFilterCollection->add($filter);
-            }
             /**
              * @todo Фильтр по региональной цене
              */
@@ -160,7 +155,15 @@ class FilterService implements LoggerAwareInterface
             $activeFilterCollection->add(
                 InternalFilter::create(
                     'OffersPrice',
-                    $queryBuilder->query()->exists('offers')
+                    $queryBuilder
+                        ->query()
+                        ->nested()
+                        ->setPath('offers')
+                        ->setQuery(
+                            $queryBuilder
+                                ->query()
+                                ->range('offers.price', ['gt' => 0])
+                        )
                 )
             );
 
@@ -181,33 +184,6 @@ class FilterService implements LoggerAwareInterface
         }
 
         return $activeFilterCollection;
-    }
-
-    /**
-     * Фильтры по остаткам
-     *
-     * @return FilterCollection
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     */
-    protected function getStockFilters(): FilterCollection
-    {
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $result = new FilterCollection();
-        $queryBuilder = new QueryBuilder();
-
-        try {
-            /** Торговые предложения товара должны иметь хоть какие-то остатки */
-            $result->add(
-                InternalFilter::create(
-                    'HasStocks',
-                    $queryBuilder->query()->term(['hasStocks' => true])
-                )
-            );
-        } catch (\InvalidArgumentException $e) {
-        }
-
-        return $result;
     }
 
     protected function getRegionInternalFilter(): InternalFilter
