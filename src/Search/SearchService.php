@@ -7,21 +7,25 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
+use Elastica\Exception\InvalidException;
 use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
 use Elastica\Suggest;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Sorting;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Helper\AggsHelper;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\Model\ProductSuggestResult;
+use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
-use RuntimeException;
 
 class SearchService implements LoggerAwareInterface
 {
@@ -38,13 +42,27 @@ class SearchService implements LoggerAwareInterface
     private $aggsHelper;
 
     /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
+
+    /**
+     * @var StoreService
+     */
+    private $storeService;
+
+    /**
      * SearchService constructor.
      *
-     * @param IndexHelper $indexHelper
+     * @param IndexHelper     $indexHelper
+     * @param DeliveryService $deliveryService
+     * @param StoreService    $storeService
      */
-    public function __construct(IndexHelper $indexHelper)
+    public function __construct(IndexHelper $indexHelper, DeliveryService $deliveryService, StoreService $storeService)
     {
         $this->indexHelper = $indexHelper;
+        $this->deliveryService = $deliveryService;
+        $this->storeService = $storeService;
     }
 
     /**
@@ -52,22 +70,23 @@ class SearchService implements LoggerAwareInterface
      * аггрегации: и фильтры соответствующим образом "схлопываются", обеспечивая настоящий фасетный поиск по каталогу.
      *
      * @param FilterCollection $filters
-     * @param Sorting $sorting
-     * @param Navigation $navigation
-     * @param string $searchString
+     * @param Sorting          $sorting
+     * @param Navigation       $navigation
+     * @param string           $searchString
      *
-     * @throws \UnexpectedValueException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws RuntimeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return ProductSearchResult
+     * @throws InvalidException
+     * @throws ApplicationCreateException
+     * @throws \InvalidArgumentException
+     * @throws ArgumentException
      */
     public function searchProducts(
         FilterCollection $filters,
         Sorting $sorting,
         Navigation $navigation,
         string $searchString = ''
-    ): ProductSearchResult {
+    ): ProductSearchResult
+    {
         $search = $this->getIndexHelper()->createProductSearch();
 
         if ($searchString !== '') {
@@ -116,6 +135,8 @@ class SearchService implements LoggerAwareInterface
      * @param string     $searchString
      *
      * @return ProductSuggestResult
+     * @throws ApplicationCreateException
+     * @throws InvalidException
      */
     public function productsAutocomplete(Navigation $navigation, string $searchString): ProductSuggestResult
     {
@@ -160,13 +181,14 @@ class SearchService implements LoggerAwareInterface
      * @param string $searchString
      *
      * @return BoolQuery
+     * @throws InvalidException
      */
     public function getQueryRule(string $searchString): BoolQuery
     {
         $queryBuilder = new QueryBuilder();
         $boolQuery = $queryBuilder->query()->bool();
 
-        if ($searchString == '') {
+        if ($searchString === '') {
             return $boolQuery;
         }
 
@@ -323,6 +345,7 @@ class SearchService implements LoggerAwareInterface
                 ->setParam('_name', 'desc-fuzzy-word')
         );
         */
+
         return $boolQuery;
     }
 
@@ -331,6 +354,9 @@ class SearchService implements LoggerAwareInterface
      * @param string           $searchString
      *
      * @return AbstractQuery
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws InvalidException
      */
     public function getFullQueryRule(FilterCollection $filters, string $searchString = ''): AbstractQuery
     {
@@ -344,6 +370,8 @@ class SearchService implements LoggerAwareInterface
         foreach ($filterSet as $filterQuery) {
             $boolQuery->addParam('filter', $filterQuery);
         }
+
+        $this->addAvailabilityBoost($boolQuery);
 
         $this->addWeightFunctions($searchQuery);
         if ('' === $searchString) {
@@ -374,7 +402,62 @@ class SearchService implements LoggerAwareInterface
     }
 
     /**
+     * @param BoolQuery $query
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws InvalidException
+     */
+    protected function addAvailabilityBoost(BoolQuery $query): void
+    {
+        $queryBuilder = new QueryBuilder();
+
+        $deliveries = $this->deliveryService->getByLocation();
+
+        $availableXmlIds = [];
+        foreach ($deliveries as $delivery) {
+            /** @noinspection SlowArrayOperationsInLoopInspection */
+            $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)->getXmlIds());
+        }
+        $availableXmlIds = \array_unique($availableXmlIds);
+
+        $supplierXmlIds = $this->storeService->getSupplierStores()->getXmlIds();
+
+
+        $query
+            ->addShould(
+                $queryBuilder->query()->constant_score(
+                    $queryBuilder
+                        ->query()
+                        ->nested()
+                        ->setPath('offers')
+                        ->setQuery(
+                            $queryBuilder
+                                ->query()
+                                ->terms()
+                                ->setTerms('offers.allStocks', $availableXmlIds)
+                        )
+                )->setBoost(5)
+            )
+            ->addShould(
+                $queryBuilder->query()->constant_score(
+                    $queryBuilder
+                        ->query()
+                        ->nested()
+                        ->setPath('offers')
+                        ->setQuery(
+                            $queryBuilder
+                                ->query()
+                                ->terms()
+                                ->setTerms('offers.allStocks', $supplierXmlIds)
+                        )
+                )->setBoost(2)
+            );
+    }
+
+    /**
      * @param Query\FunctionScore $query
+     * @throws InvalidException
      */
     protected function addWeightFunctions(Query\FunctionScore $query): void
     {
@@ -458,7 +541,7 @@ class SearchService implements LoggerAwareInterface
                                 'offers.PROPERTY_IS_NEW',
                                 'offers.PROPERTY_IS_SALE',
                             ])
-                        ->setQuery(true)
+                            ->setQuery(true)
                     )
             )
             ->setScoreMode('sum');
