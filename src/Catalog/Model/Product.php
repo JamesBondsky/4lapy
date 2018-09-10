@@ -1903,8 +1903,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getOffers($skipZeroPrice = true, array $additionalFilter = []): Collection
     {
         if (null === $this->offers) {
-            $offerQuery = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                ->withOrder(['CATALOG_WEIGHT' => 'ASC']);
+            $offerQuery = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId());
             if (!empty($additionalFilter)) {
                 foreach ($additionalFilter as $key => $value) {
                     $offerQuery->withFilterParameter($key, $value);
@@ -1946,7 +1945,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 return $offer1->getClothingSize()->getSort() <=> $offer2->getClothingSize()->getSort();
             }
 
-            return 0;
+            return $offer1->getCatalogProduct()->getWeight() <=> $offer2->getCatalogProduct()->getWeight();
         };
 
         $iterator = $this->getOffers()->getIterator();
