@@ -27,13 +27,9 @@ class FilterService implements LoggerAwareInterface
     /**
      * FilterService constructor.
      * @param FilterHelper    $filterHelper
-     * @param DeliveryService $deliveryService
-     * @param StoreService    $storeService
      */
     public function __construct(
-        FilterHelper $filterHelper,
-        DeliveryService $deliveryService,
-        StoreService $storeService
+        FilterHelper $filterHelper
     )
     {
         $this->filterHelper = $filterHelper;

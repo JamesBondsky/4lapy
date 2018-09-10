@@ -280,7 +280,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_IS_POPULAR'       => ['type' => 'boolean'],
                                 'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
                                 'currency'                  => ['type' => 'keyword'],
-                                'allStocks'                 => ['type' => 'keyword'],
 //                                'prices'                   => [
 //                                    'type'       => 'nested',
 //                                    'properties' => [
@@ -347,6 +346,7 @@ class IndexHelper implements LoggerAwareInterface
                         'hasImages'                        => ['type' => 'boolean'],
                         'hasStocks'                        => ['type' => 'boolean'],
                         'deliveryAvailability'             => ['type' => 'keyword'],
+                        'availableStores'                  => ['type' => 'keyword']
                     ],
                 ],
             ],

@@ -27,6 +27,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
@@ -617,6 +618,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
+
+    /**
+     * @var string
+     * @Type("array<string>")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getAvailableStores")
+     */
+    protected $availableStores = [];
 
     /**
      * @var array
@@ -2249,5 +2258,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->sectionIdList;
+    }
+
+    /**
+     * @return string[]
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws NotFoundException
+     */
+    public function getAvailableStores(): array
+    {
+        $result = [];
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            $result = \array_merge($offer->getAllStocks()->getStores(1)->getXmlIds());
+        }
+
+        return \array_unique($result);
     }
 }

@@ -9,6 +9,7 @@ namespace FourPaws\Search;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Elastica\Exception\InvalidException;
+use Elastica\Exception\ResponseException;
 use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
@@ -371,8 +372,6 @@ class SearchService implements LoggerAwareInterface
             $boolQuery->addParam('filter', $filterQuery);
         }
 
-        $this->addAvailabilityBoost($boolQuery);
-
         $this->addWeightFunctions($searchQuery);
         if ('' === $searchString) {
             $searchQuery->setBoostMode('sum');
@@ -399,60 +398,6 @@ class SearchService implements LoggerAwareInterface
         }
 
         return $this->aggsHelper;
-    }
-
-    /**
-     * @param BoolQuery $query
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws InvalidException
-     */
-    protected function addAvailabilityBoost(BoolQuery $query): void
-    {
-        $queryBuilder = new QueryBuilder();
-
-        $deliveries = $this->deliveryService->getByLocation();
-
-        $availableXmlIds = [];
-        foreach ($deliveries as $delivery) {
-            /** @noinspection SlowArrayOperationsInLoopInspection */
-            $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)->getXmlIds());
-        }
-        $availableXmlIds = \array_unique($availableXmlIds);
-
-        $supplierXmlIds = $this->storeService->getSupplierStores()->getXmlIds();
-
-
-        $query
-            ->addShould(
-                $queryBuilder->query()->constant_score(
-                    $queryBuilder
-                        ->query()
-                        ->nested()
-                        ->setPath('offers')
-                        ->setQuery(
-                            $queryBuilder
-                                ->query()
-                                ->terms()
-                                ->setTerms('offers.allStocks', $availableXmlIds)
-                        )
-                )->setBoost(5)
-            )
-            ->addShould(
-                $queryBuilder->query()->constant_score(
-                    $queryBuilder
-                        ->query()
-                        ->nested()
-                        ->setPath('offers')
-                        ->setQuery(
-                            $queryBuilder
-                                ->query()
-                                ->terms()
-                                ->setTerms('offers.allStocks', $supplierXmlIds)
-                        )
-                )->setBoost(2)
-            );
     }
 
     /**
