@@ -7,9 +7,6 @@
 namespace FourPaws\CatalogBundle\Service;
 
 use Bitrix\Main\ArgumentException;
-use Elastica\Query\Nested;
-use Elastica\Query\Script;
-use Elastica\Query\Terms;
 use Elastica\QueryBuilder;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -30,16 +27,6 @@ class FilterService implements LoggerAwareInterface
     private $filterHelper;
 
     /**
-     * @var DeliveryService
-     */
-    private $deliveryService;
-
-    /**
-     * @var StoreService
-     */
-    private $storeService;
-
-    /**
      * FilterService constructor.
      * @param FilterHelper    $filterHelper
      * @param DeliveryService $deliveryService
@@ -52,8 +39,6 @@ class FilterService implements LoggerAwareInterface
     )
     {
         $this->filterHelper = $filterHelper;
-        $this->deliveryService = $deliveryService;
-        $this->storeService = $storeService;
     }
 
     public function getCategoryFilters(Category $category)
@@ -147,7 +132,6 @@ class FilterService implements LoggerAwareInterface
                 )
             );
 
-            /*@todo проверка на активность основной категории */
             $activeFilterCollection->add(
                 InternalFilter::create(
                     'ProductSectionDefined',
@@ -173,11 +157,6 @@ class FilterService implements LoggerAwareInterface
                 )
             );
 
-            /*
-             *             if ($product->getOffers()->isEmpty()) {
-                throw new ZeroPriceException('All offers have zero price');
-            }
-             */
             $activeFilterCollection->add(
                 InternalFilter::create(
                     'OffersPrice',
@@ -223,26 +202,6 @@ class FilterService implements LoggerAwareInterface
                 InternalFilter::create(
                     'HasStocks',
                     $queryBuilder->query()->term(['hasStocks' => true])
-                )
-            );
-
-            $deliveries = $this->deliveryService->getByLocation();
-            $xmlIds = [];
-            foreach ($deliveries as $delivery) {
-                /** @noinspection SlowArrayOperationsInLoopInspection */
-                $xmlIds = \array_merge($xmlIds, $this->deliveryService->getStoresByDelivery($delivery)->getXmlIds());
-            }
-            $xmlIds = \array_unique(
-                \array_merge($xmlIds, $this->storeService->getSupplierStores()->getXmlIds())
-            );
-
-            /** Торговые предложения товара должны иметь остатки на складах, доступных в текущем местоположении */
-            $result->add(
-                InternalFilter::create(
-                    'Stocks',
-                    (new Nested())
-                        ->setPath('offers')
-                        ->setQuery(new Terms('offers.allStocks', $xmlIds))
                 )
             );
         } catch (\InvalidArgumentException $e) {
