@@ -8,7 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
@@ -17,19 +16,20 @@ use Bitrix\Sale;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
-class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
+class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
 {
     /**
      * @var OrderService
@@ -47,6 +47,11 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
     protected $basketService;
 
     /**
+     * @var StoreService
+     */
+    protected $storeService;
+
+    /**
      * AutoloadingIssuesInspection constructor.
      *
      * @param null|\CBitrixComponent $component
@@ -54,6 +59,7 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
      * @throws \RuntimeException
      * @throws SystemException
      * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -62,6 +68,7 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
         $this->orderService = $container->get('order.service');
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->storeService = $container->get('store.service');
     }
 
     /**
@@ -73,13 +80,6 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
     {
         $params['PAGE_COUNT'] = 10;
         $params['PATH_TO_BASKET'] = '/cart/';
-        /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
-        /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
-        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 24 * 60 * 60;
-        /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
-        $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
-
-        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
 
         return parent::onPrepareComponentParams($params);
     }
@@ -88,10 +88,8 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    public function executeComponent(): void
+    public function prepareResult(): void
     {
-        $activeOrders = new ArrayCollection();
-        $closedOrders = new ArrayCollection();
         try {
             $user = $this->currentUserProvider->getCurrentUser();
             $instance = Application::getInstance();
@@ -103,48 +101,17 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
                     $this->copyOrder2CustomerBasket($orderId, $request);
                 }
             }
-            $cache = $instance->getCache();
-            // здесь всегда будет работать $this->getPath(), который вернет не тот путь
-            //$cachePath = $this->getCachePath() ?: $this->getPath();
-            $cachePath = $instance->getManagedCache()->getCompCachePath(
-                $this->getRelativePath()
-            );
-            if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-                serialize(['userId' => $user->getId()]),
-                $cachePath)
-            ) {
-                $result = $cache->getVars();
-                $manzanaOrders = $result['manzanaOrders'];
-            } elseif ($cache->startDataCache()) {
-                $tagCache = new TaggedCacheHelper($cachePath);
-                try {
-                    $manzanaOrders = $this->orderService->getManzanaOrders();
-                } catch (ManzanaServiceException $e) {
-                    $manzanaOrders = new ArrayCollection();
-                }
-
-                $tagCache->addTags([
-                    'personal:orders:' . $user->getId(),
-                    'order:' . $user->getId(),
-                ]);
-
-                $tagCache->end();
-                $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
-            }
+            $this->orderService->loadManzanaOrders($user);
 
             /** имитация постранички */
             $nav = new PageNavigation('nav-orders');
             $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
             $activeOrders = $this->orderService->getActiveSiteOrders();
             /** @noinspection PhpUndefinedVariableInspection */
-            $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
-                $manzanaOrders->toArray());
+            $allClosedOrders = $this->orderService->getClosedSiteOrders();
             /** Сортировка по дате и статусу общих заказов */
             $allClosedOrdersList = $allClosedOrders->toArray();
-            usort($allClosedOrdersList, [
-                'FourPawsPersonalCabinetOrdersComponent',
-                'sortByStatusAndDate',
-            ]);
+            usort($allClosedOrdersList, [static::class, 'sortByStatusAndDate']);
 
             /** имитация постранички */
             $nav->setRecordCount($allClosedOrders->count());
@@ -152,28 +119,18 @@ class FourPawsPersonalCabinetOrdersComponent extends \CBitrixComponent
                 $nav->getOffset(), $nav->getPageSize(), true));
             $this->arResult['NAV'] = $nav;
 
-            if (!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
-                $storeService = App::getInstance()->getContainer()->get('store.service');
-                $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
-            }
+
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 
             return;
-        } catch (\Exception $e) {
-            $logger = LoggerFactory::create('my_orders');
-            $logger->error('error - ' . $e->getMessage());
-            /** Показываем пустую страницу с заказами */
         }
 
         if (!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
-            $storeService = App::getInstance()->getContainer()->get('store.service');
-            $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
+            $this->arResult['METRO'] = new ArrayCollection($this->storeService->getMetroInfo());
         }
         $this->arResult['CLOSED_ORDERS'] = $closedOrders;
         $this->arResult['ACTIVE_ORDERS'] = $activeOrders;
-
-        $this->includeComponentTemplate();
     }
 
     /**

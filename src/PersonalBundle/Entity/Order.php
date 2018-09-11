@@ -12,7 +12,6 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
 use Bitrix\Sale\Payment;
@@ -193,9 +192,6 @@ class Order extends BaseEntity
 
     /** @var \Bitrix\Sale\Order $bitrixOrder */
     protected $bitrixOrder;
-
-    /** @var bool */
-    protected $newManzana = false;
 
     /** @var string */
     protected $deliveryAddress;
@@ -1068,15 +1064,6 @@ class Order extends BaseEntity
 
     /**
      * @return bool
-     * @throws \Exception
-     */
-    public function isItemsEmpty(): bool
-    {
-        return $this->getItems()->isEmpty();
-    }
-
-    /**
-     * @return bool
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -1099,22 +1086,6 @@ class Order extends BaseEntity
     public function getProperty(string $code): ?OrderProp
     {
         return $this->getProps()->get($code);
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNewManzana(): bool
-    {
-        return $this->newManzana;
-    }
-
-    /**
-     * @param bool $newManzana
-     */
-    public function setNewManzana(bool $newManzana): void
-    {
-        $this->newManzana = $newManzana;
     }
 
     /**
