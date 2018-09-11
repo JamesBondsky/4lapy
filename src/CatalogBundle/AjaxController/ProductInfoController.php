@@ -218,6 +218,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
             $offerCollection = (new OfferQuery())->withFilter([
                 '=PROPERTY_CML2_LINK' => $productIds,
                 'ACTIVE'              => 'Y',
+                '>CATALOG_PRICE_2'    => 0,
             ])->exec();
 
             /** @var Offer $offer */
@@ -229,11 +230,27 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $offer->setProduct($product);
             }
 
-            foreach ($offerCollection as $offer) {
-                $product = $products[$offer->getCml2Link()];
-                $responseItem = $this->getProductInfo($product, $offer, $location);
-                $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
-                $response['products'][$product->getId()][$offer->getId()] = $responseItem;
+            /** @var Product $product */
+            foreach ($products as $product) {
+                /** @var Offer $activeOffer */
+                $activeOffer = null;
+                /** @var Offer $offer */
+                foreach ($product->getOffersSorted() as $offer) {
+                    if (null === $activeOffer) {
+                        $activeOffer = $offer;
+                    }
+
+                    if ($offer->isAvailable()) {
+                        $activeOffer = $offer;
+                    }
+                }
+
+                foreach ($product->getOffers() as $offer) {
+                    $responseItem = $this->getProductInfo($product, $offer, $location);
+                    $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
+                    $responseItem['active'] = $activeOffer->getId() === $offer->getId();
+                    $response['products'][$product->getId()][$offer->getId()] = $responseItem;
+                }
             }
         }
         return JsonSuccessResponse::createWithData('', $response);
@@ -498,7 +515,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 [
                     'offer'    => $offer->getId(),
                     'product'  => $product->getId(),
-                    'location' => $location
+                    'location' => $location,
                 ]
             );
         }
