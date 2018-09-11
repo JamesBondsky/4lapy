@@ -89,7 +89,10 @@ class StoreService implements LoggerAwareInterface
     protected $deliveryService;
 
     /** @var array */
-    protected $stores = [];
+    protected $storesByXmlId = [];
+
+    /** @var array */
+    protected $storesById = [];
 
     /** @var Offer[] $offers */
     private $offers;
@@ -133,28 +136,33 @@ class StoreService implements LoggerAwareInterface
      */
     public function getStoreById(int $id): Store
     {
-        $store = null;
+        if (!isset($this->storesById[$id])) {
+            $store = null;
 
-        $getStore = function () use ($id) {
-            return ['result' => $this->storeRepository->find($id)];
-        };
+            $getStore = function () use ($id) {
+                return ['result' => $this->storeRepository->find($id)];
+            };
 
-        try {
-            $store = (new BitrixCache())
-                ->withId(__METHOD__ . $id)
-                ->withTag('catalog:store')
-                ->resultOf($getStore)['result'];
-        } catch (\Exception $e) {
-            $this->logger->error(
-                sprintf('failed to get store with id %s: %s', $id, $e->getMessage())
-            );
+            try {
+                $store = (new BitrixCache())
+                             ->withId(__METHOD__ . $id)
+                             ->withTag('catalog:store')
+                             ->resultOf($getStore)['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf('failed to get store with id %s: %s', $id, $e->getMessage())
+                );
+            }
+
+            if (!$store || !$store instanceof Store) {
+                throw new NotFoundException('Склад с ID=' . $id . ' не найден');
+            }
+
+            $this->storesById[$id] = $store;
+            $this->storesByXmlId[$store->getXmlId()] = $store;
         }
 
-        if (!$store || !$store instanceof Store) {
-            throw new NotFoundException('Склад с ID=' . $id . ' не найден');
-        }
-
-        return $store;
+        return $this->storesById[$id];
     }
 
     /**
@@ -180,6 +188,7 @@ class StoreService implements LoggerAwareInterface
                 return ['result' => $store];
             };
 
+            /** @var Store $store */
             $store = null;
             try {
                 $store = (new BitrixCache())
@@ -196,10 +205,11 @@ class StoreService implements LoggerAwareInterface
                 throw new NotFoundException('Склад с XML_ID=' . $xmlId . ' не найден');
             }
 
-            $this->stores[$xmlId] = $store;
+            $this->storesById[$store->getId()] = $store;
+            $this->storesByXmlId[$xmlId] = $store;
         }
 
-        return $this->stores[$xmlId];
+        return $this->storesByXmlId[$xmlId];
     }
 
     /**
