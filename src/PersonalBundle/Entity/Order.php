@@ -157,9 +157,6 @@ class Order extends BaseEntity
     /** @var ArrayCollection */
     protected $items;
 
-    /** @var bool */
-    protected $manzana = false;
-
     /** @var float */
     protected $allWeight ;
 
@@ -185,7 +182,7 @@ class Order extends BaseEntity
     protected $statusMain = [];
 
     /** @var string */
-    protected $manzanaId = [];
+    protected $manzanaId = '';
 
     /** @var array $orderItems */
     protected $orderItems = [];

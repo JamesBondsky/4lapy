@@ -146,8 +146,6 @@ class OrderService
 
         $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
 
-
-
         foreach ($cheques as $cheque) {
             if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
                 continue;
@@ -688,7 +686,7 @@ class OrderService
                 ->setWeight($offer->getCatalogProduct()->getWeight())
                 ->setDetailPageUrl($offer->getLink())
                 ->setId($offer->getId());
-            $result[$item->getArticle()] = $item;
+            $result[] = $item;
         }
 
         return $result;
