@@ -182,7 +182,7 @@ class Order extends BaseEntity
     protected $statusMain = [];
 
     /** @var string */
-    protected $manzanaId = '';
+    protected $manzanaId;
 
     /** @var array $orderItems */
     protected $orderItems = [];
@@ -1007,9 +1007,22 @@ class Order extends BaseEntity
 
     /**
      * @return string
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws ServiceNotFoundException
      */
     public function getManzanaId(): string
     {
+        if (null === $this->manzanaId) {
+            $result = '';
+            /** @var OrderProp $prop */
+            foreach ($this->getProps() as $prop) {
+                if ($prop->getCode() === 'MANZANA_NUMBER') {
+                    $result = $prop->getValue();
+                }
+            }
+            $this->manzanaId = $result;
+        }
         return $this->manzanaId;
     }
 

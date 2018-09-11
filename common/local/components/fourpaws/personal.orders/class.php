@@ -118,8 +118,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                 $nav->getOffset(), $nav->getPageSize(), true));
             $this->arResult['NAV'] = $nav;
-
-
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 

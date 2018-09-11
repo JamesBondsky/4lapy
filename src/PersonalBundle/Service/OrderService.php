@@ -56,9 +56,9 @@ use FourPaws\PersonalBundle\Exception\ManzanaOrder\ManzanaNumberNotDefinedExcept
 use FourPaws\PersonalBundle\Exception\ManzanaOrder\ManzanaOrderExceptionInterface;
 use FourPaws\PersonalBundle\Exception\ManzanaOrder\NoItemsException;
 use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderAlreadyExistsException;
+use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderCreateException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
-use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -313,7 +313,6 @@ class OrderService
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws \Exception
-     * @throws NotFoundException
      */
     public function getStore(Order $order): ?Store
     {
