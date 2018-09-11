@@ -236,6 +236,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         $APPLICATION->SetTitle($properties['ELEMENT_META_TITLE']);
         $APPLICATION->SetPageProperty('description', $properties['ELEMENT_META_DESCRIPTION']);
+        $APPLICATION->SetPageProperty('canonical', $offer->getProduct()->getDetailPageUrl());
 
         return $this;
     }
