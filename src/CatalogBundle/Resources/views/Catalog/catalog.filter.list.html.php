@@ -69,7 +69,8 @@ foreach ($filters as $filter) {
                                 ? \sprintf('background-image: url(%s)', $image)
                                 : \sprintf('background-color: #%s;', \ltrim($variant->getColor(), ' #'));
                             ?>
-                            <label class="color_filter__item<?= $variant->isChecked() ? '--checked' : '' ?> js-color-filter-item" style="<?= $style ?>">
+                            <label class="color_filter__item<?= $variant->isChecked() ? '--checked' : '' ?> js-color-filter-item"
+                                   style="<?= $style ?>">
                                 <input <?= $variant->isChecked() ? 'checked' : '' ?>
                                         class="js-checkbox-change js-filter-control js-filter-select"
                                         id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
@@ -77,7 +78,9 @@ foreach ($filters as $filter) {
                                         name="<?= $filter->getFilterCode() ?>"
                                         value="<?= $variant->getValue() ?>">
                             </label>
-                        <?php } else { ?>
+                            <?php
+                        } else {
+                            ?>
                             <label class="size_filter__item<?= $variant->isChecked() ? '--active' : '' ?> js-size-filter-item">
                                 <input <?= $variant->isChecked() ? 'checked' : '' ?>
                                         class="js-checkbox-change js-filter-control js-filter-select"
