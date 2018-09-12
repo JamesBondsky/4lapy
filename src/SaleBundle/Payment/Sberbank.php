@@ -36,6 +36,9 @@ class Sberbank
      */
     private const prod_url = \API_PROD_URL;
 
+    private const TEST_MERCHANT = '4lapy';
+    private const PROD_MERCHANT = 'sbersafe';
+
     public const SUCCESS_CODE = 0;
 
     public const ERROR_ORDER_NOT_FOUND = 6;
@@ -110,6 +113,26 @@ class Sberbank
     }
 
     /**
+     * @return string
+     */
+    public function getApiUrl(): string
+    {
+        return $this->test_mode
+            ? self::test_url
+            : self::prod_url;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMerchantName(): string
+    {
+        return $this->test_mode
+            ? self::TEST_MERCHANT
+            : self:: PROD_MERCHANT;
+    }
+
+    /**
      * ЗАПРОС В ПШ
      *
      * Формирование запроса в платежный шлюз и парсинг JSON-ответа
@@ -136,11 +159,7 @@ class Sberbank
             $data = $APPLICATION->ConvertCharsetArray($data, 'windows-1251', 'UTF-8');
         }
 
-        if ($this->test_mode) {
-            $url = self::test_url;
-        } else {
-            $url = self::prod_url;
-        }
+        $url = $this->getApiUrl();
 
         $curl = \curl_init();
         \curl_setopt_array($curl, [

@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
+use Bitrix\Main\ArgumentException;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\CategoryQuery;
@@ -11,8 +12,10 @@ use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
+use InvalidArgumentException;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -45,6 +48,10 @@ class CatalogController extends Controller
      * @var CatalogLandingService
      */
     private $landingService;
+    /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
 
     /**
      * CatalogController constructor.
@@ -53,12 +60,14 @@ class CatalogController extends Controller
      * @param ValidatorInterface     $validator
      * @param GoogleEcommerceService $ecommerceService
      * @param CatalogLandingService  $landingService
+     * @param RetailRocketService    $retailRocketService
      */
-    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService, CatalogLandingService $landingService)
+    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService, CatalogLandingService $landingService, RetailRocketService $retailRocketService)
     {
         $this->searchService = $searchService;
         $this->validator = $validator;
         $this->ecommerceService = $ecommerceService;
+        $this->retailRocketService = $retailRocketService;
         $this->landingService = $landingService;
     }
 
@@ -81,13 +90,11 @@ class CatalogController extends Controller
         $result = null;
 
         if (!$this->validator->validate($searchRequest)
-            ->count()) {
+                             ->count()) {
             /** @var ProductSearchResult $result */
             $result = $this->searchService->searchProducts(
-                $searchRequest->getCategory()
-                    ->getFilters(),
-                $searchRequest->getSorts()
-                    ->getSelected(),
+                $searchRequest->getCategory()->getFilters(),
+                $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
             );
@@ -97,6 +104,13 @@ class CatalogController extends Controller
             ->withFilterParameter('SECTION_ID', false)
             ->exec();
 
+        $retailRocketViewScript = $searchRequest->getCategory()->getId()
+            ? \sprintf(
+                '<script>%s</script>',
+                $this->retailRocketService->renderCategoryView($searchRequest->getCategory()->getId())
+            )
+            : '';
+
         $tpl = 'FourPawsCatalogBundle:Catalog:search.html.php';
 
         if ($request->query->get('partial') === 'Y') {
@@ -104,11 +118,12 @@ class CatalogController extends Controller
         }
 
         return $this->render($tpl, [
-            'request'             => $request,
-            'productSearchResult' => $result,
-            'catalogRequest'      => $searchRequest,
-            'categories'          => $categories,
-            'ecommerceService'    => $this->ecommerceService,
+            'request'                => $request,
+            'productSearchResult'    => $result,
+            'catalogRequest'         => $searchRequest,
+            'categories'             => $categories,
+            'ecommerceService'       => $this->ecommerceService,
+            'retailRocketViewScript' => $retailRocketViewScript
         ]);
     }
 
@@ -144,22 +159,20 @@ class CatalogController extends Controller
     public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest, Request $request): Response
     {
         $result = $this->searchService->searchProducts(
-            $rootCategoryRequest->getCategory()
-                ->getFilters(),
-            $rootCategoryRequest->getSorts()
-                ->getSelected(),
+            $rootCategoryRequest->getCategory()->getFilters(),
+            $rootCategoryRequest->getSorts()->getSelected(),
             $rootCategoryRequest->getNavigation(),
             $rootCategoryRequest->getSearchString()
         );
 
-        return $this->render(
-            'FourPawsCatalogBundle:Catalog:rootCategory.html.php',
-            [
-                'rootCategoryRequest' => $rootCategoryRequest,
-                'request'             => $request,
-                'result'              => $result,
-            ]
-        );
+        $retailRocketViewScript = $rootCategoryRequest->getCategory()->getId()
+            ? \sprintf(
+                '<script>%s</script>',
+                $this->retailRocketService->renderCategoryView($rootCategoryRequest->getCategory()->getId())
+            )
+            : '';
+
+        return $this->render('FourPawsCatalogBundle:Catalog:rootCategory.html.php', \compact('rootCategoryRequest', 'request', 'result', 'retailRocketViewScript'));
     }
 
     /**
@@ -178,12 +191,22 @@ class CatalogController extends Controller
     public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest): Response
     {
         $result = $this->searchService->searchProducts(
-            $categoryRequest->getCategory()
-                ->getFilters(),
-            $categoryRequest->getSorts()
-                ->getSelected(),
+            $categoryRequest->getCategory()->getFilters(),
+            $categoryRequest->getSorts()->getSelected(),
             $categoryRequest->getNavigation(),
             $categoryRequest->getSearchString()
+        );
+
+        try {
+            $productWithMinPrice = $this->searchService->searchOneWithMinPrice($categoryRequest->getCategory()
+                                                                                               ->getFilters());
+        } catch (InvalidArgumentException | ArgumentException $e) {
+            $productWithMinPrice = false;
+        }
+
+        $retailRocketViewScript = \sprintf(
+            '<script>%s</script>',
+            $this->retailRocketService->renderCategoryView($categoryRequest->getCategory()->getId())
         );
 
         $tpl = 'FourPawsCatalogBundle:Catalog:catalog.html.php';
@@ -193,11 +216,13 @@ class CatalogController extends Controller
         }
 
         return $this->render($tpl, [
-            'productSearchResult' => $result,
-            'catalogRequest'      => $categoryRequest,
-            'ecommerceService'    => $this->ecommerceService,
-            'request'             => $request,
-            'landingService'      => $this->landingService
+            'productSearchResult'    => $result,
+            'catalogRequest'         => $categoryRequest,
+            'ecommerceService'       => $this->ecommerceService,
+            'request'                => $request,
+            'landingService'         => $this->landingService,
+            'retailRocketViewScript' => $retailRocketViewScript,
+            'productWithMinPrice'    => $productWithMinPrice
         ]);
     }
 }

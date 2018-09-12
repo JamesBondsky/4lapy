@@ -275,14 +275,16 @@ class BaseRepository
             $entityClass = $this->getEntityClass();
         }
         if (!empty($entityClass)) {
-            return new ArrayCollection($this->arrayTransformer->fromArray(
+            $result = new ArrayCollection($this->arrayTransformer->fromArray(
                 $allItems,
                 sprintf('array<%s>', $entityClass),
                 DeserializationContext::create()->setGroups(['read'])
             ));
+        } else {
+            $result = new ArrayCollection($allItems);
         }
 
-        return new ArrayCollection($allItems);
+        return $result;
     }
 
     /**

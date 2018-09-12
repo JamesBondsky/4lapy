@@ -4,6 +4,11 @@ namespace FourPaws\UserBundle\Entity;
 
 use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * Class Group
+ *
+ * @package FourPaws\UserBundle\Entity
+ */
 class Group
 {
     /**

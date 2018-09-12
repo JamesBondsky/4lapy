@@ -34,7 +34,7 @@ if ($arParams['WRAP_SECTION_BLOCK'] === 'Y') {
     echo '<section class="b-common-section">';
 } ?>
     <div class="b-common-section__title-box b-common-section__title-box--viewed">
-        <h2 class="b-title b-title--viewed"><?= Loc::getMessage('CVP_TPL_MESS_YOU_LOOKED') ?></h2>
+        <div class="b-title b-title--viewed"><?= Loc::getMessage('CVP_TPL_MESS_YOU_LOOKED') ?></div>
     </div>
     <div class="b-common-section__content b-common-section__content--viewed js-scroll-viewed">
         <?php foreach ($arResult['PRINT_ITEMS'] as $item) { ?>

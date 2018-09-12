@@ -25,8 +25,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         Рассылка
     </div>
     <?php if ($arResult['IS_SUBSCRIBED'] || (!empty($arResult['EMAIL']) && $arResult['CONFIRMED'])) { ?>
-        <form class="b-account-profile__form" data-url="/ajax/user/subscribe/subscribe/" id="lk-substribe"
-              method="post">
+        <form class="b-account-profile__form" data-url="/ajax/user/subscribe/subscribe/" id="lk-substribe" method="post">
             <input type="hidden" name="email" value="<?= $arResult['EMAIL'] ?>">
             <div class="b-account-profile__subscribe-setting">
                 <div class="b-checkbox b-checkbox--agree b-checkbox--account-subscribe">
@@ -43,6 +42,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </form>
     <?php } else { ?>
         <form class="b-account-profile__form js-form-validation" data-url="/ajax/user/subscribe/subscribe/"
+              onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
               id="lk-substribe" method="post">
             <input type="hidden" name="type" value="all">
             <div class="b-account-profile__no-subscribe">

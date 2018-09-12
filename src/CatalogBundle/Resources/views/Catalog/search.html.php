@@ -8,11 +8,12 @@ use Symfony\Component\Templating\PhpEngine;
 
 /**
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var GoogleEcommerceService $ecommerceService
- * @var PhpEngine $view
- * @var CategoryCollection $categories
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var GoogleEcommerceService                $ecommerceService
+ * @var PhpEngine                             $view
+ * @var CategoryCollection                    $categories
+ * @var string                                $retailRocketViewScript
+ * @var CMain                                 $APPLICATION
  */
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -24,7 +25,7 @@ $APPLICATION->SetTitle($catalogRequest->getCategory()->getName()); ?>
             <div class="b-container b-container--catalog-filter">
                 <?= $view->render(
                     'FourPawsCatalogBundle:Catalog:search.filter.container.html.php',
-                    \compact('catalogRequest', 'ecommerceService', 'productSearchResult')
+                    \compact('catalogRequest', 'ecommerceService', 'productSearchResult', 'retailRocketViewScript')
                 ) ?>
             </div>
         <?php } else { ?>
@@ -41,8 +42,8 @@ $APPLICATION->SetTitle($catalogRequest->getCategory()->getName()); ?>
             '',
             [
                 'AREA_FILE_SHOW' => 'file',
-                'PATH' => '/local/include/blocks/viewed_products.php',
-                'EDIT_TEMPLATE' => '',
+                'PATH'           => '/local/include/blocks/viewed_products.php',
+                'EDIT_TEMPLATE'  => '',
             ],
             null,
             [

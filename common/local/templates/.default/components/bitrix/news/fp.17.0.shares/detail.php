@@ -79,7 +79,7 @@ if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] ==
         [
             'IBLOCK_ID'     => $arParams['IBLOCK_ID'],
             'ITEM_ID'       => $elementId,
-            'TITLE'         => 'Распродажа',
+            'TITLE'         => '',
             'COUNT_ON_PAGE' => 20,
             'PROPERTY_CODE' => 'PRODUCTS',
             'FILTER_FIELD'  => 'XML_ID',

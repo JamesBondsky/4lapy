@@ -93,7 +93,7 @@ class SubscribeController extends Controller implements LoggerAwareInterface
                 ? $this->expertsenderService->sendEmailSubscribeNews($user)
                 : $this->expertsenderService->sendEmailUnSubscribeNews($user);
 
-            if ($subscriptionResult) {
+            if ($subscriptionResult && $user->getId()) {
                 $this->updateUserEmail($user, $oldEmail, $type === 'all');
             }
 

@@ -343,6 +343,7 @@ class OrderService implements LoggerAwareInterface
          * Привязываем корзину
          */
         if ($checkAvailability) {
+            $basket = $basket->createClone();
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
@@ -384,7 +385,7 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $order->setBasket($basket->getOrderableItems());
+        $order->setBasket($basket);
         if ($order->getBasket()->isEmpty()) {
             throw new OrderCreateException('Basket is empty');
         }
@@ -417,12 +418,6 @@ class OrderService implements LoggerAwareInterface
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
         try {
-            /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
-                $shipmentItem = $shipmentItemCollection->createItem($item);
-                $shipmentItem->setQuantity($item->getQuantity());
-            }
-
             $shipment->setFields(
                 [
                     'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
@@ -432,9 +427,16 @@ class OrderService implements LoggerAwareInterface
                     'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
+
+            /** @var BasketItem $item */
+            foreach ($order->getBasket() as $item) {
+                $shipmentItem = $shipmentItemCollection->createItem($item);
+                $shipmentItem->setQuantity($item->getQuantity());
+            }
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
                 'deliveryId' => $selectedDelivery->getDeliveryId(),
+                'trace' => $e->getTrace()
             ]);
             throw new OrderCreateException('Failed to create order shipment');
         }
@@ -515,7 +517,7 @@ class OrderService implements LoggerAwareInterface
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
             /** @var BasketItem $item */
-            foreach ($order->getBasket()->getOrderableItems() as $item) {
+            foreach ($order->getBasket() as $item) {
                 $shipmentPlaceCode = 'DC01';
                 /** @var DeliveryScheduleResult $deliveryResult */
                 if ($shipmentResults &&
@@ -1021,6 +1023,11 @@ class OrderService implements LoggerAwareInterface
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address);
 
         try {
+            /* @todo костыль - недоступные товары не попадают в корзину заказа, но учитываются в стоимости заказа */
+            $order->setFieldNoDemand(
+                'PRICE',
+                $order->getBasket()->getOrderableItems()->getPrice() + $order->getDeliveryPrice()
+            );
             $result = $order->save();
             if (!$result->isSuccess()) {
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
@@ -1087,10 +1094,6 @@ class OrderService implements LoggerAwareInterface
      */
     public function createOrder(OrderStorage $storage): Order
     {
-        if ($isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
-            Manager::disableExtendsDiscount();
-        }
-
         /**
          * Разделение заказов
          */
@@ -1141,17 +1144,13 @@ class OrderService implements LoggerAwareInterface
                     ]);
                 }
             }
+            $this->resetBasket($toDelete);
         } else {
             $order = $this->initOrder($storage);
             $this->saveOrder($order, $storage);
         }
 
-        if ($isDiscountEnabled) {
-            Manager::enableExtendsDiscount();
-        }
-
         $this->orderStorageService->clearStorage($storage);
-        $this->resetBasket($toDelete);
 
         return $order;
     }

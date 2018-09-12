@@ -31,6 +31,7 @@ use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -64,6 +65,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      * @var BasketService
      */
     private $basketService;
+    /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
 
     /**
      * CatalogElementDetailComponent constructor.
@@ -77,10 +82,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     {
         try {
             $container = App::getInstance()
-                ->getContainer();
+                            ->getContainer();
             $this->ecommerceService = $container->get(GoogleEcommerceService::class);
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
             $this->basketService = $container->get(BasketService::class);
+            $this->retailRocketService = $container->get(RetailRocketService::class);
         } catch (ApplicationCreateException | ServiceCircularReferenceException | ServiceNotFoundException $e) {
         }
 
@@ -154,12 +160,18 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'CURRENT_OFFER'         => $currentOffer,
                 'SECTION_CHAIN'         => $this->getSectionChain($sectionId),
                 'SHOW_FAST_ORDER'       => $this->arParams['SHOW_FAST_ORDER'],
-                'ECOMMERCE_VIEW_SCRIPT' => $this->ecommerceService->renderScript(
-                    $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара'),
-                    true
+                'ECOMMERCE_VIEW_SCRIPT' => \sprintf(
+                    "<script>%s\n%s</script>",
+                    $this->ecommerceService->renderScript(
+                        $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара')
+                    ),
+                    $this->retailRocketService->renderDetailView($currentOffer->getXmlId())
+                ),
+                'BASKET_LINK_EVENT'     => \sprintf(
+                    'onmousedown="%s"',
+                    $this->retailRocketService->renderAddToBasket($currentOffer->getXmlId())
                 )
             ];
-
 
             $this->setResultCacheKeys([
                 'PRODUCT',
@@ -213,7 +225,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     ],
                     [
                         $offer->getProduct()
-                            ->getBrandName(),
+                              ->getBrandName(),
                         $offer->getName(),
                         $offer->getCatalogPrice()
                     ],
@@ -224,6 +236,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         $APPLICATION->SetTitle($properties['ELEMENT_META_TITLE']);
         $APPLICATION->SetPageProperty('description', $properties['ELEMENT_META_DESCRIPTION']);
+        $APPLICATION->SetPageProperty('canonical', $offer->getProduct()->getDetailPageUrl());
 
         return $this;
     }
@@ -241,11 +254,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             switch ($type) {
                 case 'color':
                     $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_COLOUR_COMBINATION' => $val])
-                        ->exec();
+                                                         ->exec();
                     break;
                 case 'flavour':
                     $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])
-                        ->exec();
+                                                         ->exec();
                     break;
             }
             if (null !== $offerCollection) {
@@ -347,7 +360,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 /** @var Product $product */
                 $product = $this->arResult['PRODUCT'];
                 $currentOffer = $product->getOffers()
-                    ->first();
+                                        ->first();
                 $parentId = $product->getId();
                 $productId = $currentOffer ? $currentOffer->getId() : 0;
                 $productId = $productId > 0 ? $productId : $parentId;
@@ -478,9 +491,9 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             $offers = $product->getOffers();
             foreach ($offers as $offer) {
                 if ($offer->getImages()
-                        ->count() >= 1
+                          ->count() >= 1
                     && $offer->getImages()
-                           ->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+                             ->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
                     break;
                 }
             }

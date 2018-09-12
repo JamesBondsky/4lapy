@@ -55,6 +55,7 @@ use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ExpertsenderService
@@ -425,8 +426,9 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $user
      *
      * @return bool
+     * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
-     * @throws GuzzleException
+     * @throws ServiceNotFoundException
      * @throws SystemException
      */
     public function sendEmailSubscribeNews(User $user): bool
@@ -436,6 +438,10 @@ class ExpertsenderService implements LoggerAwareInterface
             try {
                 $expertSenderId = $this->getUserId($user->getEmail())->getId();
             } catch (ExpertsenderServiceApiException $e) {
+            } catch (ExpertsenderServiceException $e) {
+                if ($e->getCode() !== Response::HTTP_BAD_REQUEST) {
+                    throw $e;
+                }
             }
 
             if ($expertSenderId) {

@@ -125,7 +125,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                 <?php /** @noinspection PhpUnhandledExceptionInspection */
                 $frame->end(); ?>
                 <div class="b-form-review__wrapper-blocks">
-                    <h4 class="b-form-review__sub-heading">Оценка</h4>
+                    <div class="b-form-review__sub-heading">Оценка</div>
                     <div class="b-rating b-rating--large b-rating--form-review">
                         <div class="b-rating__form">
                             <div class="b-rating__group">
@@ -144,7 +144,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                             </div>
                         </div>
                     </div>
-                    <h4 class="b-form-review__sub-heading">Отзыв</h4>
+                    <div class="b-form-review__sub-heading">Отзыв</div>
                     <div class="b-form-review__group">
                     <textarea class="b-form-review__textarea js-small-input-eight"
                               name="UF_TEXT"

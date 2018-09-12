@@ -8,7 +8,6 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Currency\CurrencyManager;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -53,16 +52,17 @@ use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ManzanaChequeItemExceptionInterface;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\NoItemsInChequeException;
+use FourPaws\PersonalBundle\Exception\ManzanaOrder\ManzanaNumberNotDefinedException;
+use FourPaws\PersonalBundle\Exception\ManzanaOrder\ManzanaOrderExceptionInterface;
+use FourPaws\PersonalBundle\Exception\ManzanaOrder\NoItemsException;
+use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderAlreadyExistsException;
+use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderCreateException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
-use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -92,11 +92,6 @@ class OrderService
     protected $orderRepository;
 
     /**
-     * @var CurrentUserProviderInterface $currentUser
-     */
-    protected $currentUser;
-
-    /**
      * @var ManzanaService
      */
     protected $manzanaService;
@@ -114,152 +109,86 @@ class OrderService
     /**
      * OrderService constructor.
      *
-     * @param OrderRepository              $orderRepository
-     * @param DeliveryService              $deliveryService
-     * @param CurrentUserProviderInterface $currentUserProvider
-     * @param ManzanaService               $manzanaService
+     * @param OrderRepository $orderRepository
+     * @param DeliveryService $deliveryService
+     * @param ManzanaService  $manzanaService
      */
     public function __construct(
         OrderRepository $orderRepository,
         DeliveryService $deliveryService,
-        CurrentUserProviderInterface $currentUserProvider,
         ManzanaService $manzanaService
     )
     {
         $this->orderRepository = $orderRepository;
-        $this->currentUser = $currentUserProvider;
         $this->manzanaService = $manzanaService;
         $this->deliveryService = $deliveryService;
     }
 
     /**
-     * @return ArrayCollection|Order[]
-     * @throws \RuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
-     * @throws \Exception
-     */
-    public function getAllClosedOrders(): ArrayCollection
-    {
-        $closedSiteOrders = $this->getClosedSiteOrders()->toArray();
-        try {
-            $manzanaOrders = $this->getManzanaOrders()->toArray();
-        } catch (ManzanaServiceException $e) {
-            $manzanaOrders = [];
-        }
-
-        return $this->mergeAllClosedOrders($closedSiteOrders, $manzanaOrders);
-    }
-
-    /**
-     * @param array $closedSiteOrders
-     * @param array $manzanaOrders
-     *
-     * @return ArrayCollection|Order[]
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws \Exception
-     */
-    public function mergeAllClosedOrders(array $closedSiteOrders, array $manzanaOrders): ArrayCollection
-    {
-        /** Очищаем дубли из манзаны */
-        /** @var Order $manzanaOrder */
-        foreach ($manzanaOrders as $key => $manzanaOrder) {
-            if (\in_array($manzanaOrder->getManzanaId(), $this->getSiteManzanaOrders($manzanaOrder->getUserId()), true)) {
-                unset($manzanaOrders[$key]);
-            }
-        }
-
-        return new ArrayCollection(array_merge($closedSiteOrders, $manzanaOrders));
-    }
-
-    /**
-     * @return ArrayCollection
+     * @param User $user
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws ArgumentTypeException
      * @throws DeliveryNotFoundException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
-     * @throws NotImplementedException
-     * @throws NotSupportedException
-     * @throws ObjectException
-     * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
-     * @throws OrderCreateException
+     * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws \Exception
      */
-    public function getManzanaOrders(): ArrayCollection
+    public function loadManzanaOrders(User $user)
     {
-        $orders = new ArrayCollection();
-        $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByUser()));
-        if (!$cheques->isEmpty()) {
-            $hasAdd = false;
-            $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
-            /** @var Cheque $cheque */
-            foreach ($cheques as $cheque) {
-                if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
-                    continue;
-                }
+        $contactId = $this->manzanaService->getContactByUser($user)->contactId;
+        $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
 
-                /** @var \DateTimeImmutable $date */
-                $date = $cheque->date;
-                $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
-                $order = (new Order())
-                    ->setDateInsert($bitrixDate)
-                    ->setDatePayed($bitrixDate)
-                    ->setDateStatus($bitrixDate)
-                    ->setDateUpdate($bitrixDate)
-                    ->setManzana(true)
-                    ->setUserId($this->currentUser->getCurrentUserId())
-                    ->setPayed(true)
-                    ->setStatusId(static::$manzanaFinalStatus)
-                    ->setPrice($cheque->sum)
-                    ->setItemsSum($cheque->sum)
-                    ->setManzanaId('' . $cheque->chequeNumber)
-                    ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID'])
-                    ->setDeliveryId($deliveryId);
+        $cheques = $this->manzanaService->getCheques($contactId);
 
-                if (!$cheque->hasItemsBool()) {
-                    continue;
-                }
+        $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
 
-                if ($this->hasOrderByManzana($order)) {
-                    continue;
-                }
-
-                try {
-                    $items = $this->getItemsByCheque($cheque);
-                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
-                    continue;
-                }
-
-                $order->setNewManzana(true);
-                $order->setItems(new ArrayCollection($items));
-                if (!$this->hasOrderByManzana($order)) {
-                    $hasAdd = $this->addOrder($order);
-                } else {
-                    $orders[$order->getId()] = $order;
-                }
+        foreach ($cheques as $cheque) {
+            if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+                continue;
             }
 
-            if ($hasAdd) {
-                LocalRedirect(Application::getInstance()->getContext()->getRequest()->getRequestUri());
+            if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+                continue;
+            }
+
+            if (!$cheque->hasItemsBool()) {
+                continue;
+            }
+
+            /** @var \DateTimeImmutable $date */
+            $date = $cheque->date;
+            $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+            $order = (new Order())
+                ->setDateInsert($bitrixDate)
+                ->setDatePayed($bitrixDate)
+                ->setDateStatus($bitrixDate)
+                ->setDateUpdate($bitrixDate)
+                ->setManzana(true)
+                ->setUserId($user->getId())
+                ->setPayed(true)
+                ->setStatusId(static::$manzanaFinalStatus)
+                ->setPrice($cheque->sum)
+                ->setItemsSum($cheque->sum)
+                ->setManzanaId($cheque->chequeNumber)
+                ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID'])
+                ->setDeliveryId($deliveryId);
+
+            try {
+                $items = $this->getItemsByCheque($cheque);
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
+                continue;
+            }
+            $order->setItems(new ArrayCollection($items));
+
+            try {
+                $this->addManzanaOrder($order);
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
             }
         }
-
-        return $orders;
     }
 
     /**
@@ -304,21 +233,7 @@ class OrderService
      */
     public function getUserOrders(array $params): ArrayCollection
     {
-        $orderCollection = $this->orderRepository->getUserOrders($params);
-        if (!$orderCollection->isEmpty()) {
-            /** @var Order $order */
-            foreach ($orderCollection as $key => $order) {
-                if (!$order->isManzana() && $order->getId() > 0) {
-                    /** удаляем к чертям заказы без товаров */
-                    if ($order->isItemsEmpty()) {
-                        unset($orderCollection[$key]);
-                        continue;
-                    }
-                }
-            }
-        }
-
-        return $orderCollection;
+        return $this->orderRepository->getUserOrders($params);
     }
 
     /**
@@ -398,7 +313,6 @@ class OrderService
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws \Exception
-     * @throws NotFoundException
      */
     public function getStore(Order $order): ?Store
     {
@@ -524,7 +438,7 @@ class OrderService
      * @throws SystemException
      * @throws ObjectPropertyException
      */
-    protected function hasOrderByManzana(Order $order): bool
+    protected function isManzanaOrderExists(Order $order): bool
     {
         $filter = [
             'USER_ID'        => $order->getUserId(),
@@ -584,17 +498,25 @@ class OrderService
      * @throws NotSupportedException
      * @throws \Exception
      */
-    protected function addOrder(Order $order): bool
+    protected function addManzanaOrder(Order $order): bool
     {
-        if (!$order->isManzana() || empty($order->getManzanaId()) || $order->isItemsEmpty()) {
-            return false;
+        if (!$order->getManzanaId()) {
+            throw new ManzanaNumberNotDefinedException('Order manzana id not defined');
         }
-        Manager::disableExtendsDiscount();
-        $bitrixOrder = BitrixOrder::create(SITE_ID, $order->getUserId(), $order->getCurrency());
 
-        /** ставим даты */
-        $bitrixOrder->setFieldNoDemand('STATUS_ID', 'G');
-        $bitrixOrder->setFieldNoDemand('PAYED', 'Y');
+        if ($order->getItems()->isEmpty()) {
+            throw new NoItemsException(\sprintf('No items in order %s', $order->getManzanaId()));
+        }
+
+        if ($this->isManzanaOrderExists($order)) {
+            throw new OrderAlreadyExistsException(\sprintf('Order %s already exists', $order->getManzanaId()));
+        }
+
+        Manager::disableExtendsDiscount();
+
+        $bitrixOrder = BitrixOrder::create(SITE_ID, $order->getUserId(), $order->getCurrency());
+        $bitrixOrder->setFieldNoDemand('STATUS_ID', self::$manzanaFinalStatus);
+        $bitrixOrder->setFieldNoDemand('PAYED', BitrixUtils::BX_BOOL_TRUE);
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
@@ -763,7 +685,7 @@ class OrderService
                 ->setWeight($offer->getCatalogProduct()->getWeight())
                 ->setDetailPageUrl($offer->getLink())
                 ->setId($offer->getId());
-            $result[$item->getArticle()] = $item;
+            $result[] = $item;
         }
 
         return $result;

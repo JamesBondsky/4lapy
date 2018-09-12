@@ -914,8 +914,20 @@ class DeliveryService implements LoggerAwareInterface
         return DeliveryHandlerBase::getStocksForItem(
             $offer,
             $priceForAmountCollection,
-            DeliveryHandlerBase::getAvailableStores($delivery->getDeliveryCode(), $delivery->getDeliveryZone())
+            $this->getStoresByDelivery($delivery)
         );
+    }
+
+    /**
+     * @param CalculationResultInterface $delivery
+     *
+     * @return StoreCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     */
+    public function getStoresByDelivery(CalculationResultInterface $delivery): StoreCollection
+    {
+        return DeliveryHandlerBase::getAvailableStores($delivery->getDeliveryCode(), $delivery->getDeliveryZone());
     }
 
     /**

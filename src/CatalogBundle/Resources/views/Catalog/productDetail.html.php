@@ -255,7 +255,7 @@ if (null === $offer) {
                         <div class="b-tab-content__container js-tab-content" data-tab-content="shares">
                             <?php /** @var IblockElement $share */
                             foreach ($offer->getShare() as $share) { ?>
-                                <h2 class="b-title b-title--advice b-title--stock">Акция</h2>
+                                <div class="b-title b-title--advice b-title--stock">Акция</div>
                                 <div class="b-stock">
                                     <div class="b-characteristics-tab b-characteristics-tab--stock">
                                         <ul class="b-characteristics-tab__list">
