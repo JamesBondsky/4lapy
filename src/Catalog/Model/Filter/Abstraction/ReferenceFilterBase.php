@@ -25,7 +25,8 @@ abstract class ReferenceFilterBase extends FilterBase
     /**
      * @return array
      */
-    protected function getVariantOrder(): array {
+    protected function getVariantOrder(): array
+    {
         return [
             'UF_SORT' => 'asc',
             'UF_NAME' => 'asc',
@@ -54,21 +55,44 @@ abstract class ReferenceFilterBase extends FilterBase
 
             /** @var HlbReferenceItem $referenceItem */
             foreach ($referenceItemCollection as $referenceItem) {
-                $variants[] = $this->getVariant($referenceItem);
+                $variants[$referenceItem->getId()] = $this->getVariant($referenceItem);
             }
 
+            if ($this->isMergeValues()) {
+                foreach ($referenceItemCollection as $referenceItem) {
+                    if (isset($variants[$referenceItem->getBaseValue()])) {
+                        /**
+                         * @var Variant $baseVariant
+                         * @var Variant $slaveVariant
+                         */
+                        $baseVariant = $variants[$referenceItem->getBaseValue()];
+                        $slaveVariant = $variants[$referenceItem->getId()];
+                        $slaveVariant
+                            ->withName($baseVariant->getName())
+                            ->withImage($baseVariant->getImage())
+                            ->withColor($baseVariant->getColor())
+                            ->withBaseValueId($referenceItem->getBaseValue());
+
+                        $baseVariant->withValue($baseVariant->getValue() . ',' . $slaveVariant->getValue());
+                    }
+                }
+            }
             return $variants;
         };
 
-        $variants = (new BitrixCache())->withId(__METHOD__ . $this->getFilterCode())
-                                       ->withTag('catalog:referenceFilters')
-                                       ->resultOf($doGetAllVariants);
+        $variants = (new BitrixCache())
+            ->withId(__METHOD__ . $this->getFilterCode())
+            ->withTag('catalog:referenceFilters')
+            ->resultOf($doGetAllVariants);
 
         return new VariantCollection($variants);
     }
 
     /**
      * @return D7QueryBase
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @throws ArgumentException
      * @throws SystemException
      * @throws ApplicationCreateException
