@@ -31,6 +31,11 @@ class HlbReferenceItem extends HlbItemBase
     protected $UF_CODE = '';
 
     /**
+     * @var int
+     */
+    protected $UF_BASE_VALUE = '';
+
+    /**
      * @return string
      */
     public function getCode(): string
@@ -127,6 +132,25 @@ class HlbReferenceItem extends HlbItemBase
     {
         $this->UF_FILE = $file;
 
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBaseValue(): int
+    {
+        return (int)$this->UF_BASE_VALUE;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return $this
+     */
+    public function withBaseValue(int $id)
+    {
+        $this->UF_BASE_VALUE = $id;
         return $this;
     }
 }

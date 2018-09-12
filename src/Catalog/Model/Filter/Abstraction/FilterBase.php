@@ -45,6 +45,11 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     protected $UF_HIDE_IN_FILTER = false;
 
     /**
+     * @var bool
+     */
+    protected $UF_MERGE_VALUES = false;
+
+    /**
      * FilterBase constructor.
      *
      * @param array $fields
@@ -97,6 +102,25 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     {
         $this->UF_SHOW_WITH_PICTURE = $isShowWithPicture;
 
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMergeValues(): bool
+    {
+        return (bool)$this->UF_MERGE_VALUES;
+    }
+
+    /**
+     * @param bool $isMergeValues
+     *
+     * @return $this
+     */
+    public function withMergeValues(bool $isMergeValues)
+    {
+        $this->UF_MERGE_VALUES = $isMergeValues;
         return $this;
     }
 
