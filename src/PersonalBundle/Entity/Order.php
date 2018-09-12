@@ -12,7 +12,6 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
 use Bitrix\Sale\Payment;
@@ -158,9 +157,6 @@ class Order extends BaseEntity
     /** @var ArrayCollection */
     protected $items;
 
-    /** @var bool */
-    protected $manzana = false;
-
     /** @var float */
     protected $allWeight ;
 
@@ -186,16 +182,13 @@ class Order extends BaseEntity
     protected $statusMain = [];
 
     /** @var string */
-    protected $manzanaId = [];
+    protected $manzanaId;
 
     /** @var array $orderItems */
     protected $orderItems = [];
 
     /** @var \Bitrix\Sale\Order $bitrixOrder */
     protected $bitrixOrder;
-
-    /** @var bool */
-    protected $newManzana = false;
 
     /** @var string */
     protected $deliveryAddress;
@@ -1014,9 +1007,22 @@ class Order extends BaseEntity
 
     /**
      * @return string
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws ServiceNotFoundException
      */
     public function getManzanaId(): string
     {
+        if (null === $this->manzanaId) {
+            $result = '';
+            /** @var OrderProp $prop */
+            foreach ($this->getProps() as $prop) {
+                if ($prop->getCode() === 'MANZANA_NUMBER') {
+                    $result = $prop->getValue();
+                }
+            }
+            $this->manzanaId = $result;
+        }
         return $this->manzanaId;
     }
 
@@ -1068,15 +1074,6 @@ class Order extends BaseEntity
 
     /**
      * @return bool
-     * @throws \Exception
-     */
-    public function isItemsEmpty(): bool
-    {
-        return $this->getItems()->isEmpty();
-    }
-
-    /**
-     * @return bool
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -1099,22 +1096,6 @@ class Order extends BaseEntity
     public function getProperty(string $code): ?OrderProp
     {
         return $this->getProps()->get($code);
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNewManzana(): bool
-    {
-        return $this->newManzana;
-    }
-
-    /**
-     * @param bool $newManzana
-     */
-    public function setNewManzana(bool $newManzana): void
-    {
-        $this->newManzana = $newManzana;
     }
 
     /**
