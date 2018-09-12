@@ -90,6 +90,9 @@ abstract class ReferenceFilterBase extends FilterBase
 
     /**
      * @return D7QueryBase
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @throws ArgumentException
      * @throws SystemException
      * @throws ApplicationCreateException

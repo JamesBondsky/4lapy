@@ -200,18 +200,16 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     {
         $rawValue = $request->get($this->getFilterCode());
 
+        $result = [$rawValue];
+
         if (null === $rawValue) {
-            return [];
+            $result = [];
+        } elseif (\is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
+            $result = explode(static::VARIANT_DELIMITER, $rawValue);
+        } elseif (\is_array($rawValue)) {
+            $result = $rawValue;
         }
 
-        if (\is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
-            return explode(static::VARIANT_DELIMITER, $rawValue);
-        }
-
-        if (\is_array($rawValue)) {
-            return $rawValue;
-        }
-
-        return [$rawValue];
+        return $result;
     }
 }

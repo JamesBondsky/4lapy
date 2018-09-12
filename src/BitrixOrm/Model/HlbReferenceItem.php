@@ -2,6 +2,10 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
+/**
+ * Class HlbReferenceItem
+ * @package FourPaws\BitrixOrm\Model
+ */
 class HlbReferenceItem extends HlbItemBase
 {
     /**
