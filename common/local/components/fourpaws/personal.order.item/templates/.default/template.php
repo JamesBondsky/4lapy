@@ -122,12 +122,7 @@ if ($orderSubscribe) {
                         </span>
                         <?php
                     } else {
-                        $orderNumber = 0;
-                        if ($order->isManzana()) {
-                            $orderNumber = $order->getManzanaId();
-                        } else {
-                            $orderNumber = !empty($order->getAccountNumber()) ? $order->getAccountNumber() : $order->getId();
-                        } ?>
+                        $orderNumber = $order->getManzanaId() ?: $order->getAccountNumber();?>
                         <span class="b-accordion-order-item__number-order">
                             <?= ('№ ' . $orderNumber . ' от ' . $order->getFormattedDateInsert()) ?>
                         </span>
@@ -228,7 +223,7 @@ if ($orderSubscribe) {
                                 $paymentName = 'наличными';
                                 break;
                         }
-                        if ($paymentCode === 'cash' && !$order->isManzana() && !$order->isPayed()) {
+                        if ($paymentCode === 'cash' && !$order->getManzanaId() && !$order->isPayed()) {
                             /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
                             /** @var OrderService $orderService */
                             $orderService = SymfoniApplication::getInstance()
@@ -259,7 +254,7 @@ if ($orderSubscribe) {
             </div>
             <div class="b-accordion-order-item__button js-button-default">
                 <?php
-                if (!$isOrderSubscribePage && (!$order->isManzana() || $order->isNewManzana())) {
+                if (!$isOrderSubscribePage && (!$order->getManzanaId())) {
                     $uri = new Uri(Application::getInstance()
                         ->getContext()
                         ->getRequest()
@@ -267,14 +262,7 @@ if ($orderSubscribe) {
                     $uri->addParams([
                         'reply_order' => 'Y',
                         'id'          => $order->getId()
-                    ]);
-                    if ($order->isNewManzana()) {
-
-                        $uri->addParams([
-                            'is_manzana' => true,
-                            'item_ids'   => json_encode($order->getItemIdsQuantity()),
-                        ]);
-                    } ?>
+                    ]);?>
                     <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                         <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?= $uri->getUri() ?>"
                            title="Повторить заказ">
@@ -283,7 +271,7 @@ if ($orderSubscribe) {
                     </div>
                 <?php }
                 /*
-                if (!$isOrderSubscribePage && !$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') {
+                if (!$isOrderSubscribePage && !$order->isClosed() && !$order->isPayed() && !$order->getManzanaId() && $order->getPayment()->getCode() === 'card-online') {
                     ?>
                     <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                         <a class="b-link b-link--pay-account b-link--pay-account"
@@ -324,7 +312,7 @@ if ($orderSubscribe) {
                     if ($item->getParentItem()) {
                         continue;
                     }
-                    if (!$order->isManzana() && $item->hasDetailPageUrl() && !$item->isGift()) { ?>
+                    if (!$order->getManzanaId() && $item->hasDetailPageUrl() && !$item->isGift()) { ?>
                         <a href="<?= $item->getDetailPageUrl() ?>">
                     <?php } ?>
                     <li class="b-list-order__item">
@@ -394,11 +382,11 @@ if ($orderSubscribe) {
                                         × <?= $childItem->getQuantity() ?> шт
                                     </div>
                                 <?php } ?>
-                                <div class="b-list-order__bonus js-order-item-bonus-<?= $order->isManzana() ? 'manzana-' : '' ?><?= $item->getId() ?>"></div>
+                                <div class="b-list-order__bonus js-order-item-bonus-<?= $order->getManzanaId() ? 'manzana-' : '' ?><?= $item->getId() ?>"></div>
                             </div>
                         </div>
                     </li>
-                    <?php if (!$order->isManzana() && !empty($item->getDetailPageUrl())) { ?>
+                    <?php if (!$order->getManzanaId() && !empty($item->getDetailPageUrl())) { ?>
                         </a>
                     <?php } ?>
                 <?php } ?>
