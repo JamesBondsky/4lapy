@@ -1,0 +1,76 @@
+<?php
+
+namespace Sprint\Migration;
+
+use Adv\Bitrixtools\Migration\SprintMigrationBase;
+
+/**
+ * Class CatalogCategorySkipAutosort20180912162519
+ *
+ * @package Sprint\Migration
+ */
+class CatalogCategorySkipAutosort20180912162519 extends SprintMigrationBase
+{
+
+    public const ENTITY_ID = 'IBLOCK_2_SECTION';
+    protected $description = 'Свойство "не устанавливать базовым при автораскладке" для разделов каталога';
+
+    protected $field = [
+        'FIELD_NAME'        => 'UF_SKIP_AUTOSORT',
+        'USER_TYPE_ID'      => 'boolean',
+        'XML_ID'            => 'UF_SKIP_AUTOSORT',
+        'SORT'              => '100',
+        'MULTIPLE'          => 'N',
+        'MANDATORY'         => 'N',
+        'SHOW_FILTER'       => 'N',
+        'SHOW_IN_LIST'      => 'Y',
+        'EDIT_IN_LIST'      => 'Y',
+        'IS_SEARCHABLE'     => 'N',
+        'EDIT_FORM_LABEL'   => [
+            'ru' => 'Не устанавливать базовым при автораскладке',
+        ],
+        'LIST_COLUMN_LABEL' => [
+            'ru' => 'Не устанавливать базовым при автораскладке',
+        ],
+        'LIST_FILTER_LABEL' => [
+            'ru' => 'Не устанавливать базовым при автораскладке',
+        ],
+    ];
+
+    /**
+     * @return bool
+     * @throws Exceptions\HelperException
+     */
+    public function up(): bool
+    {
+        $field = $this->field;
+
+        if ($this->getHelper()->UserTypeEntity()->addUserTypeEntityIfNotExists(static::ENTITY_ID, $field['FIELD_NAME'], $field)) {
+            $this->log()->info('Пользовательское свойство ' . $field['FIELD_NAME'] . ' создано');
+        } else {
+            $this->log()->error('Ошибка при создании пользовательского свойства ' . $field['FIELD_NAME']);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     *
+     * @throws Exceptions\HelperException
+     */
+    public function down()
+    {
+        if ($this->getHelper()->UserTypeEntity()->deleteUserTypeEntityIfExists(static::ENTITY_ID, $this->field['FIELD_NAME'])) {
+            $this->log()->info('Пользовательское свойство ' . $this->field['CODE'] . ' удалено');
+        } else {
+            $this->log()->error('Ошибка при удалении пользовательского свойства ' . $this->field['FIELD_NAME']);
+
+            return false;
+        }
+
+        return true;
+    }
+}

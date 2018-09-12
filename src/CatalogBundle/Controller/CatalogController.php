@@ -2,7 +2,6 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
-use Bitrix\Main\ArgumentException;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\CategoryQuery;
@@ -15,13 +14,13 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
-use InvalidArgumentException;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Throwable;
 
 /**
  * Class CatalogController
@@ -200,7 +199,7 @@ class CatalogController extends Controller
         try {
             $productWithMinPrice = $this->searchService->searchOneWithMinPrice($categoryRequest->getCategory()
                                                                                                ->getFilters());
-        } catch (InvalidArgumentException | ArgumentException $e) {
+        } catch (Throwable $e) {
             $productWithMinPrice = false;
         }
 
