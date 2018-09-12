@@ -94,6 +94,8 @@ class Category extends IblockSection implements FilterInterface
     protected $UF_LANDING_ARTICLES = false;
     /** @var array */
     protected $UF_RECOMMENDED;
+    /** @var bool */
+    protected $UF_SKIP_AUTOSORT = false;
     /**
      * @var FilterCollection
      */
@@ -709,6 +711,23 @@ class Category extends IblockSection implements FilterInterface
     public function setRecommendedProductIds(array $recommendedProductIds): self
     {
         $this->UF_RECOMMENDED = $recommendedProductIds;
+
+        return $this;
+    }
+
+    public function isSkipAutosort(): bool
+    {
+        return $this->UF_SKIP_AUTOSORT;
+    }
+
+    /**
+     * @param bool $skipAutosort
+     *
+     * @return Category
+     */
+    public function setSkipAutosort(bool $skipAutosort): self
+    {
+        $this->UF_SKIP_AUTOSORT = $skipAutosort;
 
         return $this;
     }

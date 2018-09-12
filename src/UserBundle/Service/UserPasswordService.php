@@ -58,7 +58,7 @@ class UserPasswordService
     public function __construct(UserRepository $userRepository)
     {
         $this->userRepository = $userRepository;
-        $this->chars = implode('', \array_merge(\range(0, 9), \range('a', 'z'), \range('A', 'Z'))); // STRONG
+        $this->chars = implode('', \array_merge(\range(0, 9), \range('a', 'z'), \range('A', 'Z')));
         $this->cUser = new \CUser(); // ничего страшного, просто еще один пустой объект
     }
 

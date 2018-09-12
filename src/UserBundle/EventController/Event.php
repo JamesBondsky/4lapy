@@ -501,7 +501,6 @@ class Event extends BaseServiceHandler
     public function resetStoreUserPassword(array &$fields)
     {
         if ($fields['RESULT'] && \defined('ADMIN_SECTION') && ADMIN_SECTION) {
-            dump($fields);
             $serviceContainer = App::getInstance()->getContainer();
             $userPasswordService = $serviceContainer->get(UserPasswordService::class);
             if (!$userPasswordService->isChangePasswordPossible($fields['RESULT'])) {
