@@ -13,7 +13,6 @@ use FourPaws\EcommerceBundle\Service\RetailRocketService;
 $container = Application::getInstance()->getContainer();
 $retailRocket = $container->get(RetailRocketService::class);
 ?>
-<?php /*<script async src="https://www.googletagmanager.com/gtag/js?id=UA-30730607-1" data-skip-moving="true"></script>*/ ?>
 <script data-skip-moving="true">
     <?= $retailRocket->renderTracking() ?>
     window.dataLayer = window.dataLayer || [];
@@ -31,12 +30,4 @@ $retailRocket = $container->get(RetailRocketService::class);
             'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
         f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-NXNPF4Z');
-
-    /* function gtag() {
-        dataLayer.push(arguments);
-    }
-
-    gtag('js', new Date());
-
-    gtag('config', 'UA-30730607-1'); */
 </script>
