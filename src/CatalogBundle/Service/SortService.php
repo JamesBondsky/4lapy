@@ -22,6 +22,11 @@ class SortService
     protected $storeService;
 
     /**
+     * @var array
+     */
+    protected $availabilitySortScript;
+
+    /**
      * SortService constructor.
      *
      * @param DeliveryService $deliveryService
@@ -90,6 +95,8 @@ class SortService
      * @param bool $isAsc
      *
      * @return Sorting
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
     public function getPriceSort($isAsc = true): Sorting
     {
@@ -104,6 +111,7 @@ class SortService
             ))
             ->withRule(
                 [
+                    '_script' => $this->getAvaliabilitySort(),
                     'offers.price' => [
                         'order'       => $isAsc ? 'asc' : 'desc',
                         'mode'        => 'max',
@@ -158,23 +166,24 @@ class SortService
      */
     protected function getAvaliabilitySort(): array
     {
-        $deliveries = $this->deliveryService->getByLocation();
+        if (null === $this->availabilitySortScript) {
+            $deliveries = $this->deliveryService->getByLocation();
 
-        $availableXmlIds = [];
-        foreach ($deliveries as $delivery) {
-            /** @noinspection SlowArrayOperationsInLoopInspection */
-            $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)
-                                                                                    ->getXmlIds());
-        }
-        $availableXmlIds = \array_unique($availableXmlIds);
+            $availableXmlIds = [];
+            foreach ($deliveries as $delivery) {
+                /** @noinspection SlowArrayOperationsInLoopInspection */
+                $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)
+                                                                                        ->getXmlIds());
+            }
+            $availableXmlIds = \array_unique($availableXmlIds);
 
-        $supplierXmlIds = $this->storeService->getSupplierStores()->getXmlIds();
+            $supplierXmlIds = $this->storeService->getSupplierStores()->getXmlIds();
 
-        return [
-            'type'   => 'number',
-            'script' => [
-                'lang'   => 'painless',
-                'source' => '
+            $this->availabilitySortScript = [
+                'type'   => 'number',
+                'script' => [
+                    'lang'   => 'painless',
+                    'source' => '
                     for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
                         for (int j = 0; j < params.available.length; ++j) {
                             if (doc[\'availableStores\'][i] == params.available[j]) {
@@ -193,12 +202,15 @@ class SortService
 
                     return 0;
                 ',
-                'params' => [
-                    'available' => $availableXmlIds,
-                    'supplier'  => $supplierXmlIds
-                ]
-            ],
-            'order'  => 'desc'
-        ];
+                    'params' => [
+                        'available' => $availableXmlIds,
+                        'supplier'  => $supplierXmlIds
+                    ]
+                ],
+                'order'  => 'desc'
+            ];
+        }
+
+        return $this->availabilitySortScript;
     }
 }
