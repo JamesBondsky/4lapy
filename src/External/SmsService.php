@@ -89,7 +89,7 @@ class SmsService implements LoggerAwareInterface
                 ]
             );
 
-            if ($immediate) {
+            if ($immediate || $this->canSendNow()) {
                 $this->client->setLogin($this->parameters['login.immediate']);
                 $this->client->setPassword($this->parameters['password.immediate']);
             } else {
@@ -177,6 +177,18 @@ class SmsService implements LoggerAwareInterface
     protected function buildQueueTime(string $time): string
     {
         return (new \DateTime($time))->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * @return bool
+     */
+    protected function canSendNow(): bool
+    {
+        $from = new \DateTime($this->parameters['start_messaging']);
+        $to = new \DateTime($this->parameters['stop_messaging']);
+        $date = new \DateTime();
+
+        return $from < $date && $to > $date;
     }
 
     /**
