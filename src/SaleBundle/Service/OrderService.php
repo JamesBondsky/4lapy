@@ -423,8 +423,6 @@ class OrderService implements LoggerAwareInterface
                     'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
                     'DELIVERY_NAME'         => $selectedDelivery->getDeliveryName(),
                     'CURRENCY'              => $order->getCurrency(),
-                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
-                    'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
 
@@ -433,6 +431,13 @@ class OrderService implements LoggerAwareInterface
                 $shipmentItem = $shipmentItemCollection->createItem($item);
                 $shipmentItem->setQuantity($item->getQuantity());
             }
+
+            $shipment->setFields(
+                [
+                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
+                ]
+            );
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
                 'deliveryId' => $selectedDelivery->getDeliveryId(),
