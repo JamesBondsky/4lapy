@@ -34,7 +34,7 @@ if (empty($arResult['ITEMS'])) {
                 ); ?>
                 <article class="b-news-item">
                     <a class="b-news-item__link" href="<?= $arItem['DETAIL_PAGE_URL'] ?>"
-                       title="Мастер-классы – встречи друзей!" id="<?= $this->GetEditAreaId($arItem['ID']) ?>">
+                       title="<?= $arItem['NAME'] ?>" id="<?= $this->GetEditAreaId($arItem['ID']) ?>">
                         <?php if (!empty($arItem['PRINT_PICTURE']['SRC'])) { ?>
                             <span class="b-news-item__image-wrapper js-image-cover">
                     <img class="b-news-item__image" src="<?= $arItem['PRINT_PICTURE']['SRC'] ?>"

@@ -104,8 +104,9 @@ if (!$isAjax) { ?>
             [
                 'HIDE_ICONS' => 'Y',
             ]
-        ); ?>
-        <?php /** получаем все торговые предложения */
+        );
+
+        /** получаем все торговые предложения */
         $ids = new ArrayCollection();
         /** @var Product $product */
         foreach ($productSearchResult->getProductCollection() as $product) {
@@ -113,6 +114,7 @@ if (!$isAjax) { ?>
                 $ids->add($offer->getXmlId());
             }
         }
+
         /** Акции бренда */
         if (!$ids->isEmpty()) {
             global $filterBrandStocks;
