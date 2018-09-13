@@ -194,17 +194,16 @@ class SortService
                         return 0;
                     }
                     for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
-                        for (int j = 0; j < params.available.length; ++j) {
-                            if (doc[\'availableStores\'][i] == params.available[j]) {
-                                return 2;
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
                         for (int j = 0; j < params.supplier.length; ++j) {
                             if (doc[\'availableStores\'][i] == params.supplier[j]) {
                                 return 1;
+                            }
+                        }
+                    }
+                    for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
+                        for (int j = 0; j < params.available.length; ++j) {
+                            if (doc[\'availableStores\'][i] == params.available[j]) {
+                                return 2;
                             }
                         }
                     }
