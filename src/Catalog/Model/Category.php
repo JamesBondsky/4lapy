@@ -100,6 +100,10 @@ class Category extends IblockSection implements FilterInterface
      * @var FilterCollection
      */
     private $filterList;
+    /**
+     * @var bool
+     */
+    protected $activeLandingCategory = false;
 
     /**
      * Category constructor.
@@ -740,6 +744,26 @@ class Category extends IblockSection implements FilterInterface
     protected function findFromParent(callable $find)
     {
         return $this->getFullPathCollection()->filter($find)->last();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActiveLandingCategory(): bool
+    {
+        return $this->activeLandingCategory;
+    }
+
+    /**
+     * @param bool $activeLandingCategory
+     *
+     * @return $this
+     */
+    public function setActiveLandingCategory(bool $activeLandingCategory): self
+    {
+        $this->activeLandingCategory = $activeLandingCategory;
+
+        return $this;
     }
 
     /**
