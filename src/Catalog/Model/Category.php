@@ -788,7 +788,16 @@ class Category extends IblockSection implements FilterInterface
             'UF_SUB_DOMAIN',
             'UF_SHOW_FITTING',
             'UF_LANDING_ARTICLES',
-            'UF_RECOMMENDED'
+            'UF_RECOMMENDED',
+            'IBLOCK_ID',
+            'ID',
+            'SORT',
+            'DEPTH_LEVEL',
+            'LEFT_MARGIN',
+            'RIGHT_MARGIN',
+            'SECTION_PAGE_URL',
+            'IBLOCK_SECTION_ID',
+            'ELEMENT_CNT',
         ];
     }
 }
