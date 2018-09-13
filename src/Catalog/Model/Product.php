@@ -2270,7 +2270,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $result = [];
         /** @var Offer $offer */
         foreach ($this->getOffers() as $offer) {
-            $result = \array_merge($offer->getAllStocks()->getStores(1)->getXmlIds());
+            /** @noinspection SlowArrayOperationsInLoopInspection */
+            $result = \array_merge($result, $offer->getAllStocks()->getStores(1)->getXmlIds());
         }
 
         return \array_unique($result);
