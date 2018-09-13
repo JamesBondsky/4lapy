@@ -228,7 +228,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
                 ->toUserTime()))
             ->setClientId($order->getUserId())
-            ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
+            ->setClientFio(\str_replace('#', '', $this->getPropertyValueByCode($order, 'NAME')))
             ->setClientPhone(PhoneHelper::formatPhone(
                 $this->getPropertyValueByCode($order, 'PHONE'),
                 PhoneHelper::FORMAT_URL
