@@ -22,7 +22,7 @@ class CatalogCategoryRoot extends CatalogCategory
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      */
-    protected function prepareResult()
+    protected function prepareResult(): void
     {
         if ($this->arParams['SECTION_CODE'] === '/') {
             $this->setRootCategory();

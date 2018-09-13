@@ -45,7 +45,7 @@ trait FilterTrait
      */
     public function getAllVariants(): VariantCollection
     {
-        if (is_null($this->allVariants)) {
+        if (null === $this->allVariants) {
             /**
              * Храним в свойстве актуальный набор вариантов с состояниями,
              * а то из кеша будет возвращаться неактуальное значение.
@@ -71,7 +71,7 @@ trait FilterTrait
      *
      * @return void
      */
-    public function setAvailableVariants(array $availableValues)
+    public function setAvailableVariants(array $availableValues): void
     {
         $availableValuesIndex = array_flip($availableValues);
 
@@ -85,14 +85,37 @@ trait FilterTrait
      * Возвращает доступные возможные варианты выбора фильтра с учётом существующих результатов.
      *
      * @return VariantCollection
+     * @throws \InvalidArgumentException
      */
     public function getAvailableVariants(): VariantCollection
     {
-        return $this->getAllVariants()->filter(
+        /**
+         * @var VariantCollection $fullCollection
+         * @var VariantCollection $returnCollection
+         */
+        $fullCollection = $this->getAllVariants();
+        $returnCollection = $fullCollection->filter(
             function (Variant $variant) {
                 return $variant->isAvailable();
             }
         );
+        $toUnset = [];
+        /** @var Variant $variant */
+        foreach ($returnCollection as $id => $variant) {
+            if ($baseValueId = $variant->getBaseValueId()) {
+                if ($returnCollection->containsKey($baseValueId)) {
+                    $returnCollection->remove($id);
+                } elseif ($toUnset[$baseValueId]) {
+                    $returnCollection->remove($id);
+                } else {
+                    /** @var Variant $baseVariant */
+                    $baseVariant = $fullCollection->get($baseValueId);
+                    $variant->withValue($baseVariant->getValue());
+                    $toUnset[$baseValueId] = true;
+                }
+            }
+        }
+        return $returnCollection;
     }
 
     /**
@@ -102,7 +125,7 @@ trait FilterTrait
      *
      * @return void
      */
-    public function setCheckedVariants(array $checkedValues)
+    public function setCheckedVariants(array $checkedValues): void
     {
         $checkedValuesIndex = array_flip($checkedValues);
 
@@ -164,12 +187,16 @@ trait FilterTrait
      * Возвращает аггрегации по фильтру.
      *
      * @return AggCollection
+     * @throws \InvalidArgumentException
      */
     public function getAggs(): AggCollection
     {
         return new AggCollection([$this->getAggRule()]);
     }
 
+    /**
+     * @return AbstractAggregation
+     */
     public function getAggRule(): AbstractAggregation
     {
         return (new Terms($this->getFilterCode()))
@@ -192,7 +219,7 @@ trait FilterTrait
      *
      * @param bool $visible
      */
-    public function setVisible(bool $visible)
+    public function setVisible(bool $visible): void
     {
         $this->visible = $visible;
     }
@@ -204,17 +231,18 @@ trait FilterTrait
      * @param array $aggResult
      *
      * @return void
+     * @throws \InvalidArgumentException (sic)
      * @throws UnexpectedValueException
      *
      */
-    public function collapse(string $aggName, array $aggResult)
+    public function collapse(string $aggName, array $aggResult): void
     {
         // для nested-фильтров
         if ($aggResult[$aggName]) {
             $aggResult = $aggResult[$aggName];
         }
 
-        if (!array_key_exists('buckets', $aggResult) || !is_array($aggResult['buckets'])) {
+        if (!array_key_exists('buckets', $aggResult) || !\is_array($aggResult['buckets'])) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Отсутствуют корректные buckets в результате аггрегации `%s`',
@@ -226,20 +254,22 @@ trait FilterTrait
         $bucketCollection = AggsHelper::makeBucketCollection($aggResult['buckets']);
 
         $this->getAllVariants()->map(
+
             function (Variant $variant) use ($bucketCollection) {
-
-                if ($bucketCollection->containsKey($variant->getValue())) {
-
+                $keys = explode(',', $variant->getValue());
+                $contains = false;
+                $count = 0;
+                foreach ($keys as $key) {
                     /** @var Bucket $bucket */
-                    $bucket = $bucketCollection->get($variant->getValue());
-
-                    $variant->withAvailable(true)
-                            ->withCount($bucket->getDocCount());
-
-                } else {
-                    $variant->withAvailable(false)
-                            ->withCount(0);
+                    if ($bucket = $bucketCollection->get($key)) {
+                        $contains = true;
+                        $count += $bucket->getDocCount();
+                    }
                 }
+
+                $variant
+                    ->withAvailable($contains)
+                    ->withCount($count);
 
                 return $variant;
             }

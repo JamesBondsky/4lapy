@@ -6,7 +6,10 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\SystemException;
 use CDBResult;
+use CIBlockElement;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -24,6 +27,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
@@ -614,6 +618,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
+
+    /**
+     * @var string
+     * @Type("array<string>")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getAvailableStores")
+     */
+    protected $availableStores = [];
 
     /**
      * @var array
@@ -1891,8 +1903,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getOffers($skipZeroPrice = true, array $additionalFilter = []): Collection
     {
         if (null === $this->offers) {
-            $offerQuery = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                ->withOrder(['CATALOG_WEIGHT' => 'ASC']);
+            $offerQuery = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId());
             if (!empty($additionalFilter)) {
                 foreach ($additionalFilter as $key => $value) {
                     $offerQuery->withFilterParameter($key, $value);
@@ -1934,7 +1945,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 return $offer1->getClothingSize()->getSort() <=> $offer2->getClothingSize()->getSort();
             }
 
-            return 0;
+            return $offer1->getCatalogProduct()->getWeight() <=> $offer2->getCatalogProduct()->getWeight();
         };
 
         $iterator = $this->getOffers()->getIterator();
@@ -2221,5 +2232,48 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @return array
+     * @throws SystemException
+     */
+    public function getSectionsIdList(): array
+    {
+        if (
+            null === $this->sectionIdList
+            || (\is_array($this->sectionIdList) && \count($this->sectionIdList) === 0)
+        ) {
+            $this->sectionIdList = [];
+            $dbSectionList = CIBlockElement::GetElementGroups($this->getId(), true, ['ID', 'GLOBAL_ACTIVE']);
+
+            /** @noinspection PhpAssignmentInConditionInspection */
+            while ($section = $dbSectionList->Fetch()) {
+                if ($section['GLOBAL_ACTIVE'] !== BitrixUtils::BX_BOOL_TRUE) {
+                    continue;
+                }
+                $this->sectionIdList[] = (int)$section['ID'];
+            }
+        }
+
+        return $this->sectionIdList;
+    }
+
+    /**
+     * @return string[]
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws NotFoundException
+     */
+    public function getAvailableStores(): array
+    {
+        $result = [];
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            /** @noinspection SlowArrayOperationsInLoopInspection */
+            $result = \array_merge($result, $offer->getAllStocks()->getStores(1)->getXmlIds());
+        }
+
+        return \array_unique($result);
     }
 }

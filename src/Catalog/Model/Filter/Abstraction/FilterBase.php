@@ -45,6 +45,11 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     protected $UF_HIDE_IN_FILTER = false;
 
     /**
+     * @var bool
+     */
+    protected $UF_MERGE_VALUES = false;
+
+    /**
      * FilterBase constructor.
      *
      * @param array $fields
@@ -97,6 +102,25 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     {
         $this->UF_SHOW_WITH_PICTURE = $isShowWithPicture;
 
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMergeValues(): bool
+    {
+        return (bool)$this->UF_MERGE_VALUES;
+    }
+
+    /**
+     * @param bool $isMergeValues
+     *
+     * @return $this
+     */
+    public function withMergeValues(bool $isMergeValues)
+    {
+        $this->UF_MERGE_VALUES = $isMergeValues;
         return $this;
     }
 
@@ -176,18 +200,16 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     {
         $rawValue = $request->get($this->getFilterCode());
 
+        $result = [$rawValue];
+
         if (null === $rawValue) {
-            return [];
+            $result = [];
+        } elseif (\is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
+            $result = explode(static::VARIANT_DELIMITER, $rawValue);
+        } elseif (\is_array($rawValue)) {
+            $result = $rawValue;
         }
 
-        if (\is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
-            return explode(static::VARIANT_DELIMITER, $rawValue);
-        }
-
-        if (\is_array($rawValue)) {
-            return $rawValue;
-        }
-
-        return [$rawValue];
+        return $result;
     }
 }

@@ -5,10 +5,11 @@ namespace FourPaws\ProductAutoSort;
 use Adv\Bitrixtools\Exception\IblockPropertyNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Iblock\SectionTable;
 use CIBlockElement;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -449,23 +450,27 @@ class ProductAutoSortService implements LoggerAwareInterface
             return $categoriesToProductIndex;
         }
 
-        $categoryDepthLevels = [];
-        $categories = SectionTable::getList(
-            [
-                'filter' => [
-                    'ID' => array_keys($productsToCategoryIndex),
-                ],
-                'select' => ['ID', 'DEPTH_LEVEL'],
-            ]
-        );
-        while ($category = $categories->fetch()) {
-            $categoryDepthLevels[$category['ID']] = $category['DEPTH_LEVEL'];
-        }
+        $categories = (new CategoryQuery())
+            ->withFilterParameter('ID', \array_keys($productsToCategoryIndex))
+            ->exec();
 
         uksort(
             $productsToCategoryIndex,
-            function ($categoryId1, $categoryId2) use ($categoryDepthLevels) {
-                return $categoryDepthLevels[$categoryId2] <=> $categoryDepthLevels[$categoryId1];
+            function ($categoryId1, $categoryId2) use ($categories) {
+                /** @var Category $category1 */
+                $category1 = $categories[$categoryId1];
+                /** @var Category $category2 */
+                $category2 = $categories[$categoryId2];
+
+                if (null === $category1 || null === $category2) {
+                    return 0;
+                }
+
+                if ($category1->isSkipAutosort() !== $category2->isSkipAutosort()) {
+                    return  $category1->isSkipAutosort() <=> $category2->isSkipAutosort();
+                }
+
+                return $category2->getDepthLevel() <=> $category1->getDepthLevel();
             }
         );
 

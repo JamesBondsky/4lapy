@@ -10,6 +10,8 @@ use Elastica\QueryBuilder;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -24,9 +26,11 @@ class FilterService implements LoggerAwareInterface
 
     /**
      * FilterService constructor.
-     * @param FilterHelper $filterHelper
+     * @param FilterHelper    $filterHelper
      */
-    public function __construct(FilterHelper $filterHelper)
+    public function __construct(
+        FilterHelper $filterHelper
+    )
     {
         $this->filterHelper = $filterHelper;
     }
@@ -55,6 +59,7 @@ class FilterService implements LoggerAwareInterface
         foreach ($categoryFilters as $categoryFilter) {
             $filterCollection->add($categoryFilter);
         }
+
         return $filterCollection;
     }
 
@@ -77,6 +82,7 @@ class FilterService implements LoggerAwareInterface
             foreach ($this->getActiveFilters() as $filter) {
                 $internalFilterCollection->add($filter);
             }
+
             /**
              * @todo Фильтр по региональной цене
              */
@@ -119,6 +125,15 @@ class FilterService implements LoggerAwareInterface
 
             $activeFilterCollection->add(
                 InternalFilter::create(
+                    'ProductSectionDefined',
+                    $queryBuilder->query()->bool()->addMust(
+                        $queryBuilder->query()->exists('sectionIdList')
+                    )
+                )
+            );
+
+            $activeFilterCollection->add(
+                InternalFilter::create(
                     'BrandActive',
                     $queryBuilder->query()->term(['brand.active' => true])
                 )
@@ -132,8 +147,38 @@ class FilterService implements LoggerAwareInterface
                         ->setQuery($queryBuilder->query()->term(['offers.active' => true]))
                 )
             );
+
+            $activeFilterCollection->add(
+                InternalFilter::create(
+                    'OffersPrice',
+                    $queryBuilder
+                        ->query()
+                        ->nested()
+                        ->setPath('offers')
+                        ->setQuery(
+                            $queryBuilder
+                                ->query()
+                                ->range('offers.price', ['gt' => 0])
+                        )
+                )
+            );
+
+            $activeFilterCollection->add(
+                InternalFilter::create(
+                    'HasImages',
+                    $queryBuilder->query()->term(['hasImages' => true])
+                )
+            );
+
+            $activeFilterCollection->add(
+                InternalFilter::create(
+                    'HasStocks',
+                    $queryBuilder->query()->term(['hasStocks' => true])
+                )
+            );
         } catch (\InvalidArgumentException $exception) {
         }
+
         return $activeFilterCollection;
     }
 

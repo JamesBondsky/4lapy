@@ -1,12 +1,13 @@
 <?php
 
 namespace FourPaws\Catalog\Model;
+
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 
 /**
  * Class Variant
- * 
+ *
  * @package FourPaws\Catalog\Model
  */
 class Variant
@@ -45,6 +46,11 @@ class Variant
      * @var string код цвета данного варианта
      */
     private $color = '';
+
+    /**
+     * @var int - id значения с которым смержили. Nb: Не стал добавлять новое поле с id т.к. есть в ключах колекции
+     */
+    private $baseValueId = 0;
 
     /**
      * @return string
@@ -156,6 +162,7 @@ class Variant
 
     /**
      * @param int $image
+     *
      * @return $this
      */
     public function withImage(int $image)
@@ -182,6 +189,25 @@ class Variant
     {
         $this->color = $color;
 
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBaseValueId(): int
+    {
+        return $this->baseValueId;
+    }
+
+    /**
+     * @param int $baseValueId
+     *
+     * @return Variant
+     */
+    public function withBaseValueId(int $baseValueId): Variant
+    {
+        $this->baseValueId = $baseValueId;
         return $this;
     }
 

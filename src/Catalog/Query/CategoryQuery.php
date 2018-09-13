@@ -48,6 +48,7 @@ class CategoryQuery extends IblockSectionQuery
             'UF_SHOW_FITTING',
             'UF_LANDING_ARTICLES',
             'UF_RECOMMENDED',
+            'UF_SKIP_AUTOSORT',
         ];
     }
 

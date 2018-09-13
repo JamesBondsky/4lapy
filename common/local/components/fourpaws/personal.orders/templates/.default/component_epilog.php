@@ -23,7 +23,7 @@ if ($discount > 0) {
             if (!empty($bonus)) { ?>
                 <script type="text/javascript">
                     $(function () {
-                        var $jsBonus = $('.js-order-item-bonus-<?=$order->isManzana() ? 'manzana-' : ''?><?=$item->getId()?>');
+                        var $jsBonus = $('.js-order-item-bonus-<?=$order->getManzanaId() ? 'manzana-' : ''?><?=$item->getId()?>');
                         if ($jsBonus.length > 0) {
                             $jsBonus.html('<?=$bonus?>');
                         }
@@ -38,7 +38,7 @@ if ($discount > 0) {
             if (!empty($bonus)) { ?>
                 <script type="text/javascript">
                     $(function () {
-                        var $jsBonus = $('.js-order-item-bonus-<?=$order->isManzana() ? 'manzana-' : ''?><?=$item->getId()?>');
+                        var $jsBonus = $('.js-order-item-bonus-<?=$order->getManzanaId() ? 'manzana-' : ''?><?=$item->getId()?>');
                         if ($jsBonus.length > 0) {
                             $jsBonus.html('<?=$bonus?>');
                         }

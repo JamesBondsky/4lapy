@@ -9,16 +9,19 @@ namespace FourPaws\Search\Helper;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Elastica\Client;
 use Elastica\Document;
+use Elastica\Exception\InvalidException;
 use Elastica\Exception\ResponseException;
 use Elastica\Index;
 use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
-use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
+use FourPaws\Search\Exception\Index\IndexExceptionInterface;
+use FourPaws\Search\Exception\Index\NotActiveException;
+use FourPaws\Search\Exception\Index\WrongEntityPassedException;
 use FourPaws\Search\Factory;
 use FourPaws\Search\Model\CatalogSyncMsg;
 use JMS\Serializer\Serializer;
@@ -94,7 +97,7 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * @param bool $force
      *
-     * @throws \Elastica\Exception\InvalidException
+     * @throws InvalidException
      * @throws RuntimeException
      * @return bool
      */
@@ -343,6 +346,7 @@ class IndexHelper implements LoggerAwareInterface
                         'hasImages'                        => ['type' => 'boolean'],
                         'hasStocks'                        => ['type' => 'boolean'],
                         'deliveryAvailability'             => ['type' => 'keyword'],
+                        'availableStores'                  => ['type' => 'keyword']
                     ],
                 ],
             ],
@@ -360,15 +364,28 @@ class IndexHelper implements LoggerAwareInterface
         return $this->indexProducts([$product]);
     }
 
+    /**
+     * @param array $products
+     *
+     * @return bool
+     */
     public function indexProducts(array $products): bool
     {
         $products = array_filter($products, function ($data) {
-            return  $data &&
-                $data instanceof Product &&
-                $data->isActive() &&
-                !$data->getOffers()->isEmpty() &&
-                $data->getSection() &&
-                $data->getSection()->getCode() !== Category::UNSORTED_CATEGORY_CODE;
+            try {
+                $result = $this->canIndexProduct($data);
+            } catch (IndexExceptionInterface $e) {
+                $this->log()->debug(
+                    \sprintf(
+                        'Skipping product #%s: %s',
+                        $data instanceof Product ? $data->getId() : 'N',
+                        $e->getMessage()
+                    )
+                );
+                $result = false;
+            }
+
+            return $result;
         });
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
@@ -522,7 +539,7 @@ class IndexHelper implements LoggerAwareInterface
     }
 
     /**
-     * @throws \Elastica\Exception\InvalidException
+     * @throws InvalidException
      * @return Search
      */
     public function createProductSearch(): Search
@@ -651,5 +668,25 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         return $prefix . $indexName;
+    }
+
+    /**
+     * @param $product
+     *
+     * @return bool
+     * @throws NotActiveException
+     * @throws WrongEntityPassedException
+     */
+    private function canIndexProduct($product): bool
+    {
+        if (!$product instanceof Product) {
+            throw new WrongEntityPassedException('Invalid entity type');
+        }
+
+        if (!$product->isActive()) {
+            throw new NotActiveException('Product is not active');
+        }
+
+        return true;
     }
 }
