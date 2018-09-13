@@ -86,6 +86,7 @@ class DeliveryServiceInnerConfig20180912185001 extends SprintMigrationBase
                                         'ADD_DAYS' => [
                                             '1',
                                             '1',
+                                            '2',
                                         ],
                                     ],
                                 ],
@@ -96,6 +97,7 @@ class DeliveryServiceInnerConfig20180912185001 extends SprintMigrationBase
                                         'ADD_DAYS' => [
                                             '1',
                                             '1',
+                                            '2'
                                         ],
                                     ],
                                 ],
@@ -106,6 +108,7 @@ class DeliveryServiceInnerConfig20180912185001 extends SprintMigrationBase
                                         'ADD_DAYS' => [
                                             '0',
                                             '1',
+                                            '1'
                                         ],
                                     ],
                                 ],
@@ -118,8 +121,12 @@ class DeliveryServiceInnerConfig20180912185001 extends SprintMigrationBase
                                     ],
                                     [
                                         'FROM' => '16',
-                                        'TO' => '0',
+                                        'TO' => '20',
                                     ],
+                                    [
+                                        'FROM' => '20',
+                                        'TO' => '0'
+                                    ]
                                 ],
                             ],
                         ],
