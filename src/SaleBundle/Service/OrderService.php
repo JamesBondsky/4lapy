@@ -741,6 +741,13 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        /**
+         * LP23-37 - Запретить ввод символа решетки в имя покупателя
+         */
+        $propName = $propertyValueCollection->getPayerName();
+        $propName->setValue(str_replace('#', '', $propName->getValue()));
+
+
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
         }
