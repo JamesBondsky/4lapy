@@ -73,7 +73,7 @@ class SortService
             ->withValue('popular')
             ->withName('популярности')
             ->withRule([
-                '_script' => $this->getAvaliabilitySort(),
+//                '_script' => $this->getAvaliabilitySort(),
                 'SORT'    => ['order' => 'asc'],
                 '_score'  => ['order' => 'desc'],
                 'ID'      => ['order' => 'desc']
@@ -111,7 +111,7 @@ class SortService
             ))
             ->withRule(
                 [
-                    '_script' => $this->getAvaliabilitySort(),
+//                    '_script' => $this->getAvaliabilitySort(),
                     'offers.price' => [
                         'order'       => $isAsc ? 'asc' : 'desc',
                         'mode'        => 'max',
