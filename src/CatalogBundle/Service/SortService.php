@@ -73,7 +73,7 @@ class SortService
             ->withValue('popular')
             ->withName('популярности')
             ->withRule([
-//                '_script' => $this->getAvaliabilitySort(),
+                '_script' => $this->getAvaliabilitySort(),
                 'SORT'    => ['order' => 'asc'],
                 '_score'  => ['order' => 'desc'],
                 'ID'      => ['order' => 'desc']
@@ -111,7 +111,7 @@ class SortService
             ))
             ->withRule(
                 [
-//                    '_script' => $this->getAvaliabilitySort(),
+                    '_script' => $this->getAvaliabilitySort(),
                     'offers.price' => [
                         'order'       => $isAsc ? 'asc' : 'desc',
                         'mode'        => 'max',
@@ -175,7 +175,13 @@ class SortService
                 $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)
                                                                                         ->getXmlIds());
             }
-            $availableXmlIds = \array_unique($availableXmlIds);
+            /**
+             * вызов array_values() необходим для того, чтобы ключи шли подря. Иначе элемент придет в эластик
+             * в виде объекта, а не массива
+             */
+            $availableXmlIds = \array_values(
+                \array_unique($availableXmlIds)
+            );
 
             $supplierXmlIds = $this->storeService->getSupplierStores()->getXmlIds();
 
@@ -184,6 +190,9 @@ class SortService
                 'script' => [
                     'lang'   => 'painless',
                     'source' => '
+                    if (!doc.containsKey(\'availableStores\')) {
+                        return 0;
+                    }
                     for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
                         for (int j = 0; j < params.available.length; ++j) {
                             if (doc[\'availableStores\'][i] == params.available[j]) {
