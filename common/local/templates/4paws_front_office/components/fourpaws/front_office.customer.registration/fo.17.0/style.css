@@ -1,0 +1,66 @@
+.tab-user-list {
+    margin: 0 0 52px 0;
+}
+
+table.user-list {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+table.user-list > thead th,
+table.user-list > tbody td {
+    text-align: left;
+    margin: 0;
+    padding: 5px;
+    font-weight: normal;
+}
+
+table.user-list > thead th {
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: solid 2px #8da2b5;
+    background-color: #efefef;
+    color: #000;
+}
+
+table.user-list .user-list__item-row.even {
+    background-color: #efefef;
+}
+
+.user-list__full-name {
+    width: 200px !important;
+}
+
+.user-list__phone {
+    width: 90px !important;
+}
+
+.user-list__card-number {
+    width: 120px !important;
+}
+
+.user-list__bd {
+    width: 50px !important;
+}
+
+.user-list__auth {
+    text-align: center;
+}
+
+.user-list__auth,
+.user-list__auth .cell-value {
+    text-align: center !important;
+}
+
+.user-list__auth ._action-auth {
+    text-align: center;
+    border-bottom: dashed 1px #8da2b5;
+    cursor: pointer;
+}
+
+.user-list.loading ._action-auth {
+    cursor: default;
+    border-bottom: none;
+    color: #CCCCCC;
+}

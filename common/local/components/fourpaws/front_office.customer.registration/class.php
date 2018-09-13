@@ -144,9 +144,9 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
             $phone = $this->cleanPhoneNumberValue($value);
             if ($phone !== '') {
                 // Наличие юзера с таким номером в БД сайта
-                $user = $this->searchUserByPhoneNumber($phone);
-                if ($user) {
-                    $this->setRegisteredUserId($user->getId());
+                $users = $this->searchAllUsersByPhoneNumber($phone);
+                if ($users) {
+                    $this->setAlreadyRegisteredUsers($users);
                     $this->setFieldError(
                         $fieldName,
                         'Данный телефонный номер есть в базе данных сайта',
@@ -261,6 +261,14 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     protected function setRegisteredUserId(int $userId)
     {
         $this->arResult['REGISTERED_USER_ID'] = $userId > 0 ? $userId : 0;
+    }
+
+    /**
+     * @param User[] $users
+     */
+    protected function setAlreadyRegisteredUsers(array $users)
+    {
+        $this->arResult['ALREADY_REGISTERED_USERS'] = $users;
     }
 
     /**
