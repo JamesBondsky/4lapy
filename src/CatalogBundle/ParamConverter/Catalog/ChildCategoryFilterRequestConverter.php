@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
+use Exception;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\ChildCategoryFilterRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
@@ -112,7 +113,8 @@ class ChildCategoryFilterRequestConverter extends AbstractCatalogRequestConverte
 
         if ($this->landingService->isLanding($request)) {
             $object->setIsLanding(true);
-            $object->setLandingCollection($this->categoriesService->getLandingCollectionByDomain($this->landingService->getLandingName($request)));
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $object->setLandingCollection($this->categoriesService->getLandingCollectionByDomain($this->landingService->getLandingName($request), $request));
         }
 
         $category = (new CategoryQuery())->withFilter(['=ID' => $value])->exec()->first();
@@ -121,7 +123,7 @@ class ChildCategoryFilterRequestConverter extends AbstractCatalogRequestConverte
         }
         try {
             $this->filterService->getFilterHelper()->initCategoryFilters($category, $request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
         }
 
         $object->setCategory($category);
