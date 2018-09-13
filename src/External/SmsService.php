@@ -11,6 +11,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\SmsTraffic\Client;
+use FourPaws\External\SmsTraffic\Dto\QueueTime;
 use FourPaws\External\SmsTraffic\Exception\SmsTrafficApiException;
 use FourPaws\External\SmsTraffic\Sms\IndividualSms;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
@@ -38,6 +39,8 @@ class SmsService implements LoggerAwareInterface
     protected $client;
 
     protected $parameters;
+
+    protected const DATE_FORMAT = 'Y-m-d H:i:s';
 
     /**
      * SmsService constructor.
@@ -89,14 +92,21 @@ class SmsService implements LoggerAwareInterface
                 ]
             );
 
-            if ($immediate || $this->canSendNow()) {
+            if ($immediate ||
+                $this->canSendNow($this->parameters['start_messaging'], $this->parameters['stop_messaging'])
+            ) {
                 $this->client->setLogin($this->parameters['login.immediate']);
                 $this->client->setPassword($this->parameters['password.immediate']);
             } else {
+                $queueTime = $this->buildQueueTime(
+                    $this->parameters['start_messaging'],
+                    $this->parameters['stop_messaging']
+                );
+
                 $sms->updateParameters(
                     [
-                        'start_date' => $this->buildQueueTime($this->parameters['start_messaging']),
-                        'stop_date' => $this->buildQueueTime($this->parameters['stop_messaging']),
+                        'start_date' => $queueTime->getFrom()->format(static::DATE_FORMAT),
+                        'stop_date' => $queueTime->getTo()->format(static::DATE_FORMAT),
                         'isSendNextDay' => '1',
                         'isAbonentLocaleTime' => '1',
                     ]
@@ -170,25 +180,38 @@ class SmsService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $time
+     * @param string $timeFrom
+     * @param string $timeTo
      *
-     * @return string
-     */
-    protected function buildQueueTime(string $time): string
-    {
-        return (new \DateTime($time))->format('Y-m-d H:i:s');
-    }
-
-    /**
      * @return bool
      */
-    protected function canSendNow(): bool
+    protected function canSendNow(string $timeFrom, string $timeTo): bool
     {
-        $from = new \DateTime($this->parameters['start_messaging']);
-        $to = new \DateTime($this->parameters['stop_messaging']);
+        $from = new \DateTime($timeFrom);
+        $to = new \DateTime($timeTo);
         $date = new \DateTime();
 
         return $from < $date && $to > $date;
+    }
+
+    /**
+     * @param string $timeFrom
+     * @param string $timeTo
+     *
+     * @return QueueTime
+     */
+    protected function buildQueueTime(string $timeFrom, string $timeTo): QueueTime
+    {
+        $date = new \DateTime();
+        $from = new \DateTime($timeFrom);
+        $to = new \DateTime($timeTo);
+
+        if ($date > $to) {
+            $from->modify('+1 day');
+            $to->modify('+1 day');
+        }
+
+        return (new QueueTime())->setFrom($from)->setTo($to);
     }
 
     /**
