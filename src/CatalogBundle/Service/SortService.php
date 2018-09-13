@@ -169,7 +169,7 @@ class SortService
         if (null === $this->availabilitySortScript) {
             $deliveries = $this->deliveryService->getByLocation();
 
-            $availableXmlIds = [];
+            $availableXmlIds = ['DC01'];
             foreach ($deliveries as $delivery) {
                 /** @noinspection SlowArrayOperationsInLoopInspection */
                 $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)
