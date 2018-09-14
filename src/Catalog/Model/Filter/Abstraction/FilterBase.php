@@ -173,7 +173,7 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     {
         $checkedValues = array_map(
             function (Variant $variant) {
-                return $variant->getValue();
+                return explode(',', $variant->getValue())[0];
             },
             $this->getCheckedVariants()->toArray()
         );
