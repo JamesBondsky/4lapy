@@ -65,6 +65,45 @@ trait UserServiceTrait
     }
 
     /**
+     * Поиск пользователей с заданным телефоном в БД сайта
+     *
+     * @param string $phone
+     * @param array $orderBy
+     * @return User[]
+     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    protected function searchAllUsersByPhoneNumber(string $phone, array $orderBy = ['ID' => 'ASC'])
+    {
+        $items = [];
+        $phone = trim($phone);
+        if ($phone !== '') {
+            $items = $this->getUserListByParams(
+                [
+                    'filter' => [
+                        '=ACTIVE' => 'Y',
+                        '=PERSONAL_PHONE' => $phone,
+                    ],
+                    'order' => $orderBy,
+                ]
+            );
+            $items = array_filter(
+                $items,
+                function ($item) {
+                    /** @var User $item */
+                    return (!$item->isFastOrderUser());
+                }
+            );
+        }
+
+        return $items;
+    }
+
+    /**
+     * Поиск пользователя с заданным телефоном в БД сайта
+     *
      * @param string $phone
      * @return User|null
      * @throws ApplicationCreateException
@@ -75,24 +114,10 @@ trait UserServiceTrait
     protected function searchUserByPhoneNumber(string $phone)
     {
         $user = null;
-        $phone = trim($phone);
-        if ($phone !== '') {
-            // ищем пользователя с таким телефоном в БД сайта
-            $items = $this->getUserListByParams(
-                [
-                    'filter' => [
-                        '=ACTIVE' => 'Y',
-                        '=PERSONAL_PHONE' => $phone,
-                    ]
-                ]
-            );
-            foreach ($items as $item) {
-                /** @var User $item */
-                if (!$item->isFastOrderUser()) {
-                    $user = $item;
-                    break;
-                }
-            }
+
+        $items = $this->searchAllUsersByPhoneNumber($phone, []);
+        if ($items) {
+            $user = reset($items);
         }
 
         if ($this->userServiceMethodsLogEnabled) {
