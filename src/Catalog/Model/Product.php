@@ -620,14 +620,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
 
     /**
-     * @var string
-     * @Type("array<string>")
-     * @Groups({"elastic"})
-     * @Accessor(getter="getAvailableStores")
-     */
-    protected $availableStores = [];
-
-    /**
      * @var array
      */
     protected $fullDeliveryAvailability;
@@ -2257,23 +2249,5 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->sectionIdList;
-    }
-
-    /**
-     * @return string[]
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws NotFoundException
-     */
-    public function getAvailableStores(): array
-    {
-        $result = [];
-        /** @var Offer $offer */
-        foreach ($this->getOffers() as $offer) {
-            /** @noinspection SlowArrayOperationsInLoopInspection */
-            $result = \array_merge($result, $offer->getAllStocks()->getStores(1)->getXmlIds());
-        }
-
-        return \array_unique($result);
     }
 }
