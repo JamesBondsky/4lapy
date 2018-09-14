@@ -1,22 +1,29 @@
-.tab-user-list {
+.registration-page-cont .registration-form-cont {
+    display: none;
+}
+.registration-page-cont .registration-form-cont._visible {
+    display: block;
+}
+
+.registration-page-cont .tab-user-list {
     margin: 0 0 52px 0;
 }
 
-table.user-list {
+.registration-page-cont table.user-list {
     width: 100%;
     padding: 0;
     margin: 0;
 }
 
-table.user-list > thead th,
-table.user-list > tbody td {
+.registration-page-cont table.user-list > thead th,
+.registration-page-cont table.user-list > tbody td {
     text-align: left;
     margin: 0;
     padding: 5px;
     font-weight: normal;
 }
 
-table.user-list > thead th {
+.registration-page-cont table.user-list > thead th {
     font-size: 16px;
     font-weight: bold;
     border-bottom: solid 2px #8da2b5;
@@ -24,42 +31,44 @@ table.user-list > thead th {
     color: #000;
 }
 
-table.user-list .user-list__item-row.even {
+.registration-page-cont table.user-list .user-list__item-row.even {
     background-color: #efefef;
 }
 
-.user-list__full-name {
+.registration-page-cont .user-list__full-name {
     width: 200px !important;
 }
 
-.user-list__phone {
+.registration-page-cont .user-list__phone {
     width: 90px !important;
 }
 
-.user-list__card-number {
+.registration-page-cont .user-list__card-number {
     width: 120px !important;
 }
 
-.user-list__bd {
+.registration-page-cont .user-list__bd {
     width: 50px !important;
 }
 
-.user-list__auth {
+.registration-page-cont .user-list__auth {
     text-align: center;
 }
 
-.user-list__auth,
-.user-list__auth .cell-value {
+.registration-page-cont .user-list__auth,
+.registration-page-cont .user-list__auth .cell-value {
     text-align: center !important;
 }
 
-.user-list__auth ._action-auth {
+.registration-page-cont .user-list__auth ._action-auth,
+.registration-page-cont .user-list__auth ._action-register {
     text-align: center;
     border-bottom: dashed 1px #8da2b5;
     cursor: pointer;
 }
 
-.user-list.loading ._action-auth {
+.registration-page-cont.loading ._action-auth,
+.registration-page-cont.loading ._action-register {
     cursor: default;
     border-bottom: none;
     color: #CCCCCC;

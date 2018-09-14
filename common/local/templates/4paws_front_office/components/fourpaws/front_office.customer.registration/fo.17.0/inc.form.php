@@ -14,6 +14,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+/** @var array $curPrintFields */
+/** @var string $curFormId */
+
 $errBlock = '<div class="form-page__message b-icon"><i class="icon icon-warning"></i><span class="text-h4 text-icon">%s</span></div>';
 
 $attr = '';
@@ -22,7 +25,7 @@ $attr .= ' data-result-container="#refreshingBlockContainer"';
 
 $showAuthButton = false;
 ?>
-    <form class="form-page mb-l" action=""<?= $attr ?> method="post">
+    <form class="form-page mb-l registration-form" action=""<?= $attr ?> method="post" id="<?= $curFormId ?>">
         <div>
             <input type="hidden" name="formName" value="customerRegistration">
             <input type="hidden" name="action" value="postForm">
@@ -32,7 +35,8 @@ $showAuthButton = false;
             if ($arResult['STEP'] >= 1) {
                 // Поле: Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
                 $fieldName = 'phone';
-                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $fieldId = $curFormId.'__'.$fieldName;
+                $fieldMeta = $curPrintFields[$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
                 $attr .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
@@ -62,10 +66,10 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldName ?>" class="form-page__label">
+                    <label for="<?= $fieldId ?>" class="form-page__label">
                         Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
                     </label>
-                    <input id="<?= $fieldName ?>"
+                    <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
                            class="form-page__field mb-l"
@@ -80,9 +84,16 @@ $showAuthButton = false;
             }
 
             if ($arResult['STEP'] >= 2) {
+                ?>
+                <input type="hidden" name="contactId" value="<?= $curPrintFields['contactId']['VALUE'] ?>">
+                <?php
+            }
+
+            if ($arResult['STEP'] >= 3) {
                 // Поле: Фамилия
                 $fieldName = 'lastName';
-                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $fieldId = $curFormId.'__'.$fieldName;
+                $fieldMeta = $curPrintFields[$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
                 $attr .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
@@ -108,8 +119,8 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldName ?>" class="form-page__label">Фамилия</label>
-                    <input id="<?= $fieldName ?>"
+                    <label for="<?= $fieldId ?>" class="form-page__label">Фамилия</label>
+                    <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
                            class="form-page__field mb-l"
@@ -120,7 +131,8 @@ $showAuthButton = false;
 
                 // Поле: Имя
                 $fieldName = 'firstName';
-                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $fieldId = $curFormId.'__'.$fieldName;
+                $fieldMeta = $curPrintFields[$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
                 $attr .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
@@ -146,8 +158,8 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldName ?>" class="form-page__label">Имя</label>
-                    <input id="<?= $fieldName ?>"
+                    <label for="<?= $fieldId ?>" class="form-page__label">Имя</label>
+                    <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
                            class="form-page__field mb-l"
@@ -158,7 +170,8 @@ $showAuthButton = false;
 
                 // Поле: Отчество
                 $fieldName = 'secondName';
-                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $fieldId = $curFormId.'__'.$fieldName;
+                $fieldMeta = $curPrintFields[$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
                 $attr .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
@@ -184,8 +197,8 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldName ?>" class="form-page__label">Отчество</label>
-                    <input id="<?= $fieldName ?>"
+                    <label for="<?= $fieldId ?>" class="form-page__label">Отчество</label>
+                    <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
                            class="form-page__field mb-l"
@@ -196,7 +209,8 @@ $showAuthButton = false;
 
                 // Поле: Укажите свой пол
                 $fieldName = 'genderCode';
-                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $fieldId = $curFormId.'__'.$fieldName;
+                $fieldMeta = $curPrintFields[$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
                 $optAttr = $fieldMeta['READONLY'] ? ' disabled="disabled"' : '';
@@ -221,8 +235,8 @@ $showAuthButton = false;
                 $female = $component::EXTERNAL_GENDER_CODE_F;
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldName ?>" class="form-page__label">Пол</label>
-                    <select name="<?= $fieldName ?>">
+                    <label for="<?= $fieldId ?>" class="form-page__label">Пол</label>
+                    <select id="<?= $fieldId ?>" name="<?= $fieldName ?>">
                         <option<?=$optAttr?> value="">Укажите пол</option>
                         <option<?= ($value == $male ? ' selected="selected"' : $optAttr) ?> value="<?= $male ?>">Мужской</option>
                         <option<?= ($value == $female ? ' selected="selected"' : $optAttr) ?> value="<?= $female ?>">Женский</option>
@@ -233,7 +247,8 @@ $showAuthButton = false;
 
                 // Поле: Дата вашего рождения дд.мм.гггг
                 $fieldName = 'birthDay';
-                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $fieldId = $curFormId.'__'.$fieldName;
+                $fieldMeta = $curPrintFields[$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
                 $attr .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
@@ -260,8 +275,8 @@ $showAuthButton = false;
 
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldName ?>" class="form-page__label">Дата рождения дд.мм.гггг</label>
-                    <input id="<?= $fieldName ?>"
+                    <label for="<?= $fieldId ?>" class="form-page__label">Дата рождения дд.мм.гггг</label>
+                    <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
                            class="form-page__field mb-l"
@@ -272,7 +287,8 @@ $showAuthButton = false;
 
                 // Поле: Ваш email(поле необязательно для заполнения)
                 $fieldName = 'email';
-                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $fieldId = $curFormId.'__'.$fieldName;
+                $fieldMeta = $curPrintFields[$fieldName];
                 $value = $fieldMeta['VALUE'];
                 $attr = '';
                 $attr .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
@@ -290,19 +306,20 @@ $showAuthButton = false;
                             $errMess = 'E-mail задан некорректно';
                             break;
                         case 'already_registered':
-                            $errMess = 'Пользователь с таким e-mail уже есть в системе. Для продолжения введите другой e-mail или очистите поле';
+                            $errMess = 'Пользователь с таким e-mail уже есть в системе.
+                            Для продолжения введите другой e-mail или очистите поле';
                             break;
                     }
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">
+                <label for="<?= $fieldId ?>" class="form-page__label">
                     Ваш email (поле необязательно для заполнения)
                 </label>
-                <input id="<?= $fieldName ?>"
+                <input id="<?= $fieldId ?>"
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
+                       class="form-page__field mb-l _email"
                        type="text">
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
                 </div><?php
@@ -335,7 +352,7 @@ $showAuthButton = false;
                 } else {
                     $btnText = $arResult['STEP'] >= 2 ? 'Зарегистрировать' : 'ДАЛЕЕ';
                     ?>
-                    <input id="ajaxSubmitButton" class="form-page__btn inline-block" type="submit" value="<?= $btnText ?>">
+                    <input class="form-page__btn inline-block ajaxSubmitButton" type="submit" value="<?= $btnText ?>">
                     <?php
                 }
                 ?>

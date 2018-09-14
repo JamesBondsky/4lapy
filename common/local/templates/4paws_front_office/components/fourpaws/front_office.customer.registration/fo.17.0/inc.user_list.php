@@ -14,9 +14,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+/** @var array $curUserList */
+
 //echo '<div class="lk-container">';
 echo '<div class="tab-user-list">';
-if (!empty($arResult['ALREADY_REGISTERED_USERS'])) {
+if (!empty($curUserList)) {
     ?>
     <table class="user-list">
         <thead>
@@ -31,26 +33,40 @@ if (!empty($arResult['ALREADY_REGISTERED_USERS'])) {
         <tbody>
         <?php
         $rowClass = 'even';
-        foreach ($arResult['ALREADY_REGISTERED_USERS'] as $user) {
-            /** @var \FourPaws\UserBundle\Entity\User $user */
+        foreach ($curUserList as $item) {
             $rowClass = $rowClass === 'even' ? 'odd' : 'even';
             ?>
             <tr class="user-list__item-row <?= $rowClass ?>">
                 <td class="user-list__full-name">
-                    <div class="cell-value"><?= htmlspecialcharsbx($user->getFullName()) ?></div>
+                    <div class="cell-value"><?= htmlspecialcharsbx($item['FULL_NAME']) ?></div>
                 </td>
                 <td class="user-list__phone">
-                    <div class="cell-value"><?= htmlspecialcharsbx($user->getNormalizePersonalPhone()) ?></div>
+                    <div class="cell-value"><?= htmlspecialcharsbx($item['PHONE']) ?></div>
                 </td>
                 <td class="user-list__card-number">
-                    <div class="cell-value"><?= htmlspecialcharsbx($user->getDiscountCardNumber()) ?></div>
+                    <div class="cell-value"><?= htmlspecialcharsbx($item['CARD_NUMBER']) ?></div>
                 </td>
                 <td class="user-list__bd">
-                    <div class="cell-value"><?= $user->getBirthday() ?></div>
+                    <div class="cell-value"><?= $item['BIRTHDAY'] ?></div>
                 </td>
                 <td class="user-list__auth">
                     <div class="cell-value">
-                        <span class="_action-auth avatarAuth" data-user-id="<?= $user->getId() ?>">авторизоваться</span>
+                        <?php
+                        if ($item['USER_ID']) {
+                            ?>
+                            <span class="_action-auth avatarAuth" data-user-id="<?= $item['USER_ID'] ?>">
+                                авторизоваться
+                            </span>
+                            <?php
+                        }
+                        if ($item['CONTACT_ID']) {
+                            ?>
+                            <span class="_action-register selectRegisterContact" data-contact-id="<?= $item['CONTACT_ID'] ?>">
+                                зарегистрировать
+                            </span>
+                            <?php
+                        }
+                        ?>
                     </div>
                 </td>
             </tr>
