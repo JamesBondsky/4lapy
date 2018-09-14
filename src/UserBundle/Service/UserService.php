@@ -375,8 +375,8 @@ class UserService implements
     public function getSelectedCity(): array
     {
         $cityCode = null;
-        if ($_COOKIE['user_city_id']) {
-            $cityCode = $_COOKIE['user_city_id'];
+        if ($_COOKIE['selected_city_code']) {
+            $cityCode = $_COOKIE['selected_city_code'];
         } elseif ($this->isAuthorized()) {
             if (($user = $this->getCurrentUser()) && $user->getLocation()) {
                 $cityCode = $user->getLocation();
