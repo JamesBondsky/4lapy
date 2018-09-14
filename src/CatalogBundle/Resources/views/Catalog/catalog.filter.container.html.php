@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Catalog\Model\Product;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
@@ -24,28 +25,40 @@ global $APPLICATION;
  * @var PhpEngine              $view
  * @var string                 $currentPath
  * @var string                 $retailRocketViewScript
+ * @var Product|bool           $productWithMinPrice
  * @var CMain                  $APPLICATION
  */
 
 echo $retailRocketViewScript;
 
+$filterCollection = $catalogRequest->getCategory()
+                                   ->getFilters();
+$count = $productSearchResult->getResultSet()
+                             ->getTotalHits();
+
 $category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category',
     '',
     [
-        'SECTION_CODE' => $catalogRequest->getCategory()
-            ->getCode(),
-        'SET_TITLE'    => 'Y',
-        'CACHE_TIME'   => 10,
+        'SECTION_CODE'      => $catalogRequest->getCategory()
+                                              ->getCode(),
+        'SET_TITLE'         => 'Y',
+        'CACHE_TIME'        => 10,
+        'PRODUCT_COUNT'     => \sprintf(
+            '%d %s',
+            $count,
+            WordHelper::declension($count, [
+                    'товар',
+                    'товара',
+                    'товаров'
+                ]
+            )
+        ),
+        'MIN_PRICE_PRODUCT' => $productWithMinPrice
     ],
     null,
     ['HIDE_ICONS' => 'Y']
 );
-
-$filterCollection = $catalogRequest->getCategory()
-    ->getFilters();
-$count = $productSearchResult->getResultSet()
-    ->getTotalHits();
 
 if (!$catalogRequest->isLanding()) { ?>
     <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
@@ -65,7 +78,7 @@ if (!$catalogRequest->isLanding()) { ?>
             ], true) ? $category->getName() : implode(' ', [
                 $category->getName(),
                 $category->getParent()
-                    ->getSuffix()
+                         ->getSuffix()
             ]) ?>
         </h1>
     </div>
@@ -103,7 +116,7 @@ if (!$catalogRequest->isLanding()) { ?>
                    title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <?= $view->render(
-                'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',\compact('category', 'catalogRequest')) ?>
+                'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php', \compact('category', 'catalogRequest')) ?>
             <?php $filterToShow = $filterCollection->getFiltersToShow();
             $filterActions = $filterCollection->getActionsFilter();
             ?>
@@ -145,11 +158,16 @@ if (!$catalogRequest->isLanding()) { ?>
     </div>
     <div class="b-filter__bottom">
         <a class="b-filter__button" href="javascript:void(0);" title="">
-            Показать <?= $count . ' ' . WordHelper::declension($count, [
-                'товар',
-                'товара',
-                'товаров'
-            ]) ?>
+            Показать <?= \sprintf(
+                '%d %s',
+                $count,
+                WordHelper::declension($count, [
+                        'товар',
+                        'товара',
+                        'товаров'
+                    ]
+                )
+            ) ?>
         </a>
     </div>
 </aside>
@@ -251,7 +269,7 @@ if (!$catalogRequest->isLanding()) { ?>
         [
             'NAV_TITLE'      => '',
             'NAV_RESULT'     => $productSearchResult->getProductCollection()
-                ->getCdbResult(),
+                                                    ->getCdbResult(),
             'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
             'AJAX_MODE'      => 'Y',

@@ -3,27 +3,39 @@
 namespace FourPaws\Components;
 
 use Bitrix\Iblock\Component\Tools;
+use Bitrix\Iblock\InheritedProperty\SectionValues;
+use CBitrixComponent;
+use Exception;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
-use CBitrixComponent;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogCategory extends CBitrixComponent
 {
+    /**
+     * @param $params
+     *
+     * @return array
+     */
     public function onPrepareComponentParams($params): array
     {
         if (!isset($params['CACHE_TIME'])) {
-            $params['CACHE_TIME'] = 36000000;
+            $params['CACHE_TIME'] = 36000;
         }
 
         $params['SECTION_CODE'] = $params['SECTION_CODE'] ?? '';
-        $params['SECTION_CODE'] = (string)$params['SECTION_CODE'];
         $params['SET_TITLE'] = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
+        $params['PRODUCT_COUNT'] = $params['PRODUCT_COUNT'] ?: '0 товаров';
+        $params['MIN_PRICE_PRODUCT'] = $params['MIN_PRICE_PRODUCT'] ?? false;
 
         return parent::onPrepareComponentParams($params);
     }
 
-    public function executeComponent()
+    /**
+     * @return Category
+     */
+    public function executeComponent(): ?Category
     {
         if (!$this->arParams['SECTION_CODE']) {
             Tools::process404('', true, true, true);
@@ -40,20 +52,18 @@ class CatalogCategory extends CBitrixComponent
         return $this->arResult['CATEGORY'];
     }
 
-    protected function prepareResult()
+    /**
+     *
+     */
+    protected function prepareResult(): void
     {
-        global $APPLICATION;
-
         $category = $this->getCategory($this->arParams['SECTION_CODE']);
         if (!$category) {
             $this->abortResultCache();
             Tools::process404('', true, true, true);
         }
 
-        if ($this->arParams['SET_TITLE'] === 'Y') {
-            $APPLICATION->SetTitle($category->getCanonicalName());
-        }
-
+        $this->setSeo($category);
         $this->arResult['CATEGORY'] = $category;
     }
 
@@ -62,7 +72,7 @@ class CatalogCategory extends CBitrixComponent
      *
      * @return null|Category
      */
-    protected function getCategory(string $slug)
+    protected function getCategory(string $slug): ?Category
     {
         return (new CategoryQuery())
             ->withFilterParameter('CNT_ACTIVE', 'Y')
@@ -71,5 +81,72 @@ class CatalogCategory extends CBitrixComponent
             ->withNav(['nTopCount' => 1])
             ->exec()
             ->first();
+    }
+
+    /**
+     * @param Category $category
+     *
+     * @return $this
+     *
+     * @throws Exception
+     */
+    public function setSeo(?Category $category): self
+    {
+        if (!$category || $this->arParams['SET_TITLE'] !== 'Y') {
+            return $this;
+        }
+
+        global $APPLICATION;
+
+        $cache = (new BitrixCache())
+            ->withId(__METHOD__ . $category->getId())
+            ->withTime(3600);
+
+        $properties = $cache->resultOf(function () use ($category) {
+            return \array_map(function ($meta) use ($category) {
+                try {
+                    $minPrice = $this->arParams['MIN_PRICE_PRODUCT']->getOffersSorted()->first()->getCatalogPrice();
+                } catch (\Throwable $e) {
+                    /**
+                     * Нам неважно, почему здесь отвалилось. Важно, что мы просто не получим минимальную цену.
+                     */
+                    $minPrice = 0;
+                }
+
+                return \str_replace(
+                    [
+                        '#MIN_PRICE#',
+                        '#PRODUCT_COUNT#',
+                        '#PET_TYPE#'
+                    ],
+                    [
+                        $minPrice,
+                        $this->arParams['PRODUCT_COUNT'],
+                        $this->getSuffix($category)
+                    ],
+                    $meta
+                );
+            }, (new SectionValues($category->getIblockId(), $category->getId()))->getValues());
+        });
+
+        $APPLICATION->SetTitle($properties['SECTION_META_TITLE']);
+        $APPLICATION->SetPageProperty('description', $properties['SECTION_META_DESCRIPTION']);
+        $APPLICATION->SetPageProperty('canonical', $category->getSectionPageUrl());
+
+        return $this;
+    }
+
+    /**
+     * @param Category|null $category
+     *
+     * @return string
+     */
+    protected function getSuffix(?Category $category): string
+    {
+        if (null === $category) {
+            return '';
+        }
+
+        return $category->getSuffix() ?: $this->getSuffix($category->getParent());
     }
 }

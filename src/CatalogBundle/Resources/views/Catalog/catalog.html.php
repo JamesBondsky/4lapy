@@ -1,5 +1,6 @@
 <?php
 
+use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
@@ -13,6 +14,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var GoogleEcommerceService $ecommerceService
  * @var CatalogLandingService  $landingService
  * @var string                 $retailRocketViewScript
+ * @var Product|bool           $productWithMinPrice
  * @var CMain                  $APPLICATION
  */
 
@@ -30,7 +32,7 @@ if ($category->isLanding() || $catalogRequest->isLanding()) {
 }
 
 if ($catalogRequest->isLanding()) {
-    echo $view->render('FourPawsCatalogBundle:Catalog:landing.header.html.php',\compact('catalogRequest'));
+    echo $view->render('FourPawsCatalogBundle:Catalog:landing.header.html.php', \compact('catalogRequest'));
 
     echo '<div class="b-catalog js-preloader-fix"><div class="b-container b-container--catalog-filter">';
 } else { ?>
@@ -40,7 +42,7 @@ if ($catalogRequest->isLanding()) {
 
 echo $view->render(
     'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php',
-    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService', 'retailRocketViewScript')
+    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService', 'retailRocketViewScript', 'productWithMinPrice')
 );
 
 if ($catalogRequest->isLanding()) {

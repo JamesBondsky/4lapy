@@ -202,7 +202,7 @@ class OrderSubscribeService
     {
         //$result = $order->isPayed() && (!$order->isManzana() || $order->isNewManzana());
         // LP12-26: Сделать подписку на доставку и повтор заказа возможными для любых заказов.
-        $result = !$order->isManzana() || $order->isNewManzana();
+        $result = !$order->getManzanaId();
 
         return $result;
     }

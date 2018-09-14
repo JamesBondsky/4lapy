@@ -9,6 +9,7 @@ use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
@@ -57,8 +58,8 @@ class CatalogElementSnippet extends CBitrixComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $params['PRODUCT'] = $params['PRODUCT'] ?? null;
         $params['PRODUCT'] = $params['PRODUCT'] instanceof Product ? $params['PRODUCT'] : null;
+        $params['CATEGORY'] = $params['CURRENT_CATEGORY'] instanceof Category ? $params['CURRENT_CATEGORY'] : null;
 
         $params['NOT_CATALOG_ITEM_CLASS'] = $params['NOT_CATALOG_ITEM_CLASS'] ?? 'N';
 
@@ -90,9 +91,23 @@ class CatalogElementSnippet extends CBitrixComponent
             parent::executeComponent();
 
             if ($this->arParams['PRODUCT']) {
-                /** @var Product $product */
+                /**
+                 * @var Product  $product
+                 * @var Category $category
+                 */
+                $this->arResult['CATEGORY'] = $category = $this->arParams['CATEGORY'];
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
+
+                if ($category && $product->getIblockSectionId() !== $category->getId()) {
+                    $product->withDetailPageUrl(
+                        \sprintf(
+                            '%s%s.html',
+                            $category->getSectionPageUrl(),
+                            $product->getCode()
+                        )
+                    );
+                }
 
                 if (!$currentOffer) {
                     $this->abortResultCache();
@@ -106,6 +121,7 @@ class CatalogElementSnippet extends CBitrixComponent
                 ]);
 
                 $this->includeComponentTemplate();
+
                 return;
             }
 
@@ -132,6 +148,8 @@ class CatalogElementSnippet extends CBitrixComponent
             $foundOfferWithImages = false;
             $currentOffer = $offers->last();
             foreach ($offers as $offer) {
+                $offer->setProduct($product);
+
                 if (!$foundOfferWithImages || $offer->getImagesIds()) {
                     $currentOffer = $offer;
                 }

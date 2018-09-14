@@ -11,7 +11,6 @@ use Elastica\Query\Simple;
 use Elastica\Query\Terms;
 use Exception;
 use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\IblockSection;
 use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -23,7 +22,6 @@ use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -96,30 +94,27 @@ class Category extends IblockSection implements FilterInterface
     protected $UF_LANDING_ARTICLES = false;
     /** @var array */
     protected $UF_RECOMMENDED;
+    /** @var bool */
+    protected $UF_SKIP_AUTOSORT = false;
     /**
      * @var FilterCollection
      */
     private $filterList;
     /**
-     * @var FilterService
+     * @var bool
      */
-    private $filterService;
+    protected $activeLandingCategory = false;
 
     /**
      * Category constructor.
      *
      * @param array $fields
      *
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
      */
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
-        $this->filterService = Application::getInstance()
-            ->getContainer()
-            ->get(FilterService::class);
         //По умолчанию фильтр по категории невидим.
         $this->setVisible(false);
         $this->child = new ArrayCollection();
@@ -130,9 +125,7 @@ class Category extends IblockSection implements FilterInterface
      *
      * @throws IblockNotFoundException
      * @return Category
-     * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      */
     public static function createRoot(array $fields = []): Category
     {
@@ -142,8 +135,8 @@ class Category extends IblockSection implements FilterInterface
                 $fields,
                 [
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-                    'ID' => 0,
-                    'CODE' => '',
+                    'ID'        => 0,
+                    'CODE'      => '',
                 ]
             )
         );
@@ -353,7 +346,7 @@ class Category extends IblockSection implements FilterInterface
              * и при деактивации целевого раздела показывать битую ссылку плохо.
              */
             $res = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
-                ->exec();
+                                        ->exec();
             $this->symlink = $res->isEmpty() ? null : $res->current();
         }
 
@@ -371,7 +364,9 @@ class Category extends IblockSection implements FilterInterface
          * т.к. её состояние в процессе поиска товаров будет меняться.
          */
         if (null === $this->filterList) {
-            $this->filterList = $this->filterService->getCategoryFilters($this);
+            $this->filterList = Application::getInstance()
+                                           ->getContainer()
+                                           ->get(FilterService::class)->getCategoryFilters($this);
         }
 
         return $this->filterList;
@@ -388,11 +383,11 @@ class Category extends IblockSection implements FilterInterface
             //Если это не корневой раздел
             if ($this->getId() > 0) {
                 $categoryQuery->withFilterParameter('LEFT_MARGIN', $this->getLeftMargin())
-                    ->withFilterParameter('RIGHT_MARGIN', $this->getRightMargin());
+                              ->withFilterParameter('RIGHT_MARGIN', $this->getRightMargin());
             }
 
             $categoryCollection = $categoryQuery->withOrder(['LEFT_MARGIN' => 'ASC'])
-                ->exec();
+                                                ->exec();
 
             $variants = [];
 
@@ -405,8 +400,8 @@ class Category extends IblockSection implements FilterInterface
                  * т.к. мы по умолчанию ищем по разделу и всем подразделам
                  */
                 $variants[] = (new Variant())->withName($category->getName())
-                    ->withValue($category->getId())
-                    ->withChecked(true);
+                                             ->withValue($category->getId())
+                                             ->withChecked(true);
             }
 
             return $variants;
@@ -414,8 +409,8 @@ class Category extends IblockSection implements FilterInterface
 
         /** @var Variant[] $variants */
         $variants = (new BitrixCache())->withId(__METHOD__ . $this->getId())
-            ->withIblockTag($this->getIblockId())
-            ->resultOf($doGetAllVariants);
+                                       ->withIblockTag($this->getIblockId())
+                                       ->resultOf($doGetAllVariants);
 
         return new VariantCollection($variants);
     }
@@ -453,7 +448,7 @@ class Category extends IblockSection implements FilterInterface
         $suffix = '';
         if ($this->getParent()) {
             $suffix = $this->getParent()
-                ->getSuffix();
+                           ->getSuffix();
         }
 
         return $this->getDisplayName() ?: trim(implode(' ', [
@@ -724,6 +719,23 @@ class Category extends IblockSection implements FilterInterface
         return $this;
     }
 
+    public function isSkipAutosort(): bool
+    {
+        return $this->UF_SKIP_AUTOSORT;
+    }
+
+    /**
+     * @param bool $skipAutosort
+     *
+     * @return Category
+     */
+    public function setSkipAutosort(bool $skipAutosort): self
+    {
+        $this->UF_SKIP_AUTOSORT = $skipAutosort;
+
+        return $this;
+    }
+
     /**
      * @param callable $find
      *
@@ -732,5 +744,60 @@ class Category extends IblockSection implements FilterInterface
     protected function findFromParent(callable $find)
     {
         return $this->getFullPathCollection()->filter($find)->last();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActiveLandingCategory(): bool
+    {
+        return $this->activeLandingCategory;
+    }
+
+    /**
+     * @param bool $activeLandingCategory
+     *
+     * @return $this
+     */
+    public function setActiveLandingCategory(bool $activeLandingCategory): self
+    {
+        $this->activeLandingCategory = $activeLandingCategory;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function __sleep()
+    {
+        return [
+            'UF_SYMLINK',
+            'symlink',
+            'parent',
+            'root',
+            'child',
+            'PICTURE',
+            'UF_DISPLAY_NAME',
+            'UF_SUFFIX',
+            'UF_LANDING',
+            'UF_DEF_FOR_LANDING',
+            'UF_LANDING_BANNER',
+            'UF_FAQ_SECTION',
+            'UF_FORM_TEMPLATE',
+            'UF_SUB_DOMAIN',
+            'UF_SHOW_FITTING',
+            'UF_LANDING_ARTICLES',
+            'UF_RECOMMENDED',
+            'IBLOCK_ID',
+            'ID',
+            'SORT',
+            'DEPTH_LEVEL',
+            'LEFT_MARGIN',
+            'RIGHT_MARGIN',
+            'SECTION_PAGE_URL',
+            'IBLOCK_SECTION_ID',
+            'ELEMENT_CNT',
+        ];
     }
 }

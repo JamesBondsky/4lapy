@@ -144,9 +144,9 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
             $phone = $this->cleanPhoneNumberValue($value);
             if ($phone !== '') {
                 // Наличие юзера с таким номером в БД сайта
-                $user = $this->searchUserByPhoneNumber($phone);
-                if ($user) {
-                    $this->setRegisteredUserId($user->getId());
+                $users = $this->searchAllUsersByPhoneNumber($phone);
+                if ($users) {
+                    $this->setAlreadyRegisteredUsers($users);
                     $this->setFieldError(
                         $fieldName,
                         'Данный телефонный номер есть в базе данных сайта',
@@ -160,17 +160,26 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
                         $searchResultData = $searchResult->getData();
                         if ($searchResultData['clients']) {
                             foreach ($searchResultData['clients'] as $clientData) {
-                                $this->arResult['CONTACT_DATA']['USER'][] = [
+                                $fullName = trim($clientData['LAST_NAME'].' '.$clientData['FIRST_NAME']);
+                                $fullName = trim($fullName.' '.$clientData['SECOND_NAME']);
+                                /** @var \DateTimeImmutable $date */
+                                $date = $clientData['BIRTHDAY'];
+                                $this->arResult['CONTACT_DATA']['USER'][$clientData['CONTACT_ID']] = [
                                     'CONTACT_ID' => $clientData['CONTACT_ID'],
                                     'LAST_NAME' => $clientData['LAST_NAME'],
                                     'FIRST_NAME' => $clientData['FIRST_NAME'],
                                     'SECOND_NAME' => $clientData['SECOND_NAME'],
-                                    'BIRTHDAY' => $clientData['BIRTHDAY'],
+                                    'BIRTHDAY' => $date,
                                     'PHONE' => $clientData['PHONE'],
                                     'EMAIL' => $clientData['EMAIL'],
                                     'GENDER_CODE' => $clientData['GENDER_CODE'],
+                                    'CARD_NUMBER' => $clientData['CARD_NUMBER'],
                                     '_PHONE_NORMALIZED_' => $this->cleanPhoneNumberValue($clientData['PHONE']),
-                                    '_BX_GENDER_CODE_' => $this->getBitrixGenderByExternalGender($clientData['GENDER_CODE']),
+                                    '_BX_GENDER_CODE_' => $this->getBitrixGenderByExternalGender(
+                                        $clientData['GENDER_CODE']
+                                    ),
+                                    '_FULL_NAME_' => $fullName,
+                                    '_BIRTHDAY_FORMATTED_' => $date ? $date->format('d.m.Y') : '',
                                 ];
                             }
                         }
@@ -261,6 +270,14 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     protected function setRegisteredUserId(int $userId)
     {
         $this->arResult['REGISTERED_USER_ID'] = $userId > 0 ? $userId : 0;
+    }
+
+    /**
+     * @param User[] $users
+     */
+    protected function setAlreadyRegisteredUsers(array $users)
+    {
+        $this->arResult['ALREADY_REGISTERED_USERS'] = $users;
     }
 
     /**

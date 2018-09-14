@@ -7,11 +7,13 @@ use Symfony\Component\Templating\PhpEngine;
 /**
  * @var ProductCollection    $collection
  * @var ChildCategoryRequest $catalogRequest
- * @var PhpEngine $view
- * @var CMain $APPLICATION
+ * @var PhpEngine            $view
+ * @var CMain                $APPLICATION
  */
 
 global $APPLICATION;
+
+$category = $catalogRequest->getCategory();
 
 foreach ($collection as $product) {
     $i++;
@@ -20,28 +22,27 @@ foreach ($collection as $product) {
         'fourpaws:catalog.element.snippet',
         '',
         [
-            'PRODUCT' => $product,
-            'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по питомцу'
+            'PRODUCT'               => $product,
+            'CURRENT_CATEGORY'      => clone $category,
+            'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по питомцу',
         ],
         null,
         ['HIDE_ICONS' => 'Y']
     );
 
     if ($catalogRequest->getCategory()
-            ->isLanding()
+                       ->isLanding()
         && !empty($catalogRequest->getCategory()
-            ->getUfLandingBanner())) {
+                                 ->getUfLandingBanner())) {
         if ($i === 3 || ($i === $countItems && $i < 3)) { ?>
             <div class="b-fleas-protection-banner b-tablet">
-                <?= htmlspecialcharsback($catalogRequest->getCategory()
-                    ->getUfLandingBanner()) ?>
+                <?= htmlspecialcharsback($category->getUfLandingBanner()) ?>
             </div>
         <?php }
 
         if ($i === 4 || ($i === $countItems && $i < 4)) { ?>
             <div class="b-fleas-protection-banner">
-                <?= htmlspecialcharsback($catalogRequest->getCategory()
-                    ->getUfLandingBanner()) ?>
+                <?= htmlspecialcharsback($category->getUfLandingBanner()) ?>
             </div>
         <?php }
     }

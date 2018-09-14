@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\NotImplementedException;
@@ -154,13 +155,45 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
                 '=CODE'  => 'MANZANA_NUMBER',
                 '!VALUE' => false,
             ])
-            ->registerRuntimeField(new ReferenceField(
-                'ORDER_PROPS', OrderPropsValueTable::class,
-                Query\Join::on('this.VALUE', 'ref.VALUE')
-                    ->where('this.ORDER_ID', '!=', new Query\Filter\Expression\Column('ref.ORDER_ID'))
-                    ->where('ref.CODE', '=', 'MANZANA_NUMBER'),
-                ['join_type' => 'INNER']
-            ));
+            ->setOrder(['ORDER_ID' => 'ASC'])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'DUP_ORDER_PROPS', OrderPropsValueTable::class,
+                    Query\Join::on('this.VALUE', 'ref.VALUE')
+                        ->where('this.ORDER_ID', '!=', new Query\Filter\Expression\Column('ref.ORDER_ID'))
+                        ->where('ref.CODE', '=', 'MANZANA_NUMBER'),
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'ORDER', OrderTable::class,
+                    Query\Join::on('this.ORDER_ID', 'ref.ID'),
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->registerRuntimeField(
+                new ExpressionField(
+                    'MAIN_ORDER_USER_ID',
+                    '%s',
+                    'ORDER.USER_ID'
+                )
+            )
+            ->registerRuntimeField(
+                new ExpressionField(
+                    'DUP_ORDER_ID',
+                    '%s',
+                    'DUP_ORDER_PROPS.ORDER_ID'
+                )
+            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'DUP_ORDER', OrderTable::class,
+                    Query\Join::on('this.DUP_ORDER_ID', 'ref.ID')
+                        ->where('this.MAIN_ORDER_USER_ID', '=', 'ref.USER_ID'),
+                    ['join_type' => 'INNER']
+                )
+            );
 
         return $query;
     }
@@ -179,8 +212,8 @@ class DeleteManzanaOrders extends Command implements LoggerAwareInterface
                 'ORDER.PRICE',
             ])
             ->setFilter([
-                '=CODE'       => 'MANZANA_NUMBER',
-                '!VALUE'      => false,
+                '=CODE'         => 'MANZANA_NUMBER',
+                '!VALUE'        => false,
                 '<=ORDER.PRICE' => 0,
             ])
             ->setOrder(['ORDER_ID' => 'ASC'])

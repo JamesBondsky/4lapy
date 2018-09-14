@@ -43,6 +43,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -376,6 +377,9 @@ class Offer extends IblockElement
 
     /**
      * @var StockCollection
+     * @Type("array<string>")
+     * @Accessor(getter="getAllStocksForFilter")
+     * @Groups({"elastic"})
      */
     protected $allStocks;
 
@@ -394,8 +398,18 @@ class Offer extends IblockElement
      */
     protected $deliverableQuantity;
 
-    /** @var ShareCollection */
+    /**
+     * @var ShareCollection
+     */
     protected $share;
+
+    /**
+     * @var string
+     * @Type("array<string>")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getAvailableStores")
+     */
+    protected $availableStores = [];
 
     /**
      * Offer constructor.
@@ -1379,6 +1393,17 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getAllStocksForFilter(): array
+    {
+        return $this->getAllStocks()->getStores(1)->getXmlIds();
+    }
+
+    /**
      * Участвует ли товар в акции "Скидка на товар"
      */
     public function isSimpleDiscountAction(): bool
@@ -1463,7 +1488,7 @@ class Offer extends IblockElement
                 'DATE_ACTIVE_FROM',
                 'DATE_ACTIVE_TO',
                 'PROPERTY_LABEL',
-                'PROPERTY_LABEL_IMAGE'
+                'PROPERTY_LABEL_IMAGE',
             ])->exec();
         }
         return $this->share;
@@ -1702,7 +1727,7 @@ class Offer extends IblockElement
                     $itemFields = [
                         'PRODUCT' => null,
                         'PRODUCT_ID' => $item['UF_PRODUCT'],
-                        'QUANTITY' => $item['UF_QUANTITY']
+                        'QUANTITY' => $item['UF_QUANTITY'],
                     ];
                     if ($offerId === (int)$item['UF_PRODUCT']) {
                         $itemFields['PRODUCT'] = $this;
@@ -1758,6 +1783,17 @@ class Offer extends IblockElement
     public function getDiscountPrice(): float
     {
         return round($this->getOldPrice() - $this->getPrice());
+    }
+
+    /**
+     * @return string[]
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getAvailableStores(): array
+    {
+        return $this->getAllStocks()->getStores(1)->getXmlIds();
     }
 
     /**

@@ -179,7 +179,6 @@ class Cheque
     /**
      * @return bool
      */
-
     public function hasItemsBool(): bool
     {
         return (int)$this->hasItems === self::HAS_ITEMS_BY_CHEQUE;

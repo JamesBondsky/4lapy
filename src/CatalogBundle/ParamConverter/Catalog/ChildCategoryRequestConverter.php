@@ -125,7 +125,7 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
             $object->setIsLanding(true);
             $object->setLandingDomain($this->landingService->getLandingDomain($request));
             $object->setLandingDocRoot($this->landingService->getLandingDocRoot($request));
-            $object->setLandingCollection($this->categoriesService->getLandingCollectionByDomain($this->landingService->getLandingName($request)));
+            $object->setLandingCollection($this->categoriesService->getLandingCollectionByDomain($this->landingService->getLandingName($request), $request));
         }
 
         try {

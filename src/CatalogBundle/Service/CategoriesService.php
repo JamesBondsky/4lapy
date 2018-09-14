@@ -24,6 +24,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
 /**
@@ -217,11 +218,12 @@ class CategoriesService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $landingName
+     * @param string  $landingName
+     * @param Request $request
      *
      * @return CategoryCollection
      */
-    public function getLandingCollectionByDomain(string $landingName): CategoryCollection
+    public function getLandingCollectionByDomain(string $landingName, Request $request): CategoryCollection
     {
         /**
          * @var CategoryCollection $landingCollection
@@ -242,6 +244,12 @@ class CategoriesService implements LoggerAwareInterface
                 'Landing collection %s is not found.',
                 $landingName
             ));
+        }
+
+        foreach ($landingCollection as $landing) {
+            if (\strpos($request->getPathInfo(), $landing->getSectionPageUrl()) !== false) {
+                $landing->setActiveLandingCategory(true);
+            }
         }
 
         return $landingCollection;
