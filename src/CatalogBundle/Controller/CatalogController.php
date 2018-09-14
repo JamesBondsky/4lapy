@@ -133,13 +133,17 @@ class CatalogController extends Controller
      *      name="category.landing"
      * )
      *
-     * @param RootCategoryRequest $rootCategoryRequest
+     * @param RootCategoryRequest  $rootCategoryRequest
+     * @param ChildCategoryRequest $categoryRequest
+     * @param Request              $request
      *
      * @return Response
      */
-    public function categoryLandingAction(RootCategoryRequest $rootCategoryRequest): Response
+    public function categoryLandingAction(RootCategoryRequest $rootCategoryRequest, ChildCategoryRequest $categoryRequest, Request $request): Response
     {
-        return $this->redirect($this->landingService->getLandingDefaultPage($rootCategoryRequest), 301);
+        $categoryRequest->setCategory($rootCategoryRequest->getLanding()->setActiveLandingCategory(true));
+
+        return $this->forward('FourPawsCatalogBundle:Catalog:childCategory', \compact('request', 'categoryRequest'));
     }
 
     /**
@@ -189,23 +193,34 @@ class CatalogController extends Controller
      */
     public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest): Response
     {
+        $category = $categoryRequest->getCategory();
+
         $result = $this->searchService->searchProducts(
-            $categoryRequest->getCategory()->getFilters(),
+            $category->getFilters(),
             $categoryRequest->getSorts()->getSelected(),
             $categoryRequest->getNavigation(),
             $categoryRequest->getSearchString()
         );
 
+        if ($this->landingService->isLanding($request) && $category->isActiveLandingCategory()) {
+            foreach ($categoryRequest->getLandingCollection() as $landing) {
+                if ($category->getId() === $landing->getId()) {
+                    $landing->setActiveLandingCategory(true);
+
+                    break;
+                }
+            }
+        }
+
         try {
-            $productWithMinPrice = $this->searchService->searchOneWithMinPrice($categoryRequest->getCategory()
-                                                                                               ->getFilters());
+            $productWithMinPrice = $this->searchService->searchOneWithMinPrice($category->getFilters());
         } catch (Throwable $e) {
             $productWithMinPrice = false;
         }
 
         $retailRocketViewScript = \sprintf(
             '<script>%s</script>',
-            $this->retailRocketService->renderCategoryView($categoryRequest->getCategory()->getId())
+            $this->retailRocketService->renderCategoryView($category->getId())
         );
 
         $tpl = 'FourPawsCatalogBundle:Catalog:catalog.html.php';

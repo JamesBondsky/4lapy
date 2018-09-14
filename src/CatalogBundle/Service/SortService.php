@@ -169,13 +169,19 @@ class SortService
         if (null === $this->availabilitySortScript) {
             $deliveries = $this->deliveryService->getByLocation();
 
-            $availableXmlIds = [];
+            $availableXmlIds = ['DC01'];
             foreach ($deliveries as $delivery) {
                 /** @noinspection SlowArrayOperationsInLoopInspection */
                 $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)
                                                                                         ->getXmlIds());
             }
-            $availableXmlIds = \array_unique($availableXmlIds);
+            /**
+             * вызов array_values() необходим для того, чтобы ключи шли подря. Иначе элемент придет в эластик
+             * в виде объекта, а не массива
+             */
+            $availableXmlIds = \array_values(
+                \array_unique($availableXmlIds)
+            );
 
             $supplierXmlIds = $this->storeService->getSupplierStores()->getXmlIds();
 
@@ -184,18 +190,20 @@ class SortService
                 'script' => [
                     'lang'   => 'painless',
                     'source' => '
-                    for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
-                        for (int j = 0; j < params.available.length; ++j) {
-                            if (doc[\'availableStores\'][i] == params.available[j]) {
-                                return 2;
-                            }
-                        }
+                    if (!doc.containsKey(\'availableStores\')) {
+                        return 0;
                     }
-
                     for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
                         for (int j = 0; j < params.supplier.length; ++j) {
                             if (doc[\'availableStores\'][i] == params.supplier[j]) {
                                 return 1;
+                            }
+                        }
+                    }
+                    for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
+                        for (int j = 0; j < params.available.length; ++j) {
+                            if (doc[\'availableStores\'][i] == params.available[j]) {
+                                return 2;
                             }
                         }
                     }

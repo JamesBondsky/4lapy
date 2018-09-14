@@ -100,6 +100,10 @@ class Category extends IblockSection implements FilterInterface
      * @var FilterCollection
      */
     private $filterList;
+    /**
+     * @var bool
+     */
+    protected $activeLandingCategory = false;
 
     /**
      * Category constructor.
@@ -743,6 +747,26 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isActiveLandingCategory(): bool
+    {
+        return $this->activeLandingCategory;
+    }
+
+    /**
+     * @param bool $activeLandingCategory
+     *
+     * @return $this
+     */
+    public function setActiveLandingCategory(bool $activeLandingCategory): self
+    {
+        $this->activeLandingCategory = $activeLandingCategory;
+
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function __sleep()
@@ -764,7 +788,16 @@ class Category extends IblockSection implements FilterInterface
             'UF_SUB_DOMAIN',
             'UF_SHOW_FITTING',
             'UF_LANDING_ARTICLES',
-            'UF_RECOMMENDED'
+            'UF_RECOMMENDED',
+            'IBLOCK_ID',
+            'ID',
+            'SORT',
+            'DEPTH_LEVEL',
+            'LEFT_MARGIN',
+            'RIGHT_MARGIN',
+            'SECTION_PAGE_URL',
+            'IBLOCK_SECTION_ID',
+            'ELEMENT_CNT',
         ];
     }
 }
