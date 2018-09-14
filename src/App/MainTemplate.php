@@ -184,47 +184,27 @@ class MainTemplate extends TemplateAbstract
             }
         }
         return false;
-        //return $this->isPartitionDir('/shares/by_pet');       //  old
     }
 
     /**
      * @return array
      */
     public function getSharesFilterDirs(): array{
-        $arFilter = array(
-            'IBLOCK_ID' => IblockUtils::getIblockId(
-                IblockType::PUBLICATION,
-                IblockCode::SHARES
-            ),
-            'CODE' => 'TYPE',
-            'ACTIVE' => 'Y'
-        );
-        $arPropType = \CIBlockProperty::GetList([], $arFilter)->GetNext();
-
-        $arExitingCategories = [];
-        if ($arPropType && isset($arPropType['USER_TYPE_SETTINGS']['TABLE_NAME'])) {
-            $arHlBlock = \Bitrix\Highloadblock\HighloadBlockTable::getList(
-                [
-                    'filter' => [
-                        '=TABLE_NAME' => $arPropType['USER_TYPE_SETTINGS']['TABLE_NAME'],
-                    ]
+        /**
+         * @var $sHlEntityClass \Bitrix\Main\Entity\DataManager
+         */
+        $sHlEntityClass = \FourPaws\App\Application::getInstance()->getContainer()->get('bx.hlblock.publicationtype');
+        $dbItems = $sHlEntityClass::getList(
+            [
+                'filter' => [],
+                'select' => [
+                    'UF_NAME',
+                    'UF_XML_ID'
                 ]
-            )->fetch();
-            if ($arHlBlock) {
-                $sHlEntityClass = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($arHlBlock)->getDataClass();
-                $dbItems = $sHlEntityClass::getList(
-                    [
-                        'filter' => [],
-                        'select' => [
-                            'UF_NAME',
-                            'UF_XML_ID'
-                        ]
-                    ]
-                );
-                while($arItem = $dbItems->fetch()){
-                    $arExitingCategories[] = $arItem['UF_XML_ID'];
-                }
-            }
+            ]
+        );
+        while($arItem = $dbItems->fetch()){
+            $arExitingCategories[] = $arItem['UF_XML_ID'];
         }
 
         return $arExitingCategories;

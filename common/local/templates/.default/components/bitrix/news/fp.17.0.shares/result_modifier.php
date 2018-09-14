@@ -29,8 +29,5 @@ if(isset($arResult['VARIABLES']['ELEMENT_CODE'])){
         $arResult['VARIABLES']['SECTION_CODE'] = $arResult['VARIABLES']['ELEMENT_CODE'];
         unset($arResult['VARIABLES']['ELEMENT_CODE']);
         include(__DIR__.'/section.php');
-        if(file_exists(__DIR__.'/component_epilog.php')){
-            include(__DIR__.'/component_epilog.php');
-        }
     }
 }
