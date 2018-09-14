@@ -76,8 +76,11 @@ if (null === $offer) {
     $logger->error('Нет оффера');
     return;
 } ?>
-<div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>"
-     data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/">
+<div class="b-product-card"
+     data-productid="<?= $product->getId() ?>"
+     data-offerId="<?= $offer->getId() ?>"
+     data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/"
+     itemprop="itemListElement" itemscope itemtype="http://schema.org/Product" >
     <div class="b-container">
         <?php
         ob_start();

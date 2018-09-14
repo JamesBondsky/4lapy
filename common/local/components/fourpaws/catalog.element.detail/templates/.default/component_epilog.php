@@ -23,7 +23,7 @@ $userService = $this->getCurrentUserService();
 $basketService = $this->getBasketService();
 
 /**
- * 1 запрос к user_table. Нужно бы убрать.
+ * TODO 1 запрос к user_table. Нужно бы убрать.
  */
 $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
 
@@ -88,3 +88,30 @@ if ($currentOffer->isAvailable()) { ?>
         $('.js-product-controls').addClass('active');
     </script>
 <?php }
+
+/**
+ * Offer microdata
+ *
+ * (распологается здесь, т.к. карточка кешируется,
+ * поисковик не выполняет JavaScript,
+ * а в карточке значения заполняются через JS,
+ * а также для каждого региона возможно своё значение)
+ */
+foreach ($product->getOffers() as $offer) {
+
+    $availabilityValue = 'OutOfStock';
+    /** @noinspection PhpUnhandledExceptionInspection */
+    if ($offer->isAvailable()) {
+        $availabilityValue = 'InStock';
+    }
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $packageLabel = $offer->getPackageLabel(false, 0);
+    ?>
+    <span itemscope itemtype="http://schema.org/Offer" >
+        <meta itemprop="itemOffered" content="<?=$packageLabel?>" >
+        <meta itemprop="price" content="<?=$offer->getCatalogPrice()?>" >
+        <meta itemprop="priceCurrency" content="<?=$offer->getCurrency()?>" >
+        <meta itemprop="availability" content="http://schema.org/<?=$availabilityValue?>">
+    </span>
+    <?php
+}

@@ -125,14 +125,8 @@ if (!$currentOffer->getImagesIds()) {
         <?php //&& $product->isFood()
         if ($offers->count() > 0) {
 
-            $mainCombinationType = '';
-            if ($currentOffer->getClothingSize()) {
-                $mainCombinationType = 'SIZE';
-            } else {
-                $mainCombinationType = 'VOLUME';
-            }
-
-            if ($mainCombinationType === 'SIZE') {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            if ($currentOffer->getPackageLabelType() === Offer::PACKAGE_LABEL_TYPE_SIZE) {
                 ?>
                 <div class="b-common-item__variant">Размеры</div>
                 <?php
@@ -144,27 +138,9 @@ if (!$currentOffer->getImagesIds()) {
             ?>
             <div class="b-weight-container b-weight-container--list">
                 <?php
-                /** получаем значение текущего оффера */
-                $value = '';
-                if ($mainCombinationType === 'SIZE') {
-                    if ($currentOffer->getClothingSize()) {
-                        $value = $currentOffer->getClothingSize()->getName();
-                    }
-                } else {
-                    if ($currentOffer->getVolumeReference()) {
-                        $value = $currentOffer->getVolumeReference()->getName();
-                    } else {
-                        try {
-                            $weight = $currentOffer->getCatalogProduct()->getWeight();
-                        } catch (\Throwable $e) {
-                            $weight = 0;
-                        }
-
-                        if ($weight > 0) {
-                            $value = WordHelper::showWeight($weight, true, 999);
-                        }
-                    }
-                } ?>
+                /** @noinspection PhpUnhandledExceptionInspection */
+                $value = $currentOffer->getPackageLabel(true, 999);
+                ?>
                 <a class="b-weight-container__link <?= ($offers->count()
                                                         > 1) ? ' b-weight-container__link--mobile ' : '' ?> js-mobile-select js-select-mobile-package"
                    href="javascript:void(0);"
@@ -175,58 +151,26 @@ if (!$currentOffer->getImagesIds()) {
                 <ul class="b-weight-container__list">
                     <?php
                     foreach ($offers as $offer) {
-                        $value = null;
-                        if ($mainCombinationType === 'SIZE') {
-                            if ($offer->getClothingSize()) {
-                                $value = $offer->getClothingSize()->getName();
-                            }
-                        } else {
-                            if ($offer->getVolumeReference()) {
-                                $value = $offer->getVolumeReference()->getName();
-                            } else {
-                                try {
-                                    $weight = $offer->getCatalogProduct()->getWeight();
-                                } catch (\Throwable $e) {
-                                    $weight = 0;
-                                }
 
-                                if ($weight > 0) {
-                                    $value = WordHelper::showWeight($weight, true, 999);
-                                }
-                            }
-                        }
-
-                        if ($value) { ?>
-                            <li class="b-weight-container__item">
-                                <a href="javascript:void(0)"
-                                   class="b-weight-container__link js-price<?= $currentOffer->getId()
-                                                                               === $offer->getId() ? ' active-link' : '' ?>"
-                                   data-oldprice="<?= $offer->getCatalogOldPrice()
-                                                      !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
-                                   data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
-                                   data-price="<?= $offer->getCatalogPrice() ?>"
-                                   data-offerid="<?= $offer->getId() ?>"
-                                   data-onclick="<?= $getOnClick($offer) ?>"
-                                   data-onmousedown="<?= $getOnMouseDown($offer) ?>"
-                                   data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                                   data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
-                            </li>
-                        <?php } else { ?>
-                            <li class="b-weight-container__item" style="display: none">
-                                <a href="javascript:void(0)"
-                                   class="b-weight-container__link js-price active-link"
-                                   data-oldprice="<?= $offer->getCatalogOldPrice()
-                                                      !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
-                                   data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
-                                   data-price="<?= $offer->getCatalogPrice() ?>"
-                                   data-offerid="<?= $offer->getId() ?>"
-                                   data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                                   data-onclick="<?= $getOnClick($offer) ?>"
-                                   data-onmousedown="<?= $getOnMouseDown($offer) ?>"
-                                   data-link="<?= $offer->getLink() ?>"></a>
-                            </li>
-                        <?php } ?>
-                    <?php } ?>
+                        /** @noinspection PhpUnhandledExceptionInspection */
+                        $value = $offer->getPackageLabel(true, 999);
+                        ?>
+                        <li class="b-weight-container__item">
+                            <a href="javascript:void(0)"
+                               class="b-weight-container__link js-price<?= $currentOffer->getId()
+                                                                           === $offer->getId() ? ' active-link' : '' ?>"
+                               data-oldprice="<?= $offer->getCatalogOldPrice()
+                                                  !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
+                               data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
+                               data-price="<?= $offer->getCatalogPrice() ?>"
+                               data-offerid="<?= $offer->getId() ?>"
+                               data-onclick="<?= $getOnClick($offer) ?>"
+                               data-onmousedown="<?= $getOnMouseDown($offer) ?>"
+                               data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                               data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
+                        </li>
+                        <?php
+                    } ?>
                 </ul>
             </div>
             <?php

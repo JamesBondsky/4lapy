@@ -68,20 +68,10 @@ if (!$currentOffer->getImagesIds()) {
     }
 }
 
-$value = '';
-if ($mainCombinationType === 'SIZE') {
-    if ($currentOffer->getClothingSize()) {
-        $value = $currentOffer->getClothingSize()->getName();
-    }
-} else {
-    if ($currentOffer->getVolumeReference()) {
-        $value = $currentOffer->getVolumeReference()->getName();
-    } elseif ($weight = $currentOffer->getCatalogProduct()->getWeight()) {
-        if ($weight > 0) {
-            $value = WordHelper::showWeight($weight, true, 999);
-        }
-    }
-} ?>
+/** @noinspection PhpUnhandledExceptionInspection */
+$value = $currentOffer->getPackageLabel(true, 999);
+
+?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
          data-productid="<?= $product->getId() ?>">
         <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
@@ -111,15 +101,6 @@ if ($mainCombinationType === 'SIZE') {
             </a>
             <?php if ($offers->count() > 0) {
                 $isOffersPrinted = false;
-                $mainCombinationType = '';
-
-                if ($currentOffer->getClothingSize()) {
-                    $mainCombinationType = 'SIZE';
-                } elseif ($currentOffer->getVolumeReference()) {
-                    $mainCombinationType = 'VOLUME';
-                } else {
-                    $mainCombinationType = 'WEIGHT';
-                }
 
                 ob_start(); ?>
                 <div class="b-weight-container b-weight-container--list">
@@ -133,27 +114,10 @@ if ($mainCombinationType === 'SIZE') {
                         <?php
                         $countSizes = 0;
                         foreach ($offers as $offer) {
-                            $value = '';
-                            switch ($mainCombinationType) {
-                                case 'SIZE':
-                                    $value = $offer->getClothingSize()->getName();
-                                    break;
 
-                                case 'VOLUME':
-                                    $value = $offer->getVolumeReference()->getName();
-                                    break;
+                            /** @noinspection PhpUnhandledExceptionInspection */
+                            $value = $offer->getPackageLabel(false, 0);
 
-                                case 'WEIGHT':
-                                    $catalogProduct = $offer->getCatalogProduct();
-                                    $weightGrams = $catalogProduct->getWeight();
-                                    if ($weightGrams > 0) {
-                                        $value = WordHelper::showWeight($weightGrams);
-                                    }
-                                    break;
-                            }
-                            if (empty($value)) {
-                                continue;
-                            }
                             $countSizes++;
                             $isOffersPrinted = true;
 

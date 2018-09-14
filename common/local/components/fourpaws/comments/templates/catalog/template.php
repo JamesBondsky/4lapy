@@ -15,6 +15,11 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
 $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID'];
+
+$iconStar12x12 = new SvgDecorator('icon-star', 12, 12);
+$worstRaitingValue = 1;
+$bestRaitingValue = 5;
+
 /** top catalog review block */
 $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW) ?>
 <li class="b-tab-title__item js-tab-item">
@@ -30,12 +35,37 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW) ?>
 </li>
 <?php $this->EndViewTarget();
 /** top catalog review block */
-$this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
-<div class="b-rating b-rating--card">
-    <?php for ($i = 1; $i <= 5; $i++) { ?>
-        <div class="b-rating__star-block<?= $arResult['RATING']
-        > $i ? ' b-rating__star-block--active' : '' ?>">
-            <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
+$this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
+
+/**
+ * AggregateRating microdata
+ * Выводится, только если у товара задан рейтинг.
+ */
+if (
+        $arResult['RATING'] >= $worstRaitingValue
+        && $arResult['RATING'] <= $bestRaitingValue
+        && $arResult['COUNT_COMMENTS'] > 0
+) {
+    ?>
+    <span itemprop="aggregateRating"
+          itemscope
+          itemtype="http://schema.org/AggregateRating">
+        <meta itemprop="worstRating" content="<?= $worstRaitingValue ?>">
+        <meta itemprop="bestRating" content="<?= $bestRaitingValue ?>">
+        <meta itemprop="ratingValue" content="<?= (float)$arResult['RATING'] ?>">
+        <meta itemprop="ratingCount" content="<?= (int)$arResult['COUNT_COMMENTS'] ?>">
+        <meta itemprop="reviewCount" content="<?= (int)$arResult['COUNT_COMMENTS'] ?>">
+    </span>
+    <?php
+}
+
+?>
+<div class="b-rating b-rating--card" >
+    <?php for ($i = $worstRaitingValue; $i <= $bestRaitingValue; $i++) {
+        $activeClass = $arResult['RATING'] > $i ? ' b-rating__star-block--active' : '';
+        ?>
+        <div class="b-rating__star-block <?= $activeClass ?>" >
+            <span class="b-icon"><?= $iconStar12x12 ?></span>
         </div>
     <?php } ?>
 </div>
@@ -187,12 +217,15 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
             <div class="b-review">
                 <h2 class="b-review__heading">Отзывы</h2>
                 <ul class="b-review__list">
-                    <?php foreach ($arResult['COMMENTS'] as $comment) { ?>
-                        <li class="b-review__item">
+                    <?php foreach ($arResult['COMMENTS'] as $comment) {?>
+                        <li class="b-review__item"
+                            itemprop="review"
+                            itemscope
+                            itemtype="http://schema.org/Review" >
                             <header class="b-review__left-side">
-                                <p class="b-review__name"><?= $comment['USER_NAME'] ?></p>
+                                <p class="b-review__name" itemprop="author" ><?= $comment['USER_NAME'] ?></p>
                                 <?php if(!empty($comment['DATE_FORMATED'])){ ?>
-                                    <p class="b-review__date"><?= $comment['DATE_FORMATED'] ?></p>
+                                    <p class="b-review__date" itemprop="datePublished" ><?= $comment['DATE_FORMATED'] ?></p>
                                 <?php } ?>
                             </header>
                             <div class="b-review__right-side">
@@ -206,7 +239,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW) ?>
                                         </div>
                                     <?php } ?>
                                 </div>
-                                <div class="b-review__text">
+                                <div class="b-review__text" itemprop="description" >
                                     <p><?= $comment['UF_TEXT'] ?></p>
                                 </div>
                             </div>
