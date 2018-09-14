@@ -48,6 +48,7 @@ use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException
 use FourPaws\SaleBundle\Exception\FiscalValidation\PositionAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\OrderUpdateException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
@@ -818,7 +819,10 @@ class PaymentService implements LoggerAwareInterface
                 $newPayment->save();
                 $commWay = $orderService->getOrderPropertyByCode($order, 'COM_WAY');
                 $commWay->setValue(OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS);
-                $order->save();
+                $result = $order->save();
+                if (!$result->isSuccess()) {
+                    throw new OrderUpdateException(\implode(', ', $result->getErrorMessages()));
+                }
                 $sapConsumer->consume($order);
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [

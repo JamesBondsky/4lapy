@@ -428,6 +428,9 @@ class OrderService implements LoggerAwareInterface
 
             /** @var BasketItem $item */
             foreach ($order->getBasket() as $item) {
+                if ($item->isDelay() || !$item->canBuy()) {
+                    continue;
+                }
                 $shipmentItem = $shipmentItemCollection->createItem($item);
                 $shipmentItem->setQuantity($item->getQuantity());
             }
