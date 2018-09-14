@@ -404,6 +404,14 @@ class Offer extends IblockElement
     protected $share;
 
     /**
+     * @var string
+     * @Type("array<string>")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getAvailableStores")
+     */
+    protected $availableStores = [];
+
+    /**
      * Offer constructor.
      *
      * @param array $fields
@@ -1775,6 +1783,17 @@ class Offer extends IblockElement
     public function getDiscountPrice(): float
     {
         return round($this->getOldPrice() - $this->getPrice());
+    }
+
+    /**
+     * @return string[]
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getAvailableStores(): array
+    {
+        return $this->getAllStocks()->getStores(1)->getXmlIds();
     }
 
     /**
