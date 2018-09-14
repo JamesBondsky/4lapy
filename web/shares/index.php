@@ -70,7 +70,7 @@ $APPLICATION->SetTitle("Акции");
         'SEF_MODE' => 'Y',
         'SEF_URL_TEMPLATES' => [
             'news' => '',
-            'section' => 'by_pet/#SECTION_CODE#/', // макрос #SECTION_CODE# используется для фильтрации по видам питомцев
+            'section' => '#SECTION_CODE#/', // макрос #SECTION_CODE# используется для фильтрации по видам питомцев
             'detail' => '#ELEMENT_CODE#/',
         ],
         'SET_LAST_MODIFIED' => 'Y',
