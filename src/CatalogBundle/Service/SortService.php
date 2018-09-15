@@ -169,15 +169,15 @@ class SortService
         if (null === $this->availabilitySortScript) {
             $deliveries = $this->deliveryService->getByLocation();
 
-            $availableXmlIds = [];
+            $availableXmlIds = ['DC01'];
             foreach ($deliveries as $delivery) {
                 /** @noinspection SlowArrayOperationsInLoopInspection */
                 $availableXmlIds = \array_merge($availableXmlIds, $this->deliveryService->getStoresByDelivery($delivery)
                                                                                         ->getXmlIds());
             }
             /**
-             * вызов array_values() необходим для того, чтобы ключи шли подря. Иначе элемент придет в эластик
-             * в виде объекта, а не массива
+             * вызов array_values() необходим для того, чтобы ключи шли подряд.
+             * Иначе элемент придет в эластик в виде объекта, а не массива
              */
             $availableXmlIds = \array_values(
                 \array_unique($availableXmlIds)
@@ -190,26 +190,38 @@ class SortService
                 'script' => [
                     'lang'   => 'painless',
                     'source' => '
-                    if (!doc.containsKey(\'availableStores\')) {
-                        return 0;
-                    }
-                    for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
-                        for (int j = 0; j < params.available.length; ++j) {
-                            if (doc[\'availableStores\'][i] == params.available[j]) {
-                                return 2;
+                    int[] results = new int[20];
+                    int i = 0;
+                    def offers = params._source.offers;
+                    for (offer in offers) {
+                        int result = 0;
+                        for (store in offer.availableStores) {
+                            for (int j = 0; j < params.supplier.length; j++) {
+                                if (store == params.supplier[j]) {
+                                    result = 1;
+                                }
                             }
                         }
-                    }
-
-                    for (int i = 0; i < doc[\'availableStores\'].length; ++i) {
-                        for (int j = 0; j < params.supplier.length; ++j) {
-                            if (doc[\'availableStores\'][i] == params.supplier[j]) {
-                                return 1;
+                        if (result == 0) {
+                            for (store in offer.availableStores) {
+                                for (int j = 0; j < params.available.length; j++) {
+                                    if (store == params.available[j]) {
+                                        result = 2;
+                                    }
+                                }
                             }
                         }
+                        i++;
+                        results[i] = result;
                     }
 
-                    return 0;
+                    int max = 0;
+                    for (int k = 0; k < results.length; k++) {
+                        if (results[k] > max) {
+                            max = results[k];
+                        }
+                    }
+                    return max;
                 ',
                     'params' => [
                         'available' => $availableXmlIds,

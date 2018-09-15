@@ -8,6 +8,7 @@ namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Sale\Order;
+use FourPaws\SapBundle\Exception\CantUpdateOrderException;
 use FourPaws\SapBundle\Service\Orders\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
@@ -50,19 +51,33 @@ class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
         if (!$this->support($order)) {
             return false;
         }
-        
-        $this->log()->log(LogLevel::INFO, 'Экспортируется заказ');
-        
+        /** @var Order $order */
+        $this->log()->log(
+            LogLevel::INFO,
+            \sprintf('Экспортируется заказ #%s (%s)', $order->getId(), $order->getField('ACCOUNT_NUMBER'))
+        );
+
         try {
             $success = true;
 
             $this->orderService->out($order);
             $this->orderService->setPropertyValue($order->getPropertyCollection(), 'IS_EXPORTED', 'Y');
-            $order->save();
+            $result = $order->save();
+            if (!$result->isSuccess()) {
+                throw new CantUpdateOrderException(\implode(', ', $result->getErrorMessages()));
+            }
         } catch (\Exception $e) {
             $success = false;
             
-            $this->log()->log(LogLevel::CRITICAL, sprintf('Ошибка экспорта заказа: %s', $e->getMessage()));
+            $this->log()->log(
+                LogLevel::CRITICAL,
+                sprintf(
+                    'Ошибка экспорта заказа #%s (%s): %s',
+                    $order->getId(),
+                    $order->getField('ACCOUNT_NUMBER'),
+                    $e->getMessage()
+                )
+            );
         }
         
         return $success;
