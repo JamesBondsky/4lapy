@@ -132,7 +132,18 @@ trait FilterTrait
         /** @var Variant $variant */
         foreach ($this->getAllVariants() as $variant) {
             $value = $variant->getValue();
-            $issetChecked = isset($checkedValuesIndex[$value]);
+            $issetChecked = false;
+            if (isset($checkedValuesIndex[$value])) {
+                $issetChecked = true;
+            } else {
+                $values = explode(',', $value);
+                foreach ($values as $value) {
+                    if(isset($checkedValuesIndex[$value])) {
+                        $issetChecked = true;
+                        break;
+                    }
+                }
+            }
             $variant->withChecked($issetChecked);
         }
     }
