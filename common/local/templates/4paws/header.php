@@ -29,7 +29,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     <script data-skip-moving="true">
         window.js_static = '/static/build/';
         window._global = {};
-        window._global.locationCookieCode = '<?= UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE ?>'
+        window._global.locationCookieCode = '<?= UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE ?>';
         window.dataLayer = window.dataLayer || [];
     </script>
     <?php $APPLICATION->ShowHead(); ?>
