@@ -377,7 +377,7 @@ class UserService implements
     {
         $cityCode = null;
         if ($_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE]) {
-            $cityCode = UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE;
+            $cityCode = $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE];
         } elseif ($this->isAuthorized()) {
             if (($user = $this->getCurrentUser()) && $user->getLocation()) {
                 $cityCode = $user->getLocation();
