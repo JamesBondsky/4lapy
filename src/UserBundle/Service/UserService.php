@@ -37,6 +37,7 @@ use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
 use FourPaws\UserBundle\Exception\AuthException;
 use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -375,8 +376,8 @@ class UserService implements
     public function getSelectedCity(): array
     {
         $cityCode = null;
-        if ($_COOKIE['selected_city_code']) {
-            $cityCode = $_COOKIE['selected_city_code'];
+        if ($_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE]) {
+            $cityCode = UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE;
         } elseif ($this->isAuthorized()) {
             if (($user = $this->getCurrentUser()) && $user->getLocation()) {
                 $cityCode = $user->getLocation();
