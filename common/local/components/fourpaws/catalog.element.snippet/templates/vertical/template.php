@@ -157,9 +157,13 @@ if ($mainCombinationType === 'SIZE') {
                             $countSizes++;
                             $isOffersPrinted = true;
 
+                            $offerImage = $offer->getImagesIds()
+                                ? $offer->getResizeImages(240, 240)->first()
+                                : $offerWithImages->getResizeImages(240, 240)->first();
+
                             $addAttr = ' data-price="' . $offer->getCatalogPrice() . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
-                            $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
+                            $addAttr .= ' data-image="' . $offerImage . '"';
                             $addAttr .= ' data-pickup="' . ($offer->isByRequest() ? $pickupText : '') . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
