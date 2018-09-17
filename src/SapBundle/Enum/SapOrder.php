@@ -45,6 +45,8 @@ final class SapOrder
     public const DELIVERY_ZONE_2_ARTICLE = '2000311';
     public const DELIVERY_ZONE_3_ARTICLE = '2000001';
     public const DELIVERY_ZONE_4_ARTICLE = '2000001';
+    public const DELIVERY_ZONE_5_ARTICLE = '2000282';
+    public const DELIVERY_ZONE_6_ARTICLE = '2000331';
 
     public const ORDER_PAYMENT_ONLINE_MERCHANT_ID = '851000018943';
     public const ORDER_PAYMENT_ONLINE_CODE = '05';

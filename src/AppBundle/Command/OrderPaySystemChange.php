@@ -9,6 +9,7 @@ namespace FourPaws\AppBundle\Command;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Internals\OrderTable;
+use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
@@ -102,17 +103,24 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
             '<DATE_INSERT'        => $date->format('d.m.Y H:i:s'),
             '>DATE_INSERT'        => $maxDate->format('d.m.Y H:i:s'),
             '=PAYMENT_SYSTEM.CODE' => OrderPayment::PAYMENT_ONLINE,
-            '!CANCELED'           => 'Y',
-            '!PAYED'       => 'Y',
+            '!ORDER_PAYMENT.PAID' => 'Y',
         ];
 
-        $orders = OrderTable::query()->setSelect(['ID'])
+        $orders = OrderTable::query()->setSelect(['ID', 'ACCOUNT_NUMBER'])
             ->setFilter($filter)
             ->registerRuntimeField(
                 new ReferenceField(
                     'PAYMENT_SYSTEM',
                     PaySystemActionTable::class,
                     ['=this.PAY_SYSTEM_ID' => 'ref.ID'],
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'ORDER_PAYMENT',
+                    PaymentTable::class,
+                    ['=this.PAY_SYSTEM_ID' => 'ref.PAY_SYSTEM_ID', '=this.ID' => 'ref.ORDER_ID'],
                     ['join_type' => 'INNER']
                 )
             )

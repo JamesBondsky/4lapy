@@ -214,7 +214,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
 
             $products = $getProducts();
 
-            /** кешировать нельзя так как мы не знаем id для сброса кеша */
             $offerCollection = (new OfferQuery())->withFilter([
                 '=PROPERTY_CML2_LINK' => $productIds,
                 'ACTIVE'              => 'Y',
@@ -232,15 +231,23 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
 
             /** @var Product $product */
             foreach ($products as $product) {
-                /** @var Offer $activeOffer */
-                $activeOffer = null;
-                /** @var Offer $offer */
-                foreach ($product->getOffersSorted() as $offer) {
-                    if (null === $activeOffer) {
-                        $activeOffer = $offer;
-                    }
-
+                $ratings = [];
+                $sortedOffers = $product->getOffersSorted();
+                foreach ($sortedOffers as $offer) {
+                    $rating = 0;
                     if ($offer->isAvailable()) {
+                        $rating++;
+                        if (!$offer->isByRequest()) {
+                            $rating++;
+                        }
+                    }
+                    $ratings[$offer->getId()] = $rating;
+                }
+
+                /** @var Offer $activeOffer */
+                $activeOffer = $sortedOffers->first();
+                foreach ($sortedOffers as $offer) {
+                    if ($ratings[$activeOffer->getId()] <= $ratings[$offer->getId()]) {
                         $activeOffer = $offer;
                     }
                 }

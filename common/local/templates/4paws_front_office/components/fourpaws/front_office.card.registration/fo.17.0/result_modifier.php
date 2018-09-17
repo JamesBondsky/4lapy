@@ -140,7 +140,7 @@ foreach ($printFields as $fieldName) {
         $readonly = true;
     }
     if ($arResult['STEP'] > 4 && in_array($fieldName, $fourthStepFields)) {
-        $readonly = true;
+        //$readonly = true;
     }
     if ($readonly) {
         $arResult['PRINT_FIELDS'][$fieldName]['READONLY'] = true;

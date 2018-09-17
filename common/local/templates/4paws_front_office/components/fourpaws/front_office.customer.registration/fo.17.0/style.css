@@ -1,0 +1,75 @@
+.registration-page-cont .registration-form-cont {
+    display: none;
+}
+.registration-page-cont .registration-form-cont._visible {
+    display: block;
+}
+
+.registration-page-cont .tab-user-list {
+    margin: 0 0 52px 0;
+}
+
+.registration-page-cont table.user-list {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.registration-page-cont table.user-list > thead th,
+.registration-page-cont table.user-list > tbody td {
+    text-align: left;
+    margin: 0;
+    padding: 5px;
+    font-weight: normal;
+}
+
+.registration-page-cont table.user-list > thead th {
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: solid 2px #8da2b5;
+    background-color: #efefef;
+    color: #000;
+}
+
+.registration-page-cont table.user-list .user-list__item-row.even {
+    background-color: #efefef;
+}
+
+.registration-page-cont .user-list__full-name {
+    width: 200px !important;
+}
+
+.registration-page-cont .user-list__phone {
+    width: 90px !important;
+}
+
+.registration-page-cont .user-list__card-number {
+    width: 120px !important;
+}
+
+.registration-page-cont .user-list__bd {
+    width: 50px !important;
+}
+
+.registration-page-cont .user-list__auth {
+    text-align: center;
+}
+
+.registration-page-cont .user-list__auth,
+.registration-page-cont .user-list__auth .cell-value {
+    text-align: center !important;
+}
+
+.registration-page-cont .user-list__auth ._action-auth,
+.registration-page-cont .user-list__auth ._action-register {
+    text-align: center;
+    border-bottom: dashed 1px #8da2b5;
+    cursor: pointer;
+}
+
+.registration-page-cont.loading ._action-auth,
+.registration-page-cont.loading ._action-register {
+    cursor: default;
+    border-bottom: none;
+    color: #CCCCCC;
+}
