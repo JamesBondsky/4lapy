@@ -72,7 +72,7 @@ $basketRows = $arResult['BASKET_ROWS'];
         <label class="b-popup-one-click__label" for="one-click-name">Имя</label>
         <div class="b-input b-input--recall">
             <input class="b-input__input-field b-input__input-field--recall js-small-input-two" type="text" id="one-click-name"
-                   placeholder="Ваше имя" name="name" value="<?= $name ?>" <?= $isDisabled ?>/>
+                   placeholder="Ваше имя" name="name" value="<?= $name ?>" <?= strlen($name) > 0 ? $isDisabled : '' ?>/>
             <div class="b-error"><span class="js-message"></span></div>
         </div>
         <div class="b-error"><span class="js-message"></span></div>
@@ -82,7 +82,7 @@ $basketRows = $arResult['BASKET_ROWS'];
         <div class="b-input b-input--recall js-phone-mask">
             <input class="b-input__input-field b-input__input-field--recall js-phone-mask" type="tel"
                    id="one-click-tel" placeholder="Ваш телефон" name="phone"
-                   value="<?= $phone ?>" <?= $isDisabled ?>/>
+                   value="<?= $phone ?>" <?= strlen($phone) > 0 ? $isDisabled : '' ?>/>
             <div class="b-error"><span class="js-message"></span></div>
         </div>
         <div class="b-error"><span class="js-message"></span></div>
