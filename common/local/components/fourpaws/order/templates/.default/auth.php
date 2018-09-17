@@ -146,7 +146,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                            name="phone"
                                            value="<?= $storage->getPhone() ?>"
                                            data-url=""
-                                        <?= $user ? 'disabled="disabled"' : '' ?>>
+                                        <?= $user && $user->getPersonalPhone() ? 'disabled="disabled"' : '' ?>>
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>
