@@ -11,7 +11,6 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\HighloadHelper;
-use FourPaws\Helpers\WordHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -154,6 +153,9 @@ if (!$currentOffer->getImagesIds()) {
 
                         /** @noinspection PhpUnhandledExceptionInspection */
                         $value = $offer->getPackageLabel(true, 999);
+                        $offerImage = $offer->getImagesIds()
+                            ? $offer->getResizeImages(240, 240)->first()
+                            : $offerWithImages->getResizeImages(240, 240)->first();
                         ?>
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
@@ -166,7 +168,7 @@ if (!$currentOffer->getImagesIds()) {
                                data-offerid="<?= $offer->getId() ?>"
                                data-onclick="<?= $getOnClick($offer) ?>"
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
-                               data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                               data-image="<?= $offerImage ?>"
                                data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
                         </li>
                         <?php
