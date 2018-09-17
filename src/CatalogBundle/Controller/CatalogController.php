@@ -142,6 +142,7 @@ class CatalogController extends Controller
     public function categoryLandingAction(RootCategoryRequest $rootCategoryRequest, ChildCategoryRequest $categoryRequest, Request $request): Response
     {
         $categoryRequest->setCategory($rootCategoryRequest->getLanding()->setActiveLandingCategory(true));
+        $categoryRequest->setCurrentPath($rootCategoryRequest->getLanding()->getSectionPageUrl());
 
         return $this->forward('FourPawsCatalogBundle:Catalog:childCategory', \compact('request', 'categoryRequest'));
     }
