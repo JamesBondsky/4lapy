@@ -107,7 +107,7 @@ foreach ($product->getOffers() as $offer) {
     /** @noinspection PhpUnhandledExceptionInspection */
     $packageLabel = $offer->getPackageLabel(false, 0);
     ?>
-    <span itemscope itemtype="http://schema.org/Offer" >
+    <span itemscope itemtype="http://schema.org/Offer" style="display: none;">
         <meta itemprop="itemOffered" content="<?=$packageLabel?>" >
         <meta itemprop="price" content="<?=$offer->getCatalogPrice()?>" >
         <meta itemprop="priceCurrency" content="<?=$offer->getCurrency()?>" >
