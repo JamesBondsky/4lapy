@@ -103,7 +103,7 @@ class UserService implements
          * todo move to factory service
          */
         global $USER;
-        dump('yahoo');
+        
         if (\is_object($USER)) {
             $this->bitrixUserService = $USER;
         } else {
