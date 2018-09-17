@@ -2,8 +2,6 @@
 
 namespace FourPaws\App;
 
-use Bitrix\Main\Entity\DataManager;
-
 /**
  * Class MainTemplate
  *
@@ -171,34 +169,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListSharesFilter(): bool
     {
-        foreach ($this->getSharesFilterDirs() as $dir) {
-            $dir = '/shares/' . $dir;
-            if ($this->isDir($dir)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @return array
-     */
-    public function getSharesFilterDirs(): array
-    {
-        /**
-         * @var $sHlEntityClass DataManager */
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $sHlEntityClass = Application::getInstance()->getContainer()->get('bx.hlblock.publicationtype');
-        $items = $sHlEntityClass::query()->setSelect([
-            'UF_NAME',
-            'UF_XML_ID',
-        ])->setCacheTtl(3600)->exec();
-        $exitingCategories = [];
-        while ($item = $items->fetch()) {
-            $exitingCategories[] = $item['UF_XML_ID'];
-        }
-
-        return $exitingCategories;
+        return $this->isPartitionDir('/shares') && strpos($this->getPath(), '.html') === false;
     }
 
     /**
@@ -408,7 +379,14 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasContent(): bool
     {
-        return !$this->isPersonal() && !$this->isIndex() && !$this->isOrderPage() && !$this->isPersonalDirectory() && !$this->isShopList() && !$this->isListShares() && !$this->is404() && !$this->isCatalog() && !$this->isPublications() && !$this->isPaymentAndDelivery() && !$this->isFeedback();
+        return !$this->isPersonal() && !$this->isIndex() && !$this->isOrderPage() && !$this->isPersonalDirectory()
+            && !$this->isShopList()
+            && !$this->isListShares()
+            && !$this->is404()
+            && !$this->isCatalog()
+            && !$this->isPublications()
+            && !$this->isPaymentAndDelivery()
+            && !$this->isFeedback();
     }
 
     /**
