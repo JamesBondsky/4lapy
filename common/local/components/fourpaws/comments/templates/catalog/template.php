@@ -20,6 +20,21 @@ $iconStar12x12 = new SvgDecorator('icon-star', 12, 12);
 $worstRaitingValue = 1;
 $bestRaitingValue = 5;
 
+/**
+ * Если нет оценок, то через микроразметку передаётся, что товар на 5 звёзд по одному отзыву.
+ */
+$ratingValue = $bestRaitingValue;
+$ratingCount = 1;
+
+if (
+    $arResult['RATING'] >= $worstRaitingValue
+    && $arResult['RATING'] <= $bestRaitingValue
+    && $arResult['COUNT_COMMENTS'] > 0
+) {
+    $ratingValue = (float)$arResult['RATING'];
+    $ratingCount = (int)$arResult['COUNT_COMMENTS'];
+}
+
 /** top catalog review block */
 $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW) ?>
 <li class="b-tab-title__item js-tab-item">
@@ -39,27 +54,19 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
 
 /**
  * AggregateRating microdata
- * Выводится, только если у товара задан рейтинг.
  */
-if (
-        $arResult['RATING'] >= $worstRaitingValue
-        && $arResult['RATING'] <= $bestRaitingValue
-        && $arResult['COUNT_COMMENTS'] > 0
-) {
-    ?>
-    <span itemprop="aggregateRating"
-          itemscope
-          itemtype="http://schema.org/AggregateRating">
-        <meta itemprop="worstRating" content="<?= $worstRaitingValue ?>">
-        <meta itemprop="bestRating" content="<?= $bestRaitingValue ?>">
-        <meta itemprop="ratingValue" content="<?= (float)$arResult['RATING'] ?>">
-        <meta itemprop="ratingCount" content="<?= (int)$arResult['COUNT_COMMENTS'] ?>">
-        <meta itemprop="reviewCount" content="<?= (int)$arResult['COUNT_COMMENTS'] ?>">
-    </span>
-    <?php
-}
-
 ?>
+<span itemprop="aggregateRating"
+      itemscope
+      itemtype="http://schema.org/AggregateRating"
+      style="display: none;">
+    <meta itemprop="worstRating" content="<?= $worstRaitingValue ?>">
+    <meta itemprop="bestRating" content="<?= $bestRaitingValue ?>">
+    <meta itemprop="ratingValue" content="<?= $ratingValue ?>">
+    <meta itemprop="ratingCount" content="<?= $ratingCount ?>">
+    <meta itemprop="reviewCount" content="<?= $ratingCount ?>">
+</span>
+
 <div class="b-rating b-rating--card" >
     <?php for ($i = $worstRaitingValue; $i <= $bestRaitingValue; $i++) {
         $activeClass = $arResult['RATING'] > $i ? ' b-rating__star-block--active' : '';
