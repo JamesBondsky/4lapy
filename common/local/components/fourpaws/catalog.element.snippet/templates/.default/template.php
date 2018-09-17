@@ -196,6 +196,10 @@ if (!$currentOffer->getImagesIds()) {
                             }
                         }
 
+                        $offerImage = $offer->getImagesIds()
+                            ? $offer->getResizeImages(240, 240)->first()
+                            : $offerWithImages->getResizeImages(240, 240)->first();
+
                         if ($value) { ?>
                             <li class="b-weight-container__item">
                                 <a href="javascript:void(0)"
@@ -208,7 +212,7 @@ if (!$currentOffer->getImagesIds()) {
                                    data-offerid="<?= $offer->getId() ?>"
                                    data-onclick="<?= $getOnClick($offer) ?>"
                                    data-onmousedown="<?= $getOnMouseDown($offer) ?>"
-                                   data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                   data-image="<?= $offerImage ?>"
                                    data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
                             </li>
                         <?php } else { ?>
@@ -220,7 +224,7 @@ if (!$currentOffer->getImagesIds()) {
                                    data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                    data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-offerid="<?= $offer->getId() ?>"
-                                   data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                   data-image="<?= $offerImage ?>"
                                    data-onclick="<?= $getOnClick($offer) ?>"
                                    data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                    data-link="<?= $offer->getLink() ?>"></a>
