@@ -1,14 +1,8 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\App;
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
+use Bitrix\Main\Entity\DataManager;
 
 /**
  * Class MainTemplate
@@ -177,9 +171,9 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListSharesFilter(): bool
     {
-        foreach($this->getSharesFilterDirs() as $dir){
-            $dir = '/shares/'.$dir;
-            if($this->isDir($dir)){
+        foreach ($this->getSharesFilterDirs() as $dir) {
+            $dir = '/shares/' . $dir;
+            if ($this->isDir($dir)) {
                 return true;
             }
         }
@@ -189,25 +183,22 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return array
      */
-    public function getSharesFilterDirs(): array{
+    public function getSharesFilterDirs(): array
+    {
         /**
-         * @var $sHlEntityClass \Bitrix\Main\Entity\DataManager
-         */
-        $sHlEntityClass = \FourPaws\App\Application::getInstance()->getContainer()->get('bx.hlblock.publicationtype');
-        $dbItems = $sHlEntityClass::getList(
-            [
-                'filter' => [],
-                'select' => [
-                    'UF_NAME',
-                    'UF_XML_ID'
-                ]
-            ]
-        );
-        while($arItem = $dbItems->fetch()){
-            $arExitingCategories[] = $arItem['UF_XML_ID'];
+         * @var $sHlEntityClass DataManager */
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $sHlEntityClass = Application::getInstance()->getContainer()->get('bx.hlblock.publicationtype');
+        $items = $sHlEntityClass::query()->setSelect([
+            'UF_NAME',
+            'UF_XML_ID',
+        ])->setCacheTtl(3600)->exec();
+        $exitingCategories = [];
+        while ($item = $items->fetch()) {
+            $exitingCategories[] = $item['UF_XML_ID'];
         }
 
-        return $arExitingCategories;
+        return $exitingCategories;
     }
 
     /**
@@ -247,8 +238,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasHeaderPersonalContainer(): bool
     {
-        return ($this->isPersonalDirectory() || $this->isPersonal()) && !$this->isRegister()
-            && !$this->isForgotPassword();
+        return ($this->isPersonalDirectory() || $this->isPersonal()) && !$this->isRegister() && !$this->isForgotPassword();
     }
 
     /**
@@ -418,14 +408,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasContent(): bool
     {
-        return !$this->isPersonal() && !$this->isIndex() && !$this->isOrderPage() && !$this->isPersonalDirectory()
-            && !$this->isShopList()
-            && !$this->isListShares()
-            && !$this->is404()
-            && !$this->isCatalog()
-            && !$this->isPublications()
-            && !$this->isPaymentAndDelivery()
-            && !$this->isFeedback();
+        return !$this->isPersonal() && !$this->isIndex() && !$this->isOrderPage() && !$this->isPersonalDirectory() && !$this->isShopList() && !$this->isListShares() && !$this->is404() && !$this->isCatalog() && !$this->isPublications() && !$this->isPaymentAndDelivery() && !$this->isFeedback();
     }
 
     /**

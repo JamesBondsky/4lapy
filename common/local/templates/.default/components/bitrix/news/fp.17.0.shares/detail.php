@@ -13,17 +13,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var array $arResult */
 /** @var CBitrixComponent $component */
 
-
-/**
- *  Task LP23-254
- *  По ней исчезла разница между шаблоном детальной страницы и группы акций
- *  И битрикс всегда думает, что подключается детальная страница
- *
- */
-if(isset($arResult['VARIABLES']['SECTION_CODE'])){
-    return;
-}
-
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_1', 'b-container b-container--news-detail');
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_2', 'b-detail-page');
 
