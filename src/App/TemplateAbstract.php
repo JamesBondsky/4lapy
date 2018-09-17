@@ -27,11 +27,8 @@ use Bitrix\Main\Web\Uri;
 abstract class TemplateAbstract
 {
     protected static $instance;
-    
     private          $context;
-    
     private          $path;
-    
     private          $dir;
     
     /**
