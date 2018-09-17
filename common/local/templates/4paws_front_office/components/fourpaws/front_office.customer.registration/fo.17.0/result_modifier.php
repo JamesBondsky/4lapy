@@ -133,7 +133,7 @@ if (isset($arResult['CONTACT_DATA']['USER']) && $arResult['CONTACT_DATA']['USER'
         $arResult['PRINT_FIELDS'][$setKey]['birthDay']['READONLY'] = $contactData['_BIRTHDAY_FORMATTED_'] !== '';
 
         $arResult['PRINT_FIELDS'][$setKey]['genderCode']['VALUE'] = htmlspecialcharsbx($contactData['GENDER_CODE']);
-        $arResult['PRINT_FIELDS'][$setKey]['genderCode']['READONLY'] = $contactData['GENDER_CODE'] !== '';
+        $arResult['PRINT_FIELDS'][$setKey]['genderCode']['READONLY'] = false;
 
         $arResult['PRINT_FIELDS'][$setKey]['phone']['VALUE'] = htmlspecialcharsbx($contactData['_PHONE_NORMALIZED_']);
         $arResult['PRINT_FIELDS'][$setKey]['phone']['READONLY'] = $contactData['_PHONE_NORMALIZED_'] !== '';
@@ -224,10 +224,12 @@ foreach ($printFields as $fieldName) {
     if ($arResult['STEP'] > 1 && in_array($fieldName, $firstStepFields)) {
         $readonly = true;
     }
+
     if ($arResult['STEP'] > 2 && in_array($fieldName, $secondStepFields)) {
         $readonly = true;
     }
-    if ($arResult['STEP'] > 3 && in_array($fieldName, $thirdStepFields)) {
+
+    if ($fieldName !== 'email' && $fieldName !== 'genderCode' && $arResult['STEP'] > 3 && in_array($fieldName, $thirdStepFields)) {
         $readonly = true;
     }
     /*
