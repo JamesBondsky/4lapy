@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\UserBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -107,6 +103,7 @@ class UserService implements
          * todo move to factory service
          */
         global $USER;
+        
         if (\is_object($USER)) {
             $this->bitrixUserService = $USER;
         } else {
