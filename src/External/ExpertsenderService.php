@@ -6,12 +6,12 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Internals\FuserTable;
 use Bitrix\Sale\Order;
 use Exception;
 use FourPaws\App\Application;
@@ -25,12 +25,11 @@ use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceApiException;
 use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
-use FourPaws\External\Exception\ExpertsenderUserNotFoundException;
+use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Exception\NotFoundException;
-use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
@@ -38,7 +37,7 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -109,7 +108,7 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * ExpertsenderService constructor.
      */
-    public function __construct()
+    public function __construct(UserSearchInterface $userSearch)
     {
         $client = new Client();
         $this->guzzleClient = $client;
@@ -711,26 +710,27 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * Брошенная корзина
-     *
-     * @param Basket $basket
-     * @param int    $type
-     * type = 1 - отправка после закрытия спустя 3 часа
-     * type = 2 - отправка спустя 3 дня если не было измениней после типа 1
+     * @param ForgotBasket $forgotBasket
      *
      * @return bool
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ExpertsenderServiceBlackListException
-     * @throws ExpertsenderUserNotFoundException
-     * @throws ExpertsenderEmptyEmailException
-     * @throws ExpertsenderBasketEmptyException
-     * @throws ExpertsenderServiceException
      * @throws ExpertSenderException
+     * @throws ExpertsenderBasketEmptyException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceBlackListException
+     * @throws ExpertsenderServiceException
+     * @throws NotFoundException
+     * @throws RuntimeException
+     * @throws ArgumentNullException
+     * @throws \InvalidArgumentException
      */
-    public function sendForgotBasket(Basket $basket, int $type): bool
+    public function sendForgotBasket(ForgotBasket $forgotBasket): bool
     {
-        switch ($type) {
+        if (!$forgotBasket->getUserEmail()) {
+            throw new ExpertsenderEmptyEmailException('Email is empty');
+        }
+
+        switch ($forgotBasket->getMessageType()) {
             case static::FORGOT_BASKET_TO_CLOSE_SITE:
                 $transactionId = self::FORGOT_BASKET_LIST_ID;
                 break;
@@ -738,44 +738,22 @@ class ExpertsenderService implements LoggerAwareInterface
                 $transactionId = self::FORGOT_BASKET2_LIST_ID;
                 break;
             default:
-                $transactionId = 0;
+                throw new ExpertsenderServiceException('Unknown forgotBasket message type');
         }
-        if ($transactionId === 0) {
-            throw new ExpertsenderServiceException('unknown forgotBasket time');
-        }
-        $snippets = [];
+        $snippets = [
+            new Snippet('user_name', $forgotBasket->getUserName()),
+            new Snippet('total_bonuses', $forgotBasket->getBonusCount())
+        ];
 
-        $container = Application::getInstance()->getContainer();
-        /** @var CurrentUserProviderInterface $userService */
-        $userService = $container->get(CurrentUserProviderInterface::class);
-
-        $fuserId = $basket->getFUserId();
-
-        $user = $userService->getUserRepository()->find(FuserTable::getUserById($fuserId));
-        if ($user === null) {
-            throw new ExpertsenderUserNotFoundException('user not found');
-        }
-        if (!$user->hasEmail()) {
-            throw new ExpertsenderEmptyEmailException('email is empty');
-        }
-
-        $email = $user->getEmail();
-
-        /** @var BasketService $orderService */
-        $basketService = $container->get(BasketService::class);
-
-        $snippets[] = new Snippet('user_name', $user->getName() ?: $user->getFullName());
-        $snippets[] = new Snippet('total_bonuses', (int)$basketService->getBasketBonus($user));
-
-        $items = $this->getAltProductsItemsByBasket($basket);
-        if (empty($items)) {
+        if (!$items = $this->getAltProductsItemsByBasket($forgotBasket->getBasket())) {
             throw new ExpertsenderBasketEmptyException('basket is empty');
         }
+
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
         try {
-            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            $this->sendSystemTransactional($transactionId, $forgotBasket->getUserEmail(), $snippets);
         } catch (ExpertsenderServiceApiException | ExpertsenderServiceException $e) {
             $message = $e->getMessage();
             /** чекаем на черный список */
@@ -783,13 +761,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceBlackListException($message, $e->getCode(), $e, $e->getMethod(),
                     $e->getParameters());
             }
-            if ($e instanceof ExpertsenderServiceApiException) {
-                throw new ExpertsenderServiceApiException($message, $e->getCode(), $e, $e->getMethod(),
-                    $e->getParameters());
-            } else {
-                throw new ExpertsenderServiceException($message, $e->getCode(), $e, $e->getMethod(),
-                    $e->getParameters());
-            }
+            throw $e;
         }
 
         return true;
@@ -799,6 +771,10 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param Basket $basket
      *
      * @return array
+     * @throws ArgumentNullException
+     * @throws NotFoundException
+     * @throws RuntimeException
+     * @throws \InvalidArgumentException
      */
     protected function getAltProductsItemsByBasket(Basket $basket): array
     {
@@ -890,7 +866,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws UserNotFoundException
-     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws ArgumentNullException
      * @throws \Bitrix\Main\NotImplementedException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
