@@ -245,7 +245,7 @@ class Category extends IblockSection implements FilterInterface
         while ($section) {
             $collection->add($section);
 
-            if ($section->getIblockSectionId() === 0) {
+            if (!$section->getIblockSectionId()) {
                 break;
             }
 

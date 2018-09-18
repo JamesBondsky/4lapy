@@ -115,7 +115,8 @@
     "twig/twig": "^1.0",
     "webarchitect609/bitrix-cache": "^1.0",
     "webarchitect609/bitrix-neverinclude": "^0.4.2",
-    "webarchitect609/bitrix-user-type": "^0.1.0"
+    "webarchitect609/bitrix-user-type": "^0.1.0",
+    "webarchitect609/bitrix-iblock-property-type": "^1.0"
   },
   "require-dev": {
     "codeception/codeception": "^2.3",
@@ -128,7 +129,7 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git"
+      "url": "ssh://git@bitbucket.adv.ru:7999/adv/bitrix-tools.git"
     },
     {
       "type": "vcs",
