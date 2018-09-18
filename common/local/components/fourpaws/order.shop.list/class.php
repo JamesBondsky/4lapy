@@ -136,6 +136,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             }
             $this->arResult['DELIVERY'] = $pickupDelivery;
             $this->arResult['DELIVERY_CODE'] = $pickupDelivery->getDeliveryCode();
+            $this->arResult['IS_DPD'] = $this->deliveryService->isDpdPickup($pickupDelivery);
             $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
         }
         return true;

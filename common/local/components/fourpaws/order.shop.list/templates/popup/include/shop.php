@@ -5,6 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\Decorators\SvgDecorator;
 
+/**
+ * @var array $arResult
+ */
 ?>
 <li class="b-delivery-list__item">
     <a class="b-delivery-list__link js-shop-link b-active"
@@ -31,7 +34,7 @@ use FourPaws\Decorators\SvgDecorator;
             Вернуться к списку
         </a>
         <a class="b-link b-link--popup-back b-link--baloon js-close-order-baloon" href="javascript:void(0);">
-            Пункт самовывоза
+            <?= $arResult['IS_DPD'] ? 'Пункт самовывоза' : 'Магазин' ?>
         </a>
         <div class="b-order-info-baloon__content js-order-info-baloon-scroll" id="scroll-{{id}}">
             <ul class="b-delivery-list">
@@ -92,7 +95,7 @@ use FourPaws\Decorators\SvgDecorator;
                title=""
                data-url="/ajax/sale/order/store-info/"
                data-shopId="{{id}}">
-                Выбрать этот пункт самовывоза
+                Выбрать этот <?= $arResult['IS_DPD'] ? 'пункт самовывоза' : 'магазин' ?>
             </a>
         </div>
     </div>
