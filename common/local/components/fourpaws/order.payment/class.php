@@ -11,7 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\Application as BitrixApp;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
@@ -20,6 +22,7 @@ use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\PaymentException;
+use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -148,7 +151,7 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
                     }
                     $isOk = true;
                 } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
-                    $this->log()->notice(sprintf('payment error: %s', $e->getMessage()), [
+                    $this->log()->notice(sprintf('payment initiate error: %s', $e->getMessage()), [
                         'order' => $order->getId(),
                         'code' => $e->getCode()
                     ]);
@@ -160,13 +163,20 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
                 }
 
                 if (!$isOk) {
-                    $this->paymentService->processOnlinePaymentError($order);
-                    $this->arResult['ERRORS'][] = $e->getMessage();
-                    $url = new \Bitrix\Main\Web\Uri(sprintf('/sale/order/complete/%s/', $order->getId()));
-
-                    if (!empty($this->arParams['HASH'])) {
-                        $url->addParams(['HASH' => $this->arParams['HASH']]);
+                    $url = $this->getCompleteUrl($order);
+                    try {
+                        $this->paymentService->processOnlinePaymentByOrderNumber($order);
+                        if (null !== $relatedOrder && !$relatedOrder->isPaid()) {
+                            $url = $this->getPaymentUrl();
+                        }
+                    } catch (SberbankPaymentException $e) {
+                        $this->log()->notice(sprintf('payment check error: %s', $e->getMessage()), [
+                            'order' => $order->getId(),
+                            'code' => $e->getCode()
+                        ]);
+                        $this->paymentService->processOnlinePaymentError($order);
                     }
+
                     LocalRedirect($url->getUri());
                 }
             }
@@ -180,5 +190,37 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
             $this->arResult['RELATED_ORDER'] = $relatedOrder;
             $this->arResult['RELATED_ORDER_PAY_URL'] = $url->getUri();
         }
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return Uri
+     */
+    protected function getCompleteUrl(Order $order): Uri
+    {
+        $url = new Uri(sprintf('/sale/order/complete/%s/', $order->getId()));
+
+        if (!empty($this->arParams['HASH'])) {
+            $url->addParams(['HASH' => $this->arParams['HASH']]);
+        }
+
+        return $url;
+    }
+
+    /**
+     * @return Uri
+     * @throws SystemException
+     */
+    protected function getPaymentUrl(): Uri
+    {
+        $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+        $url = new Uri($request->getRequestedPage());
+        $url->addParams(['ORDER_ID' => $this->arParams['ORDER_ID']]);
+        if (!empty($this->arParams['HASH'])) {
+            $url->addParams(['HASH' => $this->arParams['HASH']]);
+        }
+
+        return $url;
     }
 }
