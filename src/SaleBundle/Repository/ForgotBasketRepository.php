@@ -18,6 +18,7 @@ class ForgotBasketRepository extends D7Repository
      * @return ForgotBasket
      * @throws NotFoundException
      * @throws UnknownTypeException
+     * @throws SystemException
      */
     public function findByUserId(int $userId, string $type = ForgotBasketEnum::TYPE_ALL): ForgotBasket
     {
@@ -87,19 +88,22 @@ class ForgotBasketRepository extends D7Repository
      *
      * @return array
      * @throws UnknownTypeException
+     * @throws SystemException
      */
     protected function getTypeFilter(string $type): array
     {
+        $types = \array_flip($this->getTypes());
+
         switch (true) {
             case ForgotBasketEnum::TYPE_NOTIFICATION:
             case ForgotBasketEnum::TYPE_REMINDER:
-                $result = ['UF_TASK_TYPE' => $type];
+                $result = [ForgotBasketEnum::TYPE_FIELD_CODE => $types[$type]];
                 break;
             case ForgotBasketEnum::TYPE_ALL:
                 $result = [
                     'LOGIC' => 'OR',
-                    ['UF_TASK_TYPE' => ForgotBasketEnum::TYPE_REMINDER],
-                    ['UF_TASK_TYPE' => ForgotBasketEnum::TYPE_NOTIFICATION],
+                    [ForgotBasketEnum::TYPE_FIELD_CODE => $types[ForgotBasketEnum::TYPE_REMINDER]],
+                    [ForgotBasketEnum::TYPE_FIELD_CODE => $types[ForgotBasketEnum::TYPE_NOTIFICATION]],
                 ];
                 break;
             default:

@@ -13,15 +13,4 @@ class ForgotBasketEnum
 
     public const INTERVAL_NOTIFICATION = 3600;
     public const INTERVAL_REMINDER     = 259200;
-
-    /**
-     * @return array
-     */
-    public static function getTypes(): array
-    {
-        return [
-            static::TYPE_NOTIFICATION,
-            static::TYPE_REMINDER
-        ];
-    }
 }
