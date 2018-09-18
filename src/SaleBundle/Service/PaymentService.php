@@ -51,6 +51,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderUpdateException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
+use FourPaws\SaleBundle\Exception\SberbankOrderAlreadyPaid;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotPaidException;
 use FourPaws\SaleBundle\Exception\SberBankOrderNumberNotFoundException;
@@ -61,6 +62,8 @@ use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class PaymentService
@@ -780,12 +783,16 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
+     * @throws NotFoundException
      * @throws NotImplementedException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws ApplicationCreateException
+     * @throws \RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
     public function processOnlinePaymentError(Order $order): void
     {
