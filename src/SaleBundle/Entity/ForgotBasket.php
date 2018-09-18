@@ -2,22 +2,79 @@
 
 namespace FourPaws\SaleBundle\Entity;
 
+use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
+
 class ForgotBasket
 {
     /**
      * @var int
+     *
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("ID")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     *
+     * @Assert\NotBlank(groups={"read","update","delete"})
+     * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
      */
-    public $id;
+    protected $id = 0;
 
     /**
      * @var int
+     *
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("UF_USER_ID")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     *
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     * @Assert\GreaterThanOrEqual(value="1",groups={"create","read","update","delete"})
      */
-    public $fuserId;
+    protected $userId = 0;
+
+    /**
+     * @var string
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_TASK_TYPE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     *
+     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Assert\Choice(callback={"FourPaws\SaleBundle\Enum\ForgotBasketEnum", "getTypes"},groups={"read","delete"})
+     * @Assert\Choice(callback={"FourPaws\SaleBundle\Enum\ForgotBasketEnum", "getTypes"},groups={"create""update"})
+     */
+    protected $type;
 
     /**
      * @var \DateTime
+     *
+     * @Serializer\Type("DateTime<'Y-m-d H:i:s'>")
+     * @Serializer\SerializedName("UF_DATE_UPDATE")
+     * @Serializer\Groups(groups={"read","delete"})
+     *
+     * @Assert\NotBlank(groups={"read","delete"})
      */
-    public $dateCreate;
+    protected $dateUpdate;
+
+    /**
+     * @var \DateTime|null
+     *
+     * @Serializer\Type("DateTime<'Y-m-d H:i:s'>")
+     * @Serializer\SerializedName("UF_DATE_EXEC")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @Serializer\SkipWhenEmpty())
+     *
+     * @Assert\Blank(groups={"create"})
+     */
+    protected $dateExec;
+
+    /**
+     * @var boolean
+     *
+     * @Serializer\Type("bitrix_bool")
+     * @Serializer\SerializedName("UF_ACTIVE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $active = false;
 
     /**
      * @return int
@@ -41,18 +98,37 @@ class ForgotBasket
     /**
      * @return int
      */
-    public function getFuserId(): int
+    public function getUserId(): int
     {
-        return $this->fuserId;
+        return $this->userId;
     }
 
     /**
-     * @param int $fuserId
+     * @param int $userId
      * @return ForgotBasket
      */
-    public function setFuserId(int $fuserId): ForgotBasket
+    public function setUserId(int $userId): ForgotBasket
     {
-        $this->fuserId = $fuserId;
+        $this->userId = $userId;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     * @return ForgotBasket
+     */
+    public function setType(string $type): ForgotBasket
+    {
+        $this->type = $type;
 
         return $this;
     }
@@ -60,18 +136,56 @@ class ForgotBasket
     /**
      * @return \DateTime
      */
-    public function getDateCreate(): \DateTime
+    public function getDateUpdate(): \DateTime
     {
-        return $this->dateCreate;
+        return $this->dateUpdate;
     }
 
     /**
-     * @param \DateTime $dateCreate
+     * @param \DateTime $dateUpdate
      * @return ForgotBasket
      */
-    public function setDateCreate(\DateTime $dateCreate): ForgotBasket
+    public function setDateUpdate(\DateTime $dateUpdate): ForgotBasket
     {
-        $this->dateCreate = $dateCreate;
+        $this->dateUpdate = $dateUpdate;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime|null
+     */
+    public function getDateExec(): ?\DateTime
+    {
+        return $this->dateExec;
+    }
+
+    /**
+     * @param \DateTime|null $dateExec
+     * @return ForgotBasket
+     */
+    public function setDateExec(?\DateTime $dateExec): ForgotBasket
+    {
+        $this->dateExec = $dateExec;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    /**
+     * @param bool $active
+     * @return ForgotBasket
+     */
+    public function setActive(bool $active): ForgotBasket
+    {
+        $this->active = $active;
 
         return $this;
     }

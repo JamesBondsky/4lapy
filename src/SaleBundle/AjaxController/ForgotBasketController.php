@@ -7,9 +7,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\SaleBundle\Entity\ForgotBasket;
+use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
 use FourPaws\SaleBundle\Exception\ForgotBasket\ForgotBasketExceptionInterface;
-use FourPaws\SaleBundle\Exception\ForgotBasket\NotFoundException;
-use FourPaws\SaleBundle\Service\BasketUserService;
 use FourPaws\SaleBundle\Service\ForgotBasketService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -45,27 +44,19 @@ class ForgotBasketController extends Controller implements LoggerAwareInterface
     private $forgotBasketService;
 
     /**
-     * @var BasketUserService
-     */
-    private $basketUserService;
-
-    /**
      * ForgotBasketController constructor.
      * @param UserAvatarAuthorizationInterface $userAvatarAuthorization
      * @param CurrentUserProviderInterface     $currentUserProvider
-     * @param BasketUserService                $basketUserService
      * @param ForgotBasketService              $forgotBasketService
      */
     public function __construct(
         UserAvatarAuthorizationInterface $userAvatarAuthorization,
         CurrentUserProviderInterface $currentUserProvider,
-        BasketUserService $basketUserService,
         ForgotBasketService $forgotBasketService
     )
     {
         $this->userAvatarAuthorization = $userAvatarAuthorization;
         $this->currentUserProvider = $currentUserProvider;
-        $this->basketUserService = $basketUserService;
         $this->forgotBasketService = $forgotBasketService;
     }
 
@@ -81,17 +72,12 @@ class ForgotBasketController extends Controller implements LoggerAwareInterface
         try {
             $user = $this->currentUserProvider->getCurrentUser();
             if ($user->getEmail() && !$this->userAvatarAuthorization->isAvatarAuthorized()) {
-                $fuserId = $this->basketUserService->getCurrentUserId();
                 try {
-                    try {
-                        $task = $this->forgotBasketService->getTask($fuserId);
-                        $task->setDateCreate(new \DateTime());
-                        $this->forgotBasketService->updateTask($task);
-                    } catch (NotFoundException $e) {
-                        $task = (new ForgotBasket())->setDateCreate(new \DateTime())
-                                                    ->setFuserId($fuserId);
-                        $this->forgotBasketService->addTask($task);
-                    }
+                    $task = (new ForgotBasket())->setType(ForgotBasketEnum::TYPE_NOTIFICATION)
+                                                ->setUserId($user->getId())
+                                                ->setActive(true)
+                                                ->setDateUpdate(new \DateTime());
+                    $this->forgotBasketService->saveTask($task);
                 } catch (ForgotBasketExceptionInterface $e) {
                     $this->log()->error($e->getMessage(), ['user' => $user->getId()]);
                 }
