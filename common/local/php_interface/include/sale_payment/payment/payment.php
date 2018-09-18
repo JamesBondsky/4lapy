@@ -8,6 +8,7 @@ use Bitrix\Sale\PaySystem\Manager;
 use FourPaws\App\Application as PawsApplication;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\SaleBundle\Exception\PaymentException;
+use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SaleBundle\Service\PaymentService;
 
 IncludeModuleLangFile(__FILE__);
@@ -47,7 +48,10 @@ $request = $app->getContext()->getRequest();
 $entityId = $paySystemAction->GetParamValue('ORDER_PAYMENT_ID');
 $amount = $paySystemAction->GetParamValue('AMOUNT') * 100;
 
-[$orderId, $paymentId] = Manager::getIdsByPayment($entityId);
+[
+    $orderId,
+    $paymentId,
+] = Manager::getIdsByPayment($entityId);
 
 $order = Order::load($orderId);
 
@@ -67,7 +71,7 @@ $fiscal = [];
 if ($fiscalization['ENABLE'] === 'Y') {
     /**
      * @var PaymentService $paymentService
-     * @global $USER
+     * @global             $USER
      */
     $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentService::class);
     $fiscal = $paymentService->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
@@ -91,8 +95,13 @@ switch ((int)$response['errorCode']) {
     case 1:
         try {
             $orderInfo = $paymentService->getSberbankOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER'));
-            $formUrl = $paymentService = $paymentService->getSberbankPaymentUrl($orderInfo);
-            break;
+            if (!\in_array($orderInfo->getOrderStatus(), [
+                Sberbank::ORDER_STATUS_HOLD,
+                Sberbank::ORDER_STATUS_PAID,
+            ], true)) {
+                $formUrl = $paymentService = $paymentService->getSberbankPaymentUrl($orderInfo);
+                break;
+            }
         } catch (\FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException $e) {
             // обработка ниже
         }
