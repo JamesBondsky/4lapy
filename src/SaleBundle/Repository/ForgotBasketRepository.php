@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\Repository;
 
 use Bitrix\Main\SystemException;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrmBundle\Orm\D7Repository;
 use FourPaws\SaleBundle\Entity\ForgotBasket;
 use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
@@ -20,7 +21,7 @@ class ForgotBasketRepository extends D7Repository
      * @throws UnknownTypeException
      * @throws SystemException
      */
-    public function findByUserId(int $userId, string $type = ForgotBasketEnum::TYPE_ALL): ForgotBasket
+    public function findByUserId(int $userId, string $type = ForgotBasketEnum::TYPE_NOTIFICATION): ForgotBasket
     {
         $filter = \array_merge(['UF_USER_ID' => $userId], $this->getTypeFilter($type));
         $result = parent::findBy($filter)->first();
@@ -29,6 +30,29 @@ class ForgotBasketRepository extends D7Repository
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $type
+     * @param bool   $useDateFilter
+     *
+     * @return Collection
+     * @throws SystemException
+     * @throws UnknownTypeException
+     */
+    public function getActive(string $type, bool $useDateFilter): Collection
+    {
+        $filter = [
+            'UF_ACTIVE' => true,
+        ];
+
+        $filter = \array_merge($filter, $this->getTypeFilter($type));
+
+        if ($useDateFilter) {
+            $filter = \array_merge($filter, $this->getDateFilter($type));
+        }
+
+        return $this->findBy($filter);
     }
 
     /**
@@ -99,17 +123,37 @@ class ForgotBasketRepository extends D7Repository
             case ForgotBasketEnum::TYPE_REMINDER:
                 $result = [ForgotBasketEnum::TYPE_FIELD_CODE => $types[$type]];
                 break;
-            case ForgotBasketEnum::TYPE_ALL:
-                $result = [
-                    'LOGIC' => 'OR',
-                    [ForgotBasketEnum::TYPE_FIELD_CODE => $types[ForgotBasketEnum::TYPE_REMINDER]],
-                    [ForgotBasketEnum::TYPE_FIELD_CODE => $types[ForgotBasketEnum::TYPE_NOTIFICATION]],
-                ];
-                break;
             default:
                 throw new UnknownTypeException(\sprintf('Unknown type %s', $type));
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return array
+     * @throws UnknownTypeException
+     */
+    protected function getDateFilter(string $type): array
+    {
+        $date = new \DateTime();
+        $filter = [];
+        switch ($type) {
+            case ForgotBasketEnum::TYPE_NOTIFICATION:
+                $date->setTimestamp(time() - ForgotBasketEnum::INTERVAL_NOTIFICATION);
+                $filter['<UF_DATE_EXEC'] = (new \DateTime())->setTimestamp(time() - ForgotBasketEnum::BLOCK_NOTIFICATION);
+                break;
+            case ForgotBasketEnum::TYPE_REMINDER:
+                $date->setTimestamp(time() - ForgotBasketEnum::INTERVAL_REMINDER);
+                break;
+            default:
+                throw new UnknownTypeException(\sprintf('Unknown type %s', $type));
+        }
+
+        $filter['<UF_DATE_UPDATE'] = $date;
+
+        return $filter;
     }
 }

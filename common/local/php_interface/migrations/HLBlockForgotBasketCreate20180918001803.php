@@ -116,11 +116,11 @@ class HLBlockForgotBasketCreate20180918001803 extends SprintMigrationBase
             ],
             'ENUMS'             => [
                 'n1' => [
-                    'XML_ID' => 'NOTIFICATION',
+                    'XML_ID' => 'notification',
                     'VALUE'  => 'Уведомление',
                 ],
                 'n2' => [
-                    'XML_ID' => 'REMINDER',
+                    'XML_ID' => 'reminder',
                     'VALUE'  => 'Напоминание',
                 ],
             ],
