@@ -581,6 +581,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             case DeliveryService::INNER_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
+                    case DeliveryService::ZONE_5:
+                    case DeliveryService::ZONE_6:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
