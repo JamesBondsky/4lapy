@@ -386,7 +386,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $order->setBasket($basket);
-        if ($order->getBasket()->isEmpty()) {
+        if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Basket is empty');
         }
 

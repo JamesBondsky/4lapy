@@ -8,6 +8,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -40,7 +41,7 @@ class FourPawsExpertsenderFormComponent extends CBitrixComponent implements Logg
         try {
             $container = Application::getInstance()->getContainer();
 
-            $this->userService = $container->get(UserService::class);
+            $this->userService = $container->get(CurrentUserProviderInterface::class);
             $this->retailRocketService = $container->get(RetailRocketService::class);
         } catch (ApplicationCreateException | ServiceCircularReferenceException | ServiceNotFoundException $e) {
             $this->log()
@@ -76,7 +77,8 @@ class FourPawsExpertsenderFormComponent extends CBitrixComponent implements Logg
 
             parent::executeComponent();
             $this->includeComponentTemplate();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+
             $this->log()
                  ->critical(
                      \sprintf(

@@ -2,15 +2,21 @@
 
 namespace FourPaws\FrontOffice\Traits;
 
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\UserBundle\Repository\UserRepository;
-use FourPaws\UserBundle\Service\UserService;
-use Bitrix\Main\SystemException;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Repository\UserRepository;
+use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Trait UserServiceTrait
+ *
+ * @package FourPaws\FrontOffice\Traits
+ */
 trait UserServiceTrait
 {
     /** @var UserService $userService */
@@ -23,11 +29,11 @@ trait UserServiceTrait
      * @return UserService
      * @throws ApplicationCreateException
      */
-    public function getUserService()
+    public function getUserService(): UserService
     {
         if (!$this->userService) {
             $this->userService = Application::getInstance()->getContainer()->get(
-                UserService::class
+                UserSearchInterface::class
             );
         }
 
