@@ -54,7 +54,7 @@ ini_set('session.cookie_domain', $cookieDomain);
 /**
  * Property initialize
  */
-YesNoType::init();
+(new YesNoType())->init();
 /**
  * @todo впилить
  *
