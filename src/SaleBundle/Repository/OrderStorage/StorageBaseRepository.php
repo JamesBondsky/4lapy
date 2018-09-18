@@ -80,7 +80,10 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
             if (!$data['PROPERTY_NAME']) {
                 $data['PROPERTY_NAME'] = $user->getName();
             }
-            $data['PROPERTY_PHONE'] = $user->getPersonalPhone();
+
+            if ($user->getPersonalPhone()) {
+                $data['PROPERTY_PHONE'] = $user->getPersonalPhone();
+            }
             if ($user->getEmail()) {
                 $data['PROPERTY_EMAIL'] = $user->getEmail();
             }
