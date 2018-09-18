@@ -16,27 +16,27 @@ services:
         exclude: '../../{Entity,Tests,EventController}'
 
     FourPaws\UserBundle\Service\CurrentUserProviderInterface:
-        class: FourPaws\UserBundle\Service\UserService
+        alias: FourPaws\UserBundle\Service\UserService
         public: true
 
     FourPaws\UserBundle\Service\UserAuthorizationInterface:
-        class: FourPaws\UserBundle\Service\UserService
+        alias: FourPaws\UserBundle\Service\UserService
         public: true
 
     FourPaws\UserBundle\Service\UserRegistrationProviderInterface:
-        class: FourPaws\UserBundle\Service\UserService
+        alias: FourPaws\UserBundle\Service\UserService
         public: true
 
     FourPaws\UserBundle\Service\UserCitySelectInterface:
-        class: FourPaws\UserBundle\Service\UserService
+        alias: FourPaws\UserBundle\Service\UserService
         public: true
 
     FourPaws\UserBundle\Service\UserSearchInterface:
-        class: FourPaws\UserBundle\Service\UserService
+        alias: FourPaws\UserBundle\Service\UserService
         public: true
 
     FourPaws\UserBundle\Service\UserAvatarAuthorizationInterface:
-        class: FourPaws\UserBundle\Service\UserService
+        alias: FourPaws\UserBundle\Service\UserService
         public: true
 
     FourPaws\UserBundle\Service\ConfirmCodeInterface:
@@ -54,7 +54,3 @@ services:
     FourPaws\UserBundle\Service\UserPasswordService:
         class: FourPaws\UserBundle\Service\UserPasswordService
         public: true
-
-    # Временное решение. Ввиду вызова из компонентов
-#    FourPaws\UserBundle\Service\UserService:
-#        public: true
