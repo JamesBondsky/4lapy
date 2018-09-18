@@ -1,9 +1,9 @@
 <?php
 
-use Adv\Bitrixtools\IBlockPropertyType\YesNoPropertyType;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Page\Asset;
 use FourPaws\App\EventInitializer;
+use WebArch\BitrixIblockPropertyType\YesNoType;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
@@ -54,7 +54,7 @@ ini_set('session.cookie_domain', $cookieDomain);
 /**
  * Property initialize
  */
-YesNoPropertyType::init();
+(new YesNoType())->init();
 /**
  * @todo впилить
  *
