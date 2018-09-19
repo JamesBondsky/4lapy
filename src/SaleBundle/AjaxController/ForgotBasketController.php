@@ -89,7 +89,9 @@ class ForgotBasketController extends Controller implements LoggerAwareInterface
                     \get_class($e),
                     $e->getMessage()
                 ),
-                ['trace' => $e->getTrace()]
+                [
+                    'trace' => $e->getTrace()
+                ]
             );
         }
 

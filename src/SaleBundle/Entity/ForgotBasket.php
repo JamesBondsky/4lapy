@@ -50,9 +50,9 @@ class ForgotBasket
      *
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      * @Serializer\SerializedName("UF_DATE_UPDATE")
-     * @Serializer\Groups(groups={"read","delete"})
+     * @Serializer\Groups(groups={"create","read","update","delete"})
      *
-     * @Assert\NotBlank(groups={"read","delete"})
+     * @Assert\NotBlank(groups={"create","read","update","delete"})
      */
     protected $dateUpdate;
 

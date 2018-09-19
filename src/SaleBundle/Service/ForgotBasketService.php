@@ -223,11 +223,12 @@ class ForgotBasketService
             throw new AlreadyExistsException(\sprintf('Task for user #%s already exists', $task->getUserId()));
         }
 
-        $task->setType(
-            $this->forgotBasketRepository->getTypeIdByCode(
-                $task->getType()
-            )
-        );
+        $task->setDateUpdate(new \DateTime())
+             ->setType(
+                 $this->forgotBasketRepository->getTypeIdByCode(
+                     $task->getType()
+                 )
+             );
 
         if (!$this->forgotBasketRepository->create($task)) {
             throw new FailedToCreateException(\sprintf('Failed to create task for user #%s', $task->getUserId()));
@@ -246,11 +247,12 @@ class ForgotBasketService
      */
     protected function updateTask(ForgotBasket $task): bool
     {
-        $task->setType(
-            $this->forgotBasketRepository->getTypeIdByCode(
-                $task->getType()
-            )
-        );
+        $task->setDateUpdate(new \DateTime())
+             ->setType(
+                 $this->forgotBasketRepository->getTypeIdByCode(
+                     $task->getType()
+                 )
+             );
 
         if (!$this->forgotBasketRepository->update($task)) {
             throw new FailedToUpdateException(\sprintf('Failed to update task with id #%s', $task->getId()));
