@@ -17,13 +17,19 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
+use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
+use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
+use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\StoreBundle\Service\StoreService;
+use LinguaLeo\ExpertSender\ExpertSenderException;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
 
@@ -94,6 +100,79 @@ class NotificationService implements LoggerAwareInterface
         $this->renderer = $container->get('templating');
 
         $this->withLogName('sale_notification');
+    }
+
+    /**
+     * @param ForgotBasketNotification $forgotBasketNotification
+     * @return bool
+     * @throws ArgumentNullException
+     * @throws UnknownMessageTypeException
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
+     */
+    public function sendForgotBasketMessage(ForgotBasketNotification $forgotBasketNotification): bool
+    {
+        $result = false;
+        try {
+            switch ($forgotBasketNotification->getMessageType()) {
+                case ForgotBasketEnum::TYPE_NOTIFICATION:
+                    $messageType = ExpertsenderService::FORGOT_BASKET_TO_CLOSE_SITE;
+                    break;
+                case ForgotBasketEnum::TYPE_REMINDER:
+                    $messageType = ExpertsenderService::FORGOT_BASKET_AFTER_TIME;
+                    break;
+                default:
+                    throw new UnknownMessageTypeException(
+                        \sprintf(
+                            'Type with code %s is invalid',
+                            $forgotBasketNotification->getMessageType()
+                        )
+                    );
+            }
+
+            $user = $forgotBasketNotification->getUser();
+            $forgotBasket = new ForgotBasket();
+            $forgotBasket->setUserName($user->getName() ?: $user->getFullName())
+                         ->setUserEmail($user->getEmail())
+                         ->setBasket($forgotBasketNotification->getBasket())
+                         ->setBonusCount($forgotBasketNotification->getBonusCount())
+                         ->setMessageType($messageType);
+
+            $result = $this->emailService->sendForgotBasket($forgotBasket);
+            $this->log()->info('sent "forgot basket" message', [
+                'type' => $forgotBasketNotification->getMessageType(),
+                'user'  => $forgotBasketNotification->getUser()->getId(),
+                'email' => $forgotBasketNotification->getUser()->getEmail()
+            ]);
+        } catch (ExpertsenderServiceBlackListException $e) {
+            $this->log()->warning(
+                \sprintf(
+                    'failed to send "forgot basket" message %s: %s',
+                    \get_class($e),
+                    $e->getMessage()
+                ),
+                [
+                    'type' => $forgotBasketNotification->getMessageType(),
+                    'user'  => $forgotBasketNotification->getUser()->getId(),
+                    'email' => $forgotBasketNotification->getUser()->getEmail()
+                ]
+            );
+        } catch (ExpertSenderException|ExpertsenderServiceException $e) {
+            $this->log()->error(
+                \sprintf(
+                    'failed to send "forgot basket" message %s: %s',
+                    \get_class($e),
+                    $e->getMessage()
+                ),
+                [
+                    'type' => $forgotBasketNotification->getMessageType(),
+                    'user'  => $forgotBasketNotification->getUser()->getId(),
+                    'email' => $forgotBasketNotification->getUser()->getEmail()
+                ]
+            );
+        }
+
+        return $result;
     }
 
     /**

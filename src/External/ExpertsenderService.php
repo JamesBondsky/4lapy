@@ -22,6 +22,7 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
+use FourPaws\External\Exception\ExpertSenderOfferNotFoundException;
 use FourPaws\External\Exception\ExpertsenderServiceApiException;
 use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
@@ -29,7 +30,6 @@ use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
-use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
@@ -711,17 +711,16 @@ class ExpertsenderService implements LoggerAwareInterface
 
     /**
      * @param ForgotBasket $forgotBasket
-     *
      * @return bool
+     * @throws ArgumentNullException
      * @throws ExpertSenderException
+     * @throws ExpertSenderOfferNotFoundException
      * @throws ExpertsenderBasketEmptyException
      * @throws ExpertsenderEmptyEmailException
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceBlackListException
      * @throws ExpertsenderServiceException
-     * @throws NotFoundException
      * @throws RuntimeException
-     * @throws ArgumentNullException
      * @throws \InvalidArgumentException
      */
     public function sendForgotBasket(ForgotBasket $forgotBasket): bool
@@ -772,9 +771,9 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @return array
      * @throws ArgumentNullException
-     * @throws NotFoundException
      * @throws RuntimeException
      * @throws \InvalidArgumentException
+     * @throws ExpertSenderOfferNotFoundException
      */
     protected function getAltProductsItemsByBasket(Basket $basket): array
     {
@@ -783,7 +782,7 @@ class ExpertsenderService implements LoggerAwareInterface
         foreach ($basket as $basketItem) {
             $currentOffer = OfferQuery::getById((int)$basketItem->getProductId());
             if ($currentOffer === null) {
-                throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getProductId()));
+                throw new ExpertSenderOfferNotFoundException(sprintf('Не найден товар %s', $basketItem->getProductId()));
             }
             $item = '';
             $item .= '<Product>';
@@ -803,9 +802,19 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * @param Order $order
      * @return array
-     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ExpertSenderOfferNotFoundException
      * @throws ExpertsenderServiceException
+     * @throws ExpertSenderOfferNotFoundException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
+     * @throws \Bitrix\Main\IO\InvalidPathException
+     * @throws \InvalidArgumentException
+     * @throws \LogicException
      */
     protected function getAltProductsItems(Order $order): array
     {
@@ -831,7 +840,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     }
                 }
                 if (!$currentOffer) {
-                    throw new NotFoundException(sprintf('Не найден товар %s', $basketItem->getCode()));
+                    throw new ExpertSenderOfferNotFoundException(sprintf('Не найден товар %s', $basketItem->getCode()));
                 }
                 $link = ($currentOffer->getXmlId()[0] === '3') ? '' : new FullHrefDecorator($currentOffer->getDetailPageUrl());
                 $item = '';

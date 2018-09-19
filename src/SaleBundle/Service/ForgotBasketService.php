@@ -9,13 +9,7 @@ use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrmBundle\Exception\NotFoundRepository;
 use FourPaws\BitrixOrmBundle\Orm\BitrixOrm;
-use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
-use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
-use FourPaws\External\Exception\ExpertsenderServiceApiException;
-use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
-use FourPaws\External\Exception\ExpertsenderServiceException;
-use FourPaws\External\ExpertSender\Dto\ForgotBasket as ForgotBasketDto;
-use FourPaws\External\ExpertsenderService;
+use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
 use FourPaws\SaleBundle\Entity\ForgotBasket;
 use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
 use FourPaws\SaleBundle\Exception\BasketUserInitializeException;
@@ -26,13 +20,12 @@ use FourPaws\SaleBundle\Exception\ForgotBasket\FailedToUpdateException;
 use FourPaws\SaleBundle\Exception\ForgotBasket\NotFoundException;
 use FourPaws\SaleBundle\Exception\ForgotBasket\UnknownTypeException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
-use FourPaws\SaleBundle\Exception\NotFoundException as NotFoundSaleException;
+use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\SaleBundle\Repository\ForgotBasketRepository;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotFoundException as NotFoundUserException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
-use LinguaLeo\ExpertSender\ExpertSenderException;
 
 class ForgotBasketService
 {
@@ -47,9 +40,9 @@ class ForgotBasketService
     protected $forgotBasketRepository;
 
     /**
-     * @var ExpertsenderService
+     * @var NotificationService
      */
-    protected $expertsenderService;
+    protected $notificationService;
 
     /**
      * @var BasketUserService
@@ -66,7 +59,7 @@ class ForgotBasketService
      *
      * @param BasketService       $basketService
      * @param BasketUserService   $basketUserService
-     * @param ExpertsenderService $expertsenderService
+     * @param NotificationService $notificationService
      * @param BitrixOrm           $bitrixOrm
      * @param UserSearchInterface $userSearch
      *
@@ -75,14 +68,14 @@ class ForgotBasketService
     public function __construct(
         BasketService $basketService,
         BasketUserService $basketUserService,
-        ExpertsenderService $expertsenderService,
+        NotificationService $notificationService,
         BitrixOrm $bitrixOrm,
         UserSearchInterface $userSearch
     )
     {
         $this->basketService = $basketService;
         $this->basketUserService = $basketUserService;
-        $this->expertsenderService = $expertsenderService;
+        $this->notificationService = $notificationService;
         $this->forgotBasketRepository = $bitrixOrm->getD7Repository(ForgotBasket::class);
         $this->userSearch = $userSearch;
     }
@@ -156,64 +149,49 @@ class ForgotBasketService
     /**
      * @param ForgotBasket $task
      *
+     * @throws AlreadyExistsException
      * @throws ArgumentException
      * @throws ArgumentNullException
+     * @throws BasketUserInitializeException
+     * @throws ConstraintDefinitionException
+     * @throws FailedToCreateException
+     * @throws FailedToUpdateException
      * @throws InvalidArgumentException
+     * @throws InvalidIdentifierException
+     * @throws NotFoundUserException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws UnknownTypeException
      * @throws \Exception
-     * @throws ExpertsenderBasketEmptyException
-     * @throws ExpertsenderEmptyEmailException
-     * @throws ExpertsenderServiceApiException
-     * @throws ExpertsenderServiceException
-     * @throws BasketUserInitializeException
-     * @throws NotFoundSaleException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws NotFoundUserException
+     * @throws UnknownMessageTypeException
      * @throws \InvalidArgumentException
-     * @throws ExpertSenderException
      * @throws \RuntimeException
      */
     public function executeTask(ForgotBasket $task)
     {
-        switch ($task->getType()) {
-            case ForgotBasketEnum::TYPE_NOTIFICATION:
-                $messageType = ExpertsenderService::FORGOT_BASKET_TO_CLOSE_SITE;
-                break;
-            case ForgotBasketEnum::TYPE_REMINDER:
-                $messageType = ExpertsenderService::FORGOT_BASKET_AFTER_TIME;
-                break;
-            default:
-                throw new UnknownTypeException(\sprintf('Type with code %s is invalid', $task->getType()));
-        }
-
         $user = $this->userSearch->findOne($task->getUserId());
-        $fuserId = $this->basketUserService->getByUserId($task->getUserId());
-        $basket = $this->basketService->getBasket(true, $fuserId);
+        $basket = $this->basketService->getBasket(
+            true,
+            $this->basketUserService->getByUserId($task->getUserId())
+        );
 
-        $dto = new ForgotBasketDto();
-        $dto->setUserName($user->getName() ?: $user->getFullName())
-            ->setUserEmail($user->getEmail())
-            ->setBasket($basket)
-            ->setBonusCount($this->basketService->getBasketBonus($task->getUserId()))
-            ->setMessageType($messageType);
+        $notification = new ForgotBasketNotification();
+        $notification->setMessageType($task->getType())
+                     ->setUser($user)
+                     ->setBonusCount($this->basketService->getBasketBonus($user))
+                     ->setBasket($basket);
 
-        try {
-            $this->expertsenderService->sendForgotBasket($dto);
-        } catch (ExpertsenderServiceBlackListException $e) {
-        }
-
-        /**
-         * после напоминания создаем еще одно задание для отправки через трое суток
-         */
-        if ($task->getType() === ForgotBasketEnum::TYPE_NOTIFICATION) {
-            $reminderTask = new ForgotBasket();
-            $reminderTask->setType(ForgotBasketEnum::TYPE_REMINDER)
-                         ->setUserId($task->getUserId())
-                         ->setActive(true);
-            $this->saveTask($reminderTask);
+        if ($this->notificationService->sendForgotBasketMessage($notification)) {
+            /**
+             * после напоминания создаем еще одно задание для отправки через трое суток
+             */
+            if ($task->getType() === ForgotBasketEnum::TYPE_NOTIFICATION) {
+                $reminderTask = new ForgotBasket();
+                $reminderTask->setType(ForgotBasketEnum::TYPE_REMINDER)
+                             ->setUserId($task->getUserId())
+                             ->setActive(true);
+                $this->saveTask($reminderTask);
+            }
         }
 
         $task->setDateExec(new \DateTime())

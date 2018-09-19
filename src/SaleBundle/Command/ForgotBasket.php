@@ -4,8 +4,6 @@ namespace FourPaws\SaleBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\SystemException;
-use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
-use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\SaleBundle\Entity\ForgotBasket as ForgotBasketEntity;
 use FourPaws\SaleBundle\Exception\ForgotBasket\UnknownTypeException;
 use FourPaws\SaleBundle\Service\ForgotBasketService;
@@ -76,22 +74,6 @@ class ForgotBasket extends Command implements LoggerAwareInterface
         foreach ($tasks as $task) {
             try {
                 $this->forgotBasketService->executeTask($task);
-                $this->log()->notice(
-                    \sprintf(
-                        'Sent "%s" forgot basket message to user #%s',
-                        $task->getType(),
-                        $task->getUserId()
-                    )
-                );
-            } catch (ExpertsenderBasketEmptyException|ExpertsenderEmptyEmailException $e) {
-                $this->log()->warning(
-                    \sprintf(
-                        'Failed to send "%s" forgot basket message to user #%s: %s',
-                        $task->getType(),
-                        $task->getUserId(),
-                        $e->getMessage()
-                    )
-                );
             } catch (\Exception $e) {
                 $this->log()->error(
                     \sprintf(
