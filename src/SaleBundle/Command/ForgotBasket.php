@@ -3,7 +3,7 @@
 namespace FourPaws\SaleBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\SystemException;
+use Bitrix\Main\ObjectException;
 use FourPaws\SaleBundle\Entity\ForgotBasket as ForgotBasketEntity;
 use FourPaws\SaleBundle\Exception\ForgotBasket\UnknownTypeException;
 use FourPaws\SaleBundle\Service\ForgotBasketService;
@@ -11,15 +11,15 @@ use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ForgotBasket extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    protected const OPT_TYPE = 'type';
+    protected const ARG_TYPE = 'type';
 
     /**
      * @var ForgotBasketService
@@ -46,14 +46,13 @@ class ForgotBasket extends Command implements LoggerAwareInterface
      */
     protected function configure(): void
     {
-        $this->setName('fourpaws:sale:forgotbasket:execute')
+        $this->setName('fourpaws:sale:forgotbasket:send')
              ->setDescription('Send "forgot basket" messages')
-             ->addOption(
-                static::OPT_TYPE,
-                't',
-                InputOption::VALUE_REQUIRED,
-                'Type of message'
-            );
+             ->addArgument(
+                 static::ARG_TYPE,
+                 InputArgument::REQUIRED,
+                 'Message type'
+             );
     }
 
     /**
@@ -61,13 +60,13 @@ class ForgotBasket extends Command implements LoggerAwareInterface
      * @param OutputInterface $output
      *
      * @throws InvalidArgumentException
-     * @throws SystemException
      * @throws UnknownTypeException
      * @throws \RuntimeException
+     * @throws ObjectException
      */
     protected function execute(InputInterface $input, OutputInterface $output): void
     {
-        $type = $input->getOption(static::OPT_TYPE);
+        $type = $input->getArgument(static::ARG_TYPE);
 
         $tasks = $this->forgotBasketService->getActiveTasks($type, true);
         /** @var ForgotBasketEntity $task */

@@ -69,7 +69,7 @@ class ForgotBasket
     /**
      * @var boolean
      *
-     * @Serializer\Type("bitrix_bool")
+     * @Serializer\Type("bitrix_bool_d7")
      * @Serializer\SerializedName("UF_ACTIVE")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */

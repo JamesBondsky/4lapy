@@ -4,6 +4,7 @@ namespace FourPaws\SaleBundle\Service;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\Collection;
@@ -122,6 +123,7 @@ class ForgotBasketService
      * @param bool   $useDateFilter
      * @return Collection
      * @throws UnknownTypeException
+     * @throws ObjectException
      */
     public function getActiveTasks(
         string $type = ForgotBasketEnum::INTERVAL_NOTIFICATION,
