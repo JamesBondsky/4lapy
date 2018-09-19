@@ -198,7 +198,7 @@ class HLBlockForgotBasketCreate20180918001803 extends SprintMigrationBase
 
         Application::getConnection()->query('
             ALTER TABLE `b_hlbd_forgot_basket`
-            CHANGE COLUMN `UF_DATE_UPDATE` `UF_DATE_UPDATE` DATETIME ON UPDATE CURRENT_TIMESTAMP,
+            CHANGE COLUMN `UF_DATE_UPDATE` `UF_DATE_UPDATE` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             ADD CONSTRAINT UNIQUE `UC_USER_ID_TYPE` (`UF_USER_ID`, `UF_TASK_TYPE`),
             ADD INDEX `IX_USER_ID` (`UF_USER_ID`)'
         );

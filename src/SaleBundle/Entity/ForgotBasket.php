@@ -48,7 +48,7 @@ class ForgotBasket
     /**
      * @var \DateTime
      *
-     * @Serializer\Type("DateTime<'Y-m-d H:i:s'>")
+     * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      * @Serializer\SerializedName("UF_DATE_UPDATE")
      * @Serializer\Groups(groups={"read","delete"})
      *
@@ -59,7 +59,7 @@ class ForgotBasket
     /**
      * @var \DateTime|null
      *
-     * @Serializer\Type("DateTime<'Y-m-d H:i:s'>")
+     * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      * @Serializer\SerializedName("UF_DATE_EXEC")
      * @Serializer\Groups(groups={"read","update","delete"})
      * @Serializer\SkipWhenEmpty())

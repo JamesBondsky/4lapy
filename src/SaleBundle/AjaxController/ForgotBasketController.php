@@ -75,8 +75,7 @@ class ForgotBasketController extends Controller implements LoggerAwareInterface
                 try {
                     $task = (new ForgotBasket())->setType(ForgotBasketEnum::TYPE_NOTIFICATION)
                                                 ->setUserId($user->getId())
-                                                ->setActive(true)
-                                                ->setDateUpdate(new \DateTime());
+                                                ->setActive(true);
                     $this->forgotBasketService->saveTask($task);
                 } catch (ForgotBasketExceptionInterface $e) {
                     $this->log()->error($e->getMessage(), ['user' => $user->getId()]);
