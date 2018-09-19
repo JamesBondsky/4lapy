@@ -24,7 +24,6 @@ use FourPaws\Helpers\WordHelper;
         <p>Получение</p>
         <?php
         if ($delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE) {
-            dump($delivery['ZONE']);
             if ($delivery['ZONE'] === DeliveryService::ZONE_1) { ?>
                 <span>В день оформления заказа (при оформлении до 13:00) или на следующий день</span>
             <?php } elseif ($delivery['ZONE'] === DeliveryService::ZONE_2) { ?>
