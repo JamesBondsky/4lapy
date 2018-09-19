@@ -1,13 +1,13 @@
-<?
+<?php
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
-require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
-$APPLICATION->SetTitle("Акции");
-?>
-<?php $APPLICATION->IncludeComponent(
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+$APPLICATION->SetTitle('Акции');
+
+$APPLICATION->IncludeComponent(
     'bitrix:news',
     'fp.17.0.shares',
     [
@@ -31,7 +31,8 @@ $APPLICATION->SetTitle("Акции");
         'DETAIL_DISPLAY_BOTTOM_PAGER' => 'N',
         'DETAIL_DISPLAY_TOP_PAGER' => 'N',
         'DETAIL_FIELD_CODE' => [
-            'ACTIVE_FROM', 'ACTIVE_TO'
+            'ACTIVE_FROM',
+            'ACTIVE_TO'
         ],
         'DETAIL_PAGER_SHOW_ALL' => 'N',
         'DETAIL_PAGER_TEMPLATE' => '',
@@ -105,5 +106,5 @@ $APPLICATION->SetTitle("Акции");
     [
         'HIDE_ICONS' => 'Y'
     ]
-);?>
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+);
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
