@@ -87,7 +87,6 @@ class ForgotBasketService
      * @throws FailedToCreateException
      * @throws FailedToUpdateException
      * @throws UnknownTypeException
-     * @throws SystemException
      */
     public function saveTask(ForgotBasket $task): void
     {
@@ -112,7 +111,6 @@ class ForgotBasketService
      * @return ForgotBasket
      * @throws NotFoundException
      * @throws UnknownTypeException
-     * @throws SystemException
      */
     public function getTask(int $userId, string $type = ForgotBasketEnum::INTERVAL_NOTIFICATION): ForgotBasket
     {
@@ -123,10 +121,12 @@ class ForgotBasketService
      * @param string $type
      * @param bool   $useDateFilter
      * @return Collection
-     * @throws SystemException
      * @throws UnknownTypeException
      */
-    public function getActiveTasks(string $type = ForgotBasketEnum::INTERVAL_NOTIFICATION, bool $useDateFilter)
+    public function getActiveTasks(
+        string $type = ForgotBasketEnum::INTERVAL_NOTIFICATION,
+        bool $useDateFilter
+    ): Collection
     {
         return $this->forgotBasketRepository->getActive($type, $useDateFilter);
     }
@@ -161,13 +161,13 @@ class ForgotBasketService
      * @throws NotFoundUserException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws UnknownMessageTypeException
      * @throws UnknownTypeException
      * @throws \Exception
-     * @throws UnknownMessageTypeException
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
-    public function executeTask(ForgotBasket $task)
+    public function executeTask(ForgotBasket $task): void
     {
         $user = $this->userSearch->findOne($task->getUserId());
         $basket = $this->basketService->getBasket(
@@ -200,38 +200,24 @@ class ForgotBasketService
     }
 
     /**
-     * @return string[]
-     * @throws SystemException
-     */
-    public function getTypes(): array
-    {
-        return $this->forgotBasketRepository->getTypes();
-    }
-
-    /**
      * @param ForgotBasket $task
      *
      * @return bool
      * @throws AlreadyExistsException
      * @throws FailedToCreateException
-     * @throws SystemException
      * @throws UnknownTypeException
      */
     protected function addTask(ForgotBasket $task): bool
     {
-        if ($this->forgotBasketRepository->find($task->getUserId())) {
+        try {
+            $this->forgotBasketRepository->findByUserId($task->getUserId(), $task->getType());
             throw new AlreadyExistsException(\sprintf('Task for user #%s already exists', $task->getUserId()));
-        }
+        } catch (NotFoundException $e) {
+            $task->setDateUpdate(new \DateTime());
 
-        $task->setDateUpdate(new \DateTime())
-             ->setType(
-                 $this->forgotBasketRepository->getTypeIdByCode(
-                     $task->getType()
-                 )
-             );
-
-        if (!$this->forgotBasketRepository->create($task)) {
-            throw new FailedToCreateException(\sprintf('Failed to create task for user #%s', $task->getUserId()));
+            if (!$this->forgotBasketRepository->create($task)) {
+                throw new FailedToCreateException(\sprintf('Failed to create task for user #%s', $task->getUserId()));
+            }
         }
 
         return true;
@@ -242,17 +228,10 @@ class ForgotBasketService
      *
      * @return bool
      * @throws FailedToUpdateException
-     * @throws SystemException
-     * @throws UnknownTypeException
      */
     protected function updateTask(ForgotBasket $task): bool
     {
-        $task->setDateUpdate(new \DateTime())
-             ->setType(
-                 $this->forgotBasketRepository->getTypeIdByCode(
-                     $task->getType()
-                 )
-             );
+        $task->setDateUpdate(new \DateTime());
 
         if (!$this->forgotBasketRepository->update($task)) {
             throw new FailedToUpdateException(\sprintf('Failed to update task with id #%s', $task->getId()));

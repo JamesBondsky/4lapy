@@ -96,7 +96,7 @@ class HLBlockForgotBasketCreate20180918001803 extends SprintMigrationBase
         ],
         [
             'FIELD_NAME'        => 'UF_TASK_TYPE',
-            'USER_TYPE_ID'      => 'enumeration',
+            'USER_TYPE_ID'      => 'integer',
             'XML_ID'            => 'UF_TASK_TYPE',
             'SORT'              => 40,
             'MULTIPLE'          => 'N',
@@ -113,16 +113,6 @@ class HLBlockForgotBasketCreate20180918001803 extends SprintMigrationBase
             ],
             'LIST_FILTER_LABEL' => [
                 'ru' => 'Тип задания',
-            ],
-            'ENUMS'             => [
-                'n1' => [
-                    'XML_ID' => 'notification',
-                    'VALUE'  => 'Уведомление',
-                ],
-                'n2' => [
-                    'XML_ID' => 'reminder',
-                    'VALUE'  => 'Напоминание',
-                ],
             ],
         ],
         [

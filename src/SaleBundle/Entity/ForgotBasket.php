@@ -4,7 +4,6 @@ namespace FourPaws\SaleBundle\Entity;
 
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
-use FourPaws\SaleBundle\Validation\ForgotBasket as ForgotBasketValidation;
 
 class ForgotBasket
 {
@@ -33,15 +32,14 @@ class ForgotBasket
     protected $userId = 0;
 
     /**
-     * @var string
+     * @var int
      *
-     * @Serializer\Type("string")
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_TASK_TYPE")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      *
      * @Assert\NotBlank(groups={"create","read","update","delete"})
-     * @ForgotBasketValidation\TypeCode(groups={"read","delete"})
-     * @ForgotBasketValidation\TypeId(groups={"create","update"})
+     * @Assert\Choice(callback={"FourPaws\SaleBundle\Enum\ForgotBasketEnum", "getTypes"}, groups={"create","read","update","delete"})
      */
     protected $type;
 
@@ -116,18 +114,18 @@ class ForgotBasket
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getType(): string
+    public function getType(): int
     {
         return $this->type;
     }
 
     /**
-     * @param string $type
+     * @param int $type
      * @return ForgotBasket
      */
-    public function setType(string $type): ForgotBasket
+    public function setType(int $type): ForgotBasket
     {
         $this->type = $type;
 

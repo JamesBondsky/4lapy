@@ -2,7 +2,6 @@
 
 namespace FourPaws\SaleBundle\Repository;
 
-use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrmBundle\Orm\D7Repository;
 use FourPaws\SaleBundle\Entity\ForgotBasket;
@@ -19,7 +18,6 @@ class ForgotBasketRepository extends D7Repository
      * @return ForgotBasket
      * @throws NotFoundException
      * @throws UnknownTypeException
-     * @throws SystemException
      */
     public function findByUserId(int $userId, string $type = ForgotBasketEnum::TYPE_NOTIFICATION): ForgotBasket
     {
@@ -37,7 +35,6 @@ class ForgotBasketRepository extends D7Repository
      * @param bool   $useDateFilter
      *
      * @return Collection
-     * @throws SystemException
      * @throws UnknownTypeException
      */
     public function getActive(string $type, bool $useDateFilter): Collection
@@ -56,72 +53,17 @@ class ForgotBasketRepository extends D7Repository
     }
 
     /**
-     * @param int $typeId
-     *
-     * @return string
-     * @throws SystemException
-     * @throws UnknownTypeException
-     */
-    public function getTypeCodeById(int $typeId): string
-    {
-        $types = $this->getTypes();
-
-        if (null === $types[$typeId]) {
-            throw new UnknownTypeException(\sprintf('Type with id %s not found', $typeId));
-        }
-
-        return $types[$typeId];
-    }
-
-    /**
-     * @param string $code
-     *
-     * @return int
-     * @throws SystemException
-     * @throws UnknownTypeException
-     */
-    public function getTypeIdByCode(string $code): ?int
-    {
-        $types = array_flip($this->getTypes());
-
-        if (null === $types[$code]) {
-            throw new UnknownTypeException(\sprintf('Type with code %s not found', $code));
-        }
-
-        return $types[$code];
-    }
-
-    /**
-     * @return array
-     * @throws SystemException
-     */
-    public function getTypes(): array
-    {
-        $enums = (new \CUserFieldEnum())->GetList([], ['USER_FIELD_NAME' => ForgotBasketEnum::TYPE_FIELD_CODE]);
-
-        $result = [];
-        while ($enum = $enums->Fetch()) {
-            $result[(int)$enum['ID']] = $enum['XML_ID'];
-        }
-
-        return $result;
-    }
-
-    /**
      * @param string $type
      *
      * @return array
      * @throws UnknownTypeException
-     * @throws SystemException
      */
     protected function getTypeFilter(string $type): array
     {
-        $types = \array_flip($this->getTypes());
-
         switch (true) {
             case ForgotBasketEnum::TYPE_NOTIFICATION:
             case ForgotBasketEnum::TYPE_REMINDER:
-                $result = [ForgotBasketEnum::TYPE_FIELD_CODE => $types[$type]];
+                $result = ['UF_TASK_TYPE' => $type];
                 break;
             default:
                 throw new UnknownTypeException(\sprintf('Unknown type %s', $type));
