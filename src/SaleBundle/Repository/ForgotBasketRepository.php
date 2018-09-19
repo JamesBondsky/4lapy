@@ -2,6 +2,8 @@
 
 namespace FourPaws\SaleBundle\Repository;
 
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\Type\DateTime;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrmBundle\Orm\D7Repository;
 use FourPaws\SaleBundle\Entity\ForgotBasket;
@@ -36,6 +38,7 @@ class ForgotBasketRepository extends D7Repository
      *
      * @return Collection
      * @throws UnknownTypeException
+     * @throws ObjectException
      */
     public function getActive(string $type, bool $useDateFilter): Collection
     {
@@ -77,25 +80,30 @@ class ForgotBasketRepository extends D7Repository
      *
      * @return array
      * @throws UnknownTypeException
+     * @throws ObjectException
      */
     protected function getDateFilter(string $type): array
     {
-        $date = new \DateTime();
+        $time = time();
         $filter = [];
         switch ($type) {
             case ForgotBasketEnum::TYPE_NOTIFICATION:
-                $date->setTimestamp(time() - ForgotBasketEnum::INTERVAL_NOTIFICATION);
-                $filter['<UF_DATE_EXEC'] = (new \DateTime())->setTimestamp(time() - ForgotBasketEnum::BLOCK_NOTIFICATION);
+                $time -= ForgotBasketEnum::INTERVAL_NOTIFICATION;
+                $filter[] = [
+                    'LOGIC'         => 'OR',
+                    '<UF_DATE_EXEC' => DateTime::createFromTimestamp(time() - ForgotBasketEnum::BLOCK_NOTIFICATION),
+                    'UF_DATE_EXEC'  => false,
+                ];
+
                 break;
             case ForgotBasketEnum::TYPE_REMINDER:
-                $date->setTimestamp(time() - ForgotBasketEnum::INTERVAL_REMINDER);
+                $time -= ForgotBasketEnum::INTERVAL_REMINDER;
                 break;
             default:
                 throw new UnknownTypeException(\sprintf('Unknown type %s', $type));
         }
 
-        $filter['<UF_DATE_UPDATE'] = $date;
-
+        $filter['<UF_DATE_UPDATE'] = DateTime::createFromTimestamp($time);
         return $filter;
     }
 }
