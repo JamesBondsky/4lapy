@@ -121,7 +121,7 @@ if ($template->hasMainWrapper()) {
 <script>
     <?php /** хз насколько кросбраузерно */?>
     window.onbeforeunload = function () {
-        $.get('/ajax/sale/forgot_basket_close_page/');
+        $.get('/ajax/sale/forgot-basket/close-page/');
     }
 </script>
 </body>
