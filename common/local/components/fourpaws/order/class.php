@@ -32,6 +32,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
 use FourPaws\LocationBundle\LocationService;
@@ -132,6 +133,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
      * @var SalePreset
      */
     private $salePreset;
+    /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
 
     /**
      * FourPawsOrderComponent constructor.
@@ -144,21 +149,22 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     public function __construct($component = null)
     {
-        $serviceContainer = Application::getInstance()->getContainer();
+        $container = Application::getInstance()->getContainer();
         /** @noinspection PhpUndefinedMethodInspection */
-        $this->orderService = $serviceContainer->get(OrderService::class);
-        $this->orderSplitService = $serviceContainer->get(OrderSplitService::class);
-        $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
-        $this->deliveryService = $serviceContainer->get('delivery.service');
-        $this->storeService = $serviceContainer->get('store.service');
-        $this->currentUserProvider = $serviceContainer->get(CurrentUserProviderInterface::class);
-        $this->userCityProvider = $serviceContainer->get(UserCitySelectInterface::class);
-        $this->basketService = $serviceContainer->get(BasketService::class);
-        $this->userAccountService = $serviceContainer->get(UserAccountService::class);
-        $this->locationService = $serviceContainer->get('location.service');
-        $this->manzanaService = $serviceContainer->get('manzana.service');
-        $this->ecommerceService = $serviceContainer->get(GoogleEcommerceService::class);
-        $this->salePreset = $serviceContainer->get(SalePreset::class);
+        $this->orderService = $container->get(OrderService::class);
+        $this->orderSplitService = $container->get(OrderSplitService::class);
+        $this->orderStorageService = $container->get(OrderStorageService::class);
+        $this->deliveryService = $container->get('delivery.service');
+        $this->storeService = $container->get('store.service');
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->userCityProvider = $container->get(UserCitySelectInterface::class);
+        $this->basketService = $container->get(BasketService::class);
+        $this->userAccountService = $container->get(UserAccountService::class);
+        $this->locationService = $container->get('location.service');
+        $this->manzanaService = $container->get('manzana.service');
+        $this->ecommerceService = $container->get(GoogleEcommerceService::class);
+        $this->salePreset = $container->get(SalePreset::class);
+        $this->retailRocketService = $container->get(RetailRocketService::class);
         $this->logger = LoggerFactory::create('component_order');
 
         parent::__construct($component);
@@ -258,7 +264,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $basket = $this->basketService->getBasket()->getOrderableItems();
         $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
         /** @noinspection PhpUndefinedVariableInspection */
-        if ($this->currentStep !== OrderStorageEnum::AUTH_STEP) {
+        if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
+            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'', $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'));
+        } else {
             $basket = $order->getBasket();
         }
 
