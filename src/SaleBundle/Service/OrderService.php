@@ -26,6 +26,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
+use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
@@ -316,7 +317,7 @@ class OrderService implements LoggerAwareInterface
                     'fuserId' => $storage->getFuserId(),
                     'userId' => $storage->getUserId(),
                     'location' => $storage->getCityCode(),
-                    'basket' => $this->basketService->getBasketProducts($basket)
+                    'basket' => $this->basketService->getBasketProducts($basket),
                 ]);
 
                 throw new DeliveryNotAvailableException('No available deliveries');
@@ -329,7 +330,7 @@ class OrderService implements LoggerAwareInterface
                 'fuserId' => $storage->getFuserId(),
                 'userId' => $storage->getUserId(),
                 'location' => $storage->getCityCode(),
-                'basket' => $this->basketService->getBasketProducts($basket)
+                'basket' => $this->basketService->getBasketProducts($basket),
             ]);
 
             throw new DeliveryNotAvailableException('Selected delivery is not available');
@@ -386,7 +387,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $order->setBasket($basket);
-        if ($order->getBasket()->isEmpty()) {
+        if ($order->getBasket()->getOrderableItems()->isEmpty()) {
             throw new OrderCreateException('Basket is empty');
         }
 
@@ -444,7 +445,28 @@ class OrderService implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
                 'deliveryId' => $selectedDelivery->getDeliveryId(),
-                'trace' => $e->getTrace()
+                'trace' => $e->getTrace(),
+            ]);
+            throw new OrderCreateException('Failed to create order shipment');
+        }
+
+        try {
+            /* @todo костыль: удаление из системной отгрузки товаров не в наличии */
+            if ($systemShipment = $shipmentCollection->getSystemShipment()) {
+                $shipmentItemCollection = $systemShipment->getShipmentItemCollection();
+                /** @var ShipmentItem $shipmentItem */
+                foreach ($shipmentItemCollection as $shipmentItem) {
+                    $basketItem = $shipmentItem->getBasketItem();
+                    if ($basketItem->isDelay() || !$basketItem->canBuy()) {
+                        $shipmentItem->setFieldNoDemand('QUANTITY', 0);
+                        $shipmentItem->delete();
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to update system shipment: %s', $e->getMessage()), [
+                'deliveryId' => $selectedDelivery->getDeliveryId(),
+                'trace' => $e->getTrace(),
             ]);
             throw new OrderCreateException('Failed to create order shipment');
         }
@@ -593,7 +615,7 @@ class OrderService implements LoggerAwareInterface
                 $this->log()->error(sprintf('order payment failed: %s', $e->getMessage()), [
                     'userId'  => $storage->getUserId(),
                     'fuserId' => $storage->getFuserId(),
-                    'paymentId' => $storage->getPaymentId()
+                    'paymentId' => $storage->getPaymentId(),
                 ]);
                 throw new OrderCreateException('Order payment failed');
             }
@@ -687,7 +709,7 @@ class OrderService implements LoggerAwareInterface
                     [
                         'fuserId' => $storage->getFuserId(),
                         'userId'  => $storage->getUserId(),
-                        'avatarId' => $this->userAvatarAuthorization->getAvatarHostUserId()
+                        'avatarId' => $this->userAvatarAuthorization->getAvatarHostUserId(),
                     ]
                 );
             }
@@ -975,7 +997,7 @@ class OrderService implements LoggerAwareInterface
                                 $address->setRegion($locationPathItem['NAME']);
                             } elseif (
                                 \in_array($locationType, [
-                                    LocationService::TYPE_SUBREGION, LocationService::TYPE_CITY
+                                    LocationService::TYPE_SUBREGION, LocationService::TYPE_CITY,
                                 ], true)
                             ) {
                                 $area[] = $locationPathItem['NAME'];
@@ -994,13 +1016,13 @@ class OrderService implements LoggerAwareInterface
                         'REGION' => $address->getRegion(),
                         'STREET' => $address->getStreet(),
                         'STREET_PREFIX' => $address->getStreetPrefix(),
-                        'ZIP_CODE' => $address->getZipCode()
+                        'ZIP_CODE' => $address->getZipCode(),
                     ]);
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
                         'userId'  => $storage->getUserId(),
-                        'address' => $address
+                        'address' => $address,
                     ]);
                 }
             } else {
@@ -1069,7 +1091,7 @@ class OrderService implements LoggerAwareInterface
 
         TaggedCacheHelper::clearManagedCache([
             'order:' . $order->getField('USER_ID'),
-            'order:item:' . $order->getId()
+            'order:item:' . $order->getId(),
         ]);
     }
 

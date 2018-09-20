@@ -168,7 +168,8 @@ class FourPawsFastOrderComponent extends CBitrixComponent
                         /** никогда не сработает */
                     }
                 }
-                $basket = $this->basketService->getBasket();
+                /** @var Basket $basket */
+                $basket = $this->basketService->getBasket()->getOrderableItems();
                 $this->offerCollection = $this->basketService->getOfferCollection(true);
                 // привязывать к заказу нужно для расчета скидок
                 if (null === $order = $basket->getOrder()) {

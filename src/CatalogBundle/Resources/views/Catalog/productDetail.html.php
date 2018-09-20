@@ -76,8 +76,11 @@ if (null === $offer) {
     $logger->error('Нет оффера');
     return;
 } ?>
-<div class="b-product-card" data-productid="<?= $product->getId() ?>" data-offerId="<?= $offer->getId() ?>"
-     data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/">
+<div class="b-product-card"
+     data-productid="<?= $product->getId() ?>"
+     data-offerId="<?= $offer->getId() ?>"
+     data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/"
+     itemprop="itemListElement" itemscope itemtype="http://schema.org/Product" >
     <div class="b-container">
         <?php
         ob_start();
@@ -254,7 +257,8 @@ if (null === $offer) {
                     <?php if ($offer->isShare()) { ?>
                         <div class="b-tab-content__container js-tab-content" data-tab-content="shares">
                             <?php /** @var IblockElement $share */
-                            foreach ($offer->getShare() as $share) { ?>
+                            foreach ($offer->getShare() as $share) {
+                                ?>
                                 <div class="b-title b-title--advice b-title--stock">Акция</div>
                                 <div class="b-stock">
                                     <div class="b-characteristics-tab b-characteristics-tab--stock">
@@ -265,7 +269,7 @@ if (null === $offer) {
                                                     <div class="b-characteristics-tab__dots"></div>
                                                 </div>
                                                 <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--stock">
-                                                    <?= $share->getName() ?>
+                                                    <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>"><?= $share->getName() ?></a>
                                                 </div>
                                             </li>
                                             <li class="b-characteristics-tab__item b-characteristics-tab__item--stock">

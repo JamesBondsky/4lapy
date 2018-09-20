@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\App;
 
 use Bitrix\Main\Entity\DataManager;
@@ -102,7 +98,6 @@ class Application extends AppKernel
     }
 
     /**
-     * @throws ApplicationCreateException
      * @return Application
      *
      */

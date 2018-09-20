@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 
 /**
  * @var array $arResult
@@ -26,17 +25,18 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-close-popup"
                        href="javascript:void(0);">Выберите пункт самовывоза</a>
                     <h4 class="b-availability__header b-availability__header--desktop">
-                        <?php if ($arResult['DELIVERY_CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
-                            Наши магазины
-                        <?php } else { ?>
+                        <?php if ($arResult['IS_DPD']) { ?>
                             Пункты выдачи
+                        <?php } else { ?>
+                            Наши магазины
                         <?php } ?>
                         <span class="b-availability__header-amount js-orders-shop-count">(всего 0)</span>
                     </h4>
-                    <h4 class="b-availability__header b-availability__header--tablet active">Выберите пункт самовывоза
+                    <h4 class="b-availability__header b-availability__header--tablet active">
+                        Выберите <?= $arResult['IS_DPD'] ? 'пункт самовывоза' : 'магазин' ?>
                     </h4>
                     <h4 class="b-availability__header b-availability__header--tablet b-availability__header--popuped">
-                        Пункт самовывоза
+                        <?= $arResult['IS_DPD'] ? 'Пункт самовывоза' : 'Магазин' ?>
                     </h4>
                     <ul class="b-availability-tab-list b-availability-tab-list--order js-availability-list">
                         <li class="b-availability-tab-list__item active">
@@ -52,7 +52,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                                title="На карте">На карте</a>
                         </li>
                     </ul>
-                    <?php if ($arResult['DELIVERY_CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
+                    <?php if (!$arResult['IS_DPD']) { ?>
                         <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
                             <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
                                 <?php /*

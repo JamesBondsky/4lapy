@@ -104,6 +104,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     <form class="b-order-contacts__form js-form-validation"
                           id="order-step"
                           method="post"
+                          onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
                           data-url="<?= $arResult['URL']['AUTH_VALIDATION'] ?>">
                         <div class="b-input-line js-small-input-two">
                             <div class="b-input-line__label-wrapper">
@@ -146,7 +147,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                            name="phone"
                                            value="<?= $storage->getPhone() ?>"
                                            data-url=""
-                                        <?= $user ? 'disabled="disabled"' : '' ?>>
+                                        <?= $user && $user->getPersonalPhone() ? 'disabled="disabled"' : '' ?>>
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>

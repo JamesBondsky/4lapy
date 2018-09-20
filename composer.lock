@@ -4,24 +4,32 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "57df3cccdbaf831c5a430dd6202db585",
+    "content-hash": "e52abdee2e613af7fcc972a200d43601",
     "packages": [
         {
             "name": "adv/bitrix-tools",
-            "version": "v1.0.15",
+            "version": "v1.0.20",
             "source": {
                 "type": "git",
-                "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git",
-                "reference": "54217618793736ada655f0eccca39d03fade1197"
+                "url": "ssh://git@bitbucket.adv.ru:7999/adv/bitrix-tools.git",
+                "reference": "cece1e35b56e1bd3a70c850291fd32e81ff3d6de"
             },
             "require": {
                 "andreyryabin/sprint.migration": "^2.0",
                 "doctrine/collections": "^1.4",
                 "monolog/monolog": "^1.22",
                 "php": "^7.0",
-                "psr/log": "^1.0"
+                "psr/log": "^1.0",
+                "webarchitect609/bitrix-cache": "^1.0"
             },
             "type": "library",
+            "extra": {
+                "installer-paths": {
+                    "local/modules/{$name}/": [
+                        "type:bitrix-module"
+                    ]
+                }
+            },
             "autoload": {
                 "psr-4": {
                     "Adv\\Bitrixtools\\": "src"
@@ -37,7 +45,7 @@
                 }
             ],
             "description": "Bitrix tools",
-            "time": "2018-03-30T13:11:34+00:00"
+            "time": "2018-09-17T06:22:38+00:00"
         },
         {
             "name": "adv/yandex-market-api",
@@ -3997,6 +4005,46 @@
                 "cache"
             ],
             "time": "2018-06-05T09:35:54+00:00"
+        },
+        {
+            "name": "webarchitect609/bitrix-iblock-property-type",
+            "version": "v1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/webarchitect609/bitrix-iblock-property-type.git",
+                "reference": "75c902329e8e0bf531a861ea95f5b6c9910586be"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/webarchitect609/bitrix-iblock-property-type/zipball/75c902329e8e0bf531a861ea95f5b6c9910586be",
+                "reference": "75c902329e8e0bf531a861ea95f5b6c9910586be",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WebArch\\BitrixIblockPropertyType\\": "src/main"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sergey Gripinskiy",
+                    "email": "web-architect@mail.ru"
+                }
+            ],
+            "description": "Set of custom Bitrix iblock property types and basic auxiliary functionality to help develop new types as easy and fast as it possible.",
+            "keywords": [
+                "bitrix",
+                "iblock"
+            ],
+            "time": "2018-06-05T15:01:12+00:00"
         },
         {
             "name": "webarchitect609/bitrix-neverinclude",

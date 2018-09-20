@@ -39,8 +39,6 @@ $offers = $product->getOffersSorted();
 $brand = $product->getBrand();
 $currentOffer = $arResult['CURRENT_OFFER'];
 
-$mainCombinationType = $currentOffer->getClothingSize() ? 'SIZE' : 'VOLUME';
-
 if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
 }
@@ -48,8 +46,10 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>
     <a href="<?= $brand->getDetailPageUrl() ?>"
        class="b-title b-title--h2 b-title--inline b-title--card"
-       title="<?= $brand->getName() ?>"><?= $brand->getName() ?></a>
-    <h1 class="b-title b-title--h1 b-title--card"><?= $product->getName() ?></h1>
+       title="<?= $brand->getName() ?>" >
+        <span itemprop="brand" ><?= $brand->getName() ?></span>
+    </a>
+    <h1 class="b-title b-title--h1 b-title--card" itemprop="name" ><?= $product->getName() ?></h1>
 <?php $this->EndViewTarget();
 
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
@@ -102,7 +102,8 @@ $clonedOffers->uasort(
                                          alt="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                          title="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                          data-zoom-image="<?= $originalImages->get($id) ?>"
-                                         role="presentation"/>
+                                         role="presentation"
+                                         itemprop="image" />
                                 </a>
                             </div>
                         </div>
@@ -145,8 +146,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 ?>
     <div class="b-product-card__option-product js-weight-default">
         <?php //&& $product->isFood()
-        if ($mainCombinationType && $offers->count() > 0) {
-            if ($mainCombinationType === 'SIZE') { ?>
+        if ($offers->count() > 0) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            if ($currentOffer->getPackageLabelType() === Offer::PACKAGE_LABEL_TYPE_SIZE) { ?>
                 <div class="b-product-card__weight">Размеры</div>
             <?php } else { ?>
                 <div class="b-product-card__weight">Варианты фасовки</div>
@@ -158,26 +160,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 
                     foreach ($offers as $offer) {
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
-
-                        $value = null;
-                        if ($mainCombinationType === 'SIZE') {
-                            if ($offer->getClothingSize()) {
-                                $value = $offer->getClothingSize()->getName();
-                            }
-                        } else {
-                            if ($offer->getVolumeReference()) {
-                                $value = $offer->getVolumeReference()->getName();
-                            } else {
-                                $weight = $offer->getCatalogProduct()->getWeight();
-                                if ($weight > 0) {
-                                    $value = WordHelper::showWeight($weight);
-                                }
-                            }
-                        }
-
-                        if (empty($value)) {
-                            continue;
-                        } ?>
+                        /** @noinspection PhpUnhandledExceptionInspection */
+                        $value = $offer->getPackageLabel(false, 0);
+                        ?>
                         <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
                             <a class="b-weight-container__link b-weight-container__link--product js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
@@ -408,7 +393,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 ?>
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
         <div class="b-description-tab">
-            <div class="b-description-tab__column">
+            <div class="b-description-tab__column" itemprop="description" >
                 <p><?= $product->getDetailText()->getText() ?></p>
             </div>
             <div class="b-description-tab__column b-description-tab__column--characteristics">

@@ -222,11 +222,14 @@ class Category extends IblockSection implements FilterInterface
                     ->withListPageUrl('/catalog/');
                 $this->withParent($parent);
             }
+
             if ($this->getIblockSectionId()) {
                 $parent = (new CategoryQuery())
                     ->withFilterParameter('=ID', $this->getIblockSectionId())
+                    ->withoutFilterParameter('ACTIVE')
                     ->exec()
                     ->first();
+
                 $this->withParent($parent);
             }
         }
@@ -245,7 +248,7 @@ class Category extends IblockSection implements FilterInterface
         while ($section) {
             $collection->add($section);
 
-            if ($section->getIblockSectionId() === 0) {
+            if (!$section->getIblockSectionId()) {
                 break;
             }
 

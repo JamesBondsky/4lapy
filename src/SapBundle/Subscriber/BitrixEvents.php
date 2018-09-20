@@ -15,9 +15,16 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/**
+ * Class BitrixEvents
+ *
+ * @package FourPaws\SapBundle\Subscriber
+ */
 class BitrixEvents extends BaseServiceHandler
 {
     /**
@@ -25,27 +32,27 @@ class BitrixEvents extends BaseServiceHandler
      */
     private $collection;
 
+    /**
+     * BitrixEvents constructor.
+     */
     public function __construct()
     {
         $this->collection = new ArrayCollection();
     }
 
     /**
-     * Инициализация всех обработчиков сервиса
-     *
-     * @param EventManager $eventManager
-     *
-     * @throws ArgumentException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws RuntimeException
      * @throws SystemException
-     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
-    public static function initHandlers(EventManager $eventManager): void
+    public static function initReferenceHandler(): void
     {
-        parent::initHandlers($eventManager);
-
         /**
          * @var static $current
          */
+        $eventManager = EventManager::getInstance();
         $current = Application::getInstance()->getContainer()->get(self::class);
         $referenceStorage = Application::getInstance()->getContainer()->get(SapReferenceStorage::class);
 

@@ -11,11 +11,14 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
@@ -111,6 +114,12 @@ class Event extends BaseServiceHandler
         ], $module);
 
         ###   Обработчики скидок EOF   ###
+
+        /** предотвращение попадания отложенных товаров в заказ */
+        static::initHandler('OnSaleBasketItemBeforeSaved', [
+            self::class,
+            'removeDelayedItems'
+        ], $module);
 
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
@@ -303,6 +312,28 @@ class Event extends BaseServiceHandler
             ->get(NotificationService::class);
 
         $notificationService->sendOrderPaymentMessage($order);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @return EventResult
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
+     */
+    public static function removeDelayedItems(BitrixEvent $event): EventResult
+    {
+        $basketItem = $event->getParameter('ENTITY');
+        $result = new EventResult(EventResult::SUCCESS);
+        if ($basketItem instanceof BasketItem) {
+            /** @var BasketItemCollection $collection */
+            $collection = $basketItem->getCollection();
+            if ($collection->getOrderId() && $basketItem->isDelay()) {
+                $result = new EventResult(EventResult::ERROR);
+            }
+        }
+
+        return $result;
     }
 
     /**
