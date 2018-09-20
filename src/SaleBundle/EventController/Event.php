@@ -17,6 +17,7 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
@@ -37,6 +38,8 @@ use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Exception\ForgotBasket\FailedToUpdateException;
+use FourPaws\SaleBundle\Service\ForgotBasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
@@ -191,6 +194,15 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserLoginByHash', [
             self::class,
             'updateUserAccountBalance'
+        ], $module);
+
+        /**
+         * Забытая корзина
+         */
+        $module = 'sale';
+        static::initHandler('OnSaleBasketItemSaved', [
+            self::class,
+            'disableForgotBasketReminder'
         ], $module);
     }
 
@@ -623,6 +635,36 @@ class Event extends BaseServiceHandler
                         $e->getMessage()
                     ));
             }
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @throws ArgumentException
+     * @throws ArgumentTypeException
+     * @throws FailedToUpdateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws \LogicException
+     */
+    public static function disableForgotBasketReminder(BitrixEvent $event)
+    {
+        $entity = $event->getParameter('ENTITY');
+        $userId = null;
+        /** @var CurrentUserProviderInterface $currentUserProvider */
+        $currentUserProvider = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        if ($entity instanceof BasketItem) {
+            try {
+                $userId = $currentUserProvider->getCurrentUserId();
+            } catch (NotAuthorizedException $e) {
+            }
+        }
+
+        if ($userId) {
+            /** @var ForgotBasketService $forgotBasketService */
+            $forgotBasketService = Application::getInstance()->getContainer()->get(ForgotBasketService::class);
+            $forgotBasketService->disableUserTasks($userId);
         }
     }
 }

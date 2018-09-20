@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
@@ -16,6 +12,7 @@ use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
@@ -144,6 +141,8 @@ class NotificationService implements LoggerAwareInterface
                 'user'  => $forgotBasketNotification->getUser()->getId(),
                 'email' => $forgotBasketNotification->getUser()->getEmail()
             ]);
+        } catch (ExpertsenderBasketEmptyException|ExpertsenderEmptyEmailException $e) {
+            // skip
         } catch (ExpertsenderServiceBlackListException $e) {
             $this->log()->warning(
                 \sprintf(
@@ -152,11 +151,13 @@ class NotificationService implements LoggerAwareInterface
                     $e->getMessage()
                 ),
                 [
-                    'type' => $forgotBasketNotification->getMessageType(),
+                    'type'  => $forgotBasketNotification->getMessageType(),
                     'user'  => $forgotBasketNotification->getUser()->getId(),
                     'email' => $forgotBasketNotification->getUser()->getEmail()
                 ]
             );
+
+            $result = true;
         } catch (ExpertSenderException|ExpertsenderServiceException $e) {
             $this->log()->error(
                 \sprintf(

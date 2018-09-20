@@ -202,6 +202,21 @@ class ForgotBasketService
     }
 
     /**
+     * @param int $userId
+     *
+     * @throws FailedToUpdateException
+     */
+    public function disableUserTasks(int $userId): void
+    {
+        $tasks = $this->forgotBasketRepository->findAllByUserId($userId);
+        /** @var ForgotBasket $task */
+        foreach ($tasks as $task) {
+            $task->setActive(false);
+            $this->updateTask($task);
+        }
+    }
+
+    /**
      * @param ForgotBasket $task
      *
      * @return bool

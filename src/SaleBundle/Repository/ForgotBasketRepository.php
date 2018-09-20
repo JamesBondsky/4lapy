@@ -33,6 +33,16 @@ class ForgotBasketRepository extends D7Repository
     }
 
     /**
+     * @param int $userId
+     *
+     * @return Collection
+     */
+    public function findAllByUserId(int $userId): Collection
+    {
+        return parent::findBy(['UF_USER_ID' => $userId]);
+    }
+
+    /**
      * @param string $type
      * @param bool   $useDateFilter
      *
