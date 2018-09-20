@@ -35,7 +35,9 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -54,7 +56,17 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    private const MINIMAL_AVAILABLE_IN_RC = 2;
+
     private $deliveryInfo;
+    /**
+     * @var StoreService
+     */
+    private $storeService;
+    /**
+     * @var Store
+     */
+    private $rcStock;
 
     /**
      * YandexFeedService constructor.
@@ -62,9 +74,11 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param SerializerInterface $serializer
      * @param Filesystem          $filesystem
      */
-    public function __construct(SerializerInterface $serializer, Filesystem $filesystem)
+    public function __construct(SerializerInterface $serializer, Filesystem $filesystem, StoreService $storeService)
     {
         parent::__construct($serializer, $filesystem, Feed::class);
+
+        $this->storeService = $storeService;
     }
 
     /**
@@ -370,7 +384,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return true;
         }
 
-        if (!$offer->isAvailable()) {
+        if ($offer->getAllStocks()->filterByStore($this->getRcStock())->getTotalAmount() < self::MINIMAL_AVAILABLE_IN_RC) {
             return true;
         }
 
@@ -609,5 +623,17 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         }
 
         return clone $deliveryInfo;
+    }
+
+    /**
+     * @return Store
+     */
+    private function getRcStock(): Store
+    {
+        if (null === $this->rcStock) {
+            $this->rcStock = $this->storeService->getStoreByXmlId('DC01');
+        }
+
+        return $this->rcStock;
     }
 }
