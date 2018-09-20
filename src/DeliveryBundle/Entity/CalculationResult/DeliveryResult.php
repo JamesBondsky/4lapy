@@ -38,7 +38,7 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
      */
     public function getDeliveryDate(): \DateTime
     {
-        $date = $this->getNextDeliveryDate(parent::getDeliveryDate());
+        $date = parent::getDeliveryDate();
         $date->modify(
             sprintf(
                 '+%s days',
