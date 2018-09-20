@@ -7,6 +7,6 @@ namespace FourPaws\SaleBundle\Exception;
  * Class SaleBundleException
  * @package FourPaws\SaleBundle\Exception
  */
-interface BaseExceptionInterface
+interface BaseExceptionInterface extends \Throwable
 {
 }

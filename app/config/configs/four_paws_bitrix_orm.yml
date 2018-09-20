@@ -3,5 +3,9 @@ four_paws_bitrix_orm:
         address:
             class: FourPaws\PersonalBundle\Entity\Address
             data_manager: 'bx.hlblock.address'
+        forgot_basket:
+            class: FourPaws\SaleBundle\Entity\ForgotBasket
+            data_manager: 'bx.hlblock.forgotbasket'
+            repository: FourPaws\SaleBundle\Repository\ForgotBasketRepository
 
 #            repository: FourPaws\BitrixOrmBundle\Orm\D7Repository

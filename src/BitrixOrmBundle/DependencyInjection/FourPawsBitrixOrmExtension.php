@@ -73,7 +73,7 @@ class FourPawsBitrixOrmExtension extends ConfigurableExtension
             $containerBuilder->setDefinition($entityManagerId, $entityManagerDefinition);
 
 
-            $repositoryDefinition = new Definition(D7Repository::class);
+            $repositoryDefinition = new Definition($entityData['repository']);
             $repositoryDefinition->setArgument(0, new Reference($entityManagerId));
 
             $containerBuilder->setDefinition($repositoryId, $repositoryDefinition);

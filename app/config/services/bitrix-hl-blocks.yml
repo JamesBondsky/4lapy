@@ -10,6 +10,10 @@ services:
     abstract: true
     factory: 'bx.hlblock.factory:createTableObject'
 
+  bx.hlblock.forgotbasket:
+    arguments: ['ForgotBasket']
+    parent: bx.hlblock.base
+
   bx.hlblock.parasitetype:
     arguments: ['ParasiteType']
     parent: bx.hlblock.base

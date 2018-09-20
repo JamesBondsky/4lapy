@@ -55,6 +55,10 @@ services:
         class: FourPaws\SaleBundle\Service\UserAccountService
         public: true
 
+    FourPaws\SaleBundle\Service\ForgotBasketService:
+        class: FourPaws\SaleBundle\Service\ForgotBasketService
+        public: true
+
     FourPaws\SaleBundle\Discount\Manzana:
         class: FourPaws\SaleBundle\Discount\Manzana
         public: true

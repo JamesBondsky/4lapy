@@ -77,8 +77,3 @@ form.faq:
   path: /form/faq/add/
   defaults: { _controller: '\FourPaws\Form\AjaxController\FaqController::addAction' }
   methods: [POST]
-
-forgot_basket.close_page:
-  path: /sale/forgot_basket_close_page/
-  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CloseSiteController::closeAction' }
-  methods: [GET]
