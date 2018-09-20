@@ -57,6 +57,7 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
                 ];
             }
         }
+        $params['VALUE'] = \array_values($params['VALUE']);
 
         return $params;
     }
