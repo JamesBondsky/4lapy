@@ -9,8 +9,8 @@
 
 use FourPaws\Helpers\WordHelper;
 
-if ($arResult['CURRENT']['DELIVERY']['FREE_FROM']) {
-    $diff = (float)$arResult['CURRENT']['DELIVERY']['FREE_FROM'] - (float)$arParams['BASKET_PRICE'];
+if ($arResult['DELIVERY']['FREE_FROM']) {
+    $diff = (float)$arResult['DELIVERY']['FREE_FROM'] - (float)$arParams['BASKET_PRICE'];
     if ($diff > 0.01) {
         ?>
         <p class="b-information-order__additional-info">

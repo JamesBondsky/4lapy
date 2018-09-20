@@ -760,6 +760,7 @@ class LocationService
      * Получение кода текущего местоположения
      *
      * @return string
+     * @throws \RuntimeException
      */
     public function getCurrentLocation(): string
     {
@@ -776,7 +777,7 @@ class LocationService
             }
         } catch (\Exception $e) {
             $this->log()->error(
-                sprintf('Failed to get product list: %s: %s', \get_class($e), $e->getMessage())
+                sprintf('Failed to selected city: %s: %s', \get_class($e), $e->getMessage())
             );
             $result = static::LOCATION_CODE_MOSCOW;
         }
@@ -850,10 +851,13 @@ class LocationService
     /**
      * Получение эл-та из HL-блока Cities по коду местоположения
      *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      * @return null|City
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
+     * @throws \LogicException
      */
     public function getDefaultCity(): ?City
     {
@@ -887,13 +891,11 @@ class LocationService
      * Получение эл-та из HL-блока,
      * привязанного к выбранному городу пользователя
      *
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      * @return null|City
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws \RuntimeException
      */
     public function getCurrentCity(): ?City
     {

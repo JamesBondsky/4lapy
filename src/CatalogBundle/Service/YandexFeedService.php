@@ -562,7 +562,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 'empty',
                 ['CACHE_TIME' => 3601 * 24],
                 false,
-                ['HIDE_ICONS' => 'Y']);
+                ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
 
             foreach ($deliveryInfo as $delivery) {
                 if ((int)$delivery['PRICE']) {
