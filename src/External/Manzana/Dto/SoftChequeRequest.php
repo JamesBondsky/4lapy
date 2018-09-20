@@ -389,6 +389,10 @@ class SoftChequeRequest
      */
     public function getItems(): Collection
     {
+        if (!$this->items) {
+            $this->items = new ArrayCollection();
+        }
+
         return $this->items;
     }
 
