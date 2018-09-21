@@ -30,8 +30,8 @@ if (isset($arResult['REGISTRATION_STATUS'])) {
         ?>
         <h2 class="text-h3">
             <?php
-            if ($arResult['PRINT_FIELDS']['phone']['VALUE']) {
-                echo 'Создан аккаунт по номеру телефона: '.$arResult['PRINT_FIELDS']['phone']['VALUE'];
+            if (isset($arResult['FIELD_VALUES']['phone']) && $arResult['FIELD_VALUES']['phone'] !== '') {
+                echo 'Создан аккаунт по номеру телефона: '.$arResult['FIELD_VALUES']['phone'];
             } else {
                 echo 'Аккаунт создан';
             }
@@ -68,7 +68,7 @@ if ($showForm) {
         }
         $curFormId = 'form'.$i++;
         //$visibleCss = $setKey == $arResult['SELECTED_CONTACT_ID'] ? ' _visible' : '';
-        $visibleCss = $arResult['STEP'] == 2 ? '' : ' _visible';
+        $visibleCss = $arResult['STEP'] === 2 ? '' : ' _visible';
         echo '<div class="registration-form-cont'.$visibleCss.'">';
         include __DIR__ . '/inc.form.php';
         echo '</div>';
