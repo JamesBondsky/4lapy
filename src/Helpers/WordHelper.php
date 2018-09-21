@@ -78,6 +78,18 @@ class WordHelper
     }
 
     /**
+     * @param $str
+     *
+     * @return string
+     */
+    public static function ucfirst($str): string
+    {
+        $firstLetter = mb_substr($str, 0, 1);
+        $str = mb_substr($str, 1);
+        return mb_convert_case($firstLetter, MB_CASE_TITLE) . $str;
+    }
+
+    /**
      * @param $string
      *
      * @return mixed
