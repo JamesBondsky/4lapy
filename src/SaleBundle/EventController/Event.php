@@ -214,6 +214,10 @@ class Event extends BaseServiceHandler
             self::class,
             'disableForgotBasketReminder'
         ], $module);
+        static::initHandler('OnSaleBasketItemEntityDeleted', [
+            self::class,
+            'disableForgotBasketReminder'
+        ], $module);
     }
 
     public static function updateUserAccountBalance(): void
