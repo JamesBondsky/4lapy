@@ -36,8 +36,6 @@ class AvailabilityReportService
     protected const STEP_ALL   = 0;
     protected const STEP_FIRST = 1;
 
-
-
     /**
      * @var StoreService
      */
@@ -211,7 +209,7 @@ class AvailabilityReportService
                 ->setImage(!empty($offer->getImagesIds()))
                 ->setDescription((bool)$offer->getProduct()->getDetailText()->getText())
                 ->setActive($offer->isActive())
-                ->setDateCreate($offer->getDateCreate())
+                ->setDateCreate($offer->getDateCreate() ?? new \DateTimeImmutable())
                 ->setStocks($offer->getAllStocks()->filterByStore($store)->getTotalAmount())
                 ->setPrice($offer->getPrice());
         }
