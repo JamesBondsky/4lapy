@@ -43,15 +43,14 @@ use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderItem;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
-use FourPaws\SaleBundle\Exception\FiscalValidation\PositionAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderUpdateException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
-use FourPaws\SaleBundle\Exception\SberbankOrderAlreadyPaid;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotPaidException;
 use FourPaws\SaleBundle\Exception\SberBankOrderNumberNotFoundException;
@@ -159,17 +158,15 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Fiscalization $fiscalization
      * @param OrderInfo     $orderInfo
-     * @param bool          $priceFix
      *
      * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
-     * @throws PositionAmountExceededException
      * @throws PositionQuantityExceededException
+     * @throws FiscalAmountExceededException
      */
     public function validateFiscalization(
         Fiscalization $fiscalization,
-        OrderInfo $orderInfo,
-        bool $priceFix = false
+        OrderInfo $orderInfo
     ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
@@ -216,26 +213,18 @@ class PaymentService implements LoggerAwareInterface
                     )
                 );
             }
+        }
 
-            if ($fiscalItem->getTotal() > $matchingItem->getItemAmount()) {
-                if ($priceFix) {
-                    $price = round($matchingItem->getItemAmount() / $matchingItem->getQuantity()->getValue());
-
-                    $fiscalItem
-                        ->setTotal($matchingItem->getItemAmount())
-                        ->setPrice($price);
-                } else {
-                    throw new PositionAmountExceededException(
-                        \sprintf(
-                            'Item %s amount (%s) for position %s exceeds existing item amount (%s)',
-                            $fiscalItem->getCode(),
-                            $fiscalItem->getTotal(),
-                            $fiscalItem->getPositionId(),
-                            $matchingItem->getItemAmount()
-                        )
-                    );
-                }
-            }
+        $approvedAmount = $orderInfo->getPaymentAmountInfo()->getApprovedAmount();
+        $fiscalAmount = $this->getFiscalTotal($fiscalization);
+        if ($fiscalAmount > $approvedAmount) {
+            throw new FiscalAmountExceededException(
+                \sprintf(
+                    'Fiscal amount (%s) exceeds approved amount (%s)',
+                    $fiscalAmount,
+                    $approvedAmount
+                )
+            );
         }
     }
 
@@ -380,8 +369,10 @@ class PaymentService implements LoggerAwareInterface
      * @param float $amount
      *
      * @throws ArgumentException
+     * @throws NotFoundException
      * @throws ObjectNotFoundException
      * @throws PaymentException
+     * @throws PaymentReverseException
      */
     protected function reverseOnlinePayment(Order $order, float $amount = 0): void
     {
