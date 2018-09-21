@@ -1615,7 +1615,7 @@ class Offer extends IblockElement
         /** LP23-365 Удаляем дубли названия бренда в названии оффера */
         $brandName = $this->getProduct()->getBrandName();
         $name = $this->NAME;
-        while (\stripos($name, $brandName) !== \strripos($name, $brandName)) {
+        while ($brandName && \stripos($name, $brandName) !== \strripos($name, $brandName)) {
             $name = \substr_replace(
                 $name,
                 '',
