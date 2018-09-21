@@ -41,14 +41,17 @@ class BasketViewService
             '',
             [
                 'COMPONENT_TEMPLATE' => '',
-                'PATH_TO_BASKET' => '/cart/',
-                'PATH_TO_ORDER' => '/sale/order/',
-                'IS_AJAX' => $isAjax,
+                'PATH_TO_BASKET'     => '/cart/',
+                'PATH_TO_ORDER'      => '/sale/order/',
+                'IS_AJAX'            => $isAjax,
+                'CACHE_TYPE'         => 'A',
+                'CACHE_TIME'         => 3600
             ],
             false,
             ['HIDE_ICONS' => 'Y']
         );
         Manager::enableExtendsDiscount();
+
         return \ob_get_clean();
     }
 
@@ -67,7 +70,7 @@ class BasketViewService
             'fourpaws:fast.order',
             '',
             [
-                'TYPE' => 'innerForm',
+                'TYPE'    => 'innerForm',
                 'IS_AJAX' => $isAjax,
             ],
             null,
@@ -95,7 +98,7 @@ class BasketViewService
             '',
             [
                 'IS_AJAX' => $isAjax,
-                'BASKET' => $this->basketService->getBasket(),
+                'BASKET'  => $this->basketService->getBasket(),
             ],
             false,
             ['HIDE_ICONS' => 'Y']

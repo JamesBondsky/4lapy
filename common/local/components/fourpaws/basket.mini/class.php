@@ -10,15 +10,20 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
+use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SaleBundle\Service\BasketService;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 /** @noinspection EfferentObjectCouplingInspection */
@@ -40,12 +45,26 @@ class BasketMiniComponent extends FourPawsComponent
     /** @var Basket */
     private $basketItemsWithoutGifts;
 
+    /**
+     * BasketMiniComponent constructor.
+     * @param CBitrixComponent|null $component
+     * @throws SystemException
+     * @throws \LogicException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     */
+    public function __construct(?CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+
+        $container = Application::getInstance()->getContainer();
+        $this->basketService = $container->get(BasketService::class);
+    }
 
     public function onPrepareComponentParams($params): array
     {
-        /** отключаем кеширваоние */
-        $params['CACHE_TIME'] = 0;
-        $params['CACHE_TYPE'] = 'N';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
 
         return parent::onPrepareComponentParams($params);
     }
@@ -55,16 +74,13 @@ class BasketMiniComponent extends FourPawsComponent
      */
     public function prepareResult(): void
     {
-        if (!$this->loadServices()) {
-            $this->abortResultCache();
-            return;
-        }
         /** @var Basket $basket */
         $basket = $this->arParams['BASKET'];
         if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
             $basket = $this->basketService->getBasket();
         }
-
+        $this->log()->info('no cache', ['items' => $basket->getQuantityList(), 'fuser' => $basket->getFUserId()]); //debug
+        TaggedCacheHelper::addManagedCacheTag('basket:' . $basket->getFUserId());
         $this->arResult['BASKET'] = $basket;
     }
 
@@ -80,8 +96,14 @@ class BasketMiniComponent extends FourPawsComponent
         }
         if (!isset($this->offers[$offerId])) {
             $this->offers[$offerId] = OfferQuery::getById($offerId,
-                ['ID', 'IBLOCK_ID', 'PROPERTY_IMG', 'PROPERTY_CML2_LIK']);
+                [
+                    'ID',
+                    'IBLOCK_ID',
+                    'PROPERTY_IMG',
+                    'PROPERTY_CML2_LIK',
+                ]);
         }
+
         return $this->offers[$offerId];
     }
 
@@ -103,6 +125,7 @@ class BasketMiniComponent extends FourPawsComponent
                 $this->images[$offerId] = $images->first();
             }
         }
+
         return $this->images[$offerId];
     }
 
@@ -134,21 +157,7 @@ class BasketMiniComponent extends FourPawsComponent
                 }
             }
         }
-        return $this->basketItemsWithoutGifts;
-    }
 
-    /**
-     * @return bool
-     */
-    private function loadServices(): bool
-    {
-        try {
-            $container = Application::getInstance()->getContainer();
-            $this->basketService = $container->get(BasketService::class);
-        } catch (\Exception $e) {
-            $this->log()->error('ошибка загрузки сервиса: ' . $e->getMessage());
-            return false;
-        }
-        return true;
+        return $this->basketItemsWithoutGifts;
     }
 }
