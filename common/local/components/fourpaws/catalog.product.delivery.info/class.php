@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -17,6 +19,8 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Model\Offer;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 CBitrixComponent::includeComponentClass('fourpaws:city.delivery.info');
 
@@ -36,7 +40,10 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
     /**
      * FourPawsCatalogProductDeliveryInfoComponent constructor.
      * @param CBitrixComponent|null $component
-     * @throws ApplicationCreateException
+     * @throws LogicException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -67,11 +74,18 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws DeliveryNotFoundException
-     * @throws NotFoundException
      * @throws CityNotFoundException
+     * @throws DeliveryNotFoundException
+     * @throws InvalidArgumentException
+     * @throws LogicException
+     * @throws NotFoundException
+     * @throws RuntimeException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
-    protected function prepareResult()
+    public function prepareResult(): void
     {
         if (!$this->arParams['OFFER']) {
             throw new \InvalidArgumentException('Invalid component parameters');
@@ -79,11 +93,11 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
 
         parent::prepareResult();
 
-        if (isset($this->arResult['CURRENT']['PICKUP']) &&
-            $this->arResult['CURRENT']['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
+        if (isset($this->arResult['PICKUP']) &&
+            $this->arResult['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
         ) {
-            $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
-                $this->arResult['CURRENT']['PICKUP']['RESULT']
+            $this->arResult['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
+                $this->arResult['PICKUP']['RESULT']
             );
         }
     }
@@ -97,6 +111,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
      * @throws NotFoundException
      * @throws DeliveryNotFoundException
      * @return CalculationResultInterface[]
+     * @throws RuntimeException
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
@@ -117,6 +132,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
     /**
      * @param int $id
      * @return Offer|null
+     * @throws RuntimeException
      */
     protected function getOffer(int $id): ?Offer
     {

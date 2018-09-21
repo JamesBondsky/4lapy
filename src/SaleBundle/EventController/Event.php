@@ -17,7 +17,6 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
@@ -118,6 +117,17 @@ class Event extends BaseServiceHandler
 
         ###   Обработчики скидок EOF   ###
 
+        /** сброс кеша малой корзины */
+        $module = 'sale';
+        static::initHandler('OnSaleBasketItemSaved', [
+            self::class,
+            'resetBasketCache'
+        ], $module);
+        static::initHandler('OnSaleBasketItemEntityDeleted', [
+            self::class,
+            'resetBasketCache'
+        ], $module);
+
         /** предотвращение попадания отложенных товаров в заказ */
         static::initHandler('OnSaleBasketItemBeforeSaved', [
             self::class,
@@ -201,6 +211,10 @@ class Event extends BaseServiceHandler
          */
         $module = 'sale';
         static::initHandler('OnSaleBasketItemSaved', [
+            self::class,
+            'disableForgotBasketReminder'
+        ], $module);
+        static::initHandler('OnSaleBasketItemEntityDeleted', [
             self::class,
             'disableForgotBasketReminder'
         ], $module);
@@ -665,6 +679,21 @@ class Event extends BaseServiceHandler
             /** @var ForgotBasketService $forgotBasketService */
             $forgotBasketService = Application::getInstance()->getContainer()->get(ForgotBasketService::class);
             $forgotBasketService->disableUserTasks($userId);
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @throws ArgumentException
+     * @throws ArgumentTypeException
+     * @throws \RuntimeException
+     */
+    public static function resetBasketCache(BitrixEvent $event)
+    {
+        $entity = $event->getParameter('ENTITY');
+        if ($entity instanceof BasketItem) {
+            TaggedCacheHelper::clearManagedCache(['basket:' . $entity->getFUserId()]);
         }
     }
 }

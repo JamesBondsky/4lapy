@@ -136,11 +136,6 @@ class NotificationService implements LoggerAwareInterface
                          ->setMessageType($messageType);
 
             $result = $this->emailService->sendForgotBasket($forgotBasket);
-            $this->log()->info('sent "forgot basket" message', [
-                'type' => $forgotBasketNotification->getMessageType(),
-                'user'  => $forgotBasketNotification->getUser()->getId(),
-                'email' => $forgotBasketNotification->getUser()->getEmail()
-            ]);
         } catch (ExpertsenderBasketEmptyException|ExpertsenderEmptyEmailException $e) {
             // skip
         } catch (ExpertsenderServiceBlackListException $e) {
