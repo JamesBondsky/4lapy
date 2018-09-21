@@ -79,6 +79,7 @@ $thirdStepFields = [
 ];
 $fourthStepFields = [];
 $printFields = array_merge($firstStepFields, $secondStepFields, $thirdStepFields, $fourthStepFields);
+$requiredFields = ['phone', 'firstName'];
 
 $printFieldsSet = ['n0', $arResult['SELECTED_CONTACT_ID']];
 /*
@@ -98,6 +99,7 @@ foreach ($printFieldsSet as $setKey) {
             'VALUE' => '',
             'ERROR' => null,
             'READONLY' => false,
+            'REQUIRED' => in_array($fieldName, $requiredFields, true)
         ];
     }
 }
@@ -148,11 +150,11 @@ if (isset($arResult['FIELD_VALUES']) && $arResult['FIELD_VALUES']) {
     $setKey = $arResult['SELECTED_CONTACT_ID'];
     foreach ($printFields as $fieldName) {
         if (isset($arResult['FIELD_VALUES'][$fieldName])) {
-            if (in_array($fieldName, $firstStepFields)) {
+            if (in_array($fieldName, $firstStepFields, true)) {
                 $arResult['POSTED_STEP'] = 1;
-            } elseif (in_array($fieldName, $secondStepFields)) {
+            } elseif (in_array($fieldName, $secondStepFields, true)) {
                 $arResult['POSTED_STEP'] = 2;
-            } elseif (in_array($fieldName, $thirdStepFields)) {
+            } elseif (in_array($fieldName, $thirdStepFields, true)) {
                 $arResult['POSTED_STEP'] = 3;
                 /*
             } elseif (in_array($fieldName, $fourthStepFields)) {
@@ -168,7 +170,7 @@ if (isset($arResult['FIELD_VALUES']) && $arResult['FIELD_VALUES']) {
 }
 
 // если нет пользователей в манзане, то сразу переходим на второй шаг
-if ($arResult['POSTED_STEP'] == 1 && (!isset($arResult['CONTACT_DATA']['USER']) || !$arResult['CONTACT_DATA']['USER'])) {
+if ($arResult['POSTED_STEP'] === 1 && (!isset($arResult['CONTACT_DATA']['USER']) || !$arResult['CONTACT_DATA']['USER'])) {
     $arResult['POSTED_STEP'] = 2;
 }
 
@@ -221,16 +223,18 @@ if ($arResult['WAS_POSTED']) {
 $setKey = $arResult['SELECTED_CONTACT_ID'];
 foreach ($printFields as $fieldName) {
     $readonly = false;
-    if ($arResult['STEP'] > 1 && in_array($fieldName, $firstStepFields)) {
+    if ($arResult['STEP'] > 1 && in_array($fieldName, $firstStepFields, true)) {
         $readonly = true;
     }
 
-    if ($arResult['STEP'] > 2 && in_array($fieldName, $secondStepFields)) {
+    if ($arResult['STEP'] > 2 && in_array($fieldName, $secondStepFields, true)) {
         $readonly = true;
     }
 
-    if ($fieldName !== 'email' && $fieldName !== 'genderCode' && $arResult['STEP'] > 3 && in_array($fieldName, $thirdStepFields)) {
-        $readonly = true;
+    if ($fieldName !== 'email' && $fieldName !== 'genderCode') {
+        if ($arResult['STEP'] > 3 && in_array($fieldName, $thirdStepFields, true)) {
+            $readonly = true;
+        }
     }
     /*
     if ($arResult['STEP'] > 4 && in_array($fieldName, $fourthStepFields)) {
@@ -239,17 +243,17 @@ foreach ($printFields as $fieldName) {
     */
 
     $error = null;
-    if ($arResult['POSTED_STEP'] >= 1 && in_array($fieldName, $firstStepFields)) {
+    if ($arResult['POSTED_STEP'] >= 1 && in_array($fieldName, $firstStepFields, true)) {
         if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {
             $error = $arResult['ERROR']['FIELD'][$fieldName];
         }
     }
-    if ($arResult['POSTED_STEP'] >= 2 && in_array($fieldName, $secondStepFields)) {
+    if ($arResult['POSTED_STEP'] >= 2 && in_array($fieldName, $secondStepFields, true)) {
         if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {
             $error = $arResult['ERROR']['FIELD'][$fieldName];
         }
     }
-    if ($arResult['POSTED_STEP'] >= 3 && in_array($fieldName, $thirdStepFields)) {
+    if ($arResult['POSTED_STEP'] >= 3 && in_array($fieldName, $thirdStepFields, true)) {
         if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {
             $error = $arResult['ERROR']['FIELD'][$fieldName];
         }
