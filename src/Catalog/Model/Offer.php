@@ -1608,6 +1608,27 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        /** LP23-365 Удаляем дубли названия бренда в названии оффера */
+        $brandName = $this->getProduct()->getBrandName();
+        $name = $this->NAME;
+        while (\stripos($name, $brandName) !== \strripos($name, $brandName)) {
+            $name = \substr_replace(
+                $name,
+                '',
+                \strripos($name, $brandName),
+                \strlen($brandName)
+            );
+            $name = str_replace('  ', ' ', trim($name));
+        }
+
+        return $name;
+    }
+
+    /**
      * @todo использовать этот метод для расчета скидочных цен
      *
      * Check and set optimal price, discount, old price with bitrix discount
