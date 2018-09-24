@@ -261,7 +261,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                 */
                 $newQuantity = (int)$pti->getQuantity() + (int)$item->getQuantity();
                 if (abs($pti->getPrice() - $item->getPrice()) <= $newQuantity) {
-                    $newPrice = ($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity;
+                    $newPrice = round(($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity, 2, PHP_ROUND_HALF_DOWN);
                     $pti->setQuantity($newQuantity);
                     $pti->setPrice($newPrice);
                     $pti->setSumPrice($pti->getPrice() * (int)$pti->getQuantity());
