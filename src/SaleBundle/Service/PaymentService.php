@@ -48,6 +48,7 @@ use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionWrongAmountException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderUpdateException;
 use FourPaws\SaleBundle\Exception\PaymentException;
@@ -166,6 +167,7 @@ class PaymentService implements LoggerAwareInterface
      * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
      * @throws PositionQuantityExceededException
+     * @throws PositionWrongAmountException
      */
     public function validateFiscalization(
         Fiscalization $fiscalization,
@@ -216,6 +218,18 @@ class PaymentService implements LoggerAwareInterface
                         $fiscalItem->getQuantity()->getValue(),
                         $fiscalItem->getPositionId(),
                         $matchingItem->getQuantity()->getValue()
+                    )
+                );
+            }
+
+            if ($fiscalItem->getTotal() !== $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()) {
+                throw new PositionWrongAmountException(
+                    \sprintf(
+                        'Item %s total (%s) for position %s is not equal to (price * amount) (%s)',
+                        $fiscalItem->getCode(),
+                        $fiscalItem->getTotal(),
+                        $fiscalItem->getPositionId(),
+                        $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()
                     )
                 );
             }
@@ -535,9 +549,13 @@ class PaymentService implements LoggerAwareInterface
         $items = new ArrayCollection();
 
         $measureList = [];
+        $defaultMeasure = 'Штука';
         $dbMeasure = \CCatalogMeasure::getList();
         while ($arMeasure = $dbMeasure->GetNext()) {
             $measureList[$arMeasure['ID']] = $arMeasure['MEASURE_TITLE'];
+            if ($arMeasure['IS_DEFAULT'] === BitrixUtils::BX_BOOL_TRUE) {
+                $defaultMeasure = $arMeasure['MEASURE_TITLE'];
+            }
         }
 
         $vatList = [];
@@ -630,10 +648,10 @@ class PaymentService implements LoggerAwareInterface
             $deliveryPrice = floor($order->getDeliveryPrice() * 100);
             $delivery = (new Item())
                 ->setPositionId(++$position)
-                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: '')
+                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: 'Доставка')
                 ->setQuantity((new ItemQuantity())
                     ->setValue(1)
-                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: '')
+                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: $defaultMeasure)
                 )
                 ->setXmlId(OrderPayment::GENERIC_DELIVERY_CODE)
                 ->setTotal($deliveryPrice)
