@@ -229,7 +229,8 @@ class AvailabilityReportService
                 ->setYandexName($product->getYmlName() ?: '-')
                 ->setFirstLevelCategory($categoryNames[0] ?: '-')
                 ->setSecondLevelCategory($categoryNames[1] ?: '-')
-                ->setThirdLevelCategory($categoryNames[2] ?: '-');
+                ->setThirdLevelCategory($categoryNames[2] ?: '-')
+                ->setBrand($product->getBrandName() ?: '-');
         }
 
         return $result;

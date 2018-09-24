@@ -106,6 +106,14 @@ class Product
     protected $thirdLevelCategory;
 
     /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Бренд")
+     * @Serializer\Type("string")
+     */
+    protected $brand;
+
+    /**
      * @return string
      */
     public function getXmlId(): string
@@ -329,6 +337,25 @@ class Product
     public function setThirdLevelCategory(string $thirdLevelCategory): Product
     {
         $this->thirdLevelCategory = $thirdLevelCategory;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrand(): string
+    {
+        return $this->brand;
+    }
+
+    /**
+     * @param string $brand
+     * @return Product
+     */
+    public function setBrand(string $brand): Product
+    {
+        $this->brand = $brand;
 
         return $this;
     }
