@@ -23,6 +23,7 @@ use Bitrix\Sale\Payment;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item as FiscalItem;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as SalePaymentService;
@@ -132,7 +133,11 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $orderInfo = $this->salePaymentService->getSberbankOrderStatusByOrderId($orderInvoiceId);
         if ($fiscalization = $this->getFiscalization($order, $paymentTask)) {
-            $this->salePaymentService->validateFiscalization($fiscalization, $orderInfo);
+            $this->salePaymentService->validateFiscalization(
+                $fiscalization,
+                $orderInfo,
+                $paymentTask->getSumPayed() * 100
+            );
         }
 
         $amount = $paymentTask->getSumPayed();
@@ -239,6 +244,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         /** @var array[] $paymentTaskItems */
         $paymentTaskItems = [];
         $paymentTask->getItems()->map(function (Item $item) use (&$paymentTaskItems) {
+            if ($this->isDeliveryItem($item)) {
+                $item->setOfferXmlId(OrderPayment::GENERIC_DELIVERY_CODE);
+            }
             $xmlId = $item->getOfferXmlId();
             if (!isset($paymentTaskItems[$xmlId])) {
                 $paymentTaskItems[$xmlId] = [];
@@ -253,7 +261,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                 */
                 $newQuantity = (int)$pti->getQuantity() + (int)$item->getQuantity();
                 if (abs($pti->getPrice() - $item->getPrice()) <= $newQuantity) {
-                    $newPrice = ($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity;
+                    $newPrice = round(($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity, 2, PHP_ROUND_HALF_DOWN);
                     $pti->setQuantity($newQuantity);
                     $pti->setPrice($newPrice);
                     $pti->setSumPrice($pti->getPrice() * (int)$pti->getQuantity());
@@ -317,5 +325,23 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         );
 
         return $fiscalization;
+    }
+
+    /**
+     * @param Item $item
+     *
+     * @return bool
+     */
+    private function isDeliveryItem(Item $item): bool {
+        $deliveryArticles = [
+            SapOrder::DELIVERY_ZONE_1_ARTICLE,
+            SapOrder::DELIVERY_ZONE_2_ARTICLE,
+            SapOrder::DELIVERY_ZONE_3_ARTICLE,
+            SapOrder::DELIVERY_ZONE_4_ARTICLE,
+            SapOrder::DELIVERY_ZONE_5_ARTICLE,
+            SapOrder::DELIVERY_ZONE_6_ARTICLE,
+        ];
+
+        return \in_array((string)$item->getOfferXmlId(), $deliveryArticles, true);
     }
 }

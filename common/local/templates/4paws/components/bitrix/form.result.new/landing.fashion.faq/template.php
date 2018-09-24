@@ -28,7 +28,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
     <div class="content_dropdown__content--expanded js-content-dropdown-content">
         <div class="remained_questions">
             <div class="remained_questions__title tablet_up_mq">Остались вопросы?</div>
-            <form data-url="/ajax/form/faq/add/" method="post"
+            <form data-url="/ajax/form/add/faq/" method="post"
                   class="js-form-validation js-form-faq remained_questions__form">
                 <div class="remained_questions__default">
                     <?= bitrix_sessid_post() ?>
