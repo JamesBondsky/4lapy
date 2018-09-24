@@ -184,6 +184,7 @@ class IntervalService implements LoggerAwareInterface
                         continue;
                     }
                     $days = $diff;
+                    break;
                 }
                 $intervalRuleResult->setDays($days);
             }
